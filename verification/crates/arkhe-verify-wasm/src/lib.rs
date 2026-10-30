@@ -199,3 +199,63 @@ pub fn verify_gov_lifecycle(
     arkhe_verify_core::gov_lifecycle::verify(&receipt, &trust, &context)
         .map_err(|e| JsValue::from_str(&e.to_string()))
 }
+
+fn absence_check(
+    expectation_json: &str,
+    window_index: u64,
+    record_hash: &str,
+    now: u64,
+) -> Result<String, String> {
+    if expectation_json.len() > 32_768 {
+        return Err("expectation too large".into());
+    }
+    let spec: arkhe_verify_core::absence::ExpectationSpec =
+        serde_json::from_str(expectation_json).map_err(|e| e.to_string())?;
+    let verdict = arkhe_verify_core::absence::verify(&spec, window_index, record_hash, now)?;
+    serde_json::to_string(&verdict).map_err(|e| e.to_string())
+}
+
+/// Offline check that `record_hash` is the AbsenceRecord of `window_index` for
+/// this expectation. Does not re-derive that the window was silent.
+#[wasm_bindgen]
+pub fn verify_absence(
+    expectation_json: &str,
+    window_index: u64,
+    record_hash: &str,
+    now: u64,
+) -> Result<String, JsValue> {
+    absence_check(expectation_json, window_index, record_hash, now)
+        .map_err(|m| JsValue::from_str(&m))
+}
+
+#[cfg(test)]
+mod absence_tests {
+    use super::absence_check;
+    use arkhe_verify_core::absence::ExpectationSpec;
+
+    const SPEC: &str = r#"{"version":1,"expectation_id":"laravel:billing-cron:hourly",
+        "module_id":"billing-cron","anchor_unix":1790000000,"period_secs":3600,"grace_secs":300,
+        "policy_digest":"0707070707070707070707070707070707070707070707070707070707070707"}"#;
+
+    /// The digest the auditor commits for a silent `window`.
+    fn hash_for(window: u64) -> String {
+        use arkhe_core::CanonicalEncode;
+        let spec: ExpectationSpec = serde_json::from_str(SPEC).unwrap();
+        let e = spec.expectation().unwrap();
+        let now = 1_790_000_000 + (window + 1) * 3600 + 300;
+        e.audit(window, now, &[]).unwrap()[0]
+            .object_digest()
+            .to_hex()
+    }
+
+    #[test]
+    fn binding_matches_the_core_verifier() {
+        let json = absence_check(SPEC, 2, &hash_for(2), 1_790_000_000 + 4 * 3600).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(v["status"], "VERIFIED");
+        assert_eq!(v["silence_reverified"], false);
+        assert!(absence_check(SPEC, 1, &hash_for(2), 1_790_000_000 + 4 * 3600).is_err());
+        assert!(absence_check("{}", 2, &hash_for(2), 1_790_000_000 + 4 * 3600).is_err());
+        assert!(absence_check(&" ".repeat(40_000), 2, "", 0).is_err());
+    }
+}

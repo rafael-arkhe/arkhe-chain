@@ -4,7 +4,10 @@ use arkhe_core::{
 };
 use arkhe_governance::{DevPolicyResolver, PolicyBinding};
 use arkhe_kernel::ContainmentGate;
-use arkhe_runtime::{run_report::RunReport, Runtime, WorkCommitError};
+use arkhe_runtime::{
+    run_report::{self, RunEndpoint},
+    Runtime, WorkCommitError,
+};
 use arkhe_verify_core::absence::ExpectationSpec;
 use arkhe_wormgraph::{
     absence::audit_and_record, postgres::PgWormGraph, retention::RetentionPolicy,
@@ -21,7 +24,7 @@ use std::{env, sync::Arc};
 
 struct LiveState {
     runtime: Runtime<DevPolicyResolver>,
-    store: PgWormGraph,
+    store: Arc<PgWormGraph>,
     policy: PolicyBinding,
     token: String,
     actor: String,
@@ -84,7 +87,7 @@ async fn commit(
     }
     let receipt = s
         .runtime
-        .commit_proposed_work(&s.store, &work.intent, &work.worker_record, &s.policy)
+        .commit_proposed_work(&*s.store, &work.intent, &work.worker_record, &s.policy)
         .await
         .map_err(|e| match e {
             WorkCommitError::Rejected(_) => (StatusCode::FORBIDDEN, "authorization rejected"),
@@ -94,25 +97,6 @@ async fn commit(
         })?;
     Ok(Json(
         json!({"record_hash":receipt.to_hex(),"intent_digest":work.intent.digest().to_hex(),"worker_digest":work.worker_record.digest().to_hex()}),
-    ))
-}
-/// Scheduler run reports (see `run_report`). Admission time is the store's.
-async fn run_report(
-    State(s): State<Arc<LiveState>>,
-    headers: HeaderMap,
-    Json(report): Json<RunReport>,
-) -> Result<Json<Value>, ApiError> {
-    authenticate(&headers, &s)?;
-    let worker = report
-        .worker_record(&s.actor)
-        .map_err(|m| (StatusCode::BAD_REQUEST, m))?;
-    let hash = s
-        .store
-        .commit_verified_worker(&worker)
-        .await
-        .map_err(|_| (StatusCode::SERVICE_UNAVAILABLE, "evidence commit failed"))?;
-    Ok(Json(
-        json!({"record_hash":hash.to_hex(),"module_id":worker.module_id}),
     ))
 }
 /// `audit-expectation <spec.json> [from_window]`: one audit pass. Prints the
@@ -215,9 +199,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if actor.trim().is_empty() {
         return Err("ARKHE_ACTOR is required".into());
     }
-    let store = PgWormGraph::connect(&env::var("DATABASE_URL")?, &env::var("ARKHE_TENANT_ID")?)
-        .await
-        .map_err(std::io::Error::other)?;
+    let store = Arc::new(
+        PgWormGraph::connect(&env::var("DATABASE_URL")?, &env::var("ARKHE_TENANT_ID")?)
+            .await
+            .map_err(std::io::Error::other)?,
+    );
+    let runs = run_report::router(Arc::new(RunEndpoint {
+        store: store.clone(),
+        token: token.clone(),
+        actor: actor.clone(),
+    }));
     let policy = PolicyBinding {
         policy_id: "development-unprotected-v1".into(),
         version: 1,
@@ -243,9 +234,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         get(object),
         get(retention),
     )
-    .route("/v1/runs", post(run_report))
-    .layer(DefaultBodyLimit::max(262144))
-    .with_state(state);
+    .with_state(state)
+    .merge(runs)
+    .layer(DefaultBodyLimit::max(262144));
     let listener = tokio::net::TcpListener::bind(
         env::var("ARKHE_LISTEN").unwrap_or_else(|_| "127.0.0.1:8788".into()),
     )

@@ -3,8 +3,70 @@
 //! the WER, so the report proves only that a bearer of the API token said the
 //! run succeeded; the admission time is the store's, not the reporter's.
 use arkhe_core::{canonical::encode_value, worker::WorkerExecutionRecord, Digest32};
+use async_trait::async_trait;
+use axum::{
+    extract::State,
+    http::{HeaderMap, StatusCode},
+    routing::post,
+    Json, Router,
+};
 use serde::Deserialize;
-use serde_json::json;
+use serde_json::{json, Value};
+use std::sync::Arc;
+
+/// Commits a WER the runtime built itself; see `PgWormGraph::commit_verified_worker`.
+#[async_trait]
+pub trait VerifiedWorkerCommitter: Send + Sync {
+    async fn commit_verified_worker(
+        &self,
+        worker: &WorkerExecutionRecord,
+    ) -> Result<Digest32, String>;
+}
+
+#[async_trait]
+impl VerifiedWorkerCommitter for arkhe_wormgraph::postgres::PgWormGraph {
+    async fn commit_verified_worker(
+        &self,
+        worker: &WorkerExecutionRecord,
+    ) -> Result<Digest32, String> {
+        arkhe_wormgraph::postgres::PgWormGraph::commit_verified_worker(self, worker).await
+    }
+}
+
+pub struct RunEndpoint {
+    pub store: Arc<dyn VerifiedWorkerCommitter>,
+    pub token: String,
+    pub actor: String,
+}
+
+/// `POST /v1/runs`. Same bearer token as the other runtime routes.
+pub fn router(endpoint: Arc<RunEndpoint>) -> Router {
+    Router::new()
+        .route("/v1/runs", post(admit))
+        .with_state(endpoint)
+}
+
+async fn admit(
+    State(e): State<Arc<RunEndpoint>>,
+    headers: HeaderMap,
+    Json(report): Json<RunReport>,
+) -> Result<Json<Value>, (StatusCode, &'static str)> {
+    let expected = format!("Bearer {}", e.token);
+    if headers.get("authorization").and_then(|v| v.to_str().ok()) != Some(&expected) {
+        return Err((StatusCode::UNAUTHORIZED, "authentication required"));
+    }
+    let worker = report
+        .worker_record(&e.actor)
+        .map_err(|m| (StatusCode::BAD_REQUEST, m))?;
+    let hash = e
+        .store
+        .commit_verified_worker(&worker)
+        .await
+        .map_err(|_| (StatusCode::SERVICE_UNAVAILABLE, "evidence commit failed"))?;
+    Ok(Json(
+        json!({"record_hash":hash.to_hex(),"module_id":worker.module_id}),
+    ))
+}
 
 const MAX_ID_BYTES: usize = 128;
 
