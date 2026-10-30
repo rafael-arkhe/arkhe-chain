@@ -51,6 +51,7 @@ pub mod absence;
 pub mod anchor;
 pub mod binding;
 pub mod custody;
+pub mod decision;
 pub mod detection;
 pub mod fencing;
 pub mod identity;

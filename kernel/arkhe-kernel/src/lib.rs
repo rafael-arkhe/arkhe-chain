@@ -41,6 +41,58 @@ impl<R: PolicyResolver> ContainmentGate<R> {
     pub fn set_emergency_stop(&mut self, enabled: bool) {
         self.emergency_stop = enabled;
     }
+
+    /// Decide on an event from a policy resolution made in L3. The verdict is
+    /// the only output: its `decision` is binary, and its `reason` says
+    /// whether a rule decided, coverage was missing, the policy was unusable,
+    /// or the emergency stop was set. The emergency stop takes precedence.
+    /// `Err` means the inputs could not form a valid verdict and nothing was
+    /// decided; callers must not proceed and must not record a decision.
+    pub fn decide_event(
+        &self,
+        subject: Digest32,
+        event_type: &str,
+        policy_id: &str,
+        resolution: &arkhe_governance::event_policy::Resolution,
+    ) -> Result<arkhe_core::decision::DecisionVerdict, arkhe_core::decision::VerdictError> {
+        use arkhe_core::decision::{Decision, DecisionReason, DecisionVerdict, VERDICT_VERSION};
+        use arkhe_governance::event_policy::{Resolution, RuleAction};
+        let policy_digest = match resolution {
+            Resolution::Rule { policy_digest, .. }
+            | Resolution::NoRuleMatched { policy_digest } => Some(*policy_digest),
+            Resolution::Unavailable { .. } => None,
+        };
+        let (reason, rule_id) = match resolution {
+            _ if self.emergency_stop => (DecisionReason::EmergencyStop, None),
+            Resolution::Rule {
+                rule_id, action, ..
+            } => (
+                match action {
+                    RuleAction::Allow => DecisionReason::RuleAllowed,
+                    RuleAction::Reject => DecisionReason::RuleRejected,
+                },
+                Some(rule_id.clone()),
+            ),
+            Resolution::NoRuleMatched { .. } => (DecisionReason::NoRuleMatched, None),
+            Resolution::Unavailable { .. } => (DecisionReason::PolicyUnavailable, None),
+        };
+        let verdict = DecisionVerdict {
+            version: VERDICT_VERSION,
+            subject,
+            event_type: event_type.into(),
+            policy_id: policy_id.into(),
+            policy_digest,
+            rule_id,
+            decision: if reason == DecisionReason::RuleAllowed {
+                Decision::Allow
+            } else {
+                Decision::Reject
+            },
+            reason,
+        };
+        verdict.validate()?;
+        Ok(verdict)
+    }
     pub(crate) async fn authenticated_request<E: arkhe_core::evidence::EvidenceReader>(
         &self,
         intent: &WorkIntent,

@@ -91,6 +91,7 @@ impl PolicyResolver for DevPolicyResolver {
 
 pub mod constitution_graph;
 pub mod er_backend;
+pub mod event_policy;
 pub mod fellegi_sunter;
 pub mod invariant_resolver;
 pub mod ontology_snapshot;
