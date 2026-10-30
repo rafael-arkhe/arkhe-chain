@@ -1,6 +1,7 @@
 pub mod digest;
 pub mod error;
 pub mod evidence;
+pub mod expectation;
 pub mod formal_proof;
 pub mod match_summary;
 pub mod output_proof;
