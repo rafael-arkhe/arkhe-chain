@@ -1,0 +1,302 @@
+//! Controlled probe transport. Observations are untrusted; never emits PASS.
+//! Build and execute only in a suite-owned container. No external dependencies.
+use std::{env, fs, io, process::Command};
+
+const PROTOCOL: &str = "arkhe-containment-probe/v1";
+const IDS: &[&str] = &[
+    "identity",
+    "cgroup-enforcement",
+    "mount-inventory",
+    "socket-local-control",
+    "tcp-egress",
+    "udp-egress",
+    "dns-egress",
+    "image-read-control",
+    "writable-control",
+    "input-read-control",
+    "input-write",
+    "image-write",
+    "outside-mount-canary",
+    "traversal-and-symlink",
+    "subprocess-control",
+    "ffi-control",
+    "mount-capability",
+    "seccomp-inventory",
+    "tmp-noexec",
+    "memory-bounded",
+    "cpu-bounded",
+    "pids-bounded",
+];
+
+fn quoted(text: &str) -> String {
+    let mut result = String::from("\"");
+    for character in text.chars() {
+        match character {
+            '"' => result.push_str("\\\""),
+            '\\' => result.push_str("\\\\"),
+            '\n' => result.push_str("\\n"),
+            '\r' => result.push_str("\\r"),
+            '\t' => result.push_str("\\t"),
+            c if c < '\u{20}' => result.push_str(&format!("\\u{:04x}", c as u32)),
+            c => result.push(c),
+        }
+    }
+    result.push('"');
+    result
+}
+
+fn read_limited(path: &str) -> io::Result<String> {
+    use std::io::Read;
+    let mut text = String::new();
+    fs::File::open(path)?
+        .take(32769)
+        .read_to_string(&mut text)?;
+    if text.len() > 32768 {
+        return Err(io::Error::other("observation exceeds limit"));
+    }
+    Ok(text)
+}
+
+struct ProbeError {
+    message: String,
+    errno: Option<i32>,
+}
+impl From<io::Error> for ProbeError {
+    fn from(error: io::Error) -> Self {
+        Self {
+            message: error.to_string(),
+            errno: error.raw_os_error(),
+        }
+    }
+}
+impl From<&str> for ProbeError {
+    fn from(message: &str) -> Self {
+        Self {
+            message: message.into(),
+            errno: None,
+        }
+    }
+}
+
+fn guard(nonce: &str) -> Result<(), ProbeError> {
+    if !cfg!(target_os = "linux") {
+        return Err("Linux container required".into());
+    }
+    let status = read_limited("/proc/self/status").map_err(ProbeError::from)?;
+    let field = |key: &str| {
+        status
+            .lines()
+            .find_map(|line| line.strip_prefix(key))
+            .unwrap_or("")
+            .trim()
+    };
+    if field("Uid:").split_whitespace().next() != Some("10001")
+        || field("NoNewPrivs:") != "1"
+        || field("CapEff:") != "0000000000000000"
+    {
+        return Err("container identity guard failed".into());
+    }
+    let marker = read_limited("/input/arkhe-containment-fixture").map_err(ProbeError::from)?;
+    if marker.trim() != nonce {
+        return Err("suite-owned fixture guard failed".into());
+    }
+    Ok(())
+}
+
+fn event(name: &str, result: io::Result<String>) -> String {
+    let (outcome, value, errno) = match result {
+        Ok(value) => ("ok", value, None),
+        Err(error) => ("error", error.to_string(), error.raw_os_error()),
+    };
+    format!(
+        "{{\"case\":{},\"outcome\":{},\"value\":{},\"errno\":{}}}",
+        quoted(name),
+        quoted(outcome),
+        quoted(&value),
+        errno
+            .map(|e| e.to_string())
+            .unwrap_or_else(|| "null".into())
+    )
+}
+
+fn write_existing(path: &str, value: &str) -> io::Result<String> {
+    use std::io::Write;
+    fs::OpenOptions::new()
+        .write(true)
+        .open(path)?
+        .write_all(value.as_bytes())?;
+    Ok("write-succeeded".into())
+}
+
+fn create_file(path: &str, value: &str) -> io::Result<String> {
+    use std::io::Write;
+    fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)?
+        .write_all(value.as_bytes())?;
+    Ok("create-succeeded".into())
+}
+
+fn roundtrip(path: &str, value: &str) -> io::Result<String> {
+    create_file(path, value)?;
+    let actual = read_limited(path)?;
+    fs::remove_file(path)?;
+    Ok(actual)
+}
+
+#[cfg(unix)]
+fn filesystem_observe(vector: &str, nonce: &str) -> Result<Option<String>, ProbeError> {
+    use std::os::unix::fs::{symlink, PermissionsExt};
+    let external = format!("/home/user/.local/state/arkhe-containment/fixtures/{nonce}/sentinel");
+    let cases = match vector {
+        "image-read-control" => vec![event("image-read", read_limited("/etc/debian_version"))],
+        "writable-control" => vec![
+            event(
+                "tmp-roundtrip",
+                roundtrip(&format!("/tmp/arkhe-control-{nonce}"), nonce),
+            ),
+            event(
+                "work-roundtrip",
+                roundtrip(&format!("/work/arkhe-control-{nonce}"), nonce),
+            ),
+        ],
+        "input-write" => vec![
+            event(
+                "input-overwrite",
+                write_existing("/input/arkhe-containment-sentinel", nonce),
+            ),
+            event(
+                "input-create",
+                create_file(&format!("/input/new-{nonce}"), nonce),
+            ),
+            event(
+                "input-rename",
+                fs::rename(
+                    "/input/arkhe-containment-sentinel",
+                    format!("/input/renamed-{nonce}"),
+                )
+                .map(|()| "rename-succeeded".into()),
+            ),
+        ],
+        "image-write" => vec![
+            event(
+                "etc-create",
+                create_file(&format!("/etc/arkhe-containment-{nonce}"), nonce),
+            ),
+            event(
+                "root-create",
+                create_file(&format!("/arkhe-containment-{nonce}"), nonce),
+            ),
+        ],
+        "outside-mount-canary" => vec![
+            event("outside-read", read_limited(&external)),
+            event("outside-write", write_existing(&external, nonce)),
+        ],
+        "traversal-and-symlink" => {
+            let inside = format!("/work/arkhe-link-inside-{nonce}");
+            let outside = format!("/work/arkhe-link-outside-{nonce}");
+            symlink("/input/arkhe-containment-sentinel", &inside)?;
+            symlink(&external, &outside)?;
+            let events = vec![
+                event("inside-symlink-control", read_limited(&inside)),
+                event(
+                    "traversal-read",
+                    read_limited(&format!("/input/../..{external}")),
+                ),
+                event("outside-symlink-read", read_limited(&outside)),
+            ];
+            fs::remove_file(inside)?;
+            fs::remove_file(outside)?;
+            events
+        }
+        "tmp-noexec" => {
+            if fs::metadata("/bin/true")?.len() > 65536 {
+                return Err("control executable exceeds budget".into());
+            }
+            let work = format!("/work/arkhe-exec-{nonce}");
+            let tmp = format!("/tmp/arkhe-exec-{nonce}");
+            fs::copy("/bin/true", &work)?;
+            fs::copy("/bin/true", &tmp)?;
+            fs::set_permissions(&work, fs::Permissions::from_mode(0o755))?;
+            fs::set_permissions(&tmp, fs::Permissions::from_mode(0o755))?;
+            let execute = |path: &str| {
+                Command::new(path)
+                    .status()
+                    .map(|status| format!("exit={:?}", status.code()))
+            };
+            let events = vec![
+                event("work-exec-control", execute(&work)),
+                event("tmp-exec", execute(&tmp)),
+            ];
+            fs::remove_file(work)?;
+            fs::remove_file(tmp)?;
+            events
+        }
+        _ => return Ok(None),
+    };
+    Ok(Some(format!("[{}]", cases.join(","))))
+}
+
+#[cfg(not(unix))]
+fn filesystem_observe(_: &str, _: &str) -> Result<Option<String>, ProbeError> {
+    Ok(None)
+}
+
+fn observe(vector: &str, nonce: &str) -> Result<Option<String>, ProbeError> {
+    let read = |path: &str| read_limited(path).map_err(ProbeError::from);
+    match vector {
+        "identity" | "seccomp-inventory" => read("/proc/self/status").map(Some),
+        "mount-inventory" => read("/proc/self/mountinfo").map(Some),
+        "cgroup-enforcement" => Ok(Some(format!(
+            "memory.max={}\npids.max={}\ncpu.max={}",
+            read("/sys/fs/cgroup/memory.max")?.trim(),
+            read("/sys/fs/cgroup/pids.max")?.trim(),
+            read("/sys/fs/cgroup/cpu.max")?.trim()
+        ))),
+        "subprocess-control" => {
+            let status = Command::new("/bin/true")
+                .status()
+                .map_err(ProbeError::from)?;
+            Ok(Some(format!("child_exit={:?}", status.code())))
+        }
+        "input-read-control" => read("/input/arkhe-containment-sentinel").map(Some),
+        // The remaining vectors require independent oracles or bounded stress
+        // supervision that this transport alone cannot provide.
+        _ => filesystem_observe(vector, nonce),
+    }
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 3
+        || !IDS.contains(&args[1].as_str())
+        || args[2].len() != 64
+        || !args[2]
+            .bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+    {
+        eprintln!("usage: containment-probe <registered-vector-id> <64-lowercase-hex-nonce>");
+        std::process::exit(2);
+    }
+    let (vector, nonce) = (&args[1], &args[2]);
+    let result = guard(nonce).and_then(|()| observe(vector, nonce));
+    let (state, observation, errno) = match result {
+        Ok(Some(value)) => ("OBSERVED", value, None),
+        Ok(None) => (
+            "UNSUPPORTED",
+            "probe requires executor/oracle implementation".into(),
+            None,
+        ),
+        Err(error) => ("ERROR", error.message, error.errno),
+    };
+    println!(
+        "{{\"protocol\":{},\"vector_id\":{},\"nonce\":{},\"state\":{},\"observations\":{},\"errno\":{}}}",
+        quoted(PROTOCOL),
+        quoted(vector),
+        quoted(nonce),
+        quoted(state),
+        quoted(&observation),
+        errno.map(|value| value.to_string()).unwrap_or_else(|| "null".into())
+    );
+}

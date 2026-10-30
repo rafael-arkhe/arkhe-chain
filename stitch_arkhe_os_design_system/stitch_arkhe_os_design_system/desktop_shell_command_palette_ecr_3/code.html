@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-canvas-subtle" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Protocol Engine - Desktop Launcher &amp; Command Palette (Ecrã 3)</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CDN & Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface": "#fcf8fa",
+            "status-fail-bg": "#FFF1F2",
+            "surface-variant": "#e4e2e4",
+            "border-subtle": "#E5E7EB",
+            "background": "#fcf8fa",
+            "surface-container-highest": "#e4e2e4",
+            "status-warning-text": "#B45309",
+            "on-primary-container": "#7c839b",
+            "status-pass-bg": "#ECFDF5",
+            "inverse-primary": "#bec6e0",
+            "inverse-on-surface": "#f3f0f2",
+            "on-surface-variant": "#45464d",
+            "inverse-surface": "#303032",
+            "outline": "#76777d",
+            "surface-container-low": "#f6f3f5",
+            "tertiary": "#000000",
+            "tertiary-fixed": "#fcdeb5",
+            "status-pending-text": "#334155",
+            "on-tertiary-container": "#98805d",
+            "on-tertiary-fixed": "#271901",
+            "primary-fixed": "#dae2fd",
+            "on-secondary-container": "#fefcff",
+            "on-tertiary": "#ffffff",
+            "surface-dim": "#dcd9db",
+            "status-pending-border": "#CBD5E1",
+            "border-muted": "#E2E8F0",
+            "text-secondary": "#4B5563",
+            "secondary-fixed-dim": "#b4c5ff",
+            "error-container": "#ffdad6",
+            "surface-container": "#f0edef",
+            "on-error-container": "#93000a",
+            "tertiary-container": "#271901",
+            "on-primary": "#ffffff",
+            "status-pass-border": "#A7F3D0",
+            "on-secondary-fixed": "#00174b",
+            "primary-container": "#131b2e",
+            "tertiary-fixed-dim": "#dec29a",
+            "secondary-fixed": "#dbe1ff",
+            "on-primary-fixed": "#131b2e",
+            "on-background": "#1b1b1d",
+            "status-pass-text": "#047857",
+            "secondary": "#0051d5",
+            "surface-container-high": "#eae7e9",
+            "on-surface": "#1b1b1d",
+            "text-primary": "#111827",
+            "canvas-base": "#FFFFFF",
+            "surface-bright": "#fcf8fa",
+            "primary-fixed-dim": "#bec6e0",
+            "outline-variant": "#c6c6cd",
+            "error": "#ba1a1a",
+            "text-tertiary": "#6B7280",
+            "canvas-subtle": "#F9FAFB",
+            "on-primary-fixed-variant": "#3f465c",
+            "status-pending-bg": "#F1F5F9",
+            "surface-tint": "#565e74",
+            "primary": "#000000",
+            "surface-container-lowest": "#ffffff",
+            "status-fail-border": "#FECDD3",
+            "on-secondary": "#ffffff",
+            "status-fail-text": "#BE123C",
+            "on-tertiary-fixed-variant": "#574425",
+            "status-warning-bg": "#FFFBEB",
+            "on-secondary-fixed-variant": "#003ea8",
+            "status-warning-border": "#FDE68A",
+            "secondary-container": "#316bf3",
+            "on-error": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "0.75rem",
+            "space-2xl": "2rem",
+            "space-xs": "0.25rem",
+            "space-xl": "1.5rem",
+            "margin-compact": "1rem",
+            "space-sm": "0.5rem",
+            "gutter-dense": "0.5rem",
+            "gutter": "1rem",
+            "space-lg": "1rem",
+            "margin": "1.5rem"
+          },
+          "fontFamily": {
+            "label-md": ["JetBrains Mono"],
+            "code-inline": ["JetBrains Mono"],
+            "headline-xl": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-sm": ["JetBrains Mono"],
+            "body-md": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-sm": ["Inter"]
+          },
+          "fontSize": {
+            "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "code-inline": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full flex flex-col font-body-md text-text-primary bg-canvas-subtle antialiased select-none">
+<!-- TopNavBar (Shared Component JSON Implementation) -->
+<header class="w-full px-6 h-14 flex items-center justify-between border-b border-border-subtle bg-canvas-base max-w-full fixed top-0 left-0 right-0 z-50">
+<!-- Brand Anchor & Node Telemetry -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="shield">shield</span>
+<span class="text-headline-sm font-headline-sm font-semibold tracking-tight text-primary">Arkhe Protocol Engine</span>
+</div>
+<div class="h-4 w-px bg-border-subtle"></div>
+<!-- Node Status & Regulatory Proof Flags -->
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pass-text"></span>
+          KERNEL v4.2 ONLINE // FIPS 140-3
+        </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-border-muted bg-surface-container-low text-text-secondary font-label-sm text-label-sm">
+          BACEN/ICP-Brasil Validated
+        </span>
+</div>
+</div>
+<!-- Central Global Search Command Trigger -->
+<button class="flex items-center justify-between w-96 px-3 py-1.5 bg-canvas-subtle border border-border-subtle hover:border-text-secondary rounded text-text-secondary transition-colors duration-150 group" onclick="toggleCommandPalette()">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-text-tertiary" data-icon="search">search</span>
+<span class="font-body-sm text-body-sm text-text-tertiary group-hover:text-text-primary">Procurar por Hash, Leaf, DID ou Ação...</span>
+</div>
+<kbd class="px-1.5 py-0.5 text-[10px] font-label-sm border border-border-muted bg-canvas-base rounded text-text-secondary font-semibold">⌘K</kbd>
+</button>
+<!-- Navigation & Operador Actions -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1">
+<button class="p-1.5 text-text-secondary hover:text-text-primary hover:bg-canvas-subtle rounded transition-colors" title="Copiar Hash do Estado Atual">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-1.5 text-text-secondary hover:text-text-primary hover:bg-canvas-subtle rounded transition-colors" title="Exportar JCS Canonical">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+</button>
+<button class="p-1.5 text-text-secondary hover:text-text-primary hover:bg-canvas-subtle rounded transition-colors" title="Terminal RPC">
+<span class="material-symbols-outlined text-[18px]" data-icon="terminal">terminal</span>
+</button>
+</div>
+<div class="h-4 w-px bg-border-subtle"></div>
+<button class="px-2.5 py-1 text-body-sm font-headline-sm font-medium border border-border-muted bg-canvas-base hover:bg-canvas-subtle text-text-primary rounded transition-colors">
+        Exportar JCS
+      </button>
+<button class="px-2.5 py-1 text-body-sm font-headline-sm font-medium bg-primary text-on-primary rounded hover:bg-neutral-800 transition-colors">
+        Verificar Offline WASM
+      </button>
+<!-- Certified Operator Tag -->
+<div class="flex items-center gap-2 pl-2">
+<div class="w-7 h-7 rounded bg-surface-container-high border border-border-subtle flex items-center justify-center font-label-sm text-label-sm text-text-primary">
+          OP
+        </div>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Dense Audit Nav) -->
+<aside class="fixed top-14 left-0 bottom-0 w-64 flex flex-col justify-between p-3 border-r border-border-subtle bg-canvas-subtle z-40">
+<div class="space-y-4">
+<!-- Node Header -->
+<div class="px-2 py-1">
+<div class="text-headline-sm font-headline-sm font-bold text-text-primary">ARKHE KERNEL v4.2</div>
+<div class="font-code-inline text-code-inline text-text-tertiary">MMR Checkpoint #849,204</div>
+</div>
+<!-- Navigation Links -->
+<nav class="space-y-0.5">
+<a class="flex items-center gap-3 px-3 py-2 text-text-primary bg-canvas-base border-l-2 border-primary font-medium text-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified_user">verified_user</span>
+<span>Proof Explorer</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="memory">memory</span>
+<span>Enclave Attestation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="hub">hub</span>
+<span>Rekor Anchor</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="fact_check">fact_check</span>
+<span>Status List v1.0</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="key">key</span>
+<span>Ed25519 Keys</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="history">history</span>
+<span>Epoch Root Log</span>
+</a>
+</nav>
+</div>
+<!-- Navigation Footer Actions -->
+<div class="pt-3 border-t border-border-subtle space-y-1">
+<button class="w-full flex items-center justify-center gap-1.5 py-1.5 bg-canvas-base hover:bg-surface-container-high border border-border-subtle text-text-primary font-headline-sm text-body-sm font-medium rounded transition-colors mb-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="anchor">anchor</span>
+        Anchor State
+      </button>
+<a class="flex items-center gap-3 px-3 py-1.5 text-text-secondary hover:text-text-primary text-body-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="terminal">terminal</span>
+<span>System Diagnostics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-1.5 text-text-secondary hover:text-text-primary text-body-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="menu_book">menu_book</span>
+<span>API Documentation</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas Content Area -->
+<main class="ml-64 mt-14 mb-10 p-6 flex-1 flex flex-col gap-6 max-w-7xl">
+<!-- Workspace Overview Header -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border-subtle gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-text-primary font-semibold tracking-tight">Launcher de Protocolo &amp; Ambiente Operacional</h1>
+<p class="font-body-md text-body-md text-text-secondary">Ecrã 3 (F0): Ponto de ancoragem estático e despachador central de subsistemas com verificação criptográfica determinística.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<div class="font-label-sm text-label-sm text-text-tertiary">ROOT BLAKE3 ATUAL</div>
+<div class="font-code-inline text-code-inline font-medium text-text-primary">b3:7f28...a091</div>
+</div>
+<button class="px-3 py-1.5 bg-primary text-on-primary text-body-sm font-medium rounded hover:bg-neutral-800 transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]" data-icon="refresh">refresh</span>
+          Sincronizar Epoch
+        </button>
+</div>
+</div>
+<!-- Integrated Central Command Palette (Visible / Focus Area) -->
+<div class="w-full bg-canvas-base border border-border-subtle rounded-lg shadow-sm overflow-hidden">
+<!-- Search Input Toolbar -->
+<div class="px-4 py-3 border-b border-border-subtle flex items-center gap-3 bg-canvas-base">
+<span class="material-symbols-outlined text-text-secondary text-[20px]" data-icon="search">search</span>
+<input class="flex-1 bg-transparent border-0 p-0 font-code-inline text-body-md text-text-primary focus:ring-0 placeholder:text-text-tertiary focus:outline-none" placeholder="Procurar por Hash BLAKE3, DID, Número de Operação, Folha MMR ou Regra Invariante..." type="text" value="b3:0x8fbc92c0..."/>
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-label-sm">BLAKE3 MATCH</span>
+<kbd class="px-2 py-0.5 text-[10px] font-label-sm border border-border-muted bg-canvas-subtle text-text-secondary rounded">ESC para Limpar</kbd>
+</div>
+</div>
+<!-- Categorized Instant Results -->
+<div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border-subtle bg-canvas-subtle">
+<!-- Fast Actions Section -->
+<div class="p-4 space-y-3">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-tertiary font-semibold tracking-wider">AÇÕES RÁPIDAS</span>
+<span class="font-code-inline text-[10px] text-text-tertiary">4 DISPONÍVEIS</span>
+</div>
+<div class="space-y-1">
+<button class="w-full text-left p-2 rounded hover:bg-canvas-base border border-transparent hover:border-border-subtle flex items-center justify-between group transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary text-[18px]" data-icon="verified">verified</span>
+<span class="font-body-sm text-body-sm text-text-primary font-medium">Verificar Recibo Offline (WASM)</span>
+</div>
+<span class="font-label-sm text-[10px] text-text-tertiary">ALT+V</span>
+</button>
+<button class="w-full text-left p-2 rounded hover:bg-canvas-base border border-transparent hover:border-border-subtle flex items-center justify-between group transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary text-[18px]" data-icon="anchor">anchor</span>
+<span class="font-body-sm text-body-sm text-text-primary font-medium">Ancorar Estado Imediatamente</span>
+</div>
+<span class="font-label-sm text-[10px] text-text-tertiary">ALT+A</span>
+</button>
+<button class="w-full text-left p-2 rounded hover:bg-canvas-base border border-transparent hover:border-border-subtle flex items-center justify-between group transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary text-[18px]" data-icon="add_moderator">add_moderator</span>
+<span class="font-body-sm text-body-sm text-text-primary font-medium">Provisionar Nova Chave Ed25519</span>
+</div>
+<span class="font-label-sm text-[10px] text-text-tertiary">ALT+K</span>
+</button>
+<button class="w-full text-left p-2 rounded bg-status-fail-bg/40 hover:bg-status-fail-bg border border-status-fail-border flex items-center justify-between group transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-fail-text text-[18px]" data-icon="dangerous">dangerous</span>
+<span class="font-body-sm text-body-sm text-status-fail-text font-medium">Acionar Fail-Closed (Ecrã 36)</span>
+</div>
+<span class="font-label-sm text-[10px] text-status-fail-text font-semibold">KILL-0</span>
+</button>
+</div>
+</div>
+<!-- Recent Hashes & History -->
+<div class="p-4 space-y-3">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-tertiary font-semibold tracking-wider">HISTÓRICO &amp; HASHES RECENTES</span>
+<span class="font-code-inline text-[10px] text-text-tertiary">ÚLTIMAS 24H</span>
+</div>
+<div class="space-y-1">
+<div class="p-2 rounded bg-canvas-base border border-border-subtle flex flex-col gap-1 cursor-pointer hover:border-text-secondary">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm font-medium text-text-primary">Recibo PIX E00038166...</span>
+<span class="px-1.5 py-0.2 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-[10px]">INCLUÍDO</span>
+</div>
+<div class="font-code-inline text-code-inline text-text-tertiary truncate">b3:8fbc92c019284fa6e890cd12e</div>
+</div>
+<div class="p-2 rounded bg-canvas-base border border-border-subtle flex flex-col gap-1 cursor-pointer hover:border-text-secondary">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm font-medium text-text-primary">MMR Leaf #849,204</span>
+<span class="px-1.5 py-0.2 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-[10px]">CHECKPOINT</span>
+</div>
+<div class="font-code-inline text-code-inline text-text-tertiary truncate">sha256:d82e817c1a8934df9021...</div>
+</div>
+<div class="p-2 rounded bg-canvas-base border border-border-subtle flex flex-col gap-1 cursor-pointer hover:border-text-secondary">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm font-medium text-text-primary">Contrato HackenProof Attest</span>
+<span class="px-1.5 py-0.2 rounded border border-status-pending-border bg-status-pending-bg text-status-pending-text font-label-sm text-[10px]">PENDING AUDIT</span>
+</div>
+<div class="font-code-inline text-code-inline text-text-tertiary truncate">0x918f...4e10</div>
+</div>
+</div>
+</div>
+<!-- System Screens & Subsystems -->
+<div class="p-4 space-y-3">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-tertiary font-semibold tracking-wider">ECRÃS &amp; SUBSISTEMAS</span>
+<span class="font-code-inline text-[10px] text-text-tertiary">REGISTO FIPS</span>
+</div>
+<div class="space-y-1">
+<a class="p-2 rounded hover:bg-canvas-base border border-transparent hover:border-border-subtle flex items-center justify-between group transition-colors" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary text-[18px]" data-icon="developer_board">developer_board</span>
+<div>
+<div class="font-body-sm text-body-sm text-text-primary font-medium">MCP Server Management</div>
+<div class="font-code-inline text-[11px] text-text-tertiary">Ecrã 61 · Orquestração de Agentes</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-text-tertiary" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="p-2 rounded hover:bg-canvas-base border border-transparent hover:border-border-subtle flex items-center justify-between group transition-colors" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary text-[18px]" data-icon="badge">badge</span>
+<div>
+<div class="font-body-sm text-body-sm text-text-primary font-medium">KYA Passport Registry</div>
+<div class="font-code-inline text-[11px] text-text-tertiary">Ecrã 19 · Identidade Soberana</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-text-tertiary" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="p-2 rounded hover:bg-canvas-base border border-transparent hover:border-border-subtle flex items-center justify-between group transition-colors" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary text-[18px]" data-icon="schedule">schedule</span>
+<div>
+<div class="font-body-sm text-body-sm text-text-primary font-medium">Scheduled Runs &amp; Cron Daemon</div>
+<div class="font-code-inline text-[11px] text-text-tertiary">Ecrã 63 · Ancoragem Periódica</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-text-tertiary" data-icon="chevron_right">chevron_right</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<!-- App Launcher Grid (Bento Matrix) -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm font-semibold text-text-primary">Módulos de Produção e Ferramentas Criptográficas</h2>
+<span class="font-label-sm text-label-sm text-text-tertiary">DISCIPLINA OPERACIONAL 100% AUDITÁVEL</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Category 1: Módulos de Verificação -->
+<div class="bg-canvas-base border border-border-subtle rounded p-4 flex flex-col justify-between hover:border-text-secondary transition-colors">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="p-2 bg-canvas-subtle border border-border-subtle rounded text-text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="payments">payments</span>
+</span>
+<span class="px-1.5 py-0.5 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-[10px]">PIX/SPI v2</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary">Validador de Transações PIX</h3>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Conformidade síncrona com o Regulamento BACEN e geração imediata de recibo criptográfico JCS.</p>
+</div>
+<div class="pt-2 font-code-inline text-[11px] text-text-tertiary border-t border-border-subtle flex justify-between">
+<span>Taxa Erro: 0.00%</span>
+<span>TPS: 1,842</span>
+</div>
+</div>
+<div class="pt-4 mt-auto">
+<button class="w-full py-1.5 px-3 bg-canvas-subtle hover:bg-surface-container-high border border-border-subtle rounded font-body-sm text-body-sm font-medium text-text-primary flex items-center justify-center gap-1.5 transition-colors">
+<span>Abrir Verificador</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="bg-canvas-base border border-border-subtle rounded p-4 flex flex-col justify-between hover:border-text-secondary transition-colors">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="p-2 bg-canvas-subtle border border-border-subtle rounded text-text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_tree">account_tree</span>
+</span>
+<span class="px-1.5 py-0.5 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-[10px]">MMR CORE</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary">Inspetor de Inclusão MMR</h3>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Geração de provas de trilha para verificação em navegadores locais com WASM compilado sem rede.</p>
+</div>
+<div class="pt-2 font-code-inline text-[11px] text-text-tertiary border-t border-border-subtle flex justify-between">
+<span>Depth: 24</span>
+<span>Roots: 849k</span>
+</div>
+</div>
+<div class="pt-4 mt-auto">
+<button class="w-full py-1.5 px-3 bg-canvas-subtle hover:bg-surface-container-high border border-border-subtle rounded font-body-sm text-body-sm font-medium text-text-primary flex items-center justify-center gap-1.5 transition-colors">
+<span>Examinar Folhas</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="bg-canvas-base border border-border-subtle rounded p-4 flex flex-col justify-between hover:border-text-secondary transition-colors">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="p-2 bg-canvas-subtle border border-border-subtle rounded text-text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="workspace_premium">workspace_premium</span>
+</span>
+<span class="px-1.5 py-0.5 rounded border border-border-muted bg-surface-container-low text-text-secondary font-label-sm text-[10px]">MP 2.200-2</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary">Validador ICP-Brasil / e-CNPJ</h3>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Validação e verificação de cadeias X.509, LCRs e OCSP de autoridades certificadoras padrão AC-Raiz.</p>
+</div>
+<div class="pt-2 font-code-inline text-[11px] text-text-tertiary border-t border-border-subtle flex justify-between">
+<span>OCSP Status: Ativo</span>
+<span>Cadeia: V11</span>
+</div>
+</div>
+<div class="pt-4 mt-auto">
+<button class="w-full py-1.5 px-3 bg-canvas-subtle hover:bg-surface-container-high border border-border-subtle rounded font-body-sm text-body-sm font-medium text-text-primary flex items-center justify-center gap-1.5 transition-colors">
+<span>Validar Assinatura</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Category 2: Autonomia & Agentes -->
+<div class="bg-canvas-base border border-border-subtle rounded p-4 flex flex-col justify-between hover:border-text-secondary transition-colors">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="p-2 bg-canvas-subtle border border-border-subtle rounded text-text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="fingerprint">fingerprint</span>
+</span>
+<span class="px-1.5 py-0.5 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-[10px]">KYA v1.0</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary">KYA Passport Registry</h3>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Emissão e controle de credenciais para Agentes Autônomos AI com restrição de escopo de execução.</p>
+</div>
+<div class="pt-2 font-code-inline text-[11px] text-text-tertiary border-t border-border-subtle flex justify-between">
+<span>DIDs Ativos: 42</span>
+<span>Revogados: 0</span>
+</div>
+</div>
+<div class="pt-4 mt-auto">
+<button class="w-full py-1.5 px-3 bg-canvas-subtle hover:bg-surface-container-high border border-border-subtle rounded font-body-sm text-body-sm font-medium text-text-primary flex items-center justify-center gap-1.5 transition-colors">
+<span>Aceder Passaportes</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Category 3: Evidência & WormGraph -->
+<div class="bg-canvas-base border border-border-subtle rounded p-4 flex flex-col justify-between hover:border-text-secondary transition-colors">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="p-2 bg-canvas-subtle border border-border-subtle rounded text-text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="conversion_path">conversion_path</span>
+</span>
+<span class="px-1.5 py-0.5 rounded border border-border-muted bg-surface-container-low text-text-secondary font-label-sm text-[10px]">DAG DIRECTED</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary">Artefactos WormGraph (Causal DAG)</h3>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Exploração visual da cadeia de causalidade imutável ligando ordens de pagamento aos logs de auditoria.</p>
+</div>
+<div class="pt-2 font-code-inline text-[11px] text-text-tertiary border-t border-border-subtle flex justify-between">
+<span>Nós DAG: 1.2M</span>
+<span>Ciclos: 0 (Strict)</span>
+</div>
+</div>
+<div class="pt-4 mt-auto">
+<button class="w-full py-1.5 px-3 bg-canvas-subtle hover:bg-surface-container-high border border-border-subtle rounded font-body-sm text-body-sm font-medium text-text-primary flex items-center justify-center gap-1.5 transition-colors">
+<span>Inspecionar Grafo</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="bg-canvas-base border border-border-subtle rounded p-4 flex flex-col justify-between hover:border-text-secondary transition-colors">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="p-2 bg-canvas-subtle border border-border-subtle rounded text-text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="rule">rule</span>
+</span>
+<span class="px-1.5 py-0.5 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-[10px]">W3C CCG</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary">Bitstring Status List v1.0</h3>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Estrutura compacta de alta densidade criptográfica para revogação instantânea de credenciais descentralizadas.</p>
+</div>
+<div class="pt-2 font-code-inline text-[11px] text-text-tertiary border-t border-border-subtle flex justify-between">
+<span>Bits Alocados: 16MB</span>
+<span>Gzip: 98%</span>
+</div>
+</div>
+<div class="pt-4 mt-auto">
+<button class="w-full py-1.5 px-3 bg-canvas-subtle hover:bg-surface-container-high border border-border-subtle rounded font-body-sm text-body-sm font-medium text-text-primary flex items-center justify-center gap-1.5 transition-colors">
+<span>Auditar Lista</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="bg-canvas-base border border-border-subtle rounded p-4 flex flex-col justify-between hover:border-text-secondary transition-colors">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="p-2 bg-canvas-subtle border border-border-subtle rounded text-text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="policy">policy</span>
+</span>
+<span class="px-1.5 py-0.5 rounded border border-border-muted bg-surface-container-low text-text-secondary font-label-sm text-[10px]">RFC 6962</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary">Rekor &amp; RBB Anchor</h3>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Conexão transparente ao registo público Rekor e ao Repositório Brasileiro de Blockchain.</p>
+</div>
+<div class="pt-2 font-code-inline text-[11px] text-text-tertiary border-t border-border-subtle flex justify-between">
+<span>Última Ancoragem: 4m atrás</span>
+<span>Gas: 0 Gwei</span>
+</div>
+</div>
+<div class="pt-4 mt-auto">
+<button class="w-full py-1.5 px-3 bg-canvas-subtle hover:bg-surface-container-high border border-border-subtle rounded font-body-sm text-body-sm font-medium text-text-primary flex items-center justify-center gap-1.5 transition-colors">
+<span>Ver Prova Rekor</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Category 4: Governança & Emergência -->
+<div class="bg-canvas-base border border-status-fail-border rounded p-4 flex flex-col justify-between hover:border-status-fail-text transition-colors">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="p-2 bg-status-fail-bg border border-status-fail-border rounded text-status-fail-text">
+<span class="material-symbols-outlined text-[20px]" data-icon="emergency_home">emergency_home</span>
+</span>
+<span class="px-1.5 py-0.5 rounded border border-status-fail-border bg-status-fail-bg text-status-fail-text font-label-sm text-[10px]">FAIL-CLOSED</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-status-fail-text">Kill-Switch &amp; Paragem</h3>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Procedimento de travamento de emergência com assinatura em quórum m-de-n para contenção imediata de derivação.</p>
+</div>
+<div class="pt-2 font-code-inline text-[11px] text-text-tertiary border-t border-border-subtle flex justify-between">
+<span>Quórum: 3 de 5</span>
+<span>Estado: Nominal</span>
+</div>
+</div>
+<div class="pt-4 mt-auto">
+<button class="w-full py-1.5 px-3 bg-status-fail-bg hover:bg-rose-100 border border-status-fail-border rounded font-body-sm text-body-sm font-medium text-status-fail-text flex items-center justify-center gap-1.5 transition-colors">
+<span>Consola de Paragem</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="shield_with_heart">shield_with_heart</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Active System Invariants Status Table -->
+<div class="bg-canvas-base border border-border-subtle rounded p-4">
+<div class="flex items-center justify-between pb-3 border-b border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-secondary text-[18px]" data-icon="fact_check">fact_check</span>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary">Regras Invariantes Constitucionais (Constituição E02)</h3>
+</div>
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-2 py-0.5 rounded">
+          100% DAS INVARIANTES ATIVAS &amp; VERIFICADAS
+        </span>
+</div>
+<div class="mt-3 overflow-x-auto">
+<table class="w-full text-left font-body-sm text-body-sm">
+<thead>
+<tr class="text-text-tertiary font-label-sm text-[11px] border-b border-border-subtle">
+<th class="pb-2 font-medium">IDENTIFICADOR</th>
+<th class="pb-2 font-medium">DESCRIÇÃO DA REGRA INVARIANTE</th>
+<th class="pb-2 font-medium">VERIFICAÇÃO LOCAL</th>
+<th class="pb-2 font-medium text-right">EXECUÇÕES (24H)</th>
+<th class="pb-2 font-medium text-right">ESTADO</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle">
+<tr>
+<td class="py-2.5 font-code-inline text-code-inline font-medium text-text-primary">INV-BACEN-01</td>
+<td class="py-2.5 text-text-secondary">Assinatura digital válida obrigatória segundo perfil ICP-Brasil A3/A4 em toda liquidação PIX acima de R$ 50.000.</td>
+<td class="py-2.5 font-code-inline text-code-inline text-text-tertiary">Rust WASM v2.4 (Native)</td>
+<td class="py-2.5 text-right font-code-inline text-code-inline">41,208</td>
+<td class="py-2.5 text-right">
+<span class="px-1.5 py-0.5 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-[10px]">THEOREM</span>
+</td>
+</tr>
+<tr>
+<td class="py-2.5 font-code-inline text-code-inline font-medium text-text-primary">INV-DAG-04</td>
+<td class="py-2.5 text-text-secondary">Acyclicidade absoluta no WormGraph: Rejeição determinística de loops de precedência temporal ou retro-ancoragem.</td>
+<td class="py-2.5 font-code-inline text-code-inline text-text-tertiary">Topological Sorter (O(N))</td>
+<td class="py-2.5 text-right font-code-inline text-code-inline">1,402,891</td>
+<td class="py-2.5 text-right">
+<span class="px-1.5 py-0.5 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-[10px]">THEOREM</span>
+</td>
+</tr>
+<tr>
+<td class="py-2.5 font-code-inline text-code-inline font-medium text-text-primary">INV-SEC-09</td>
+<td class="py-2.5 text-text-secondary">Enclave Intel SGX / AWS Nitro Attestation exigida para qualquer emissão de chave delegada de Agente KYA.</td>
+<td class="py-2.5 font-code-inline text-code-inline text-text-tertiary">Enclave Verifier PCR0-2</td>
+<td class="py-2.5 text-right font-code-inline text-code-inline">94</td>
+<td class="py-2.5 text-right">
+<span class="px-1.5 py-0.5 rounded border border-status-pass-border bg-status-pass-bg text-status-pass-text font-label-sm text-[10px]">THEOREM</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<!-- Real-time Bottom Monitoring Dock -->
+<aside class="fixed bottom-0 left-64 right-0 h-10 bg-canvas-base border-t border-border-subtle px-6 flex items-center justify-between z-40">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-pass-text"></span>
+<span class="font-label-sm text-label-sm text-text-secondary">CHECKPOINT MMR: <span class="text-text-primary font-semibold">#849,204</span></span>
+</div>
+<div class="h-3 w-px bg-border-subtle"></div>
+<div class="font-label-sm text-label-sm text-text-secondary">
+        LATÊNCIA WASM: <span class="text-text-primary font-code-inline font-medium">&lt; 0.38ms</span>
+</div>
+<div class="h-3 w-px bg-border-subtle"></div>
+<div class="font-label-sm text-label-sm text-text-secondary">
+        DERIVAÇÕES IRREGULARES: <span class="text-status-pass-text font-code-inline font-semibold">0 DETECTADAS</span>
+</div>
+</div>
+<!-- Formal Legal Footer -->
+<div class="flex items-center gap-4 text-text-tertiary font-label-sm text-[11px]">
+<span>CONFORMIDADE DETERMINÍSTICA MP 2.200-2/2001 &amp; PADRÃO FIPS 140-3</span>
+<div class="h-3 w-px bg-border-subtle"></div>
+<span class="font-code-inline">ARKHE-OS v4.2.0-STABLE</span>
+</div>
+</aside>
+<!-- Interactive Hotkey Listener Script -->
+<script>
+    function toggleCommandPalette() {
+      const input = document.querySelector('input[type="text"]');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleCommandPalette();
+      }
+    });
+  </script>
+</body></html>

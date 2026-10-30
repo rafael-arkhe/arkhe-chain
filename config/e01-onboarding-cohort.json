@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "cohort_id": "E01-WIN-X64-C01",
+  "material_revision": 1,
+  "state": "COHORT_MATERIALS_PINNED",
+  "human_study_status": "NOT_RUN",
+  "journey": "E01_MCP_WASM_VERIFICATION",
+  "kit_version": "0.1.0",
+  "adapter_version": "0.2.0",
+  "format": "portable ZIP with bundled Node and WASM",
+  "artifact": "dist/Arkhe-E01-Verifier-0.1.0-windows-x64.zip",
+  "artifact_sha256": "1484bbad22f04b50caa508343fd7cabe765e3d4f654c80cd62f67aafed55d2ea",
+  "manifest_sha256": "3bbbe48385eea7e4007a07dd76654c73f634cbf719ea76d82f8682091470f1d8",
+  "tutorial_sha256": "966ad98ce9b0aea3dbb4333ad687cb9b456c7f7270e05d39142c3d3c0059e5b4",
+  "entrypoints": {
+    "cli": "arkhe-verify.cmd",
+    "mcp_stdio": "mcp-server.cmd"
+  },
+  "fixtures": {
+    "A": {
+      "path": "fixtures/A.json",
+      "sha256": "bf90f26ccbd392441d1d7db3fbd80284ccd8594d002803df33bb70844747d29f"
+    },
+    "B": {
+      "path": "fixtures/B.json",
+      "sha256": "dbccf4ccf3a94565dc60c216375f96c9add1a1b4cf6e8ab94ade35b3a5c1435e"
+    }
+  },
+  "evaluator_key": {
+    "A": {
+      "status": "PROOF_VALID",
+      "exit_code": 0
+    },
+    "B": {
+      "status": "PROOF_INVALID",
+      "exit_code": 1
+    },
+    "required_interpretation": "Inclusion relative to supplied root; no checkpoint authentication, signature verification, execution authority or runtime certification"
+  },
+  "roles": {
+    "operator": "admin",
+    "observer": "admin",
+    "reviewer": "admin",
+    "independence": "NOT_ESTABLISHED_SAME_IDENTITY",
+    "source": "human user reply admin"
+  },
+  "acceptance": {
+    "planned_participants": 5,
+    "minimum_unassisted_successes": 4,
+    "maximum_journey_seconds": 900,
+    "positive_and_negative_correct": true,
+    "scope_understood": true,
+    "technical_intervention_disqualifies_unassisted_success": true
+  },
+  "sessions": [],
+  "technical_rehearsal": {
+    "status": "PASS",
+    "checks": 6,
+    "environment": "different directory on same Windows host; restricted PATH",
+    "fresh_vm_verified": false,
+    "os_network_isolation_verified": false
+  },
+  "publisher_signature": "NOT_PERFORMED",
+  "runtime_verified": false,
+  "authority": false,
+  "change_rule": "Any change to kit/tutorial/fixtures requires new material revision/cohort; keep prior evidence",
+  "validation_reference": "docs/evidence/2026-10-19T162850Z-e01-onboarding-kit/REPORT.md"
+}

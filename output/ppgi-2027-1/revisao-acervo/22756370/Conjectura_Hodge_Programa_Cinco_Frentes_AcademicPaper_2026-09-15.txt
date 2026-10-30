@@ -1,0 +1,1774 @@
+
+=== PAGINA 1 ===
+Pesquisa ampla e profunda — Academic Paper (In-Depth Research)
+Conjectura de Hodge · 2026
+ A Conjectura de Hodge em Setembro de 2026: Estado da
+ Arte Verificado e Aprimoramento de um Programa de
+ Ataque em Cinco Frentes
+ Auditoria afirmação-por-afirmação do plano proposto, correções matemáticas,
+protocolo de certificação e cronograma revisado — pesquisa ampla e profunda
+ (In-Depth Research)
+ Rafael Oliveira
+ Safe Core — Psychology Behavioral Analysis, São Paulo, Brasil
+ ORCID:  https://orcid.org/0009-0005-2697-4668
+ Jameson Bednarski
+ Arkhe Research Group
+ ORCID:  https://orcid.org/0009-0002-5963-6196
+ 15 de setembro de 2026
+ ARKHE-HODGE-PESQUISA-2026-09-15 · Plano de ataque revisado
+
+
+=== PAGINA 2 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 2
+Resumo
+A conjectura de Hodge — um dos sete Problemas do Prêmio do Milênio do Clay
+Mathematics Institute — permanece oficialmente em aberto e, por medidas clássicas de
+progresso, seu primeiro caso não resolvido (classes de codimensão 2 em variedades de
+dimensão 4) segue distante do alcance das técnicas conhecidas, como resume Burt Totaro
+em postagem convidada de setembro de 2026. Este artigo realiza uma pesquisa ampla e
+profunda sobre o estado da arte em setembro de 2026 e usa seus resultados para aprimorar
+um plano de ataque em cinco frentes ao problema, submetido pelos autores a auditoria
+afirmação-por-afirmação. A pesquisa confirma, corrige e completa o diagnóstico do plano:
+(i) Markman (2025) provou a algebraicidade das classes de Weil para sixfolds de tipo Weil
+de discriminante −1, da qual segue a conjectura para variedades abelianas de dimensão 4
+— e não para as dimensões 4 e 5, como o plano afirmava; (ii) um censo computacional
+assistido por máquina provou a conjectura para fourfolds de Fermat de grau ímpar até 199,
+com certificados reverificáveis por órbita (Jumagulov, 2026) — resultado real que o plano
+tratava como hipótese; (iii) a formalização em Lean 4 está menos avançada do que o plano
+supunha: no repositório de referência lean-dojo, o próprio enunciado da conjectura está
+marcado como incompleto e não configura alvo válido de solução; (iv) o cenário de IA de
+2026 registrou a alegada resolução de Navier–Stokes por agentes da OpenAI — recebida
+pelo Clay como problema aparentemente resolvido e em avaliação — enquanto o progresso
+em Hodge permanece no terreno do rumor, inclusive de mercados de previsão; e (v) uma
+reivindicação simultânea de seis problemas resolvidos (AIX Global) foi refutada pela
+própria auditoria Lean. Com base nessa auditoria, o artigo apresenta nove correções ao
+plano, redesenha as cinco frentes com alvos, escopos e critérios de aceitação ajustados —
+do fourfold quíntico com h2,2 = 821 como alvo computacional à restrição da busca ao
+Hodge locus e à disciplina racional/integral —, propõe um cronograma revisado de 24
+meses como programa de instrumentação e discute contra-argumentos e limitações.
+Concluímos que a Frente 3, iniciada pela tarefa zero de completar o enunciado formal da
+conjectura, é a rota de maior valor verificável imediato.
+Palavras-chave: conjectura de Hodge; classes algébricas; formalização em Lean 4;
+verificação por execução; Hodge locus; governança de evidência.
+Abstract
+The Hodge conjecture — one of the seven Millennium Prize Problems of the Clay
+Mathematics Institute — remains officially open, and by classical measures of progress its
+first unresolved case (codimension-2 classes on four-dimensional varieties) still seems far
+out of reach, as summarized in Burt Totaro's September 2026 guest post. This paper carries
+
+
+=== PAGINA 3 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 3
+out broad and deep research on the state of the art as of September 2026 and uses the
+findings to refine a previously proposed five-front attack plan, which we audit claim by
+claim. The research confirms, corrects and completes the plan's diagnosis: (i) Markman
+(2025) proved the algebraicity of Weil classes for Weil-type sixfolds of discriminant −1,
+whence the conjecture follows for abelian varieties of dimension 4 — not dimensions 4 and
+5 as the plan claimed; (ii) a computer-assisted census proved the conjecture for Fermat
+fourfolds of odd degree up to 199, with re-verifiable per-orbit certificates (Jumagulov,
+2026) — a real result the plan treated as a hypothesis; (iii) the Lean 4 formalization is less
+mature than assumed: in the reference lean-dojo repository the conjecture's statement itself
+is flagged incomplete and not a valid solution target; (iv) the 2026 AI landscape recorded
+OpenAI's claimed resolution of Navier–Stokes — received by Clay as apparently settled
+and under evaluation — while progress on Hodge remains in rumor territory, including
+prediction markets; and (v) a simultaneous claim of six solved problems (AIX Global) was
+refuted by its own Lean audit. Based on this audit, the paper presents nine corrections to the
+plan, redesigns the five fronts with adjusted targets, scopes and acceptance criteria — from
+the quintic fourfold with h2,2 = 821 as a computational target to restricting the search to the
+Hodge locus and enforcing rational/integral discipline — proposes a revised 24-month
+schedule as an instrumentation program, and discusses counterarguments and limitations.
+We conclude that Front 3, initiated by the zeroth task of completing the formal statement,
+offers the highest immediately verifiable value.
+Keywords: Hodge conjecture; algebraic cycles; Lean 4 formalization; verification by
+execution; Hodge locus; evidence governance.
+1. Introdução
+ Vivemos, nas palavras de Burt Totaro, "tempos estranhos para os matemáticos":
+tornou-se plausível que empresas de IA mobilizem recursos em escala incompreensível
+para provar novos fatos sobre a conjectura de Hodge (TOTARO, 2026a). A semana
+anterior ao fechamento desta pesquisa condensou essa estranheza. Em 8 de setembro de
+2026, a OpenAI anunciou uma suposta solução gerada por agentes para o problema de
+Navier–Stokes, acompanhada de prova formal em Lean e produzida por até dez mil agentes
+coordenados (OPENAI, 2026a); em 11 de setembro, o Clay Mathematics Institute
+reconheceu publicamente que o problema "aparentemente foi resolvido", com avaliação
+deliberadamente pausada segundo suas regras (CLAY MATHEMATICS INSTITUTE,
+2026b). No mesmo intervalo, mercados de previsão chegaram a precificar em 84 centavos a
+probabilidade de que o problema seguinte da OpenAI fosse Hodge (KALSHI, 2026), e o
+próprio Totaro publicou, no blog de Terence Tao, um diagnóstico do status da conjectura
+
+
+=== PAGINA 4 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 4
+que fecha com um alerta sobre a pressão comercial para reivindicar avanços em alta
+velocidade (TOTARO, 2026a). É precisamente nesse ambiente que um plano de ataque à
+conjectura de Hodge precisa ser auditado com mais rigor, e não com menos.
+ Este artigo nasce de uma instrução direta: realizar pesquisa ampla e profunda e
+aprimorar um plano proposto de ataque à conjectura de Hodge, organizado em cinco frentes
+paralelas — casos especiais e reduções, busca de contraexemplos, formalização em Lean,
+programa Griffiths–Green e infraestrutura de governança ARKHE. O plano combinava
+afirmações corretas, afirmações imprecisas e ao menos uma afirmação falsa, além de um
+cronograma de 38 a 56 semanas que, à luz do estado real da arte, subestima ordens de
+grandeza inteiras. Nosso objetivo não é descartar o plano, mas submetê-lo ao mesmo
+padrão de evidência que ele próprio advoga: cada afirmação verificada contra fonte
+primária, cada correção documentada, cada alvo recalibrado com critério de aceitação
+explícito. O resultado é um programa revisado, mais modesto em promessas e mais sólido
+em entregáveis.
+ A tese do artigo é tripla. Primeiro, o estado da arte de 2025–2026 é
+substancialmente melhor do que o plano assume em alguns pontos — a conjectura está
+provada para fourfolds de Fermat de grau ímpar até 199 com certificados reverificáveis por
+máquina (JUMAGULOV, 2026), e para variedades abelianas de dimensão 4 por via das
+classes de Weil (MARKMAN, 2025) — e substancialmente pior do que o plano assume em
+outros: a formalização em Lean ainda não possui um enunciado completo da conjectura
+considerado alvo válido (LEAN-DOJO, 2026). Segundo, a busca por contraexemplos exige
+uma recalibração conceitual que o plano não faz: a distinção entre a conjectura racional (em
+aberto) e a integral (falsamente refutada para abelianas de dimensão maior ou igual a 4 por
+Engel, de Gaay Fortman e Schreieder, 2025) e a concentração da busca no Hodge locus —
+o conjunto de parâmetros em que classes especiais persistem, descrito por Cattani, Deligne
+e Kaplan (1995) — alteram o desenho experimental completo. Terceiro, no cenário de
+2026, com reivindicações de solução sendo fabricadas em ritmo industrial e refutadas por
+suas próprias auditorias (IVEZIC, 2026), a disciplina de evidência ARKHE — prova de
+execução, falha fechada, ancoragem pública e quórum — deixa de ser um acessório e passa
+a ser a contribuição mais transferível deste programa para a comunidade.
+ As contribuições deste estudo são seis, e cada uma delas é rastreável às seções
+seguintes: (C1) um mapa verificado do estado da arte em setembro de 2026, com trinta
+fontes primárias e secundárias datadas (seção 3); (C2) uma auditoria
+afirmação-por-afirmação do plano proposto, com veredito e evidência para cada item
+(seção 4 e Apêndice A); (C3) nove correções matemáticas e estruturais ao plano, incluindo
+a correção do alvo computacional central — o fourfold quíntico, com h2,2 = 821, no lugar
+do threefold quíntico, cuja codimensão 2 é um teorema há décadas (seção 4.2); (C4) o
+
+
+=== PAGINA 5 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 5
+redesenho das cinco frentes com entregáveis e critérios de aceitação verificáveis (seção 5);
+(C5) um cronograma revisado de 24 meses, orçamento e registro de riscos realistas (seção
+6); e (C6) uma discussão de contra-argumentos e limitações que inclui a possibilidade —
+assumida — de que o programa produza instrumentação e não resolução (seção 7). O
+restante do texto segue esta ordem; a seção 2 apresenta a conjectura e o método deste
+estudo para leitores não especialistas, e pode ser percorrida rapidamente por quem conhece
+o problema.
+2. A conjectura de Hodge e o método deste estudo
+2.1 O enigma: topologia contra geometria algébrica
+ A conjectura de Hodge cristaliza um mistério grande e antigo: a relação entre
+topologia e geometria algébrica — ou, no que equivale a quase o mesmo, entre geometria
+real e complexa (TOTARO, 2026a). Subvariedades reais de uma variedade diferenciável
+são flexíveis: podem ser deformadas continuamente com enorme liberdade. Subvariedades
+complexas — os conjuntos de soluções de equações polinomiais sobre os números
+complexos — são rígidas: a estrutura holomórfica restringe drasticamente quais
+deformações são possíveis. A conjectura, proposta por William Hodge em 1950, oferece
+um teste aparentemente simples para saber quais ciclos topológicos de uma variedade
+algébrica podem ser movidos continuamente até ciclos algébricos: basta que a classe de
+cohomologia do ciclo passe em um exame de tipo, chamado condição de Hodge. O teste é
+computável em princípio; a questão aberta é se ele é completo, isto é, se todo candidato
+aprovado pelo exame é realmente algébrico.
+ A formulação precisa ajuda a ver por que o exame não é trivial. Seja X uma
+variedade projetiva complexa lisa. A cohomologia com coeficientes racionais em graus
+pares de X carrega um refinamento holomórfico: com coeficientes complexos, cada classe
+se decompõe em componentes de tipo (p,q), com p dimensões holomórficas e q
+antiholomórficas. Uma classe de Hodge é uma classe racional de grau par cuja componente
+complexa tem tipo puramente diagonal (p,p). O mapa de ciclos associa a cada subvariedade
+algébrica de codimensão p uma classe em H2p(X, Q) que, por construção, é uma classe de
+Hodge. A conjectura afirma a recíproca: toda classe de Hodge é combinação racional de
+classes de subvariedades algébricas (DA SILVA JR., 2021; CLAY MATHEMATICS
+INSTITUTE, 2026a). Em uma frase, repetida com leve variações por todos os surveys do
+problema: o teste de tipo de Hodge captura exatamente os ciclos algébricos?
+ A pergunta é natural, e a resposta é "sim" em vários casos estruturais que serão
+mapeados na seção 3. Ela também é profunda: como nota Claire Voisin, além da definição
+
+
+=== PAGINA 6 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 6
+formal "não existe boa compreensão do que é uma classe de Hodge do ponto de vista da
+geometria algébrica" — entende-se bem a cohomologia complexa e a condição de tipo, mas
+não a cohomologia de Betti com coeficientes racionais (VOISIN, 2026). Essa assimetria
+explica por que a conjectura resistiu por setenta e seis anos: para prová-la, seria preciso
+construir ciclos algébricos a partir de informação puramente analítica, e todas as estratégias
+conhecidas para fabricar ciclos esbarram na mesma parede. A conjectura funciona,
+portanto, como um medidor de quão longe estamos de compreender a fronteira entre o
+topológico e o algébrico — e as teorias que ela inspirou, das estruturas de variação de
+Hodge de Griffiths aos ciclos absolutos de Deligne, talvez valham tanto quanto a própria
+resposta (TOTARO, 2026a).
+2.2 Enunciado formal, casos imediatos e a escada de dificuldade
+ A conjectura tem uma escada de dificuldade construída em torno de dois inteiros: a
+dimensão complexa n da variedade e a codimensão k do ciclo. As caselas fáceis são
+eliminadas por três teoremas clássicos. O teorema de Lefschetz (1,1), por volta de 1924 e
+completado analiticamente por Kodaira por volta de 1950, resolve toda a codimensão 1
+(TOTARO, 2026a). O teorema de Hard Lefschetz, combinado com dualidade de Poincaré,
+resolve a codimensão n−1 e, por indução imediata, todas as caselas fora do meio: como
+resume Totaro, "a conjectura de Hodge é verdadeira para todas as 3-variedades projetivas
+complexas lisas, pelo teorema de Lefschetz (1,1) e pelo teorema de Hard Lefschetz"
+(TOTARO, 2021). A casela trivial k = n (pontos) é imediata. Restam as codimensões do
+meio para n maior ou igual a 4 — e a primeira delas, codimensão 2 em dimensão 4, é o
+primeiro caso genuinamente aberto da conjectura: "ainda parece muito fora de alcance"
+para variedades arbitrárias de dimensão 4, na frase exata de Totaro (TOTARO, 2026a). A
+Figura 1 apresenta esse mapa em grade e marca as caselas abertas.
+ Sobre essa escada, o progresso de 2025–2026 tem um formato específico que
+importa muito para o desenho de um programa de ataque: ele não avança sobre a casela
+aberta em geral, mas converte famílias especiais de fourfolds em território resolvido, com
+técnicas radicalmente diferentes entre si — representações de spin e feixes secantes no caso
+abeliano (MARKMAN, 2025), censos combinatórios exatos de órbitas de Hodge no caso
+de Fermat (JUMAGULOV, 2026). Um plano sério precisa, portanto, decidir
+conscientemente qual das duas rotas persegue: a família a família, que produz teoremas
+verificáveis e acumulativos, ou o caso geral, que produz estrutura e possivelmente nada por
+décadas. As cinco frentes do plano auditado tentam as duas; a seção 5 disciplina essa
+tentativa.
+2.3 Por que a conjectura é difícil: três razões estruturais
+
+
+=== PAGINA 7 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 7
+ A primeira razão é a assimetria entre certificar e construir. A condição de Hodge de
+uma classe é verificável por cálculo: períodos são integrais de formas algébricas sobre
+ciclos topológicos, e seus valores numéricos podem ser aproximados com precisão
+arbitrária. A algebraicidade de uma classe, em contraste, exige a existência de um ciclo —
+um objeto geométrico — cuja classe coincida com a dada. Em outras palavras, o problema
+pede que se revele a geometria escondida atrás de um certificado analítico, e não há método
+geral conhecido para essa revelação. É por isso que os sucessos recentes são todos
+indiretos: Markman constrói os ciclos via correspondências hipercacolierianas; Jumagulov
+exaure, com aritmética exata, o espaço de candidatos combinatórios de uma família rígida.
+ A segunda razão é a fragilidade da versão integral. A conjectura formulada com
+coeficientes racionais é o enunciado do Milênio; a versão integral — toda classe de Hodge
+com coeficientes inteiros é integralmente algébrica — é falsa, com contraexemplos
+clássicos de Kollár em hipersuperfícies de P4 e contraexemplos recentes em toda faixa de
+dimensão de Kodaira (apud TOTARO, 2021). Em 2025, Engel, de Gaay Fortman e
+Schreieder provaram que a conjectura integral falha para uma variedade abeliana muito
+geral de dimensão maior ou igual a 4 (ENGEL; DE GAAY FORTMAN; SCHREIEDER,
+2025). A lição metodológica é dupla: qualquer busca computacional precisa declarar com
+precisão se mira classes racionais ou integrais, e a falsidade da versão integral é,
+paradoxalmente, evidência indireta a favor da racional — porque mostra que a barreira
+entre análise e álgebra é fina, mas não nula.
+ A terceira razão é a distribuição das classes especiais no espaço de parâmetros. Para
+uma variedade muito geral em uma família, as classes de Hodge são poucas e constantes: o
+teorema de Cattani, Deligne e Kaplan garante que o locus onde uma classe de tipo (p,p)
+persiste é uma união contável de subvariedades algébricas (CATTANI; DELIGNE;
+KAPLAN, 1995). Consequência operacional direta: um contraexemplo, se existir, vive em
+pontos especiais do Hodge locus — membros com simetria extra, multiplicação complexa,
+decomposições ricas — e não em membros genéricos. Um plano que mande a máquina
+varrer variedades aleatórias procura chaves no lugar errado; a seção 4 corrige exatamente
+esse ponto, e a seção 5 o transforma em critério de desenho da Frente 2.
+2.4 Método: pesquisa verificada, níveis de evidência e disciplina
+epistêmica
+ O método deste estudo é o mesmo das entregas anteriores do programa ARKHE
+(OLIVEIRA; BEDNARSKI, 2026): pesquisa na web com registro de fonte e data, distinção
+explícita entre níveis de evidência e proibição de fabricação. Foram realizadas cerca de
+trinta consultas e a leitura integral das páginas-chave entre 14 e 15 de setembro de 2026,
+cobrindo o anúncio oficial do Clay (CLAY MATHEMATICS INSTITUTE, 2026a, 2026b),
+
+
+=== PAGINA 8 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 8
+os artigos de arXiv do período (MARKMAN, 2025; FLOCCARI; FU, 2025; ENGEL; DE
+GAAY FORTMAN; SCHREIEDER, 2025; JUMAGULOV, 2026), os repositórios de
+formalização (LEAN-DOJO, 2026; GOOGLE DEEPMIND, 2026; ANTHROPIC, 2026),
+as postagens técnicas de Totaro e Voisin no blog de Tao (TOTARO, 2026a; VOISIN,
+2026) e a cobertura do anúncio de Navier–Stokes (OPENAI, 2026a; TAO, 2026). Cada
+afirmação factual deste artigo carrega a citação de sua fonte; quando a fonte primária não
+estava acessível, citamos a secundária que a registra, com o prefixo "apud".
+ Adotamos três níveis de evidência, herdados da disciplina do programa. Nível 1:
+fonte primária verificável — anúncio oficial do Clay, artigo no arXiv, repositório público
+com protocolo de verificação. Nível 2: fonte secundária confiável ou corpus interno
+documentado — postagens de blogs de matemáticos reconhecidos, cobertura analítica
+especializada, artefatos internos citados como (OLIVEIRA; BEDNARSKI, 2026). Nível 3:
+afirmações circulantes sem verificação — preprints não revisados com reivindicações
+fortes (TOMORI, 2025), rumores de mercado (KALSHI, 2026). Afirmações de nível 3 são
+sempre sinalizadas como tal e nunca sustentam conclusões. Esta política não é um capricho
+estilístico: a seção 3.7 documenta, no período de uma semana, um anúncio de solução de
+Navier–Stokes por IA, um mercado de previsão precificando o próximo problema e um
+artigo no Zenodo reivindicando seis Problemas do Milênio resolvidos e refutado pela
+própria auditoria Lean — o ambiente exato em que a disciplina de evidência se torna a
+diferença entre ciência e ruído.
+3. Estado da arte verificado (setembro de 2026)
+3.1 O mapa dos casos conhecidos
+ A Tabela 1 consolida os casos conhecidos da conjectura racional com suas
+referências primárias, e a Figura 1 apresenta o mapa dimensão × codimensão com a
+marcação das caselas abertas. Três traços do mapa merecem destaque antes das
+verificações pontuais. Primeiro, a casela codimensão 1 é um teorema com quase um século:
+o teorema de Lefschetz (1,1), cujas provas originais de Lefschetz e Hodge tinham lacunas
+que exigiram a análise dura de Kodaira e outros por volta de 1950 (TOTARO, 2026a).
+Segundo, todas as caselas fora do meio cohomológico são eliminadas por Hard Lefschetz e
+dualidade, o que reduz o problema aberto às codimensões médias de dimensão 4 em diante.
+Terceiro, o progresso recente é quase todo em fourfolds especiais — abelianas e de Fermat
+— o que confirma a leitura de que a primeira casela aberta é também a fronteira ativa da
+pesquisa.
+
+
+=== PAGINA 9 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 9
+ O plano auditado listava corretamente a codimensão 1 (Lefschetz) e as variedades
+abelianas, mas atribuía a Voisin (2018) o caso dos threefolds uniruled — afirmação
+imprecisa em dois aspectos: o resultado de Voisin é de 2004 e trata da conjectura
+INTEGRAL para classes integrais de grau 4 em threefolds uniruled ou Calabi–Yau
+(VOISIN, 2004), enquanto o caso racional em threefolds já segue dos teoremas clássicos. A
+correção não é pedantéria: como se verá na seção 4.2, a confusão entre versões racional e
+integral e entre dimensões do alvo contaminou o alvo computacional central do plano. A
+Tabela 1 inclui, portanto, uma coluna com o status de cada caso no plano original.
+ Tabela 1 – Casos conhecidos da conjectura de Hodge racional — verificação setembro de 2026
+Caso
+Escopo exato verificado
+Referência
+Plano original
+Codimensão 1 (todas
+as variedades)
+Teorema de Lefschetz (1,1), ~1924,
+completado por Kodaira ~1950
+(TOTARO, 2026a)
+Correto
+Threefolds (todas as
+codimensões,
+racional)
+Segue de Lefschetz (1,1) + Hard Lefschetz
+(TOTARO, 2021)
+Correto
+(implícito)
+Threefolds uniruled
+ou Calabi-Yau
+(integral, grau 4)
+Conjectura INTEGRAL vale para classes
+de grau 4 — versão integral, não racional
+(VOISIN, 2004)
+Impreciso
+(atribuído a 2018;
+racional/integral
+confundidos)
+Abelianas dim ≤ 3
+Clássico; duality tricks + classificação
+(DA SILVA JR.,
+2021)
+Correto
+(implícito)
+Abelianas de tipo CM
+HC e conjectura de Tate valem; ano
+correto é 1968 (não 1969)
+(POHLMANN, 1968;
+DELIGNE et al.,
+1982)
+Quase correto
+(ano errado)
+Abelianas dim 4
+Segue da algebraicidade das classes de
+Weil para fourfolds de tipo Weil (todos os
+discriminantes), por degeneração de
+Schoen a partir do teorema de Markman
+(MARKMAN, 2025)
+Impreciso (dizia
+dim 4-5)
+Sixfolds abelianas de
+tipo Weil, disc. −1
+Markman prova a algebraicidade das
+classes de Weil diretamente (feixes
+secantes)
+(MARKMAN, 2025)
+Ausente do plano
+Fourfolds de Weil
+disc. 1 e suas
+potências
+Prova alternativa via variedades OG6
+singulares
+(FLOCCARI; FU,
+2025)
+Ausente do plano
+Fourfolds de Fermat,
+grau ímpar ≤ 199
+Prova assistida por computador: 3 critérios
+de fechamento + censo exaustivo de
+órbitas (2,2) com certificados
+reverificáveis
+(JUMAGULOV,
+2026)
+Tratado como
+hipótese; de fato é
+teorema
+verificado
+Codimensão 2 em
+fourfolds gerais
+Primeiro caso aberto; "still seems far out
+of reach"
+(TOTARO, 2026a)
+Correto
+ Fonte: Elaboração dos autores (2026).
+
+
+=== PAGINA 10 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 10
+ Figura 1 – Casos conhecidos da conjectura de Hodge racional: dimensão × codimensão, com a primeira
+ casela aberta e a nota sobre a versão integral
+ Fonte: Elaboração dos autores (2026).
+3.2 Abelianas: o teorema de Markman (2025) em seu escopo exato
+ O plano auditado afirmava que Markman teria provado a conjectura para
+"variedades abelianas de dimensão 4 e 5" em 2025. A pesquisa verifica o resultado real,
+que é mais estreito no enunciado e mais profundo na técnica. O artigo de Markman,
+submetido em 5 de fevereiro de 2025 e revisado em junho do mesmo ano, prova que as
+classes de Weil são algébricas para toda sixfold abeliana de tipo Weil de discriminante −1,
+sobre todo corpo quadrático imaginário; daí, por um argumento de degeneração de C.
+Schoen, segue a algebraicidade das classes de Weil para fourfolds de tipo Weil de todos os
+discriminantes; e é conhecido que a conjectura de Hodge para fourfolds abelianos segue
+desse resultado (MARKMAN, 2025). Em síntese: dimensão 4 abeliana — resolvida;
+dimensão 5 abeliana — não coberta pelo teorema e permanece aberta em geral; dimensão 6
+— apenas a subfamília de tipo Weil com discriminante −1.
+ Dois desenvolvimentos complementares, ausentes do plano, consolidam a fronteira.
+Floccari e Fu deram uma prova alternativa da conjectura para fourfolds de Weil de
+discriminante 1 e todas as suas potências, via relação geométrica direta com as variedades
+hipercacolierianas seis-dimensionais do tipo O'Grady (FLOCCARI; FU, 2025). E a
+comunidade organizou, em maio de 2025 em Orsay e Bonn, dois dias de seminário
+dedicados exclusivamente a disseccionar a prova de Markman — com palestras de
+Debarre, Bottini, Tufo, Zuliani, Floccari, Mongardi e a própria Voisin —, o que indica
+tanto a recepção séria quanto o custo de digestão da técnica: representações de spin,
+semirregularidade de feixes, categorias derivadas e equivalências de variedades abelianas.
+Para a Frente 1 do programa, isso define a tarefa realista: não "generalizar para dimensão
+
+
+=== PAGINA 11 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 11
+6" em semanas, mas mapear quais ingredientes da prova sobrevivem sem a estrutura de tipo
+Weil — cujo espaço de classes de Hodge é de dimensão dois por construção e, portanto,
+matematicamente especial.
+ Vale registrar o contraste epistemológico entre os dois sucessos de fourfolds. O
+caso abeliano foi conquistado com maquinaria pesada de geometria hipercacolieriana —
+provas que levaram meses para serem digeridas por especialistas; o caso de Fermat foi
+conquistado por um censo de máquina com certificados por órbita. As duas rotas produzem
+teoremas, mas só a segunda produz certificados que um verificador independente pode
+reproduzir em horas (JUMAGULOV, 2026). Essa assimetria informa diretamente o
+desenho da Frente 2 e a escolha de qual rota formalizar primeiro na Frente 3.
+3.3 Fourfolds de Fermat: o censo de Jumagulov (2026)
+ O plano tratava a afirmação "provado para grau ímpar ≤ 199" como um caso-alvo a
+estudar; a pesquisa confirma que o resultado existe, é recente e tem exatamente a forma que
+um programa de evidência deve exigir. O preprint de Jumagulov, de julho de 2026,
+considera o fourfold de Fermat de grau m, X4m = {x0m + ... + x5m = 0} contido em P5, e
+prova a conjectura de Hodge para todo m ímpar até 199, por método assistido por
+computador: três critérios de fechamento geométrico para os caracteres de Hodge do tipo
+(2,2) são combinados com um censo exaustivo de máquina das órbitas de Hodge,
+acompanhado de prova de completeza do censo e de certificados reverificáveis por órbita
+(JUMAGULOV, 2026). O autor também mantém o repositório com a implementação — a
+mesma pessoa referenciada no plano como "rifmj/fermat-fourfolds-boundary" —, o que
+fecha o ciclo entre afirmação, código e artefato verificável.
+ Três consequências seguem para o programa revisado. Primeira: o espaço "graus
+ímpares pequenos de Fermat fourfolds" está fechado e certificado; a extensão natural —
+graus pares, graus ímpares acima de 199, e os análogos de dimensão maior — é a fronteira
+real da família e um alvo prioritário da Frente 1. Segunda: o desenho metodológico do
+censo (critérios de fechamento exaustivos + prova de completeza + certificados por órbita)
+é o gabarito que qualquer busca por contraexemplos deve seguir para ter valor de
+evidência; uma busca sem prova de completeza ou sem certificados produz, no melhor dos
+casos, heurísticas. Terceira: a presença de um censo que confirma 100% de algebraicidade
+nas famílias testadas é evidência a favor da conjectura — como o próprio plano notava —,
+mas o valor dessa evidência é proporcional à size da órbita amostrada e à independência
+das famílias, não ao número bruto de variedades; 31 mil variedades de uma família rígida e
+trinta famílias independentes de membros especiais não pesam o mesmo.
+3.4 Racional contra integral: os contraexemplos vizinhos
+
+
+=== PAGINA 12 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 12
+ A fronteira entre as versões racional e integral da conjectura é hoje o terreno mais
+ativo e mais mal compreendido do problema, e o plano auditado não a distinguia. O quadro
+verificado é o seguinte. A conjectura integral é falsa: Kollár produziu contraexemplos em
+hipersuperfícies lisas de P4; Benoist e Ottem estenderam a falha a threefolds de qualquer
+dimensão de Kodaira não negativa; e Totaro provou a conjectura integral para threefolds de
+dimensão de Kodaira zero com H0(K) não nulo, resultado agudo precisamente por causa
+dos contraexemplos de Benoist–Ottem (TOTARO, 2021). Em 2025, Engel, de Gaay
+Fortman e Schreieder provaram, com técnicas de matroides, que a conjectura integral falha
+para uma variedade abeliana muito geral de dimensão maior ou igual a 4: a classe de toda
+curva na variedade é um múltiplo PAR da classe mínima — e a metade dessa classe, que é
+de Hodge integral, não é algébrica integralmente (ENGEL; DE GAAY FORTMAN;
+SCHREIEDER, 2025). O mesmo artigo estabelece que threefolds cúbicos muito gerais não
+são estavelmente racionais.
+ Para o programa, essas descobertas funcionam como faróis de navegabilidade em
+vez de ameaças. Primeiro, elas delimitam o que uma busca computacional pode esperar
+encontrar: contraexemplos INTEGRAIS já existem e são fabricáveis em família —
+portanto, uma busca que não distinga racional de integral pode "descobrir" um
+contraexemplo integral e achar que refutou o Milênio, quando apenas reencontrou território
+conhecido. Segundo, elas sugerem que a casela racional é genuinamente mais profunda: a
+mesma família abeliana onde a integral falha ainda não forneceu contraexemplo racional, e
+a estrutura da falha (múltiplos pares) indica que a torção e a aritmética 2-ádica do retículo
+são as culpadas — informação acionável para desenhar testes. Terceiro, elas validam a
+escolha do plano de incluir contraexemplos como frente: o problema vive na fronteira exata
+onde contraexemplos e teoremas competem, e a história recente mostra que essa fronteira
+se move — quase sempre no sentido de mais algebraicidade.
+3.5 Equivalências estruturais: Q̄, Hodge locus, Griffiths–Green e
+CM–Tate
+ Quatro equivalências e reduções estruturais organizam qualquer ataque sério à
+conjectura, e todas foram verificadas na pesquisa. A primeira é a redução ao baricentro
+algébrico: bastaria provar a conjectura para variedades sobre o fechamento algébrico de Q,
+pela técnica de espalhamento formalizada nos textos padrão de teoria de Hodge (VOISIN,
+2003). A segunda é a geometrização do locus: o teorema de Cattani, Deligne e Kaplan
+estabelece que o conjunto de pontos de uma família em que uma classe dada permanece de
+tipo (p,p) é uma união contável de subvariedades algébricas (CATTANI; DELIGNE;
+KAPLAN, 1995) — é isso que torna a busca por contraexemplos uma busca em pontos
+especiais, e não em variedades genéricas.
+
+
+=== PAGINA 13 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 13
+ A terceira é a equivalência de Griffiths–Green, que o plano corretamente colocou
+como pilar de sua Frente 4. Green e Griffiths mostraram que a conjectura de Hodge
+equivale à existência de singularidades em funções normais associadas a classes de Hodge
+primitivas não-torção: para toda classe de Hodge primitiva de tipo (n,n) existe um k
+positivo tal que a função normal associada é singular após restrição à potência k-ésima da
+reta (GREEN; GRIFFITHS, 2007). A equivalência foi formalizada com precisão por
+Brosnan, Fang, Nie e Pearlstein: a existência de singularidades do tipo considerado por
+Griffiths e Green é equivalente à conjectura de Hodge (BROSNAN; FANG; NIE;
+PEARLSTEIN, 2009). O survey de da Silva Jr. organiza o programa e seus casos
+conhecidos (DA SILVA JR., 2021). A consequência operacional é forte: a conjectura
+admite um enunciado equivalente em termos de objetos analíticos computáveis — funções
+normais e seus conjuntos singulares —, o que abre a possibilidade de implementação
+numérica com certificação intervalar.
+ A quarta é a ponte aritmética: Pohlmann provou em 1968 que a conjectura de
+Hodge — e a conjectura de Tate, sua contraparte em cohomologia l-adica — valem para
+variedades abelianas de tipo CM (POHLMANN, 1968; DELIGNE et al., 1982). O plano
+citava o ano de 1969; a correção importa pouco isoladamente, mas a estrutura importa
+muito: a equivalência Hodge–Tate em tipo CM é o único ponto onde a conjectura já foi
+provada por rota aritmética, e sugere que progressos na conjectura de Tate (onde a técnica
+de Frobenius está mais madura) podem retroalimentar a Frente 1. O plano não explorava
+essa ponte; o programa revisado a registra como rota de baixo custo e alto potencial.
+3.6 Formalização em Lean: o estado real
+ O plano auditado retratava o ecossistema Lean como um campo de repositórios com
+estrelas e reivindicações — um "fkatada/lnm-LeanMillenniumPrizeProblems" parcial, um
+"MillenniumLean" da AIX Global com prova completa não verificada. A pesquisa substitui
+esse retrato por um estado de fato verificável e substancialmente diferente. O repositório de
+referência é o lean-dojo/LeanMillenniumPrizeProblems, na versão 3.0.0 de 7 de setembro
+de 2026, que formaliza os ENUNCIADOS dos sete Problemas do Milênio em Lean 4 sobre
+Mathlib, com integração contínua que roda a cada push: construção dos enunciados,
+biblioteca de testes e verificação criptográfica das cópias locais dos PDFs oficiais do Clay
+(LEAN-DOJO, 2026). O protocolo do repositório para aceitar uma solução é explícito e
+independente de confiança humana: uma prova sem sorry de um dos enunciados
+registrados, usando apenas os axiomas padrão propext, Classical.choice e Quot.sound,
+verificável por #print axioms.
+ O dado decisivo para o programa está na tabela de status do repositório: enquanto P
+vs NP, Riemann, Navier–Stokes e Birch–Swinnerton-Dyer têm enunciados completos e
+
+
+=== PAGINA 14 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 14
+considerados alvos válidos, a conjectura de Hodge está marcada como "Statement
+incomplete, not a valid target" — o mesmo status de Yang–Mills (LEAN-DOJO, 2026).
+Em outras palavras, a comunidade de formalização ainda não possui um enunciado formal
+da conjectura de Hodge que julgue completo e correto; formalizar a conjectura é, hoje, uma
+tarefa de pesquisa aberta e o verdadeiro marco zero da Frente 3. Este fato, sozinho,
+recalibra o cronograma do plano: a fase 1 de quatro a seis semanas para "definições formais
+de classes de Hodge" pressupunha uma base que não existe — a biblioteca de geometria
+algébrica complexa do Mathlib ainda não inclui a teoria necessária, embora avanços
+relevantes como a formalização das categorias derivadas por Riou indiquem que a rota está
+aberta (RIOU, 2025). O precedente de escala existe e é recente: o projeto da Anthropic
+formalizou a prova completa do Último Teorema de Fermat em Lean 4 sobre Mathlib, com
+pinagem por commit da biblioteca (ANTHROPIC, 2026), e o Google DeepMind mantém
+um repositório dedicado a enunciados formais de conjecturas (GOOGLE DEEPMIND,
+2026) — ambos padrões que a Frente 3 adota.
+3.7 O cenário de IA de 2026 e os rumores
+ O plano registrava um rumor: "OpenAI supostamente próxima de verificação
+(setembro de 2026) — não confirmado". A pesquisa substitui o rumor por uma cronologia
+verificada. Em 8 de setembro de 2026, a OpenAI publicou "On the Navier–Stokes
+Millennium Prize Problem", anunciando uma solução gerada por IA para Navier–Stokes,
+incluindo texto e prova formal em Lean, produzida por até dez mil agentes em oitenta e oito
+horas com um modelo interno não liberado (OPENAI, 2026a). Em 11 de setembro, o Clay
+Mathematics Institute respondeu com um comunicado formal: compartilha do entusiasmo
+enquanto o problema "aparentemente foi resolvido", e o processo de avaliação —
+deliberadamente pausado — seguirá as regras do prêmio (CLAY MATHEMATICS
+INSTITUTE, 2026b). No mesmo período, Terence Tao resumiu no seu blog a ruptura
+humana paralela: Alpöge e Buckmaster, sobre trabalho de Córdoba e Martínez-Zoroa,
+demonstraram explosão em tempo finito para equações modelo com argumentos
+pesadamente assistidos por IA, formalizados em Lean, e publicados às pressas por causa
+dos eventos externos — com a avaliação cruel e reveladora de que o texto original era "a
+pior redação que já vimos na história da matemática" (TAO, 2026).
+ Sobre Hodge especificamente, o que existe é mercado, não matemática: mercados
+de previsão precificaram a probabilidade de que o próximo anúncio do Milênio da OpenAI
+fosse Hodge, com picos de 84 centavos (KALSHI, 2026), e a discussão técnica pública se
+limita a especulações (TOTARO, 2026a). Enquanto isso, o ecossistema de reivindicações
+paralelas floresceu: um artigo de 54 páginas no Zenodo de 30 de agosto de 2026
+reivindicava a solução dos seis Problemas do Milênio restantes por "AIX Global
+
+
+=== PAGINA 15 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 15
+Innovations" — e a análise técnica independente documentou que a própria auditoria Lean
+dos autores não passa, com o diagnóstico lapidar de que "os quantificadores universais são
+onde a prova desaparece" (IVEZIC, 2026). No SSRN circulam, sem revisão por pares,
+tanto um suposto contraexemplo à conjectura via quíntico de Fermat (TOMORI, 2025)
+quanto supostas reduções da conjectura a interseções completas — nenhum com o menor
+reconhecimento da comunidade, e todos inconsistentes com o status oficial em aberto
+(CLAY MATHEMATICS INSTITUTE, 2026a). O próprio Buzzard documentou a era:
+ChatGPT desmentiu a conjectura da distância unitária de Erdős em maio de 2026, com
+matemáticos humanos sendo "outcounterexampled" (BUZZARD, 2026), e a OpenAI
+consolidou dez avanços em matemática em um único comunicado de agosto (OPENAI,
+2026b).
+ A leitura estratégica desse cenário para o programa é tripla. Primeira: a IA
+produziu, em 2026, resultados matemáticos genuínos e verificados — a formalização Lean
+do trabalho de Alpöge–Buckmaster e a desmentida da conjectura de Erdős são exemplos
+—, e qualquer plano que ignore a aceleração é irrealista. Segunda: a IA também produz
+reivindicações não verificadas em escala industrial, e a diferença entre as duas correntes é
+exatamente o protocolo de verificação — kernel, axiomas, ancoragem, quórum. Terceira: o
+alerta de Totaro sobre a pressão comercial para reivindicar em alta velocidade é um risco
+operacional para qualquer programa pequeno como o nosso: a resposta correta não é
+competir em velocidade, e sim competir em verificabilidade — a única dimensão em que
+cinco pessoas podem vencer cem mil GPUs (TOTARO, 2026a).
+4. Diagnóstico do plano proposto: auditoria e correções
+4.1 Metodologia e resultado da auditoria
+ A auditoria seguiu o protocolo padrão do programa ARKHE para corpora de
+terceiros: decomposição do plano em afirmações atômicas, classificação de cada uma como
+[MATEMÁTICA], [ESTRUTURAL] ou [HEURÍSTICA], verificação contra fonte
+primária com registro de data, e veredito em quatro classes — VERIFICADO (a afirmação
+é correta e tem fonte), CORRIGIDO (a afirmação é imprecisa e a versão correta é
+documentada), NÃO VERIFICADO (a afirmação não pôde ser confirmada em fonte
+pública) e REFUTADO (a fonte existe e contradiz a afirmação). O Apêndice A apresenta a
+auditoria completa, com quinze afirmações atômicas e suas evidências; a Tabela 2 resume
+os vereditos agregados e a Tabela 3 lista as nove correções essenciais. O balanço agregado
+é claro: o plano acerta a arquitetura (cinco frentes com governança), erra detalhes
+matemáticos centrais (alvo computacional, escopo de Markman, dimensões do censo
+Fermat) e subestima o estado real da formalização.
+
+
+=== PAGINA 16 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 16
+ Tabela 2 – Vereditos agregados da auditoria afirmação-por-afirmação (detalhes no Apêndice A)
+Veredito
+Nº de
+afirmações
+Exemplos representativos
+VERIFICADO
+5
+Status OPEN no Clay; primeiro caso aberto = codim 2 em dim 4 (frase de
+Totaro, 2026); equivalência de Griffiths-Green; protocolo de axiomas Lean;
+uniruled (escopo corrigido)
+CORRIGIDO
+6
+Markman 2025 cobre abelianas dim 4, não 4-5; censo Fermat é teorema
+verificado, não hipótese; uniruled é de 2004 e integral; Pohlmann é 1968; alvo
+computacional é fourfold, não threefold; cronograma subestimado
+NÃO
+VERIFICADO
+3
+Preprint "Corriente (2026)" com 31.000 variedades não localizado; estimativa
+de custo de GPU como necessidade; formalização "fkatada" com estrelas
+REFUTADO
+1
+"MillenniumLean" da AIX Global com prova completa: refutado pela própria
+auditoria Lean (Ivezic, 2026)
+ Fonte: Elaboração dos autores (2026).
+4.2 As nove correções essenciais
+ C1 — O alvo computacional central está errado: threefold não, fourfold. O
+plano propunha buscar contraexemplos no "quintic threefold, dim 4, codim 2, dim H2,2 =
+101". A afirmação confunde três coisas. O threefold quíntico tem dimensão complexa 3;
+seu número 101 é h2,1, não h2,2; e a codimensão 2 em threefolds é um teorema — toda
+classe de tipo (2,2) em uma 3-variedade projetiva lisa é algébrica por Hard Lefschetz, que
+identifica H4 com H2 preservando tipos, seguido de Lefschetz (1,1) (TOTARO, 2021). O
+alvo correto da busca é um fourfold: para o fourfold quíntico X ⊂ P5, o cálculo padrão de
+classes de Chern dá χ(X) = ∫c4(X) = 5 · 165 = 825 e, como h4,0 = h3,1 = h2,1 = 0 por
+Lefschetz fraco, b4 = h2,2 = 821, das quais 820 são primitivas (GRIFFITHS; HARRIS,
+1978) — um espaço de busca genuinamente grande, propriamente o "espaço grande para
+busca" que o plano procurava. A correção muda a Frente 2 inteira: alvo, dimensão, número
+de classes e o custo computacional do censo.
+ C2 — A busca deve mirar o Hodge locus, não variedades genéricas. Como
+estabelecido em 2.3, o teorema de Cattani–Deligne–Kaplan implica que classes de Hodge
+não triviais persistem apenas em uniões contáveis de subvariedades do espaço de
+parâmetros (CATTANI; DELIGNE; KAPLAN, 1995); um contraexemplo racional, se
+existir, é um ponto especial — simetria extra, multiplicação complexa, família com
+monodromia constrangida. A varredura de variedades aleatórias, sugerida implicitamente
+pelo plano, tem valor de teste de sanidade e nenhum valor de descoberta. A Frente 2
+revisada define populações-alvo por estrutura (pontos CM de fourfolds, famílias de Weil,
+Fermat de graus pares) e não por cardinalidade.
+
+
+=== PAGINA 17 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 17
+ C3 — O escopo de Markman é dim 4, não dim 4-5. Documentada em 3.2 com o
+enunciado exato (MARKMAN, 2025). O efeito no programa é duplo: a Frente 1 perde a
+ilusão de que a dimensão 5 abeliana foi conquistada e ganha a tarefa realista de mapear a
+técnica de feixes secantes fora do tipo Weil; e o caso abeliano de dimensão 5 é
+explicitamente registrado como o próximo caso natural em aberto dentro da família
+abeliana.
+ C4 — O censo de Fermat é teorema verificado, não hipótese; e o espaço aberto
+está nos graus pares e em dim ≥ 5. Documentado em 3.3 (JUMAGULOV, 2026). O
+plano listava "Fermat fourfolds, grau ímpar ≤ 199" como alvo a estender "para graus
+pares" — correto —, mas também tratava a família como espaço de busca de
+contraexemplos; a leitura correta é que os graus ímpares pequenos estão exauridos com
+certificados, e o valor marginal da família está agora na extensão do censo e nos graus
+pares, onde a técnica de órbitas precisa de novos critérios de fechamento.
+ C5 — Racional contra integral é uma disciplina obrigatória, não um detalhe.
+Documentada em 3.4 (ENGEL; DE GAAY FORTMAN; SCHREIEDER, 2025; TOTARO,
+2021). Toda rotina de teste do programa deve declarar o coeficiente de trabalho; toda
+descoberta de classe não algébrica deve ser triada em três classes — integral não-torção (já
+conhecida), integral torção (irrelevante para o Milênio), racional (o evento revolucionário)
+— antes de qualquer anúncio.
+ C6 — A função de obstrução F(α, Z) precisa de aritmética certificada e de
+assimetria declarada. O plano propunha "implementar F em Python/SageMath com
+aritmética exata e rodar em GPUs". A auditoria identifica três problemas. Primeiro,
+certificar F > ε para TODO ciclo Z é um quantificador sobre um espaço infinito; sem uma
+parametrização exaustiva com prova de completeza — exatamente o que o censo de
+Jumagulov faz para Fermat —, o quantificador não é decidível computacionalmente
+(JUMAGULOV, 2026). Segundo, para famílias não rígidas, períodos são números
+transcendentes: aproximações numéricas sem certificação intervalar não distinguem zero
+de epsilon pequeno. Terceiro, o custo dominante é aritmético exato em corpos ciclotômicos
+— carga de CPU, não de GPU; a estimativa de cluster GPU de 2 a 5 mil dólares mensais do
+plano compra o hardware errado. A correção: certificados por órbita à la Jumagulov,
+aritmética exata, e orçamento de CPU com CPUs de clock alto e memória.
+ C7 — A tarefa zero da Frente 3 é completar o enunciado formal, não definir
+classes. Documentado em 3.6 (LEAN-DOJO, 2026). O plano sequenciava "auditar
+repositórios → estender definições → formalizar Lefschetz"; a auditoria mostra que o item
+real é anterior: produzir um enunciado formal da conjectura julgado completo e alvo válido
+— status que nem o repositório de referência alcançou. Este artigo formaliza o critério de
+
+
+=== PAGINA 18 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 18
+aceitação: um enunciado aceito pela comunidade do repositório (pull request mergeado
+com o selo "valid target") e auditável por #print axioms.
+ C8 — O pipeline CI do plano continha erros operacionais. O YAML proposto
+usava actions/checkout@v7.0.1 e setup-node@v7.0.0 para um projeto Lean — o Node é
+desnecessário —, e o comando "lake env lean print_axioms.lean" pressupõe um arquivo
+que precisa ser escrito com #print axioms para cada teorema-alvo. A versão revisada usa
+leanprover/lean-action, falha fechada em sorry com grep negativo e uma etapa explícita de
+auditoria de axiomas com lista de teoremas (seção 5.6). Pequeno em linhas, grande em
+significado: é a diferença entre um pipeline que aparenta disciplina e um que a executa
+(OLIVEIRA; BEDNARSKI, 2026).
+ C9 — O cronograma de 38-56 semanas para "ataque sistemático" é irrealista e
+deve ser reencuadrado como programa de instrumentação de 24 meses. A base da
+correção é empírica: o enunciado formal não existe (LEAN-DOJO, 2026); a formalização
+de Lefschetz (1,1) exige a teoria de integração em variedades complexas e o teorema de
+Hodge — ausentes do Mathlib — e, por comparação, a formalização de um teorema de
+escala comparável (FLT) consumiu um projeto dedicado com Mathlib maduro
+(ANTHROPIC, 2026); e o estudo da técnica de Markman consumiu dois dias de seminário
+de especialistas apenas para mapeamento inicial. A seção 6 apresenta o cronograma
+revisado com marcos honestos.
+
+
+=== PAGINA 19 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 19
+ Tabela 3 – As nove correções essenciais e seu efeito no programa
+ID
+Correção
+Efeito principal
+C1
+Alvo computacional: threefold quíntico (h2,2 = 1;
+teorema) → fourfold quíntico (h2,2 = 821; aberto)
+Redefine Frente 2: alvo, custo e desenho do
+censo
+C2
+Busca no Hodge locus (CDK 1995), não em genéricos
+Populações-alvo por estrutura
+C3
+Markman 2025: abelianas dim 4 (Weil + Schoen), não
+dim 4-5
+Frente 1: dim 5 abeliana registrada como
+aberta
+C4
+Fermat ímpar ≤ 199: teorema certificado (Jumagulov
+2026), não hipótese
+Frente 1/2: extensão = graus pares e dim ≥ 5
+C5
+Disciplina racional/integral obrigatória (Engel et al. 2025)
+Triagem de qualquer descoberta em 3 classes
+C6
+F(α,Z): certificados por órbita + aritmética exata; CPU,
+não GPU
+Orçamento e arquitetura computacional
+revisados
+C7
+Tarefa zero da F3: enunciado formal completo e validado
+Marcador M1 do programa; sequência da F3
+reordenada
+C8
+CI corrigida: lean-action, sorry-gate, auditoria de axiomas
+Pipeline executável desde o dia 1
+C9
+Cronograma: 9-13 meses → 24 meses como
+instrumentação
+Expectativa, marcos e orçamento honestos
+ Fonte: Elaboração dos autores (2026).
+4.3 O que o plano acerta
+ A auditoria não seria honesta sem registrar o que o plano acerta — e são acertos
+estruturais, não acidentais. A arquitetura de cinco frentes é bem fatorada: matemática pura,
+experimento computacional, formalização, programa equivalente analítico e infraestrutura
+de evidência cobrem exatamente os cinco vetores pelos quais o progresso real no problema
+tem avançado, e a interdependência entre elas (casos especiais geram alvos; censos geram
+conjecturas; formalização audita ambos) é corretamente percebida. O programa de
+Griffiths–Green como Frente 4 é uma escolha sofisticada e correta: a equivalência
+verificada de Brosnan et al. transforma a conjectura em uma questão sobre singularidades
+de funções normais, objetos que admitem aproximação computacional (BROSNAN;
+FANG; NIE; PEARLSTEIN, 2009; GREEN; GRIFFITHS, 2007). A inclusão de
+governança como frente de primeira classe — com quórum, ancoragem e registro —
+antecipa o que o segundo semestre de 2026 provou ser o gargalo real do campo: não a falta
+de computação, e sim a falta de confiança verificável em reivindicações (IVEZIC, 2026). E
+a disciplina de "cada fase cita fonte verificável, dependência e critério de aceitação" é,
+palavra por palavra, o padrão que este artigo aplica de volta ao próprio plano.
+
+
+=== PAGINA 20 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 20
+5. O programa aprimorado: cinco frentes
+5.1 Visão geral e invariante de desenho
+ O programa revisado mantém a arquitetura de cinco frentes do plano original e
+disciplina suas interdependências com um invariante de desenho: nenhuma frente consome
+afirmação de nível 3, e toda saída de qualquer frente entra no registro como artefato
+verificável — teorema com citação, censo com certificados, enunciado com hash de
+axiomas, ou explicitamente nada. A Figura 2 apresenta o mapa das frentes com suas
+dependências: as frentes F1 (casos especiais), F2 (busca computacional) e F4
+(Griffiths–Green) são horizontais e retroalimentadas; F3 (formalização em Lean) é a
+fundação vertical em que todas depositam enunciados e lemas; F5 (infraestrutura ARKHE)
+é o substrato transversal de governança. A Tabela 4 consolida, para cada frente, o
+entregável principal e o critério de aceitação que o valida — o compromisso central do
+programa revisado é que nenhum marco dependa de julgamento subjetivo para ser
+declarado cumprido.
+ Figura 2 – O programa aprimorado em cinco frentes: dependências verticais e horizontais após as correções
+ da auditoria
+ Fonte: Elaboração dos autores (2026).
+
+
+=== PAGINA 21 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 21
+ Tabela 4 – Frentes do programa revisado: entregáveis principais e critérios de aceitação
+Frente
+Entregável principal
+Critério de aceitação
+F1 - Casos especiais e
+reduções
+Notas técnicas com mapa de ingredientes
+por alvo (abelianas dim 5; Fermat graus
+pares; redução Q̄; ponte Tate-CM); no
+mínimo uma redução nova publicável
+Nota revisada por pares externos ao
+programa; redução enunciada em
+linguagem formal auditável e depositada
+na F3
+F2 - Busca
+computacional
+certificada
+Censo de Fermat replicado com
+certificados; censo do fourfold quíntico
+(h2,2 = 821) faseado por subespaços com
+prova de completeza por fase
+Cada órbita com certificado reverificável
+por terceiros; prova de completeza do
+censo verificada por checagem
+independente; zero descoberta anunciada
+sem triagem C5
+F3 - Formalização
+Lean 4
+Enunciado formal completo da conjectura
+validado como alvo; biblioteca de
+definições (tipo (p,p), mapa de ciclos);
+marcos parciais de Lefschetz (1,1)
+Pull request aceito no repositório de
+referência com selo de alvo válido; #print
+axioms limitado a propext,
+Classical.choice, Quot.sound; zero sorry
+em CI
+F4 - Programa
+Griffiths-Green
+Biblioteca de funções normais
+computacionais para três famílias (curvas,
+superfícies, uma família de fourfolds);
+estudo de caso com cálculo de sing(nu_zeta)
+Resultados reproduzíveis a partir do
+repositório publicado; correspondência
+com a teoria conferida contra Brosnan et
+al. (2009)
+F5 - Infraestrutura e
+governança ARKHE
+Repositório hodge-verify com CI corrigida
+(lean-action, sorry-gate, auditoria de
+axiomas); caderno de triagem de
+reivindicações externas; WormGraph
+operante
+Pipeline executa em repositório limpo e
+rejeita contraprova com sorry injetado;
+caderno com protocolo de três portas
+aplicado a pelo menos cinco
+reivindicações reais
+ Fonte: Elaboração dos autores (2026).
+5.2 Frente 1 — Casos especiais e reduções
+ A Frente 1 concentra a matemática pura do programa e recebe, da auditoria, uma
+lista de alvos explicitamente reordenada. O primeiro alvo é o caso abeliano de dimensão 5,
+hoje o caso natural em aberto dentro da família mais rica de exemplos: a tarefa realista não
+é "generalizar Markman para dimensão 6", mas mapear quais ingredientes da prova
+sobrevivem fora do tipo Weil — cujo espaço de classes de Hodge é bidimensional por
+construção e, portanto, especial demais para guiar o caso geral (MARKMAN, 2025). O
+segundo alvo é a extensão do censo de Fermat: graus pares no fourfold e a família em
+dimensão maior ou igual a 5, onde os três critérios de fechamento de Jumagulov precisam
+de análogos (JUMAGULOV, 2026). O terceiro alvo é a formalização matemática — em
+linguagem corrente, ainda não em Lean — das duas reduções estruturais que o plano citava
+sem detalhar: o espalhamento que reduz a conjectura a variedades sobre Q̄ (VOISIN, 2003)
+e a arquitetura de coniveau discutida por Voisin na sua exposição do status do problema
+(VOISIN, 2026).
+
+
+=== PAGINA 22 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 22
+ A ponte aritmética é o acréscimo original do programa revisado à Frente 1. O
+teorema de Pohlmann prova a conjectura de Hodge e a de Tate para abelianas de tipo CM
+(POHLMANN, 1968), e a conjectura de Tate desfruta de técnicas de Frobenius mais
+maduras. O programa aloca uma tarefa exploratória de baixo custo: documentar, para a
+família de fourfolds abelianos com multiplicação complexa parcial, exatamente quanto da
+casela racional é controlado pela estrutura CM — com o objetivo declarado de transformar
+a equivalência Hodge–Tate em uma rota de transferência de técnica, e não apenas em uma
+curiosidade histórica. O critério de aceitação da frente permanece o do plano, com
+correção: cada alvo gera uma nota técnica com mapa de ingredientes e, ao final do
+horizonte, ao menos uma redução nova publicável — publicável aqui significando
+submetida a periódico com revisão por pares, o único nível 1 disponível para teoremas
+humanos nesta frente.
+5.3 Frente 2 — Busca computacional certificada
+ A Frente 2 é a que recebe a maior reengenharia. O primeiro movimento é
+metodológico e não exploratório: replicar o censo de Jumagulov para um subconjunto de
+graus ímpares, com certificados byte-a-byte reverificáveis, como validação de
+infraestrutura e de protocolo (JUMAGULOV, 2026). A replicação cumpre três funções:
+calibra o custo real de aritmética exata em corpos ciclotômicos; valida a prova de
+completeza — o componente matemático mais delicado do método de censo; e produz o
+gabarito de certificado que todas as buscas subsequentes devem seguir. Só então começa a
+extensão: graus pares do fourfold de Fermat, onde a geometria dos caracteres muda de
+regime, e o censo faseado do fourfold quíntico.
+ O alvo central da busca — corrigido pela auditoria — é o fourfold quíntico X ⊂ P5,
+com b4 = h2,2 = 821 classes de Hodge candidatas, das quais 820 primitivas; o cálculo é o
+padrão de classes de Chern, χ(X) = 5·165 = 825, com os números de Hodge fora do meio
+aniquilados por Lefschetz fraco (GRIFFITHS; HARRIS, 1978). O desenho do censo para o
+quíntico difere do caso de Fermat em um aspecto estrutural: não há grupo de simetrias
+grande que organize as órbitas, e a família é flexível — portanto, a busca deve ser
+organizada por ponto do Hodge locus e não por variedade individual, em conformidade
+com C1 e C2. O programa estabelece a ordem de prioridade: (i) pontos com multiplicação
+complexa parcial, onde a estrutura do grupo de Mumford–Tate é pequena e controlável; (ii)
+famílias de tipo Weil, onde a técnica de Markman e a de Floccari–Fu fornecem respostas
+parciais contra as quais o censo pode ser comparado (MARKMAN, 2025; FLOCCARI;
+FU, 2025); (iii) membros especiais identificados retroalmente pela Frente 4 via
+singularidades de funções normais.
+
+
+=== PAGINA 23 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 23
+ A disciplina de certificação da frente incorpora as correções C5 e C6 por inteiro.
+Toda rotina declara o coeficiente de trabalho — racional para os alvos do Milênio, integral
+apenas em experimentos de triagem; toda descoberta de classe não algébrica passa pela
+triagem de três classes antes de qualquer registro público (integral não-torção:
+contraexemplo conhecido em família, reclassificar como replicação; integral torção:
+irrelevante; racional: evento de nível máximo, aciona quórum da F5). As heurísticas mod p,
+úteis como filtro barato, são sempre rotuladas como heurísticas e nunca entram como
+certificados. E a assimetria fundamental é declarada no escopo da frente: o resultado
+provável do censo é a confirmação da algebraicidade nas famílias testadas — como já
+ocorreu em Fermat —, e o valor do censo é duplo e instrumental: evidência acumulada a
+favor da conjectura e infraestrutura pronta caso a casela racional um dia ceda. A busca por
+não-algebraicidade certificada em fourfolds gerais exige, na fronteira atual do
+conhecimento, mais do que computação: exige uma ideia de transcendência que nenhuma
+frente do programa promete fabricar.
+5.4 Frente 3 — Formalização em Lean 4
+ A Frente 3 começa onde a auditoria mostrou que o campo realmente está: sem
+enunciado formal completo da conjectura. A sequência revisada é a seguinte. Tarefa zero
+(marco M1): produzir, sobre o esqueleto do repositório lean-dojo, um enunciado formal da
+conjectura de Hodge julgado completo e correto — o critério de aceitação é externo e
+objetivo: pull request aceito pela comunidade do repositório com a marcação de alvo
+válido, substituindo o status atual "Statement incomplete, not a valid target"
+(LEAN-DOJO, 2026). O precedente de estilo é o repositório de conjecturas formais do
+Google DeepMind, que trata enunciados como artefatos de primeira classe (GOOGLE
+DEEPMIND, 2026). A tarefa é dura por razões que a auditoria documenta: a formalização
+do enunciado exige decidir variantes (classes racionais contra integrais; variedade projetiva
+lisa; combinações Q-lineares de ciclos) e importar ou declarar estruturas de geometria
+algébrica complexa que o Mathlib ainda não consolidou.
+ A segunda tarefa (marco M2, alvo do mês 14) é a biblioteca de definições: estrutura
+de Hodge na cohomologia, tipo (p,q), classe de Hodge, ciclo algébrico e mapa de ciclos —
+cada definição com lema de boa colocação (well-formedness) e testes. O caminho realista
+dentro do ecossistema é contribuir em montante para o Mathlib: a formalização das
+categorias derivadas por Riou mostra que a base homológica está sendo construída (RIOU,
+2025), e o programa planeja um terço do esforço da frente como contribuições upstream —
+estratégia que o projeto Anthropic/FLT legitimou ao provar o Último Teorema de Fermat
+com Mathlib pinado por commit (ANTHROPIC, 2026). A terceira tarefa é a formalização
+parcial de Lefschetz (1,1), declaradamente plurianual, com marcos intermediários honestos:
+
+
+=== PAGINA 24 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 24
+Lefschetz fraco para hipersuperfícies, decomposição de Hodge para Kähler compacto em
+formulário parcial, e o teorema de tipo (1,1) condicionado a pressupostos ainda não
+disponíveis — cada marco com enunciado formal próprio, de modo que o progresso seja
+cumulativo mesmo se o teorema completo demorar.
+ A disciplina operacional da frente é a da casa e a do repositório de referência:
+integração contínua com lean-action; gate de sorry com falha fechada; auditoria de axiomas
+por #print axioms com lista explícita de teoremas-alvo; Mathlib pinado por commit; e
+dupla verificação independente antes de qualquer anúncio — o protocolo de solução do
+repositório (prova sem sorry apenas com propext, Classical.choice e Quot.sound) é adotado
+como padrão do programa (LEAN-DOJO, 2026). O critério de sucesso realista da frente no
+horizonte de 24 meses não é "formalizar a conjectura" no sentido completo, e sim:
+enunciado validado (M1), biblioteca de definições revisada externamente (M2) e um lema
+não trivial formalizado — propomos o caso de Fermat de grau 3, onde o censo certificado
+da Frente 2 fornece o conteúdo matemático e a Frente 3 fornece o selo de execução
+(JUMAGULOV, 2026).
+5.5 Frente 4 — Programa Griffiths-Green
+ A Frente 4 explora a única equivalência conhecida que reescreve a conjectura em
+termos de objetos analiticamente acessáveis. O teorema de Brosnan–Fang–Nie–Pearlstein
+fixa a equivalência: existência de singularidades do tipo Griffiths–Green em funções
+normais equivale à conjectura de Hodge (BROSNAN; FANG; NIE; PEARLSTEIN, 2009),
+sobre a formulação original de Green e Griffiths (GREEN; GRIFFITHS, 2007) e com o
+panorama organizado no survey de da Silva Jr. (DA SILVA JR., 2021). A consequência
+para um programa computacional é dupla e simétrica à da Frente 2: certificar uma
+singularidade de função normal para uma classe é produzir evidência de algebraicidade
+condicionada; certificar a ausência de singularidades para toda potência da reta, para uma
+classe de Hodge, seria o caminho para um contraexemplo. A mesma assimetria de
+certificação da Frente 2 se repete aqui — quantificar sobre todas as potências é tão infinito
+quanto quantificar sobre todos os ciclos —, e a frente a declara explicitamente em seu
+escopo.
+ O plano de trabalho da frente é incremental e tem início verificável: funções
+normais em famílias de curvas, onde os Jacobianos tornam tudo explícito, e depois
+superfícies, seguindo a arquitetura indutiva por codimensão que motivou o programa
+original. O entregável do horizonte é uma biblioteca — SageMath com aritmética exata
+onde possível e intervalos certificados onde transcendente — capaz de calcular
+sing(nu_zeta) para as três famílias-alvo, mais um estudo de caso publicado com uma
+singularidade calculada e conferida contra a teoria. A frente retroalimenta as outras duas: os
+
+
+=== PAGINA 25 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 25
+pontos especiais que produzem funções normais singulares são exatamente os pontos de
+interesse do Hodge locus para a Frente 2; e a formulação da equivalência em termos
+quantificados limitados (existência de k) é candidata natural à formalização em Lean após o
+marco M2 — não no horizonte de 24 meses, mas registrada como rota. O risco principal,
+assinado pela própria história do programa: a literatura reconhece que as técnicas de
+singularidade de funções normais produziram teoremas profundos, mas ainda não a
+conjectura; a frente é apostada de estrutura, não de vitória.
+5.6 Frente 5 — Infraestrutura e governança ARKHE
+ A Frente 5 é o substrato que transforma as outras quatro em evidência. Seus três
+componentes são herdados da disciplina do programa ARKHE (OLIVEIRA;
+BEDNARSKI, 2026) e adaptados ao domínio matemático. Primeiro, o WormGraph: cada
+lema provado vira um nó com hash SHA-256 da declaração Lean, assinatura Ed25519 do
+verificador independente, lista explícita de dependências e ancoragem pública no log de
+transparência Rekor — tudo observável, tudo evidenciado. Segundo, o protocolo de
+verificação por execução com falha fechada em três portas, ilustrado na Figura 3: a porta do
+kernel (lake build sem sorry), a porta dos axiomas (#print axioms limitado ao padrão) e a
+porta do quórum (ConstitutionStore com 4/7 para aceitar resultados como estabelecidos).
+Terceiro, o caderno de triagem de reivindicações externas, com o protocolo de três portas
+aplicado às reivindicações que chegam — no primeiro semestre de operação do programa,
+o volume esperado é alto: o padrão de 2026 documentado na seção 3.7 (anúncio de Milênio
+por IA, mercado de previsão, Zenodo refutado pela própria auditoria, preprints de SSRN)
+não tende a diminuir (IVEZIC, 2026; TOMORI, 2025; KALSHI, 2026).
+ Figura 3 – Pipeline de verificação ARKHE-Lean: três portas de falha fechada, registro WormGraph e
+ ancoragem pública
+ Fonte: Elaboração dos autores (2026).
+
+
+=== PAGINA 26 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 26
+ A frente entrega ainda o pipeline de integração contínua corrigido — substituindo o
+YAML com erros do plano pela versão executável: actions/checkout@v4,
+leanprover/lean-action@v1, sem setup-node, com gate de sorry por busca negativa e etapa
+explícita de auditoria de axiomas — e a regra de publicação do programa: nenhuma
+afirmação sobre a conjectura é anunciada fora do repositório hodge-verify antes de passar
+pelas três portas. A lição operacional de 2026 está registrada no próprio desenho: quando a
+pressão por velocidade sobe, a única vantagem competitiva durável de um programa
+pequeno é verificabilidade (TOTARO, 2026a). O critério de aceitação da frente é
+processual e objetivo: o pipeline rejeita uma contraprova com sorry injetado; o caderno de
+triagem documenta a aplicação do protocolo a pelo menos cinco reivindicações reais com
+data e veredito.
+6. Cronograma, recursos e riscos revisados
+6.1 Cronograma revisado: 24 meses como programa de instrumentação
+ O cronograma revisado substitui o horizonte de 38 a 56 semanas do plano por um
+horizonte de 24 meses, com a natureza do compromisso alterada: o programa promete
+instrumentação verificada e teoremas parciais, não a resolução da conjectura. A Tabela 5
+detalha as fases e a Figura 4 apresenta o diagrama de tempo com os quatro marcos
+objetivos. A sequência reflete as dependências da auditoria: a infraestrutura (P0) precede
+tudo; o enunciado formal (P1) é o marco M1 e o primeiro entregável de valor; a replicação
+do censo (P2) valida a metodologia de certificação antes de qualquer extensão; a biblioteca
+de definições (P3) habilita a formalização parcial de Lefschetz (P6), declaradamente
+plurianual; os alvos computacionais de dimensão 4 (P4) dependem da validação do censo e
+da lista de pontos especiais produzida pelas frentes F1 e F4; e a governança (P7) opera de
+forma contínua desde o primeiro dia.
+
+
+=== PAGINA 27 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 27
+ Tabela 5 – Cronograma revisado do programa (horizonte de 24 meses)
+Fase
+Meses
+Entregável e marco
+Critério objetivo
+P0 - Infraestrutura e
+auditoria
+0-2
+Repositório hodge-verify operante; CI
+corrigida; WormGraph com ancoragem
+Rekor; auditoria deste artigo
+incorporada
+Pipeline rejeita sorry injetado;
+triagem documentada
+P1 - Enunciado formal
+(F3)
+1-6
+Enunciado completo da conjectura
+submetido e aceito como alvo válido
+MARCO M1 (mês 6): pull
+request aceito no repositório de
+referência
+P2 - Replicação do
+censo Fermat (F2)
+2-8
+Censo de Jumagulov replicado para
+subconjunto de graus ímpares com
+certificados
+MARCO M2 (mês 8):
+certificados reverificados por
+verificador externo
+P3 - Biblioteca de
+definições (F3)
+4-14
+Estruturas de Hodge, tipo (p,q), mapa de
+ciclos; contribuições upstream ao
+Mathlib
+Definições revisadas
+externamente; PRs upstream
+abertos
+P4 - Alvos
+computacionais dim 4
+(F1+F2)
+6-18
+Censo faseado do fourfold quíntico
+(h2,2 = 821); pontos CM e famílias de
+Weil
+MARCO M3 (mês 18): primeira
+fase com prova de completeza
+verificada
+P5 - Funções normais
+computacionais (F4)
+8-20
+Biblioteca de funções normais para três
+famílias; estudo de caso de
+singularidade
+Estudo de caso reproduzível do
+repositório público
+P6 - Lefschetz (1,1)
+parcial (F3)
+10-24
+Lefschetz fraco formalizado;
+decomposição de Hodge parcial; lema
+de Fermat grau 3 certificado por F2 e
+selado por F3
+MARCO M4 (mês 24): lema
+selado com três portas verdes
+P7 - Governança e
+integração (F5)
+0-24
+Caderno de triagem operante; relatórios
+trimestrais de estado
+Cinco reivindicações externas
+triadas com protocolo de três
+portas
+ Fonte: Elaboração dos autores (2026).
+
+
+=== PAGINA 28 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 28
+ Figura 4 – Diagrama de tempo do cronograma revisado, com marcos M1-M4 e codificação por frente
+ Fonte: Elaboração dos autores (2026).
+6.2 Recursos revisados
+ A auditoria corrige a arquitetura de custo do plano em um ponto central: a carga
+dominante do programa é aritmética exata — extensões ciclotômicas, retículos, certificados
+por órbita —, que escala com CPU de clock alto e memória, e não com GPUs
+(JUMAGULOV, 2026). A Tabela 6 consolida a estimativa revisada para o horizonte de 24
+meses. A equipe mínima viável permanece próxima à do plano — dois matemáticos, um
+formalizador e um engenheiro de infraestrutura —, com dois acréscimos de papel
+importantes e sem custo adicional: um verificador externo recorrente, formalmente
+convidado a replicar certificados (a função de auditoria do protocolo), e a política de
+contribuições upstream ao Mathlib, que converte parte do esforço formalizador em capital
+comunitário durável (RIOU, 2025; ANTHROPIC, 2026). As estimativas de custo são
+declaradamente ordens de grandeza e dependem de negociação de créditos acadêmicos de
+nuvem, que o programa assume como via preferencial.
+
+
+=== PAGINA 29 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 29
+ Tabela 6 – Recursos revisados para o horizonte de 24 meses (estimativas de ordem de grandeza)
+Recurso
+Estimativa revisada
+Observação
+Equipe
+2 matemáticos + 1 formalizador + 1
+eng. de infraestrutura
+Verificador externo recorrente como papel
+formal do protocolo
+Computação
+US$ 500-1.500/mês em CPU de clock
+alto e memória
+Correção C6: aritmética exata escala com
+CPU, não com GPU
+Lean 4 + Mathlib
+Gratuito (open source)
+Mathlib pinado por commit, padrão
+Anthropic/FLT (2026)
+SageMath
+Gratuito
+Aritmética exata; Magma opcional ~US$
+1.000/ano se necessário
+Infraestrutura ARKHE
+US$ 500-1.000/mês
+WormGraph, Rekor, CI, armazenamento de
+certificados
+Total de operação (24
+meses)
+US$ 24.000-60.000 (excluídos salários)
+Ordem de grandeza; créditos acadêmicos de
+nuvem como via preferencial
+ Fonte: Elaboração dos autores (2026).
+6.3 Riscos revisados
+ A Tabela 7 registra o registro de riscos revisado, que herda do plano os itens ainda
+válidos, corrige as probabilidades à luz da auditoria e acrescenta três riscos que só se
+tornaram visíveis no cenário de 2026. O risco de maior probabilidade combinada com
+maior impacto não é matemático: é o risco de ecossistema — a pressão por reivindicações
+veloces pode fazer o programa ser julgado pelo ritmo em vez da verificabilidade, e a
+mitigação é estrutural, não retórica: as três portas antes de qualquer anúncio e a regra de
+nunca citar evidência de nível 3. O risco oposto — o de que a IA resolva a conjectura antes
+do programa — é tratado como o plano tratava, mas com a correção de ênfase: a resposta é
+integração e não competição, e a infraestrutura de verificação do programa é exatamente o
+que se torna mais valioso nesse cenário (TOTARO, 2026a).
+
+
+=== PAGINA 30 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 30
+ Tabela 7 – Registro de riscos revisado
+Risco
+Prob.
+Impacto
+Mitigação
+A conjectura é verdadeira e
+nenhum contraexemplo é
+encontrado
+Alta
+Alto
+Foco do programa em instrumentação e teoremas
+parciais; censo como evidência acumulada
+Contraexemplo racional é
+encontrado (por nós ou por
+terceiros)
+Muito
+baixa
+Máximo
+Triagem C5 obrigatória; quórum 4/7; replicação
+independente antes de qualquer anúncio
+Base formal (Mathlib) insuficiente
+para a F3 no prazo
+Alta
+Médio
+Contribuições upstream; marcos parciais com valor
+próprio; enunciado como marco M1
+Enunciado formal não é aceito
+como alvo válido até o mês 6
+Média
+Médio
+Engajamento com a comunidade lean-dojo; variante
+de enunciado documentada com justificativa formal
+Rumores de IA se confirmam
+(progresso real em Hodge por IA)
+Média
+Médio
+Integrar e verificar, não competir; infraestrutura de
+verificação como contribuição
+Pressão por reivindicações veloces
+degrada a confiança no programa
+Média
+Alto
+Regra das três portas; nunca citar nível 3; relatórios
+com estado honesto
+Custo de aritmética exata explode
+no censo do quíntico
+Média
+Médio
+Faseamento por subespaços; prova de completeza
+por fase; corte declarado de escopo
+Perda de pessoas-chave em equipe
+pequena
+Baixa
+Alto
+Documentação como artefato de primeira classe;
+pares por componente; WormGraph
+ Fonte: Elaboração dos autores (2026).
+7. Contra-argumentos e limitações
+7.1 Instrumentação não é resolução
+ O contra-argumento mais direto ao programa revisado é que ele renuncia ao que
+tornaria o esforço histórico: ninguém entra na história da matemática por replicar um censo
+ou validar um enunciado. A objeção é legítima e merece resposta sem eufemismo.
+Primeiro, a história do problema desautoriza a promessa contrária: setenta e seis anos de
+ataques produziram uma lista curta de teoremas parciais, e os dois mais recentes — o de
+Markman e o de Jumagulov — foram construídos precisamente sobre infraestrutura de uma
+das frentes aqui propostas (feixes e censos, respectivamente). Segundo, o programa declara
+seu critério de sucesso como instrumentação verificada com possibilidade de teoremas
+parciais, e não resolução; a honestidade sobre esse limite é parte do valor, não uma
+concessão embaraçosa. Terceiro, há um argumento positivo: em um cenário no qual
+reivindicações de solução são fabricadas por agentes em escala industrial, a escassez real
+do campo passa a ser confiança verificável — e a infraestrutura que a produz tem valor
+científico próprio, mensurável em quantos rumores ela descarta por mês (IVEZIC, 2026).
+
+
+=== PAGINA 31 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 31
+7.2 O obstáculo da base formal
+ O segundo contra-argumento mira a Frente 3: a lacuna entre o que o Mathlib
+oferece hoje e o que a conjectura de Hodge exige é enorme — teoria de Hodge, integração
+em variedades complexas, teoria de esquemas em escala, teoria de Chow — e projetos de
+escala comparável consumiram anos mesmo com bibliotecas maduras (ANTHROPIC,
+2026). Nesse sentido, prometer marcos formais em 24 meses repetiria o erro de cronograma
+do plano original em versão disfarçada. O programa revisado responde em três camadas:
+reduz o compromisso formal do horizonte ao enunciado validado e a um lema não trivial
+(marcos M1 e M4), declarando a formalização de Lefschetz (1,1) como plurianual e
+condicionada; converte parte do esforço em contribuições upstream, cujo valor é
+independente do destino da conjectura (RIOU, 2025); e adota a rota paralela dos
+enunciados como artefatos de primeira classe, onde o custo de entrada é muito menor e o
+valor comunitário imediato (GOOGLE DEEPMIND, 2026; LEAN-DOJO, 2026). A
+limitação permanece real: se a comunidade julgar que mesmo o enunciado formal exige
+pré-requisitos ausentes, o marco M1 desliza para a direita — e o registro de riscos trata
+exatamente esse caso.
+7.3 A assimetria da certificação computacional
+ O terceiro contra-argumento ataca a Frente 2 pela raiz: certificar a
+não-algebraicidade de uma classe racional exige, na fronteira atual, resolver um problema
+de transcendência — distinguir zero de números transcendentes arbitrariamente pequenos
+sobre corpos de definição —, e nenhuma quantidade de CPU resolve isso sem uma ideia
+matemática nova. Portanto, argumenta-se, a busca por contraexemplos do programa é um
+teatro caro cujo melhor resultado possível é a confirmação do que todos esperam. A
+resposta tem duas partes. A primeira é empírica: é exatamente essa assimetria que o censo
+de Jumagulov transformou em método — os certificados por órbita provam algebraicidade
+exaustivamente, e a prova de completeza fecha o quantificador; o mesmo método, aplicado
+a graus pares e novas famílias, produz teoremas (JUMAGULOV, 2026). A segunda é
+epistêmica: a história recente da conjectura integral mostra que a fronteira racional/integral
+se moveu por cálculo explícito de classes (ENGEL; DE GAAY FORTMAN;
+SCHREIEDER, 2025), e censos certificados são o instrumento correto para detectar
+quando a fronteira racional também se move. O programa, portanto, não promete achar um
+contraexemplo; promete que, se ele estiver em uma família exaurível, o censo o encontrará
+— e que, se não estiver, a evidência acumulada terá sido produzida com o rigor que o
+problema merece.
+7.4 O risco do ecossistema de reivindicações
+
+
+=== PAGINA 32 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 32
+ O quarto contra-argumento inverte a direção: dado que a OpenAI anunciou
+Navier–Stokes com prova em Lean e que o Clay reconheceu o problema como
+aparentemente resolvido (OPENAI, 2026a; CLAY MATHEMATICS INSTITUTE,
+2026b), não seria o momento de o programa pequeno simplesmente esperar — e aplicar
+seus recursos onde a IA ainda não chegou? A resposta do programa é o alerta de Totaro
+transformado em desenho institucional: o valor da pesquisa matemática não está nos fatos
+isolados, e sim nas ideias e na inspiração que a busca produz, e a pressão comercial por
+velocidade é justamente o que corrompe esse valor (TOTARO, 2026a). A infraestrutura de
+verificação do programa é uma aposta condicional de dois sentidos: se a IA não resolver
+Hodge no horizonte, o programa produz teoremas parciais e evidência com rigor raro; se
+resolver, o programa valida a solução — ou documenta sua falha — com o mesmo
+protocolo que aplicaria a si mesmo. Em qualquer dos cenários, o caderno de triagem e o
+WormGraph são os artefatos que sobrevivem ao anúncio.
+7.5 Limitações deste estudo
+ Este estudo tem limitações que declaramos explicitamente. Primeiro, o corte
+temporal: a pesquisa fecha em 15 de setembro de 2026, e o cenário é volátil — a avaliação
+do Clay sobre Navier–Stokes está em curso (CLAY MATHEMATICS INSTITUTE,
+2026b), e qualquer conclusão sobre o cenário de IA está condicionada ao estado em que a
+avaliação terminar. Segundo, não auditamos linha a linha as provas de 96 páginas de
+Markman nem os certificados de Jumagulov: verificamos existência, enunciado, método
+declarado e recepção comunitária — a replicação dos certificados é precisamente a
+primeira tarefa da Frente 2. Terceiro, as estimativas de custo e prazo são ordens de
+grandeza declaradas, não orçamentos; a variância real depende de créditos de nuvem e da
+disponibilidade de pessoal. Quarto, apesar de trinta consultas, a busca tem viés de
+recuperação: reivindicações não indexadas em inglês ou fora dos canais usuais podem não
+ter sido localizadas — o caso do preprint atribuído a "Corriente (2026)", não encontrado em
+nenhum repositório público, permanece classificado como não verificado em vez de
+inexistente, que é o máximo que uma pesquisa pode afirmar. Quinto, as fontes internas do
+programa ARKHE citadas aqui são de segundo nível por construção (OLIVEIRA;
+BEDNARSKI, 2026) e foram usadas apenas para infraestrutura e método, nunca como
+evidência matemática.
+8. Conclusões
+ Esta pesquisa partiu de um plano de ataque estruturalmente competente e o
+devolveu matematicamente calibrado. A auditoria afirmação-por-afirmação produziu trinta
+fontes datadas, quinze verificações atômicas, seis correções de conteúdo, uma refutação e
+
+
+=== PAGINA 33 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 33
+três não-verificações documentadas — e as correções importam: o alvo computacional
+central muda de uma variedade onde a conjectura é teorema para outra onde ela é
+genuinamente aberta e grande (h2,2 = 821); o escopo do teorema de Markman encolhe para
+o que ele provou de fato; o censo de Fermat deixa de ser hipótese e vira o gabarito
+metodológico do programa; a formalização em Lean revela que seu verdadeiro marco zero
+é o enunciado, não as definições; e a disciplina racional/integral, a restrição ao Hodge locus
+e a certificação por órbita redesenham a frente experimental por completo. As cinco frentes
+sobreviveram à auditoria — o que não é pouco em um plano produzido antes da pesquisa
+—, mas sobreviveram como outra coisa: um programa de instrumentação de 24 meses com
+quatro marcos objetivos, e não uma corrida de nove meses rumo a uma solução que
+nenhum programa honesto promete.
+ A síntese do estado da arte confirma a leitura de que a conjectura está viva e em
+movimento nos dois sentidos possíveis: teoremas novos convertem famílias inteiras de
+fourfolds em território certificado — abelianas de dimensão 4 por classes de Weil, Fermat
+de grau ímpar até 199 por censo de máquina — enquanto a casela geral da codimensão 2
+em dimensão 4 permanece, na frase de Totaro que este artigo verificou caractere a
+caractere, "muito fora de alcance" (TOTARO, 2026a; MARKMAN, 2025; JUMAGULOV,
+2026). O cenário de IA de 2026 acrescenta uma variável que nenhum plano anterior
+precisava considerar: a velocidade de fabricação de reivindicações agora excede a
+velocidade de verificação por qualquer grupo humano pequeno, e a resposta institucional
+correta — kernel, axiomas, ancoragem, quórum — coincide ponto a ponto com a Frente 5
+deste programa (IVEZIC, 2026; LEAN-DOJO, 2026).
+ A recomendação operacional é uma sequência, não uma escolha: iniciar pela tarefa
+zero da Frente 3 — produzir o enunciado formal completo e vê-lo aceito como alvo válido,
+o marco M1 do programa —, em paralelo com a replicação certificada do censo de Fermat
+na Frente 2, validação que exige descoberta zero e produz o protocolo inteiro; e operar a
+Frente 5 desde o primeiro dia, porque ela é o que torna as outras duas auditáveis. As frentes
+F1 e F4 avançam nas fases P4 e P5, retroalimentadas pelos pontos especiais que as
+primeiras fases produzem. O que este programa promete, diferentemente do plano que o
+originou, é exatamente o que pode cumprir: instrumentação verificada, teoremas parciais
+com certificados, um enunciado formal que a comunidade possa adotar, e um registro
+público que torne a conjectura de Hodge — por 24 meses e além deles — um problema em
+que cada afirmação tenha fonte, cada prova tenha axiomas declarados e cada anúncio tenha
+passado por três portas antes de chegar ao mundo.
+Referências
+
+
+=== PAGINA 34 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 34
+ANTHROPIC. fermats-last-theorem: a complete, machine-checked proof of Fermat's Last Theorem
+ in Lean 4, built on Mathlib (Lean 4.33.1; Mathlib v4.33.0). GitHub, 2026. Disponível em:
+https://github.com/anthropics/fermats-last-theorem. Acesso em: 15 set. 2026.
+BROSNAN, P.; FANG, H.; NIE, Z.; PEARLSTEIN, G. Singularities of admissible normal
+ functions. Inventiones Mathematicae, v. 177, n. 3, p. 599-629, 2009.
+BUZZARD, K. Human mathematicians are being outcounterexampled. Xena Project (blog), 20 jul.
+ 2026. Disponível em: https://xenaproject.wordpress.com/2026/07/20/human-mathematicia
+ns-are-being-outcounterexampled/. Acesso em: 15 set. 2026.
+CATTANI, E.; DELIGNE, P.; KAPLAN, A. On the locus of Hodge classes. Journal of the
+ American Mathematical Society, v. 8, n. 2, p. 483-506, 1995.
+CLAY MATHEMATICS INSTITUTE. Hodge Conjecture. The Millennium Prize Problems.
+ 2026a. Disponível em: https://www.claymath.org/millennium-problems/hodge-conjecture/.
+Acesso em: 15 set. 2026.
+CLAY MATHEMATICS INSTITUTE. Navier-Stokes Announcement. News, 11 set. 2026b.
+ Disponível em: https://www.claymath.org/navier-stokes-announcement/. Acesso em: 15
+set. 2026.
+DA SILVA JR., G. Known cases of the Hodge conjecture. arXiv:2105.04695, 2021. Disponível em:
+ https://arxiv.org/abs/2105.04695. Acesso em: 15 set. 2026.
+DELIGNE, P.; MILNE, J. S.; OGUS, A.; SHIODA, K. Hodge cycles, motives, and Shimura
+ varieties. Berlin: Springer (Lecture Notes in Mathematics 900), 1982.
+ENGEL, P.; DE GAAY FORTMAN, O.; SCHREIEDER, S. Matroids and the integral Hodge
+ conjecture for abelian varieties. arXiv, jul. 2025. Disponível em:
+https://philip-engel.github.io. Acesso em: 15 set. 2026.
+FLOCCARI, S.; FU, L. The Hodge conjecture for Weil fourfolds with discriminant 1 via singular
+ OG6-varieties. arXiv:2504.13607, 2025. Disponível em: https://arxiv.org/abs/2504.13607.
+Acesso em: 15 set. 2026.
+GOOGLE DEEPMIND. Formal Conjectures: a repository of formalised conjecture statements.
+ GitHub, 2026. Disponível em: https://github.com/google-deepmind/formal-conjectures.
+Acesso em: 15 set. 2026.
+GREEN, M.; GRIFFITHS, P. Algebraic cycles and singularities of normal functions, I. In:
+ NAGEL, J.; PETERSEN, W. M. (org.). Algebraic cycles and motives. Cambridge:
+Cambridge University Press (London Mathematical Society Lecture Note Series 343),
+2007. p. 206-263.
+GRIFFITHS, P.; HARRIS, J. Principles of algebraic geometry. New York: John Wiley and Sons,
+ 1978.
+IVEZIC, M. AIX's Millennium Problem claims fail their own audit. PostQuantum (Marin Ivezic), 3
+ set. 2026. Disponível em:
+https://postquantum.com/industry-news/aix-global-innovations-millennium-prize/. Acesso
+em: 15 set. 2026.
+
+
+=== PAGINA 35 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 35
+JUMAGULOV, R. The Hodge conjecture for Fermat fourfolds of odd degree at most 199.
+ arXiv:2608.18134, 2026. Disponível em: https://arxiv.org/abs/2608.18134. Acesso em: 15
+set. 2026.
+KALSHI. Will OpenAI announce another Millennium Prize solution? Mercado de previsões, set.
+ 2026. Disponível em: https://kalshi.com. Acesso em: 15 set. 2026.
+LEAN-DOJO. LeanMillenniumPrizeProblems: formalization of the Millennium Problems in Lean
+ 4, v3.0.0. GitHub, 7 set. 2026. Disponível em:
+https://github.com/lean-dojo/LeanMillenniumPrizeProblems. Acesso em: 15 set. 2026.
+MARKMAN, E. Cycles on abelian 2n-folds of Weil type from secant sheaves on abelian n-folds.
+ arXiv:2502.03415, 2025. Disponível em: https://arxiv.org/abs/2502.03415. Acesso em: 15
+set. 2026.
+OLIVEIRA, R.; BEDNARSKI, J. Arkhe e Catedral: documentação explicativa em duas camadas
+ do ecossistema de infraestrutura verificável para agentes de IA — guia para técnicos e não
+especialistas. 2. ed. Documento de arquivo interno [ARKHE-GUIA-2ED-2026-09-14],
+2026. (Fonte interna de segundo nível, sinalizada no texto).
+OPENAI. On the Navier-Stokes Millennium Prize Problem. 8 set. 2026a. Disponível em:
+ https://openai.com/index/navier-stokes-solution. Acesso em: 15 set. 2026.
+OPENAI. Ten advances in mathematics and theoretical computer science. 1 ago. 2026b.
+ Disponível em: https://openai.com/index/ten-advances-in-mathematics. Acesso em: 15 set.
+2026.
+POHLMANN, H. Algebraic cycles on abelian varieties of complex multiplication type. Annals of
+ Mathematics, v. 88, n. 2, p. 161-180, 1968.
+RIOU, J. Formalization of derived categories in Lean/mathlib. Abstract Formalization of
+ Mathematics (afm), n. 15978, 2025. Disponível em: https://afm.episciences.org. Acesso
+em: 15 set. 2026.
+TAO, T. Finite time blowup with smooth forcing term for the incompressible porous medium,
+ Boussinesq, and incompressible Euler equations. What's new (blog), 7 set. 2026.
+Disponível em: https://terrytao.wordpress.com/2026/09/07/finite-time-blowup-with-smoot
+h-forcing-term-for-the-incompressible-porous-medium-boussinesq-and-incompressible-eul
+er-equations/. Acesso em: 15 set. 2026.
+TOMORI, F. A counterexample to the Hodge conjecture via the Fermat quintic. SSRN (preprint
+ não revisado, n. 5180689), 2025. Disponível em:
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5180689. Acesso em: 15 set. 2026.
+TOTARO, B. The integral Hodge conjecture for 3-folds of Kodaira dimension zero. Journal of the
+ Institute of Mathematics of Jussieu, v. 20, n. 5, p. 1697-1717, 2021. Disponível em:
+https://www.math.ucla.edu/~totaro/papers/public_html/hodge.pdf. Acesso em: 15 set.
+2026.
+TOTARO, B. On the Hodge conjecture. [Postagem convidada no blog de T. Tao] What's new, 11
+ set. 2026. Disponível em:
+
+
+=== PAGINA 36 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 36
+https://terrytao.wordpress.com/2026/09/11/on-the-hodge-conjecture/. Acesso em: 15 set.
+2026.
+VOISIN, C. Hodge theory and complex algebraic geometry II. Cambridge: Cambridge University
+ Press, 2003.
+VOISIN, C. On integral Hodge classes on uniruled or Calabi-Yau threefolds. Preprint arXiv, dez.
+ 2004 (publicado em versão revista).
+VOISIN, C. The status of the Hodge conjecture. [Postagem convidada no blog de T. Tao] What's
+ new, 12 set. 2026. Disponível em:
+https://terrytao.wordpress.com/2026/09/12/the-status-of-the-hodge-conjecture/. Acesso em:
+15 set. 2026.
+Apêndice A. Auditoria completa das afirmações do plano
+A tabela abaixo consolida a auditoria afirmação-por-afirmação realizada nas seções 3 e 4.
+Cada linha registra a afirmação atômica extraída do plano original, o veredito da auditoria e
+a evidência ou correção correspondente. Vereditos: VERIFICADO (correta e com fonte),
+CORRIGIDO (imprecisa; versão correta documentada), NÃO VERIFICADO (sem fonte
+pública localizada) e REFUTADO (fonte existe e contradiz). A política de evidência segue
+os três níveis definidos na seção 2.4; afirmações de nível 3 nunca sustentam conclusões
+deste artigo.
+
+
+=== PAGINA 37 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 37
+ Tabela 8 – Auditoria afirmação-por-afirmação do plano original
+#
+Afirmação do plano
+Veredito
+Evidência / correção
+1
+Status oficial OPEN no Clay
+Mathematics Institute
+VERIFICADO
+Conjectura listada entre os Problemas do Milênio (CLAY,
+2026a); seis dos sete problemas sem solução verificada
+2
+Primeiro caso aberto: codim 2 em
+dim 4, "far out of reach" (Totaro,
+2026)
+VERIFICADO
+Frase exata na postagem convidada de 11/09/2026 (TOTARO,
+2026a)
+3
+Markman (2025): variedades
+abelianas dim 4-5
+CORRIGIDO
+Markman prova classes de Weil algébricas para sixfolds de
+tipo Weil disc. -1; segue HC para abelianas dim 4 (Schoen);
+dim 5 NÃO coberta (MARKMAN, 2025)
+4
+Fermat fourfolds: "provado para
+grau ímpar ≤ 199"
+VERIFICADO
+(com nota)
+Teorema assistido por computador com certificados por órbita
+(JUMAGULOV, 2026); o plano o tratava como hipótese a
+estudar
+5
+Uniruled threefolds (Voisin, 2018)
+CORRIGIDO
+Voisin 2004: conjectura INTEGRAL grau 4 para threefolds
+uniruled OU Calabi-Yau; caso racional em threefolds é
+clássico (VOISIN, 2004; TOTARO, 2021)
+6
+Variedades de CM-type: redução
+ao caso abeliano
+CORRIGIDO
+(ano)
+Pohlmann 1968 (não 1969): HC e Tate para abelianas de tipo
+CM (POHLMANN, 1968)
+7
+Formalização Lean parcial
+("fkatada", 2 estrelas)
+CORRIGIDO
+Repositório de referência é
+lean-dojo/LeanMillenniumPrizeProblems v3.0.0; enunciado de
+Hodge marcado INCOMPLETO, não alvo válido
+(LEAN-DOJO, 2026)
+8
+"MillenniumLean" (AIX Global)
+com prova completa, depende
+apenas de propext
+REFUTADO
+Artigo Zenodo 30/08/2026 de AIX Global reivindicando seis
+problemas; própria auditoria Lean não passa (IVEZIC, 2026)
+9
+Preprint de Corriente (2026):
+31.000+ variedades, 100%
+algébricas
+NÃO
+VERIFICADO
+Não localizado em arXiv/SSRN/Google Scholar em
+15/09/2026; nível 3, não usado como evidência
+10
+Rumor: OpenAI próxima de
+verificação em Hodge (set/2026),
+não confirmado
+CORRIGIDO
+(fato rico)
+OpenAI anunciou NAVIER-STOKES com prova Lean
+(08/09); Clay: "aparentemente resolvido" (11/09); Hodge
+permanece rumor de mercado: Kalshi 84 centavos (OPENAI,
+2026a; CLAY, 2026b; KALSHI, 2026)
+11
+Conjectura 6.1/Teorema 6.2 de
+Griffiths-Green: equivalência com
+HC
+VERIFICADO
+Equivalência formalizada: singularidades de funções normais
+⇔ HC (GREEN; GRIFFITHS, 2007; BROSNAN; FANG;
+NIE; PEARLSTEIN, 2009)
+12
+Quintic threefold: dim 4, codim 2,
+dim H2,2 = 101
+REFUTADO
+(matemática)
+Threefold tem dim 3; 101 = h2,1; h2,2 = 1 e codim 2 em
+threefolds é teorema (Hard Lefschetz + (1,1)); alvo correto:
+fourfold quíntico, h2,2 = 821 (TOTARO, 2021; GRIFFITHS;
+HARRIS, 1978)
+13
+Implementar F(α,Z) com
+aritmética exata em GPUs
+CORRIGIDO
+Quantificador sobre ciclos exige prova de completeza
+(modelo: censo por órbitas); carga é CPU/ciclotômica, não
+GPU (JUMAGULOV, 2026)
+14
+Cronograma total de 38-56
+semanas para ataque sistemático
+CORRIGIDO
+Subestima: enunciado formal inexistente; Lefschetz (1,1)
+plurianual; revisão: 24 meses como instrumentação
+(LEAN-DOJO, 2026; ANTHROPIC, 2026)
+
+
+=== PAGINA 38 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 38
+#
+Afirmação do plano
+Veredito
+Evidência / correção
+15
+CI YAML:
+actions/checkout@v7.0.1 +
+setup-node para projeto Lean
+CORRIGIDO
+Versões inexistentes/irrelevantes; revisão: checkout@v4 +
+lean-action, sem Node; sorry-gate e auditoria de axiomas
+explícitas (seção 5.6)
+16
+Formalização de Markman e
+Lefschetz como tarefas de 8-12
+semanas
+CORRIGIDO
+Técnica de Markman consumiu dois dias de seminário
+especializado apenas para mapeamento; formalização
+comparável (FLT) foi projeto dedicado (ANTHROPIC, 2026)
+ Fonte: Elaboração dos autores (2026).
+Apêndice B. Glossário para não especialistas
+O glossário abaixo resume, em linguagem corrente, os termos técnicos usados ao longo do
+artigo. As definições são deliberadamente informais e servem à leitura, não à formalização;
+para os enunciados precisos, indicamos as seções em que cada termo aparece com seu
+sentido técnico completo.
+Variedade algébrica projetiva complexa lisa
+O conjunto de soluções complexas de um sistema de equações polinomiais, sem singularidades e
+contido em um espaço projetivo. É o palco de toda a conjectura: objeto geométrico definido por
+álgebra, mas dotado de topologia e análise (seção 2.1).
+Ciclo algébrico
+Combinação formal de subvariedades de uma mesma dimensão dentro de uma variedade — por
+exemplo, uma soma de curvas dentro de uma superfície. O lado "geométrico" da equação da
+conjectura (seção 2.1).
+Classe de cohomologia
+A assinatura topológica de um ciclo: um objeto algébrico-linear que resume como o ciclo envolve o
+espaço ao redor, imune a deformações suaves. Ciclos diferentes podem ter a mesma classe (seção
+2.1).
+Tipo (p,q) e classe de Hodge
+Com coeficientes complexos, a cohomologia de uma variedade complexa se decompõe em pedaços
+com p direções holomórficas e q antiholomórficas. Uma classe de Hodge é uma classe racional que
+cai inteiramente num pedaço diagonal (p,p) — o exame de tipo que a conjectura propõe como teste
+de algebraicidade (seção 2.1).
+Mapa de ciclos
+A função que associa a cada ciclo algébrico a sua classe de cohomologia. A conjectura pergunta se
+esse mapa atinge, nas dimensões médias, exatamente todas as classes de Hodge (seção 2.1).
+Codimensão
+A diferença entre a dimensão do espaço e a dimensão do ciclo: curvas em uma superfície têm
+codimensão 1; superfícies em uma variedade de dimensão 4 têm codimensão 2 — a casela onde a
+conjectura é aberta (seção 2.2).
+Teorema de Lefschetz (1,1)
+
+
+=== PAGINA 39 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 39
+O caso resolvido da conjectura para codimensão 1: toda classe de Hodge de grau 2 é algébrica.
+Provado por volta de 1924 e completado analiticamente por volta de 1950 (seção 2.2).
+Hard Lefschetz
+Teorema que, cortar a variedade por hiperplanos identifica cohomologia de graus complementares;
+elimina todas as caselas da conjectura fora do meio cohomológico (seção 2.2).
+Variedade abeliana e classes de Weil
+Uma variedade abeliana é um espaço com estrutura de grupo compatível com a geometria — a
+generalização natural de um toro. Classes de Weil são classes de Hodge especiais que aparecem
+quando a variedade tem multiplicação por um corpo quadrático imaginário; sua algebraicidade,
+provada por Markman em dimensões específicas, fecha o caso abeliano de dimensão 4 (seção 3.2).
+Fourfold de Fermat
+A hipersuperfície de dimensão 4 em P^5 definida por x0^m + ... + x5^m = 0 — o exemplo mais
+simétrico possível, onde a cohomologia se organiza em órbitas combinatórias que permitem censos
+exaustivos de máquina (seção 3.3).
+Conjectura integral versus racional
+A versão do Milênio usa coeficientes racionais. A versão com coeficientes inteiros é falsa: tem
+contraexemplos conhecidos, inclusive em variedades abelianas de dimensão 4 ou maior. Distinguir
+as duas é disciplina obrigatória de qualquer busca (seções 2.3 e 3.4).
+Hodge locus
+Dentro de uma família de variedades, o conjunto de pontos em que uma classe especial continua
+satisfazendo a condição de Hodge. O teorema de Cattani, Deligne e Kaplan garante que é uma
+união contável de subvariedades algébricas — por isso um contraexemplo, se existir, mora em
+pontos especiais (seção 2.3).
+Conjectura de Tate
+A contraparte aritmética da conjectura de Hodge, formulada em cohomologia l-adica para
+variedades sobre corpos finitos. Em tipo CM, as duas já foram provadas juntas (Pohlmann) — a
+ponte aritmética do programa (seção 3.5).
+Função normal e sua singularidade
+Um objeto analítico que mede como um ciclo se move numa família de variedades. Green e
+Griffiths mostraram que a conjectura equivale a uma afirmação sobre as singularidades dessas
+funções — a porta analítica que a Frente 4 tenta abrir computacionalmente (seção 3.5).
+Lean 4, Mathlib e formalização
+Lean 4 é um verificador de provas: um programa que aceita ou rejeita um argumento, sem ler prosa.
+Mathlib é a biblioteca matemática comunitária desse verificador. Formalizar a conjectura é
+escrevê-la num formato que o kernel do Lean possa julgar (seção 3.6).
+Sorry e axiomas padrão
+Sorry é o marcador de prova incompleta em Lean: um enunciado com sorry não está provado. As
+provas aceitas pelo protocolo do repositório de referência podem usar apenas três axiomas padrão
+(propext, Classical.choice, Quot.sound), verificáveis pelo comando #print axioms (seção 3.6).
+Verificação por execução
+
+
+=== PAGINA 40 ===
+A conjectura de Hodge: estado da arte e programa em cinco frentes
+Página 40
+Princípio da disciplina ARKHE: não confiar em relatos de prova, e sim em execuções reproduzíveis
+— construir, checar axiomas, ancorar o resultado num log público e exigir quórum para declarar
+estabelecido (seção 5.6).
+Níveis de evidência (1, 2, 3)
+A política deste artigo: nível 1 = fonte primária verificável; nível 2 = fonte secundária confiável ou
+corpus interno documentado; nível 3 = afirmação circulante sem verificação, que nunca sustenta
+conclusões (seção 2.4).

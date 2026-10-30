@@ -1,0 +1,1315 @@
+Abaixo está a estrutura completa e exaustiva do monorepo **`arkhe`**, organizada em camadas estritas de separação de autoridade (**Genoma da Verificabilidade** vs. **Genoma da Cognição** vs. **Orquestração** vs. **Substrato de Trabalho**), contemplando todas as crates Rust, pacotes Node/TypeScript, especificações normativas, scripts de CI/CD, migrações SQLx e vetores de conformidade:
+
+```text
+arkhe/
+├── .cargo/
+│   └── config.toml
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml
+│   │   ├── release.yml
+│   │   ├── mcp-publish.yml
+│   │   ├── wasm-parity.yml
+│   │   ├── golden-vectors.yml
+│   │   ├── gvisor-version-gate.yml
+│   │   ├── runwasi-version-gate.yml
+│   │   ├── migration-checksum.yml
+│   │   ├── rls-audit.yml
+│   │   ├── append-only-audit.yml
+│   │   ├── mmr-checkpoint-test.yml
+│   │   ├── cosign-admission-test.yml
+│   │   ├── sandbox-escape-test.yml
+│   │   ├── heartbeat-separation.yml
+│   │   └── cognition-conformance.yml
+│   ├── actions/
+│   │   └── verify-artifact/
+│   │       ├── action.yml
+│   │       └── README.md
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   ├── feature_request.md
+│   │   └── security.md
+│   ├── CODEOWNERS
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── dependabot.yml
+├── .gitignore
+├── .gitattributes
+├── .editorconfig
+├── .rustfmt.toml
+├── .clippy.toml
+├── .deny.toml
+├── .cargo-audit.toml
+├── Cargo.toml
+├── Cargo.lock
+├── rust-toolchain.toml
+├── package.json
+├── pnpm-workspace.yaml
+├── pnpm-lock.yaml
+├── Makefile
+├── justfile
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── LICENSE-APACHE
+├── LICENSE-MIT
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── CODE_OF_CONDUCT.md
+├── CHANGELOG.md
+│
+├── kernel/                                 # ═══ GENOMA DA VERIFICABILIDADE (TCB / Fail-Closed) ═══
+│   ├── arkhe-core/                         # Primitivas fundamentais (Hash, CBOR, MMR, Tipos)
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   ├── src/
+│   │   │   ├── lib.rs
+│   │   │   ├── error.rs
+│   │   │   ├── types.rs
+│   │   │   ├── hash.rs                     # BLAKE3 + SHA-256
+│   │   │   ├── identity.rs                 # RequestIdentity, OperationId, AuthorRef
+│   │   │   ├── cbor/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── canonical.rs            # AKG-CBOR-v1 (RFC 8949 §4.2.1)
+│   │   │   │   └── domain.rs               # Domain separators
+│   │   │   ├── mmr/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── profile.rs              # MMRProfile v1
+│   │   │   │   ├── bagging.rs              # Right-to-left bagging
+│   │   │   │   ├── inclusion.rs
+│   │   │   │   └── checkpoint.rs
+│   │   │   ├── signature.rs                # Ed25519 + ML-DSA
+│   │   │   ├── work_intent.rs              # WorkIntent canônico
+│   │   │   └── worker_execution.rs         # WorkerExecutionRecord canônico
+│   │   └── tests/
+│   │       ├── canonical_vectors.rs
+│   │       ├── mmr_tests.rs
+│   │       └── cbor_tests.rs
+│   │
+│   ├── arkhe-verify-core/                  # Lógica de verificação pura (Sem I/O)
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   ├── src/
+│   │   │   ├── lib.rs
+│   │   │   ├── error.rs
+│   │   │   ├── c2pa/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── claim.rs                # claim-map-v2
+│   │   │   │   ├── assertion.rs
+│   │   │   │   └── manifest.rs
+│   │   │   ├── gguf/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── parser.rs
+│   │   │   │   └── canonical.rs
+│   │   │   ├── zk/
+│   │   │   │   ├── mod.rs
+│   │   │   │   └── proof.rs                # ZKProofEvidence + verify_zk_proof (genshi)
+│   │   │   └── verification/
+│   │   │       ├── mod.rs
+│   │   │       ├── artifact.rs
+│   │   │       ├── provenance.rs
+│   │   │       └── quorum.rs
+│   │   └── tests/
+│   │       ├── c2pa_tests.rs
+│   │       ├── gguf_tests.rs
+│   │       └── zk_tests.rs
+│   │
+│   ├── arkhe-verify-cli/                   # CLI nativa sobre o verify-core
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── main.rs
+│   │       └── commands/
+│   │           ├── mod.rs
+│   │           ├── verify.rs
+│   │           ├── verify_blob.rs          # Compatível com Cosign
+│   │           ├── c2pa.rs
+│   │           ├── mmr.rs
+│   │           ├── gguf.rs
+│   │           └── zk.rs
+│   │
+│   ├── arkhe-verify-wasm/                  # Módulo WebAssembly para verificação portátil
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   ├── build.sh
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── bindings.rs                 # Exports wasm-bindgen
+│   │       └── zk.rs                       # verify_zk_proof_wasm
+│   │
+│   └── arkhe-kernel/                       # Microkernel de contenção e aplicação de regras
+│       ├── Cargo.toml
+│       ├── README.md
+│       └── src/
+│           ├── lib.rs
+│           ├── error.rs
+│           ├── containment.rs              # Fail-closed ContainmentGate (PEP/PDP)
+│           ├── autonomy_limits.rs          # Limites de autonomia e furos de segurança
+│           ├── evidence/
+│           │   ├── mod.rs
+│           │   ├── branch_protection.rs    # Evidência via gitpolicy
+│           │   └── ci_hook.rs              # Evidência de runner CI
+│           └── replay.rs                   # Replay determinístico
+│
+├── evidence/                               # ═══ BLASTEMA CONSTITUCIONAL (Grafo Causal / Audit) ═══
+│   ├── arkhe-wormgraph/                    # Grafo causal append-only
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── error.rs
+│   │       ├── graph.rs                    # Chaining de record_hash e prev_hash
+│   │       ├── anchor.rs                   # Ancoragem em lote no Rekor / Besu (QBFT)
+│   │       ├── replay.rs                   # Reconstrução de linhagem
+│   │       └── regenerate.rs               # Regeneração de estado verificado
+│   │
+│   ├── arkhe-memory/                       # Armazenamento episódico sobre WormGraph
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── types/
+│   │       │   ├── mod.rs
+│   │       │   ├── episode.rs              # EpisodicMemoryRecord
+│   │       │   ├── trajectory.rs           # Trajectory (Cadeia causal)
+│   │       │   ├── retrieval.rs            # EpisodicRetrieval (Episode + Proof)
+│   │       │   └── checkpoint.rs
+│   │       ├── store/
+│   │       │   ├── trait.rs                # EpisodicStore trait
+│   │       │   ├── memory.rs
+│   │       │   ├── file.rs
+│   │       │   └── postgres.rs
+│   │       ├── writer/
+│   │       │   └── episodic_writer.rs
+│   │       └── reader/
+│   │           └── episodic_reader.rs
+│   │
+│   └── arkhe-sql/                          # Camada de persistência PostgreSQL (Append-Only)
+│       ├── Cargo.toml
+│       ├── README.md
+│       └── src/
+│           ├── lib.rs
+│           ├── pool.rs
+│           ├── tenant.rs                   # set_config('app.tenant_id')
+│           ├── idempotency.rs              # ON CONFLICT DO NOTHING / parameters_digest
+│           ├── append_only.rs
+│           ├── models/
+│           │   ├── mod.rs
+│           │   ├── usage_event.rs
+│           │   ├── verification_record.rs
+│           │   ├── mmr_checkpoint.rs
+│           │   ├── stamp_evidence.rs       # Human Passport Stamps
+│           │   └── operation_journal.rs    # Journal durável de operações
+│           ├── repositories/               # Repositórios INSERT-only
+│           └── projections/                # Projeções CQRS read-only
+│
+├── governance/                             # ═══ AUTORIDADE CONSTITUCIONAL ═══
+│   ├── arkhe-governance/                   # Gestão de políticas e quórum
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── constitution_store.rs       # ConstitutionStore
+│   │       ├── quorum.rs                   # Avaliação de quórum (ADR-011)
+│   │       └── policy.rs                   # ResolvedPolicyArtifact + PolicyDigest
+│   │
+│   └── arkhe-sql-migrate/                  # CLI de verificação e aplicação de migrações SQLx
+│       ├── Cargo.toml
+│       ├── README.md
+│       └── src/
+│           ├── main.rs
+│           └── commands/
+│               ├── migrate.rs
+│               ├── checksum_verify.rs
+│               ├── rls_audit.rs
+│               └── append_only_audit.rs
+│
+├── cognition/                              # ═══ GENOMA DA COGNIÇÃO (Substituível / Sem Chaves) ═══
+│   ├── arkhe-learning/                     # Aprendizagem e auto-aperfeiçoamento
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       └── dream_rsi.rs                # Loop de melhoria contínua Dream-RSI
+│   │
+│   ├── arkhe-world-model/                  # Modelação do mundo e simulação
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       └── simulator.rs                # Simulador de reexecução ("dreaming")
+│   │
+│   ├── arkhe-metacognition/                # Metacognição e auto-modelo
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       └── self_model.rs
+│   │
+│   ├── arkhe-perception/                   # Percepção e codificação de entradas
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       └── encoder.rs
+│   │
+│   └── arkhe-rag/                          # Retrieval Augmented Generation com proveniência
+│       ├── Cargo.toml
+│       └── src/
+│           ├── lib.rs
+│           ├── chunk_evidence.rs
+│           └── response_evidence.rs
+│
+├── orchestration/                          # ═══ ORQUESTRAÇÃO E ISOLAMENTO ═══
+│   ├── arkhe-containers/                   # Runtimes e sandboxes (gVisor / runwasi / WASM)
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── error.rs
+│   │       ├── runtime/
+│   │       │   ├── mod.rs
+│   │       │   ├── gvisor.rs               # gVisor >= 20260831.0
+│   │       │   ├── runwasi.rs              # runwasi >= 0.6.1
+│   │       │   ├── wasmtime.rs             # Performance (Rust/WASI)
+│   │       │   ├── wasmer.rs               # Portabilidade
+│   │       │   └── wasc.rs                 # Hardening extra
+│   │       ├── sandbox/
+│   │       │   ├── mod.rs
+│   │       │   ├── profile.rs              # Performance | Portable | Untrusted
+│   │       │   └── escape_detection.rs
+│   │       ├── oci/
+│   │       │   ├── image.rs
+│   │       │   └── signature.rs            # Validação Cosign
+│   │       └── attestation.rs              # Atestação TEE / Hardware
+│   │
+│   ├── arkhe-workers/                      # Orquestração de tarefas assíncronas
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── job/
+│   │       │   ├── handler.rs              # Trait JobHandler
+│   │       │   ├── context.rs              # JobContext
+│   │       │   └── retry.rs                # Retry delimitado (max_attempts = 3)
+│   │       ├── queue/
+│   │       │   ├── trait.rs                # Trait JobQueue
+│   │       │   ├── awa.rs                  # Fila nativa PostgreSQL (Default)
+│   │       │   └── bullmq.rs               # Fila Redis (Escala)
+│   │       ├── worker/
+│   │       │   ├── runner.rs
+│   │       │   ├── heartbeat.rs            # Task Tokio isolada do handler
+│   │       │   └── crash_recovery.rs
+│   │       └── dlq.rs                      # Dead Letter Queue
+│   │
+│   └── arkhe-intra/                        # Integração e resiliência distribuída
+│       ├── Cargo.toml
+│       ├── README.md
+│       └── src/
+│           ├── lib.rs
+│           ├── admission.rs                # INV-22: Verificação delimitada
+│           ├── cache.rs                    # INV-23: Projeção de entradas
+│           ├── circuit_breaker.rs          # INV-24: Segurança ≠ Vivacidade
+│           ├── assessment.rs               # INV-25: Função determinística
+│           ├── outbox.rs                   # INV-26: Relay idempotente
+│           ├── authority.rs                # INV-27: Orquestrador ≠ Autoridade
+│           └── idempotency.rs              # Resolução de OperationId
+│
+├── work/                                   # ═══ SUBSTRATO DO TRABALHO (AGI Workplace) ═══
+│   ├── arkhe-work/                         # Modelo fiduciário de trabalho diário
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── employee.rs                # Employee DID, permissões e delegações
+│   │       ├── work_intent.rs             # Estrutura do WorkIntent
+│   │       ├── transition_map.rs          # Mapeamento WorkIntent → ProtectedTransition
+│   │       ├── private_data.rs            # Dados privados com TTL (Fora do WormGraph)
+│   │       └── continuity.rs              # Procedimentos de emergência assinados por HSM
+│   │
+│   ├── arkhe-work-channels/                # Adaptadores de canais operacionais
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── email.rs                   # Email → WorkIntent → Evidence
+│   │       ├── chat.rs                    # Mensagem → WorkIntent → Log Operacional
+│   │       ├── docs.rs                    # Documento → WorkIntent → Evidence
+│   │       └── code.rs                    # Commit → WorkIntent → Evidence
+│   │
+│   └── arkhe-work-cockpit/                # Interface humana de acompanhamento
+│       ├── Cargo.toml
+│       └── src/
+│           ├── lib.rs
+│           ├── provenance_panel.rs
+│           ├── intent_composer.rs
+│           └── evidence_viewer.rs
+│
+├── integration/                            # ═══ VEÍCULOS DE INTEGRAÇÃO ═══
+│   ├── mcp-server/                         # Servidor MCP primário (TypeScript)
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/
+│   │       ├── index.ts
+│   │       ├── tools/
+│   │       │   ├── verify-artifact.ts
+│   │       │   ├── get-provenance.ts
+│   │       │   ├── verify-c2pa.ts
+│   │       │   ├── verify-gguf.ts
+│   │       │   ├── verify-zk-proof.ts
+│   │       │   ├── mmr-proof.ts
+│   │       │   └── human-passport-stamp.ts
+│   │       └── utils/
+│   │           └── wasm.ts                 # Carrega arkhe-verify.wasm
+│   │
+│   ├── vscode-extension/                   # Extensão VS Code para verificação inline
+│   │   ├── package.json
+│   │   └── src/
+│   │       ├── extension.ts
+│   │       └── mcp-client.ts
+│   │
+│   ├── cosign-integration/                 # Scripts e pontes de atestação OCI/Cosign
+│   │   ├── sign-blob.sh
+│   │   ├── verify-blob.sh
+│   │   └── sign-image.sh
+│   │
+│   ├── arkhe-bugbounty/                    # Triagem verificável de vulnerabilidades (HackenProof)
+│   │   ├── Cargo.toml
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── taxonomy.rs                 # Mapeamento de 250 tópicos → CWE/OWASP
+│   │       ├── hackenproof/
+│   │       │   ├── mod.rs
+│   │       │   ├── client.rs               # Cliente MCP
+│   │       │   └── untrusted.rs            # Isolamento de dados do relatório
+│   │       ├── triage/
+│   │       │   ├── analyzer.rs             # Análise LLM → WorkerExecutionRecord
+│   │       │   ├── proposal.rs             # TriageProposal + WorkIntent
+│   │       │   └── executor.rs             # Fluxo de triagem com ContainmentGate
+│   │       └── journal/
+│   │           ├── operation_journal.rs    # OperationJournal PostgreSQL
+│   │           └── idempotency.rs          # OperationId v2
+│   │
+│   └── arkhe-auth-md/                      # Adaptador para o protocolo de agente auth.md
+│       ├── Cargo.toml
+│       └── src/
+│           ├── lib.rs
+│           ├── provider.rs                 # Emissão de ID-JAGs
+│           ├── assertion.rs                # Validação de asserção
+│           └── token.rs                    # Troca de tokens por evidências
+│
+├── deploy/                                 # ═══ ARTEFATOS DE IMPLANTAÇÃO ═══
+│   ├── kubernetes/
+│   │   ├── runtimeclass/
+│   │   │   ├── gvisor.yaml                 # handler: runsc
+│   │   │   └── runwasi.yaml
+│   │   ├── admission-policy/
+│   │   │   └── policy.yaml                 # ClusterImagePolicy (Sigstore/Cosign)
+│   │   └── workers/
+│   │       ├── deployment.yaml             # runtimeClassName: gvisor
+│   │       └── hpa.yaml
+│   ├── docker/
+│   │   ├── Dockerfile.kernel               # Imagem distroless
+│   │   ├── Dockerfile.workers
+│   │   └── Dockerfile.mcp
+│   └── github-actions/
+│       └── verify-artifact.yml
+│
+├── migrations/                             # ═══ MIGRAÇÕES SQLX (Imutáveis após liberação) ═══
+│   ├── 20261017000001_init_roles.sql
+│   ├── 20261017000002_usage_events.sql
+│   ├── 20261017000003_verification_records.sql
+│   ├── 20261017000007_mmr_checkpoints.sql
+│   ├── 20261017000008_append_only_triggers.sql
+│   ├── 20261017000009_rls_policies.sql
+│   ├── 20261017000013_stamp_evidence.sql
+│   └── checksums.lock
+│
+├── specs/                                  # ═══ ESPECIFICAÇÕES NORMATIVAS E WIRE ═══
+│   ├── akg/
+│   │   ├── B.0.1-general-wire-rules.md
+│   │   ├── B.0.2-field-classification-matrix.md
+│   │   ├── B.1-conformance-vectors.md
+│   │   └── B.2-cross-implementation-parity.md
+│   └── mmr/
+│       └── mmr-profile-v1.md
+│
+├── vectors/                                # ═══ VETORES DE TESTE E PARIDADE (Golden Vectors) ═══
+│   ├── README.md
+│   ├── blake3/
+│   │   ├── empty.json
+│   │   └── abc.json
+│   ├── cbor/
+│   │   ├── gguf-metadata.json
+│   │   └── c2pa-claim.json
+│   ├── mmr/
+│   │   ├── 1-leaf.json
+│   │   ├── 3-leaves.json
+│   │   ├── 5-leaves.json
+│   │   └── 7-leaves.json
+│   ├── c2pa/
+│   │   ├── valid-minimal.json
+│   │   └── invalid-missing-fields.json
+│   └── zk/
+│       └── gov_id/                         # Fixtures de circuito Noir
+│
+├── docs/                                   # ═══ DOCUMENTAÇÃO NORMATIVA E ADRS ═══
+│   ├── ARCHITECTURE.md
+│   ├── GENOME-MAP.md                       # Mapeamento Verificabilidade vs. Cognição
+│   ├── TRUST_MODEL.md
+│   ├── DEPLOYMENT_PROFILES.md
+│   ├── PROVENANCE.md
+│   ├── SECURITY.md
+│   ├── MMR-PROFILE.md                      # Perfil MMR v1 congelado
+│   ├── AKG-CBOR-V1.md                      # Regras de canonicalização CBOR
+│   ├── APPEND-ONLY.md
+│   ├── RLS.md
+│   ├── ISOLATION.md                        # Isolação de runtime (gVisor / runwasi / WaSC)
+│   └── adr/
+│       ├── ADR-0001-append-only-via-revoke-and-trigger.md
+│       ├── ADR-0002-runtime-role-nosuperuser-nobypassrls.md
+│       ├── ADR-0003-mm-checkpoint-incremental-verification.md
+│       ├── ADR-0004-mcp-as-primary-surface.md
+│       ├── ADR-0005-gvisor-min-version.md
+│       ├── ADR-0006-runwasi-min-version.md
+│       ├── ADR-0007-awa-default-bullmq-scale.md
+│       ├── ADR-0008-heartbeat-separate-task.md
+│       ├── ADR-0009-genshi-over-bbjs.md
+│       ├── ADR-0010-human-passport-90-days.md
+│       └── ADR-0011-quorum.md
+│
+├── scripts/                                # ═══ FERRAMENTAS E SCRIPTS DE MANUTENÇÃO ═══
+│   ├── check_architecture.py              # Valida estrutura de diretórios e contratos
+│   ├── generate_vectors.py                # Gerador independente de vetores (stdlib-only)
+│   ├── verify_vectors.py                  # Validador estático de vetores
+│   ├── build_wasm.sh                      # Compilador do arkhe-verify.wasm
+│   ├── sign_release.sh                    # Assinatura Cosign keyless
+│   ├── check_gvisor_version.sh
+│   ├── check_runwasi_version.sh
+│   ├── check_domain_separators.sh
+│   └── seed_dlq.sql
+│
+└── tests/                                  # ═══ SUÍTE DE TESTES E INTEGRALIDADE E2E ═══
+    ├── golden_vectors.json                 # Contrato estático humano
+    ├── negative_vectors.json               # Vetores de falha obrigatória
+    ├── schemas/
+    │   └── golden-vectors-v1.schema.json
+    └── e2e/
+        ├── c2pa_e2e.rs
+        ├── mmr_e2e.rs
+        ├── mcp_e2e.ts
+        ├── container_escape_e2e.rs
+        ├── worker_crash_recovery_e2e.rs
+        └── zk_proof_e2e.rs
+```
+
+---
+
+### 🔑 Invariantes de Organização do Monorepo
+
+1. **Workspace Único e Isolado**:
+   * O arquivo `Cargo.toml` na raiz gerencia o workspace Rust com `resolver = "2"`.
+   * O arquivo `pnpm-workspace.yaml` na raiz orquestra os pacotes TypeScript/Node em `packages/`, `integration/` e `apps/`.
+2. **Separação Rígida de Dependências**:
+   * Os módulos cognitivos (`cognition/`) nunca dependem das chaves de assinatura do kernel (`kernel/`) nem têm acesso direto ao `arkhe-wormgraph`.
+   * O kernel (`kernel/`) opera em modo *fail-closed* e de forma pura, agindo como a **única autoridade de aplicação de contenção (TCB)**.
+3. **Auditabilidade Estática e Dinâmica**:
+   * Toda migração em `migrations/` possui um hash imutável validado em `checksums.lock`.
+   * Scripts em `scripts/` validam as dependências, as versões de runtimes de sandbox (gVisor \\(\ge\\) 20260831.0 e runwasi \\(\ge\\) 0.6.1) e garantem que a verificação de vetores seja determinística.
+
+# Arkhe — Design Consolidado (DESIGN.md)
+
+**Status**: ARCHITECTURE CANDIDATE — NOT FROZEN  
+**Versão**: 0.3 (Consolidação de Pareceres, Invariantes e Calibrações)  
+**Princípio Dominante**: $\\text{PerformanceMechanism} \\nRightarrow \\text{SafetyAuthority}$
+
+---
+
+## 1\. Visão Geral e Princípios Fundacionais
+
+O **Arkhe** não é uma plataforma que substitui as ferramentas existentes; é a camada de verificação (*Computational Fiduciary Layer*) que torna o trabalho realizado nelas auditável e verificável.
+
+$$\\text{Arkhe doesn't replace the tools. Arkhe makes the work done in them verifiable.}$$
+
+### Invariantes Centrais de Execução
+
+1. **Invariância do Kernel**: O kernel de contenção (*native core*) é a única autoridade de aplicação de políticas e execução de transições protegidas.
+2. **Orquestração Substituível**: Mecanismos de performance, roteamento, filas, retries e caches não pertencem à TCB (*Trusted Computing Base*) de segurança.
+3. **Exigência de Evidência**: $$\\text{ProtectedTransitionAllowed} \\implies \\text{RequiredVerificationCompleted}$$ $$\\text{FailureToVerify} \\implies \\text{RejectProtectedTransition}$$
+
+---
+
+## 2\. Axiomas Criptográficos e Mapeamento de Identidade
+
+A identidade de qualquer artefato no Arkhe é definida por representação canônica e separação estrita de domínios:
+
+* **CanonicalBytes**: $$\\text{CanonicalBytes}(x) = \\text{AKG-CBOR-v1}(\\text{WireProjection}\_{v1}(x))$$
+* **ObjectDigest**: $$\\text{ObjectDigest}(x) = H(\\text{DomainObject} \\parallel \\text{CanonicalBytes}(\\text{UnsignedProjection}(x)))$$
+* **Separacao de Autoridades**: $$\\text{StateTransitionEnforcementAuthority} \\subseteq \\text{NativeCore}$$ $$\\text{SigningAuthority, RootAuthority} \\nsubseteq \\text{NativeCore}$$ $$\\text{PortableVerifier} \\nRightarrow \\text{EnforcementAuthority}$$
+
+---
+
+## 3\. Arquitetura do Monorepo e Separação de Camadas
+
+A estrutura do monorepo reflete a divisão rígida entre a TCB invariante, o substrato de evidência e as camadas substituíveis:
+
+```
+arkhe/
+├── kernel/                    # ═══ GENOMA DA VERIFICABILIDADE (TCB / Fail-Closed) ═══
+│   ├── arkhe-core/            # Primitivas canônicas (Hash BLAKE3/SHA256, CBOR, MMR, Tipos)
+│   ├── arkhe-verify-core/     # Lógica pura de verificação (C2PA, GGUF, ZK - sem I/O)
+│   ├── arkhe-verify-cli/      # CLI nativa sobre o verify-core
+│   ├── arkhe-verify-wasm/     # Módulo WebAssembly para verificação portátil
+│   └── arkhe-kernel/          # Microkernel de contenção (ContainmentGate / PDP &amp; PEP)
+├── evidence/                  # ═══ BLASTEMA CONSTITUCIONAL (Grafo Causal) ═══
+│   ├── arkhe-wormgraph/       # Grafo causal append-only com ancoragem no Rekor/Besu
+│   ├── arkhe-memory/          # Episodic store com Trajectory e InclusionProof
+│   └── arkhe-sql/             # Persistência PostgreSQL append-only (RLS + Triggers)
+├── governance/                # ═══ AUTORIDADE CONSTITUCIONAL ═══
+│   ├── arkhe-governance/      # ConstitutionStore e avaliação de Quórum (ADR-011)
+│   └── arkhe-sql-migrate/     # CLI de migrações imutáveis SQLx
+├── cognition/                 # ═══ GENOMA DA COGNIÇÃO (Substituível / Sem Chaves) ═══
+│   ├── arkhe-learning/        # Loop Dream-RSI de aprendizado contínuo
+│   ├── arkhe-world-model/     # Simulador de reexecução ("dreaming")
+│   ├── arkhe-metacognition/   # Auto-modelo e calibração
+│   ├── arkhe-perception/      # Encoders de entrada
+│   └── arkhe-rag/             # RAG com proveniência de chunks
+├── orchestration/             # ═══ ORQUESTRAÇÃO SUBSTITUÍVEL ═══
+│   ├── arkhe-containers/      # Sandboxes de isolamento (gVisor, runwasi, WaSC)
+│   ├── arkhe-workers/         # Filas de jobs assíncronas (Awa default / BullMQ)
+│   └── arkhe-intra/           # Integração e resiliência distribuída
+└── integration/               # ═══ VEÍCULOS DE INTEGRAÇÃO ═══
+    ├── mcp-server/            # Servidor MCP para IDEs (VS Code, Cursor, Claude)
+    ├── vscode-extension/      # Extensão para verificação inline
+    └── cosign-integration/    # Scripts e pontes de atestação OCI
+
+```
+
+---
+
+## 4\. Camadas de Persistência e Proteção do Grafo (`arkhe-sql`)
+
+A persistência de evidências utiliza três camadas de defesa em profundidade:
+
+1. **Privilégios Estritos**: A role de runtime (`arkhe_append`) possui permissões exclusivas de `INSERT` e `SELECT`. Operações de `UPDATE` e `DELETE` são revogadas.
+2. **Triggers de Imutabilidade**: Triggers `BEFORE UPDATE OR DELETE` emitem exceções para bloquear tentativas de mutação por contas com privilégios elevados.
+3. **Row-Level Security (RLS)**: Aplicação de `ENABLE` e `FORCE ROW LEVEL SECURITY` com roles `NOSUPERUSER NOBYPASSRLS` vinculadas à função `arkhe_assert_tenant()`.
+
+---
+
+## 5\. Invariantes de Resiliência Distribuída (`INV-ARKHE-22..27`)
+
+* **INV-ARKHE-22 (Bounded Verification Admission)**: Orçamentos de verificação ($\\text{Budget}\_V$) e mutação ($\\text{Budget}\_M$) são finitos e disjuntos. Falha de verificação por estresse bloqueia a transição (*fail-closed*).
+* **INV-ARKHE-23 (Verification Cache Binding)**: $$\\text{CacheKey} = H(\\text{DomainVerificationCache} \\parallel \\text{CanonicalBytes}(\\text{VerifierInputsProjection}))$$
+* **INV-ARKHE-24 (Safety/Liveness Separation)**: Circuit breakers mantêm a segurança bloqueando transições inválidas. A liveness exige redundância de backends, não relaxamento de regras.
+* **INV-ARKHE-25 (IntegrationAssessment Determinism)**: A avaliação é uma função puramente determinística de inputs congelados, executando sem I/O ou chamadas de rede no momento da decisão.
+* **INV-ARKHE-26 (Durable Outbox Relay)**: Garantia de entrega idempotente ao `WormGraph` via chave $\\text{OperationId} = H(\\text{Domain} \\parallel \\text{Type} \\parallel \\text{Target} \\parallel \\text{RequestIdentity})$.
+* **INV-ARKHE-27 (PEP/PDP Separation)**: O `ContainmentGate` atua como PEP (Policy Enforcement Point), consultando tabelas declarativas de políticas (PDP) sem hard-coding de lógica.
+
+---
+
+## 6\. Roteiro Faseado de Integração
+
+| Fase   | Superfície / Veículo    | Mecanismo de Integração                                                 |
+| ------ | ----------------------- | ----------------------------------------------------------------------- |
+| **F1** | IDEs (VS Code / Cursor) | Servidor MCP executando `arkhe-verify-wasm` localmente                  |
+| **F1** | CI/CD (GitHub)          | GitHub Action com assinaturas Cosign e SLSA Provenance                  |
+| **F2** | Containers (Docker/OCI) | Assinatura de imagens com Cosign e atestação de modelos GGUF            |
+| **F2** | Kubernetes              | Admission control via Sigstore Policy Controller (`ClusterImagePolicy`) |
+| **F3** | Ambientes Corporativos  | Replicação do MCP server em GitLab e IDEs JetBrains                     |
+
+---
+
+## 7\. Tabela de Honestidade de Atribuição ($\\tau$)
+
+| Item                                 | Classificação $\\tau$ | Nota de Auditoria                                          |
+| ------------------------------------ | --------------------- | ---------------------------------------------------------- |
+| **MMRProfile v1**                    | `LEMMA`               | Estrutura de bagging right-to-left e prefixos congelados.  |
+| **C2PA claim-map-v2**                | `LEMMA`               | Campos de instância, assinatura e assertions validados.    |
+| **AKG-CBOR-v1**                      | `LEMMA`               | Padrão determinístico conforme RFC 8949 §4.2.1.            |
+| **RLS + Triggers Backstop**          | `LEMMA`               | Mecanismo comprovado no PostgreSQL com role `NOSUPERUSER`. |
+| **Outbox Relay Idempotente**         | `LEMMA`               | Padrão de deduplicação por `OperationId`.                  |
+| **Análise de Requisitos INV-22..27** | `CONJECTURE`          | Exige testes de carga e simulação adversarial contínua.    |
+
+$$\\boxed{\\text{ARKHE MULTI-FORMAT ARCHITECTURE v1.0 = FROZEN}}$$
+
+A Interface de Usuário e a Experiência do Usuário (UI/UX) no Arkhe possuem uma posição estritamente demarcada: **a UI é uma superfície não confiável (*Untrusted Interface*)**. Ela serve como o meio pelo qual humanos e agentes expressam intenções e visualizam evidências, mas **nunca detém autoridade de decisão, custódia de chaves ou capacidade de aprovar transições protegidas diretamente**.
+
+---
+
+### 🏛️ Os 3 Módulos do Cockpit (`arkhe-work-cockpit`)
+
+A camada de interface humana organiza-se em três módulos principais:
+
+1. **`IntentComposer` (Composição de Intenções)**:
+   * **Função**: Auxilia o usuário (ou agente) a construir um contrato de intenção (`WorkIntent`) contendo o objetivo, o artefato/patch, as alegações e a referência de política (`policy_ref`).
+   * **Regra de Execução**: O `IntentComposer` apenas constrói a proposta. Nenhuma ação protegida é executada na interface sem passar antes pela autorização do kernel (`ContainmentGate.authorize()`).
+
+2. **`EvidenceViewer` (Visualização e Verificação Local)**:
+   * **Função**: Exibe o envelope do artefato (`ArtifactEnvelope`), os selos de atestação, as provas de inclusão em Merkle Mountain Ranges (MMR) e os vereditos de conformidade.
+   * **Verificação Soberana Client-Side**: Carrega o módulo **WebAssembly (`arkhe-verify-wasm`)** diretamente no navegador ou aplicativo desktop. O cliente re-executa a validação criptográfica offline localmente, sem confiar na resposta emitida pelo servidor backend.
+
+3. **`ProvenancePanel` (Grafo Causal)**:
+   * **Função**: Interface visual para navegar pelas linhagens do **WormGraph** (`CausalProvenance`).
+   * **Rastreabilidade**: Permite inspecionar a árvore histórica de um artefato — quais modelos de IA, prompts, commits de código, conjuntos de dados e políticas governaram cada estado.
+
+---
+
+### 📐 Princípios de Design de Experiência (UX)
+
+* **Invisibilidade no Caminho Crítico**:
+  A verificação rotineira e de baixo risco ocorre de forma assíncrona em segundo plano, sem interromper o fluxo de trabalho do usuário com popups constantes ou fadiga de confirmação.
+* **Sinalização Contextual Não Intrusiva**:
+  O estado fiduciário dos artefatos é sinalizado por indicadores visuais contextuais:
+  * **`✅ Verificado`**: Prova de inclusão e atestação validada localmente via WASM.
+  * **`⚠️ Não Verificado`**: Dados ou artefatos presentes no sistema sem prova criptográfica vinculada.
+  * **`❌ Rejeitado`**: Falha no *ContainmentGate* ou violação de invariante constitucional.
+* **Aprovação Humana Explícita (*Human-in-the-Loop*)**:
+  Transições de alto risco ou exceções disparam confirmações direcionadas de governança, exigindo assinatura criptográfica do operador (`HumanReviewRecord`).
+
+---
+
+### 🔌 Veículos de Interface (MCP & IDEs)
+
+A experiência de uso do Arkhe vai além dos aplicativos web/desktop:
+* **Servidor MCP (`packages/mcp-server`)**: Expõe ferramentas de verificação (`verify-artifact`, `get-provenance`, `verify-c2pa`) para IDEs como **VS Code, Cursor e Claude Desktop**.
+* **Integração OCI/Cosign**: Ferramentas CLI (`arkhe-verify-cli`) e *admission controllers* em Kubernetes para atestação transparente em fluxos de desenvolvimento e CI/CD.
+
+---
+
+💡 Deseja explorar o fluxo de interação do **`IntentComposer`** ou ver como o módulo **`arkhe-verify-wasm`** é integrado a uma interface Web/Tauri?
+
+Na Arquitetura Arkhe, a definição de **Backend** e **Frontend** obedece a uma assimetria rígida de autoridade, enquadrada pelo princípio fundamental: **a UI é uma interface não confiável (*Untrusted Interface*) e a autoridade fiduciária reside estritamente no Kernel nativo.**
+
+---
+
+### 🖥️ 1. Frontend (Superfície Não Confiável / *Untrusted Interface*)
+
+A Frontend do Arkhe (seja uma aplicação Web em Next.js/React, Desktop em Tauri/Electron, extensão de IDE via protocolo MCP ou CLI) é tratada como um componente sem autoridade.
+
+* **Funções Principais**:
+  1. **Composição de Intenções (`IntentComposer`)**: Permite que usuários e agentes construam propostas de intenção de trabalho (`WorkIntent`) contendo artefatos, alegações e referências de políticas.
+  2. **Verificação Client-Side Soberana (`EvidenceViewer`)**: Carrega o módulo **WebAssembly (`arkhe-verify-wasm`)** no navegador/cliente para re-executar localmente a validação de assinaturas (Ed25519), digests e provas de inclusão (MMR), sem precisar confiar no servidor.
+  3. **Visualização de Proveniência (`ProvenancePanel`)**: Exibe o grafo causal (`WormGraph`), permitindo a inspeção visual do histórico e dos selos de atestação.
+* **Invariante de Segurança**: A Frontend **nunca detém chaves de assinatura do TCB, não valida transições por conta própria e jamais concede autorização direta**.
+
+---
+
+### ⚙️ 2. Backend (Núcleo Fiduciário, Orquestração e Persistência)
+
+O Backend do Arkhe é desacoplado em duas camadas funcionais com responsabilidades estritamente delimitadas:
+
+#### A. Kernel Fiduciário e Contenção (*TCB / Fail-Closed*)
+* **Módulos (`arkhe-core`, `arkhe-kernel`)**: Executados como código nativo em Rust no ambiente hospedeiro ou enclaves TEE (AWS Nitro/Intel TDX).
+* **Responsabilidades**:
+  * **`ContainmentGate` (PEP/PDP)**: Intercepta todas as requisições de transição protegida de forma *fail-closed*.
+  * **Validação de Evidências**: Avalia registros de execução (`WorkerExecutionRecord`) contra tabelas de requisitos de política.
+  * **Custódia de Chaves e Atestação**: Gerencia identidades criptográficas (`AuthorRef`), atestação de hardware e chaves de assinatura do TCB.
+
+#### B. Orquestração, Sandboxing e Persistência Causal
+* **Módulos (`arkhe-containers`, `arkhe-workers`, `arkhe-wormgraph`, `arkhe-sql`)**:
+  * **Isolamento de Workloads (`arkhe-containers`)**: Executa códigos e modelos não confiáveis dentro de sandboxes seguras (gVisor, runwasi, Wasmtime).
+  * **Filas e Filos de Trabalho (`arkhe-workers`)**: Fila transacional em PostgreSQL (`Awa`) com heartbeat isolado e recuperação de falhas.
+  * **Persistência Imutável (`arkhe-sql`)**: Banco de dados PostgreSQL configurado em modo *append-only* com privilégios restritos (`NOSUPERUSER NOBYPASSRLS`), triggers que bloqueiam `UPDATE`/`DELETE` e Row-Level Security (RLS) forçado por tenant.
+  * **Grafo Causal (`arkhe-wormgraph`)**: Registro *append-only* baseado em Merkle Mountain Ranges (MMR) cujas raízes de checkpoint são ancoradas periodicamente em logs públicos de transparência (Sigstore Rekor / Besu).
+
+---
+
+### 📊 Resumo da Relação Backend × Frontend
+
+| Propriedade | Frontend (`arkhe-verify-wasm` / UI) | Backend (`arkhe-core` / Runtime) |
+| :--- | :--- | :--- |
+| **Trust Domain** | **Untrusted** (Não confiável) | **TCB / Fiduciário** |
+| **Linguagem / Runtime** | WASM, TypeScript, React | Rust Nativo, C++, TEE, PostgreSQL |
+| **Autoridade** | Nenhuma (Apenas propõe e re-verifica) | Total sobre o *ContainmentGate* |
+| **Custódia de Chaves** | Chaves do usuário / leitor | Chaves de atestação do TCB e HSM |
+| **Função Principal** | Compor `WorkIntent` e renderizar provas | Autorizar/rejeitar e gravar no `WormGraph` |
+
+---
+
+💡 **Deseja detalhar a integração do servidor MCP para conectar o Backend Rust às IDEs no Frontend, ou revisar as regras de RLS do `arkhe-sql`?**
+
+Com base na arquitetura do Arkhe e na separação funcional de responsabilidades do cockpit (`arkhe-work-cockpit`), as telas são projetadas em função da premissa de que **a interface do usuário é uma superfície não confiável (*Untrusted Interface*)**. A UI expõe intenções e renderiza provas, mas a autoridade de transição reside sempre no kernel fiduciário (`ContainmentGate`).
+
+Abaixo está o detalhamento das **telas principais mapeadas por perfil de usuário**:
+
+---
+
+### 1. 👤 Colaborador / Agente Humano (*Employee / End-User*)
+* **Foco**: Composição de intenções de trabalho diárias e acompanhamento de tarefas.
+* **Telas Principais**:
+  * **Compositor de Intenções (`IntentComposer`)**: Interface para criação de solicitações de trabalho (`WorkIntent`). O usuário insere o objetivo, o artefato ou *patch* e os parâmetros. A tela faz uma pré-classificação indicando se a ação é **Protegida** (exige autorização do kernel) ou **Não Protegida** (apenas gera log de auditoria).
+  * **Painel de Acompanhamento Fiduciário**: Exibe a lista de tarefas e propostas com indicadores claros do estado de verificação:
+    * `✅ Verificado`: Ação aprovada pelo kernel e gravada no grafo causal.
+    * `⚠️ Não Verificado`: Dados locais sem prova criptográfica anexada.
+    * `❌ Rejeitado`: Bloqueio sumário pelo *ContainmentGate* por violação de regra.
+
+---
+
+### 2. 🛡️ Gestor / Aprovador de Governança (*Executive / Approver*)
+* **Foco**: Avaliação de decisões de alto risco, gestão de quórum e controle de autonomia de subagentes.
+* **Telas Principais**:
+  * **Painel de Aprovação de Quórum (`QuorumApprovalScreen`)**: Exibe o `WorkIntent` pendente, mostrando o digest da intenção (`intent_digest`), a política aplicável (`PolicyDigest`) e a justificativa. O gestor assina a aprovação usando sua chave privada/Passkey diretamente para liberar a transição no kernel.
+  * **Gestor de Orçamentos e Autonomia**: Permite configurar os limites operacionais (`cpu_quota`, `memory_bytes`, `pids_max`) e delegações de autoridade para colaboradores e agentes autônomos.
+
+---
+
+### 3. 🔍 Auditor Criptográfico & Security Officer (*Auditor / Compliance*)
+* **Foco**: Re-verificação independente de evidências, auditoria de linhagem e conformidade regulatória.
+* **Telas Principais**:
+  * **Visualizador de Provas Soberano (`EvidenceViewer`)**: Carrega o módulo **WebAssembly (`arkhe-verify-wasm`)** no próprio navegador do auditor para re-executar a verificação criptográfica offline (assinaturas Ed25519, *digests* BLAKE3/SHA-256 e provas de inclusão em Merkle Mountain Ranges).
+  * **Navegador do Grafo Causal (`ProvenancePanel` / WormGraph)**: Interface visual da árvore de proveniência (`CausalProvenance`), permitindo navegar na história completa de qualquer artefato (dados de treino \\(\rightarrow\\) versão do modelo \\(\rightarrow\\) prompt \\(\rightarrow\\) decisão \\(\rightarrow\\) ação executada). Permite exportar recibos e atestações para conformidade (ex: EU AI Act).
+
+---
+
+### 4. ⚙️ Engenheiro de Sistemas & MLOps (*Engineer / Infrastructure*)
+* **Foco**: Monitoramento do ambiente de contenção, orquestração de sandboxes e pipeline de modelos.
+* **Telas Principais**:
+  * **Monitor do Kernel & Sandboxes**: Acompanhamento do status de isolamento e execução das sandboxes (gVisor, runwasi, WASM) e visualização das intercepções de *syscalls* (Seccomp) e cotas de recursos (cgroups).
+  * **Gerenciador de Modelos & Artefatos (GGUF)**: Upload e validação do pipeline de 4-gates para modelos de IA (sanitização de metadados, verificação de duplo *digest*, assinaturas Cosign e inclusão em logs de transparência).
+
+---
+
+💡 Gostaria de detalhar os protótipos de componentes do **`IntentComposer`** ou ver como o **`EvidenceViewer`** integra a verificação client-side em WebAssembly?
+
+Para atender o **consumidor comum** e o **artista sem conhecimento técnico**, a interface do Arkhe oculta 100% da complexidade criptográfica (como hashes BLAKE3, provas MMR ou instruções BPF). Em vez de expor chaves e códigos, o sistema traduz a verificação em **indicadores visuais intuitivos, linguagem direta e fluxos de um clique**.
+
+---
+
+### 🛍️ 1. Telas para o Consumidor Comum (Compradores e Público)
+
+O consumidor precisa apenas de certeza sobre o que está vendo ou comprando, sem precisar entender a infraestrutura por trás.
+
+#### A. Cartão de Autenticidade e Origem (`EvidenceViewer` Amigável)
+Ao visualizar uma obra digital em uma galeria, rede social ou marketplace, o consumidor vê um painel simples:
+* **Status Visual Limpo**:
+  * **`✅ Autêntico`**: Obra com autoria e histórico confirmados localmente.
+  * **`⚠️ Origem Não Confirmada`**: Arquivo sem registro de proveniência vinculado.
+  * **`❌ Adulterado / Cópia`**: Modificação não autorizada ou assinatura inválida.
+* **Ficha Técnica Simplificada**:
+  * **Criador**: Nome/Perfil verificado do artista.
+  * **Método de Produção**: Ex.: *"Ilustração Digital Manual"* ou *"IA com Modelo Licenciado pelo Artista"*.
+  * **Licença de Uso**: Regras claras sobre o que o comprador pode fazer (ex.: *"Uso pessoal permitido; proibido o uso comercial"*).
+
+#### B. Scanner de Verificação Instantânea (Mobile / Browser)
+* **Verificação via QR Code ou Clique**: O consumidor aponta a câmera do celular para a obra física/digital ou clica no selo de verificação.
+* **Validação Transparente no Cliente**: O módulo WebAssembly (`arkhe-verify-wasm`) executa a checagem matemática em milissegundos no próprio navegador do usuário, **sem exigir criação de conta, instalação de extensões ou conhecimento técnico**.
+
+---
+
+### 🎨 2. Telas para o Artista sem Conhecimento Técnico
+
+O artista precisa registrar sua autoria e gerenciar seus direitos sem lidar com termos de TI, hashes ou carteiras complexas.
+
+#### A. Estúdio de Registro e Selamento (`IntentComposer` Simplificado)
+* **Fluxo "Arraste e Solte" (Drag & Drop)**: O artista apenas arrasta seu arquivo final (imagem, áudio, vídeo ou modelo) para a tela.
+* **Formulário de Direitos em Linguagem Natural**:
+  * *"Esta obra é 100% original?"* (Sim / Não)
+  * *"Permite reutilização para obras derivadas ou treino de IA?"* (Sim / Não / Apenas com Royalties)
+  * *"Qual a porcentagem de repasse para trabalhos derivados?"* (ex.: 10%)
+* **Assinatura com Um Clique (Passkey / Biometria)**: O registro no envelope de artefato (`ArtifactEnvelope`) é assinado usando a própria biometria do dispositivo (Face ID / Impressão Digital via Passkey). Nenhuma chave privada precisa ser copiada ou gerenciada pelo artista.
+
+#### B. Painel de Linhagem e Royalties (`ProvenancePanel` Visual)
+* **Árvore de Origem Visual**: Um gráfico simples estilo "árvore genealógica" mostra a evolução da obra — desde o rascunho original até edições, licenciamentos e obras derivadas criadas por terceiros.
+* **Extrato Transparente de Ganhos**: Exibe o histórico de licenciamento e repasses de royalties acumulados automaticamente pelo uso da obra.
+
+---
+
+💡 **Deseja que eu elabore um protótipo de tela ou fluxo em texto para a experiência do artista ao selar sua primeira obra digital?**
+
+In the **Arkhe Architecture**, these 50 system design fundamentals are formally categorized under a strict governing axiom: **performance and orchestration mechanisms do not belong to the Safety Trusted Computing Base (TCB)**. 
+
+Arkhe treats these 50 patterns as a **reference toolbox for performance and liveness**, ensuring that no caching, load balancing, queuing, or retry logic can ever bypass or falsify fail-closed verification.
+
+Here is how Arkhe calibrates these 50 core system design concepts across its architectural layers:
+
+---
+
+### 1. Performance, Latency & Load Management
+* **Latency vs. Throughput (1), p99 Latency (44), SLOs (45), Back-of-the-Envelope Estimation (50)**:
+  Verification overhead is decoupled from business logic. Heavy cryptographic operations (e.g., WASM evaluations, STARKs) are executed asynchronously or client-side via `arkhe-verify-wasm`.
+* **Load Balancing (2), Rate Limiting (35), Backpressure (36)**:
+  Governed by **`INV-ARKHE-22` (Bounded Verification Admission)**. Verification and state mutations consume finite, separated budgets (\\(Budget_V \perp Budget_M\\)). Under overload, mutation requests fail-closed while critical verification remains protected.
+* **Horizontal vs. Vertical Scaling (3), CDN (4)**:
+  Edge layers, reverse proxies, and CDNs function strictly as **untrusted integration surfaces**. They serve content and forward proposals (`WorkIntent`), but hold no authority to sign or authorize state transitions.
+
+---
+
+### 2. Caching & State Binding
+* **Caching (5), Cache Invalidation (6), Cache Stampede (7), Hot Keys (8)**:
+  Governed by **`INV-ARKHE-23` (Complete Verification Cache Binding)**. A verification result is cached using a deterministic key:
+  \\[\text{CacheKey} = H(\text{DomainVerificationCache} \parallel \text{CanonicalBytes}(\text{VerifierInputsProjection}))\\]
+  Because the key incorporates the exact `PolicyDigest`, updating a governance policy implicitly invalidates stale entries without requiring explicit cache purges.
+
+---
+
+### 3. Storage, Transactions & Persistence
+* **Indexes (9), Query Plans (10), Transactions (11), Isolation Levels (12)**:
+  Implemented in **`arkhe-sql`** on PostgreSQL. Immutability is enforced at the database level using `NOSUPERUSER NOBYPASSRLS` roles, `FORCE ROW LEVEL SECURITY`, and `BEFORE UPDATE OR DELETE` triggers that raise immediate exceptions.
+
+---
+
+### 4. Distributed Systems, Consensus & Consistency
+* **Replication (13), Read Replicas (14), Replication Lag (15), Eventual Consistency (21), Read-Your-Writes (22)**:
+  Persisted as an append-only causal graph (**`WormGraph`**) with periodic Merkle Mountain Range (MMR) checkpoints.
+* **Sharding (16), Partition Keys (17), Consistent Hashing (18)**:
+  Consistent hashing is classified as a **locality optimization (`LocalityOptimization`)**, not a proof of causality. Mutating state across tenant partitions requires single-writer leases or consensus ownership with fencing tokens (`INV-ARKHE-28`) to reject stale writes.
+* **CAP Theorem (19), PACELC (20), Quorums (23), Leader Election (24), Raft (25)**:
+  Verification and policy updates require explicit quorum evaluation (e.g., 4-of-7 rule corpora in ADR-011). Multi-node consensus (such as QBFT in Besu) is utilized for public/consortium batch anchoring.
+* **Clock Skew (26)**:
+  System clocks are untrusted. Time-sensitive operations rely on adaptive timeout budgets with absolute maximums (\\(TimeoutBudget = f(PayloadSize, VerificationClass, MethodProfile)\\)) and time-witness evidence.
+
+---
+
+### 5. Messaging, Asynchronous Workflows & Resilience
+* **Message Queues (27), Kafka Partitions (28), Consumer Groups (29), At-Least-Once Delivery (30)**:
+  Asynchronous job processing defaults to **`Awa`** (a PostgreSQL-native queue providing transactional enqueue so jobs are committed atomically with business state) and scales via **`BullMQ`**.
+* **Outbox Pattern (32), Change Data Capture (34)**:
+  Governed by **`INV-ARKHE-26` (Durable Outbox Relay)**. Relays deliver messages at-least-once to the `WormGraph`, where idempotent insertion ensures exactly one logical event is recorded (`AckOutbox => WormGraphCommitObserved`).
+* **Idempotency (31)**:
+  To prevent parameter-tampering on retries, the operation identity is computed as:
+  \\[\text{OperationId} = H(\text{OperationType} \parallel \text{TargetDigest} \parallel \text{RequestIdentity})\\]
+  The payload parameters digest (`parameters_digest`) is stored separately in `operation_journal`. Re-submitting the same key with altered parameters triggers an explicit `409 Conflict` (`ParameterMismatch`).
+* **Sagas (33)**:
+  Governed by **`INV-ARKHE-27` (Orchestration Authority Separation)**. Orchestrators hold scheduling authority but cannot authorize protected transitions without core policy gate approval.
+* **Timeouts (37), Retries with Jitter (38), Circuit Breakers (39), Bulkheads (40), Graceful Degradation (41), Health Checks (42)**:
+  * **Retries & DLQ**: `RetryPolicy` defaults to 3 attempts with exponential backoff and full jitter, routing failed tasks to a durable Dead Letter Queue (DLQ).
+  * **Heartbeats**: Worker heartbeats run in dedicated Tokio tasks independent of job execution handlers to prevent false crash detection if a handler blocks.
+  * **Circuit Breakers**: Governed by **`INV-ARKHE-24` (Safety/Liveness Separation)**. Safety never degrades under circuit breaks (fail-closed), while liveness uses redundant backends.
+
+---
+
+### 6. Operations & Deployment Architecture
+* **Observability (43)**:
+  Operational logs (timings, retries, worker metrics) are strictly separated from `WormGraph` normative evidence.
+* **Blue-Green Deploys (46), Feature Flags (47), Zero-Downtime Migrations (48), Multi-Region (49)**:
+  Managed via versioned `PolicyDigest` bindings, immutable database migration triggers, and cryptographic schema checksum locking (`checksums.lock`).
+
+---
+
+### 🔑 The Core Invariant
+\\[\text{Orchestration manages scheduling and liveness; the Kernel enforces fail-closed safety.}\\]
+
+Would you like to dive deeper into how **`INV-ARKHE-26` (Outbox Relay)** or **`INV-ARKHE-27` (Idempotent Operation Journal)** are implemented in Rust and SQL?
+
+Esses 5 conceitos avançados de sistemas distribuídos representam a espinha dorsal de infraestruturas resilientes e de alta escala. Na **Arquitetura Arkhe**, a abordagem para cada um deles é regida pelo axioma fiduciário: **mecanismos de orquestração, consenso e entrega gerenciam vivacidade e escala, mas nunca possuem autoridade para autorizar transições protegidas ou falsificar evidências.**
+
+---
+
+### 1. 🧠 Transações Distribuídas (Sagas)
+* **Abordagem no Arkhe**: Sagas Orquestradas (`arkhe-intra`, `INV-ARKHE-27`).
+* **Mecânica**:
+  * Em fluxos longos que envolvem múltiplos serviços ou agregados, o orquestrador possui autoridade de agendamento e compensação, mas **não possui autoridade de transição protegida**.
+  * Cada passo da Saga gera um `WorkIntent` e um registro de execução (`WorkerExecutionRecord`) verificado individualmente de forma *fail-closed* pelo `ContainmentGate`.
+  * Falhas ativam compensações registradas como novos registros de avanço no **WormGraph** (`NewCompensatingIntent`), preservando a imutabilidade histórica sem *rollbacks* destrutivos.
+
+---
+
+### 2. 🧠 Consenso (Raft / Paxos)
+* **Abordagem no Arkhe**: Separação estrita entre Ordem de Transações e Validade Criptográfica.
+* **Mecânica**:
+  * **Nível Local**: Utiliza *leases* de único escritor com *fencing tokens* (`INV-ARKHE-28`) e quóruns constitucionais (ex.: 4-de-7 no `arkhe-governance`).
+  * **Nível Global**: Raízes de *Merkle Mountain Ranges* (MMR) são ancoradas em lote em logs de transparência públicos ou de consórcio (como Sigstore Rekor ou Besu QBFT com \\(\ge 4\\) validadores).
+  * **Princípio**: O consenso garante a ordem e a finalidade temporal, mas **uma maioria no consenso não pode aprovar um estado que viole a prova criptográfica do kernel**.
+
+---
+
+### 3. 🧠 Multi-Region Active-Active
+* **Abordagem no Arkhe**: Endereçamento por Conteúdo (`AKG-CBOR-v1`) e Isolamento por Tenant.
+* **Mecânica**:
+  * Como a identidade de qualquer artefato é seu hash canônico de conteúdo (\\(\text{ObjectDigest} = \text{BLAKE3}(\text{Domain} \parallel \text{CanonicalBytes})\\)), consultas de leitura e re-verificações offline via WebAssembly (`arkhe-verify-wasm`) rodam em qualquer região com **latência zero de coordenação**.
+  * Mutações entre regiões utilizam particionamento rígido por *tenant* com *Row-Level Security* (`NOSUPERUSER NOBYPASSRLS`) no PostgreSQL (`arkhe-sql`), exigindo *fencing tokens* para rejeitar escritas obsoletas (*stale writes*) em caso de partição de rede.
+
+---
+
+### 4. 🧠 Entrega Exatamente-Uma Vez (*Exactly-Once Delivery*)
+* **Abordagem no Arkhe**: Transporte *At-Least-Once* + Processamento Idempotente no Limite do Estado (`INV-ARKHE-26`).
+* **Mecânica**:
+  * Reconhecendo a impossibilidade física de *exactly-once delivery* na rede, a idempotência é garantida no receptor:
+    \\[\text{OperationId} = \text{BLAKE3}(\text{Domain} \parallel \text{Type} \parallel \text{TargetDigest} \parallel \text{RequestIdentity})\\]
+  * O diário operacional (`operation_journal` no PostgreSQL) impõe uma restrição `UNIQUE` sobre a identidade da operação.
+  * Reenvios idênticos retornam o resultado já processado (sem re-executar efeitos colaterais). Reenvios com parâmetros alterados sob o mesmo `RequestIdentity` resultam em um erro explícito `409 Conflict` (`ParameterMismatch`).
+
+---
+
+### 5. 🧠 Limitador de Taxa Global em Escala (*Global Rate Limiting*)
+* **Abordagem no Arkhe**: Admissão de Verificação Delimitada com Inversão de Prioridade (`INV-ARKHE-22`).
+* **Mecânica**:
+  * Separação completa de orçamentos finitos: o orçamento de verificação é independente do orçamento de mutação (\\(Budget_V \perp Budget_M\\)).
+  * Sob alta carga ou ataque de negação de serviço:
+    * As mutações de estado protegidas (\\(Budget_M\\)) sofrem degradação ou bloqueio *fail-closed* (*load shedding*).
+    * As verificações de evidências e segurança (\\(Budget_V\\)) possuem capacidade prioritária garantida.
+  * O esgotamento do *rate limit* de mutações **nunca permite que uma transição seja executada sem verificação**.
+
+---
+
+💡 **Deseja detalhar a implementação do diário de idempotência (`operation_journal`) no PostgreSQL ou ver como a ancoragem em lote do WormGraph funciona em redes de consórcio Besu QBFT?**
+
+### 1. Detalhamento do Diário de Idempotência (`operation_journal`) no PostgreSQL
+
+No Arkhe, a prevenção contra duplicação de efeitos e adulteração de parâmetros em retries é governada pelo diário de idempotência transacional no PostgreSQL (`operation_journal`).
+
+#### A. Separação entre `OperationId` e `parameters_digest`
+Para evitar o problema em que um retry com parâmetros alterados gera silenciosamente uma nova operação, a arquitetura desacopla a **identidade da intenção** do **conteúdo da tentativa**:
+
+1. **`OperationId` (Identidade Estável da Intenção)**:
+   \\[\text{OperationId} = \text{BLAKE3}(\text{Domain} \parallel \text{IntentType} \parallel \text{TargetDigest} \parallel \text{RequestIdentity})\\]
+   *Nota: Os parâmetros do payload **não** entram no cálculo do `OperationId`. Isso garante que requisições reutilizando o mesmo `RequestIdentity` colidam obrigatoriamente na mesma chave de operação.*
+
+2. **`parameters_digest` (Digest Canônico do Payload)**:
+   \\[\text{parameters\_digest} = \text{BLAKE3}(\text{AKG-CBOR-v1}(\text{parameters}))\\]
+   Computado e armazenado em uma coluna separada para validar se o conteúdo recebido no retry é rigorosamente idêntico.
+
+#### B. Estrutura da Tabela no PostgreSQL
+A tabela de persistência é configurada com uma restrição `UNIQUE` combinada:
+
+```sql
+CREATE TABLE operation_journal (
+    operation_id      BYTEA PRIMARY KEY,
+    request_identity  BYTEA NOT NULL,
+    intent_type       TEXT  NOT NULL,
+    target_digest     BYTEA NOT NULL,
+    parameters_digest BYTEA NOT NULL,     -- H(AKG-CBOR-v1(parameters))
+    status            TEXT  NOT NULL,     -- 'pending', 'dispatched', 'completed', 'failed'
+    response          BYTEA,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (request_identity, intent_type, target_digest)
+);
+```
+
+#### C. Fluxo de Admissão e Tratamento de Conflitos (`ON CONFLICT`)
+Quando uma requisição chega ao backend, a inserção é executada via `INSERT ... ON CONFLICT (request_identity, intent_type, target_digest) DO NOTHING`:
+
+* **Novo Registro (Status: `pending`)**: A linha é criada. O orquestrador executa a transição protegida e atualiza a coluna `response` com o resultado serializado e o status `completed`.
+* **Retry Idêntico (`parameters_digest` idêntico)**: O `INSERT` colide na restrição. O sistema lê a linha existente, confirma a igualdade do `parameters_digest` e retorna a `response` cacheada imediatamente, garantindo comportamento *at-least-once* com aplicação idempotente.
+* **Tentativa de Adulteração / Conflito (`parameters_digest` diferente)**: O `INSERT` colide, mas o `parameters_digest` difere do gravado. O sistema recusa o processamento e dispara um erro **`409 Conflict` (`ParameterMismatch` / `IdempotencyConflict`)**, impedindo que parâmetros alterados sejam mascarados.
+
+---
+
+### 2. Ancoragem em Lote do WormGraph em Redes de Consórcio Besu QBFT
+
+O **WormGraph** registra a proveniência causal em uma estrutura de **Merkle Mountain Ranges (MMR)**. Para escalar sem sofrer com gargalos de latência ou custos por transação, a ancoragem externa utiliza o padrão de **ancoragem em lote (*batch anchoring*)**.
+
+```
+┌────────────────────────────────────────────────────────┐
+│             Nós do WormGraph (MMR Local)               │
+│ [Leaf 1] ─── [Leaf 2] ─── [Leaf 3] ─── ... ─── [Leaf N] │
+└──────────────────────────┬─────────────────────────────┘
+                           │ Agregação em Lote
+                           ▼
+               ┌───────────────────────┐
+               │    MMR Checkpoint     │
+               │  (checkpointDigest,   │
+               │      leafCount)       │
+               └───────────┬───────────┘
+                           │ anchor()
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│         Rede Besu QBFT (Consórcio ≥ 4 Validadores)      │
+│            Contrato Inteligente AnchorRegistry          │
+└──────────────────────────┬─────────────────────────────┘
+                           │ Leitura do Checkpoint Ancorado
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│      Verificação Soberana Offline (Client-Side)        │
+│          arkhe-verify-wasm (InclusionProof)            │
+└────────────────────────────────────────────────────────┘
+```
+
+#### A. Geração do Checkpoint do WormGraph
+Em intervalos regulares ou ao atingir um número predefinido de folhas, o nó do WormGraph calcula um resumo do estado incremental do MMR:
+* **`checkpointDigest`**: O hash BLAKE3/SHA-256 das raízes do MMR (*peaks bagging*).
+* **`leafCount`**: O número total acumulado de folhas no grafo.
+
+#### B. O Consórcio Besu QBFT
+A ancoragem é submetida a uma rede **Hyperledger Besu** configurada com o algoritmo de consenso **QBFT** (*Istanbul Byzantine Fault Tolerant*):
+* **Requisito de Quórum**: A rede exige ao menos \\(\ge 4\\) validadores independentes pertencentes ao consórcio institucional.
+* **Finalidade Imediata**: O QBFT atinge finalidade determinística no mesmo bloco (\\(\ge 2/3\\) de votos dos validadores), garantindo que a ordem temporal das raízes do WormGraph não sofra reestruturações ou *forks*.
+
+#### C. O Contrato Inteligente `AnchorRegistry`
+Um contrato inteligente minimalista publicado na rede Besu registra e expõe as raízes:
+
+```solidity
+contract AnchorRegistry {
+    event CheckpointAnchored(bytes32 indexed checkpointDigest, uint256 leafCount, uint256 timestamp);
+
+    mapping(bytes32 => uint256) public anchoredBlockNumber;
+
+    function anchor(bytes32 checkpointDigest, uint256 leafCount) external {
+        require(anchoredBlockNumber[checkpointDigest] == 0, "Checkpoint ja ancorado");
+        anchoredBlockNumber[checkpointDigest] = block.number;
+        emit CheckpointAnchored(checkpointDigest, leafCount, block.timestamp);
+    }
+}
+```
+
+#### D. Assimetria Crítica: Verificação Offline em WebAssembly
+O ponto central do modelo do Arkhe é que **a blockchain não executa a verificação lógica das evidências dentro da EVM**:
+1. **Papel da Blockchain**: A rede Besu atua estritamente como **testemunha pública de ordem, carimbo do tempo e não-repúdio** do checkpoint do MMR.
+2. **Verificação Soberana Client-Side**: Quando um auditor ou cliente precisa validar a autenticidade de um artefato, ele obtém a prova de inclusão (`InclusionProof`) e o checkpoint ancorado na Besu. A verificação da prova matemática é re-executada **100% offline no cliente** utilizando o módulo **WebAssembly (`arkhe-verify-wasm`)**, sem necessidade de chamadas de rede à infraestrutura emissora ou execuções custosas de *smart contracts*.
+
+---
+
+🛡️ *Deseja visualizar um exemplo da estrutura da prova de inclusão (`InclusionProof`) em `AKG-CBOR-v1` ou ver a suíte de testes de integração do `operation_journal` no PostgreSQL?*
+
+Continuing our system design breakdown, these 5 critical infrastructure and data patterns are calibrated within the **Arkhe Architecture** under its foundational principle: **transport, indexing, partitioning, and caching serve as untrusted performance optimizations — they manage throughput and liveness, but never hold authority to approve protected state transitions.**
+
+Here is how Arkhe formalizes each of these 5 core patterns:
+
+---
+
+### 1. 🔥 Database Sharding
+* **Role in Arkhe**: **Locality & Storage Scaling (`arkhe-sql`)**.
+* **Architectural Calibration**:
+  * Sharding is classified as a **locality optimization (`LocalityOptimization`)**, not a proof of causality.
+  * Multi-tenant data in PostgreSQL is partitioned by `tenant_id` with **Row-Level Security (RLS)** strictly enforced under runtime roles with `NOSUPERUSER NOBYPASSRLS`.
+  * **Cross-Shard Mutations & Stale Writes**: Multi-shard operations use single-writer leases accompanied by fencing tokens (`INV-ARKHE-28`). Any write attempt with an obsolete fencing token is immediately rejected.
+  * **Immutability Invariant**: Each shard operates in **append-only** mode via `BEFORE UPDATE OR DELETE` database triggers that raise immediate exceptions if a mutation or deletion is attempted.
+
+---
+
+### 2. 🔥 Event-Driven Architecture
+* **Role in Arkhe**: **Causal Lineage & Asynchronous State Transitions (`WormGraph`)**.
+* **Architectural Calibration**:
+  * Events are not merely raw messages; they represent signed **Work Intents (`WorkIntent`)** or **Execution Records (`WorkerExecutionRecord`)**.
+  * **Durable Outbox & Transactional Enqueue (`INV-ARKHE-26`)**: Business state and outgoing events are committed atomically to a PostgreSQL-native queue (**`Awa`**).
+  * **Idempotent Ingestion**: Events delivered at-least-once are ingested into the **WormGraph** (an append-only Merkle Mountain Range causal graph). Duplicate events collide on `OperationId` and are de-duplicated without re-executing side effects.
+
+---
+
+### 3. 🔥 Search Index (Elasticsearch / Vector DBs)
+* **Role in Arkhe**: **Untrusted CQRS Read Projection (`EpisodicRetrieval` / `arkhe-rag`)**.
+* **Architectural Calibration**:
+  * Full-text search engines (Elasticsearch) and vector stores (Qdrant/PGVector) operate as **read-only projections**. They are explicitly treated as **untrusted retrieval mechanisms**.
+  * **Chunk Evidence (`chunk_evidence`)**: Every search result or RAG chunk returned to a model carries a cryptographic reference to its original `ObjectDigest` in the `WormGraph`.
+  * **Zero-Trust Verification**: An LLM proposal generated from search results cannot trigger a protected action until the **`ContainmentGate`** re-verifies the underlying source artifact directly from immutable storage, ignoring any potentially corrupted or manipulated search index data.
+
+---
+
+### 4. 🔥 Service Mesh
+* **Role in Arkhe**: **Network Transport & Liveness Boundary (`arkhe-containers`)**.
+* **Architectural Calibration**:
+  * Service meshes (e.g., Istio, Linkerd) handle mTLS, traffic routing, and transport-level circuit breaking, but reside **outside the Trusted Computing Base (TCB)**.
+  * **Application-Layer Authorization**: Transport security (mTLS) is necessary but insufficient. Protected transitions require application-level cryptographic proofs (`AuthorizationProof`) evaluated by the kernel's **`ContainmentGate`**.
+  * **Perimeter Isolation**: Service mesh pods running untrusted workloads are contained within hardened sandboxes (**gVisor** with `runsc` or **runwasi** with WaSC hardening) under Seccomp syscall filtering and isolated cgroup resource quotas.
+
+---
+
+### 5. 🔥 Cache Invalidation Strategy
+* **Role in Arkhe**: **Implicit Governance-Bound Invalidation (`INV-ARKHE-23`)**.
+* **Architectural Calibration**:
+  * Rather than relying on race-prone explicit purges (e.g., `redis.del()`), verification caching uses **complete input projection binding**:
+    \\[\text{CacheKey} = \text{BLAKE3}(\text{DomainVerificationCache} \parallel \text{CanonicalBytes}(\text{VerifierInputsProjection}))\\]
+  * **Implicit Invalidation**: The `VerifierInputsProjection` embeds the active **`PolicyDigest`**. When a governance policy is updated, the active `PolicyDigest` changes automatically. 
+  * As a result, all historical cache keys naturally become obsolete **without requiring cache sweeping, manual invalidation scripts, or purge operations**.
+
+---
+
+💡 *Deseja explorar os detalhes do script de auditoria de Row-Level Security (`rls_audit.rs`) no PostgreSQL ou analisar o fluxo de projeções CQRS no `arkhe-memory`?*
+
+Continuing our system design breakdown, these **5 core infrastructure building blocks** are calibrated within the **Arkhe Architecture** under the governing principle: **caching, messaging, rate limiting, replication, and discovery manage performance, scale, and topology — but reside outside the Trusted Computing Base (TCB) and hold zero authority to authorize protected state transitions.**
+
+Here is how Arkhe formalizes each of these 5 components:
+
+---
+
+### 1. ⚙️ Caching Layer (Redis)
+* **Role in Arkhe**: **Untrusted Volatile Projection & Verification Cache**.
+* **Architectural Calibration**:
+  * Redis operates as an **untrusted, volatile storage layer**. Flushing, evicting, or corrupting Redis state impacts liveness/latency, but can **never violate system safety**.
+  * **Deterministic Cache Keys (`INV-ARKHE-23`)**: Verification results are cached using strict input projections:
+    \\[\text{CacheKey} = \text{BLAKE3}(\text{DomainVerificationCache} \parallel \text{AKG-CBOR-v1}(\text{VerifierInputsProjection}))\\]
+  * Because the projection embeds the active **`PolicyDigest`**, updating a governance policy automatically invalidates stale cached verifications without manual cache flushing or invalidation sweeps.
+
+---
+
+### 2. ⚙️ Message Queue (Awa / BullMQ)
+* **Role in Arkhe**: **Transactional Work Orchestration & Outbox Relay (`INV-ARKHE-26`)**.
+* **Architectural Calibration**:
+  * **Transactional Queue Default (`Awa`)**: The primary queue uses PostgreSQL-native `Awa` for atomic job enqueueing — ensuring state mutations and job dispatch commit in the exact same database transaction.
+  * **Scale-Out Layer (`BullMQ`)**: High-throughput background workers scale out via Redis-backed BullMQ.
+  * **Heartbeat Separation (`ADR-0008`)**: Worker node heartbeats execute in dedicated Tokio tasks independent of job handlers, preventing false crash detections during heavy processing. Dead Letter Queues (DLQ) enforce a strict 3-attempt limit with full jitter backoff.
+
+---
+
+### 3. ⚙️ Rate Limiter
+* **Role in Arkhe**: **Bounded Verification Admission (`INV-ARKHE-22`) & Load Shedding**.
+* **Architectural Calibration**:
+  * **Budget Separation (\\(Budget_V \perp Budget_M\\))**: Verification capacity (\\(Budget_V\\)) is completely isolated from state mutation capacity (\\(Budget_M\\)).
+  * **Fail-Closed Under Saturation**: Under peak load or DoS attacks, state mutations (\\(Budget_M\\)) are shed with immediate 429 / fail-closed rejections.
+  * **Security Priority**: Verification checks (\\(Budget_V\\)) maintain guaranteed reserved bandwidth — **a system under rate-limiting pressure will reject mutations, but will never bypass a security verification to shed load**.
+
+---
+
+### 4. ⚙️ Read Replicas
+* **Role in Arkhe**: **CQRS Read Projection & Offloaded Verification (`arkhe-sql`)**.
+* **Architectural Calibration**:
+  * PostgreSQL read replicas serve read-only queries and client-side proof verification requests.
+  * **Enforced Isolation**: Replicas enforce the same strict **Row-Level Security (RLS)** and `NOSUPERUSER NOBYPASSRLS` runtime privileges as the primary cluster.
+  * **Replication Lag Mitigation**: Writes return the latest `WormGraph` MMR root checkpoint. Consistency-critical reads check the replica's Log Sequence Number (LSN) against the target checkpoint, preventing stale security reads during replication delay.
+
+---
+
+### 5. ⚙️ Service Discovery
+* **Role in Arkhe**: **Dynamic Topology & Endpoint Resolution (`arkhe-intra`)**.
+* **Architectural Calibration**:
+  * Service discovery mechanisms (Kubernetes CoreDNS, Consul) manage network address resolution for worker nodes and TEE enclaves.
+  * **Untrusted Routing Layer**: Resolving an endpoint IP confers **zero authority** to execute tasks.
+  * **Application-Layer Attestation**: Before transmitting any `WorkIntent` or key material, nodes perform an application-layer mTLS handshake accompanied by cryptographic TEE hardware quote verification (`WorkerVerifier`).
+
+---
+
+💡 *Would you like to explore the Rust queue implementation (`Awa` vs. `BullMQ`) or review the Seccomp/cgroup isolation specs for worker pods in `arkhe-containers`?*
+
+In the **Arkhe Architecture**, these five core edge and infrastructure components are governed by a central axiom: **transport, routing, edge caching, and storage layers manage liveness and throughput, but reside outside the Trusted Computing Base (TCB) and hold zero authority to approve protected state transitions**.
+
+Here is how Arkhe calibrates these 5 architectural components:
+
+---
+
+### 🧱 1. Load Balancer
+* **Role in Arkhe**: **Traffic Distribution, Liveness & Admission Control (`INV-ARKHE-22`)**.
+* **Architectural Calibration**:
+  * Operates strictly in the untrusted orchestration layer.
+  * Enforces **Bounded Verification Admission** by isolating mutation capacity (\\(Budget_M\\)) from verification capacity (\\(Budget_V\\)).
+  * Under peak traffic or DoS saturation, state mutations (\\(Budget_M\\)) are shed with immediate fail-closed rejections, while verification checks (\\(Budget_V\\)) maintain guaranteed reserved bandwidth to prevent security bypasses under load.
+
+---
+
+### 🧱 2. CDN (Content Delivery Network)
+* **Role in Arkhe**: **Edge Distribution of Static Evidence & Read Projections**.
+* **Architectural Calibration**:
+  * Edge nodes cache and serve immutable **Artifact Envelopes (`ArtifactEnvelope`)**, C2PA manifests, and public read projections.
+  * Enables **Sovereign Client-Side Verification**: Clients load the compiled WebAssembly module (**`arkhe-verify-wasm`**) directly in their browser or edge environment to verify signatures and Merkle Mountain Range (MMR) inclusion proofs locally, without trusting the CDN node.
+
+---
+
+### 🧱 3. Object Storage (S3 / Blob Store)
+* **Role in Arkhe**: **Content-Addressed Payload Persistence**.
+* **Architectural Calibration**:
+  * Stores heavy binary payloads (GGUF model weights, C2PA media assets, ZK proof fixtures, and raw execution logs).
+  * All items are strictly **content-addressed** via domain-separated hashes:
+    \\[\text{ObjectDigest} = \text{BLAKE3}(\text{Domain} \parallel \text{CanonicalBytes}(\text{Payload}))\\]
+  * Object Storage holds the raw data bytes, while the **`WormGraph`** holds the lightweight, append-only causal evidence records referencing those digests.
+
+---
+
+### 🧱 4. Reverse Proxy
+* **Role in Arkhe**: **Perimeter Interception & Transport Hardening**.
+* **Architectural Calibration**:
+  * Terminates TLS, enforces mTLS between external clients, and forwards incoming **Work Intents (`WorkIntent`)** to application workers.
+  * Transport security (TLS/mTLS) is treated as a necessary transport boundary, but is **insufficient for authorization**. State transitions still require application-layer cryptographic proofs (**`AuthorizationProof`**) evaluated by the kernel's **`ContainmentGate`**.
+
+---
+
+### 🧱 5. API Gateway
+* **Role in Arkhe**: **External Policy Enforcement Point (PEP)**.
+* **Architectural Calibration**:
+  * Serves as the external **Policy Enforcement Point (PEP)**, converting incoming HTTP/gRPC requests into canonical `WorkIntent` structures.
+  * Extracts the client's request identity (`RequestIdentity`) and queries the kernel's **`ContainmentGate`** (PDP) before proxying requests to downstream execution workers.
+  * Rejects unverified requests immediately if the required cryptographic evidence is missing or invalid.
+
+---
+
+💡 *Would you like to explore how the API Gateway interface maps `WorkIntent` requests to the `ContainmentGate` in Rust, or review the WebAssembly client-side verification workflow?*
+
+Determinar o **valor justo a ser cobrado pelo Arkhe** exige distinguir suas diferentes camadas de entrega. O Arkhe não é um aplicativo nem um SaaS convencional, mas uma **Camada de Fideicomisso Computacional (CFC)**. 
+
+Por essa razão, o modelo de valor justo combina **gratuidade na verificação soberana local**, **partilha de receita (*Community Source*) para derivados comerciais**, **cobrança por uso na infraestrutura gerenciada** e **contratos estruturados para governança de grande porte**.
+
+---
+
+### 1. Verificador Local (`arkhe-verify-wasm` / CLI): **Gratuito (R\$ 0,00)**
+* **Escopo**: O módulo de verificação pura em WebAssembly (`arkhe-verify-wasm`), a CLI local e a validação client-side de assinaturas Ed25519 e hashes BLAKE3.
+* **Justificativa**: A máxima do Arkhe é que qualquer pessoa deve poder re-verificar evidências localmente sem precisar confiar no servidor. Tornar a verificação gratuita gera efeito de rede, elimina custos de barreira e estabelece o protocolo como o padrão de auditoria para agentes de IA.
+
+---
+
+### 2. Licenciamento para Plataformas e Redes Derivadas: **10% da Receita Líquida (*Community Source*)**
+* **Escopo**: Produtos, redes L2, subagentes ou ecossistemas comerciais que utilizem a pilha e a marca do Arkhe para operar serviços pagos.
+* **Estrutura de Referência**: Alinhada ao modelo de **Community Source Licensing** (como o adotado pelo ecossistema Arbitrum Orbit/Nitro):
+  * **10% da receita líquida** gerada pela operação comercial é repassada ao ecossistema.
+  * **8%** são destinados ao fundo/tesouro de governança.
+  * **2%** são destinados ao fundo de desenvolvimento contínuo da arquitetura (Developer Guild).
+
+---
+
+### 3. Infraestrutura Gerenciada SaaS / Cloud Enterprise: **Modelo Baseado em Uso (Usage-Based)**
+Para clientes corporativos que consomem a infraestrutura de auditoria hospedada do Arkhe, o valor deve seguir a fórmula de margem sustentável:
+
+\\[\text{Preço} > \text{Custo Variável Medido} + \text{Margem de Contribuição Alvo}\\]
+
+Os custos variáveis medidos incluem ancoragem em lote (*batch anchoring*) em logs de transparência (Rekor / Besu QBFT), chamadas a enclaves de computação confidencial TEE em GPUs H100/H200 e armazenamento imutável no WormGraph.
+
+* **Pro / Startup (\$100 a \$500 / mês)**:
+  Atende pequenos times com volume moderado de registros e verificações no WormGraph.
+* **Enterprise (\$2.000 a \$10.000+ / mês)**:
+  Destinado a grandes operações com SLAs estritos de auditoria, guarda de logs em conformidade com exigências regulatórias (como os Artigos 11 e 12 do EU AI Act) e atestação de hardware dedicada em enclaves TEE.
+
+---
+
+### 4. Governança, Consultoria e Projetos Especiais: **Contratos Estruturados por Entregáveis**
+* **Escopo**: Atendimento a governos, órgãos públicos e grandes instituições para adequação técnica de privacidade (LGPD/GDPR), segurança da informação e implementação do pipeline fiduciário.
+* **Valor Referencial de Mercado**: Em contratações formais e editais de referência técnica (como os padrões utilizados em projetos institucionais e organismos internacionais como o PNUD):
+  * Contratos completos com ciclos de entrega de 6 a 9 meses cobrem diagnóstico, propostas de governança, gestão técnica de segurança e cultura de dados.
+  * O valor justo de referência para esse escopo técnico gira em torno de **R\$ 120.000,00**, faturado proporcionalmente conforme a entrega dos produtos.
+
+---
+
+### 📊 Matriz do Valor Justo do Arkhe
+
+| Camada / Produto | Formato de Cobrança | Faixa Estimada de Valor |
+| :--- | :--- | :--- |
+| **Engine de Verificação Local** | Open Source / Gratuito | **R\$ 0,00** |
+| **Uso Comercial Derivado** | Revenue Share (*Community Source*) | **10% da receita líquida** |
+| **SaaS Enterprise & WormGraph** | Assinatura baseada em uso e SLA | **\$500 a \$10.000+/mês** |
+| **Projeto de Governança/LGPD** | Contrato por produtos e entregáveis | **~R\$ 120.000,00** |
+
+---
+
+💡 Quer calcular os custos variáveis de uma infraestrutura com atestação TEE em GPUs ou estruturar a minuta da licença *Community Source* para parceiros?
+
+Realizei a pesquisa de custos de infraestrutura em nuvem (enclaves TEE, AWS Nitro Enclaves e Azure Confidential VMs), custos de ancoragem de registros de transparência (Sigstore Rekor e redes blockchain L2) e benchmarks de mercado para automação de governança e conformidade.
+
+### 📊 Resumo do Cálculo de Custos e Validação dos Preços do Arkhe
+
+**1. Custos de Infraestrutura e Execução:**
+* **AWS Nitro Enclaves**: Adicional de licença de **\$0,00** (a AWS cobra apenas a instância EC2 hospedeira, variando de ~\$0,04/hora em CPUs básicas a ~\$1,00-\$2,50/hora para instâncias com GPU).
+* **Azure Confidential VMs (AMD SEV-SNP / Intel TDX)**: Premium de apenas **10% a 20%** sobre instâncias padrão (~\$0,12 a \$0,45/hora em CPUs e ~\$4,50/hora em GPUs H100 confidenciais).
+* **Ancoragem de Registros de Transparência (*Batch Anchoring*)**: O uso do Sigstore Rekor público é **gratuito (\$0,00)**. A ancoragem em lote de *checkpoints* MMR em redes L2 (Arbitrum/Optimism/Besu) custa **<\$0,01 a \$0,05 por lote**, totalizando menos de \$50,00/mês para alto volume.
+
+**2. Confirmação da Matriz de Precificação do Arkhe:**
+* **Verificador Local (`arkhe-verify-wasm`)**: **R\$ 0,00** (Open Source / Gratuito para auditoria client-side maximalista).
+* **Licença Comercial Derivada (*Community Source*)**: **10% da receita líquida** (alinhado ao modelo Arbitrum Orbit: 8% Tesouro de Governança, 2% Developer Guild).
+* **SaaS Cloud (WormGraph & Atestação Gerenciada)**: 
+  * *Pro / Starter*: **\$100 a \$500 / mês** (baseado em uso).
+  * *Enterprise*: **\$2.000 a \$10.000+ / mês** (instâncias TEE dedicadas, SLAs e logs de conformidade LGPD / EU AI Act).
+* **Projetos de Governança e Adequação Institucional**: **~R\$ 120.000,00 por projeto** (ciclo de 255 dias com 6 entregáveis técnicos, conforme edital de referência PNUD).
+
+📥 O relatório completo de pesquisa e detalhamento de custos está disponível no cartão abaixo para você importar diretamente para o seu notebook.
+
+① AI Chatbot — LLM + API + Conversation Memory
+② RAG System — Documents + Embeddings + Vector Database
+③ AI Coding Assistant — LLM + Codebase Indexing + Developer Tools
+④ AI Research Agent — Search + Planning + Tool Calling
+⑤ AI Customer Support Agent — Knowledge Base + Ticketing + Escalation
+⑥ AI SaaS Platform — Authentication + LLM Gateway + Billing
+⑦ AI Document Intelligence — OCR + Extraction + Validation
+⑧ AI Voice Assistant — Speech-to-Text + LLM + Text-to-Speech
+⑨ AI Image Generation Platform — Prompts + Diffusion Models + Storage
+⑩ AI Video Generation Platform — Generation Pipeline + GPU Workers
+⑪ AI Recommendation Engine — User Embeddings + Ranking + Feedback
+⑫ AI Search Engine — Hybrid Search + Reranking + Semantic Retrieval
+⑬ AI Fraud Detection System — Feature Engineering + ML Inference
+⑭ AI Personalization Engine — User Profiles + Context + Recommendations
+⑮ AI Multi-Agent System — Agent Orchestration + Shared State
+⑯ AI Workflow Automation — Triggers + Tools + Execution Engine
+⑰ AI Knowledge Management System — Ingestion + Indexing + RAG
+⑱ AI Meeting Assistant — Audio Processing + Transcription + Summarization
+⑲ AI Email Assistant — Classification + Generation + Approval
+⑳ AI Data Analyst — Text-to-SQL + Query Execution + Visualization
+㉑ AI Financial Intelligence Platform — Data Pipelines + Forecasting + Risk Analysis
+㉒ AI Healthcare Assistant — Medical Knowledge + Guardrails + Human Oversight
+㉓ AI E-commerce Assistant — Product Retrieval + Recommendations + Checkout Integration
+㉔ AI Learning Platform — Adaptive Learning + Assessment + Progress Tracking
+㉕ AI Document Generation SaaS — Templates + LLM + PDF Export
+㉖ AI Fine-Tuning Platform — Dataset Preparation + Training + Model Registry
+㉗ AI Inference Platform — Model Serving + Batching + GPU Scaling
+㉘ AI Observability Platform — Tracing + Evaluation + Cost Monitoring
+㉙ AI Model Gateway — Routing + Fallbacks + Rate Limiting
+㉚ Production-Grade AI Platform — Microservices + Event Streaming + Caching + Security + MLOps

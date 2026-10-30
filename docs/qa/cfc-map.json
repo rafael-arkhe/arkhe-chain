@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "date": "2026-10-29 (week 2)",
+  "definition": "A critical flow counts as covered only if an automated test exercises its negative (fail-closed) path AND that test runs in a CI workflow of this tree. 'local' = automated but not wired to CI. 'none' = no automated test.",
+  "flows": [
+    {
+      "id": "CF-01",
+      "layers": [
+        "L1",
+        "L2",
+        "L4",
+        "L7"
+      ],
+      "flow": "WorkIntent + WER -> policy -> ContainmentGate -> atomic evidence commit",
+      "tests": [
+        "orchestration/arkhe-runtime/tests",
+        "ci.yml persistent-runtime"
+      ],
+      "status": "covered",
+      "note": "last remote CI evidence 2026-10-17, 8 migrations; tree now has 13"
+    },
+    {
+      "id": "CF-02",
+      "layers": [
+        "L2"
+      ],
+      "flow": "Gate rejects without policy/evidence (default deny, typed verdict)",
+      "tests": [
+        "kernel/arkhe-kernel/tests/rejection_gates.rs"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "CF-03",
+      "layers": [
+        "L4",
+        "L7"
+      ],
+      "flow": "Fail-closed during database outage; exact replay keeps receipt",
+      "tests": [
+        "ci.yml persistent-runtime (scripts/live_runtime.py)"
+      ],
+      "status": "covered",
+      "note": "evidence stale (2026-10-17)"
+    },
+    {
+      "id": "CF-04",
+      "layers": [
+        "L1"
+      ],
+      "flow": "Canonical CBOR parity Rust = Python: WorkIntent/WER",
+      "tests": [
+        "scripts/generate_work_vectors.py --check",
+        "kernel/arkhe-core/tests/golden_vectors.rs"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "CF-05",
+      "layers": [
+        "L1",
+        "L8"
+      ],
+      "flow": "Canonical CBOR parity and strict decode: ReleaseManifest",
+      "tests": [
+        "scripts/generate_release_manifest_vectors.py --check",
+        "kernel/arkhe-core/tests/release_manifest.rs"
+      ],
+      "status": "covered",
+      "note": "Python --check wired as gate release-vectors (week 2)"
+    },
+    {
+      "id": "CF-06",
+      "layers": [
+        "L4",
+        "L5"
+      ],
+      "flow": "MMR inclusion verified offline; altered leaf rejected",
+      "tests": [
+        "verification/crates/arkhe-verify-core/tests",
+        "verification/scripts/verify-vectors.py"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "CF-07",
+      "layers": [
+        "L5"
+      ],
+      "flow": "WASM verifier = native verifier on READY vectors",
+      "tests": [
+        "pnpm verify:wasm (ci.yml surfaces-and-wasm)"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "CF-08",
+      "layers": [
+        "L3"
+      ],
+      "flow": "Roster quorum, succession and membership windows",
+      "tests": [
+        "evidence/arkhe-wormgraph/src/roster.rs tests"
+      ],
+      "status": "covered",
+      "note": "Kani harnesses declared, execution pending"
+    },
+    {
+      "id": "CF-09",
+      "layers": [
+        "L3",
+        "L8"
+      ],
+      "flow": "Release keyset k-of-n signatures over ReleaseManifest digest",
+      "tests": [],
+      "status": "none",
+      "note": "envelope not specified; trust-registry unprovisioned"
+    },
+    {
+      "id": "CF-10",
+      "layers": [
+        "L3",
+        "L8"
+      ],
+      "flow": "IdentityBinding: both signatures, roster window, revocation",
+      "tests": [
+        "evidence/arkhe-wormgraph/tests/binding.rs",
+        "integration/arkhe-p2p/tests/idbind_nostr.rs"
+      ],
+      "status": "covered",
+      "note": "gates idbind-vectors and idbind-fixtures; nostr cross-check runs in job p2p-acquisition (week 2)"
+    },
+    {
+      "id": "CF-11",
+      "layers": [
+        "L8"
+      ],
+      "flow": "Hashtree tree verification against independent digests; damaged/missing blocks rejected",
+      "tests": [
+        "integration/arkhe-p2p/tests/hashtree.rs"
+      ],
+      "status": "covered",
+      "note": "job p2p-acquisition runs the arkhe-p2p suite offline (week 2)"
+    },
+    {
+      "id": "CF-12",
+      "layers": [
+        "L8"
+      ],
+      "flow": "Adversarial Blossom/Nostr transport: bounded, fallbacks, Incomplete not NotFound",
+      "tests": [
+        "integration/arkhe-p2p/tests/acquisition.rs",
+        "integration/arkhe-p2p/tests/bao.rs"
+      ],
+      "status": "covered",
+      "note": "job p2p-acquisition (week 2)"
+    },
+    {
+      "id": "CF-13",
+      "layers": [
+        "L8"
+      ],
+      "flow": "Rollback: release whose prev_release_digest does not chain is rejected",
+      "tests": [],
+      "status": "none",
+      "note": "field exists and is digest-bound; no chain check implemented"
+    },
+    {
+      "id": "CF-14",
+      "layers": [
+        "L4",
+        "L8"
+      ],
+      "flow": "Split view: divergent checkpoints rejected via witnesses",
+      "tests": [],
+      "status": "none",
+      "note": "D4"
+    },
+    {
+      "id": "CF-15",
+      "layers": [
+        "L7"
+      ],
+      "flow": "Preview admission, leases, fencing, recovery",
+      "tests": [
+        "orchestration/arkhe-runtime/tests/preview_postgres.rs (ci.yml, --ignored with PostgreSQL)"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "CF-16",
+      "layers": [
+        "L6",
+        "L9"
+      ],
+      "flow": "Adversarial retrieval / prompt-injection boundaries",
+      "tests": [
+        "cognition/arkhe-rag/tests/adversarial.rs (ci.yml ai-security)"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "CF-17",
+      "layers": [
+        "L0"
+      ],
+      "flow": "Reproducible build: identical narHash across independent builders",
+      "tests": [
+        "nixpkgs-arkhe checks"
+      ],
+      "status": "local",
+      "note": "workflow lives in work/nixpkgs-arkhe-integration; host x VM with Rust 1.96.0 not repeated"
+    },
+    {
+      "id": "CF-18",
+      "layers": [
+        "L7"
+      ],
+      "flow": "arkhe-sdd gate V1-V4: PR without Allow is not merged",
+      "tests": [],
+      "status": "none",
+      "note": "only the parser exists"
+    },
+    {
+      "id": "CF-19",
+      "layers": [
+        "L9"
+      ],
+      "flow": "Discovery card signature verifiable by an external agent",
+      "tests": [],
+      "status": "none",
+      "note": "D7, needs approval to publish"
+    },
+    {
+      "id": "CF-20",
+      "layers": [
+        "L0",
+        "L1"
+      ],
+      "flow": "Architecture gate: workspace = registry, migration identities locked",
+      "tests": [
+        "scripts/check_architecture.py (ci.yml)"
+      ],
+      "status": "covered",
+      "note": "passes since week 2: registry reconciled, independent workspaces declared, QA-002 migration locked, arkhe-ask build.rs"
+    }
+  ],
+  "caveat": "covered = wired to a CI workflow and passing when replayed locally; the tree is not a git repository, so no remote run backs these statuses yet",
+  "summary": {
+    "covered": 14,
+    "none": 5,
+    "local": 1
+  }
+}

@@ -1,0 +1,50 @@
+/target
+**/*.rs.bk
+
+# 🔴 O livro (mdBook) é SAÍDA, não fonte. São 1,7 MB de HTML e um índice de
+# busca de 483 KB que se regeneram em segundos — e versioná-los é a forma
+# de um `git diff` com duas mil linhas que ninguém lê. A fonte são os
+# ficheiros que o livro INCLUI, e esses estão versionados.
+/book/
+
+# 🔴 O frontend (`apps/web`) é Next.js e traz o seu próprio peso. Estas três
+# linhas: sem elas, o `git add` do repo inteiro tenta versionar
+# 934 MB de `node_modules` e 1,7 GB de cache `.next` — e o `.next` é cache
+# de build, que se regenera e nunca deve entrar num diff.
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+# 🔴 `.env.local` guarda o `NEXT_PUBLIC_*_API_URL` de cada máquina. A regra da
+# casa é dura: o `Dockerfile` do frontend **recusa** build com `.env` no
+# contexto, porque o Next inlinaria o `NEXT_PUBLIC_*` na imagem e ela voltaria
+# a ser uma imagem por cliente.
+apps/web/.env
+apps/web/.env.*
+!apps/web/.env.example
+# Capturas do Playwright e das provas de E2E: resultado de uma corrida, não
+# fonte. `.playwright-shots` pode chegar a gigabytes.
+apps/web/.playwright-shots/
+apps/web/e2e-record/
+apps/web/coverage/
+apps/web/test-results/
+
+# Ilha de desenvolvimento: dados e configuracao local, nunca versionados.
+/ilha
+.env
+
+# 🔴 As chaves de PRODUCAO nunca entram. As de TESTE entram, e tem de ser
+# assim: `fixtures/chaves/*.key` é a raiz de teste que assina os fixtures, e
+# sem ela a prova de interoperabilidade não corre no CI. A raiz de teste é
+# PUBLICADA de propósito — é o que a torna recusada pela raiz de produção.
+*.key
+*.lic
+!crates/aegis-license/fixtures/chaves/*.key
+!crates/aegis-license/fixtures/chaves/*.pub
+.licenca-ci/
+
+# 🔴 O clone do upstream do console é **bancada**, não fonte. É um clone
+# *blobless* do commit pinado (`863f94c`), clone de um repositório que é de
+# outro, e o portão da divergência faz o seu próprio clone em cada corrida —
+# versionar isto punha no nosso histórico o repositório de outra casa, e
+# 9,6 MB que se reconstroem com um comando.
+aegis-console-upstream/

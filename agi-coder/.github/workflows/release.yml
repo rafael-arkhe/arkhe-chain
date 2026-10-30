@@ -1,0 +1,46 @@
+name: Signed release candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: cargo test --locked --workspace
+      - run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - run: cargo fmt --all --check
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s integrations/deepinfer -p test_bridge.py -v
+      - run: cargo build --locked --release -p agi-coder-cli
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build && pnpm test
+      - name: Package SDK
+        run: pnpm --filter @agi-coder/sdk pack --pack-destination "$GITHUB_WORKSPACE/release"
+      - name: Package CLI
+        run: tar -czf release/agi-coder-linux-x64.tar.gz -C target/release agi-coder
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign candidates
+        run: |
+          for artifact in release/*.tgz release/*.tar.gz; do
+            cosign sign-blob --yes --bundle "$artifact.sigstore.json" "$artifact"
+          done
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: release/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-release-candidates
+          path: release/

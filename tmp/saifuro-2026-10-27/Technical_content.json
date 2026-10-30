@@ -1,0 +1,169 @@
+[
+  {
+    "title": "Arkhe and Saifuro",
+    "sub": "Technical evaluation proposal for independently verifiable evidence",
+    "cover": true,
+    "foot": "Restricted discussion draft   /   No production integration asserted"
+  },
+  {
+    "title": "The existing evidence boundary",
+    "lead": "A signed decision is one evidence object",
+    "body": [
+      "Saifuro documents a log and signed verdicts.",
+      "The proposed adapter preserves the original statement.",
+      "Execution evidence needs a separate source and explicit attribution."
+    ],
+    "note": "https://saifuro.com/about\nhttps://docs.saifuro.com/reference/verdict-limits"
+  },
+  {
+    "title": "Proposed system boundary",
+    "diagram": [
+      "Saifuro export\nApproved source",
+      "Arkhe adapter\nValidate and record",
+      "Auditor bundle\nVerify offline"
+    ],
+    "bottom": "Customer systems retain payment authority. The adapter receives no wallet keys.",
+    "note": "Architecture proposal. No implementation or custody claim is made."
+  },
+  {
+    "title": "Authorization and settlement",
+    "diagram": [
+      "Signed\nauthorization",
+      "Attributed\noutcome evidence",
+      "Linked records\nwith uncertainty"
+    ],
+    "bottom": "Unknown, pending, failed and reversed outcomes remain explicit.",
+    "note": "https://docs.saifuro.com/reference/verdict-limits\nThe integration must not infer payment from allow."
+  },
+  {
+    "title": "The signed token boundary",
+    "lead": "Preserve exact source bytes",
+    "body": [
+      "Keep the original token and a namespaced digest.",
+      "Use a strict, versioned verification profile.",
+      "Separate signature validation from transaction claims.",
+      "Store provenance for the trust configuration."
+    ],
+    "note": "https://docs.saifuro.com/reference/verify-a-verdict\nAdapter design proposed in 05_TECHNICAL_RFC_EN.md."
+  },
+  {
+    "title": "The escrow envelope question",
+    "lead": "The public token profile and escrow contract need reconciliation",
+    "body": [
+      "The public JWT uses ES256.",
+      "The public limits page describes no aud claim.",
+      "The role describes audience verification onchain.",
+      "Request the actual escrow envelope before designing a verifier."
+    ],
+    "note": "https://docs.saifuro.com/reference/verify-a-verdict\nhttps://docs.saifuro.com/reference/verdict-limits\nhttps://saifuro.com/careers/smart-contract-engineer-evm\nThis is an open question, not a confirmed vulnerability."
+  },
+  {
+    "title": "Mapping to WorkerExecutionRecord",
+    "lead": "Record the adapter operation",
+    "body": [
+      "module_id and module_version identify the adapter.",
+      "input_digest identifies the input envelope.",
+      "output_digest identifies the validation report.",
+      "evidence_refs links retained source objects."
+    ],
+    "bottom": "A WER does not establish that the underlying purchase executed.",
+    "note": "Local source: D:/arkhe/kernel/arkhe-core/src/worker.rs. Additional tenant and payment metadata requires an agreed sidecar schema."
+  },
+  {
+    "title": "Offline verification trust",
+    "diagram": [
+      "Approved key\nand profile",
+      "Signed checkpoint\nand disclosed records",
+      "Verifier result\nwith stated limits"
+    ],
+    "bottom": "A bundle cannot reveal current revocations or omitted events without additional evidence.",
+    "note": "Local source: D:/arkhe/evidence/arkhe-wormgraph/src/anchor.rs. Proposed trust procedure, not Saifuro interoperability evidence."
+  },
+  {
+    "title": "Completeness and policy history",
+    "lead": "Inclusion needs source reconciliation",
+    "body": [
+      "Retain export boundaries and expected record counts.",
+      "Detect gaps and conflicting event identities.",
+      "Do not reconstruct old rules from policy_version alone.",
+      "Collect attributable policy evidence if required."
+    ],
+    "note": "https://docs.saifuro.com/reference/not-built-yet\nProposed reconciliation controls in RFC and pilot plan."
+  },
+  {
+    "title": "Failure handling",
+    "lead": "No successful evidence receipt after a failed write",
+    "body": [
+      "Duplicates return the existing evidence identity.",
+      "Conflicting content enters quarantine.",
+      "Missing settlement evidence remains unknown.",
+      "Reversals append a linked record."
+    ],
+    "note": "Proposed adapter behavior. Payment handling remains outside this evaluation."
+  },
+  {
+    "title": "Data and disclosure boundaries",
+    "lead": "Minimize retained information",
+    "body": [
+      "Start with synthetic records and approved environments.",
+      "Keep raw tokens and sensitive metadata access controlled.",
+      "Review hashes for privacy and dictionary attacks.",
+      "Treat public anchoring as a separate design decision."
+    ],
+    "note": "Data controls are proposals. No DPA roles or international transfer mechanism have been established."
+  },
+  {
+    "title": "Pilot delivery phases",
+    "diagram": [
+      "Profile and\ntrust model",
+      "Adapter and\nnegative tests",
+      "Independent\nreview"
+    ],
+    "bottom": "Proposed four-week planning envelope, subject to access, staffing and signed scope.",
+    "note": "See 06_PILOT_PLAN_EN.md and 13_STATEMENT_OF_WORK_EN.md. The duration is an estimate."
+  },
+  {
+    "title": "Acceptance evidence",
+    "lead": "A reproducible reviewer exercise",
+    "body": [
+      "Tampered records and untrusted keys reject.",
+      "Replays, conflicts and tenant boundaries behave as specified.",
+      "Offline verification uses approved retained roots.",
+      "Latency and reviewer effort include measurement conditions."
+    ],
+    "note": "Proposed mandatory suite T01 to T18 in 06_PILOT_PLAN_EN.md. No tests of this proposed adapter have been run."
+  },
+  {
+    "title": "IP and licensing boundary",
+    "lead": "Existing permissions remain intact",
+    "body": [
+      "Core local manifests declare Apache-2.0 OR MIT.",
+      "Version and distribution history need reconciliation.",
+      "Private material must be enumerated and lawfully controlled.",
+      "New deliverables need an explicit owner and license."
+    ],
+    "note": "Local sources: D:/arkhe/Cargo.toml; kernel/arkhe-core/Cargo.toml; evidence/arkhe-wormgraph/Cargo.toml; verification/crates/arkhe-verify-wasm/Cargo.toml."
+  },
+  {
+    "title": "People and responsibility",
+    "lead": "A qualified implementation team",
+    "body": [
+      "Rafael: research, context engineering and specifications.",
+      "Experienced engineer: implementation and technical review.",
+      "Saifuro: source access, signing profile and product decisions.",
+      "Independent reviewer: acceptance evidence and limits."
+    ],
+    "note": "Proposed staffing. The candidate disclosed no production Solidity experience. No team or role allocation has been agreed."
+  },
+  {
+    "title": "Pilot decision",
+    "lead": "Agreement on scope precedes restricted delivery",
+    "body": [
+      "Confirm identity and contracting parties.",
+      "Reconcile IP and choose the appropriate NDA.",
+      "Complete the evaluation agreement and SOW.",
+      "Decide whether the measured result supports a commercial phase."
+    ],
+    "note": "https://saifuro.com/legal\nWebsite law does not automatically govern a new transaction. Draft legal terms require completion and review."
+  }
+]

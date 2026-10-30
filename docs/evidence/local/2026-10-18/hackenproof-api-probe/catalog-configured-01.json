@@ -1,0 +1,1809 @@
+{
+  "status": "UNTRUSTED_CANDIDATE_REQUIRES_REVIEW",
+  "protocol_version": "2025-11-25",
+  "server_info": {
+    "name": "hackenproof-bugbounty",
+    "version": "1.26.0"
+  },
+  "tools": [
+    {
+      "name": "list_companies",
+      "description": "List companies accessible to the current user. Returns [{title, slug, role}].\nUse slug (not title) in all other tools.\n\nArgs:\n    search: Case-insensitive filter on title or slug.\n",
+      "inputSchema": {
+        "properties": {
+          "search": {
+            "default": "",
+            "title": "Search",
+            "type": "string"
+          }
+        },
+        "title": "list_companiesArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "list_companiesOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_programs",
+      "description": "List program slugs for a company.\n\nArgs:\n    company: Company slug (from list_companies)\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          }
+        },
+        "required": [
+          "company"
+        ],
+        "title": "list_programsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "list_programsOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_program_info",
+      "description": "Fetch program rules, scopes, rewards, poc_required, focus_area, and dual_defence flag.\nCheck this before triaging to verify scope and severity/reward expectations.\n\nArgs:\n    program: Program slug (e.g. mawari-sc-audit)\n",
+      "inputSchema": {
+        "properties": {
+          "program": {
+            "title": "Program",
+            "type": "string"
+          }
+        },
+        "required": [
+          "program"
+        ],
+        "title": "get_program_infoArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "get_program_infoDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_hacker_info",
+      "description": "Fetch a hacker's profile: rank, reputation, reports count, verified/kyc\nstatus, country, skills, influenced programs, social links, and payout stats\n(severity counts + total_bounty — may be hidden when display_payout_stats=False).\n\nArgs:\n    nickname: Hacker nickname (e.g. 'sensei')\n",
+      "inputSchema": {
+        "properties": {
+          "nickname": {
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname"
+        ],
+        "title": "get_hacker_infoArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "get_hacker_infoDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_program_stats",
+      "description": "Report counts: total, new, SLA soon-to-breach, SLA breached.\n\nArgs:\n    company: Company slug\n    program: Program slug\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "program": {
+            "title": "Program",
+            "type": "string"
+          }
+        },
+        "required": [
+          "company",
+          "program"
+        ],
+        "title": "get_program_statsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "title": "get_program_statsDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_reports",
+      "description": "Search/filter reports. Returns summaries (id, title, state, severity, labels, author, created).\nUse get_report_details for full content. page=0 fetches all pages (slow for large programs).\n\nArgs:\n    company: Company slug\n    program: Program slug\n    search: Free-text search query\n    severity: \"Critical\" | \"High\" | \"Medium\" | \"Low\"\n    state: \"New\" | \"In review\" | \"Need more info\" | \"Triaged\" | \"Out of scope\" | \"Not applicable\" | \"Spam\" | \"Informative\" | \"Disclosed\" | \"Duplicate\" | \"Resolved\" | \"Paid\"\n    labels: Filter by label names (OR filter — reports matching any of the provided labels are returned)\n    hide_closed: Show only open reports (New, In review, Need more info, Triaged, Paid)\n    page: 1-based page number (10/page). 0 = all pages.\n    created_after: Return reports created on or after this date (YYYY-MM-DD).\n    created_before: Return reports created on or before this date (YYYY-MM-DD). Use same value as created_after to filter a single day.\n    awaiting_reply: Return only reports whose most recent comment is from the reporter, i.e. the ones waiting on a response from your team. Use it to build a \"needs reply\" queue. Leave False to apply no filter; the opposite set (reports your team answered last) cannot be requested.\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "program": {
+            "title": "Program",
+            "type": "string"
+          },
+          "search": {
+            "default": "",
+            "title": "Search",
+            "type": "string"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Severity"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "State"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Labels"
+          },
+          "hide_closed": {
+            "default": false,
+            "title": "Hide Closed",
+            "type": "boolean"
+          },
+          "page": {
+            "default": 0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "created_after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created After"
+          },
+          "created_before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created Before"
+          },
+          "awaiting_reply": {
+            "default": false,
+            "title": "Awaiting Reply",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "company",
+          "program"
+        ],
+        "title": "list_reportsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "list_reportsOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_report_sizes",
+      "description": "Get char counts for each report field without fetching full content.\nCall this first to decide whether to fetch the full report or specific fields.\n\nReturns: {vulnerability_description, validation_steps, comments, attachments}\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "company",
+          "report_id"
+        ],
+        "title": "get_report_sizesArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "title": "get_report_sizesDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_report_details",
+      "description": "Fetch report content. Default truncates long fields at 4000 chars and excludes comments;\n_sizes shows real char counts. Use get_report_sizes first to plan what to fetch.\n\n- full=True: return everything at full length including comments (may be large)\n- fields=[\"vulnerability_description\"]: return only that field at full length\n- fields=[\"comments\"]: get comments inline\n\nAvailable fields: id, title, severity, state, author, target, attachments,\n                  vulnerability_description, validation_steps, comments,\n                  labels, created_at, published_at, updated_at, sla, cvss_score\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    fields: Return only these fields at full length.\n    full: Return all fields at full length including comments.\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fields"
+          },
+          "full": {
+            "default": false,
+            "title": "Full",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "company",
+          "report_id"
+        ],
+        "title": "get_report_detailsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "get_report_detailsDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_reports_details_batch",
+      "description": "Fetch details for multiple reports. Same truncation/fields logic as get_report_details.\n\nArgs:\n    company: Company slug\n    report_ids: Report IDs to fetch\n    fields: Return only these fields at full length (omit for default truncated response).\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Report Ids",
+            "type": "array"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fields"
+          }
+        },
+        "required": [
+          "company",
+          "report_ids"
+        ],
+        "title": "get_reports_details_batchArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "get_reports_details_batchOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_comments",
+      "description": "Get comments on a report. Deleted comments are always excluded.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    limit: Return only the last N comments (most recent first).\n    include_hidden: If False, exclude comments hidden from the reporter.\n    comment_ids: Return only comments with these IDs (from list_comments_summary).\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Limit"
+          },
+          "include_hidden": {
+            "default": true,
+            "title": "Include Hidden",
+            "type": "boolean"
+          },
+          "comment_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment Ids"
+          }
+        },
+        "required": [
+          "company",
+          "report_id"
+        ],
+        "title": "get_commentsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "get_commentsOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_comments_summary",
+      "description": "List comment metadata without fetching comment text. Use this to identify\nwhich comments to fetch with get_comments(comment_ids=[...]).\n\nReturns: [{comment_id, username, role, date, is_hidden}] excluding deleted comments.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "company",
+          "report_id"
+        ],
+        "title": "list_comments_summaryArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "list_comments_summaryOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "search_comments",
+      "description": "Search comment text across all reports in a program. Slow on large programs — use page=N to limit scope.\n\nArgs:\n    company: Company slug\n    program: Program slug\n    query: Text to find (case-insensitive)\n    state: Restrict to reports in these states\n    page: 1-based page of reports to search. 0 = all pages.\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "program": {
+            "title": "Program",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "State"
+          },
+          "page": {
+            "default": 0,
+            "title": "Page",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "company",
+          "program",
+          "query"
+        ],
+        "title": "search_commentsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "search_commentsOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_attachments",
+      "description": "List attachment filenames and URLs for a report.\nOnly includes report-level attachments (description/PoC uploads). Comment attachments\nare not listed here — check the attachments field in get_comments results instead.\nURLs require auth — use fetch_attachment to read content into context, or\ndownload_attachment to save a file locally.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "company",
+          "report_id"
+        ],
+        "title": "get_attachmentsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "get_attachmentsOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "fetch_attachment",
+      "description": "Download an attachment via authenticated session. Text files return up to\n4000 characters of content per call, plus a short marker when more remains —\nwhen truncated is true, call again with the offset from that marker. Binary\nfiles return metadata only; their bytes are never returned — call\ndownload_attachment to save them locally.\nEvery call re-downloads and re-decodes the whole file — there is no server-side\ncache to page through — so continuing a large file repeatedly is expensive.\nJump to a specific offset deliberately rather than paging through start to\nfinish.\nTo attach a file to a comment, pass its URL as attachment_url to\ncomment_with_attachment instead of downloading it.\n\nArgs:\n    attachment_url: URL from get_attachments or get_report_details\n    offset: Character offset into the text content. Use to continue a truncated read.\n",
+      "inputSchema": {
+        "properties": {
+          "attachment_url": {
+            "title": "Attachment Url",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "title": "Offset",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "attachment_url"
+        ],
+        "title": "fetch_attachmentArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "fetch_attachmentDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_labels",
+      "description": "List all labels available in the company. Labels are company-level and shared across all programs.\nUse this before triaging to pick correct existing labels instead of creating duplicates.\n\nArgs:\n    company: Company slug\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          }
+        },
+        "required": [
+          "company"
+        ],
+        "title": "list_labelsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "list_labelsOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "add_comment",
+      "description": "Post a markdown comment on a report. Visible to the researcher unless hidden=True.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    comment: Markdown text. Newlines are supported.\n    hidden: If true, only triage team can see the comment.\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "comment": {
+            "title": "Comment",
+            "type": "string"
+          },
+          "hidden": {
+            "default": false,
+            "title": "Hidden",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "company",
+          "report_id",
+          "comment"
+        ],
+        "title": "add_commentArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "add_commentDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "comment_with_attachment",
+      "description": "Post a comment with one or more file attachments on a report.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    attachments: List of attachment dicts. Each dict:\n        {\"attachment_url\": \"https://dashboard.hackenproof.com/attachments/...\"}\n        to copy an existing HackenProof attachment, or {\"file_path\": \"/abs/path\"}\n        for a local file. attachment_url is fetched server-side. file_path works\n        only over stdio. Optional \"filename\" overrides the stored name.\n    comment: Markdown comment text. Newlines are supported.\n    hidden: If true, only triage team can see the comment.\n",
+      "inputSchema": {
+        "$defs": {
+          "Attachment": {
+            "additionalProperties": false,
+            "properties": {
+              "attachment_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Attachment Url"
+              },
+              "filename": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Filename"
+              },
+              "file_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "File Path"
+              }
+            },
+            "title": "Attachment",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/$defs/Attachment"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          },
+          "hidden": {
+            "default": false,
+            "title": "Hidden",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "company",
+          "report_id",
+          "attachments"
+        ],
+        "title": "comment_with_attachmentArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "comment_with_attachmentDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "screenshot_and_comment",
+      "description": "Attach an evidence rendering of another HackenProof report (e.g. the\noriginal of a duplicate) to a comment.\n\nBehaviour: fetches the report's PDF first (full content, fast). Falls back\nto a page screenshot only if the PDF endpoint fails for that report.\n\nArgs:\n    company: Company slug\n    report_id: Report ID to post the comment on (e.g. HACK-55)\n    screenshot_url: Full URL of the report page to attach (e.g. the original duplicate).\n    comment: Markdown comment text. Newlines are supported.\n    hidden: If true, only triage team can see the comment.\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "screenshot_url": {
+            "title": "Screenshot Url",
+            "type": "string"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          },
+          "hidden": {
+            "default": false,
+            "title": "Hidden",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "company",
+          "report_id",
+          "screenshot_url"
+        ],
+        "title": "screenshot_and_commentArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "screenshot_and_commentDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "update_comment",
+      "description": "Edit a comment on a report, possible only within 15 minutes of posting.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    new_text: Replacement markdown text.\n    comment_id: ID of the comment to edit (preferred if available).\n    comment_text: Substring of the comment text to search for (used when comment_id is unknown).\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "new_text": {
+            "title": "New Text",
+            "type": "string"
+          },
+          "comment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment Id"
+          },
+          "comment_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment Text"
+          }
+        },
+        "required": [
+          "company",
+          "report_id",
+          "new_text"
+        ],
+        "title": "update_commentArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "update_commentDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "delete_comment",
+      "description": "Delete a comment on a report, possible only within 15 minutes of posting.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    comment_id: ID of the comment to delete (preferred if available).\n    comment_text: Substring of the comment text to search for (used when comment_id is unknown).\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "comment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment Id"
+          },
+          "comment_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment Text"
+          }
+        },
+        "required": [
+          "company",
+          "report_id"
+        ],
+        "title": "delete_commentArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "delete_commentDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "change_state",
+      "description": "Change report state. Automatically walks intermediate transitions to reach the target.\n\nValid target states: New | In review | Need more info | Triaged | Out of scope |\n                     Not applicable | Spam | Informative | Disclosed | Duplicate | Resolved\nTransition to Paid is rejected — payout is a separate operation.\n\nWhen target_state=\"Disclosed\", you can optionally control public visibility:\n- visibility: \"private\" | \"partially\" | \"public\"\n- visibility_params: per-field booleans. Recognised keys:\n    report_title, author_name, rewards, comments, target_info, vuln_details,\n    validation_steps, vuln_type, attachments, severity, state, creation_date,\n    participants, timeline\nThese are ignored unless target_state=\"Disclosed\". Use the set_visibility tool to\nupdate them later on an already-disclosed report.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    target_state: Target state (exact string from list above)\n    visibility: Public-visibility mode for disclosed reports\n    visibility_params: Per-field visibility toggles for disclosed reports\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "target_state": {
+            "title": "Target State",
+            "type": "string"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visibility"
+          },
+          "visibility_params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visibility Params"
+          }
+        },
+        "required": [
+          "company",
+          "report_id",
+          "target_state"
+        ],
+        "title": "change_stateArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "change_stateDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "set_visibility",
+      "description": "Update what's publicly visible on an already-disclosed report.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    visibility: \"private\" | \"partially\" | \"public\"\n    visibility_params: Per-field booleans. Recognised keys:\n        report_title, author_name, rewards, comments, target_info, vuln_details,\n        validation_steps, vuln_type, attachments, severity, state, creation_date,\n        participants, timeline\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "visibility": {
+            "title": "Visibility",
+            "type": "string"
+          },
+          "visibility_params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visibility Params"
+          }
+        },
+        "required": [
+          "company",
+          "report_id",
+          "visibility"
+        ],
+        "title": "set_visibilityArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "set_visibilityDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "change_severity",
+      "description": "Change report severity.\n\nValid values: Low | Medium | High | Critical\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    severity: New severity (exact string from list above)\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "company",
+          "report_id",
+          "severity"
+        ],
+        "title": "change_severityArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "change_severityDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "add_labels",
+      "description": "Add labels to a report.\nUse kebab-case: dup-42, access-control, needs-poc. Avoid spaces/underscores/mixed case.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    labels: Label names to add\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Labels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "company",
+          "report_id",
+          "labels"
+        ],
+        "title": "add_labelsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "add_labelsDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "remove_labels",
+      "description": "Remove labels from a report. Labels not currently on the report are silently ignored.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    labels: Label names to remove\n",
+      "inputSchema": {
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Labels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "company",
+          "report_id",
+          "labels"
+        ],
+        "title": "remove_labelsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "remove_labelsDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "triage_report",
+      "description": "Apply all triage decisions to a single report in one authorized action.\n\nFor the same actions on many reports, use triage_bulk instead.\nFor different actions per report, use triage_reports_batch.\n\nExecution order: comment (with optional attachments) → state → severity → labels.\nThe LLM should present a plain-text summary of planned actions before calling this,\nso the user can review and confirm in one step.\n\nArgs:\n    company: Company slug\n    report_id: Report ID (e.g. HACK-55)\n    state: Target state (e.g. \"Out of scope\", \"Duplicate\", \"Triaged\")\n    severity: New severity (e.g. \"High\", \"Critical\")\n    labels_add: Labels to add (e.g. [\"dup-42\", \"needs-poc\"])\n    labels_remove: Labels to remove (e.g. [\"needs-poc\"])\n    comment: Markdown comment text\n    comment_hidden: If true, comment is only visible to triage team\n    screenshot_url: If set, takes an authenticated screenshot and attaches it to the comment\n    attachments: Files to attach. Each dict:\n        {\"attachment_url\": \"https://dashboard.hackenproof.com/attachments/...\"}\n        or {\"file_path\": \"/abs/path\"} (stdio only). Optional \"filename\"\n        overrides the stored name.\n",
+      "inputSchema": {
+        "$defs": {
+          "Attachment": {
+            "additionalProperties": false,
+            "properties": {
+              "attachment_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Attachment Url"
+              },
+              "filename": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Filename"
+              },
+              "file_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "File Path"
+              }
+            },
+            "title": "Attachment",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "State"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Severity"
+          },
+          "labels_add": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Labels Add"
+          },
+          "labels_remove": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Labels Remove"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          },
+          "comment_hidden": {
+            "default": false,
+            "title": "Comment Hidden",
+            "type": "boolean"
+          },
+          "screenshot_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Screenshot Url"
+          },
+          "attachments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/$defs/Attachment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attachments"
+          }
+        },
+        "required": [
+          "company",
+          "report_id"
+        ],
+        "title": "triage_reportArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "triage_reportDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "triage_reports_batch",
+      "description": "Apply different triage decisions to multiple reports in one authorized action.\n\nFor the same actions on all reports, use triage_bulk instead (simpler, flat params).\n\nThe LLM should present a summary table of planned actions before calling this,\nso the user can review, edit, and confirm everything in one step.\n\nEach entry in `reports` is a dict with (all fields optional except report_id):\n    report_id       (str, required)\n    state           (str)  e.g. \"Out of scope\", \"Duplicate\", \"Triaged\"\n    severity        (str)  e.g. \"High\", \"Critical\"\n    labels_add      (list[str])\n    labels_remove   (list[str])\n    comment         (str)  markdown text\n    comment_hidden  (bool) default false\n    screenshot_url  (str)  if set, attaches a screenshot to the comment\n    attachments     (list[dict]) file attachments:\n                    {\"attachment_url\": \"...\"} | {\"file_path\": \"...\"}\n                    optional \"filename\" overrides the stored name\n\nExecution order per report: comment (+attachments) → state → severity → labels.\nReports are processed sequentially; failures on one report do not stop the rest.\n\nArgs:\n    company: Company slug\n    reports: List of per-report action dicts\n",
+      "inputSchema": {
+        "$defs": {
+          "Attachment": {
+            "additionalProperties": false,
+            "properties": {
+              "attachment_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Attachment Url"
+              },
+              "filename": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Filename"
+              },
+              "file_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "File Path"
+              }
+            },
+            "title": "Attachment",
+            "type": "object"
+          },
+          "TriageReportAction": {
+            "additionalProperties": false,
+            "properties": {
+              "report_id": {
+                "title": "Report Id",
+                "type": "string"
+              },
+              "state": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "State"
+              },
+              "severity": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Severity"
+              },
+              "labels_add": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Labels Add"
+              },
+              "labels_remove": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Labels Remove"
+              },
+              "comment": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Comment"
+              },
+              "comment_hidden": {
+                "default": false,
+                "title": "Comment Hidden",
+                "type": "boolean"
+              },
+              "screenshot_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Screenshot Url"
+              },
+              "attachments": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "$ref": "#/$defs/Attachment"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Attachments"
+              }
+            },
+            "required": [
+              "report_id"
+            ],
+            "title": "TriageReportAction",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/$defs/TriageReportAction"
+            },
+            "title": "Reports",
+            "type": "array"
+          }
+        },
+        "required": [
+          "company",
+          "reports"
+        ],
+        "title": "triage_reports_batchArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "triage_reports_batchDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "triage_bulk",
+      "description": "Apply identical triage actions to multiple reports at once.\n\nUse this when the same state, severity, labels, and/or comment apply to all reports.\nFor per-report customization, use triage_reports_batch instead.\n\nExecution order per report: comment (+attachments) → state → severity → labels.\nReports are processed sequentially; failures on one do not stop the rest.\n\nArgs:\n    company: Company slug\n    report_ids: List of report IDs (e.g. [\"HACK-55\", \"HACK-56\"])\n    state: Target state (e.g. \"Out of scope\", \"Duplicate\")\n    severity: New severity (e.g. \"High\", \"Critical\")\n    labels_add: Labels to add\n    labels_remove: Labels to remove\n    comment: Markdown comment text\n    comment_hidden: If true, comment is only visible to triage team\n    screenshot_url: Takes an authenticated screenshot and attaches it to each comment\n    attachments: Files to attach. Each dict:\n        {\"attachment_url\": \"https://dashboard.hackenproof.com/attachments/...\"}\n        or {\"file_path\": \"/abs/path\"} (stdio only). Optional \"filename\"\n        overrides the stored name.\n",
+      "inputSchema": {
+        "$defs": {
+          "Attachment": {
+            "additionalProperties": false,
+            "properties": {
+              "attachment_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Attachment Url"
+              },
+              "filename": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Filename"
+              },
+              "file_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "File Path"
+              }
+            },
+            "title": "Attachment",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "report_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Report Ids",
+            "type": "array"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "State"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Severity"
+          },
+          "labels_add": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Labels Add"
+          },
+          "labels_remove": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Labels Remove"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          },
+          "comment_hidden": {
+            "default": false,
+            "title": "Comment Hidden",
+            "type": "boolean"
+          },
+          "screenshot_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Screenshot Url"
+          },
+          "attachments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/$defs/Attachment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attachments"
+          }
+        },
+        "required": [
+          "company",
+          "report_ids"
+        ],
+        "title": "triage_bulkArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "triage_bulkDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    }
+  ]
+}

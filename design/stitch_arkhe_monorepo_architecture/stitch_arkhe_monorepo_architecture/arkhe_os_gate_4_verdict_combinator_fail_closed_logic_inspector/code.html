@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // OS - Gate 4 Inspector</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Space Grotesk, JetBrains Mono, Geist -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&amp;family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-on-surface": "#2d3038",
+            "on-primary": "#00363a",
+            "on-background": "#dfe2ed",
+            "outline-variant": "#3b494b",
+            "inverse-primary": "#006970",
+            "primary": "#dbfcff",
+            "on-surface-variant": "#b9cacb",
+            "surface-tint": "#00dbe9",
+            "primary-fixed": "#7df4ff",
+            "on-primary-fixed-variant": "#004f54",
+            "on-surface": "#dfe2ed",
+            "on-tertiary-fixed-variant": "#005236",
+            "error": "#ffb4ab",
+            "secondary-fixed-dim": "#7bd0ff",
+            "on-secondary-container": "#00374d",
+            "secondary": "#7bd0ff",
+            "on-error-container": "#ffdad6",
+            "surface-container": "#1c2027",
+            "background": "#0f131b",
+            "on-error": "#690005",
+            "surface-container-low": "#181c23",
+            "on-primary-fixed": "#002022",
+            "on-tertiary": "#003824",
+            "inverse-surface": "#dfe2ed",
+            "outline": "#849495",
+            "on-tertiary-container": "#006d4a",
+            "on-secondary": "#00354a",
+            "surface-variant": "#31353d",
+            "on-primary-container": "#006970",
+            "on-tertiary-fixed": "#002113",
+            "on-secondary-fixed": "#001e2c",
+            "surface-container-lowest": "#0a0e15",
+            "tertiary-container": "#65f2b5",
+            "surface-container-high": "#262a32",
+            "surface-dim": "#0f131b",
+            "secondary-fixed": "#c4e7ff",
+            "primary-container": "#00f0ff",
+            "tertiary-fixed": "#6ffbbe",
+            "secondary-container": "#00a6e0",
+            "error-container": "#93000a",
+            "surface": "#0f131b",
+            "primary-fixed-dim": "#00dbe9",
+            "on-secondary-fixed-variant": "#004c69",
+            "surface-bright": "#353941",
+            "tertiary-fixed-dim": "#4edea3",
+            "tertiary": "#d8ffe7",
+            "surface-container-highest": "#31353d"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin-desktop": "1.5rem",
+            "margin": "1rem",
+            "space-xl": "2rem",
+            "gutter-desktop": "1rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "gutter": "0.75rem",
+            "space-md": "0.75rem"
+          },
+          "fontFamily": {
+            "label-caps": ["JetBrains Mono"],
+            "headline-md": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "mono-md": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "body-sm": ["Geist"],
+            "display-lg": ["Space Grotesk"],
+            "body-lg": ["Geist"],
+            "mono-sm": ["JetBrains Mono"],
+            "display-lg-mobile": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom scanline and glow utilities for cybernetic terminal aesthetic */
+    .terminal-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .terminal-scrollbar::-webkit-scrollbar-track {
+      background: #0a0e15;
+    }
+    .terminal-scrollbar::-webkit-scrollbar-thumb {
+      background: #1c2027;
+      border-radius: 1px;
+    }
+    .terminal-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #3b494b;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+    }
+    .pulse-dot {
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden h-screen flex flex-col select-none">
+<!-- TOP BAR (Derived from Shared Components JSON: TopNavBar) -->
+<header class="flex justify-between items-center w-full px-space-md h-12 bg-surface dark:bg-surface border-b border-outline-variant z-50 shrink-0">
+<!-- Brand Anchor & Search / Breadcrumb Context -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="terminal">terminal</span>
+<span class="text-headline-md font-headline-md font-bold tracking-tight text-primary dark:text-primary">ARKHE // OS</span>
+</div>
+<div class="h-4 w-px bg-outline-variant mx-1"></div>
+<!-- Breadcrumbs / Active Context -->
+<div class="flex items-center gap-2 text-mono-sm font-mono-sm text-on-surface-variant">
+<span class="text-outline">inspect:</span>
+<span class="text-primary font-mono-sm text-mono-sm bg-surface-container-low px-2 py-0.5 border border-outline-variant">Gate 4 Verdict Combinator &amp; Fail-Closed Logic Inspector (src/gate4.rs)</span>
+</div>
+</div>
+<!-- Central Navigation Links from JSON: Active is 'Formal Verification' -->
+<nav class="hidden lg:flex items-center gap-6 h-full pt-1">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150" href="#">Monorepo Explorer</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150" href="#">GGUF 4-Gate Pipeline</a>
+<a class="border-b-2 border-primary-container dark:border-primary-container text-primary dark:text-primary pb-1 font-mono-sm text-mono-sm" href="#">Formal Verification</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150" href="#">ADR Matrix</a>
+</nav>
+<!-- Trailing Actions, Pill Badges & System Arming -->
+<div class="flex items-center gap-2">
+<!-- Pill Badges -->
+<div class="hidden xl:flex items-center gap-1.5 bg-surface-container-low border border-outline-variant px-2 py-1 rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container pulse-dot"></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">TCB: ARKHE-VERIFY-CORE V0.2.0</span>
+</div>
+<div class="hidden 2xl:flex items-center bg-surface-container-low border border-outline-variant px-2 py-1 rounded">
+<span class="font-label-caps text-label-caps text-secondary">Zeroize: Resolved (2024)</span>
+</div>
+<!-- Trailing Primary Action from JSON: Fail-Closed [ARMED] -->
+<div class="flex items-center gap-1.5 bg-error-container/20 border border-error/50 px-2.5 py-1 rounded text-error font-mono-sm text-mono-sm">
+<span class="material-symbols-outlined text-[14px]" data-icon="shield">shield</span>
+<span>Fail-Closed [ARMED]</span>
+</div>
+<!-- Quick Action Utilities -->
+<button class="flex items-center gap-1 px-2 py-1 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface text-mono-sm font-mono-sm rounded transition-colors duration-150" title="Copy Full Crate Code">
+<span class="material-symbols-outlined text-[14px]" data-icon="content_copy">content_copy</span>
+<span class="hidden md:inline">Copy Full Crate</span>
+</button>
+<button class="flex items-center gap-1 px-2 py-1 bg-primary-container hover:bg-surface-tint text-surface-container-lowest font-mono-sm text-mono-sm font-semibold rounded glow-cyan transition-all duration-150">
+<span class="material-symbols-outlined text-[15px]" data-icon="play_arrow">play_arrow</span>
+<span>Verify Cargo Test</span>
+</button>
+<div class="h-4 w-px bg-outline-variant mx-1"></div>
+<!-- Trailing Icon Actions from JSON -->
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="p-1 hover:bg-surface-container-high hover:text-primary rounded transition-colors" title="Hub Network"><span class="material-symbols-outlined text-[18px]" data-icon="hub">hub</span></button>
+<button class="p-1 hover:bg-surface-container-high hover:text-primary rounded transition-colors" title="Tune Gate Parameters"><span class="material-symbols-outlined text-[18px]" data-icon="tune">tune</span></button>
+</div>
+<!-- Version Tag from JSON -->
+<span class="font-mono-sm text-mono-sm text-outline px-1">v0.1.0</span>
+</div>
+</header>
+<!-- MAIN WORKBENCH VIEWPORT -->
+<div class="flex flex-1 w-full overflow-hidden">
+<!-- LEFT SIDEBAR: File Tree & Lemma Prover (Derived from Shared Components JSON: SideNavBar) -->
+<aside class="w-64 bg-surface-container-lowest border-r border-outline-variant flex flex-col justify-between shrink-0 z-30 select-none">
+<!-- Top Operational Identity & MMR State -->
+<div class="p-space-sm border-b border-outline-variant bg-surface-container-low/40">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]" data-icon="lock_clock">lock_clock</span>
+<div>
+<div class="font-mono-sm text-mono-sm font-bold text-primary tracking-wider">ROOT::0x8f2a...c01d</div>
+<div class="font-label-caps text-label-caps text-tertiary-container flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+                MMR VERIFIED // ZERO-DRIFT
+              </div>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]" data-icon="verified_user">verified_user</span>
+</div>
+<!-- 4-Gate Rapid Verification Selector Harness -->
+<div class="mt-3 pt-2 border-t border-outline-variant/60">
+<div class="font-label-caps text-label-caps text-outline mb-1.5 flex justify-between">
+<span>PIPELINE GATES</span>
+<span class="text-tertiary-container">G1-G4 ACTIVE</span>
+</div>
+<div class="grid grid-cols-4 gap-1">
+<button class="py-1 text-center font-mono-sm text-mono-sm border border-outline-variant bg-surface-container text-on-surface-variant hover:border-primary-container transition-colors">
+              G1
+            </button>
+<button class="py-1 text-center font-mono-sm text-mono-sm border border-outline-variant bg-surface-container text-on-surface-variant hover:border-primary-container transition-colors">
+              G2
+            </button>
+<button class="py-1 text-center font-mono-sm text-mono-sm border border-outline-variant bg-surface-container text-on-surface-variant hover:border-primary-container transition-colors">
+              G3
+            </button>
+<button class="py-1 text-center font-mono-sm text-mono-sm border border-primary-container bg-surface-container-low text-primary-container font-bold glow-cyan transition-all">
+              G4
+            </button>
+</div>
+</div>
+</div>
+<!-- Navigation & File Tree Workspace -->
+<div class="flex-1 overflow-y-auto terminal-scrollbar p-space-xs space-y-3">
+<!-- Tab Labels from SideNavBar JSON (Contextual active highlighting) -->
+<div class="space-y-0.5">
+<div class="px-2 py-1 font-label-caps text-label-caps text-outline">WORKSPACE NAVIGATION</div>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="account_tree">account_tree</span>
+<span>AST WormGraph</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="verified_user">verified_user</span>
+<span>GGUF Gates</span>
+</a>
+<!-- Active navigation item matching Prover Lemmata / Formal Verification -->
+<a class="flex items-center gap-2 px-space-sm py-1.5 border-l-2 border-primary-container bg-surface-container-low text-primary font-mono-sm text-mono-sm" href="#">
+<span class="material-symbols-outlined text-[16px] text-primary-container" data-icon="rule">rule</span>
+<span class="font-bold">Prover Lemmata</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="monitoring">monitoring</span>
+<span>Telemetry Log</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="lock_clock">lock_clock</span>
+<span>Audit Chain</span>
+</a>
+</div>
+<div class="h-px bg-outline-variant/60 my-1 mx-2"></div>
+<!-- Crate Hierarchy: arkhe-verify-core -->
+<div>
+<div class="px-2 py-1 font-label-caps text-label-caps text-outline flex items-center justify-between">
+<span>CRATE: ARKHE-VERIFY-CORE</span>
+<span class="text-secondary text-[10px]">v0.2.0</span>
+</div>
+<div class="mt-1 space-y-0.5 text-mono-sm font-mono-sm">
+<div class="flex items-center gap-1.5 px-2 py-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface cursor-pointer">
+<span class="material-symbols-outlined text-[14px] text-outline" data-icon="description">description</span>
+<span>src/lib.rs</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface cursor-pointer">
+<span class="material-symbols-outlined text-[14px] text-outline" data-icon="description">description</span>
+<span class="flex-1">src/gguf.rs</span>
+<span class="text-[10px] text-outline border border-outline-variant px-1 rounded">G1</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface cursor-pointer">
+<span class="material-symbols-outlined text-[14px] text-outline" data-icon="description">description</span>
+<span class="flex-1">src/canon.rs</span>
+<span class="text-[10px] text-outline border border-outline-variant px-1 rounded">G2</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface cursor-pointer">
+<span class="material-symbols-outlined text-[14px] text-outline" data-icon="description">description</span>
+<span class="flex-1">src/gate3.rs</span>
+<span class="text-[10px] text-outline border border-outline-variant px-1 rounded">G3</span>
+</div>
+<!-- Active Target File -->
+<div class="flex items-center gap-1.5 px-2 py-1 bg-surface-container text-primary font-bold border-l-2 border-primary-container cursor-pointer">
+<span class="material-symbols-outlined text-[14px] text-primary-container" data-icon="code">code</span>
+<span class="flex-1">src/gate4.rs</span>
+<span class="text-[10px] bg-primary-container/20 text-primary-container border border-primary-container/40 px-1 rounded">G4</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface cursor-pointer">
+<span class="material-symbols-outlined text-[14px] text-outline" data-icon="bug_report">bug_report</span>
+<span class="flex-1">tests/pipeline.rs</span>
+<span class="text-[10px] text-tertiary-container font-mono-sm">[12T]</span>
+</div>
+</div>
+</div>
+<div class="h-px bg-outline-variant/60 my-1 mx-2"></div>
+<!-- Verification Lemmas & Proof Status -->
+<div class="px-2">
+<div class="font-label-caps text-label-caps text-outline mb-1.5 flex items-center justify-between">
+<span>VERIFIED LEMMATA</span>
+<span class="text-tertiary-container font-bold">4/4 OK</span>
+</div>
+<div class="space-y-1.5">
+<div class="p-1.5 bg-surface-container-low border border-outline-variant rounded hover:border-tertiary-container/50 transition-colors">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-on-surface text-[11px] font-bold">L1: PENDING -&gt; Incomplete</span>
+<span class="text-[10px] text-tertiary-container font-semibold">Q.E.D.</span>
+</div>
+<div class="text-[10px] text-on-surface-variant mt-0.5">Strict mapping guaranteed</div>
+</div>
+<div class="p-1.5 bg-surface-container-low border border-outline-variant rounded hover:border-tertiary-container/50 transition-colors">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-on-surface text-[11px] font-bold">L2: Zero-pass-through</span>
+<span class="text-[10px] text-tertiary-container font-semibold">Q.E.D.</span>
+</div>
+<div class="text-[10px] text-on-surface-variant mt-0.5">Offline cannot promote</div>
+</div>
+<div class="p-1.5 bg-surface-container-low border border-outline-variant rounded hover:border-tertiary-container/50 transition-colors">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-on-surface text-[11px] font-bold">L3: Precedence G1..G3</span>
+<span class="text-[10px] text-tertiary-container font-semibold">Q.E.D.</span>
+</div>
+<div class="text-[10px] text-on-surface-variant mt-0.5">Antecedent failures trigger Reject</div>
+</div>
+<div class="p-1.5 bg-surface-container-low border border-outline-variant rounded hover:border-tertiary-container/50 transition-colors">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-on-surface text-[11px] font-bold">L4: Non-vacuous combinator</span>
+<span class="text-[10px] text-tertiary-container font-semibold">PROVED</span>
+</div>
+<div class="text-[10px] text-on-surface-variant mt-0.5">Satisfiability domain intact</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom CTA & Settings / Docs (from SideNavBar JSON) -->
+<div class="p-space-sm border-t border-outline-variant bg-surface-container-low/60 space-y-2">
+<button class="w-full py-2 bg-primary-container hover:bg-surface-tint text-surface-container-lowest font-mono-sm text-mono-sm font-bold rounded flex items-center justify-center gap-1.5 glow-cyan active:scale-[0.99] transition-all">
+<span class="material-symbols-outlined text-[16px]" data-icon="terminal">terminal</span>
+<span>EXEC PROVER</span>
+</button>
+<div class="flex items-center justify-between pt-1 text-mono-sm font-mono-sm">
+<a class="flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container px-2 py-1 rounded transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container px-2 py-1 rounded transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="menu_book">menu_book</span>
+<span>Docs</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- CENTER CODE VIEWER & PROVER WORKBENCH -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface-dim overflow-hidden border-r border-outline-variant">
+<!-- File Tabs Header -->
+<div class="h-9 bg-surface-container-lowest border-b border-outline-variant flex items-center justify-between px-space-sm shrink-0">
+<div class="flex items-center h-full">
+<div class="flex items-center gap-2 px-3 h-full bg-surface-dim border-r border-outline-variant border-t-2 border-t-primary-container text-primary font-mono-sm text-mono-sm font-bold">
+<span class="material-symbols-outlined text-[14px] text-primary-container" data-icon="code">code</span>
+<span>src/gate4.rs [G4]</span>
+<span class="text-outline hover:text-on-surface cursor-pointer ml-1">×</span>
+</div>
+<div class="flex items-center gap-2 px-3 h-full border-r border-outline-variant text-on-surface-variant hover:bg-surface-container-low cursor-pointer font-mono-sm text-mono-sm transition-colors">
+<span class="material-symbols-outlined text-[14px]" data-icon="description">description</span>
+<span>src/gate3.rs</span>
+</div>
+</div>
+<div class="flex items-center gap-3 text-mono-sm font-mono-sm">
+<span class="text-outline">48 lines</span>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-tertiary-container/15 text-tertiary-container border border-tertiary-container/30 font-label-caps text-label-caps">
+<span class="w-1 h-1 rounded-full bg-tertiary-container"></span>
+            THEOREM PROVED
+          </span>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-error/10 text-error border border-error/30 font-label-caps text-label-caps">
+            AUDITED // FAIL-CLOSED
+          </span>
+<span class="text-on-surface-variant text-[11px] font-mono-sm">UTF-8 // Rust 1.78</span>
+</div>
+</div>
+<!-- Invariant Definition Header Banner -->
+<div class="bg-surface-container-low border-b border-outline-variant p-3 shrink-0">
+<div class="flex items-start gap-2.5">
+<div class="p-1 bg-primary-container/10 border border-primary-container/30 rounded text-primary-container mt-0.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified">verified</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-primary-container tracking-wider">INVARIANT I_4 // VERDICT COMBINATOR &amp; NON-VACUITY</span>
+<span class="font-label-caps text-[9px] bg-surface-container-high px-1.5 py-0.2 rounded text-secondary border border-outline-variant">FAIL-CLOSED FORMULA</span>
+</div>
+<p class="mt-1 font-body-sm text-body-sm text-on-surface leading-tight">
+<code class="text-primary font-mono-sm text-[11px] bg-surface-container px-1 py-0.2 rounded">PENDING</code> state is strictly mapped to <code class="text-primary font-mono-sm text-[11px] bg-surface-container px-1 py-0.2 rounded">Verdict::Incomplete</code>. A verdict of <code class="text-tertiary-container font-mono-sm text-[11px] bg-surface-container px-1 py-0.2 rounded">Pass</code> strictly requires all 3 antecedent verification gates (G1 structural, G3 cryptographic in-toto) to return <code class="text-tertiary-container font-mono-sm text-[11px] bg-surface-container px-1 py-0.2 rounded">Ok(())</code> AND Gate 4 status to be <code class="text-primary font-mono-sm text-[11px] bg-surface-container px-1 py-0.2 rounded">Verified</code>. Any gate failure unconditionally returns <code class="text-error font-mono-sm text-[11px] bg-surface-container px-1 py-0.2 rounded">Verdict::Reject</code>.
+            </p>
+</div>
+</div>
+</div>
+<!-- Syntax-Highlighted Rust Source Code View -->
+<div class="flex-1 overflow-y-auto terminal-scrollbar bg-surface-container-lowest font-mono-sm text-mono-sm leading-relaxed p-2 flex">
+<!-- Line Numbers Column -->
+<div class="text-right text-outline/50 select-none pr-3 border-r border-outline-variant/40 space-y-0.5 w-8 shrink-0">
+<div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div>
+<div>11</div><div>12</div><div>13</div><div>14</div><div>15</div><div>16</div><div>17</div><div>18</div><div>19</div><div>20</div>
+<div>21</div><div>22</div><div>23</div><div>24</div><div>25</div><div>26</div><div>27</div><div>28</div><div>29</div><div>30</div>
+<div>31</div><div>32</div><div>33</div><div>34</div><div>35</div><div>36</div><div>37</div>
+</div>
+<!-- Rust Code Listing with High-Fidelity Theming -->
+<div class="pl-4 space-y-0.5 text-on-surface whitespace-pre overflow-x-auto flex-1">
+<div><span class="text-outline italic">//! Gate 4 (apenas o combinador): PENDING nunca vira PASS. Consulta de linhagem/TEE nao implementada offline.</span></div>
+<div><span class="text-primary-container font-semibold">use</span> <span class="text-on-surface">crate::gate3::</span><span class="text-secondary">Gate3Error</span>;</div>
+<div><span class="text-primary-container font-semibold">use</span> <span class="text-on-surface">crate::gguf::</span><span class="text-secondary">GgufError</span>;</div>
+<div></div>
+<div><span class="text-outline">#[derive(Debug, Clone, PartialEq, Eq)]</span></div>
+<div><span class="text-primary-container font-semibold">pub enum</span> <span class="text-primary font-bold">Gate4Status</span> {</div>
+<div> <span class="text-tertiary-container">Verified</span>,</div>
+<div> <span class="text-secondary">Pending</span>(<span class="text-primary-fixed">String</span>),</div>
+<div> <span class="text-error">Failed</span>(<span class="text-primary-fixed">String</span>),</div>
+<div>}</div>
+<div></div>
+<div><span class="text-outline">#[derive(Debug, Clone, PartialEq, Eq)]</span></div>
+<div><span class="text-primary-container font-semibold">pub enum</span> <span class="text-primary font-bold">Verdict</span> {</div>
+<div> <span class="text-tertiary-container font-bold">Pass</span>,</div>
+<div> <span class="text-error">Reject</span>(<span class="text-primary-fixed">String</span>),</div>
+<div> <span class="text-secondary">Incomplete</span>(<span class="text-primary-fixed">String</span>),</div>
+<div>}</div>
+<div></div>
+<div><span class="text-outline italic">/// Combinador de veredito fail-closed.</span></div>
+<div><span class="text-outline italic">/// AXIOMA DE SEGURANCA: PENDING nunca e PASS.</span></div>
+<div><span class="text-primary-container font-semibold">pub fn</span> <span class="text-secondary-fixed font-bold">final_verdict</span>(</div>
+<div> <span class="text-on-surface">g1</span>: &amp;<span class="text-primary-container">Result</span>&lt;(), <span class="text-secondary">GgufError</span>&gt;,</div>
+<div> <span class="text-on-surface">g3</span>: &amp;<span class="text-primary-container">Result</span>&lt;(), <span class="text-secondary">Gate3Error</span>&gt;,</div>
+<div> <span class="text-on-surface">g4</span>: &amp;<span class="text-primary">Gate4Status</span>,</div>
+<div>) -&gt; <span class="text-primary font-bold">Verdict</span> {</div>
+<div class="bg-surface-container-high/40 px-1 rounded -mx-1"><span class="text-primary-container font-semibold">    if let</span> <span class="text-error">Err</span>(<span class="text-on-surface">e</span>) = <span class="text-on-surface">g1</span> {</div>
+<div> <span class="text-primary-container font-semibold">return</span> <span class="text-primary">Verdict</span>::<span class="text-error">Reject</span>(<span class="text-primary-container">format!</span>(<span class="text-tertiary">"gate1: {:?}"</span>, <span class="text-on-surface">e</span>));</div>
+<div>    }</div>
+<div class="bg-surface-container-high/40 px-1 rounded -mx-1"><span class="text-primary-container font-semibold">    if let</span> <span class="text-error">Err</span>(<span class="text-on-surface">e</span>) = <span class="text-on-surface">g3</span> {</div>
+<div> <span class="text-primary-container font-semibold">return</span> <span class="text-primary">Verdict</span>::<span class="text-error">Reject</span>(<span class="text-primary-container">format!</span>(<span class="text-tertiary">"gate3: {:?}"</span>, <span class="text-on-surface">e</span>));</div>
+<div>    }</div>
+<div class="bg-surface-container-low/80 border-l border-primary-container pl-2 -ml-2 py-0.5"> <span class="text-primary-container font-semibold">match</span> <span class="text-on-surface">g4</span> {</div>
+<div> <span class="text-primary">Gate4Status</span>::<span class="text-tertiary-container">Verified</span> =&gt; <span class="text-primary">Verdict</span>::<span class="text-tertiary-container font-bold">Pass</span>,</div>
+<div> <span class="text-primary">Gate4Status</span>::<span class="text-secondary">Pending</span>(<span class="text-on-surface">r</span>) =&gt; <span class="text-primary">Verdict</span>::<span class="text-secondary">Incomplete</span>(<span class="text-primary-container">format!</span>(<span class="text-tertiary">"gate4 pending: {}"</span>, <span class="text-on-surface">r</span>)),</div>
+<div> <span class="text-primary">Gate4Status</span>::<span class="text-error">Failed</span>(<span class="text-on-surface">r</span>) =&gt; <span class="text-primary">Verdict</span>::<span class="text-error">Reject</span>(<span class="text-primary-container">format!</span>(<span class="text-tertiary">"gate4: {}"</span>, <span class="text-on-surface">r</span>)),</div>
+<div>    }</div>
+<div>}</div>
+</div>
+</div>
+<!-- Bottom Embedded Prover Output & Terminal -->
+<div class="h-44 bg-surface-container-lowest border-t border-outline-variant flex flex-col shrink-0">
+<div class="h-7 bg-surface-container-low px-3 flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-container text-[14px]" data-icon="terminal">terminal</span>
+<span class="font-label-caps text-label-caps text-on-surface">CARGO TEST EXECUTION TRACE</span>
+<span class="text-[10px] text-tertiary-container bg-tertiary-container/10 px-1 rounded border border-tertiary-container/30">DETERMINISTIC PASS</span>
+</div>
+<div class="flex items-center gap-2 text-outline text-[11px] font-mono-sm">
+<span>2 passed</span>
+<span>•</span>
+<span>0 failed</span>
+<span>•</span>
+<span class="text-primary-container">0.03ms</span>
+</div>
+</div>
+<div class="flex-1 p-2 font-mono-sm text-mono-sm overflow-y-auto terminal-scrollbar space-y-0.5 text-on-surface-variant">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="text-primary-container">$</span>
+<span>cargo test verdict -- --nocapture</span>
+</div>
+<div class="text-outline">Compiling arkhe-verify-core v0.2.0 (/workspace/core)</div>
+<div class="text-outline">Running 2 tests</div>
+<div class="flex items-center justify-between py-0.5">
+<span class="text-on-surface">test <span class="text-primary">verdict_pending_is_never_pass</span> ...</span>
+<span class="text-tertiary-container font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+              ok (0.01ms)
+            </span>
+</div>
+<div class="flex items-center justify-between py-0.5">
+<span class="text-on-surface">test <span class="text-primary">verdict_pass_requires_all</span> ...</span>
+<span class="text-tertiary-container font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+              ok (0.02ms)
+            </span>
+</div>
+<div class="pt-1 border-t border-outline-variant/40 text-tertiary-container font-bold">
+            test result: ok. 2 passed; 0 failed; finished in 0.03ms.
+          </div>
+</div>
+</div>
+</main>
+<!-- RIGHT SIDEBAR: Security Invariant Analysis & State Machine Matrix -->
+<aside class="w-80 bg-surface-container-lowest border-l border-outline-variant flex flex-col shrink-0 overflow-y-auto terminal-scrollbar select-none">
+<!-- Panel Header -->
+<div class="p-space-sm border-b border-outline-variant bg-surface-container-low flex items-center justify-between shrink-0">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]" data-icon="policy">policy</span>
+<span class="font-label-caps text-label-caps text-primary tracking-wider">SECURITY INVARIANT ANALYSIS</span>
+</div>
+<span class="font-label-caps text-label-caps px-1.5 py-0.5 bg-error/15 text-error border border-error/40 rounded">
+          FAIL-CLOSED
+        </span>
+</div>
+<!-- tau-Classification Ledger -->
+<div class="p-3 border-b border-outline-variant space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline">TAU-CLASSIFICATION LEDGER</span>
+<span class="font-mono-sm text-[11px] text-tertiary-container font-bold">LEVEL 4 HIGH</span>
+</div>
+<div class="space-y-1.5 text-mono-sm font-mono-sm">
+<div class="flex items-center justify-between p-1.5 bg-surface-container-low border border-outline-variant rounded">
+<div class="flex items-center gap-1.5">
+<span class="text-primary-container font-bold">τ₁</span>
+<span class="text-on-surface">Structural Rigidity</span>
+</div>
+<span class="text-tertiary-container font-bold text-[11px]">100% PASS</span>
+</div>
+<div class="flex items-center justify-between p-1.5 bg-surface-container-low border border-outline-variant rounded">
+<div class="flex items-center gap-1.5">
+<span class="text-primary-container font-bold">τ₂</span>
+<span class="text-on-surface">Deterministic Canon</span>
+</div>
+<span class="text-tertiary-container font-bold text-[11px]">100% PASS</span>
+</div>
+<div class="flex items-center justify-between p-1.5 bg-surface-container-low border border-outline-variant rounded">
+<div class="flex items-center gap-1.5">
+<span class="text-primary-container font-bold">τ₃</span>
+<span class="text-on-surface">Attestation Identity</span>
+</div>
+<span class="text-tertiary-container font-bold text-[11px]">100% PASS</span>
+</div>
+<div class="p-1.5 bg-surface-container border border-primary-container/60 rounded">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-primary font-bold">τ₄</span>
+<span class="text-primary font-bold">Combinator Non-Vacuity</span>
+</div>
+<span class="text-primary-container font-bold text-[11px]">100% PASS</span>
+</div>
+<div class="mt-1 text-[10px] text-on-surface-variant leading-tight">
+              Armed reject on pending/partial. Zero bypass window.
+            </div>
+</div>
+</div>
+</div>
+<!-- State Transition Matrix / Truth Table -->
+<div class="p-3 border-b border-outline-variant space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline">STATE TRANSITION TRUTH TABLE</span>
+<span class="font-label-caps text-[9px] text-on-surface-variant">DETERMINISTIC EVAL</span>
+</div>
+<div class="border border-outline-variant rounded overflow-hidden">
+<table class="w-full text-left font-mono-sm text-mono-sm">
+<thead class="bg-surface-container border-b border-outline-variant text-[10px] text-outline font-label-caps">
+<tr>
+<th class="p-1.5">G1</th>
+<th class="p-1.5">G3</th>
+<th class="p-1.5">G4</th>
+<th class="p-1.5 text-right">VERDICT</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/50 text-[11px]">
+<tr class="bg-surface-container-low/50">
+<td class="p-1.5 text-tertiary-container">Ok</td>
+<td class="p-1.5 text-tertiary-container">Ok</td>
+<td class="p-1.5 text-primary">Verified</td>
+<td class="p-1.5 text-right font-bold text-tertiary-container">PASS</td>
+</tr>
+<tr>
+<td class="p-1.5 text-tertiary-container">Ok</td>
+<td class="p-1.5 text-tertiary-container">Ok</td>
+<td class="p-1.5 text-secondary">Pending(*)</td>
+<td class="p-1.5 text-right font-bold text-secondary">INCOMPLETE</td>
+</tr>
+<tr class="bg-surface-container-low/50">
+<td class="p-1.5 text-error">Err(e)</td>
+<td class="p-1.5 text-outline">*</td>
+<td class="p-1.5 text-outline">*</td>
+<td class="p-1.5 text-right font-bold text-error">REJECT</td>
+</tr>
+<tr>
+<td class="p-1.5 text-outline">*</td>
+<td class="p-1.5 text-error">Err(e)</td>
+<td class="p-1.5 text-outline">*</td>
+<td class="p-1.5 text-right font-bold text-error">REJECT</td>
+</tr>
+<tr class="bg-surface-container-low/50">
+<td class="p-1.5 text-tertiary-container">Ok</td>
+<td class="p-1.5 text-tertiary-container">Ok</td>
+<td class="p-1.5 text-error">Failed(*)</td>
+<td class="p-1.5 text-right font-bold text-error">REJECT</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Gate 4 Threat Mitigation Callouts -->
+<div class="p-3 border-b border-outline-variant space-y-2.5">
+<span class="font-label-caps text-label-caps text-outline block">FORMAL THREAT MITIGATION</span>
+<div class="p-2 bg-surface-container-low border border-outline-variant rounded space-y-1">
+<div class="flex items-center justify-between">
+<span class="font-mono-sm text-[11px] font-bold text-on-surface">Offline Network Disconnect &amp; Partial Attestation Attack</span>
+<span class="font-label-caps text-[9px] text-tertiary-container border border-tertiary-container/30 px-1 rounded">DEFEATED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight">
+            Offline systems cannot fake lineage proofs; PENDING never silently promotes to PASS under any conditional branch.
+          </p>
+</div>
+<div class="p-2 bg-surface-container-low border border-outline-variant rounded space-y-1">
+<div class="flex items-center justify-between">
+<span class="font-mono-sm text-[11px] font-bold text-on-surface">Vacuous Pass Vulnerability</span>
+<span class="font-label-caps text-[9px] text-tertiary-container border border-tertiary-container/30 px-1 rounded">DEFEATED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight">
+            All antecedent gates must evaluate to Ok(()). Non-vacuity confirmed by automated lemma synthesizer.
+          </p>
+</div>
+</div>
+<!-- Real-Time Telemetry & Verification Health -->
+<div class="p-3 mt-auto bg-surface-container-low border-t border-outline-variant space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline">INTEGRITY TELEMETRY</span>
+<span class="material-symbols-outlined text-tertiary-container text-[14px]" data-icon="speed">speed</span>
+</div>
+<div class="grid grid-cols-2 gap-2 text-mono-sm font-mono-sm">
+<div class="p-1.5 bg-surface-container border border-outline-variant rounded">
+<div class="text-outline text-[10px]">Combinator Eval Latency</div>
+<div class="text-primary-container font-bold text-[13px] mt-0.5">0.04 µs</div>
+</div>
+<div class="p-1.5 bg-surface-container border border-outline-variant rounded">
+<div class="text-outline text-[10px]">State Collapse Risk</div>
+<div class="text-tertiary-container font-bold text-[13px] mt-0.5">0.000 ppm</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</body></html>

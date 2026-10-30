@@ -1,0 +1,1097 @@
+# Transcrição de trabalho com correções editoriais pontuais
+
+Não é uma nova edição diagramada. Tabelas, fórmulas e figuras devem ser conferidas no PDF original. As correções abaixo não encerram os demais achados da revisão dirigida. A autoria e a versão publicada permanecem preservadas; integração final e revisão autoral pendentes.
+
+
+=== PAGINA 1 ===
+Do Documento Mestre ao Software: tutorial para o uso da
+ especificação ARKHE OS & AGI como prompt na
+ construção completa do arkhe-agi
+ Tutorial metodológico do pipeline DMCP (Documento-Mestre-como-Prompt): sete fases, gates
+ executáveis e rastreabilidade bloco-código
+  Rafael Oliveira
+ORCID 0009-0005-2697-4668 · Safe Core — Psychology Behavioral Analysis, São Paulo, Brasil
+  Jameson Bednarski
+ORCID 0009-0002-5963-6196 · Arkhe Research Group
+ Correspondência: lemestua@hotmail.com
+ 22 de setembro de 2026
+ Resumo
+Especificações de software de grande escala desafiam o uso direto por agentes de código: o Arkhe OS &
+AGI — Documento Mestre Integrado (Edição 2) reúne 68.262 linhas e 2.287.868 caracteres —
+estimativamente 570 a 650 mil tokens —, acima das janelas de contexto padrão de 200 mil tokens. Este
+artigo transforma esse documento em um manual operacional: o pipeline DMCP
+(Documento-Mestre-como-Prompt), que fatia o corpus em 50 blocos endereçáveis com identificadores
+estáveis, prefixa todo prompt com uma constituição de seis princípios (fail-closed, status honesto,
+rastreabilidade de bloco, uma fase por vez, evidência executável e reconciliação declarada de versões
+divergentes) e ordena a construção do software arkhe-agi em sete fases (F0–F6), do bootstrap do
+monorepo de 15 crates ao servidor MCP, com gates executáveis — cargo check/test/clippy/fmt/deny, os
+oito gates da auditoria v5 e o protocolo WAP governado do repositório aia — como critérios de aceite e
+logs como evidência anexada a cada commit. Apresentam-se templates universais de prompt e de
+auditoria, a análise de limitações (saturação de contexto, alucinação de pacotes e APIs, divergências
+internas do corpus) e as respectivas mitigações. Conclui-se que a verificação, e não o prompt, é a
+arquitetura: a fidelidade bloco-código só é sustentável quando cada afirmação da especificação se
+converte em teste executável.
+Palavras-chave: engenharia de prompt; agentes de código; desenvolvimento dirigido por especificação;
+engenharia de contexto; verificação fail-closed; ARKHE AGI.
+
+
+=== PAGINA 2 ===
+Abstract
+Large-scale software specifications challenge direct use by coding agents: the Arkhe OS & AGI —
+Integrated Master Document (2nd edition) spans 68,262 lines and 2,287,868 characters — an estimated
+570–650 thousand tokens —, exceeding standard 200 thousand-token context windows. This paper turns
+that document into an operating manual: the DMCP pipeline (Master-Document-as-Prompt), which slices
+the corpus into 50 addressable blocks with stable identifiers, prefixes every prompt with a six-principle
+constitution (fail-closed, honest status, block traceability, one phase at a time, executable evidence, and
+declared reconciliation of divergent versions), and orders the construction of the arkhe-agi software into
+seven phases (F0–F6), from the 15-crate monorepo bootstrap to the MCP server, using executable gates
+— cargo check/test/clippy/fmt/deny, the eight gates of the v5 audit, and the governed write-audit-publish
+protocol of the aia repository — as acceptance criteria, with logs attached to every commit as evidence.
+Universal prompt and audit templates are provided, along with an analysis of limitations (context
+saturation, package and API hallucination, internal corpus divergences) and their mitigations. We
+conclude that verification, not prompting, is the architecture: block-to-code fidelity is only sustainable
+when every specification claim becomes an executable test.
+Keywords: prompt engineering; coding agents; spec-driven development; context engineering; fail-closed
+verification; ARKHE AGI.
+Nota de escopo e integridade. Este tutorial é um documento metodológico derivado do Arkhe OS & AGI
+— Documento Mestre Integrado (Edição 2, OLIVEIRA, 2026), fonte interna do projeto citada por
+identificadores estáveis de bloco (ex.: Bloco 2.6). O corpus adota política de status honesto (VERIFIED,
+PARTIAL, FAILED, NONEXISTENT); o tutorial herda essa política e declara como limitações próprias
+tudo o que depende de execução ainda não realizada. As fontes externas foram acessadas em 22/09/2026
+e estão listadas nas Referências.
+
+
+=== PAGINA 3 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 3
+Sumário
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 5
+1. Introdução
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2. Fundamentos e trabalhos relacionados
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2.1 Da engenharia de prompt à engenharia de fluxo
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2.2 Agentes de código: capacidade bruta não basta
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+2.3 Especificação como contrato: desenvolvimento dirigido por especificação
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+2.4 Contexto longo e recuperação: por que não basta colar tudo
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+2.5 Riscos conhecidos: alucinação de APIs e de pacotes
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+3. Anatomia do Documento Mestre como corpus de prompts
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+3.1 Métricas do corpus
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+3.2 As seis partes e seus papéis construtivos
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 9
+3.3 Blocos como unidades de prompt
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 10
+3.4 Status honesto e gates como critérios de aceite
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 10
+4. Metodologia: o pipeline Documento-Mestre-como-Prompt (DMCP)
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 10
+4.1 Visão geral do ciclo
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 11
+4.2 Princípios constitucionais do prompt
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 12
+4.3 Fatiamento e orçamento de contexto
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 13
+4.4 As sete fases F0–F6
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+4.5 O loop de verificação como critério de progresso
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+5. Tutorial passo a passo
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+5.1 Passo 0A — Preparação do ambiente e da constituição do repositório
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 15
+5.2 Passo 0B — Fatiamento do corpus em prompts endereçáveis
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 15
+5.3 Passo 1 (F0) — Bootstrap do workspace: 15 crates, stubs honestos
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 16
+5.4 Passo 2 (F1) — Núcleo arkhe-core e o pipeline de gates
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 16
+5.5 Passo 3 (F2) — WormGraph, ConstitutionStore e ratificação de invariantes
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 16
+5.6 Passo 4 (F3) — Dados governados: aia v2 + AEGIS com as 21 correções
+ .  .  .  .  .  .  .  .  . 17
+5.7 Passo 5 (F4) — Crates da AGI: cognição, memória, deliberação e treinamento verificável
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 17
+5.8 Passo 6 (F5/F6) — Verificação formal, empacotamento, MCP e aplicações
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 17
+5.9 Templates universais de prompt e auditoria de fase
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 18
+6. Contra-argumentos e limitações
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 18
+6.1 Janelas de um milhão de tokens não resolvem o problema
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+6.2 A especificação não é verdade: afirmações não verificadas dentro do corpus
+
+
+=== PAGINA 4 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 4
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+6.3 Alucinação de implementação: o caso empírico das APIs fantasma
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+6.4 Divergências internas do corpus e o custo da reconciliação
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 20
+6.5 Escopo desejoso: o que o tutorial deliberadamente não promete
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 20
+6.6 Síntese dos riscos e mitigações
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 21
+7. Conclusão e implicações
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 21
+Referências
+
+
+=== PAGINA 5 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 5
+1. Introdução
+Há um paradoxo no centro de todo projeto ambicioso de software assistido por inteligência artificial: as
+especificações mais completas são justamente aquelas que nenhum modelo de linguagem consegue ler de
+uma vez. O Arkhe OS & AGI — Documento Mestre Integrado (Edição 2) é um exemplo concreto desse
+paradoxo. Fruto da integração auditável de quatro fontes (AGI1, AGI2, AGI3 e AIA), o documento reúne
+68.262 linhas e 2.287.868 caracteres de especificação executável — monorepos completos, pipelines de
+verificação criptográfica, invariantes ratificáveis, metodologias de treinamento e repositórios inteiros em
+Rust (OLIVEIRA, 2026). Convertido em tokens, o corpus ocupa, por estimativa conservadora, entre 570 e
+650 mil tokens, valor que excede a janela de contexto padrão dos modelos Claude (200 mil tokens) e
+tensiona até mesmo as janelas estendidas de um milhão de tokens (ANTHROPIC, 2025b; AMAZON WEB
+SERVICES, 2025). A pergunta que motiva este tutorial é direta: como transformar um documento dessa
+magnitude em um prompt operacional capaz de guiar a construção completa do software arkhe-agi?
+A resposta que este artigo desenvolve e demonstra é que o Documento Mestre não deve ser tratado como
+um bloco monolítico a ser colado em um campo de conversação, e sim como um corpus de prompts já
+estruturado para esse fim. A integração que produziu a Edição 2 deixou, como subproduto, uma
+infraestrutura de fatiamento natural: 50 blocos de conteúdo com identificadores estáveis (p1-b01 a p6-b06),
+intervalos de linha de origem, hashes de conteúdo normalizado, um índice consolidado de 298
+identificadores de invariantes INV-* e marcações de status de verificação (VERIFIED, PARTIAL,
+FAILED, NONEXISTENT) distribuídas pelo texto (OLIVEIRA, 2026). Cada bloco é, em essência, uma
+unidade de prompt endereçável — suficientemente pequena para caber em contexto, suficientemente
+grande para descrever um subsistema inteiro. O que falta não é material, mas método: uma arquitetura de
+fluxo que diga qual bloco usar, em qual ordem, com qual critério de aceite e com qual evidência executável.
+A literatura de geração de código com grandes modelos de linguagem apoia essa leitura. A transição da
+engenharia de prompt para a engenharia de fluxo, formalizada pelo AlphaCodium, mostrou que pipelines em
+múltiplos estágios superam substancialmente prompt único em problemas de código (RIDNIK et al., 2024).
+Agentes de software de referência, como o SWE-agent, demonstram que a interface entre agente e
+computador — e não apenas o modelo — determina o desempenho (YANG et al., 2024), enquanto o
+benchmark SWE-bench evidencia que modelos ponta ainda falham na maioria das issues reais de
+repositórios populares quando operam sem estrutura (JIMENEZ et al., 2024). Paralelamente, estudos sobre
+uso de contexto longo mostram que a posição da informação importa: modelos tendem a recuperar melhor o
+que está nas extremidades da janela, degradando a atenção sobre o miolo (LIU et al., 2024). Esses três
+achados convergem para a mesma prescrição metodológica adotada aqui: fatiar, ordenar e verificar.
+Este artigo propõe, assim, o DMCP — Documento-Mestre-como-Prompt (Master-Document-as-Prompt),
+um protocolo em sete fases (F0 a F6) que transforma a especificação integrada em uma sequência
+construtiva do software arkhe-agi, com quatro propriedades distintivas: (i) fatiamento por blocos estáveis,
+herdado da estrutura do documento; (ii) prompt constitucional, que fixa a filosofia fail-closed do projeto
+como regra invariante de todo prompt; (iii) gates verificáveis, que convertem cada afirmação da
+especificação em critério de teste executável; e (iv) rastreabilidade bidirecional, que liga cada linha de
+código gerada ao bloco que a especifica. O tutorial é escrito para operadores que usem qualquer agente de
+código contemporâneo — os exemplos empregam a terminologia do Claude Code, mas os princípios são
+agnósticos quanto à ferramenta (ANTHROPIC, 2025a).
+O artigo está organizado como segue. A Seção 2 revisita os fundamentos e trabalhos relacionados que
+sustentam a proposta. A Seção 3 disseca a anatomia do Documento Mestre enquanto corpus de prompts,
+com métricas e mapeamento de papéis construtivos. A Seção 4 formaliza o pipeline DMCP — princípios,
+fatiamento, orçamento de contexto e fases F0–F6. A Seção 5 constitui o tutorial propriamente dito, passo a
+passo, com templates de prompt reutilizáveis. A Seção 6 confronta contra-argumentos e limitações,
+
+
+=== PAGINA 6 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 6
+inclusive os documentados no próprio corpus. A Seção 7 conclui com implicações e agenda futura. Adota-se
+o princípio de honestidade de status do próprio projeto: onde a evidência é parcial ou inexistente, o texto o
+declara.
+2. Fundamentos e trabalhos relacionados
+2.1 Da engenharia de prompt à engenharia de fluxo
+A primeira geração de técnicas para dirigir modelos de linguagem concentrou-se no conteúdo de um único
+prompt: exemplos, papéis e instruções cuidadosamente redigidos. A técnica do encadeamento de
+pensamento (chain-of-thought) demonstrou que induzir o modelo a produzir raciocínio intermediário
+melhora o desempenho em tarefas complexas (WEI et al., 2022), mas permaneceu confinada a uma única
+passagem de inferência. O AlphaCodium marcou a virada conceitual relevante para este tutorial: ao
+substituir o prompt único por um fluxo orientado a testes — reflexão sobre o problema, raciocínio em
+linguagem natural, geração, execução e iteração de correção contra testes públicos —, os autores elevaram
+substancialmente a taxa de acerto de modelos ponta em problemas de código, mostrando que o processo ao
+redor do modelo é a alavanca dominante (RIDNIK et al., 2024). Em termos operacionais, um documento de
+especificação de 650 mil tokens nunca foi um prompt: é um programa de engenharia de fluxo esperando
+para ser executado.
+Duas linhas complementares consolidam a iteração com retorno como mecanismo de qualidade. O
+Self-Refine demonstra que modelos podem refinar suas próprias saídas quando recebem feedback
+estruturado — inclusive gerado por si mesmos — em múltiplas iterações (MADAAN et al., 2023). O
+Reflexion adiciona memória verbal de falhas: o agente resume por que a tentativa anterior falhou e
+condensa esse aprendizado na próxima tentativa, sem atualização de pesos (SHINN et al., 2023). Ambos os
+mecanismos serão incorporados ao DMCP em duas formas concretas: o loop de gates executáveis (que
+devolve logs de erro como feedback objetivo) e o prompt de auditoria de fase (Seção 5.9), que produz
+sínteses verbais de falha para realimentar a fase seguinte.
+2.2 Agentes de código: capacidade bruta não basta
+A avaliação de agentes em engenharia de software tempera otimismo com evidência. O SWE-bench propõe
+a tarefa mais fiel à realidade — resolver issues reais de repositórios populares — e concluiu, em sua
+formulação original, que tanto modelos proprietários ponta quanto variantes ajustadas resolviam apenas as
+issues mais simples (JIMENEZ et al., 2024). O SWE-agent atribui parte relevante do desempenho à
+interface agente-computador: terminais, editores e comandos desenhados para o agente produzem saltos de
+eficácia comparáveis a mudanças de modelo (YANG et al., 2024). A lição para o presente tutorial é dupla:
+primeiro, a estrutura do repositório alvo e dos materiais de entrada deve ser projetada para o agente;
+segundo, cada fase de construção precisa de critérios de aceite executáveis, pois a confiança em si mesma
+não é atributo confiável desses sistemas.
+A documentação de prática do Claude Code adiciona a dimensão de orçamento de contexto. O guia oficial
+recomenda planejar antes de implementar, verificar cada mudança com testes, e — crucialmente — tratar a
+janela de contexto como recurso que se degrada: à medida que se enche, o desempenho cai, e sessões longas
+de depuração consomem dezenas de milhares de tokens (ANTHROPIC, 2025a). A engenharia de contexto
+formaliza essa preocupação: o artefato certo no contexto certo, com compactação de histórico, recuperação
+sob demanda e delegação a subagentes, em vez do acúmulo indiscriminado de material (ANTHROPIC,
+2025b). Esses preceitos de prática industrial coincidem ponto a ponto com os achados acadêmicos de
+posição e saturação de contexto e justificam o orçamento estrito por prompt adotado na Seção 4.3.
+
+
+=== PAGINA 7 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 7
+2.3 Especificação como contrato: desenvolvimento dirigido por especificação
+Em setembro de 2025, o GitHub institucionalizou o desenvolvimento dirigido por especificação
+(spec-driven development) com o Spec Kit, um conjunto de ferramentas e de fases padronizadas —
+constituição, especificação, esclarecimento, plano, tarefas, análise e implementação — nas quais a
+especificação precede e restringe a geração de código por agentes (GITHUB, 2025). A tese do movimento é
+que a especificação é o programa: o código torna-se derivado, e a fidelidade à especificação torna-se a
+métrica primária. O Documento Mestre Arkhe ocupa uma posição extrema nesse espectro: em vez de uma
+especificação sintética redigida para guiar um agente, é uma especificação orgânica, acumulada por
+integração de quatro fontes, que já contém código completo, correções de auditoria e critérios de aceite. O
+DMCP pode ser lido como a adaptação do ciclo do Spec Kit a um corpus pré-existente de grande escala: as
+fases de constituição e especificação já foram cumpridas pelo documento; restam o fatiamento, o plano, as
+tarefas e a implementação — que é exatamente a estrutura das Seções 4 e 5.
+2.4 Contexto longo e recuperação: por que não basta colar tudo
+A geração aumentada por recuperação (RAG) estabeleceu que recuperar trechos relevantes sob demanda
+supera a memorização paramétrica para tarefas intensivas em conhecimento (LEWIS et al., 2020). Em
+código, o RepoCoder refinou a ideia para nível de repositório: recuperação iterativa, na qual o esboço
+gerado orienta a próxima busca por contexto relevante, melhora a completude de código multiarquivo
+(ZHANG et al., 2023). A evidência de posição completa o quadro: Liu et al. demonstram que modelos
+multijanela apresentam desempenho em U — altos nas extremidades do contexto, degradados no meio — e
+que o desempenho degrada quando o número de documentos relevantes cresce, mesmo com janela
+suficiente (LIU et al., 2024). Ainda que janelas de um milhão de tokens acomodem numericamente o
+Documento Mestre (AMAZON WEB SERVICES, 2025; GOOGLE, 2026), a economia cognitiva do
+modelo não acompanha a economia de armazenamento: colar 650 mil tokens é, à luz desses resultados, uma
+estratégia de pior caso. A consequência metodológica é a hierarquia de fatiamento e recuperação detalhada
+na Seção 4.3.
+2.5 Riscos conhecidos: alucinação de APIs e de pacotes
+O risco específico de código gerado por modelos está bem documentado. Spracklen et al. analisam
+sistematicamente a alucinação de pacotes — modelos recomendam bibliotecas que não existem — e
+mostram que o fenômeno é generalizado, persiste em modelos comerciais e abre superfície de ataque de
+cadeia de suprimentos, o slopsquatting, em que terceiros registram os pacotes alucinados (SPRACKLEN et
+al., 2025). O detalhe notável, para os fins deste tutorial, é que o próprio Documento Mestre registra o
+análogo em nível de API: a análise de contratos faltantes do repositório aia (Bloco 6.5) documenta
+chamadas a funções que não existem na implementação v1 — APIs fantasma — e as análises estáticas do
+arkhe-aegis (Bloco 6.4) catalogam 21 correções (C1–C7, A1–A8, R1–R5), incluindo hashing
+length-prefixed para a invariante INV-AEGIS-04 e timeouts para eliminar um fail-hang (OLIVEIRA, 2026).
+O corpus, em outras palavras, já contém seu próprio estudo de caso de falha de geração de código — e o
+tutorial se apropriará dele como evidência de que gates executáveis não são acessório, mas requisito.
+
+
+=== PAGINA 8 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 8
+3. Anatomia do Documento Mestre como corpus de prompts
+3.1 Métricas do corpus
+Antes de fatiar, é preciso medir. A Tabela 1 consolida as métricas objetivas do corpus-fonte, calculadas
+sobre o arquivo canônico da Edição 2 com hash SHA-256 registrado. O documento é grande — cerca de
+255 mil palavras e uma estimativa de 570 a 650 mil tokens, assumindo a razão habitual de 3,5 a 4 caracteres
+por token para português técnico misturado a código —, mas é grande de forma estruturada: a integração
+manteve a política de preservação integral (zero exclusão de conteúdo único), manteve versões divergentes
+em paralelo com notas explicativas e fundiu apenas duplicatas exatas, sinalizadas com avisos ♻ que
+apontam para a cópia preservada (OLIVEIRA, 2026). Essa disciplina editorial é o que torna o fatiamento
+seguro: cada bloco tem identidade, origem e integridade verificáveis.
+Tabela 1 – Métricas do corpus-fonte (Documento Mestre, Edição 2, arquivo canônico)
+Métrica
+Valor
+Relevância para o uso como prompt
+Linhas / caracteres
+68.262 / 2.287.868
+Escala total a fatiar; base do cálculo de tokens
+Palavras
+≈ 255 mil
+Volume de leitura humana; justifica delegação a agentes
+Tokens (estimativa)
+570–650 mil (3,5–4 chars/token)
+Excede janelas padrão de 200 mil; tensiona janelas de 1
+milhão
+Blocos endereçáveis
+50 (p1-b01…p6-b06: 2+14+28+6)
+Unidades de prompt com âncora, origem e hash estáveis
+Identificadores de
+invariantes
+298 únicos (INV-*)
+Índice de critérios de aceite reutilizáveis (Parte V.2)
+Marcações de status
+✔ 15 · ⚠ 8 · ✗ 13 · □ 7
+Honestidade de status: sinaliza evidência por componente
+Duplicatas fundidas (♻)
+3 pares idênticos
+Leitura única suficiente para conteúdo preservado
+Versões divergentes (⇄)
+v0.1.0 × v0.2.0; aia v1 × v2
+Exigem regra de reconciliação (Seção 4.2, P6)
+Integridade
+SHA-256: 5a77d9c3…4ec44
+Âncora de rastreabilidade das citações ao corpus
+3.2 As seis partes e seus papéis construtivos
+O mapa temático do documento (Seção 0.3) organiza o conteúdo por assunto, mas a construção de software
+exige um recorte por papel construtivo: o que cada parte fornece ao pipeline de geração. A Tabela 2
+apresenta esse mapeamento. Duas observações merecem destaque. Primeira: a Parte IV — pesquisa
+complementar de balanço — cumpre papel de desfalsificador de prompts: ao marcar o que é real
+(CVE-2026-22696, FIPS 204/205, ALF-LB como estado da arte) e o que não foi localizado (did:cid, o
+arXiv errado da DeepMind), ela impede que o operador redija prompts que herdam afirmações não
+verificadas. Segunda: a Parte VI declara explicitamente sua ordem lógica de leitura — 6.5 antes de 6.1/6.2
+(a análise de contratos faltantes explica os defeitos corrigidos na v2) e 6.4 antes de 6.3 (os achados
+C1–C7/A1–A8/R1–R5 são implementados pelo repositório corrigido) —, que o DMCP adota como ordem
+de leitura de prompt na fase F3 (OLIVEIRA, 2026).
+
+
+=== PAGINA 9 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 9
+Tabela 2 – Partes do Documento Mestre e papéis construtivos no pipeline DMCP
+Parte
+Conteúdo essencial
+Papel construtivo
+Fases
+I
+Monorepo definitivo (SSMDP v8, Lean 4, CI/CD,
+modelo de confiança, roadmap 2026–2032,
+hardware); Arkhe IP com 5 gates
+Constituição técnica; alvo de arquitetura;
+critérios de verificação formal
+F1, F5
+II
+Correções da auditoria v5; GGUF-100T;
+empacotamento; monorepo Arkhe AGI (2 versões,
+15 crates); verification stack; invariantes Web3; OS
+Layer v0.1.0
+Fonte primária do bootstrap e do núcleo;
+templates de Cargo.toml/lib.rs; gates executáveis
+F0, F1, F2
+III
+Pacote BRICS; treinamento verificável em 6 fases;
+RustFS; governança econômica; Dream-RSI;
+quality gates (11 famílias); orca-arkhe-mcp; ESP32;
+UI; OS Layer v0.2.0
+Extensões e aplicações; famílias de gates;
+camada MCP; referência pós-correções da OS
+Layer
+F4, F6
+IV
+Trilhas de validação A–D e tabela de balanço das
+afirmações-chave
+Desfalsificador de prompts; separa real de não
+localizado
+Todas
+V
+Glossário; índice consolidado de invariantes; mapa
+de origem; relatório de integração
+Índice de recuperação de critérios (INV-*);
+rastreabilidade
+Todas
+VI
+Repositório aia (v1/v2), arkhe-aegis
+corrigido, análises estáticas (21 correções), 10
+crates restantes do Arkhe AGI
+Dados governados (WAP, AEGIS); fechamento
+do monorepo; estudo de caso de correção
+F3, F0
+3.3 Blocos como unidades de prompt
+O identificador estável de cada bloco — p<parte>-b<nº> — é o endereço fundamental do protocolo. Cada
+âncora corresponde a um documento independente das fontes originais, com intervalo de linha de origem
+(por exemplo, o bloco 2.6, Arkhe AGI — Monorepo Completo, Corrigido e Verificado, ocupa as linhas
+9.073–14.895 de AGI1.txt) e hash de conteúdo normalizado registrado no mapa de rastreabilidade da Parte
+V.3 (OLIVEIRA, 2026). O maior bloco de conteúdo, o 2.6, tem 5.823 linhas — algo entre 25 e 35 mil
+tokens, confortavelmente dentro de um orçamento de contexto de 60 mil tokens por prompt quando
+combinado apenas com a constituição e um resumo do repositório. Essa propriedade de encaixe não é
+acidental: ela permite a regra de operação mais importante do DMCP — um bloco por prompt, um objetivo
+por bloco —, que mantém o miolo do contexto livre para o material realmente relevante e contorna a
+degradação posicional documentada (LIU et al., 2024).
+Os blocos também resolvem, por construção, o problema da citação verificável em prompts. Em vez de
+instruir o agente com paráfrases soltas — terreno fértil para alucinação —, cada prompt cita o bloco-fonte e,
+quando pertinente, o identificador da invariante (INV-*) cuja violação deve ser impedida. O índice
+consolidado da Parte V.2, com seus 298 identificadores agrupados por domínio (INV-CORE, INV-CLAIM,
+INV-TRAIN, INV-AEGIS, entre outros 45 grupos), funciona como índice dos critérios de aceite (OLIVEIRA,
+2026). O resultado é uma cadeia de custódia: bloco → prompt → código gerado → gate → evidência →
+commit, com cada elo apontando para o anterior.
+
+
+=== PAGINA 10 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 10
+3.4 Status honesto e gates como critérios de aceite
+A característica metodológica mais valiosa do corpus não é técnica, mas epistêmica: a política de status
+honesto. Componentes e afirmações carregam marcações explícitas — VERIFIED, PARTIAL, FAILED,
+NONEXISTENT —, e o próprio conjunto reconhece que o material é, majoritariamente, especificação
+executável e skeletons, e que o Arkhe OS não é uma AGI, mas a infraestrutura de verificação sobre a qual
+uma AGI verificável poderia ser construída e auditada (OLIVEIRA, 2026). Para um pipeline de geração,
+isso significa que cada prompt herda um contrato de honestidade: o agente não deve prometer o que não
+executou. A filosofia fail-closed do projeto — em caso de dúvida, rejeitar; capacidades são declarações
+machine-checkable — converte-se na regra de progresso do pipeline: uma fase só se completa quando seus
+gates executam e passam, e a primeira evidência de qualquer fase é o log do comando de verificação.
+Três famílias de gates do corpus estruturam essa regra. A família do núcleo, consolidada pela auditoria v5,
+executa oito gates em run-all-gates.sh: bimodalidade corrigida, deserialização de Invariant, round-trip
+de Claim, trybuild regenerado, cargo test --workspace, cargo clippy, cargo fmt e cargo deny (com a
+advisory da CVE-2026-22696) (OLIVEIRA, 2026, Bloco 2.1). A família do pipeline de verificação de
+artefatos define o caminho Gate 0 (sanitização) → Gate 0.5 (classificação “Jev”) → Gate 1 (hash BLAKE3)
+→ Gate 2 (assinatura híbrida Ed25519 + ML-DSA) → Gate 3 (inclusão MMR), estendido a um Gate 4 de
+propriedade intelectual no Arkhe IP. A família dos dados governados, no repositório aia, impõe o protocolo
+WAP governado (write-audit-publish): nenhuma operação toca a branch main sem autorização AEGIS,
+verificação e auditoria, com record_hash por operação e 14 invariantes ratificáveis (OLIVEIRA, 2026,
+Parte VI). No DMCP, essas famílias tornam-se os critérios de aceite das fases F1, F2 e F3, respectivamente.
+4. Metodologia: o pipeline Documento-Mestre-como-Prompt (DMCP)
+4.1 Visão geral do ciclo
+O DMCP organiza a construção do arkhe-agi em sete fases sequenciais (F0–F6), cada uma alimentada por
+blocos específicos do Documento Mestre e encerrada por um portão de verificação executável. O ciclo
+elementar de cada fase tem cinco momentos: (1) extração do bloco-fonte a partir do corpus canônico, pelo
+identificador estável; (2) contextualização, pela injeção do prompt constitucional e do resumo do estado
+atual do repositório; (3) geração do código ou dos artefatos da fase pelo agente de código; (4) verificação,
+pela execução dos gates com coleta de logs como evidência; e (5) integração, pelo commit atomicamente
+associado à evidência e ao bloco que especifica a mudança. A Figura 1 apresenta a sequência e o mecanismo
+de realimentação: quando um gate falha, o prompt de auditoria (Seção 5.9) sintetiza a falha em linguagem
+verbal — na linha do Reflexion (SHINN et al., 2023) — e a fase é reexecutada com o novo material, sem
+que o operador abandone o orçamento de contexto disciplinado.
+
+
+=== PAGINA 11 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 11
+ Figura 1 – Sequência construtiva DMCP: sete fases (F0–F6) e o ciclo de auditoria com realimentação verbal de falhas de
+ gate.
+Essa arquitetura é deliberadamente uma engenharia de fluxo no sentido do AlphaCodium (RIDNIK et al.,
+2024), e não uma engenharia de prompt: o valor está na sequência, nos critérios de passe entre estágios e na
+evidência acumulada, e não em uma redação perfeita de instrução única. Ela também é compatível com o
+ciclo de especificação do Spec Kit (GITHUB, 2025), com uma inversão fundadora: em vez de escrever a
+especificação para depois implementá-la, o DMCP parte de uma especificação já existente — herdada,
+grande, em partes inconsistente — e concentra todo o esforço metodológico em fatiá-la, reconciliá-la e
+verificá-la.
+4.2 Princípios constitucionais do prompt
+Todo prompt emitido pelo DMCP carrega um prefixo constitucional fixo — um bloco de regras invariante
+que codifica a filosofia do projeto. Essa técnica é corrente na prática de agentes de código, em que arquivos
+como CLAUDE.md ou AGENTS.md funcionam como memória de regras persistente do repositório
+(ANTHROPIC, 2025a). Seis princípios constituem o núcleo: P1 — fail-closed: em caso de dúvida, rejeitar;
+nenhuma tentativa de “fazer funcionar” à custa de verificação. P2 — status honesto: o agente declara o que
+executou e o que não executou; skeletons permanecem marcados como skeletons. P3 — rastreabilidade de
+bloco: toda mudança de código cita o bloco-fonte (p*-b**) e, quando aplicável, a invariante (INV-*). P4 —
+uma fase por vez: nenhum prompt avança fases; escopo é violação, não iniciativa. P5 — evidência
+executável: afirmações de funcionamento exigem log; “prove, do not promise”. P6 — reconciliação
+declarada: diante de versões divergentes do corpus, o agente não escolhe silenciosamente; aplica a regra de
+precedência declarada no prompt (v0.2.0 sobre v0.1.0; aia v2 sobre v1; cópias fundidas ♻ lidas uma única
+vez) e registra a decisão.
+Os princípios P2 e P6 merecem justificativa adicional, pois derivam de achados internos do corpus e não de
+boa prática genérica. O P2 herda a política de status honesto do documento — que marca componentes
+como PARTIAL ou FAILED e reconhece a natureza de skeleton de parte substancial do monorepo
+(OLIVEIRA, 2026) — e a converte em disciplina do agente: sem ela, a geração tende a “completar” stubs
+com implementações plausíveis e não verificadas, exatamente a classe de erro que a auditoria do aia
+documentou como APIs fantasma (Bloco 6.5). O P6 existe porque o corpus mantém, deliberadamente,
+versões divergentes em paralelo: a OS Layer v0.1.0 (Bloco 2.14) e a v0.2.0 pós-correções (Bloco 3.28); o
+repositório aia v1 (Bloco 6.1) e a v2 (Bloco 6.2), com similaridade estrutural de cerca de 26,9%. Sem regra
+de precedência explícita, o agente mistura interfaces das duas versões — modo de falha que a análise de
+
+
+=== PAGINA 12 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 12
+contratos faltantes demonstra ser real e não hipotético (OLIVEIRA, 2026).
+4.3 Fatiamento e orçamento de contexto
+A estratégia de contexto do DMCP combina três mecanismos complementares da literatura: recuperação
+sob demanda no estilo RAG (LEWIS et al., 2020), recuperação iterativa guiada pelo esboço gerado, como
+no RepoCoder (ZHANG et al., 2023), e disciplina de orçamento da prática industrial de agentes
+(ANTHROPIC, 2025b). A unidade de recuperação é o bloco; o orçamento recomendado por prompt é de
+aproximadamente 60 mil tokens, distribuídos da seguinte forma: constituição e regras (até 2 mil), resumo do
+estado do repositório e da fase (até 6 mil), bloco-fonte integral (até 40 mil, suficiente para todos os blocos
+do corpus, cujo maior tem 5.823 linhas), material auxiliar citado pelo bloco — por exemplo, trechos do
+índice de invariantes da Parte V.2 (até 6 mil) — e margem de trabalho para leitura e edição de arquivos pelo
+agente (mínimo 6 mil). A Figura 2 situa esses números contra as janelas de contexto correntes. A Tabela 3
+resume as estratégias de fatiamento e o momento em que cada uma é preferível.
+ Figura 2 – Orçamento de contexto: o Documento Mestre integral excede janelas padrão e a recomendação do DMCP é o
+ fatiamento por bloco com orçamento estrito por prompt.
+Tabela 3 – Estratégias de fatiamento do corpus e quando empregá-las
+Estratégia
+Descrição
+Custo de
+contexto
+Quando empregar
+Bloco integral
+Prompt contém o bloco p*-b** completo, com
+constituição e resumo da fase
+25–40 mil tokens
+Implementação de subsistema
+(regra padrão do DMCP)
+Seção-alvo com
+vizinhança
+Extrato do bloco: a seção pertinente ± 150 linhas de
+contexto
+8–15 mil tokens
+Correção pontual, ajuste de
+assinatura, revisão
+Recuperação por
+índice
+Consulta à Parte V.2 (índice INV-*) e ao mapa
+temático (Seção 0.3), trazendo só os critérios
+citados
+2–6 mil tokens
+Montagem de critérios de aceite;
+verificação de cobertura de
+invariantes
+Subagente por crate
+Subagentes especializados com constituição
+resumida e um crate cada; orquestrador consolida
+(padrão orquestrador-trabalhador)
+por subagente ≈ 30
+mil
+Fases com muitos módulos
+paralelos (F0, F4)
+Documento integral
+Corpus inteiro na janela (apenas modelos de 1
+milhão, beta)
+570–650 mil
+tokens
+Desaconselhado: degradação
+posicional, custo e latência (LIU
+et al., 2024)
+A recuperação iterativa fecha o circuito: após o primeiro esboço da fase, o agente — ou o orquestrador —
+consulta o índice de invariantes para verificar se algum critério aplicável ficou fora do prompt (por
+exemplo, INV-AEGIS-04 para hashing de registros no aia) e somente então injeta o trecho correspondente.
+Esse movimento, economicamente oposto ao do documento integral, é o que permite manter cada prompt
+
+
+=== PAGINA 13 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 13
+dentro do orçamento sem perder cobertura de critérios: o contexto não carrega o que pode ser buscado
+(ANTHROPIC, 2025b).
+4.4 As sete fases F0–F6
+A Tabela 4 formaliza as fases: fonte primária de prompts, entregável principal e gate de aceite. A ordem
+segue a dependência real de construção — o núcleo precede a governança, que precede os dados
+governados, que precedem a cognição — e não a ordem física das partes do documento. Duas inversões
+deliberadas em relação à ordem de leitura merecem nota: a fase F0 consome os blocos 2.5–2.6 (monorepo)
+antes do restante da Parte II, porque o template dos 10 crates stub e a estrutura de workspace são
+pré-requisitos de tudo o mais; e a fase F3 lê a Parte VI na ordem lógica declarada pelo próprio documento
+(6.5 → 6.1 → 6.2; 6.4 → 6.3), de modo que o agente conheça os defeitos documentados antes de tocar as
+implementações (OLIVEIRA, 2026). A fase F6 é declarada opcional e de grau de pesquisa: adaptações a
+ecossistemas e hardware embarcado não são pré-requisitos do núcleo verificável.
+Tabela 4 – Fases do DMCP: fontes de prompt, entregáveis e gates de aceite
+Fase
+Blocos-fonte (OLIVEIRA, 2026)
+Entregável principal
+Gate de aceite (evidência)
+F0 · Bootstrap
+2.5–2.6 (estrutura de 15 crates;
+template de Cargo.toml/lib.rs); 6.6
+(10 crates restantes)
+Workspace Rust compilável: arkhe-os
++ arkhe-agi com todos os crates e
+stubs honestos
+cargo check
+--workspace verde; árvore
+de crates idêntica à especificada
+F1 · Núcleo e
+gates
+2.1–2.2 (auditoria v5; arkhe-core;
+pipeline Gates 0–3); 2.11 (verification
+stack)
+arkhe-core com sanitização, hash
+BLAKE3, assinatura Ed25519 (+
+esqueleto ML-DSA), inclusão MMR
+run-all-gates.sh: 8 gates
+da auditoria v5 verdes
+F2 · Governança
+2.5–2.6 (WormGraph,
+ConstitutionStore, ClaimRegistry);
+2.13 (invariantes Web3)
+Log causal append-only com MMR;
+ratificação de invariantes com
+quórum 4/7 ou 5/7 e timelock de 7/14
+dias
+Testes de ratificação e prova de
+inclusão MMR; negação em caso
+de quórum insuficiente
+F3 · Dados
+governados
+Parte VI na ordem 6.5 → 6.1 → 6.2 →
+6.4 → 6.3
+Repositório aia v2 + cliente AEGIS
+com as 21 correções (C1–C7, A1–A8,
+R1–R5)
+WAP: pipeline de 4 gates +
+record_hash por operação;
+14 invariantes
+(INV-AEGIS/BRANCH/AIA)
+verdes
+F4 · Crates da
+AGI
+2.6 (cognição, memória,
+aprendizagem, deliberação por 51
+agentes); 3.1–3.2 (BRICS;
+treinamento em 6 fases); 3.3
+(RustFS); 3.5 (Dream-RSI)
+Crates de cognição implementados
+sobre a fundação; pipeline de dados
+de treinamento atestado (sem
+treinamento efetivo)
+cargo test por crate;
+invariantes
+INV-CORE/NEURO/TRAIN
+aplicáveis
+F5 · Verificação
+formal e
+empacotamento
+1.1 (Lean 4, TLA+, Kani/Verus); 3.19
+(quality gates); 2.4 (empacotamento
+BLAKE3/SHA-256)
+Specs formais das propriedades
+críticas; manifesto de empacotamento
+verificável
+Gates das 11 famílias (build,
+lint, testes, Kani, WASM, MCP,
+segurança, GGUF, birthmark,
+hardware); verificação de
+manifesto
+F6 · Aplicações
+(opcional)
+3.26 (orca-arkhe-mcp); 3.22 (UI +
+fluxo de verificação de frontend);
+3.21 (ESP32); 3.13–3.18 (adaptações)
+Servidor MCP; interface de
+verificação; adaptações a ecossistemas
+Gates de frontend/MCP do
+Bloco 3.19; honestidade de
+status por adaptador
+
+
+=== PAGINA 14 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 14
+4.5 O loop de verificação como critério de progresso
+O progresso no DMCP é definido operacionalmente: uma fase avança quando seus gates passam e a
+evidência está anexada ao commit; uma fase não avança por parecer plausível. Esse critério é a transposição
+direta do princípio machine-checkable do corpus — capacidades são provadas, não prometidas (OLIVEIRA,
+2026) — e dos achados de avaliação de agentes, nos quais a verificação externa, e não a confiança do
+modelo, é o preditor confiável de correção (JIMENEZ et al., 2024). Na prática, o loop tem três saídas
+possíveis por iteração: (i) verde: gates passam; evidência anexada; próxima fase; (ii) vermelho com causa
+conhecida: log aponta falha específica; prompt de correção com o trecho do log + seção-alvo do bloco
+pertinente (8–15 mil tokens); (iii) vermelho com causa obscura: prompt de auditoria sintetiza a falha
+verbalmente (Reflexion), e a fase reexecuta com síntese incluída (SHINN et al., 2023). O limite
+recomendado é de três iterações de realimentação por gate; persistindo a falha, a fase deve ser dividida —
+sinal de que o prompt carregou escopo demais, violando P4.
+5. Tutorial passo a passo
+Esta seção é o manual operacional do DMCP. Assumem-se um repositório vazio arkhe-agi, o arquivo
+canônico do Documento Mestre Ed2 no caminho docs/master-integrated-ed2.md (com o SHA-256
+registrado na Tabela 1 para conferência) e um agente de código com acesso ao repositório — os exemplos
+usam a nomenclatura do Claude Code, em que CLAUDE.md carrega regras persistentes e sessões podem ser
+dirigidas por prompts escritos (ANTHROPIC, 2025a). A numeração dos passos corresponde às fases
+F0–F6, precedidas por dois passos de preparação (0A e 0B).
+5.1 Passo 0A — Preparação do ambiente e da constituição do repositório
+Prepare o ambiente host: toolchain Rust estável (rustup), cargo-deny e cargo-audit (para os gates de
+dependências e CVEs), Python 3.11+ (testbed SSMDP e utilitários), Node.js 20+ (frontend e MCP) e, para
+a fase F5, os executáveis de Lean 4 e TLA+ correspondentes aos blocos da Parte I. Em seguida, escreva a
+constituição do repositório — o arquivo CLAUDE.md/AGENTS.md que todo prompt herdará. A Listagem 1
+apresenta um template mínimo, derivado dos princípios da Seção 4.2 e do texto do próprio documento
+(OLIVEIRA, 2026). O efeito prático dessa constituição é converter a filosofia fail-closed em restrição local
+do agente: ele não pode marcar como completo o que não executou, nem importar versões erradas do corpus
+sem declarar a precedência.
+Listagem 1 – Constituição do repositório (CLAUDE.md / AGENTS.md), derivada dos princípios P1–P6.
+# Constituição do arkhe-agi (prompt prefixo permanente)
+## Fonte de verdade
+- Especificação: docs/master-integrated-ed2.md (SHA-256 5a77d9c3...4ec44).
+- Cite TODO bloco alterado pelo id estável (ex.: p2-b06) e a invariante (INV-*).
+## Precedência entre versões divergentes (P6)
+- OS Layer: v0.2.0 (Bloco 3.28) prevalece sobre v0.1.0 (Bloco 2.14).
+- Repositorio `aia`: v2 (Bloco 6.2) prevalece sobre v1 (Bloco 6.1).
+- Blocos marcados ♻ são duplicatas: leia apenas a cópia preservada indicada.
+## Regras de conduta (P1, P2, P4, P5)
+1. Fail-closed: dúvida = rejeitar. Nunca desative um gate para "fazer passar".
+2. Status honesto: declare o que executou; skeletons continuam skeletons.
+3. Uma fase por prompt (F0..F6); nao avance escopo sem instrucao explicita.
+4. "Funciona" exige log: anexe a saída do comando de verificação ao commit.
+5. Dependências: proibido introduzir crate/PackageName sem verificar existência
+   (cargo search + cargo add). Alucinação de pacote = falha de gate (SPRACKLEN et al., 2025).
+## Critérios de aceite por fase: ver docs/dmcp/fases.md (Tabela 4 do tutorial).
+
+
+=== PAGINA 15 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 15
+5.2 Passo 0B — Fatiamento do corpus em prompts endereçáveis
+Gere, uma única vez, o índice de prompts: um diretório docs/dmcp/blocks/ com um arquivo Markdown
+por bloco do corpus, nomeado pelo identificador estável (p1-b01.md … p6-b06.md), mais dois índices
+derivados — invariantes.md (extração dos 298 INV-* com a primeira ocorrência, espelhando a Parte V.2)
+e fases.md (a Tabela 4 do tutorial). A Listagem 2 fornece o script de fatiamento, que explora as âncoras
+HTML do documento (<a id='p2-b05'></a>) como limites de bloco. O custo do procedimento é mínimo
+e o benefício é estrutural: a partir daqui, todo prompt é emitido por endereço (p2-b06), e nunca por
+navegação manual no documento integral.
+Listagem 2 – Fatiamento do Documento Mestre em blocos endereçáveis (Python).
+#!/usr/bin/env python3
+# Slice master document into stable prompt-addressable blocks.
+import re, pathlib, hashlib
+SRC = pathlib.Path("docs/master-integrated-ed2.md")
+DST = pathlib.Path("docs/dmcp/blocks"); DST.mkdir(parents=True, exist_ok=True)
+text = SRC.read_text(encoding="utf-8")
+# âncoras de bloco: <a id="p1-b01"></a> ... <a id="p6-b06"></a>
+pat = re.compile(r'^<a id="(p\d-b\d+)"></a>\s*$', re.M)
+marks = [(m.group(1), m.start()) for m in pat.finditer(text)]
+marks.append(("EOF", len(text)))
+manifest = []
+for (bid, start), (_, end) in zip(marks, marks[1:]):
+    chunk = text[start:end]
+    out = DST / f"{bid}.md"
+    out.write_text(chunk, encoding="utf-8")
+    sha16 = hashlib.sha256(chunk.encode()).hexdigest()[:16]
+    manifest.append(f"{bid},{out.name},{chunk.count(chr(10))},{sha16}")
+pathlib.Path("docs/dmcp/manifest.csv").write_text("\n".join(manifest), encoding="utf-8")
+print(f"{len(manifest)} blocos extraídos -> {DST}")
+5.3 Passo 1 (F0) — Bootstrap do workspace: 15 crates, stubs honestos
+Emita o prompt de bootstrap com o bloco p2-b05 (monorepo especificado) e o p2-b06 (monorepo
+corrigido) como fontes, na precedência declarada, mais o template dos 10 crates stub contido no próprio
+corpus — o documento fornece o modelo mínimo de Cargo.toml e src/lib.rs necessário para que cargo
+build --workspace passe (OLIVEIRA, 2026, Blocos 2.5–2.6). O objetivo da fase é estrito: um workspace
+compilável com os 15 crates do monorepo Arkhe AGI, cada um com sua estrutura declarada e stubs
+marcados como stubs — nada de lógica inventada. O gate de aceite é o verde de cargo check --workspace
+com a árvore de crates idêntica à especificada; a evidência é o log integral anexado ao commit. O bloco 6.6,
+que completa os 10 crates restantes e carrega o selo ARKHE-AGI-COMPLETE-2026-09-22, é a referência de
+fechamento da fase (OLIVEIRA, 2026, Parte VI).
+Recomenda-se o padrão orquestrador-trabalhador para esta fase — o orquestrador emite um subagente por
+crate, cada um com a constituição resumida e apenas o extrato do bloco referente ao seu crate —,
+arquitetura que a prática de agentes da Anthropic documenta como orquestrador-trabalhador
+(ANTHROPIC, 2024). Isso mantém cada subcontexto pequeno e paralelizável, e o orquestrador consolida o
+resultado executando o gate global. Em modelos com janelas grandes, a tentação de “passar os dois blocos
+2.5 e 2.6 inteiros de uma vez” existe, mas não compensa: os dois blocos somam mais de 10 mil linhas e o
+miolo do contexto seria desperdiçado, com degradação de atenção comprovada (LIU et al., 2024).
+
+
+=== PAGINA 16 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 16
+5.4 Passo 2 (F1) — Núcleo arkhe-core e o pipeline de gates
+A fase F1 implementa o kernel de contenção e seu pipeline de verificação. Emita o prompt com o bloco
+p2-b02 (pacote de correções concretas) e o extrato correspondente do p2-b01 (auditoria v5 com
+run-all-gates.sh), solicitando a implementação, em ordem, dos estágios: Gate 0 de sanitização de
+entrada, Gate 1 de hash BLAKE3, Gate 2 de assinatura híbrida Ed25519 com esqueleto de ML-DSA
+declarado como esqueleto (P2), e Gate 3 de inclusão em Merkle Mountain Range (OLIVEIRA, 2026). O
+gate de aceite da fase é objetivo: run-all-gates.sh verde — os oito gates da auditoria v5, incluindo cargo
+test --workspace, clippy, fmt e cargo deny com a advisory da CVE-2026-22696 no deny.toml. Se
+algum gate falhar, o ciclo de verificação da Seção 4.5 se aplica sem exceção: o log é o prompt de correção.
+5.5 Passo 3 (F2) — WormGraph, ConstitutionStore e ratificação de invariantes
+A fase F2 ergue a camada de governança sobre o núcleo. As fontes são o p2-b06 (WormGraph e
+ClaimRegistry com hashes) e o p2-b13 (invariantes Web3 consolidados), com recuperação por índice da
+Parte V.2 para os grupos INV-CORE, INV-CLAIM e INV-OS. Implemente o log causal append-only com MMR
+(o WormGraph) e o ConstitutionStore com a semântica exata de ratificação especificada: cada invariante
+com id, enunciado e falsificador; quórum 4/7 para o padrão ou 5/7 para o crítico; timelock de 7 ou 14 dias
+conforme criticidade (OLIVEIRA, 2026). Os testes de aceite devem cobrir, no mínimo: inclusão e prova de
+MMR sobre o log; negação de ratificação com quórum insuficiente; e bloqueio de mutação durante o
+timelock. A regra de falha é fail-closed por construção — uma ratificação malformada rejeita, nunca
+“conclui”.
+5.6 Passo 4 (F3) — Dados governados: aia v2 + AEGIS com as 21 correções
+A fase F3 é o teste de maturidade do pipeline, porque constrói sobre a parte do corpus que já documenta
+suas próprias falhas de geração. Emita os prompts da Parte VI na ordem lógica declarada pelo documento
+— 6.5 (análise de contratos faltantes) antes de 6.1/6.2 (repositório aia v1 e v2) e 6.4 (análise estática) antes
+de 6.3 (repositório corrigido) — de modo que o agente conheça as APIs fantasma da v1 e os achados
+C1–C7, A1–A8 e R1–R5 antes de implementar (OLIVEIRA, 2026). O alvo é o repositório aia v2 + cliente
+AEGIS: branching estilo Apache Iceberg, governança de execução (IAM, ontologia, orçamentos, auditoria)
+e o protocolo WAP governado. As 21 correções documentadas são critérios de aceite nomeados —
+incluindo o hashing length-prefixed para INV-AEGIS-04, o timeout que elimina o fail-hang, o fim de
+wildcards IAM e o runtime por chamada FFI com OnceLock (OLIVEIRA, 2026). O gate da fase é o WAP
+completo: nenhuma escrita em main sem o pipeline de 4 gates, autorização AEGIS e record_hash, com as
+14 invariantes (INV-AEGIS-01..06, INV-BRANCH-01..06, INV-AIA-01..02) verdes em teste.
+
+
+=== PAGINA 17 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 17
+5.7 Passo 5 (F4) — Crates da AGI: cognição, memória, deliberação e treinamento
+verificável
+Com a fundação verificada, a fase F4 implementa os crates superiores do monorepo Arkhe AGI: núcleo de
+cognição, memória multi-camada, aprendizagem e deliberação multiagente — a especificação do corpus
+descreve deliberação por 51 agentes com protocolos de consenso —, além dos conectores de dados (RustFS,
+Bloco 3.3) e do ciclo de descoberta Dream-RSI com invariantes fixos (Bloco 3.5) (OLIVEIRA, 2026). Para
+o treinamento verificável do Pacote BRICS (Bloco 3.2), a recomendação do tutorial é implementar o
+pipeline de dados e atestados — as seis fases de dados atestados por país, sparse upcycling, treinamento
+federado MoE com ALF-LB, avaliação por 10 domínios, especialização com Proof-of-Loss e ancoragem no
+WormGraph/Rekor via Model Provenance Certificate — como código de orquestração com invariantes
+INV-TRAIN-* e INV-BRICS-*, sem executar treinamento efetivo, que exige infraestrutura de aceleradores
+fora do escopo de qualquer estação de trabalho individual. Esse recorte é coerente com o status honesto do
+corpus (P2): o pipeline é verificável como código; o treinamento de fundação é uma operação material que
+o repositório deve ser capaz de atestar, não de executar sozinho.
+5.8 Passo 6 (F5/F6) — Verificação formal, empacotamento, MCP e aplicações
+A fase F5 fecha a promessa de verifiabilidade: propriedades críticas em provas formais nas três trilhas
+especificadas — Lean 4 para as propriedades matemáticas do núcleo, TLA+ para o WormGraph e a
+ClaimRegistry (protocolos concorrentes), Kani/Verus para contratos de Rust —, os quality gates das 11
+famílias do Bloco 3.19 (build, lint, testes, Kani, WASM, frontend, MCP, segurança, GGUF, birthmark,
+hardware) e o empacotamento verificável com manifesto BLAKE3/SHA-256 do Bloco 2.4 (OLIVEIRA,
+2026). A fase F6, opcional e declarada de grau de pesquisa, adiciona o servidor MCP orca-arkhe-mcp
+(Bloco 3.26), o fluxo de verificação de frontend (Bloco 3.22) e, se desejado, as adaptações a ecossistemas
+(Blocos 3.13–3.18) e o núcleo em microcontrolador Arkhe-ESP (Bloco 3.21). Em todas as fases, vale o
+lembrete do corpus: as adaptações por ecossistema e o hardware são extensões; o núcleo verificável
+compilando com todos os gates verdes é o produto mínimo do projeto.
+5.9 Templates universais de prompt e auditoria de fase
+Os dois templates a seguir padronizam a comunicação com o agente e encerram o conjunto de artefatos do
+tutorial. A Listagem 3 é o template universal de prompt de fase — preenche-se um por iteração, com um
+bloco-fonte por vez. A Listagem 4 é o prompt de auditoria que dispara a realimentação verbal (Reflexion)
+quando um gate falha ou quando a fase termina em vermelho obscuro (SHINN et al., 2023). Ambos
+pressupõem a constituição da Listagem 1 já no contexto do agente.
+
+
+=== PAGINA 18 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 18
+Listagem 3 – Template universal de prompt de fase (um bloco-fonte por iteração).
+[FASE F<n> | iteração <k> | bloco-fonte: p<parte>-b<nº>]
+OBJETIVO (uma frase, escopo fechado):
+  <ex.: implementar Gate 1 (hash BLAKE3) em arkhe-core conforme p2-b02>
+CONTEXTO ANEXADO (orçamento ≤ 60 mil tokens):
+  - docs/dmcp/blocks/<bloco>.md (integral)
+  - extratos citados: docs/dmcp/invariantes.md#<INV-*> (somente os citados)
+  - estado: resumo do repositório + log da última iteração (≤ 6 mil tokens)
+TAREFA:
+  1. Implementar/alterar SOMENTE o escopo do objetivo (P4).
+  2. Toda decisão conflitante com o bloco deve ser declarada, nunca oculta (P6).
+  3. Marcar como stub tudo que não for implementado nesta iteração (P2).
+ACEITE (gate executável desta iteração):
+  <ex.: cargo test -p arkhe-core gate1 && ./scripts/run-all-gates.sh>
+EVIDÊNCIA (P5):
+  Anexar ao commit: log integral do gate + diff + blocos citados.
+PROIBIDO: novas dependências sem verificação; desativar gates; prometer sem log.
+Listagem 4 – Prompt de auditoria de fase (realimentação verbal, estilo Reflexion).
+[AUDITORIA | fase F<n> | iteração <k> | resultado: VERMELHO]
+ENTRADAS:
+  - log de falha do gate (anexado, integral)
+  - bloco-fonte: docs/dmcp/blocks/<bloco>.md (somente a seção pertinente)
+TAREFA (sem escrever código):
+  1. Diagnóstico: qual invariante/critério do bloco foi violado (cite INV-*)?
+  2. Hipótese causal: por que a implementação gerada falhou (1 parágrafo)?
+  3. Lição verbal para a próxima iteração (≤ 5 linhas, imperativa):
+     "Na próxima tentativa, <ação>, porque <causa>. Não <erro observado>."
+  4. Decisão: CORRIGIR (mesmo escopo) | DIVIDIR (escopo era grande demais, P4)
+     | ESCALAR (dúvida de especificação -> abrir p*-b** para revisão humana).
+SAÍDA: seções 1-4 em texto. A próxima iteração receberá esta saída como contexto.
+6. Contra-argumentos e limitações
+6.1 Janelas de um milhão de tokens não resolvem o problema
+O primeiro contra-argumento é o mais óbvio: se existem janelas de contexto de um milhão de tokens
+(AMAZON WEB SERVICES, 2025; GOOGLE, 2026), por que não simplesmente colar o Documento
+Mestre inteiro? A resposta empírica vem da evidência de posição e saturação: o desempenho em U
+documentado por Liu et al. indica que o miolo de contextos extensos é onde a informação se perde, e o
+desempenho degrada com o aumento de material distrator, mesmo quando a janela numericamente cabe
+(LIU et al., 2024). A resposta de engenharia reforça a primeira: contexto caro é contexto lento e
+dispendioso, e a prática industrial de agentes recomenda precisamente o contrário — carregar o necessário e
+recuperar o restante sob demanda (ANTHROPIC, 2025b). Há, ainda, um limite prático que o tutorial não
+pode abstrair: iterações longas consomem contexto adicional a cada leitura de arquivo e execução de
+comando, de modo que mesmo a estratégia disciplinada precisa de compactação de histórico em sessões
+longas. O DMCP mitiga — não elimina — essa limitação, e é honesto quanto a isso: fases grandes
+continuam exigindo múltiplas sessões com estado persistido no repositório (commits, logs, manifests), não
+na conversa.
+
+
+=== PAGINA 19 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 19
+6.2 A especificação não é verdade: afirmações não verificadas dentro do corpus
+O segundo contra-argumento vem do interior do próprio corpus. A Parte IV do documento — a trilha de
+pesquisa complementar — registra que nem tudo que a especificação afirma pôde ser verificado: o método
+de identidade did:cid não foi localizado nos registros do W3C/DIF; a referência “arXiv:2605.28405” não
+existe — o framework real da DeepMind é o “Levels of AGI”, arXiv:2311.02462, como a própria Parte IV
+registra; e o “Cluster-Aware Upcycling (CVPR 2026)” permanece não localizado (OLIVEIRA, 2026). Para
+o operador do DMCP, a consequência é uma regra de higiene: prompts citam blocos e critérios executáveis,
+jamais afirmações isoladas de contexto; e toda afirmação do corpus que esteja marcada como não verificada
+deve ser tratada como hipótese a testar, não como requisito. O tutorial herda a tabela de balanço da Parte IV
+como uma “lista de suspeitos” inicial — a alternativa, filtrar ou “corrigir” o corpus, violaria a política de
+preservação integral que dá ao documento sua utilidade auditável.
+6.3 Alucinação de implementação: o caso empírico das APIs fantasma
+O terceiro contra-argumento é o mais técnico: mesmo com especificação perfeita e contexto disciplinado, o
+agente alucina — APIs que não existem, pacotes inexistentes, contratos incompatíveis. A literatura
+confirma a generalidade do fenômeno (SPRACKLEN et al., 2025), e o corpus oferece o análogo em nível
+de API: a análise do repositório aia documenta chamadas a funções que não existem na implementação v1
+— APIs fantasma —, corrigidas apenas na v2 após as análises estáticas (OLIVEIRA, 2026, Blocos 6.4–6.5).
+As mitigações do DMCP são três e nenhuma é suficiente sozinha: gates executáveis (o log rejeita o código
+que não roda), verificação de dependências antes da introdução (cargo search/cargo add;
+cargo-deny/cargo-vet nos gates) e a regra de citação de bloco (P3), que reduz — mas não zera — o espaço
+de paráfrases livres nas quais a alucinação floresce. O residual de risco é aceito e declarado: o tutorial não
+garante ausência de alucinação; verifica apenas as propriedades cobertas pelos gates e seus oráculos; erros sem cobertura podem atravessá-los sem detecção.
+6.4 Divergências internas do corpus e o custo da reconciliação
+Um cético apontaria, com razão, que o corpus mantém versões divergentes em paralelo — OS Layer v0.1.0
+contra v0.2.0, aia v1 contra v2, além de três duplicatas fundidas — e que isso transfere para o operador o
+ônus da reconciliação. É um ônus real, e o P6 existe para torná-lo gerenciável: precedência declarada,
+decisão registrada, nenhuma escolha silenciosa. Mas é justo reconhecer o limite do mecanismo: a
+precedência por versão resolve conflitos entre versões, e não conflitos dentro de uma mesma versão — por
+exemplo, entre o template de crate do Bloco 2.6 e o selo de completude do Bloco 6.6, que pertencem a
+iterações distintas do monorepo. Nesses casos, o DMCP prescreve escalonamento humano (saída
+ESCALAR do prompt de auditoria, Listagem 4), porque a decisão envolve julgamento editorial sobre a
+especificação que nenhum gate executável captura. O custo total de reconciliação é, portanto, não nulo e
+heterogêneo, concentrado nas fases F0 e F3.
+
+
+=== PAGINA 20 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 20
+6.5 Escopo desejoso: o que o tutorial deliberadamente não promete
+O quinto contra-argumento é o mais fundamental: a especificação descreve, entre outras coisas, uma AGI
+do Sul Global com treinamento federado em aceleradores distribuídos, e nenhum protocolo de prompts
+constrói uma AGI. O tutorial não disputa esse ponto — disputa o escopo. O produto do DMCP é o
+monorepo arkhe-agi verificável: fundação compilável com gates verdes, governança ratificável, dados
+governados com WAP, crates de cognição implementados sobre essa fundação e pipeline de treinamento
+como código de atestação — não o treinamento de um modelo fundacional, que é uma operação material
+dependente de infraestrutura externa. Essa restrição não é evasiva; é a mesma do corpus, que reconhece ser
+majoritariamente especificação executável e skeletons e que o Arkhe OS não é uma AGI, mas a
+infraestrutura de verificação sobre a qual uma AGI verificável poderia ser construída e auditada
+(OLIVEIRA, 2026). O tutorial aplica ao próprio resultado a honestidade de status que pede ao agente.
+6.6 Síntese dos riscos e mitigações
+A Tabela 5 consolida os riscos discutidos nesta seção e suas mitigações, na forma de referência rápida para
+o operador. Nenhuma linha da tabela é opcional: a experiência documentada no próprio corpus — APIs
+fantasma corrigidas, gates adicionados, versões reconciliadas — é a prova de que o regime de verificação
+não é cerimônia, mas o mecanismo que transforma uma especificação desejosa em um sistema construído.
+O leitor pode observar que todas as mitigações são procedurais ou executáveis; nenhuma depende de
+confiança no modelo, e essa é, na nossa avaliação, a lição central do tutorial.
+Tabela 5 – Riscos do uso do Documento Mestre como prompt e mitigações do DMCP
+Risco
+Evidência
+Mitigação no DMCP
+Saturação e degradação de
+contexto
+LIU et al., 2024; ANTHROPIC, 2025b
+Fatiamento por bloco; orçamento ≤ 60 mil
+tokens/prompt; recuperação por índice
+Alucinação de pacotes/APIs
+SPRACKLEN et al., 2025; Bloco 6.5 do
+corpus
+Gates executáveis; cargo-deny/vet; verificação prévia de
+dependência; regra P3 de citação
+Herança de afirmações não
+verificadas
+Parte IV do corpus (did:cid; arXiv
+inexistente)
+Prompts citam blocos/critérios, não afirmações; tabela de
+balanço como lista de suspeitos
+Conflito entre versões
+divergentes
+v0.1.0 × v0.2.0; aia v1 × v2
+Precedência declarada (P6); duplicatas ♻ lidas uma vez;
+escalonamento humano em conflitos intra-versão
+Escopo extrapolado pelo
+agente
+Prática de agentes; auditoria v5 do
+corpus
+Uma fase por prompt (P4); aceite por gate; divisão de
+fase após 3 iterações de falha
+Pseudo-completude (stubs
+'completados')
+Status honesto do corpus
+P2: stubs permanecem stubs; selo de fase só com
+evidência anexada ao commit
+Código criptográfico
+incorreto
+21 correções do arkhe-aegis (Bloco 6.4)
+Implementar sobre correções documentadas (F3); testes
+de vetor conhecidos; revisão humana obrigatória em
+cripto
+
+
+=== PAGINA 21 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 21
+7. Conclusão e implicações
+Este tutorial partiu de uma pergunta prática — como usar um documento de especificação de 68.262 linhas
+como prompt para a construção completa de um software — e respondeu com um protocolo operacional, o
+DMCP, que fatia o Documento Mestre ARKHE OS & AGI em 50 blocos endereçáveis, prefixa cada
+prompt com uma constituição de seis princípios derivados da filosofia fail-closed do projeto, ordena a
+construção em sete fases (F0–F6) com gates executáveis como critérios de aceite e encerra cada ciclo com
+evidência anexada ao commit. A defesa metodológica do protocolo não repousa em otimismo sobre
+modelos de linguagem, mas no conjunto oposto de evidências: degradação de atenção em contextos longos
+(LIU et al., 2024), alucinação de pacotes e APIs (SPRACKLEN et al., 2025), desempenho modesto de
+agentes sem estrutura (JIMENEZ et al., 2024) — e, decisivamente, no estudo de caso interno do próprio
+corpus, cuja auditoria do repositório aia documentou e corrigiu 21 defeitos de implementação gerada. O
+DMCP é a formalização de uma lição que o corpus já continha: em sistemas fail-closed, a verificação é a
+arquitetura.
+As implicações excedem o projeto tratado. Para projetos com especificações herdadas de grande escala —
+legado corporativo, normas técnicas, documentos de design acumulados —, o tutorial demonstra que a
+infraestrutura de fatiamento (âncoras estáveis, hashes, índices de critérios) é o ativo que transforma
+documentação em programa construtivo; sem ela, o documento é apenas grande. Para a prática de
+desenvolvimento dirigido por especificação com agentes (GITHUB, 2025), o DMCP adiciona o padrão da
+precedência declarada entre versões divergentes da especificação, um problema que emerge naturalmente
+quando a especificação é orgânica e versionada em paralelo. E para a pesquisa em agentes de código, o caso
+Arkhe sugere uma métrica de avaliação complementar ao SWE-bench: a fidelidade de construção a uma
+especificação adversa — grande, divergente e parcialmente não verificada — medida por gates executáveis
+e rastreabilidade bloco-código.
+O trabalho futuro segue três frentes. A primeira é a execução: rodar o pipeline F0–F3 ponta a ponta com
+agentes contemporâneos, publicando os logs de gates como artefato público de replicação — o mesmo
+padrão de evidência que o corpus exige de seus próprios componentes. A segunda é a automação do
+orquestrador: converter a Tabela 4 e os templates das Listagens 3–4 em um runner que emita prompts,
+execute gates e mantenha o manifesto de rastreabilidade bloco-commit sem intervenção manual por
+iteração. A terceira é a verificação formal das propriedades de governança (quórum, timelock, WAP) em
+TLA+, fechando o ciclo entre a especificação escrita e a garantia executável. Até lá, o operador dispõe do
+essencial: um mapa, uma constituição e uma regra de progresso — prove, não prometa.
+Referências
+Fontes externas acessadas em 22/09/2026; a fonte interna é literatura cinzenta do arquivo do projeto (Safe
+Core archive), citada por bloco com hash SHA-256 registrado.
+ANTHROPIC. Best practices for Claude Code. Claude Code Documentation, 2025a. Disponível em:
+ https://code.claude.com/docs/en/best-practices. Acesso em: 22 set. 2026.
+https://code.claude.com/docs/en/best-practices
+ANTHROPIC. Building effective agents. Anthropic Research, dez. 2024. Disponível em:
+ https://www.anthropic.com/research/building-effective-agents. Acesso em: 22 set. 2026.
+https://www.anthropic.com/research/building-effective-agents
+ANTHROPIC. Effective context engineering for AI agents. Anthropic Engineering, set. 2025b. Disponível em:
+ https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents. Acesso em: 22 set.
+2026. https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
+
+
+=== PAGINA 22 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 22
+AMAZON WEB SERVICES. Claude Sonnet 4's 1M context window on Amazon Bedrock. AWS Builder
+ Library, ago. 2025. Disponível em:
+https://builder.aws.com/content/6-/claude-sonnet-4-s-1m-context-window-on-amazon-bedrock. Acesso
+em: 22 set. 2026.
+https://builder.aws.com/content/6-/claude-sonnet-4-s-1m-context-window-on-amazon-bedrock
+GITHUB. Spec-driven development with AI: get started with a new way of working. GitHub Blog, 2 set. 2025.
+ Disponível em: https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-wi
+th-a-new-way-of-working/. Acesso em: 22 set. 2026. https://github.blog/ai-and-ml/generative-ai/spec-driv
+en-development-with-ai-get-started-with-a-new-way-of-working/
+GOOGLE. Long context. Gemini API Documentation, 2026. Disponível em:
+ https://ai.google.dev/gemini-api/docs/long-context. Acesso em: 22 set. 2026.
+https://ai.google.dev/gemini-api/docs/long-context
+JIMENEZ, C. E. et al. SWE-bench: can language models resolve real-world GitHub issues? In:
+ INTERNATIONAL CONFERENCE ON LEARNING REPRESENTATIONS (ICLR), 12., 2024, Viena.
+Proceedings... arXiv:2310.06770. Disponível em: https://arxiv.org/abs/2310.06770. Acesso em: 22 set.
+2026. https://arxiv.org/abs/2310.06770
+LEWIS, P. et al. Retrieval-augmented generation for knowledge-intensive NLP tasks. In: CONFERENCE ON
+ NEURAL INFORMATION PROCESSING SYSTEMS (NEURIPS), 34., 2020. Proceedings...
+arXiv:2005.11401. Disponível em: https://arxiv.org/abs/2005.11401. Acesso em: 22 set. 2026.
+https://arxiv.org/abs/2005.11401
+LIU, N. F. et al. Lost in the middle: how language models use long contexts. Transactions of the Association for
+ Computational Linguistics, v. 12, p. 157-173, 2024. arXiv:2307.03172. Disponível em:
+https://arxiv.org/abs/2307.03172. Acesso em: 22 set. 2026. https://arxiv.org/abs/2307.03172
+MADAAN, A. et al. Self-Refine: iterative refinement with self-feedback. In: CONFERENCE ON NEURAL
+ INFORMATION PROCESSING SYSTEMS (NEURIPS), 36., 2023. Proceedings... arXiv:2303.17651.
+Disponível em: https://arxiv.org/abs/2303.17651. Acesso em: 22 set. 2026.
+https://arxiv.org/abs/2303.17651
+OLIVEIRA, R. Arkhe OS & AGI — Documento Mestre Integrado. 2. ed., 22 set. 2026. Documento interno do
+ projeto arkhe-agi (68.262 linhas; 2.287.868 caracteres; SHA-256:
+5a77d9c3f1094dadca72edf3326bea594e9dd73b23ed563054a6059bd8d4ec44). Literatura cinzenta do
+arquivo do projeto (Safe Core archive).
+RIDNIK, T. et al. Code generation with AlphaCodium: from prompt engineering to flow engineering. arXiv,
+ 2024. arXiv:2401.08500. Disponível em: https://arxiv.org/abs/2401.08500. Acesso em: 22 set. 2026.
+https://arxiv.org/abs/2401.08500
+SHINN, N. et al. Reflexion: language agents with verbal reinforcement learning. In: CONFERENCE ON
+ NEURAL INFORMATION PROCESSING SYSTEMS (NEURIPS), 36., 2023. Proceedings...
+arXiv:2303.11366. Disponível em: https://arxiv.org/abs/2303.11366. Acesso em: 22 set. 2026.
+https://arxiv.org/abs/2303.11366
+SPRACKLEN, J. et al. We have a package for you! A comprehensive analysis of package hallucinations by code
+ generating LLMs. In: USENIX SECURITY SYMPOSIUM, 34., 2025, Chicago. Proceedings... Disponível
+em: https://www.usenix.org/conference/usenixsecurity25/presentation/spracklen. Acesso em: 22 set. 2026.
+https://www.usenix.org/conference/usenixsecurity25/presentation/spracklen
+WEI, J. et al. Chain-of-thought prompting elicits reasoning in large language models. In: CONFERENCE ON
+ NEURAL INFORMATION PROCESSING SYSTEMS (NEURIPS), 35., 2022. Proceedings...
+arXiv:2201.11903. Disponível em: https://arxiv.org/abs/2201.11903. Acesso em: 22 set. 2026.
+https://arxiv.org/abs/2201.11903
+YANG, J. et al. SWE-agent: agent-computer interfaces enable automated software engineering. In:
+ CONFERENCE ON NEURAL INFORMATION PROCESSING SYSTEMS (NEURIPS), 37., 2024.
+
+
+=== PAGINA 23 ===
+Documento Mestre como Prompt — Tutorial DMCP · arkhe-agi
+Página 23
+Proceedings... arXiv:2405.15793. Disponível em: https://arxiv.org/abs/2405.15793. Acesso em: 22 set.
+2026. https://arxiv.org/abs/2405.15793
+ZHANG, F. et al. RepoCoder: repository-level code completion through iterative retrieval and generation. In:
+ CONFERENCE ON EMPIRICAL METHODS IN NATURAL LANGUAGE PROCESSING (EMNLP),
+2023, Singapura. Proceedings... arXiv:2303.12570. Disponível em: https://arxiv.org/abs/2303.12570.
+Acesso em: 22 set. 2026. https://arxiv.org/abs/2303.12570

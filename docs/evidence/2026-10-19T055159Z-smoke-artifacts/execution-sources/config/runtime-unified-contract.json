@@ -1,0 +1,767 @@
+{
+  "schema": 1,
+  "id": "arkhe-podman-unified-candidate/v1",
+  "state": "DRAFT_NOT_SEALED_NOT_EXECUTED",
+  "execution_enabled": false,
+  "runtime_verified": false,
+  "purpose": "specification of a new unified trial, not production admission",
+  "runtime": {
+    "engine": "podman",
+    "rootless": true,
+    "architecture": "linux/x86_64",
+    "kernel_domain": "WSL2 shared utility-VM kernel",
+    "dedicated_machine_required": true,
+    "no_inherited_runtime_approval": true
+  },
+  "target_profile": {
+    "id": "arkhe-unified-target-128m/v1",
+    "same_for_all_22_targets": true,
+    "memory_bytes": 134217728,
+    "memory_swap_total_bytes": 134217728,
+    "memory_swap_max_bytes": 0,
+    "cpu_quota": 0.5,
+    "pids_max": 16,
+    "uid": 10001,
+    "gid": 10001,
+    "capabilities": [],
+    "no_new_privileges": true,
+    "network": "none",
+    "image_readonly": true,
+    "work_tmpfs_bytes": 1073741824,
+    "tmp_tmpfs_bytes": 67108864,
+    "tmp_noexec": true,
+    "implicit_profile_fallback": false,
+    "production_1536m_approval": false
+  },
+  "build_phase": {
+    "separate_from_22_target_verdicts": true,
+    "memory_bytes": 1610612736,
+    "cpu_quota": 2,
+    "pids_max": 128,
+    "network": "none",
+    "sandbox_builder": "apps/arkhe-intra/lib/sandbox-policy.mjs",
+    "host_probe_execution": false,
+    "only_hash_bound_binary_transferred_to_targets": true
+  },
+  "vectors": [
+    "identity",
+    "cgroup-enforcement",
+    "mount-inventory",
+    "socket-local-control",
+    "tcp-egress",
+    "udp-egress",
+    "dns-egress",
+    "image-read-control",
+    "writable-control",
+    "input-read-control",
+    "input-write",
+    "image-write",
+    "outside-mount-canary",
+    "traversal-and-symlink",
+    "subprocess-control",
+    "ffi-control",
+    "mount-capability",
+    "seccomp-inventory",
+    "tmp-noexec",
+    "memory-bounded",
+    "cpu-bounded",
+    "pids-bounded"
+  ],
+  "overrides": {
+    "cgroup-enforcement": {
+      "memory.max": "134217728",
+      "memory.swap.max": "0",
+      "cpu.max": "50000 100000",
+      "pids.max": "16"
+    },
+    "mount-capability": {
+      "calls": [
+        "mount",
+        "umount2",
+        "pivot_root"
+      ],
+      "each_required": true,
+      "wall_seconds": 3,
+      "host_paths_forbidden": true,
+      "success_is_failure": true,
+      "no_invalid_argument_error_as_proof_of_filter": true
+    },
+    "mount-inventory": {
+      "all_mounts_must_match_sealed_manifest": true,
+      "unknown_or_duplicate_target": "ERROR",
+      "writable_mounts_need_explicit_justification": true,
+      "check_before_release_and_after_subtests": true
+    },
+    "seccomp-inventory": {
+      "required_action": "all mandatory rule cases covered, not just mode or getppid",
+      "getppid_policy": "allowed positive control; prior errno-133 canary is not production policy"
+    }
+  },
+  "mount_contract": {
+    "reference_receipt": "docs/evidence/2026-10-19T045147Z-syscall-trial/host-receipts/ffi-control.oracle.json",
+    "reference_only": [
+      {
+        "target": "/input",
+        "filesystem": "9p",
+        "observed_vfs_flags": [
+          "ro",
+          "noatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/etc/group",
+        "filesystem": "ext4",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/run/.containerenv",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/run/secrets",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/etc/hostname",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/etc/hosts",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev/shm",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/etc/passwd",
+        "filesystem": "ext4",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/",
+        "filesystem": "overlay",
+        "observed_vfs_flags": [
+          "ro",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/run",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "nodev",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/tmp",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/work",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "nodev",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc",
+        "filesystem": "proc",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/sys",
+        "filesystem": "sysfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/var/tmp",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "nodev",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev/pts",
+        "filesystem": "devpts",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev/mqueue",
+        "filesystem": "mqueue",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/sys/fs/cgroup",
+        "filesystem": "cgroup2",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime",
+          "nosymfollow"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev/null",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev/zero",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev/full",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev/tty",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev/random",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/dev/urandom",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "rw",
+          "nosuid",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/acpi",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/kcore",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/keys",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/scsi",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/timer_list",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/sys/firmware",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/sys/fs/selinux",
+        "filesystem": "tmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/interrupts",
+        "filesystem": "devtmpfs",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/bus",
+        "filesystem": "proc",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/fs",
+        "filesystem": "proc",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/irq",
+        "filesystem": "proc",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/sys",
+        "filesystem": "proc",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      },
+      {
+        "target": "/proc/sysrq-trigger",
+        "filesystem": "proc",
+        "observed_vfs_flags": [
+          "ro",
+          "nosuid",
+          "nodev",
+          "noexec",
+          "relatime"
+        ],
+        "source_binding": "must resolve to exact suite-owned artifact or declared kernel/device mount; seal separately",
+        "status": "REFERENCE_NOT_APPROVED"
+      }
+    ],
+    "final_manifest_sha256": null,
+    "require_vfs_and_superblock_flags": true,
+    "normalize_only": [
+      "mount_id",
+      "parent_mount_id",
+      "device_number",
+      "suite_bound_source_path"
+    ],
+    "normalization_must_preserve": [
+      "target",
+      "root_within_mount",
+      "filesystem",
+      "access_mode",
+      "nosuid",
+      "nodev",
+      "noexec",
+      "propagation",
+      "source_identity"
+    ],
+    "forbidden": [
+      "engine sockets",
+      "host root or arbitrary host path",
+      "host proc/sys views",
+      "real credentials",
+      "shared propagation"
+    ],
+    "candidate_changes": {
+      "/run": "explicit tmpfs nosuid,nodev,noexec; bounded size must be sealed",
+      "/var/tmp": "explicit tmpfs nosuid,nodev,noexec; bounded size must be sealed"
+    },
+    "proc_sys_device_exceptions": "exact mount and device-node identities, modes and masking paths must be sealed; do not claim only /work and /tmp writable",
+    "candidate_manifest": {
+      "path": "config/runtime-mounts-candidate.json",
+      "sha256": "0869d4ab4100c52a2bae3099b15439257063a9add3f2c17882446116f009fc40",
+      "state": "DRAFT_REQUIRES_CANDIDATE_OBSERVATION",
+      "counts_as_final_seal_binding": false
+    }
+  },
+  "seccomp_contract": {
+    "profile_file_sha256": "fa5338973b097190125cea4b489f88698df74365085f734d7c462e9381359a2f",
+    "abi_table_sha256": "6d6b541d40c18877d417a1195cd34aacd96272b780e0c36ac8653fd426afbbab",
+    "expanded_rule_manifest_sha256": "1082648cc6723d053bd8775d29af59d813a5d8f00177f70260005285b28b2abe",
+    "compiled_filter_evidence_sha256": null,
+    "default_action": "SCMP_ACT_ERRNO",
+    "allow_compat_architectures": false,
+    "x32_abi": "reject; require explicit compiled-policy and controlled ABI evidence",
+    "getpid_getppid_subprocess_ffi": "positive controls allowed",
+    "mandatory_restricted_syscalls": [
+      "mount",
+      "umount2",
+      "pivot_root",
+      "fsopen",
+      "fsconfig",
+      "fsmount",
+      "move_mount",
+      "open_tree",
+      "mount_setattr",
+      "unshare",
+      "setns",
+      "ptrace",
+      "bpf",
+      "perf_event_open",
+      "keyctl",
+      "userfaultfd"
+    ],
+    "complete_means": "closed expanded policy rule manifest and required action/argument branches, for the sealed ABI; not every possible kernel behavior",
+    "rule_case_coverage_required": true,
+    "unlisted_coverage_or_unsupported_case": "ERROR_BLOCKS_SEAL",
+    "unavailable_or_unsafe_probe": "UNSUPPORTED_BLOCKS_VERIFICATION",
+    "errno_eperm_alone_attributes_seccomp": false,
+    "raw_policy_hash_is_bpf_dump": false,
+    "probe_constraints": "review safe fixed operands; no privileged positive container, host targets, exploit payloads or unbounded calls",
+    "canary_deny_profile_accepted_as_production": false,
+    "candidate_static_artifacts": {
+      "profile_file_sha256": {
+        "path": "config/seccomp/arkhe-unified-x86_64-v1/profile.json",
+        "sha256": "fa5338973b097190125cea4b489f88698df74365085f734d7c462e9381359a2f"
+      },
+      "abi_table_sha256": {
+        "path": "config/seccomp/arkhe-unified-x86_64-v1/abi.json",
+        "sha256": "6d6b541d40c18877d417a1195cd34aacd96272b780e0c36ac8653fd426afbbab"
+      },
+      "expanded_rule_manifest_sha256": {
+        "path": "config/seccomp/arkhe-unified-x86_64-v1/rules.json",
+        "sha256": "1082648cc6723d053bd8775d29af59d813a5d8f00177f70260005285b28b2abe"
+      }
+    },
+    "offline_compilation": {
+      "receipt": "config/seccomp/arkhe-unified-x86_64-v1/offline-compilation.json",
+      "sha256": "88f1a9cb4b32fd0e703f639b674fdb1a08a784b7db3dea9f16d2b69cc3c8ef44",
+      "bpf_sha256": "65c6f984d3959c65bc6923f8a79c86fe4421d59ef82e843af6df7c6578e3a9d3",
+      "kernel_filter_loaded": false,
+      "satisfies_effective_loaded_evidence": false
+    }
+  },
+  "seal": {
+    "required_sha256": [
+      "contract",
+      "image",
+      "probe_binary",
+      "probe_source",
+      "shared_builder",
+      "mount_manifest",
+      "seccomp_profile",
+      "abi_table",
+      "expanded_rule_manifest",
+      "oracle",
+      "runner",
+      "source_snapshot",
+      "compiled_filter_evidence"
+    ],
+    "required_runtime_identity": [
+      "engine_version",
+      "oci_runtime_version",
+      "architecture",
+      "kernel_release",
+      "boot_id"
+    ],
+    "missing_binding": "ERROR",
+    "source_mutation_during_run": "ERROR",
+    "stale_lease_auto_takeover": false,
+    "human_or_existing_governance_admission_required_for_production": true
+  },
+  "execution_plan": {
+    "not_legacy_180_second_budget": true,
+    "global_seconds": 900,
+    "preflight_seconds": 30,
+    "build_seconds": 60,
+    "per_target_start_seconds": 10,
+    "ordinary_probe_seconds": 3,
+    "resource_probe_seconds": 8,
+    "all_syscall_cases_cumulative_seconds": 60,
+    "cleanup_reserve_seconds": 30,
+    "parallel_targets": 1,
+    "max_auxiliary_containers": 2,
+    "max_probe_output_bytes": 65536,
+    "max_oracle_receipt_bytes": 1048576,
+    "deadline_exceeded": "ERROR_AND_KILL_EXACT_OWNED_TARGET",
+    "requires_budget_validation_before_release": true,
+    "network_positive_controls": "before and after each private IPv4 TCP/UDP/DNS case; exact nonces; readiness required",
+    "network_claim_scope": "private IPv4 fixtures; no blanket IPv6/system-resolver claim",
+    "resource_sampling_ms": 50,
+    "memory_137_alone": "insufficient",
+    "pids_max_spawn_attempts": 24,
+    "cpu_threads": 2,
+    "cpu_compute_seconds": 3
+  },
+  "decision": {
+    "required_vector_count": 22,
+    "required_status": "PASS",
+    "requires_all_subchecks": true,
+    "mount_inventory_unassessed_blocks": true,
+    "skipped_unsupported_or_missing_receipts_block": true,
+    "cleanup_required_before_final_verdict": true,
+    "results_from_other_runs_count": false,
+    "automatic_runtime_verified_transition": false,
+    "verification_scope": "only the sealed candidate tuple, after an implemented and validated decision engine",
+    "production_promotion": "separate admission and full trial for 1536 MiB profile; stress budgets must be revised before that trial",
+    "gvisor_wasm_transfer": false
+  },
+  "remaining_work": [
+    "seal exact mount/device manifest",
+    "review candidate seccomp, ABI/rule manifests and complete dynamic coverage",
+    "implement required per-rule probes and independent effective-policy evidence",
+    "adapt all 22 vector expectations to one candidate profile",
+    "implement unified runner and fail-closed collector",
+    "run clean target startup and resource smoke checks before full run",
+    "execute 22 vectors and all mandatory subchecks with cleanup receipts"
+  ],
+  "implemented_components": {
+    "mount_family_subchecks": {
+      "source": "packaging/sandbox/containment-probe/main.rs",
+      "source_sha256": "bd80af463da5ad80dd29f8bafbdd3f47097cb7e64e5539bda8a019b083c1c4d3",
+      "observation_body_schema": 2,
+      "calls": [
+        "mount",
+        "umount2",
+        "pivot_root"
+      ],
+      "trial": "docs/evidence/2026-10-19T050340Z-mount-variants-trial/results.json",
+      "trial_scope": "128 MiB resource candidate with engine default seccomp; not the sealed final policy",
+      "independent_mount_snapshots_unchanged": true,
+      "seccomp_rule_attribution": false,
+      "runtime_verified": false
+    },
+    "candidate_startup_smoke": {
+      "runner": "scripts/run_unified_smoke.py",
+      "runner_sha256": "be2086524cb8855817efa51319ac302c80f5abae6d16732dbfaf7be78c1fdc2a",
+      "results": "docs/evidence/2026-10-19T052756Z-unified-smoke/results.json",
+      "startup": "PASS",
+      "effective_limits": "PASS",
+      "mounts": "STRUCTURAL_MATCH_BINDINGS_PENDING",
+      "kernel_filter_capture": "BLOCKED_READER_SECCOMP",
+      "unified_22_vector_runner": false,
+      "resource_stress_under_explicit_profile_executed": false,
+      "sealed": false,
+      "runtime_verified": false
+    }
+  }
+}

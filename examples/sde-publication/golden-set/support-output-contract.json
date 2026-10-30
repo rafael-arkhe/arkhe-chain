@@ -1,0 +1,30 @@
+{
+  "id": "support-response-evidence",
+  "version": "0.1.0",
+  "panel_spec": { "id": "ai-output-panel", "version": "0.1.0" },
+  "output_contract": {
+    "response": "nonempty_string",
+    "citations": {
+      "format": "full_hash",
+      "pattern": "^[a-f0-9]{64}$",
+      "minimum_count": 1,
+      "resolves_against": "retrieved_article_ids",
+      "syntax": "[article_id]",
+      "truncated_ids_allowed": false
+    }
+  },
+  "rule_judge": {
+    "checks": ["response.nonempty_string", "citations.minimum_count", "citations.full_hash", "citations.resolvable_in_retrieved_context"],
+    "on_fail": "DENY",
+    "on_unavailable": "REQUIRE_APPROVAL",
+    "semantic_support_verified": false
+  },
+  "measurement_policy": {
+    "mode": "measure_for_diagnostics_even_if_rule_gate_fails",
+    "measured_score_status_on_rule_failure": "MEASURED_NOT_USED_RULE_GATE",
+    "not_measured_score": null,
+    "invalid_provider_response": "INVALID",
+    "zero_is_a_real_score_not_a_missing_value": true
+  },
+  "limits": "Exact ID resolution does not prove claim support. No per-claim segmentation or citation-count maximum is implemented. Human review and calibration remain pending."
+}

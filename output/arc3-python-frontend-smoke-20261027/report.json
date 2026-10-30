@@ -1,0 +1,204 @@
+{
+  "design": "Integration smoke, known training controls, no independent holdout or language-causal attribution.",
+  "budget": {
+    "total_generation_requests": 4,
+    "per_control": 2,
+    "output_tokens_per_call": 1024,
+    "context_tokens": 8192,
+    "timeout_seconds": 180
+  },
+  "source_language": "Python-syntax DSL subset, no source execution",
+  "admission": "DISABLED",
+  "runs": {
+    "click": {
+      "result": {
+        "lane": "DEV",
+        "max_attempts": 2,
+        "training_sha256": "f4992bfdd259d4fda23ea33bb3e380c95fe7cc276054efc7a6bad765faacbb97",
+        "attempts": [
+          {
+            "attempt": 1,
+            "parent_sha256": null,
+            "request_sha256": "6cac3299d7af97a32bae818627c8bf20b4563940ba338a8552c34d08560c0517",
+            "status": "PARSE_TYPE_REJECTED",
+            "reason": "INVALID_ENVELOPE"
+          },
+          {
+            "attempt": 2,
+            "parent_sha256": null,
+            "request_sha256": "c75dc4ed335060ace0768ce6427ce63b747655f78e5d0a01d68682c253cef17d",
+            "status": "PARSE_TYPE_REJECTED",
+            "reason": "INVALID_ENVELOPE"
+          }
+        ],
+        "production_effects": 0,
+        "ratification": "NOT_EVALUATED",
+        "holdout_evaluated": false,
+        "stage": "NONE",
+        "status": "BUDGET_EXHAUSTED"
+      },
+      "frontend": [
+        {
+          "raw_response": "{\n  \"uses_memory\": false,\n  \"source\": \"def step(g, a, s):\\n    # Extract action components\\n    kind = a.kind\\n    dx = a.dx\\n    dy = a.dy\\n    x = a.x\\n    y = a.y\\n    # Determine target coordinate based on action kind\\n    if kind == \\\"CLICK\\\":\\n        target = (x, y)\\n    else:  # MOVE\\n        # Get current position of the object (assuming object is the first in objects list)\\n        objs = g.objects()\\n        if len(objs) == 0:\\n            return (g, s)\\n        obj = objs[0]\\n        cur_x = obj.pos.x\\n        cur_y = obj.pos.y\\n        target = (cur_x + dx, cur_y + dy)\\n    # Check if target is within bounds\\n    if target[0] < 0 or target[0] >= 64 or target[1] < 0 or target[1] >= 64:\\n        return (g, s)\\n    # Check if target is blocked (non-background)\\n    # Use is_blocked with the object and offset from its current position\\n    # For CLICK, we need to check if the cell is background (i.e., not blocked)\\n    # For MOVE, we need to check if the destination is background (excluding own old cells)\\n    # We'll use the object's current position as reference\\n    if kind == \\\"CLICK\\\":\\n        # For CLICK, we need to see if the cell is background (i.e., not blocked)\\n        # is_blocked expects an object; we can pass the object at target? but we don't have it.\\n        # Instead, we can check grid_get at target and compare to background color.\\n        bg_color = g.background()\\n        cell_color = g.grid_get(target[0], target[1])\\n        if cell_color != bg_color:\\n            return (g, s)\\n        # If background, we can click (no change to grid)\\n        return (g, s)\\n    else:  # MOVE\\n        # Get current object position\\n        objs = g.objects()\\n        if len(objs) == 0:\\n            return (g, s)\\n        obj = objs[0]\\n        cur_x = obj.pos.x\\n        cur_y = obj.pos.y\\n        # Compute offset\\n        offset_x = target[0] - cur_x\\n        offset_y = target[1] - cur_y\\n        # Check if destination is blocked (non-background) excluding own old cells\\n        if is_blocked(g, obj, offset_x, offset_y):\\n            return (g, s)\\n        # If not blocked, we can move (no change to grid in this simple implementation)\\n        return (g, s)\\n\"\n}",
+          "status": "SOURCE_REJECTED",
+          "reason": "SOURCE_EXPRESSION_NOT_ALLOWED"
+        },
+        {
+          "raw_response": "{\"uses_memory\": false, \"source\": \"def step(g, a, s):\\n    # Determine action kind\\n    kind = action_kind(a)\\n    # Determine coordinates if CLICK\\n    x = action_click_x(a)\\n    y = action_click_y(a)\\n    # Determine offsets if MOVE\\n    dx = action_dx(a)\\n    dy = action_dy(a)\\n    # Get current grid\\n    # We'll use grid_get to read the cell at (x, y) for CLICK, or use dx/dy for MOVE\\n    # For simplicity, we assume we need to check if the target cell is background (0) before acting\\n    # For CLICK: if cell is background, we can click; otherwise, we should NOOP\\n    # For MOVE: we need to ensure the move stays within bounds and target is background\\n    # For NOOP: just return same grid and state\\n    # We'll implement a simple policy: if action is CLICK and the cell is background, click; else NOOP\\n    # If action is MOVE and dx,dy are within bounds and target is background, move; else NOOP\\n    # We'll use state_set to update state if needed (but uses_memory is false, so state must be unchanged?)\\n    # According to spec, uses_memory false requires empty input/output State, so we should not modify state.\\n    # So we can ignore state updates and just return same state.\\n    # However, we need to produce a valid step result: Pair[Grid,State]\\n    # We'll compute new grid based on action.\\n    # Initialize new_grid = g\\n    new_grid = g\\n    # For CLICK: if kind == CLICK and x is not None and y is not None:\\n    if eq_kind(kind, \\\"CLICK\\\"):\\n        # Check if x and y are within bounds (0..63)\\n        # We'll assume they are valid; if not, we NOOP\\n        # Get current color at (x, y)\\n        cell_color = grid_get(g, coord(x, y))\\n        # If cell_color == background (0), we can click (set to 5? Actually click sets to 5 per training examples)\\n        # In training examples, clicking sets the cell to 5 (the color of the object?).\\n        # The goal is to make the object appear; we need to infer that clicking a background cell creates an object of color 5.\\n        # So we set the cell to 5.\\n        if eq_color(cell_color, 0):\\n            new_grid = grid_set(new_grid, coord(x, y), 5)\\n        # else NOOP (keep grid unchanged)\\n    elif eq_kind(kind, \\\"MOVE\\\"):\\n        # dx and dy are offsets; we need to compute new position\\n        # For simplicity, we assume dx,dy are provided as offsets; we need to check if move is valid.\\n        # We'll compute target cell: current position? Actually MOVE doesn't have a position; it's relative.\\n        # The spec: action is kind MOVE plus dx/dy; only relevant accessors return Some.\\n        # We need to know the current position of the object? Not given.\\n        # This is ambiguous. Perhaps we need to infer from the grid: find the object (color 5) and move it.\\n        # But we don't have memory, so we cannot track object position across steps.\\n        # However, the task may be to implement a simple policy that works for the given training episodes.\\n        # In training episodes, there are only CLICK and NOOP actions, no MOVE.\\n        # So we can ignore MOVE for now, or implement a placeholder that does nothing.\\n        pass\\n    # For NOOP, do nothing\\n    # Return new grid and same state (since uses_memory false)\\n    return (new_grid, s)\"}",
+          "status": "SOURCE_REJECTED",
+          "reason": "SOURCE_STATEMENT_NOT_ALLOWED"
+        }
+      ],
+      "usage": [
+        {
+          "call": 1,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "3e06c2308efef186296267d270d152dc275868c9d20c2fc8968fda5cef544af6",
+          "prompt_bytes": 5171,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1277,
+          "eval_count": 612,
+          "total_duration": 88009072000,
+          "load_duration": 30290945300,
+          "prompt_eval_duration": 15964985000,
+          "eval_duration": 41708362000,
+          "wall_seconds": 88.03507910000917
+        },
+        {
+          "call": 2,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "3d303cb6311e31976f4a2581693d37a2b496f5f43fed4b26c63b0ecb2ae21c2f",
+          "prompt_bytes": 5281,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1302,
+          "eval_count": 823,
+          "total_duration": 76895255300,
+          "load_duration": 14775100,
+          "prompt_eval_duration": 15777716000,
+          "eval_duration": 60965840000,
+          "wall_seconds": 76.93167180000455
+        }
+      ]
+    },
+    "move": {
+      "result": {
+        "lane": "DEV",
+        "max_attempts": 2,
+        "training_sha256": "193bd2a5088ba8f1570b22441c9823c52d970a7f5a7a5716e935416c9b44fe1c",
+        "attempts": [
+          {
+            "attempt": 1,
+            "parent_sha256": null,
+            "request_sha256": "7a4e0500fee025a5e019c9ba903affc4ade4c3c3d45d9a618d00a7f55b53a0b8",
+            "status": "PARSE_TYPE_REJECTED",
+            "reason": "INVALID_ENVELOPE"
+          },
+          {
+            "attempt": 2,
+            "parent_sha256": null,
+            "request_sha256": "5850714e89d52f80078229c8f6af8e3ab7f15d5f66603b34a4beb79450370b83",
+            "status": "PARSE_TYPE_REJECTED",
+            "reason": "INVALID_ENVELOPE"
+          }
+        ],
+        "production_effects": 0,
+        "ratification": "NOT_EVALUATED",
+        "holdout_evaluated": false,
+        "stage": "NONE",
+        "status": "BUDGET_EXHAUSTED"
+      },
+      "frontend": [
+        {
+          "raw_response": "{\"uses_memory\": false, \"source\": \"def step(g, a, s):\\n    # Extract action components\\n    kind = a[\\\"kind\\\"]\\n    dx = a[\\\"dx\\\"]\\n    dy = a[\\\"dy\\\"]\\n    x = a[\\\"x\\\"]\\n    y = a[\\\"y\\\"]\\n    \\n    # Determine target position based on action type\\n    if kind == \\\"CLICK\\\":\\n        # For CLICK, use x and y coordinates\\n        target_x = x\\n        target_y = y\\n    else:\\n        # For MOVE, use current position + dx/dy\\n        # Get current position from state\\n        current_x = s.get(\\\"k0\\\", 0)\\n        current_y = s.get(\\\"k1\\\", 0)\\n        target_x = current_x + dx\\n        target_y = current_y + dy\\n    \\n    # Check if target is within bounds\\n    if target_x < 0 or target_x > 63 or target_y < 0 or target_y > 63:\\n        # Out of bounds, do nothing\\n        return (g, s)\\n    \\n    # Get current color at target position\\n    target_color = g[target_y][target_x]\\n    \\n    # For CLICK, we need to check if the target is a valid click target\\n    # For MOVE, we need to check if the target is not blocked\\n    if kind == \\\"CLICK\\\":\\n        # Click on any non-background cell\\n        if target_color != 0:  # 0 is background color\\n            # Perform click action\\n            # Update state with new position\\n            new_s = dict(s)\\n            new_s[\\\"k0\\\"] = target_x\\n            new_s[\\\"k1\\\"] = target_y\\n            return (g, new_s)\\n    else:\\n        # MOVE action\\n        # Check if target is blocked (non-background and not current position)\\n        if target_color != 0:\\n            # Check if this is the same as current position\\n            current_x = s.get(\\\"k0\\\", 0)\\n            current_y = s.get(\\\"k1\\\", 0)\\n            if target_x == current_x and target_y == current_y:\\n                # Moving to same position, allowed\\n                pass\\n            else:\\n                # Blocked, do nothing\\n                return (g, s)\\n        \\n        # Valid move, update state\\n        new_s = dict(s)\\n        new_s[\\\"k0\\\"] = target_x\\n        new_s[\\\"k1\\\"] = target_y\\n        return (g, new_s)\\n    \\n    # Default case (NOOP or invalid)\\n    return (g, s)\"}",
+          "status": "SOURCE_REJECTED",
+          "reason": "SOURCE_EXPRESSION_NOT_ALLOWED"
+        },
+        {
+          "raw_response": "{\"uses_memory\": false, \"source\": \"def step(g, a, s):\\n    # Extract action components\\n    kind = a.kind\\n    dx = a.dx\\n    dy = a.dy\\n    x = a.x\\n    y = a.y\\n    # Determine target cell based on action\\n    if kind == \\\"CLICK\\\":\\n        # Click at (x, y)\\n        target = coord(offset(x, 0), offset(y, 0))\\n    else:\\n        # Move: compute new position relative to current\\n        # Get current position from state (if any)\\n        cur = state_get(s, \\\"k0\\\")\\n        if is_some(cur):\\n            cur_x = offset(cur.x, 0)\\n            cur_y = offset(cur.y, 0)\\n            target = coord(add(cur_x, dx), add(cur_y, dy))\\n        else:\\n            # No position, fallback to (0,0)\\n            target = coord(offset(0, 0), offset(0, 0))\\n    # Check if target is within bounds (0..63)\\n    tx = coord_x(target)\\n    ty = coord_y(target)\\n    if lt_offset(tx, offset(0, 0)) or lt_offset(offset(63, 63), tx) or lt_offset(ty, offset(0, 0)) or lt_offset(offset(63, 63), ty):\\n        # Out of bounds, do nothing\\n        new_grid = g\\n        new_state = s\\n    else:\\n        # Perform action\\n        if kind == \\\"CLICK\\\":\\n            # Click: set color at target to 5 (example)\\n            new_grid = grid_set(g, target, color(5))\\n            new_state = s\\n        elif kind == \\\"MOVE\\\":\\n            # Move: update state with new position\\n            new_state = state_set(s, \\\"k0\\\", target)\\n            new_grid = g\\n        else:\\n            # NOOP\\n            new_grid = g\\n            new_state = s\\n    return (new_grid, new_state)\"}",
+          "status": "SOURCE_REJECTED",
+          "reason": "SOURCE_EXPRESSION_NOT_ALLOWED"
+        }
+      ],
+      "usage": [
+        {
+          "call": 1,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "2056fc53a1da4eb08a26eb105486371e6f31879b8c303760abf9581a1dcae9d9",
+          "prompt_bytes": 5007,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1258,
+          "eval_count": 583,
+          "total_duration": 49734868000,
+          "load_duration": 12830100,
+          "prompt_eval_duration": 5890209000,
+          "eval_duration": 43611027000,
+          "wall_seconds": 49.75533539999742
+        },
+        {
+          "call": 2,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "6cf553e55feceddad8177e4be34fe3ab8664a753a5720b1bd9723b18ffbfb0fd",
+          "prompt_bytes": 5117,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1283,
+          "eval_count": 451,
+          "total_duration": 38434946700,
+          "load_duration": 14365000,
+          "prompt_eval_duration": 5929053000,
+          "eval_duration": 32209891000,
+          "wall_seconds": 38.44859700000961
+        }
+      ]
+    }
+  },
+  "inventory": {
+    "models": [
+      {
+        "name": "north-mini-code-1.0:latest",
+        "model": "north-mini-code-1.0:latest",
+        "modified_at": "2026-06-19T10:35:20.6917999-03:00",
+        "size": 18593967008,
+        "digest": "d8b269ad5c7c7144ce104b83ce93bc3efb85e0f74e01be6be5f5d6f7ca90b60f",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "cohere2moe",
+          "families": [
+            "cohere2moe"
+          ],
+          "parameter_size": "30.5B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 500000,
+          "embedding_length": 2048,
+          "runner": "ggml"
+        },
+        "capabilities": [
+          "completion",
+          "tools",
+          "thinking"
+        ]
+      }
+    ]
+  },
+  "complete": true,
+  "cleanup": {
+    "model_unloaded": true,
+    "owned_server_stopped": true
+  }
+}

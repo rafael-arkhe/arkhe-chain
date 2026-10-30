@@ -1,0 +1,939 @@
+
+=== PAGINA 1 ===
+Specify, Don't Simulate: A Fail-Closed Four-Gate Verification
+Pipeline for Verifiable GGUF Model Artifacts in the Arkhe OS
+ Trust Layer
+ Rafael Oliveira —  https://orcid.org/0009-0005-2697-4668
+ Safe Core — Psychology Behavioral Analysis, São Paulo, Brazil
+ Jameson Bednarski —  https://orcid.org/0009-0002-5963-6196
+ Arkhe Research Group
+ Corresponding author: Rafael Oliveira, ORCID https://orcid.org/0009-0005-2697-4668
+ September 2026 — updated article (source package consolidated on 2026-09-15; seal
+ ARKHE-GGUF-COMPLETE-STRUCTURE-2026-09-15)
+Abstract
+Open-weight machine-learning artifacts circulate through distribution chains characterized by opaque provenance,
+executable metadata, and trust delegated to promises. This article consolidates and extends arkhe.gguf, the
+model-verification component of the Arkhe OS trust layer, tracking its evolution from a delegation package
+(schema v1.2) to a complete project structure (schema v1.3). The framework's methodological axiom — what
+does not exist is not simulated; it is specified — separates generated artifacts (a byte-exact 24-byte GGUF v3
+header fixture whose SHA-256 digest we compute by deterministic execution), delegated execution steps, and
+explicitly non-generable items. The technical contribution is a fail-closed, four-gate verification pipeline: Gate 0
+sanitizes GGUF metadata against two verified parser vulnerabilities (CVE-2026-65315, Ollama;
+CVE-2025-53630, llama.cpp); Gate 1 verifies dual SHA-256/BLAKE3 digests; Gate 2 verifies keyless Sigstore
+signatures over an in-toto Statement v1 manifest; Gate 3 verifies RFC 6962 inclusion and consistency proofs plus
+a witness quorum of at least two checkpoint cosignatures. Schema v1.3 adds a source block for pre-extension
+hashes, an external-manifest hash location, CVE attestation fields, and Safenet-enforced revocation. We further
+document an honest-delegation methodology, a thirteen-step provenance checklist, tooling errata discovered
+during verification (rekor-cli flag mismatches), and negative tests that make fail-closed behavior an executable
+specification. We conclude that attestation constitutes an epistemically honest floor — signed is not safe, identity
+is not behavior — and outline the path from PROMISE to VERIFIED within a complete digital-sovereignty stack.
+Keywords: model provenance; GGUF; cryptographic attestation; Sigstore; transparency log; witness quorum; AI
+supply-chain security; fail-closed verification.
+ Preprint — in-depth research on the arkhe.gguf delegation package and its complete project structure. All digests
+reported here were obtained by deterministic local execution, and web sources carry access dates. Source-package
+ seals: ARKHE-GGUF-DELEGATION-CONSOLIDATED-2026-09-15 and
+ ARKHE-GGUF-COMPLETE-STRUCTURE-2026-09-15.
+
+
+=== PAGINA 2 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 2
+1. Introduction
+On February 21, 2025, the exchange Bybit lost approximately US$1.5 billion to North Korean actors
+whom the FBI attributes to TraderTraitor [28], [29] — the largest cryptocurrency theft recorded to date.
+The detail that matters here is not the magnitude but the mechanism: the cryptography worked
+flawlessly, and what was compromised was the signing interface, which led operators to approve
+transactions whose real semantics differed from what they believed they were approving. The distance
+between what one believes one is signing and what one actually verifies is the same epistemic void that
+currently crosses the machine-learning model supply chain, in which billions of bytes of weights change
+hands daily with no requirement of cryptographic evidence attached to the artifact itself.
+In the open-model ecosystem, that void has already produced concrete incidents. JFrog documented
+models hosted on Hugging Face that silently execute arbitrary code during deserialization via crafted
+pickle payloads [5]; a subsequent scan concentrated roughly one hundred malicious models on the
+platform [6], [7]. In February 2025, the nullifAI campaign used malformed pickle files to bypass
+automated scanners [8], and the scanning tool itself was later shown to be bypassable (CVE-2025-1716)
+[9]. The technical root is documented in the Python standard library itself: pickle data can execute
+arbitrary code during deserialization and must never be unpickled from untrusted sources [3]. The
+safetensors format [4] eliminated the code-execution attack class — but a safe format is not provenance:
+intact bytes do not answer who produced the model, when, with what identity, under which capability
+declarations, and with what distribution history.
+Meanwhile the parser layer — the code that reads model containers — accumulated its own
+vulnerability record. Between 2024 and 2026, llama.cpp and Ollama, the two most widely deployed
+local inference runtimes, disclosed heap overflows, integer overflows, and uncontrolled memory
+allocations in GGUF metadata parsing (CVE-2024-23496, CVE-2024-23605, CVE-2024-37032,
+CVE-2024-39719 through CVE-2024-39721, CVE-2025-53630, and CVE-2026-65315) [10], [11], [12],
+[13], [14], [15]. A model file is thus not merely data: it is a parser input with a demonstrated history of
+memory-corruption consequences, and its metadata block is an attack surface long before the first token
+is generated.
+This article takes as its object of study the arkhe.gguf framework — the model- verification component
+of the Arkhe OS trust layer [36] — across its two most recent source documents: the consolidated
+delegation package (seal ARKHE-GGUF-DELEGATION-CONSOLIDATED-2026-09-15) and the
+complete project structure (seal ARKHE-GGUF-COMPLETE-STRUCTURE-2026-09-15), both dated
+September 15, 2026. The package is an engineering document with an explicit methodological thesis,
+summarized in its golden rule: when evidence does not exist, it is not simulated; what cannot be
+generated is specified. Hashes that have not been computed appear as <CALCULATE> placeholders;
+capabilities that have not been verified are declared as an empty list; weights, base models, trust roots,
+and signatures that require external execution resources are enumerated as non-generable items rather
+than fabricated.
+Our contribution is fourfold. First, we dissect the framework's two-layer construction: a delegation
+methodology that separates the generable from the executable and the declarable (Section 3), and an
+attestation schema that reached version 1.3 with five blocks and an expanded rule set (Section 4).
+Second, we formalize the fail-closed four-gate verification pipeline now implemented as a Rust
+workspace — sanitization, hash, signature, and transparency-log verification with witness quorum —
+
+
+=== PAGINA 3 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 3
+together with the negative tests that make rejection behavior an executable specification (Section 5).
+Third, we trace the thirteen-step provenance pipeline and its hash-ordering discipline, including an
+erratum we identified between the specified and the actual rekor-cli interface (Section 6). Fourth, we
+position the pipeline within its governance (Safenet/FROST), distribution (Hashtree/Nostr with npub
+pinning), and execution (WebGPU/WASM local inference) layers, and we confront the whole
+construction with its limitations (Sections 7–10). Throughout, the distinctions that organize the
+argument are the ones the source package itself insists upon: PROMISE is not VERIFIED, signed is not
+safe, and identity is not behavior.
+2. Background and Threat Model
+2.1 The GGUF format
+GGUF (GGML Universal File) is the container format used by llama.cpp, Ollama, and the broade
+local-inference ecosystem to distribute quantized language models [1]. Its v3 header is deliberately
+compact: a four-byte magic (the ASCII bytes GGUF), a little- endian uint32 version, a uint64 tensor
+count, and a uint64 metadata key-value count, followed by the metadata block and tensor data [1], [2].
+The metadata block is an ordered map whose values are typed (uints, floats, booleans, strings, arrays);
+the format prescribes a default alignment of 32 bytes unless the general.alignment key states otherwise
+[1]. Hugging Face Hub treats GGUF as a first-class distribution format [2], which makes the header and
+its metadata the first code path every local runtime executes when loading a model from public
+infrastructure. This is precisely the surface that arkhe.gguf targets: the framework treats the header as a
+verification object, injects its own attestation keys into the metadata namespace, and insists that any
+consumer parse it only after sanitization.
+ Figure 1. The byte-exact minimal GGUF v3 header fixture (fixtures/arkhe.gguf). The 24 bytes are deterministic; the
+SHA-256 digest shown was computed by local deterministic execution in this study, honoring the package rule that digests
+ are calculated, never invented.
+2.2 Deserialization and parser attacks, 2024–2026
+The empirical record justifies the framing of a model file as a hostile input. Table 1 consolidates the
+vulnerability record that Gate 0 of the pipeline is designed against. Two classes dominate. The first is
+deserialization: pickle-based loading executes attacker-controlled constructors [3], exploited in the wild
+by malicious Hugging Face uploads [5], [6], [7], [8], [9]. The second is memory safety in container parsers:
+Talos disclosed two heap overflows in llama.cpp's GGUF reader in February 2024 [10], [11]; Wiz's
+
+
+=== PAGINA 4 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 4
+Probllama research turned an Ollama path-handling flaw into remote code execution [12]; Oligo
+disclosed a family of Ollama flaws including malformed- GGUF denial of service [13]; and in
+2025–2026 both ecosystems disclosed integer- overflow and uncontrolled-allocation conditions
+reachable from GGUF metadata [14], [15]. The two identifiers embedded in the arkhe.gguf schema —
+CVE-2026-65315 (Ollama, uncontrolled memory allocation in the GGUF metadata parser) and
+CVE-2025-53630 (llama.cpp, integer overflow in gguf_init_from_file_impl) — were independently
+confirmed against public CVE databases during the preparation of this article, which matters because the
+framework's own honesty rule makes every claim auditable.
+ Table 1. Verified vulnerability record motivating Gate 0 (metadata sanitization).
+ Identifier
+ Component
+ Class
+ Date
+ Ref.
+CVE-2024-23496
+llama.cpp
+(gguf_fread_str)
+Heap buffer overflow in GGUF string
+reader
+Feb 2024
+[10]
+CVE-2024-23605
+llama.cpp
+(header.n_kv)
+Heap overflow from GGUF header counts
+Feb 2024
+[11]
+CVE-2024-37032
+Ollama
+Path traversal to RCE (Probllama)
+Jun 2024
+[12]
+CVE-2024-39719
+/20/21
+Ollama
+Info disclosure; malformed-GGUF DoS;
+goroutine DoS
+Oct 2024
+[13]
+CVE-2025-53630
+llama.cpp (gguf_init_fr
+om_file_impl)
+Integer overflow to heap out-of-bounds
+Jul 2025
+[14]
+CVE-2026-65315
+Ollama
+Uncontrolled memory allocation in GGUF
+metadata parser (DoS)
+Jul 2026
+[15]
+CVE-2025-1716
+picklescan
+Unsafe globals bypass enabling RCE via
+pickle
+Mar 2025
+[9]
+2.3 The provenance gap and related infrastructure
+Format safety and parser hygiene address integrity of execution, not authenticity of origin. The
+provenance gap has a mature institutional response in the software supply chain, and arkhe.gguf
+deliberately reuses it rather than inventing new cryptography. Sigstore provides keyless signing in which
+an OIDC identity (for CI, the GitHub Actions issuer token.actions.githubusercontent.com) is bound into
+a short-lived Fulcio certificate, with signature objects recorded in the Rekor transparency log [16], [19],
+[20], [40]. Certificate Transparency contributed the underlying append-only machinery: RFC 6962 defines
+Merkle inclusion and consistency proofs [17], later consolidated in RFC 9162 [18], and the structure
+descends from Merkle's original signature scheme [25]. SLSA contributes build-level provenance
+vocabulary [23], and in-toto contributes the Statement v1 envelope whose subject digests enumerate
+exactly which files a signature covers [22]. On the model side, the OpenSSF Model Signing tool
+(model-transparency; PyPI package model-signing) wraps these primitives for ML artifacts [21], and the
+Model Cards literature supplies the declaration vocabulary that the schema's capability fields
+operationalize [24]. Hash agility is provided by dual SHA-256/BLAKE3 digests [26], [27]. What was
+missing, and what arkhe.gguf specifies, is the binding of this machinery to the specific container format,
+metadata namespace, and parser threat model of GGUF — plus the honesty discipline that keeps
+declaration separate from verification.
+2.4 The Arkhe OS context
+Arkhe OS is a verifiable trust layer for autonomous AI agents, of which arkhe.gguf is the minimum
+viable product: model verification is the first concrete object to which the architecture's invariants apply
+
+
+=== PAGINA 5 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 5
+[36]. The surrounding architecture contributes three concepts that recur in this article. WormGraph
+provides evidence records in a SHA-256/Ed25519 hash chain anchored to transparency infrastructure —
+the same shape as the provenance chain in Section 6.4. ConstitutionStore provides governance
+thresholds under which quorum policies (such as the witness quorum of Section 5.3 or the FROST
+attestation quorum of Section 7) are configuration, not hard-coding. And the incident narratives
+consolidated after the Bybit, StablR, and SUPERFORTURE losses motivate the architectural insistence
+that enforcement must move from the warning path to the execution path — the requirement that Section
+7 implements on-chain [28], [31].
+3. Methodology: Specify, Don't Simulate
+3.1 The delegation-package pattern
+The arkhe.gguf documents practice a methodology that deserves explicit treatment because it is unusual
+in AI engineering writing. A delegation package is neither a specification frozen in intent nor a
+fabricated demonstration; it is a three-way ledger. The generable is generated: twelve artifacts in the
+consolidated package, growing to more than twenty-five in the complete project structure — fixture,
+schemas, scripts, Rust crates, configuration, documentation, and negative tests. The executable is
+delegated: thirteen steps that require real resources (model downloads, OIDC identities, log
+submissions) are written as a checklist with acceptance criteria, expected exit codes, and prohibitions.
+The non-generable is declared: training weights, the base model, a real trust root, a real Rekor inclusion
+proof, a real Sigstore signature, and the resulting production arkhe.gguf itself are listed in a
+what-was-not-generated table [36]. Every hash that could not be computed appears as the literal
+placeholder <CALCULATE>.
+The pattern's value is epistemic. A reader can distinguish, at every point in the document, between
+claims that are specifications (auditable against external references), claims that are artifacts (auditable
+by re-execution), and claims that are future obligations (auditable against the acceptance criteria). We
+note one internal inconsistency that the methodology itself surfaces: the opening ledger of the
+consolidated package counts five non-generable items while its closing README table counts six (the
+production arkhe.gguf appears only in the latter) — exactly the kind of discrepancy that consistency
+checks in Section 4.3 are designed to catch, and exactly the kind that a simulated package would have
+hidden.
+3.2 The byte-exact fixture and the computed digest
+The framework's minimal verifiable artifact is a 24-byte GGUF v3 header with zero tensors and zero
+metadata pairs (Figure 1, Listing 1). Its bytes are fully determined by the format specification: magic
+GGUF, version 3, and two zero counts in little- endian encoding [1]. Because the bytes are deterministic,
+the fixture functions as a cross-implementation test vector: the Python generator, the Rust parser tests,
+and any third-party reimplementation must agree on both the bytes and their digests. In preparing this
+article we executed the digest computation locally and obtained SHA-256
+a4e5e156ddec27e286f75328784d7106b60a4eb1d246e950a001a3f944fbda99 over the hex string
+474755460300000000000000000000000000000000000000 — the same value reported in the source
+package, which had itself computed it by execution rather than asserting it. BLAKE3, by contrast,
+remained a placeholder in our environment because the reference implementation was not installable
+offline; the package's discipline is that the placeholder stays visibly unfilled, marking an obligation,
+rather than being invented [27].
+
+
+=== PAGINA 6 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 6
+Listing 1. Deterministic fixture generation (scripts/fixture.py, excerpt).
+def generate_fixture() -> bytes:
+    return (
+        b"GGUF" # magic
+        + struct.pack("<I", 3) # version 3 (little-endian)
+        + struct.pack("<Q", 0) # tensor_count = 0
+        + struct.pack("<Q", 0) # metadata_kv_count = 0
+    )
+ 
+# invariant enforced at generation time:
+assert len(fixture) == 24
+3.3 Fail-closed as a design axiom
+Across all four gates, the package specifies a single failure semantics: fail-closed. Any gate that cannot
+complete its verification rejects the artifact; there is no degraded mode, no warning-only path, and no
+default-allow branch. The choice is deliberately conservative and is justified by the incident record of
+Section 2: warning-path security is precisely the failure mode that turned interface approval into a
+US$1.5 billion loss at Bybit [28], [31]. What makes the axiom more than rhetoric is Section 5.4: the
+package ships negative tests whose success condition is that malformed inputs are rejected, so the
+fail-closed property is itself executable and regressable, not merely asserted.
+4. The Attestation Schema v1.3
+4.1 Five blocks
+Schema version 1.3 organizes an attestation into five top-level blocks under the arkhe.attestation.*
+namespace (Figure 2). The source block (new in v1.3) records the SHA-256 and BLAKE3 digests and
+the size of the base artifact before metadata extension. The verifiable block records signing time, the
+Ed25519 signature algorithm, the signing identity (OIDC subject, identity provider, Fulcio issuer), the
+sanitization flag, the CVE list checked, and the model-signing manifest summary. The anchored block
+carries the transparency-log evidence: anchor type rekor, log identifier and index, UUID, tree size, root
+hash, inclusion proof, and — new in v1.3 — a consistency proof and witness quorum with cosignatures.
+The attested block carries the declaration: type PROMISE, an explicitly empty declared-capabilities list,
+an explicit not-capabilities list (code-execution, network-access, file-write, shell-execution), an SLSA
+level of 0 flagged as undefined, the signer trust root, and the disclaimer that capabilities are signer
+claims, not verifications [24], [36]. The revocation block points to a revocation document and names the
+revocation strategies, which v1.3 extends from short_lived alone to short_lived plus safenet_enforced.
+
+
+=== PAGINA 7 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 7
+ Figure 2. The arkhe.attestation.* schema v1.3: five blocks with the v1.2 to v1.3 delta highlighted. Red lines mark fields
+introduced or made mandatory in v1.3, including the source block, the external-manifest hash location, CVE attestation,
+ consistency proofs, and the witness quorum.
+4.2 What changed from v1.2 to v1.3
+The delta from v1.2 to v1.3 is not decorative; each addition closes a specific verification gap (Table 2).
+Three changes deserve emphasis. First, the final-hash location moves into an external manifest: because
+metadata injection changes the file that was signed, v1.2 contained an inherent tension between in-file
+attestation keys and the hash of the file that contains them; v1.3 resolves it by letting the signed in-toto
+manifest (which covers the whole bundle, external to the file) be the final digest's home [22], [21].
+Second, sanitization becomes attested: the fields metadata_sanitized and cve_checked record that Gate 0
+ran against the identified parser vulnerabilities, converting a private engineering step into a claim a third
+party can require and audit [14], [15]. Third, the anchored block stops treating the log as a single trusted
+party: consistency proofs and a witness quorum of at least two cosignatures are required, which is the
+minimal configuration under which a malicious or compromised log cannot equivocate without
+detection [17], [35].
+ Table 2. Schema delta v1.2 → v1.3 and the gap each change closes.
+ Change
+ v1.2
+ v1.3
+ Gap closed
+source block
+—
+base hashes + size recorded
+before extension
+distinguishes base artifact from
+extended artifact
+
+
+=== PAGINA 8 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 8
+ Change
+ v1.2
+ v1.3
+ Gap closed
+final hash location
+in-file
+verifiable.file_hashes
+external_manifest (in-toto
+signed bundle)
+signing no longer self-references the
+container it lives in
+sanitization evidence
+—
+metadata_sanitized +
+cve_checked list
+Gate 0 becomes an auditable
+attestation claim
+model-signing manifest
+—
+predicate, file_count,
+bundle_hash
+signature covers the whole bundle,
+not one file
+consistency proof
+inclusion proof only
+consistency_proof required
+append-only property of the log is
+checked
+witness quorum
+—
+witness_quorum = 2 +
+cosignatures
+log cannot equivocate unilaterally
+revocation strategy
+short_lived
+short_lived + safenet_enforced
+on-chain enforcement path for
+revocation
+4.3 Consistency rules
+The schema is accompanied by consistency rules that make malformed attestations detectable before any
+cryptography runs. The five v1.2 rules carry over: every entry in declared_capabilities must carry an
+explicit status; slsa_level is valid only when slsa_level_defined is true; an ANCHORED_IN_REKOR
+status requires non-empty log identifier, index, UUID, and tree size; the short_lived strategy requires
+bounded certificate validity; and the default trust root is Sigstore/Fulcio [36]. We flag one tension inside
+rule four that verification ought to enforce more strictly than the source does: the schema retains a
+certificate_validity_hours bound of 72 from v1.2, while the public Fulcio instance issues certificates
+with approximately ten-minute lifetimes [20]; we interpret 72 hours as an upper bound for private
+deployments and recommend that verifiers require the public-good default unless the trust root explicitly
+declares otherwise. To the carried-over rules, the v1.3 artifacts add three: metadata_sanitized must be
+true (not merely present) for artifacts produced by the reference pipeline; cve_checked must name the
+concrete CVE identifiers the sanitizer defends against; and an attestation claiming witness quorum must
+carry at least that many distinct, valid cosignatures.
+4.4 JSON as canonical source, GGUF as flat projection
+GGUF metadata is a flat, typed key-value map: the format has no nested objects [1]. The framework
+therefore designates the JSON document as the canonical schema source and projects it into the
+container as a dotted, flat namespace — arkhe.attestation.verifiable.signed_at and so on — via the gguf
+Python library's reader/writer interface [39] (Listing 3). The projection rule has a non-obvious
+verification consequence that the package makes explicit: because the metadata lives inside the file, any
+change to it changes the file's digest. Attestation keys therefore can never claim to contain the hash of
+the file they inhabit; the digests they do carry refer to the pre-extension base (source block) and to
+external bundles (manifest). This is the same self-reference paradox that Listing 5 encodes as a negative
+test, and it is the engineering reason the schema's honesty is structural rather than declared.
+5. The Four-Gate Verification Architecture
+Verification in arkhe-verify, the Rust crate at the center of the complete project structure, is a four-gate
+pipeline (Figure 3). The gates are ordered by dependence: sanitization before parsing, parsing before
+hashing, hashing before signature checks, and everything before transparency-log checks. The crate is
+deliberately small — it composes the ggus parser [32], the ct-merkle implementation of RFC 6962 proofs
+
+
+=== PAGINA 9 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 9
+[33], SHA-2 and BLAKE3 digest implementations [26], [27], and Ed25519 verification [26] — so that the
+security-relevant logic remains auditable in a few hundred lines.
+ Figure 3. The arkhe-verify four-gate pipeline. Gates are ordered by dependence and the semantics is fail-closed: any failed
+ gate rejects the artifact, with no warning-only or default-allow path.
+5.1 Gate 0: metadata sanitization
+Gate 0 exists because the first code to touch a model file is a parser, and Section 2 records what parsers
+have done with hostile inputs [10], [11], [13], [14], [15]. The sanitizer enforces fixed limits before any
+allocation: strings at most 1 MiB, arrays at most one million elements, at most ten thousand metadata
+pairs, at most eight tensor dimensions, and a cumulative allocation ceiling of one gibibyte (Table 3).
+Each limit maps to a known vulnerability class — uncontrolled allocation (the CVE-2026-65315
+pattern), integer overflow (CVE-2025-53630), and count-field overflow (CVE-2024-23605) — and each
+violation is a hard rejection, not a clamp. The gate ships twice: as a standalone Python script that can run
+before signing in the pipeline, and as the Rust sanitize module that runs at verification time; both
+implement the same limits so that the producer-side and consumer-side checks cannot drift apart
+silently.
+ Table 3. Gate 0 sanitization limits (default SanitizeLimits).
+ Limit
+ Default
+ Vulnerability class addressed
+max_string_len
+1 MiB
+oversized metadata strings (allocation bombs)
+max_array_elements
+1,000,000
+array-count overflow (CVE-2026-65315 pattern)
+max_kv_pairs
+10,000
+count-field overflow (CVE-2024-23605 pattern)
+max_tensor_dims
+8
+dimensionality abuse
+max_total_allocation
+1 GiB
+cumulative uncontrolled allocation (DoS)
+
+
+=== PAGINA 10 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 10
+5.2 Gates 1 and 2: digest and signature
+Gate 1 recomputes the artifact's SHA-256 and BLAKE3 digests and compares them against the values
+recorded in the signed manifest; the source block preserves the pre- extension digest so that both stages
+of the artifact's life are independently auditable [26], [27]. Gate 2 verifies the OpenSSF Model Signing
+envelope: an in-toto Statement v1 whose subject list enumerates the bundle's files with their digests,
+signed keylessly — a GitHub Actions OIDC token bound into a short-lived Fulcio certificate, recorded
+in Rekor, and verifiable against the Sigstore trust root [21], [22], [16], [40]. Two properties of this envelope
+matter for the model use case. The subject list covers every file in the bundle, so a signature cannot be
+reused across a partially swapped set of artifacts; and the certificate's short lifetime bounds the window
+in which a stolen signing session remains usable, complementing the schema's revocation block.
+5.3 Gate 3: transparency log with witness quorum
+Gate 3 is where v1.3 most materially departs from v1.2. The verifier now requires three properties, not
+one: an inclusion proof that the artifact's entry is in the log's Merkle tree at a stated size; a consistency
+proof that the tree at that size is a prefix of the current tree, establishing append-only behavior [17]; and a
+witness quorum — at least two valid checkpoint cosignatures from independently configured witnesses,
+matching the ecosystem's direction of travel in which Rekor v2 treats witness cosigning as a first-class
+deployment component [35], [18]. The quorum is configured, not hard-coded, so an operator can raise it;
+the tauri-side updater configuration of Section 8.2 mirrors the same field. Figure 4 depicts the full
+structure, and Listing 2 shows the resulting obligations as implemented in the crate's verify_full routine.
+The design assumption is explicit: the log operator is not automatically trusted, and a single-log
+compromise must not suffice to produce an artifact that passes Gate 3.
+Listing 2. Gate 3 verification obligations (crates/arkhe-verify/src/rekor.rs, excerpt).
+pub fn verify_full(&self) -> Result<(), RekorError> {
+    self.inclusion_proof.verify(&self.root_hash)?; // 1. leaf in tree
+    let consistency = self.consistency_proof.as_ref()
+        .ok_or(RekorError::ConsistencyProofMissing)?;
+    consistency.verify(self.trusted_checkpoint.root_hash(),
+                       &self.root_hash)?; // 2. append-only
+    let quorum = self.witness_signatures.iter()
+        .filter(|ws| self.trusted_checkpoint.witnesses()
+                     .contains(&ws.identity)).count();
+    if quorum < self.trusted_checkpoint.min_witnesses() { // 3. quorum >= 2
+        return Err(RekorError::InsufficientWitnesses { quorum,
+            required: self.trusted_checkpoint.min_witnesses() });
+    }
+    // 4. each witness signature verified against the trusted checkpoint
+    ...
+}
+
+
+=== PAGINA 11 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 11
+ Figure 4. Transparency log verification in Gate 3: artifact bytes become leaves of an RFC 6962 Merkle tree; inclusion and
+ consistency proofs establish membership and append-only behavior, and an independent witness quorum of at least two
+ cosignatures prevents a malicious log from equivocating.
+5.4 Negative tests as executable specification
+The crate's test suite encodes the fail-closed axiom as executable expectations (Table 4). Oversized
+strings, oversized arrays, invalid magic numbers, missing consistency proofs, and insufficient witness
+quorums must all be rejected; the tests assert that they are [36]. One test deserves singling out for its
+epistemic neatness: final_artifact_does_not_contain_its_own_hash asserts that the artifact's bytes do not
+contain the hex encoding of the artifact's own SHA-256 digest — a fixed-point impossibility that any
+implementation claiming in-file final hashes would fail. The negative tests are the mechanism that keeps
+the pipeline's failure semantics honest over time: they regress whenever a code change accidentally
+introduces a default-allow path.
+ Table 4. Negative test matrix (tests/negative_test.rs) — each test must pass by rejecting.
+ Test
+ Malformed input
+ Expected verdict
+sanitizer_rejects_oversized_string
+metadata string of 2 MiB
+rejected (Gate 0)
+sanitizer_rejects_oversized_array
+array with 2,000,000 elements
+rejected (Gate 0)
+sanitizer_rejects_invalid_magic
+magic bytes XXXX
+rejected (Gate 0)
+rekor_rejects_missing_consistency_proof
+None consistency proof
+rejected (Gate 3)
+rekor_rejects_insufficient_witnesses
+single witness cosignature
+rejected (Gate 3)
+final_artifact_does_not_contain_its_own
+_hash
+artifact containing own digest
+asserted impossible
+5.5 The Rust workspace in context
+The complete project structure organizes the implementation as a five-crate workspace: arkhe-core
+(session and principal types), arkhe-crypto (digest and signature facades), arkhe-verify (the gates),
+arkhe-governance (Safenet integration), and arkhe-storage (Hashtree integration) [36]. Two third-party
+
+
+=== PAGINA 12 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 12
+dependencies deserve mention because they are small-community rather than industrial crates: ggus, the
+Rust GGUF parser (version 0.5.x), and ct-merkle, the RFC 6962 proof library (version 0.3.x) [32], [33].
+Their selection is consistent with the framework's minimalism, but it concentrates supply-chain risk in
+single-maintainer code, a trade-off we return to in Section 10.6. The nostr crate (version 0.38) supplies
+event verification and NIP-19 bech32 encoding for the distribution layer [34].
+6. Provenance Pipeline and Hash-Ordering Discipline
+6.1 Thirteen steps
+The production pipeline is a thirteen-step checklist (Figure 5, Table 5). It begins with conversion of a
+third-party base model to GGUF and ends with full verification; between those endpoints it interleaves
+the two disciplines the package treats as inviolable — hash-ordering and fail-closed gating. Four steps
+are new relative to the twelve-step v1.2 checklist: sanitization (step 3), consistency-proof verification
+(step 9), witness-quorum verification (step 10), and Nostr identity verification (step 12). The delegation
+brief specifies mandatory ordering for implementers, prioritizing the three critical items — Gate 0
+sanitization, consistency plus witness verification, and npub pinning — before any convenience features
+[36].
+
+
+=== PAGINA 13 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 13
+ Figure 5. The thirteen-step provenance pipeline. Red boxes mark steps added in v1.3 (sanitization, consistency proof,
+ witness quorum, Nostr identity verification); the gold box marks the hash-ordering invariant whose violation breaks
+ verification detectably.
+ Table 5. The thirteen-step verification checklist (condensed; NEW = v1.3 additions).
+ #
+ Step
+ Command (abridged)
+ Acceptance
+1
+Convert HF → base GGUF
+convert.sh model_dir
+base.gguf exists
+2
+Hash the base
+sha256sum base.gguf
+source_sha256 obtained
+3 NE
+W
+Sanitize metadata
+sanitize_metadata.py base.gguf
+exit 0
+4
+Extend metadata
+extend_metadata.py base.gguf arkhe.gguf
+arkhe.gguf exists
+5
+Hash the final artifact
+sha256sum arkhe.gguf
+final digest obtained
+6
+Create manifest
+create_manifest.py . arkhe.gguf.manifest.json
+manifest exists
+7
+Sign (keyless)
+model_signing sign manifest.json
+.sigstore bundle exists
+8
+Verify roundtrip
+model_signing verify ...
+signature verified
+9 NE
+W
+Verify consistency
+rekor-cli logproof
+exit 0
+10 N
+EW
+Verify witness quorum
+witness cosignature check (>= 2)
+exit 0
+
+
+=== PAGINA 14 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 14
+ #
+ Step
+ Command (abridged)
+ Acceptance
+11
+Publish
+htree add arkhe.gguf; htree publish
+CID obtained
+12 N
+EW
+Verify identity
+htree verify --npub expected
+exit 0
+13
+Full verification
+arkhe-verify arkhe.gguf
+4 gates OK
+6.2 Hash-ordering invariants
+The pipeline's central discipline is that digests have a direction. The base digest is computed before
+extension; the final digest is computed after extension and never inside the artifact; the manifest
+enumerates the bundle only after both exist; and the log entry anchors the signed manifest rather than an
+ad-hoc structure. Inverting any two adjacent steps breaks verification in a detectable way: the served
+bytes will not reproduce the anchored digest, which is exactly the failure the negative tests and the
+checklist's acceptance criteria encode. The v1.3 move to an external manifest simplifies this discipline at
+one point — the signed statement covers the whole bundle, so no in-file field needs to claim the final
+digest — while preserving it everywhere else. The package's prohibitions state the corollaries
+operationally: do not invent hashes; do not sign before sanitizing; do not publish before verification; and
+do not trust the user interface — verify the payload independently [36], [28].
+6.3 A tooling erratum, and what it demonstrates
+During bibliographic verification for this article we identified an erratum in the checklist as written:
+steps 9 and 10 cite rekor-cli verify --consistency and rekor-cli verify --witness-quorum 2, flags that do
+not exist in the rekor v1 command- line interface. The actual interface performs inclusion, checkpoint,
+and signed- entry-timestamp verification inside rekor-cli verify, and computes consistency evidence
+through the separate rekor-cli logproof command [19]; witness-quorum verification is the province of the
+witness ecosystem and Rekor v2 rather than a flag [35]. We flag this not as a defect of the methodology
+but as its demonstration: the checklist specifies verification obligations, and the delegated executor must
+map obligations to the tooling that actually exists — the same specify-don't-simulate rule applied to
+tooling. The erratum also illustrates why every delegated step carries an acceptance criterion: an
+executor that ran a nonexistent flag would fail step 9's exit-0 criterion immediately, rather than silently
+skipping a verification.
+6.4 The provenance chain
+The pipeline emits docs/provenance.json, a four-record hash chain in which each record carries a
+BLAKE3 record hash and the previous record's hash as prev_hash, with a genesis prev_hash of
+sixty-four zeros [27], [36]. The records correspond to the pipeline's state transitions — header plus
+attestation metadata, signature, Rekor anchoring, and Hashtree publication — making the chain
+isomorphic to the WormGraph evidence structure of the surrounding Arkhe OS architecture [36]. The
+chain's value is auditability across processes: an auditor can confirm that the artifact's publication claim
+descends from the signing claim that descends from the metadata claim, with each link independently
+recomputable.
+Listing 3. Metadata injection with dotted keys (scripts/extend_metadata.py, excerpt).
+writer.add_string("arkhe.attestation.schema_version", "1.3")
+writer.add_string("arkhe.attestation.source.file_hashes.sha256",
+                  base_sha256) # digest of the BASE artifact
+writer.add_string("arkhe.attestation.verifiable.final_hash_location",
+                  "external_manifest")
+
+
+=== PAGINA 15 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 15
+writer.add_string("arkhe.attestation.verifiable.signed_at",
+                  datetime.now(timezone.utc).isoformat())
+writer.add_string("arkhe.attestation.anchored.anchor_type", "rekor")
+writer.add_string("arkhe.attestation.attested.attestation_type",
+                  "PROMISE")
+# after writing, the FINAL digest is computed over the output file —
+# never embedded in it.
+7. Governance Enforcement: Safenet and FROST
+Verification is epistemics; enforcement is politics of the execution path. The arkhe-governance crate
+integrates Safenet, the Safe Ecosystem Foundation's on-chain security network, whose SafenetGuard
+contract sits in front of every execTransaction call of a guarded Safe wallet and blocks transactions that
+lack a valid attestation [31]. The integration's logic is a four-step fail-closed sequence: confirm the guard
+is installed on the target Safe; request attestation for the transaction; validate the attestation's FROST
+threshold signature over known oracle data; and only then submit. FROST — the Flexible
+Round-Optimized Schnorr Threshold protocol, specified in RFC 9591 as an IRTF Crypto Forum
+Research Group informational document [30] — provides the threshold property: the attestation is
+produced by a quorum of independent signers and verifies as a single signature, so on-chain enforcement
+does not require trusting any single operator.
+The architectural claim, inherited from the Arkhe OS incident analyses, is that this moves security from
+the warning path to the execution path [31], [28]: instead of showing an operator a warning that human
+attention may or may not catch, the execution environment itself refuses to run the unsafe action. For
+model artifacts the analogy is direct — a model whose attestation fails is not displayed with a warning
+but is not loaded — and the revocation block's safenet_enforced strategy gives the schema a concrete
+revocation mechanism: attestation validity is checked against network state at enforcement time, not
+against a static certificate lifetime alone. The framework maps its quorum policies onto
+ConstitutionStore thresholds, keeping the ratio strict (no quorum below two-thirds) and consistent with
+the witness quorum of Section 5.3 [36].
+8. Decentralized Distribution: Hashtree and Identity Pinning
+8.1 Content-addressed publication
+After verification, the artifact is published through Hashtree, the content-addressed storage layer that
+distributes files over Nostr relays and serves them by content identifier [36]. Publication uses the htree
+add and htree publish workflow; the CID binds the served bytes to the digests that Gate 1 verified, so the
+decentralized distribution layer inherits rather than redefines integrity. The storage crate's client verifies
+the Schnorr signature of the Nostr event that carries the mutable reference and checks that its author key
+matches the configured trusted set, using NIP-19 bech32 npub encoding as the identity presentation
+format [34].
+8.2 npub pinning and verified updates
+The distribution layer's critical control is npub pinning: the updater accepts release references only from
+explicitly configured public keys. The tauri-side configuration in the package makes the parameters
+explicit — relay endpoints, trustedNpubs, signature verification enabled, minimum two witnesses, and a
+required consistency proof — so the desktop application's update path is governed by the same quorum
+
+
+=== PAGINA 16 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 16
+discipline as the model path [37]. This closes a loop that the framework considers essential: a verified
+model distributed through an unverified channel would reinstate exactly the gap the pipeline eliminates,
+and an update channel is the classic supply-chain pivot from a compromised dependency to
+compromised hosts. The implementation priority list in the delegation brief marks npub pinning as
+critical for precisely this reason: without it, updates from untrusted sources are accepted by default [36].
+9. Local Inference: The Flare Engine
+The pipeline's endpoint is execution, and execution is kept local. The frontend engine wraps the Flare
+LLM runtime — a WASM-first browser inference engine with WebGPU acceleration [38] — in a loader
+that attempts GPU initialization and falls back to WASM SIMD128 unconditionally, so the artifact runs
+without any server component. The choice is attestation-relevant rather than merely ergonomic. First, it
+keeps the verified artifact and the executing runtime in the same trust domain: no upload, no opaque
+remote execution, no re-introduction of the trust-the-provider gap between verification and use. Second,
+it makes the verifier's obligations symmetric with the runner's: the same metadata the verifier checked is
+available to the runtime that loads the model. Third, it completes the sovereignty narrative that runs
+through the surrounding Arkhe OS work — free firmware at the hardware layer, content-addressed
+distribution at the network layer, on-chain governance at the coordination layer, and now attested local
+inference at the model layer [36]. The fallback structure also models the framework's broader approach to
+capability negotiation: degrade deterministically rather than fail open. Figure 6 summarizes the resulting
+stack.
+ Figure 6. The arkhe.gguf stack: from the 24-byte minimal verifiable artifact through the attestation schema, the four-gate
+ verification core, on-chain governance enforcement, and content-addressed distribution, to sovereign local inference.
+10. Counterarguments and Limitations
+
+
+=== PAGINA 17 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 17
+10.1 Attestation is not behavior
+The strongest objection to the whole construction is that it verifies containers, not conduct. A model
+whose weights encode harmful behavior passes every gate if the container is intact, properly signed, and
+honestly anchored; the schema's empty capabilities list and PROMISE type exist precisely to prevent the
+pipeline from being read as a behavioral guarantee. The disclaimer field states it in the artifact itself, and
+the framework's roadmap (behavioral probes that would justify a VERIFIED type) remains future work
+[36]. We regard this as the correct epistemic posture — an attestation that claimed behavior would be
+unfalsifiable — but users must understand that Gate 1 through Gate 3 answer who produced and who
+anchors an artifact, never what it will do.
+10.2 Signed is not safe
+Gate 0 defends against the parser vulnerabilities that are known and identified; it cannot defend against
+zero-day memory-safety flaws in the underlying runtimes, and its numeric limits are engineering
+judgments rather than derived optima. The 2024– 2026 record of Section 2 cuts both ways: it justifies
+sanitization as necessary, and it implies that sanitization is not sufficient [10], [11], [12], [13], [14], [15]. The
+pipeline's own honesty about this — signed is not safe is one of its stated mottos — is worth preserving
+against the temptation to market the four gates as a security boundary in the strong sense.
+10.3 Trust anchors remain
+The pipeline relocates trust; it does not eliminate it. Verifiers trust the Sigstore root and the Fulcio PKI
+[16], [20]; OIDC identities authenticate a workflow, not the good faith of its author; the witness quorum is
+only as independent as its configuration, and an operator who configures two colluding witnesses has
+recreated single-party trust with extra steps. The framework's answer — quorums as explicit, auditable
+configuration via ConstitutionStore, with strict ratios [36] — is the right kind of answer, but the residual
+is real and belongs in any deployment's threat model.
+10.4 Certificate validity and the 72-hour question
+The schema's carried-over certificate_validity_hours bound of 72 sits in tension with the public Fulcio
+instance's approximately ten-minute certificates [20]. We read 72 hours as an upper bound appropriate to
+private deployments and recommend that verifiers treat the public-good default as normative unless a
+deployment's trust root declares otherwise. The discrepancy is documented here because the package's
+own consistency rules demand that declared bounds be enforced; a rule that permits what the ecosystem
+never issues is a rule that should be tightened, and we say so in Section 11.
+10.5 Delegation residuals
+The methodology's honesty has a boundary: a delegation package cannot verify its own delegated
+execution. The acceptance criteria map obligations to observable exit codes and artifacts, but the AI
+coder (or human executor) who runs the thirteen steps is outside the package's epistemic control; the
+checklist's prohibitions are norms, not mechanics. Two mitigations exist in the structure — the negative
+tests re-run at verification time on the consumer side, and every claim the executor makes is
+re-checkable by a third party from the published evidence — but the residual trust in the executor is real
+and should be recorded as such.
+10.6 Engineering and ecosystem risks
+Three practical risks round out the picture. The small-community dependencies (ggus, ct-merkle)
+concentrate review burden [32], [33]. Quorum and relay liveness are operational dependencies: a
+
+
+=== PAGINA 18 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 18
+distribution layer that requires two witness cosignatures and healthy Nostr relays has an availability
+profile that single- operator infrastructure does not. And the GGUF projection of a five-block schema
+adds metadata weight to every artifact; the dotted namespace is compact, but the inclusion proofs and
+manifest references it points to must remain retrievable for the attestation to be checkable years later,
+which is an archival commitment as much as a cryptographic one.
+10.7 What the threat model excludes
+Finally, the boundary of the model: training-data poisoning, weight-level backdoors that trigger on
+distributed inputs, and all behavioral attacks leave no trace in container metadata. The pipeline is
+supply-chain infrastructure; it is not, and does not claim to be, an alignment or auditing technique. The
+scanner-evasion record of Section 2.2 — where even dedicated behavioral scanners were bypassed [8],
+[9] — suggests that behavioral verification is a hard open problem, which reinforces rather than
+undermines the decision to build the verifiable floor first.
+11. Conclusions and Future Work
+The arkhe.gguf framework demonstrates that a verifiable floor for open-weight model distribution is
+achievable with existing, institutionally maintained primitives — Sigstore, RFC 6962 transparency,
+in-toto envelopes, SLSA vocabulary — provided two things are added: a binding to the specific
+container format and parser threat model of GGUF, and an honesty discipline that keeps specification,
+execution, and declaration separately auditable. The four-gate pipeline implements the first; the
+delegation methodology and the empty capabilities list implement the second. Schema v1.3's additions
+— the source block, the external manifest hash location, sanitization attestation, consistency proofs, and
+witness quorum — each close a gap that v1.2 left open, and the negative tests make the pipeline's failure
+semantics executable rather than aspirational.
+Future work follows from the limitations, and the framework states most of it itself. First, fill the
+remaining placeholders by execution: a base model, a real trust root, real log entries, and the resulting
+production artifact, each adding a column of verified evidence to the ledger. Second, tighten the
+consistency rules that this review found loose — the certificate-validity bound of Section 10.4 and the
+rekor-cli command mapping of Section 6.3 are the two concrete errata. Third, move from PROMISE
+toward VERIFIED: behavioral probes whose results would be recorded in the attested block, with the
+same honesty rule that a probe not run leaves the field empty. Fourth, publish the public catalog of
+verified GGUF artifacts — the blob-database pattern the surrounding LibrePhone work models — so
+that verification becomes a property of a shared infrastructure rather than a per-consumer chore [36].
+Fifth, propose the arkhe.attestation.* metadata convention upstream to the llama.cpp and Hugging Face
+communities, where a shared namespace would let independent verifiers interoperate. Sixth, formalize
+the gate implementations — the Rust crates are small enough that machine-checked proofs of the
+fail-closed property are plausible. The broader claim the framework stakes out survives every caveat we
+have raised: in a distribution ecosystem that today operates on promises, the verifiable floor is not the
+ceiling — but without it, there is nothing to build on.
+References
+[1] GGML org. “GGUF format specification.” ggml-org/ggml repository, docs/gguf.md — magic, version 3 header,
+ tensor and metadata counts, alignment default 32. Available at:
+https://github.com/ggml-org/ggml/blob/master/docs/gguf.md (accessed September 16, 2026).
+
+
+=== PAGINA 19 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 19
+[2] Hugging Face. “GGUF — Hugging Face documentation.” Hub docs on GGUF distribution and conversion.
+ Available at: https://huggingface.co/docs/hub/en/gguf (accessed September 16, 2026).
+[3] Python Software Foundation. “pickle — Python object serialization,” Security warning: arbitrary code execution
+ during unpickling. Available at: https://docs.python.org/3/library/pickle.html (accessed September 16, 2026).
+[4] Hugging Face. “Safetensors audited as really safe and becoming the default,” May 23, 2023 — external audit found
+ no arbitrary code execution. Available at: https://huggingface.co/blog/safetensors (accessed September 16, 2026).
+[5] JFrog. “Data Scientists Targeted by Malicious Hugging Face ML Models with Silent Backdoor Development,”
+ February 27, 2024. Available at: https://jfrog.com/blog/data-scientists-targeted-by-malicious-hugging-face-ml-mo
+dels-with-silent-backdoor-development/ (accessed September 16, 2026).
+[6] Dark Reading. “Hugging Face AI Riddled With 100 Malicious Code-Execution Models,” February 29, 2024.
+ Available at:
+https://www.darkreading.com/cloud-security/hugging-face-ai-riddled-100-malicious-code-execution-models
+(accessed September 16, 2026).
+[7] Goodin, D. “Hugging Face, the GitHub of AI, hosted code that backdoored user devices,” Ars Technica, March 1,
+ 2024. Available at: https://arstechnica.com/security/2024/03/hugging-face-the-github-of-ai-hosted-code-that-back
+doored-user-devices/ (accessed September 16, 2026).
+[8] ReversingLabs. “Malicious ML models discovered on Hugging Face platform — nullifAI technique uses
+ malformed pickles to evade scanning,” February 6, 2025. Available at:
+https://www.reversinglabs.com/blog/rl-identifies-malware-ml-model-hosted-on-hugging-face (accessed
+September 16, 2026).
+[9] GitHub Security Advisory / PYSEC-2025-18, CVE-2025-1716. “Picklescan fails to detect some unsafe globals,”
+ March 2025. Available at: https://github.com/advisories (accessed September 16, 2026).
+[10] Cisco Talos. TALOS-2024-1913 — llama.cpp GGUF implementation heap overflow vulnerability
+ (CVE-2024-23496), February 26, 2024. Available at:
+https://talosintelligence.com/vulnerability_reports/TALOS-2024-1913 (accessed September 16, 2026).
+[11] Cisco Talos. TALOS-2024-1916 — llama.cpp GGUF implementation heap overflow vulnerability
+ (CVE-2024-23605), February 26, 2024. Available at:
+https://talosintelligence.com/vulnerability_reports/TALOS-2024-1916 (accessed September 16, 2026).
+[12] Wiz Research. “Probllama: Vulnerability in Ollama Leads to Remote Code Execution” (CVE-2024-37032), June
+ 24, 2024. Available at: https://www.wiz.io/blog/probllama-ollama-vulnerability-cve-2024-37032 (accessed
+September 16, 2026).
+[13] Oligo Security. “Models, More ProbLLMs — 6 New Vulnerabilities in Ollama” (incl.
+ CVE-2024-39719/39720/39721), October 2024. Available at:
+https://www.oligo.security/blog/models-more-probllms-6-new-vulnerabilities-in-ollama (accessed September 16,
+2026).
+[14] GitHub Advisory (CNA). “Integer Overflow in GGUF Parser can lead to Heap Out-of-bounds” — llama.cpp,
+ CVE-2025-53630, July 2025; NVD record July 10, 2025. Available at:
+https://nvd.nist.gov/vuln/detail/CVE-2025-53630 (accessed September 16, 2026).
+[15] CVE Program / NVD. CVE-2026-65315 — Ollama uncontrolled memory allocation in GGUF metadata parser
+ allowing denial of service, July 2026. Available at: https://nvd.nist.gov/vuln/detail/CVE-2026-65315 (accessed
+September 16, 2026).
+[16] Newman, Z.; Meyers, J. S.; Torres-Arias, S. “Sigstore: Software Signing for Everybody.” Proc. ACM CCS 2022,
+ pp. 1109–1123. DOI 10.1145/3548606.3560596. Available at: https://doi.org/10.1145/3548606.3560596
+(accessed September 16, 2026).
+[17] Laurie, B.; Langley, A.; Kasper, E. “Certificate Transparency.” RFC 6962, IETF, June 2013 — Merkle inclusion
+ and consistency proofs. Available at: https://www.rfc-editor.org/info/rfc6962 (accessed September 16, 2026).
+
+
+=== PAGINA 20 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 20
+[18] Laurie, B.; Langley, A.; Kasper, E.; Messeri, E.; Stradling, R. “Certificate Transparency Version 2.0.” RFC 9162,
+ IETF, December 2021. Available at: https://www.rfc-editor.org/info/rfc9162 (accessed September 16, 2026).
+[19] Sigstore. “Rekor — transparency log” documentation and rekor-cli command reference (verify; logproof),
+ sigstore.dev docs. Available at: https://docs.sigstore.dev/rekor/overview/ (accessed September 16, 2026).
+[20] Sigstore. “Trusted Time in Sigstore,” August 2, 2023 — “Fulcio issues a short-lived (10 minute expiration)
+ code-signing certificate”; Fulcio CA overview. Available at:
+https://blog.sigstore.dev/trusted-time-in-sigstore-906ab6dfd8b6/ (accessed September 16, 2026).
+[21] Sigstore Authors. “model-transparency / OpenSSF Model Signing” — PyPI model-signing v1.1.1; keyless signing
+ via GitHub OIDC, Fulcio, Rekor. Available at: https://github.com/sigstore/model-transparency (accessed
+September 16, 2026).
+[22] in-toto project. “Attestation spec v1 — Statement type,” _type https://in-toto.io/Statement/v1; subject digests and
+ predicateType. Available at: https://github.com/in-toto/attestation/tree/main/spec/v1 (accessed September 16,
+2026).
+[23] OpenSSF. “SLSA v1.0: Supply-chain Levels for Software Artifacts,” announced April 19, 2023. Available at:
+ https://slsa.dev/ (accessed September 16, 2026).
+[24] Mitchell, M. et al. “Model Cards for Model Reporting.” Proc. FAT* '19, ACM, January 2019. DOI
+ 10.1145/3287560.3287596. Available at: https://doi.org/10.1145/3287560.3287596 (accessed September 16,
+2026).
+[25] Merkle, R. C. “A Digital Signature Based on a Conventional Encryption Function.” CRYPTO '87, LNCS 293,
+ Springer, pp. 369–378. DOI 10.1007/3-540-48184-2_32. Available at: https://doi.org/10.1007/3-540-48184-2_32
+(accessed September 16, 2026).
+[26] Bernstein, D. J.; Duif, N.; Lange, T.; Schwabe, P.; Yang, B.-Y. “High-speed high-security signatures.” Journal of
+ Cryptographic Engineering 2(2), 2012. DOI 10.1007/s13389-012-0027-1 (Ed25519). Available at:
+https://doi.org/10.1007/s13389-012-0027-1 (accessed September 16, 2026).
+[27] BLAKE3 team. “BLAKE3 cryptographic hash function” — official specification and implementations;
+ Aumasson, J.-P. “The BLAKE3 Hashing Framework,” IETF Internet-Draft draft-aumasson-blake3 (expired, not
+standardized). Available at: https://github.com/BLAKE3-team/BLAKE3 (accessed September 16, 2026).
+[28] Federal Bureau of Investigation / IC3. Public Service Announcement PSA250226 (Alert I-022625-PSA): “North
+ Korea Responsible for $1.5 Billion Bybit Hack,” February 26, 2025. Available at:
+https://www.ic3.gov/PSA/2025/PSA250226 (accessed September 16, 2026).
+[29] Reuters. “North Korea's Lazarus behind $1.5 billion Bybit crypto theft: FBI” (TraderTraitor attribution), February
+ 27, 2025. Available at: https://www.reuters.com/technology/cybersecurity/ (accessed September 16, 2026).
+[30] Komlo, C.; Goldberg, I.; Ricks, C. “The Flexible Round-Optimized Schnorr Threshold (FROST) Protocol for
+ Two-Round Schnorr Signatures.” RFC 9591 (IRTF CFRG, Informational), June 2024. DOI 10.17487/RFC9591.
+Available at: https://www.rfc-editor.org/info/rfc9591 (accessed September 16, 2026).
+[31] Safe Ecosystem Foundation. “Safenet” — on-chain transaction security enforcement; safe-research/safenet
+ repository (SafenetGuard.sol, Rust, Apache-2.0); “FROST Brings Secure, Scalable Threshold Signatures to the
+EVM,” July 9, 2025. Available at: https://github.com/safe-research/safenet (accessed September 16, 2026).
+[32] YdrMaster. “ggus — GGUF in Rust.” crates.io crate ggus, v0.5.1 (2025), MIT. Available at:
+ https://crates.io/crates/ggus (accessed September 16, 2026).
+[33] rozbb. “ct-merkle — implementation of the append-only log described in RFC 6962.” crates.io crate ct-merkle,
+ v0.3.0. Available at: https://crates.io/crates/ct-merkle (accessed September 16, 2026).
+[34] rust-nostr project. “nostr — Rust implementation of the Nostr protocol,” crates.io v0.38.0 (December 2024), with
+ NIP-19 bech32 feature; NIP-19 “bech32-encoded entities” (npub); NIP-34 “git stuff” (draft). Available at:
+https://crates.io/crates/nostr (accessed September 16, 2026).
+
+
+=== PAGINA 21 ===
+Specify, don't simulate — the arkhe.gguf v1.3 verification pipeline
+Page 21
+[35] transparency-dev. “witness — libraries and binaries for running witnesses for verifiable logs”; Sigstore. “Rekor v2
+ GA — cheaper to run, simpler to maintain” (checkpoint witnessing via Tessera), October 10, 2025. Available at:
+https://github.com/transparency-dev/witness (accessed September 16, 2026).
+[36] Oliveira, R.; Bednarski, J. “Arkhe.gguf — Pacote Completo de Delegação (Consolidado)” and “Arkhe.gguf —
+ Estrutura Completa do Projeto,” September 15, 2026. Source-package seals
+ARKHE-GGUF-DELEGATION-CONSOLIDATED-2026-09-15 and
+ARKHE-GGUF-COMPLETE-STRUCTURE-2026-09-15 (primary sources analyzed in this article). Available at:
+https://github.com/arkhe-os/arkhe-gguf (accessed September 16, 2026).
+[37] Tauri. “Updater — Tauri v2 plugin documentation” (plugins.updater configuration; endpoints, signing public key),
+ Tauri Studio. Available at: https://v2.tauri.app/plugin/updater/ (accessed September 16, 2026).
+[38] sauravpanda. “@sauravpanda/flare — WASM-first LLM inference engine with WebGPU acceleration,” npm
+ package v0.2.21 (May 2026), MIT OR Apache-2.0; repository flarellm. Available at:
+https://www.npmjs.com/package/@sauravpanda/flare (accessed September 16, 2026).
+[39] ggml-org / contributors. “gguf — Python package for reading and writing GGUF files” (GGUFReader,
+ GGUFWriter), PyPI. Available at: https://pypi.org/project/gguf/ (accessed September 16, 2026).
+[40] GitHub. “About security hardening with OpenID Connect” — token.actions.githubusercontent.com as OIDC
+ issuer for keyless signing workflows. Available at: https://docs.github.com/en/actions/security-for-github-actions/
+security-hardening-your-deployments/about-security-hardening-with-openid-connect (accessed September 16,
+2026).

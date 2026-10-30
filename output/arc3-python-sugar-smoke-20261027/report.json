@@ -1,0 +1,545 @@
+{
+  "design": "Integration smoke, known training controls, no independent holdout or language-causal attribution.",
+  "budget": {
+    "total_generation_requests": 4,
+    "per_control": 2,
+    "output_tokens_per_call": 1024,
+    "context_tokens": 8192,
+    "timeout_seconds": 180
+  },
+  "source_language": "Python-syntax DSL subset, no source execution",
+  "admission": "DISABLED",
+  "runs": {
+    "click": {
+      "result": {
+        "lane": "DEV",
+        "max_attempts": 2,
+        "training_sha256": "f4992bfdd259d4fda23ea33bb3e380c95fe7cc276054efc7a6bad765faacbb97",
+        "attempts": [
+          {
+            "attempt": 1,
+            "parent_sha256": null,
+            "request_sha256": "6cac3299d7af97a32bae818627c8bf20b4563940ba338a8552c34d08560c0517",
+            "status": "PARSE_TYPE_REJECTED",
+            "reason": "INVALID_ENVELOPE"
+          },
+          {
+            "attempt": 2,
+            "parent_sha256": null,
+            "request_sha256": "c75dc4ed335060ace0768ce6427ce63b747655f78e5d0a01d68682c253cef17d",
+            "status": "PARSE_TYPE_REJECTED",
+            "reason": "INVALID_ENVELOPE"
+          }
+        ],
+        "production_effects": 0,
+        "ratification": "NOT_EVALUATED",
+        "holdout_evaluated": false,
+        "stage": "NONE",
+        "status": "BUDGET_EXHAUSTED"
+      },
+      "frontend": [
+        {
+          "raw_response": "{\n  \"uses_memory\": false,\n  \"source\": \"def step(g, a, s):\\n    # Determine the action type\\n    kind = a.kind\\n    # For CLICK actions, we need to set the pixel at (a.x, a.y) to color 5\\n    # For MOVE actions, we need to move the object at (a.x, a.y) by (a.dx, a.dy)\\n    # For NOOP, we do nothing\\n    # We'll use a conditional to handle each case\\n    if kind == \\\"CLICK\\\":\\n        # Set the pixel at (a.x, a.y) to color 5\\n        # Use grid_set to create a new grid with the updated pixel\\n        # First, get the current grid to ensure we have the right coordinates\\n        # Note: a.x and a.y are Option types, so we need to use option_default\\n        x = option_default(a.x, 0)\\n        y = option_default(a.y, 0)\\n        # Create a new grid with the pixel set to color 5\\n        new_grid = grid_set(g, coord(x, y), 5)\\n        return (new_grid, s)\\n    elif kind == \\\"MOVE\\\":\\n        # Move the object at (a.x, a.y) by (a.dx, a.dy)\\n        # First, get the current object at (a.x, a.y)\\n        x = option_default(a.x, 0)\\n        y = option_default(a.y, 0)\\n        obj = grid_get(g, coord(x, y))\\n        # Check if the object is not background (color 0)\\n        if obj != 0:\\n            # Translate the object by (a.dx, a.dy)\\n            dx = option_default(a.dx, 0)\\n            dy = option_default(a.dy, 0)\\n            new_grid = translate(g, obj, dx, dy)\\n            return (new_grid, s)\\n        else:\\n            # If the object is background, do nothing\\n            return (g, s)\\n    else:\\n        # For NOOP, return the original grid and state\\n        return (g, s)\\n}\"\n}",
+          "status": "SOURCE_REJECTED",
+          "reason": "SOURCE_SYNTAX",
+          "source_diagnostics": {
+            "syntax_parseable": false,
+            "parse_error": "SyntaxError",
+            "known_blockers": [],
+            "observed_sugar": []
+          }
+        },
+        {
+          "raw_response": "{\"uses_memory\": false, \"source\": \"def step(g, a, s):\\n    # Extract action components\\n    kind = a.kind\\n    dx = a.dx\\n    dy = a.dy\\n    x = a.x\\n    y = a.y\\n    # Determine target coordinate if needed\\n    if kind == \\\"CLICK\\\":\\n        # Use x and y directly (they are Option[Offset])\\n        target_x = option_default(x, 0)\\n        target_y = option_default(y, 0)\\n        # Create target Coord\\n        target = coord(target_x, target_y)\\n        # Check if target is within bounds and not blocked\\n        # For simplicity, we assume it's valid and not blocked\\n        # Perform click action: set grid at target to color 5\\n        new_grid = grid_set(g, target, 5)\\n        return (new_grid, s)\\n    else:\\n        # MOVE or NOOP: no grid change\\n        return (g, s)\"}",
+          "status": "SOURCE_REJECTED",
+          "reason": "SOURCE_EXPRESSION_NOT_ALLOWED",
+          "source_diagnostics": {
+            "syntax_parseable": true,
+            "known_blockers": [
+              {
+                "line": 9,
+                "column": 7,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              }
+            ],
+            "observed_sugar": [
+              {
+                "line": 3,
+                "column": 11,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 4,
+                "column": 9,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 5,
+                "column": 9,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 6,
+                "column": 8,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 7,
+                "column": 8,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              }
+            ],
+            "blocker_rule_counts": {
+              "CONSTRUCT_UNSUPPORTED": 1
+            },
+            "coverage": "Partial syntactic inventory. Forms are candidates, not proof of successful lowering; type, scope, literal and node/fuel constraints are not exhaustively checked."
+          }
+        }
+      ],
+      "usage": [
+        {
+          "call": 1,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "f4bfc2cc1f36a23d2ec675e6b7632e55f8fbfc1cc280fbb9a35a4f683ac15d8a",
+          "prompt_bytes": 6407,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1548,
+          "eval_count": 474,
+          "total_duration": 74116404500,
+          "load_duration": 26989604900,
+          "prompt_eval_duration": 17122347000,
+          "eval_duration": 29960007000,
+          "wall_seconds": 74.16071000001102
+        },
+        {
+          "call": 2,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "ebba5b41c4ca9daa245cd3696d8eb4ad876482b1239c72d9f95229154d8ef85b",
+          "prompt_bytes": 6501,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1571,
+          "eval_count": 215,
+          "total_duration": 31570481600,
+          "load_duration": 14679400,
+          "prompt_eval_duration": 18251092000,
+          "eval_duration": 13111534000,
+          "wall_seconds": 31.59292809999897
+        }
+      ]
+    },
+    "move": {
+      "result": {
+        "lane": "DEV",
+        "max_attempts": 2,
+        "training_sha256": "193bd2a5088ba8f1570b22441c9823c52d970a7f5a7a5716e935416c9b44fe1c",
+        "attempts": [
+          {
+            "attempt": 1,
+            "parent_sha256": null,
+            "request_sha256": "7a4e0500fee025a5e019c9ba903affc4ade4c3c3d45d9a618d00a7f55b53a0b8",
+            "status": "PARSE_TYPE_REJECTED",
+            "reason": "INVALID_ENVELOPE"
+          },
+          {
+            "attempt": 2,
+            "parent_sha256": null,
+            "request_sha256": "5850714e89d52f80078229c8f6af8e3ab7f15d5f66603b34a4beb79450370b83",
+            "status": "PARSE_TYPE_REJECTED",
+            "reason": "INVALID_ENVELOPE"
+          }
+        ],
+        "production_effects": 0,
+        "ratification": "NOT_EVALUATED",
+        "holdout_evaluated": false,
+        "stage": "NONE",
+        "status": "BUDGET_EXHAUSTED"
+      },
+      "frontend": [
+        {
+          "raw_response": "{\n  \"uses_memory\": false,\n  \"source\": \"def step(g, a, s):\\n    # Extract action components\\n    kind = a.kind\\n    dx = a.dx\\n    dy = a.dy\\n    x = a.x\\n    y = a.y\\n    # Determine target cell based on action type\\n    if kind == \\\"CLICK\\\":\\n        # For CLICK, use x and y directly\\n        target_x = x\\n        target_y = y\\n    else:\\n        # For MOVE, offset from current position\\n        # Get current position of the object\\n        obj = objects(g)[0]\\n        cur_x = obj.pos.x\\n        cur_y = obj.pos.y\\n        target_x = cur_x + dx\\n        target_y = cur_y + dy\\n    # Build target coordinate\\n    target = coord(target_x, target_y)\\n    # Check if target is within bounds and not blocked\\n    if target_x < 0 or target_x > 63 or target_y < 0 or target_y > 63:\\n        # Out of bounds, do nothing\\n        return (g, s)\\n    # Check if target cell is background (i.e., not blocked)\\n    # Use grid_get to see color at target\\n    cell_color = grid_get(g, target)\\n    # Background color is the most frequent palette color\\n    bg_color = grid_background(g)\\n    if cell_color == bg_color:\\n        # Target is free, perform action\\n        if kind == \\\"CLICK\\\":\\n            # For CLICK, set the cell to a specific color (e.g., 5)\\n            new_g = grid_set(g, target, 5)\\n        else:\\n            # For MOVE, we need to move the object\\n            # Find the object and update its position\\n            obj = objects(g)[0]\\n            new_obj = obj\\n            # Update object's position\\n            new_obj = new_obj\\n            # Since we cannot directly modify objects, we need to use translate\\n            # However, translate expects an Object and Offset, not Coord.\\n            # We'll use translate with dx, dy offsets\\n            new_g = translate(g, obj, dx, dy)\\n        return (new_g, s)\\n    else:\\n        # Target is blocked, do nothing\\n        return (g, s)\\n}\"\n}",
+          "status": "SOURCE_REJECTED",
+          "reason": "SOURCE_SYNTAX",
+          "source_diagnostics": {
+            "syntax_parseable": false,
+            "parse_error": "SyntaxError",
+            "known_blockers": [],
+            "observed_sugar": []
+          }
+        },
+        {
+          "raw_response": "{\"uses_memory\": false, \"source\": \"def step(g, a, s):\\n    # Extract action components\\n    kind = a.kind\\n    dx = a.dx\\n    dy = a.dy\\n    x = a.x\\n    y = a.y\\n    # Determine target cell based on action type\\n    if kind == \\\"CLICK\\\":\\n        # Click action: target is (x, y)\\n        target = coord(offset(x), offset(y))\\n    else:\\n        # Move action: target is current position + (dx, dy)\\n        # Get current position from action (dx/dy are relative)\\n        # For simplicity, assume action provides absolute dx/dy from start\\n        target = coord(offset(dx), offset(dy))\\n    # Check if target is within bounds (0..63)\\n    if target.x < 0 or target.x > 63 or target.y < 0 or target.y > 63:\\n        # Out of bounds, do nothing\\n        return (g, s)\\n    # Get color at target cell\\n    target_color = g.grid_get(target)\\n    # If target is background (color 0), cannot click/move onto it\\n    if target_color == 0:\\n        return (g, s)\\n    # Determine if target is blocked by another object\\n    # For simplicity, assume any non-background cell is an object\\n    # Use is_blocked to check collision with other objects\\n    # We need to find the object at target; not directly available.\\n    # Instead, we can check if moving would overwrite another object.\\n    # Since we cannot inspect objects directly, we rely on is_blocked.\\n    # We'll pass a dummy object (e.g., the first object) and offset.\\n    # However, is_blocked expects an Object and two Offsets.\\n    # We'll need to get the object at target; not possible.\\n    # Alternative: Use grid objects list and check if any object's position matches target.\\n    # objects(g) returns list of Object.\\n    # For each obj in objects(g), if obj.pos == target, then it's occupied.\\n    # We'll implement a simple loop using fold.\\n    def occupied(obj, acc):\\n        if acc:\\n            return True\\n        if obj.pos == target:\\n            return True\\n        return False\\n    occupied_flag = False\\n    for obj in objects(g):\\n        if occupied(obj, occupied_flag):\\n            occupied_flag = True\\n            break\\n    if occupied_flag:\\n        # Target already occupied, cannot move/click\\n        return (g, s)\\n    # If action is CLICK, set the cell to a new color (e.g., 5)\\n    if kind == \\\"CLICK\\\":\\n        new_grid = g.grid_set(target, color(5))\\n        return (new_grid, s)\\n    # If action is MOVE, we need to move the object from its current position to target.\\n    # Since we cannot identify which object to move, we assume the object at (dx, dy)??\\n    # This is a placeholder: we'll just do nothing for MOVE.\\n    # For a proper solution, we need to track which object is being moved.\\n    # However, the task is to produce a valid step function; we can implement a simple heuristic.\\n    # We'll move the object at (dx, dy) to target (if exists).\\n    # Find object at (dx, dy) using similar loop.\\n    source_obj = None\\n    for obj in objects(g):\\n        if obj.pos == coord(offset(dx), offset(dy)):\\n            source_obj = obj\\n            break\\n    if source_obj is not None:\\n        # Translate source_obj to target\\n        new_grid = g.translate(source_obj, offset(dx), offset(dy))\\n        return (new_grid, s)\\n    # If no source object, do nothing\\n    return (g, s)\"}",
+          "status": "SOURCE_REJECTED",
+          "reason": "SUGAR_LOOP_ITEM_ESCAPES",
+          "source_diagnostics": {
+            "syntax_parseable": true,
+            "known_blockers": [
+              {
+                "line": 9,
+                "column": 4,
+                "node": "If",
+                "rule": "NONFINAL_IF"
+              },
+              {
+                "line": 9,
+                "column": 7,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 18,
+                "column": 4,
+                "node": "If",
+                "rule": "IF_WITHOUT_ELSE"
+              },
+              {
+                "line": 18,
+                "column": 4,
+                "node": "If",
+                "rule": "NONFINAL_IF"
+              },
+              {
+                "line": 18,
+                "column": 7,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 18,
+                "column": 23,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 18,
+                "column": 40,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 18,
+                "column": 56,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 24,
+                "column": 4,
+                "node": "If",
+                "rule": "IF_WITHOUT_ELSE"
+              },
+              {
+                "line": 24,
+                "column": 4,
+                "node": "If",
+                "rule": "NONFINAL_IF"
+              },
+              {
+                "line": 24,
+                "column": 7,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 40,
+                "column": 8,
+                "node": "If",
+                "rule": "IF_WITHOUT_ELSE"
+              },
+              {
+                "line": 40,
+                "column": 8,
+                "node": "If",
+                "rule": "NONFINAL_IF"
+              },
+              {
+                "line": 42,
+                "column": 8,
+                "node": "If",
+                "rule": "IF_WITHOUT_ELSE"
+              },
+              {
+                "line": 42,
+                "column": 8,
+                "node": "If",
+                "rule": "NONFINAL_IF"
+              },
+              {
+                "line": 42,
+                "column": 11,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 49,
+                "column": 12,
+                "node": "Break",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 50,
+                "column": 4,
+                "node": "If",
+                "rule": "IF_WITHOUT_ELSE"
+              },
+              {
+                "line": 50,
+                "column": 4,
+                "node": "If",
+                "rule": "NONFINAL_IF"
+              },
+              {
+                "line": 54,
+                "column": 4,
+                "node": "If",
+                "rule": "IF_WITHOUT_ELSE"
+              },
+              {
+                "line": 54,
+                "column": 4,
+                "node": "If",
+                "rule": "NONFINAL_IF"
+              },
+              {
+                "line": 54,
+                "column": 7,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 55,
+                "column": 19,
+                "node": "Attribute",
+                "rule": "METHOD_OR_ATTRIBUTE_UNSUPPORTED"
+              },
+              {
+                "line": 66,
+                "column": 11,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 68,
+                "column": 12,
+                "node": "Break",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 69,
+                "column": 4,
+                "node": "If",
+                "rule": "IF_WITHOUT_ELSE"
+              },
+              {
+                "line": 69,
+                "column": 4,
+                "node": "If",
+                "rule": "NONFINAL_IF"
+              },
+              {
+                "line": 69,
+                "column": 7,
+                "node": "Compare",
+                "rule": "CONSTRUCT_UNSUPPORTED"
+              },
+              {
+                "line": 71,
+                "column": 19,
+                "node": "Attribute",
+                "rule": "METHOD_OR_ATTRIBUTE_UNSUPPORTED"
+              }
+            ],
+            "observed_sugar": [
+              {
+                "line": 3,
+                "column": 11,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 4,
+                "column": 9,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 5,
+                "column": 9,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 6,
+                "column": 8,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 7,
+                "column": 8,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 18,
+                "column": 7,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 18,
+                "column": 23,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 18,
+                "column": 40,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 18,
+                "column": 56,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 22,
+                "column": 19,
+                "node": "Attribute",
+                "rule": "KNOWN_METHOD"
+              },
+              {
+                "line": 42,
+                "column": 11,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              },
+              {
+                "line": 46,
+                "column": 4,
+                "node": "For",
+                "rule": "FOR_CANDIDATE"
+              },
+              {
+                "line": 65,
+                "column": 4,
+                "node": "For",
+                "rule": "FOR_CANDIDATE"
+              },
+              {
+                "line": 66,
+                "column": 11,
+                "node": "Attribute",
+                "rule": "KNOWN_ATTRIBUTE"
+              }
+            ],
+            "blocker_rule_counts": {
+              "NONFINAL_IF": 8,
+              "IF_WITHOUT_ELSE": 7,
+              "CONSTRUCT_UNSUPPORTED": 12,
+              "METHOD_OR_ATTRIBUTE_UNSUPPORTED": 2
+            },
+            "coverage": "Partial syntactic inventory. Forms are candidates, not proof of successful lowering; type, scope, literal and node/fuel constraints are not exhaustively checked."
+          }
+        }
+      ],
+      "usage": [
+        {
+          "call": 1,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "80a9559e3bd0176158fc62149ee9dfe6e1ba3fafca7aa03e76ba79410971e1c8",
+          "prompt_bytes": 6243,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1529,
+          "eval_count": 500,
+          "total_duration": 39081872000,
+          "load_duration": 10817100,
+          "prompt_eval_duration": 5843592000,
+          "eval_duration": 32977207000,
+          "wall_seconds": 39.10678500001086
+        },
+        {
+          "call": 2,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "64e5ec60a4709a94dc1171d0cbe9257a7cf3f1efae65431e26bbcdb00a0c9420",
+          "prompt_bytes": 6337,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1552,
+          "eval_count": 844,
+          "total_duration": 63792973800,
+          "load_duration": 14343500,
+          "prompt_eval_duration": 6095720000,
+          "eval_duration": 57412249000,
+          "wall_seconds": 63.81767899999977
+        }
+      ]
+    }
+  },
+  "frontend_extension": {
+    "version": "sugar-v2",
+    "backend": "Unchanged finite DSL,24nodes,10000fuel. No arbitrary Python execution.",
+    "grid": "g[y][x] reads grid_get(g,coord(x,y)); g[y][x]=color(c) writes a new grid binding. Indices must lower to valid Offset values; coord clamps. Single indexing of lists/tuples is NOT supported.",
+    "attributes": "obj.pos and obj.color; Coord.x/.y. a.kind/.dx/.dy and a.x/.y use action accessors; coordinates and offsets from actions are Option and need option_default.",
+    "methods": "objects(g) or g.objects(), g.background(), g.grid_get(coord), obj.contains(coord). No unknown attributes or method keywords.",
+    "for": "for obj in objects(g): ... may update exactly one preexisting accumulator variable. It lowers to fold over a snapshot with lambda-local obj. Body supports accumulator assignments and if/else updates. No nested loops, break, continue, return, for-else or escaping obj.",
+    "control": "Outside a fold only a final if/else whose branches return is supported. No while, arbitrary operators, comparisons or pass. Use eq_kind, eq_color etc and typed literal helpers kind/color/offset.",
+    "limits": "These forms do not enlarge literal domains, type relations, AST budget or runtime semantics. Return Pair[Grid,State]."
+  },
+  "inventory": {
+    "models": [
+      {
+        "name": "north-mini-code-1.0:latest",
+        "model": "north-mini-code-1.0:latest",
+        "modified_at": "2026-06-19T10:35:20.6917999-03:00",
+        "size": 18593967008,
+        "digest": "d8b269ad5c7c7144ce104b83ce93bc3efb85e0f74e01be6be5f5d6f7ca90b60f",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "cohere2moe",
+          "families": [
+            "cohere2moe"
+          ],
+          "parameter_size": "30.5B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 500000,
+          "embedding_length": 2048,
+          "runner": "ggml"
+        },
+        "capabilities": [
+          "completion",
+          "tools",
+          "thinking"
+        ]
+      }
+    ]
+  },
+  "complete": true,
+  "cleanup": {
+    "model_unloaded": true,
+    "owned_server_stopped": true
+  }
+}

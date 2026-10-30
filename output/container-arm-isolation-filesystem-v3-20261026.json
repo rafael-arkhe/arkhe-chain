@@ -1,0 +1,60 @@
+{
+  "phase": "container_isolation_probe",
+  "image_id": "sha256:dc1f22974dab4be31a8b56d58cb1f8fc218e83de83ccd831d885b3d7ac1223fb",
+  "connection": "arkhe-runtime",
+  "positive_controls": {
+    "A": true,
+    "B": true,
+    "C": true
+  },
+  "observations": [
+    {
+      "observer": "A",
+      "target": "B",
+      "cross_path_result": "ENOENT",
+      "uid": 65534,
+      "cap_eff": "0000000000000000"
+    },
+    {
+      "observer": "B",
+      "target": "A",
+      "cross_path_result": "ENOENT",
+      "uid": 65534,
+      "cap_eff": "0000000000000000"
+    },
+    {
+      "observer": "C",
+      "target": "B",
+      "cross_path_result": "ENOENT",
+      "uid": 65534,
+      "cap_eff": "0000000000000000"
+    }
+  ],
+  "container_observations": {
+    "A": {
+      "network_mode": "none",
+      "readonly_rootfs": true,
+      "user": "65534:65534",
+      "host_mount_sources": []
+    },
+    "B": {
+      "network_mode": "none",
+      "readonly_rootfs": true,
+      "user": "65534:65534",
+      "host_mount_sources": []
+    },
+    "C": {
+      "network_mode": "none",
+      "readonly_rootfs": true,
+      "user": "65534:65534",
+      "host_mount_sources": []
+    }
+  },
+  "filesystem_probe": "PASSED",
+  "sandbox_qualified_for_pilot": false,
+  "resource_limits": "NOT_ENFORCED_FILESYSTEM_ONLY_PROBE",
+  "scope": "synthetic_files_in_distinct_containers_only",
+  "real_records_accessed": false,
+  "model_calls": 0,
+  "capability_demonstrated": false
+}

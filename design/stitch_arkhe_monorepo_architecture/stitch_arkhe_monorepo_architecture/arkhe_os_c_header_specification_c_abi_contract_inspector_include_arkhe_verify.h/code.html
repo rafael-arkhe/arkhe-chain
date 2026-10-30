@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // OS - C-ABI Specification Inspector (include/arkhe_verify.h)</title>
+<!-- Material Symbols & Typography -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary": "#003824",
+            "primary": "#dbfcff",
+            "surface-dim": "#0f131b",
+            "outline": "#849495",
+            "tertiary": "#d8ffe7",
+            "on-error": "#690005",
+            "on-primary": "#00363a",
+            "on-background": "#dfe2ed",
+            "secondary-fixed": "#c4e7ff",
+            "inverse-on-surface": "#2d3038",
+            "outline-variant": "#3b494b",
+            "surface-container": "#1c2027",
+            "on-secondary-fixed-variant": "#004c69",
+            "secondary": "#7bd0ff",
+            "inverse-surface": "#dfe2ed",
+            "background": "#0f131b",
+            "on-secondary-container": "#00374d",
+            "on-primary-fixed-variant": "#004f54",
+            "on-secondary-fixed": "#001e2c",
+            "primary-fixed-dim": "#00dbe9",
+            "surface-container-highest": "#31353d",
+            "surface-tint": "#00dbe9",
+            "error": "#ffb4ab",
+            "on-surface": "#dfe2ed",
+            "primary-fixed": "#7df4ff",
+            "on-primary-fixed": "#002022",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-error-container": "#ffdad6",
+            "primary-container": "#00f0ff",
+            "tertiary-container": "#65f2b5",
+            "on-surface-variant": "#b9cacb",
+            "surface-variant": "#31353d",
+            "inverse-primary": "#006970",
+            "surface": "#0f131b",
+            "on-primary-container": "#006970",
+            "on-tertiary-container": "#006d4a",
+            "surface-container-lowest": "#0a0e15",
+            "surface-container-low": "#181c23",
+            "on-secondary": "#00354a",
+            "tertiary-fixed": "#6ffbbe",
+            "secondary-container": "#00a6e0",
+            "surface-bright": "#353941",
+            "error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-tertiary-fixed": "#002113",
+            "secondary-fixed-dim": "#7bd0ff",
+            "surface-container-high": "#262a32"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter-desktop": "1rem",
+            "space-xl": "2rem",
+            "space-md": "0.75rem",
+            "gutter": "0.75rem",
+            "margin": "1rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "margin-desktop": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Space Grotesk"],
+            "display-lg": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "mono-sm": ["JetBrains Mono"],
+            "body-sm": ["Geist"],
+            "mono-md": ["JetBrains Mono"],
+            "body-lg": ["Geist"],
+            "label-caps": ["JetBrains Mono"],
+            "display-lg-mobile": ["Space Grotesk"],
+            "body-md": ["Geist"],
+            "mono-lg": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 16px;
+      line-height: 1;
+    }
+    /* Technical scrollbars */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0e15;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1c2027;
+      border: 1px solid #3b494b;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00f0ff;
+    }
+    .grid-lines {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(59, 73, 75, 0.12) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(59, 73, 75, 0.12) 1px, transparent 1px);
+    }
+    .neon-glow {
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.22);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased font-mono-sm text-mono-sm min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container overflow-x-hidden">
+<!-- TOP APP BAR (Shared Component Execution) -->
+<header class="flex justify-between items-center w-full px-space-md h-12 bg-surface dark:bg-surface border-b border-outline-variant z-50 sticky top-0">
+<!-- Brand / Search Cluster -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="text-headline-md font-headline-md font-bold tracking-tight text-primary dark:text-primary">ARKHE // OS</span>
+<span class="px-1.5 py-0.5 bg-surface-container-high text-secondary border border-outline-variant text-label-caps font-label-caps rounded">v0.2.0</span>
+</div>
+<div class="hidden lg:flex items-center bg-surface-container-lowest border border-outline-variant px-2 py-1 rounded gap-2 text-on-surface-variant w-56">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none p-0 text-mono-sm font-mono-sm text-on-surface placeholder-outline focus:outline-none focus:ring-0 w-full" placeholder="grep C symbols..." readonly="" type="text" value="include/arkhe_verify.h"/>
+<span class="text-label-caps font-label-caps text-outline bg-surface-container px-1">C99</span>
+</div>
+</div>
+<!-- Central Navigation Links -->
+<nav class="hidden md:flex items-center gap-6">
+<a class="border-b-2 border-primary-container dark:border-primary-container text-primary dark:text-primary pb-1 font-mono-sm text-mono-sm flex items-center gap-1.5" href="#">
+<span class="material-symbols-outlined text-sm">account_tree</span> Monorepo Explorer
+      </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm" href="#">
+        GGUF 4-Gate Pipeline
+      </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm" href="#">
+        Formal Verification
+      </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm" href="#">
+        ADR Matrix
+      </a>
+</nav>
+<!-- Trailing Actions Cluster -->
+<div class="flex items-center gap-2.5">
+<div class="hidden sm:flex items-center gap-1 bg-surface-container-low px-2 py-1 rounded border border-outline-variant text-on-surface-variant">
+<span class="material-symbols-outlined text-sm text-secondary">terminal</span>
+<span class="material-symbols-outlined text-sm text-outline hover:text-primary">shield</span>
+<span class="material-symbols-outlined text-sm text-outline hover:text-primary">hub</span>
+<span class="material-symbols-outlined text-sm text-outline hover:text-primary">tune</span>
+</div>
+<div class="px-2 py-0.5 border border-error text-error bg-error-container/30 text-label-caps font-label-caps rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span>
+        Fail-Closed [ARMED]
+      </div>
+<button class="bg-primary-container text-on-primary-container hover:bg-secondary font-mono-sm font-semibold px-2.5 py-1 rounded transition-colors duration-150 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">play_arrow</span>
+<span>EXEC PROVER</span>
+</button>
+</div>
+</header>
+<!-- SECONDARY MISSION CONTROL SUBHEADER / CONTEXT STRIP -->
+<div class="w-full bg-surface-container-lowest border-b border-outline-variant px-space-md py-1.5 flex flex-wrap items-center justify-between gap-3 text-mono-sm z-40">
+<div class="flex items-center flex-wrap gap-2">
+<div class="flex items-center gap-1.5 text-primary font-mono-md">
+<span class="material-symbols-outlined text-primary-container">file_copy</span>
+<span class="text-primary font-semibold">include/arkhe_verify.h</span>
+<span class="px-1.5 py-0.2 bg-surface-container-high text-primary-container border border-primary-container/30 text-label-caps font-label-caps rounded">[C-ABI SPEC]</span>
+</div>
+<span class="text-outline-variant">|</span>
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-caps font-label-caps bg-tertiary-container/10 border border-tertiary-container/30 text-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+          ISO C99 / C11 COMPATIBLE
+        </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-caps font-label-caps bg-surface-container-high border border-outline-variant text-on-surface">
+<span class="material-symbols-outlined text-xs text-primary-container">memory</span>
+          ZERO-ALLOC BORROWING
+        </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-caps font-label-caps bg-surface-container-low border border-outline-variant text-on-surface-variant">
+          MMR VERIFIED // ZERO-DRIFT
+        </span>
+</div>
+</div>
+<!-- Header Actions -->
+<div class="flex items-center gap-2">
+<button class="px-2.5 py-1 bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-secondary text-primary font-mono-sm rounded flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+<span>Export C Header (.h)</span>
+</button>
+<button class="px-2.5 py-1 bg-primary-container text-on-primary-container hover:bg-secondary font-mono-sm font-semibold rounded flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm">fact_check</span>
+<span>Verify Clang / GCC Ast</span>
+</button>
+</div>
+</div>
+<!-- WORKBENCH 3-PANE CONTAINER -->
+<div class="flex-1 flex overflow-hidden">
+<!-- LEFT COLUMN: Filesystem, ABI Topology, & Safety Lemmata (280px) -->
+<aside class="w-72 flex-shrink-0 bg-surface-container-lowest border-r border-outline-variant flex flex-col justify-between overflow-y-auto">
+<div class="p-3 space-y-4">
+<!-- Header File Hierarchy Tabs -->
+<div>
+<div class="flex items-center justify-between pb-1.5 mb-2 border-b border-outline-variant text-label-caps font-label-caps text-outline">
+<span>PEER REPOSITORY TOPOLOGY</span>
+<span class="text-primary-container font-mono-sm">4 FILES</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center justify-between px-2 py-1.5 rounded bg-surface-container-low border-l-2 border-primary-container text-primary font-mono-sm">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-xs text-primary-container">terminal</span>
+<span class="truncate font-semibold">include/arkhe_verify.h</span>
+</div>
+<span class="text-label-caps font-label-caps text-primary-container bg-surface-container px-1 rounded">SPEC</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm transition-colors">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-xs text-outline">code</span>
+<span class="truncate">src/ffi.rs</span>
+</div>
+<span class="text-label-caps font-label-caps text-outline bg-surface-container-low px-1 rounded">PEER</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm transition-colors">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-xs text-outline">bug_report</span>
+<span class="truncate">tests/test_ffi.c</span>
+</div>
+<span class="text-label-caps font-label-caps text-outline bg-surface-container-low px-1 rounded">HARNESS</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm transition-colors">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-xs text-outline">data_object</span>
+<span class="truncate">python/arkhe_ffi.py</span>
+</div>
+<span class="text-label-caps font-label-caps text-outline bg-surface-container-low px-1 rounded">CTYPES</span>
+</div>
+</div>
+</div>
+<!-- ABI Structure Definitions Tree -->
+<div>
+<div class="flex items-center justify-between pb-1.5 mb-2 border-b border-outline-variant text-label-caps font-label-caps text-outline">
+<span>ABI STRUCT DEFINITIONS</span>
+<span class="text-secondary font-mono-sm">C99 POD</span>
+</div>
+<div class="space-y-1.5 font-mono-sm">
+<!-- Struct 1 -->
+<div class="p-2 rounded bg-surface-container border border-outline-variant hover:border-primary-container transition-colors">
+<div class="flex items-center justify-between text-primary font-semibold">
+<span class="text-primary-container font-mono-md">ArkheVerdict</span>
+<span class="text-label-caps font-label-caps text-outline">16 BYTES</span>
+</div>
+<div class="text-on-surface-variant text-xs mt-1 space-y-0.5 border-l border-outline-variant pl-2 ml-1">
+<div class="flex justify-between"><span>+00 uint32_t</span> <span class="text-on-surface">status</span></div>
+<div class="flex justify-between"><span>+04 int32_t</span> <span class="text-on-surface">error_code</span></div>
+<div class="flex justify-between"><span>+08 const char*</span> <span class="text-secondary">details</span></div>
+</div>
+</div>
+<!-- Struct 2 -->
+<div class="p-2 rounded bg-surface-container border border-outline-variant hover:border-primary-container transition-colors">
+<div class="flex items-center justify-between text-primary font-semibold">
+<span class="text-primary-container font-mono-md">ArkheByteBuffer</span>
+<span class="text-label-caps font-label-caps text-outline">24 BYTES</span>
+</div>
+<div class="text-on-surface-variant text-xs mt-1 space-y-0.5 border-l border-outline-variant pl-2 ml-1">
+<div class="flex justify-between"><span>+00 uint8_t*</span> <span class="text-on-surface">data</span></div>
+<div class="flex justify-between"><span>+08 size_t</span> <span class="text-on-surface">len</span></div>
+<div class="flex justify-between"><span>+16 size_t</span> <span class="text-on-surface">cap</span></div>
+</div>
+</div>
+<!-- Struct 3 -->
+<div class="p-2 rounded bg-surface-container border border-outline-variant hover:border-primary-container transition-colors">
+<div class="flex items-center justify-between text-primary font-semibold">
+<span class="text-primary-container font-mono-md">ArkheCanonicalDigest</span>
+<span class="text-label-caps font-label-caps text-outline">64 BYTES</span>
+</div>
+<div class="text-on-surface-variant text-xs mt-1 space-y-0.5 border-l border-outline-variant pl-2 ml-1">
+<div class="flex justify-between"><span>+00 uint8_t[32]</span> <span class="text-on-surface">sha256</span></div>
+<div class="flex justify-between"><span>+32 uint8_t[32]</span> <span class="text-on-surface">blake3</span></div>
+</div>
+</div>
+<!-- Struct 4 -->
+<div class="p-2 rounded bg-surface-container border border-outline-variant hover:border-primary-container transition-colors">
+<div class="flex items-center justify-between text-primary font-semibold">
+<span class="text-primary-container font-mono-md">ArkhePolicyConstraints</span>
+<span class="text-label-caps font-label-caps text-outline">40 BYTES</span>
+</div>
+<div class="text-on-surface-variant text-xs mt-1 space-y-0.5 border-l border-outline-variant pl-2 ml-1">
+<div class="flex justify-between"><span>+00 uint32_t</span> <span class="text-on-surface">min_version</span></div>
+<div class="flex justify-between"><span>+04 uint8_t[32]</span> <span class="text-on-surface">allowed_key_id</span></div>
+<div class="flex justify-between"><span>+36 bool</span> <span class="text-on-surface">require_tee</span></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Memory Safety Lemmata & ABI Guard Checklist -->
+<div>
+<div class="flex items-center justify-between pb-1.5 mb-2 border-b border-outline-variant text-label-caps font-label-caps text-outline">
+<span>SAFETY LEMMATA &amp; ABI GUARDS</span>
+<span class="text-tertiary-container font-mono-sm">5/5 PASS</span>
+</div>
+<div class="space-y-1.5 text-xs">
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low border border-outline-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary-container text-xs">check_circle</span>
+<span class="text-on-surface">L1: Panic Barrier</span>
+</div>
+<span class="text-label-caps font-label-caps text-tertiary-container bg-tertiary-container/10 px-1 rounded">GUARANTEED</span>
+</div>
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low border border-outline-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary-container text-xs">check_circle</span>
+<span class="text-on-surface">L2: Non-Zero Traps</span>
+</div>
+<span class="text-label-caps font-label-caps text-tertiary-container bg-tertiary-container/10 px-1 rounded">ENFORCED</span>
+</div>
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low border border-outline-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary-container text-xs">check_circle</span>
+<span class="text-on-surface">L3: Explicit Arena Free</span>
+</div>
+<span class="text-label-caps font-label-caps text-secondary bg-secondary/10 px-1 rounded">ARKHE_FREE_*</span>
+</div>
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low border border-outline-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary-container text-xs">check_circle</span>
+<span class="text-on-surface">L4: Alignment Safety</span>
+</div>
+<span class="text-label-caps font-label-caps text-tertiary-container bg-tertiary-container/10 px-1 rounded">8-BYTE U64</span>
+</div>
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low border border-outline-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary-container text-xs">check_circle</span>
+<span class="text-on-surface">L5: Version Tagging</span>
+</div>
+<span class="text-label-caps font-label-caps text-outline bg-surface-container px-1 rounded">v0.2.0 TAG</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Left Panel Bottom Operator Key Anchor -->
+<div class="p-3 border-t border-outline-variant bg-surface-container">
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-caps font-label-caps text-outline">CRYPTOGRAPHIC ROOT</span>
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+</div>
+<div class="text-primary font-mono-sm font-semibold truncate">ROOT::0x8f2a...c01d</div>
+<div class="text-on-surface-variant text-label-caps font-label-caps text-xs">ED25519 VERIFIED HOST KEY</div>
+</div>
+</aside>
+<!-- CENTER MAIN COLUMN: C Header Viewer & Clang Terminal (Fluid) -->
+<main class="flex-1 flex flex-col bg-surface-dim overflow-hidden min-w-0">
+<!-- Center Tab Header & Compilation Status Bar -->
+<div class="flex items-center justify-between bg-surface-container-low border-b border-outline-variant px-space-md py-1">
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1.5 bg-surface-container-highest px-3 py-1 border-t-2 border-primary-container text-primary">
+<span class="material-symbols-outlined text-primary-container text-xs">code_blocks</span>
+<span class="font-semibold text-xs">include/arkhe_verify.h</span>
+<span class="text-outline text-label-caps font-label-caps ml-2">340 LINES</span>
+</div>
+<span class="text-outline-variant">/</span>
+<span class="text-on-surface-variant text-xs">C99/C11 Header (Dual MIT/Apache-2.0)</span>
+</div>
+<div class="hidden sm:flex items-center gap-3 text-xs">
+<span class="text-outline font-label-caps text-label-caps">CPP GUARDS: <span class="text-tertiary-container">#ifndef ARKHE_VERIFY_H</span></span>
+<span class="text-outline font-label-caps text-label-caps">COMPILER: <span class="text-primary">CLANG 17.0 / GCC 13.2</span></span>
+<span class="text-outline font-label-caps text-label-caps">HEAP: <span class="text-secondary">ZERO-ALLOC</span></span>
+</div>
+</div>
+<!-- Main Code Viewer Area -->
+<div class="flex-1 overflow-y-auto flex font-mono-sm bg-surface-container-lowest grid-lines text-xs">
+<!-- Line Numbers Column -->
+<div class="w-12 py-3 bg-surface-container-lowest border-r border-outline-variant/50 text-outline select-none text-right pr-2 space-y-0.5 font-mono-sm opacity-60">
+<div>01</div><div>02</div><div>03</div><div>04</div><div>05</div><div>06</div><div>07</div><div>08</div>
+<div>09</div><div>10</div><div>11</div><div>12</div><div>13</div><div>14</div><div>15</div><div>16</div>
+<div>17</div><div>18</div><div>19</div><div>20</div><div>21</div><div>22</div><div>23</div><div>24</div>
+<div>25</div><div>26</div><div>27</div><div>28</div><div>29</div><div>30</div><div>31</div><div>32</div>
+<div>33</div><div>34</div><div>35</div><div>36</div><div>37</div><div>38</div><div>39</div><div>40</div>
+<div>41</div><div>42</div><div>43</div><div>44</div><div>45</div><div>46</div><div>47</div><div>48</div>
+</div>
+<!-- Code Content -->
+<div class="flex-1 p-3 overflow-x-auto text-on-surface leading-5 font-mono-sm">
+<div class="text-outline italic">// ============================================================================</div>
+<div class="text-outline italic">// ARKHE // OS - FORMAL VERIFICATION INTERFACE RUNTIME</div>
+<div class="text-outline italic">// Module: include/arkhe_verify.h (ABI Version 0.2.0 - ISO C99/C11)</div>
+<div class="text-outline italic">// Mission Safety: Fail-Closed panic barrier, non-reentrant state isolation</div>
+<div class="text-outline italic">// ============================================================================</div>
+<div class="mt-2"><span class="text-primary-container">#ifndef</span> <span class="text-primary">ARKHE_VERIFY_H</span></div>
+<div><span class="text-primary-container">#define</span> <span class="text-primary">ARKHE_VERIFY_H</span></div>
+<div class="mt-2"><span class="text-primary-container">#include</span> <span class="text-secondary">&lt;stddef.h&gt;</span></div>
+<div><span class="text-primary-container">#include</span> <span class="text-secondary">&lt;stdint.h&gt;</span></div>
+<div><span class="text-primary-container">#include</span> <span class="text-secondary">&lt;stdbool.h&gt;</span></div>
+<div class="mt-3"><span class="text-primary-container">#ifdef</span> __cplusplus</div>
+<div><span class="text-primary-container">extern</span> <span class="text-secondary">"C"</span> {</div>
+<div><span class="text-primary-container">#endif</span></div>
+<div class="mt-3 text-outline italic">/* ABI Version Tags */</div>
+<div><span class="text-primary-container">#define</span> <span class="text-primary">ARKHE_ABI_VERSION_MAJOR</span> <span class="text-tertiary-container">0</span></div>
+<div><span class="text-primary-container">#define</span> <span class="text-primary">ARKHE_ABI_VERSION_MINOR</span> <span class="text-tertiary-container">2</span></div>
+<div><span class="text-primary-container">#define</span> <span class="text-primary">ARKHE_ABI_VERSION_PATCH</span> <span class="text-tertiary-container">0</span></div>
+<div class="mt-3 text-outline italic">/* Formal Verdict Classification Code */</div>
+<div><span class="text-primary-container">#define</span> <span class="text-primary">ARKHE_VERDICT_PASS</span> <span class="text-tertiary-container">0</span></div>
+<div><span class="text-primary-container">#define</span> <span class="text-primary">ARKHE_VERDICT_REJECT</span> <span class="text-error">1</span></div>
+<div><span class="text-primary-container">#define</span> <span class="text-primary">ARKHE_VERDICT_PANIC_TRAPPED</span> <span class="text-error">2</span></div>
+<div><span class="text-primary-container">#define</span> <span class="text-primary">ARKHE_VERDICT_INCOMPLETE</span> <span class="text-secondary">3</span></div>
+<div class="mt-3 text-outline italic">/* High-Integrity Return Status Enums */</div>
+<div><span class="text-primary-container">typedef</span> <span class="text-primary-container">enum</span> {</div>
+<div class="pl-4"><span class="text-tertiary-container">ARKHE_ERR_OK</span>                   =  <span class="text-tertiary-container">0</span>,</div>
+<div class="pl-4"><span class="text-error">ARKHE_ERR_INVALID_MAGIC</span>        = -<span class="text-error">1</span>,</div>
+<div class="pl-4"><span class="text-error">ARKHE_ERR_INTEGER_OVERFLOW</span>     = -<span class="text-error">2</span>,</div>
+<div class="pl-4"><span class="text-error">ARKHE_ERR_SHA256_MISMATCH</span>      = -<span class="text-error">3</span>,</div>
+<div class="pl-4"><span class="text-error">ARKHE_ERR_SIGNATURE_INVALID</span>    = -<span class="text-error">4</span>,</div>
+<div class="pl-4"><span class="text-error">ARKHE_ERR_UNALIGNED_BUFFER</span>     = -<span class="text-error">5</span>,</div>
+<div class="pl-4"><span class="text-error">ARKHE_ERR_PANIC_UNWIND_BLOCKED</span> = -<span class="text-error">99</span></div>
+<div>} <span class="text-primary font-semibold">ArkheErrorCode</span>;</div>
+<div class="mt-3 text-outline italic">/**</div>
+<div class="text-outline italic"> * @brief Deterministic verification verdict returned across FFI barrier.</div>
+<div class="text-outline italic"> * Struct is strictly 64-bit aligned. details ptr is allocated in Rust arena</div>
+<div class="text-outline italic"> * and MUST be released using arkhe_free_verdict().</div>
+<div class="text-outline italic"> */</div>
+<div><span class="text-primary-container">typedef</span> <span class="text-primary-container">struct</span> {</div>
+<div class="pl-4"><span class="text-secondary">uint32_t</span> <span class="text-on-surface">status</span>;      <span class="text-outline italic">/* 0 = pass, 1 = reject, 2 = trapped */</span></div>
+<div class="pl-4"><span class="text-secondary">int32_t</span> <span class="text-on-surface">error_code</span>;  <span class="text-outline italic">/* Negative error enumeration */</span></div>
+<div class="pl-4"><span class="text-primary-container">const</span> <span class="text-secondary">char</span>* <span class="text-on-surface">details</span>;     <span class="text-outline italic">/* UTF-8 null-terminated diagnostic text */</span></div>
+<div>} <span class="text-primary font-semibold">ArkheVerdict</span>;</div>
+<div class="mt-3 text-outline italic">/**</div>
+<div class="text-outline italic"> * @brief Sliced contiguous byte buffer for canonical CBOR outputs.</div>
+<div class="text-outline italic"> */</div>
+<div><span class="text-primary-container">typedef</span> <span class="text-primary-container">struct</span> {</div>
+<div class="pl-4"><span class="text-secondary">uint8_t</span>*    <span class="text-on-surface">data</span>;</div>
+<div class="pl-4"><span class="text-secondary">size_t</span> <span class="text-on-surface">len</span>;</div>
+<div class="pl-4"><span class="text-secondary">size_t</span> <span class="text-on-surface">cap</span>;</div>
+<div>} <span class="text-primary font-semibold">ArkheByteBuffer</span>;</div>
+<div class="mt-4 text-outline italic">/* Function Prototypes with Zero-Copy Borrow Semantics */</div>
+<div class="mt-1"><span class="text-primary font-semibold">ArkheVerdict</span> <span class="text-primary-container font-semibold">arkhe_verify_gguf</span>(</div>
+<div class="pl-4"><span class="text-primary-container">const</span> <span class="text-secondary">uint8_t</span>* <span class="text-on-surface">model_bytes</span>, <span class="text-secondary">size_t</span> <span class="text-on-surface">model_len</span>,</div>
+<div class="pl-4"><span class="text-primary-container">const</span> <span class="text-secondary">uint8_t</span>* <span class="text-on-surface">policy_bytes</span>, <span class="text-secondary">size_t</span> <span class="text-on-surface">policy_len</span>);</div>
+<div class="mt-2"><span class="text-primary font-semibold">ArkheVerdict</span> <span class="text-primary-container font-semibold">arkhe_verify_intoto_statement</span>(</div>
+<div class="pl-4"><span class="text-primary-container">const</span> <span class="text-secondary">uint8_t</span>* <span class="text-on-surface">stmt_bytes</span>, <span class="text-secondary">size_t</span> <span class="text-on-surface">stmt_len</span>,</div>
+<div class="pl-4"><span class="text-primary-container">const</span> <span class="text-secondary">uint8_t</span>* <span class="text-on-surface">public_key_32</span>);</div>
+<div class="mt-2"><span class="text-primary font-semibold">ArkheByteBuffer</span> <span class="text-primary-container font-semibold">arkhe_project_canonical_cbor</span>(</div>
+<div class="pl-4"><span class="text-primary-container">const</span> <span class="text-secondary">uint8_t</span>* <span class="text-on-surface">gguf_bytes</span>, <span class="text-secondary">size_t</span> <span class="text-on-surface">gguf_len</span>);</div>
+<div class="mt-2"><span class="text-secondary">void</span> <span class="text-primary-container font-semibold">arkhe_free_verdict</span>(<span class="text-primary font-semibold">ArkheVerdict</span> <span class="text-on-surface">verdict</span>);</div>
+<div><span class="text-secondary">void</span> <span class="text-primary-container font-semibold">arkhe_free_byte_buffer</span>(<span class="text-primary font-semibold">ArkheByteBuffer</span> <span class="text-on-surface">buffer</span>);</div>
+<div><span class="text-secondary">uint32_t</span> <span class="text-primary-container font-semibold">arkhe_abi_version</span>(<span class="text-secondary">void</span>);</div>
+<div class="mt-3"><span class="text-primary-container">#ifdef</span> __cplusplus</div>
+<div>}</div>
+<div><span class="text-primary-container">#endif</span></div>
+<div class="mt-2"><span class="text-primary-container">#endif</span> <span class="text-outline italic">/* ARKHE_VERIFY_H */</span></div>
+</div>
+</div>
+<!-- Integrated Clang / GCC Verification Terminal -->
+<div class="h-44 bg-surface-container-lowest border-t border-outline-variant flex flex-col font-mono-sm">
+<div class="flex items-center justify-between px-3 py-1 bg-surface-container border-b border-outline-variant text-label-caps font-label-caps text-outline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-primary-container">terminal</span>
+<span>CLANG 17.0.6 SYNTAX &amp; ABI EMISSION TERMINAL</span>
+<span class="text-tertiary-container bg-tertiary-container/10 px-1 rounded">EXIT 0</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-mono-sm">ARCH: x86_64-unknown-linux-gnu</span>
+<button class="hover:text-primary"><span class="material-symbols-outlined text-xs">refresh</span></button>
+</div>
+</div>
+<div class="p-2.5 overflow-y-auto space-y-1 text-xs">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="text-primary-container">$</span>
+<span>clang -Wall -Wextra -Wpedantic -Werror -std=c99 -fsyntax-only include/arkhe_verify.h</span>
+</div>
+<div class="text-tertiary-container flex items-center gap-1.5 pl-3">
+<span class="material-symbols-outlined text-xs">check</span>
+<span>0 warnings, 0 errors generated. Perfect ISO C99 / C11 compliance confirmed.</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface pt-1">
+<span class="text-primary-container">$</span>
+<span>nm -D target/release/libarkhe_verify_core.so | grep arkhe_</span>
+</div>
+<div class="pl-3 space-y-0.5 text-on-surface-variant">
+<div class="flex items-center gap-3"><span class="text-secondary font-mono-sm">000000000001f340 T</span> <span class="text-primary">arkhe_verify_gguf</span> <span class="text-outline">[binding safe]</span></div>
+<div class="flex items-center gap-3"><span class="text-secondary font-mono-sm">000000000001f810 T</span> <span class="text-primary">arkhe_verify_intoto_statement</span> <span class="text-outline">[binding safe]</span></div>
+<div class="flex items-center gap-3"><span class="text-secondary font-mono-sm">00000000000201a0 T</span> <span class="text-primary">arkhe_project_canonical_cbor</span> <span class="text-outline">[binding safe]</span></div>
+<div class="flex items-center gap-3"><span class="text-secondary font-mono-sm">00000000000204d0 T</span> <span class="text-primary">arkhe_free_verdict</span> <span class="text-outline">[dtor safe]</span></div>
+<div class="flex items-center gap-3"><span class="text-secondary font-mono-sm">0000000000020520 T</span> <span class="text-primary">arkhe_free_byte_buffer</span> <span class="text-outline">[dtor safe]</span></div>
+<div class="flex items-center gap-3"><span class="text-secondary font-mono-sm">000000000001f010 T</span> <span class="text-primary">arkhe_abi_version</span> <span class="text-outline">[const 0x000200]</span></div>
+</div>
+</div>
+</div>
+</main>
+<!-- RIGHT COLUMN: C-ABI Contract Invariants & Interoperability Harness (320px) -->
+<aside class="w-80 flex-shrink-0 bg-surface-container-lowest border-l border-outline-variant flex flex-col justify-between overflow-y-auto">
+<div class="p-3 space-y-4">
+<!-- Section Header -->
+<div class="flex items-center justify-between pb-1.5 border-b border-outline-variant text-label-caps font-label-caps text-outline">
+<span>ABI CONTRACT INVARIANTS</span>
+<span class="text-primary-container font-mono-sm">AMD64 / ARM64</span>
+</div>
+<!-- Invariant Defense Cards (Asymmetric Bento style) -->
+<div class="space-y-2.5">
+<!-- Card 1 -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant hover:border-secondary transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-semibold text-primary text-xs">Strict Alignment &amp; Struct Packing</span>
+<span class="px-1 py-0.2 bg-surface-container-high text-secondary text-label-caps font-label-caps rounded">8-BYTE</span>
+</div>
+<p class="text-on-surface-variant text-xs leading-4">
+              Natural 64-bit word boundaries maintained without packing holes. Precludes undefined behavior across ARM64 NEON &amp; AMD64 SSE pipelines.
+            </p>
+</div>
+<!-- Card 2 -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant hover:border-secondary transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-semibold text-primary text-xs">Ownership Protocol &amp; Lifecycles</span>
+<span class="px-1 py-0.2 bg-surface-container-high text-tertiary-container text-label-caps font-label-caps rounded">ZERO-LEAK</span>
+</div>
+<p class="text-on-surface-variant text-xs leading-4">
+              Caller maintains ownership of input buffers. Callee owns return string &amp; byte buffer until explicit <code class="text-primary-container">arkhe_free_*</code> invocation.
+            </p>
+</div>
+<!-- Card 3 -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant hover:border-secondary transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-semibold text-primary text-xs">C++ Linkage &amp; Name Mangling</span>
+<span class="px-1 py-0.2 bg-surface-container-high text-outline text-label-caps font-label-caps rounded">EXTERN "C"</span>
+</div>
+<p class="text-on-surface-variant text-xs leading-4">
+              Bi-directional <code class="text-primary-container">extern "C"</code> guards prevent symbol mangling across MSVC, g++, and clang++ toolchains.
+            </p>
+</div>
+<!-- Card 4 -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant hover:border-secondary transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-semibold text-primary text-xs">FFI Offset Stability Assurance</span>
+<span class="px-1 py-0.2 bg-surface-container-high text-primary-container text-label-caps font-label-caps rounded">STATIC_ASSERT</span>
+</div>
+<div class="space-y-1 font-mono-sm text-xs mt-1 text-on-surface">
+<div class="flex justify-between bg-surface-container-low px-1.5 py-0.5 rounded">
+<span class="text-outline">offset_of(ArkheVerdict, error_code)</span>
+<span class="text-tertiary-container font-semibold">== 4</span>
+</div>
+<div class="flex justify-between bg-surface-container-low px-1.5 py-0.5 rounded">
+<span class="text-outline">offset_of(ArkheVerdict, details)</span>
+<span class="text-tertiary-container font-semibold">== 8</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Foreign Runtime Cross-Check Matrix -->
+<div>
+<div class="flex items-center justify-between pb-1.5 mb-2 border-b border-outline-variant text-label-caps font-label-caps text-outline">
+<span>FOREIGN RUNTIME MATRIX</span>
+<span class="text-secondary font-mono-sm">4 BINDINGS</span>
+</div>
+<div class="space-y-1.5 font-mono-sm text-xs">
+<!-- Binding 1 -->
+<div class="p-2 rounded bg-surface-container-low border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-primary font-semibold">C99 Direct Bindings</span>
+<span class="text-tertiary-container text-label-caps font-label-caps">18.4 ns</span>
+</div>
+<div class="text-outline mt-0.5">Zero overhead, 0 heap allocs in proof hot-path</div>
+</div>
+<!-- Binding 2 -->
+<div class="p-2 rounded bg-surface-container-low border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-primary font-semibold">C++20 Wrapper</span>
+<span class="text-secondary text-label-caps font-label-caps">RAII UNIQUE_PTR</span>
+</div>
+<div class="text-outline mt-0.5">Automated custom deleter via std::unique_ptr</div>
+</div>
+<!-- Binding 3 -->
+<div class="p-2 rounded bg-surface-container-low border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-primary font-semibold">Python ctypes / cffi</span>
+<span class="text-primary-container text-label-caps font-label-caps">ZERO COPY</span>
+</div>
+<div class="text-outline mt-0.5">POINTER(ArkheVerdict) directly mapped in-memory</div>
+</div>
+<!-- Binding 4 -->
+<div class="p-2 rounded bg-surface-container-low border border-outline-variant">
+<div class="flex items-center justify-between">
+<span class="text-primary font-semibold">WASM wasip1 / Emscripten</span>
+<span class="text-tertiary-container text-label-caps font-label-caps">LINEAR MEM</span>
+</div>
+<div class="text-outline mt-0.5">Pointer translation over WebAssembly memory pages</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Action Footer Bar -->
+<div class="p-3 border-t border-outline-variant bg-surface-container space-y-2">
+<button class="w-full py-1.5 bg-surface-container-high hover:bg-surface-bright text-primary border border-outline-variant font-mono-sm rounded flex items-center justify-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+<span>Copy Header to Clipboard</span>
+</button>
+<div class="grid grid-cols-2 gap-1.5">
+<button class="py-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant font-mono-sm rounded text-xs flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-xs">schema</span>
+<span>Clang AST</span>
+</button>
+<button class="py-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant font-mono-sm rounded text-xs flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-xs">terminal</span>
+<span>Gen ctypes</span>
+</button>
+</div>
+</div>
+</aside>
+</div>
+<!-- STATUS FOOTER STRIP -->
+<footer class="h-6 bg-surface-container-lowest border-t border-outline-variant px-space-md flex items-center justify-between text-label-caps font-label-caps text-outline z-50">
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+        ABI SYNTAX PARSER: IDLE
+      </span>
+<span>C99 STRICT PEDANTIC: ENFORCED</span>
+<span class="hidden sm:inline">ENDIANNESS: DETERMINISTIC LE</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-primary-container">ARKHE-CORE v0.2.0</span>
+<span>SHA256: e3b0c442...b960</span>
+</div>
+</footer>
+</body></html>

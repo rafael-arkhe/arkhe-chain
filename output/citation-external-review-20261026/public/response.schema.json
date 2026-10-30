@@ -1,0 +1,66 @@
+{
+  "type": "object",
+  "required": [
+    "case_id",
+    "verdict"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "error_kind",
+        "evidence_id",
+        "entity",
+        "jaccard_numerator",
+        "jaccard_denominator"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "PASS_LEXICAL",
+            "FAIL_LEXICAL",
+            "UNSUPPORTED"
+          ]
+        },
+        "error_kind": {
+          "enum": [
+            null,
+            "UnknownEvidence",
+            "EntityNotInEvidence",
+            "InsufficientSupport",
+            "UnsupportedProfile"
+          ]
+        },
+        "evidence_id": {
+          "type": "string"
+        },
+        "entity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "jaccard_numerator": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "jaccard_denominator": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

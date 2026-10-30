@@ -1,0 +1,345 @@
+[
+  {
+    "command": [
+      "rad",
+      "auth",
+      "--alias",
+      "arkhe-release-lab-author",
+      "--stdin"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "\nInitializing your Radicle \ud83d\udc7e identity\n\n\u2713 Creating your Ed25519 keypair\u2026\n\u2713 Your Radicle DID is did:key:z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp. This identifies your device. Run `rad self` to show it at all times.\n\u2713 You're all set.\n\nTo create a Radicle repository, run `rad init` from a Git repository with at least one commit.\nTo clone a repository, run `rad clone <rid>`. For example, `rad clone rad:z3gqcJUoA1n9HaHKufZs5FCSGazv5` clones the Radicle 'heartwood' repository.\nTo get a list of all commands, run `rad`.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rad",
+      "auth",
+      "--alias",
+      "arkhe-release-lab-reviewer",
+      "--stdin"
+    ],
+    "profile": "reviewer",
+    "exit_code": 0,
+    "stdout": "\nInitializing your Radicle \ud83d\udc7e identity\n\n\u2713 Creating your Ed25519 keypair\u2026\n\u2713 Your Radicle DID is did:key:z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4. This identifies your device. Run `rad self` to show it at all times.\n\u2713 You're all set.\n\nTo create a Radicle repository, run `rad init` from a Git repository with at least one commit.\nTo clone a repository, run `rad clone <rid>`. For example, `rad clone rad:z3gqcJUoA1n9HaHKufZs5FCSGazv5` clones the Radicle 'heartwood' repository.\nTo get a list of all commands, run `rad`.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "init",
+      "-b",
+      "main",
+      "/home/arkhen/arkhe-release-lab-20261028-02/source"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "Initialized empty Git repository in /home/arkhen/arkhe-release-lab-20261028-02/source/.git/\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "config",
+      "user.name",
+      "Arkhe release laboratory"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "config",
+      "user.email",
+      "release-lab@example.invalid"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "add",
+      "README.md"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "commit",
+      "-m",
+      "Initialize public release specimen"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "[main (root-commit) d6fb52e] Initialize public release specimen\n 1 file changed, 3 insertions(+)\n create mode 100644 README.md\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rad",
+      "init",
+      "--name",
+      "arkhe-release-specimen",
+      "--description",
+      "Synthetic release verification demo",
+      "--public",
+      "--no-confirm",
+      "--no-seed"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "\nInitializing public Radicle \ud83d\udc7e repository in /home/arkhen/arkhe-release-lab-20261028-02/source..\n\n\u2713 Repository arkhe-release-specimen created.\n\nYour Repository ID (RID) is rad:z2MKB2DZ4Z8nqddg5zvFdsHp6AuH1\nYou can show it any time by running `rad .` from this directory.\n\nYour repository will be announced to the network when you start your node.\nYou can start your node with `rad node start`.\nTo push changes, run `git push`.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rad",
+      "inspect",
+      "--rid"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "rad:z2MKB2DZ4Z8nqddg5zvFdsHp6AuH1\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "checkout",
+      "-b",
+      "release-specimen"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "Switched to a new branch 'release-specimen'\n"
+  },
+  {
+    "command": [
+      "/usr/bin/python3",
+      "-m",
+      "unittest",
+      "-v"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "test_known_vector (test_specimen.SpecimenTests.test_known_vector) ... ok\ntest_tamper (test_specimen.SpecimenTests.test_tamper) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+  },
+  {
+    "command": [
+      "git",
+      "add",
+      "specimen.py",
+      "test_specimen.py"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "commit",
+      "-m",
+      "Add deterministic release specimen and tests"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "[release-specimen 12527ac] Add deterministic release specimen and tests\n 2 files changed, 12 insertions(+)\n create mode 100644 specimen.py\n create mode 100644 test_specimen.py\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "12527ac63a4eea635a8a4942a649414d6d57a2cb\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "push",
+      "rad",
+      "HEAD:refs/patches",
+      "-o",
+      "patch.message=Release specimen for offline verification"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "\u2713 Patch c01ffbde021b05170cd5136a1574f69e27f3cb99 opened\nhint: to update, run `git push` or `git push rad --force-with-lease HEAD:patches/c01ffbde021b05170cd5136a1574f69e27f3cb99`\nhint: you are not seeding this repository; skipping sync\nTo rad://z2MKB2DZ4Z8nqddg5zvFdsHp6AuH1/z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp\n * [new reference]   HEAD -> refs/patches\n"
+  },
+  {
+    "command": [
+      "rad",
+      "cob",
+      "list",
+      "--repo",
+      "rad:z2MKB2DZ4Z8nqddg5zvFdsHp6AuH1",
+      "--type",
+      "xyz.radicle.patch"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "c01ffbde021b05170cd5136a1574f69e27f3cb99\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rad",
+      "patch",
+      "cache",
+      "--repo",
+      "rad:z2MKB2DZ4Z8nqddg5zvFdsHp6AuH1"
+    ],
+    "profile": "reviewer",
+    "exit_code": 0,
+    "stdout": "\u2713 Successfully cached patch c01ffbde021b05170cd5136a1574f69e27f3cb99 (1/1)\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rad",
+      "self",
+      "--did"
+    ],
+    "profile": "reviewer",
+    "exit_code": 0,
+    "stdout": "did:key:z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rad",
+      "patch",
+      "review",
+      "c01ffbde021b05170cd5136a1574f69e27f3cb99",
+      "--repo",
+      "rad:z2MKB2DZ4Z8nqddg5zvFdsHp6AuH1",
+      "--accept",
+      "--message",
+      "LAB AUTOMATION: source tests passed; accepts this exact synthetic revision. Not a human review.",
+      "--no-announce"
+    ],
+    "profile": "reviewer",
+    "exit_code": 0,
+    "stdout": "\u2713 Patch c01ffbd accepted\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rad",
+      "cob",
+      "show",
+      "--repo",
+      "rad:z2MKB2DZ4Z8nqddg5zvFdsHp6AuH1",
+      "--type",
+      "xyz.radicle.patch",
+      "--object",
+      "c01ffbde021b05170cd5136a1574f69e27f3cb99"
+    ],
+    "profile": "reviewer",
+    "exit_code": 0,
+    "stdout": "{\"title\":\"Release specimen for offline verification\",\"author\":{\"id\":\"did:key:z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp\"},\"state\":{\"status\":\"open\"},\"target\":\"delegates\",\"labels\":[],\"merges\":{},\"revisions\":{\"c01ffbde021b05170cd5136a1574f69e27f3cb99\":{\"id\":\"c01ffbde021b05170cd5136a1574f69e27f3cb99\",\"author\":{\"id\":\"did:key:z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp\"},\"description\":[{\"author\":\"z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp\",\"timestamp\":1793220601000,\"body\":\"\",\"embeds\":[]}],\"base\":\"d6fb52e90490530d56da7ea2c69c704c0935495b\",\"oid\":\"12527ac63a4eea635a8a4942a649414d6d57a2cb\",\"discussion\":{\"comments\":{},\"timeline\":[]},\"reviews\":{\"z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4\":{\"id\":\"d61b8e8a163f3a42c5e50229b7e7a1ed8229508c\",\"author\":{\"id\":\"did:key:z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4\"},\"verdict\":\"accept\",\"summary\":[{\"author\":\"z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4\",\"timestamp\":1793220601000,\"body\":\"LAB AUTOMATION: source tests passed; accepts this exact synthetic revision. Not a human review.\",\"embeds\":[]}],\"comments\":{\"comments\":{},\"timeline\":[]},\"labels\":[],\"timestamp\":1793220601000}},\"timestamp\":1793220601000,\"resolves\":[],\"reactions\":[]}},\"assignees\":[],\"timeline\":[\"c01ffbde021b05170cd5136a1574f69e27f3cb99\",\"d61b8e8a163f3a42c5e50229b7e7a1ed8229508c\"],\"reviews\":{\"d61b8e8a163f3a42c5e50229b7e7a1ed8229508c\":[\"c01ffbde021b05170cd5136a1574f69e27f3cb99\",\"z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4\"]}}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rad",
+      "patch",
+      "show",
+      "c01ffbde021b05170cd5136a1574f69e27f3cb99",
+      "--repo",
+      "rad:z2MKB2DZ4Z8nqddg5zvFdsHp6AuH1"
+    ],
+    "profile": "reviewer",
+    "exit_code": 0,
+    "stdout": "\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 Title    Release specimen for offline verification                            \u2502\n\u2502 Patch    c01ffbde021b05170cd5136a1574f69e27f3cb99                             \u2502\n\u2502 Author   z6MkneM\u2026cxE5UZp                                                      \u2502\n\u2502 Head     12527ac63a4eea635a8a4942a649414d6d57a2cb                             \u2502\n\u2502 Base     d6fb52e90490530d56da7ea2c69c704c0935495b                             \u2502\n\u2502 Target   main                                                                 \u2502\n\u2502 Commits  ahead 1, behind 0                                                    \u2502\n\u2502 Status   open                                                                 \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 12527ac Add deterministic release specimen and tests                          \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 \u25cf Revision c01ffbd @ d6fb52e..12527ac by z6MkneM\u2026cxE5UZp now                  \u2502\n\u2502   \u2514\u2500 \u2713 accepted                       by arkhe-release-lab-reviewer (you) now \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rad",
+      "inspect",
+      "--sigrefs",
+      "rad:z2MKB2DZ4Z8nqddg5zvFdsHp6AuH1"
+    ],
+    "profile": "reviewer",
+    "exit_code": 0,
+    "stdout": "z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4 45a7c1d083dc6904b60256e2c42b4fa821b3c46b root\nz6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp d09565856bf2a2bab82932c90a6992d4c6f33968 parent\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "archive",
+      "--format=tar",
+      "12527ac63a4eea635a8a4942a649414d6d57a2cb"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "bundle",
+      "create",
+      "/mnt/d/arkhe/ops/local/verifiable-release/source-02/source.bundle",
+      "--all"
+    ],
+    "profile": "reviewer",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "bundle",
+      "verify",
+      "/mnt/d/arkhe/ops/local/verifiable-release/source-02/source.bundle"
+    ],
+    "profile": "reviewer",
+    "exit_code": 0,
+    "stdout": "The bundle contains these 13 refs:\nd6fb52e90490530d56da7ea2c69c704c0935495b refs/heads/main\nd61b8e8a163f3a42c5e50229b7e7a1ed8229508c refs/namespaces/z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4/refs/cobs/xyz.radicle.patch/c01ffbde021b05170cd5136a1574f69e27f3cb99\nf3bb82503f33fb001face7b51bc9354c711838a6 refs/namespaces/z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4/refs/rad/root\n45a7c1d083dc6904b60256e2c42b4fa821b3c46b refs/namespaces/z6MkfzSzy6Xu4QAZ3iGDQn6Ra5jPYH4qP6T7wx91x7gM9Vn4/refs/rad/sigrefs\nf3bb82503f33fb001face7b51bc9354c711838a6 refs/namespaces/z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp/refs/cobs/xyz.radicle.id/f3bb82503f33fb001face7b51bc9354c711838a6\nc01ffbde021b05170cd5136a1574f69e27f3cb99 refs/namespaces/z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp/refs/cobs/xyz.radicle.patch/c01ffbde021b05170cd5136a1574f69e27f3cb99\nd6fb52e90490530d56da7ea2c69c704c0935495b refs/namespaces/z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp/refs/heads/main\n12527ac63a4eea635a8a4942a649414d6d57a2cb refs/namespaces/z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp/refs/heads/patches/c01ffbde021b05170cd5136a1574f69e27f3cb99\nf3bb82503f33fb001face7b51bc9354c711838a6 refs/namespaces/z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp/refs/rad/id\nf3bb82503f33fb001face7b51bc9354c711838a6 refs/namespaces/z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp/refs/rad/root\nd09565856bf2a2bab82932c90a6992d4c6f33968 refs/namespaces/z6MkneMaWw5cDcZkXmPWbv6F1eoAmnsKqxdBafjMtcxE5UZp/refs/rad/sigrefs\nf3bb82503f33fb001face7b51bc9354c711838a6 refs/rad/id\nd6fb52e90490530d56da7ea2c69c704c0935495b HEAD\nThe bundle records a complete history.\nThe bundle uses this hash algorithm: sha1\n",
+    "stderr": "/mnt/d/arkhe/ops/local/verifiable-release/source-02/source.bundle is okay\n"
+  },
+  {
+    "command": [
+      "hostname"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "DESKTOP-G1BRFD4\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "uname",
+      "-srmo"
+    ],
+    "profile": "author",
+    "exit_code": 0,
+    "stdout": "Linux 6.18.54.1-microsoft-standard-WSL2 x86_64 GNU/Linux\n",
+    "stderr": ""
+  }
+]

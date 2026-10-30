@@ -1,0 +1,37 @@
+# Scope: standalone arkhe-p2p experiment, not the root workspace or E02 freeze.
+# Validated with cargo-deny 0.20.2. Check all resolved targets and dev deps.
+# Run `check --warn unmaintained`: maintenance notices stay visible without
+# suppressing them. All security advisories retain their default error level.
+[graph]
+all-features = true
+
+[advisories]
+db-urls = ["https://github.com/RustSec/advisory-db"]
+unmaintained = "all"
+yanked = "deny"
+ignore = []
+
+[licenses]
+confidence-threshold = 0.93
+# GPL/AGPL/LGPL-only expressions are not allowed. Dual-licensed packages may
+# satisfy the policy through an allowed alternative; do not ban their names.
+allow = [
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "CDLA-Permissive-2.0",
+    "ISC",
+    "MIT",
+    "Unicode-3.0",
+]
+exceptions = []
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

@@ -1,0 +1,56 @@
+   Compiling arkhe-verify-self-demo v0.1.0 (C:\Users\Lemes\AppData\Local\Temp\arkhe-verifier-gate-mutations-3a_ldf3m\remove_checkpoint_validation)
+   Compiling sigstore-verify v0.6.6 (C:\Users\Lemes\AppData\Local\Temp\arkhe-verifier-gate-mutations-3a_ldf3m\remove_checkpoint_validation\vendor\sigstore-verify)
+warning: unreachable statement
+  --> vendor\sigstore-verify\src\verify_impl\tlog.rs:89:5
+   |
+86 |       return Ok(()); // MUTATION ONLY
+   |       ------------- any code following this expression is unreachable
+...
+89 | /     let checkpoint = Checkpoint::from_text(checkpoint_envelope)
+90 | |         .map_err(|e| Error::Verification(format!("Failed to parse checkpoint: {}", e)))?;
+   | |_________________________________________________________________________________________^ unreachable statement
+   |
+   = note: `#[warn(unreachable_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `checkpoint_envelope`
+  --> vendor\sigstore-verify\src\verify_impl\tlog.rs:82:5
+   |
+82 |     checkpoint_envelope: &str,
+   |     ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_checkpoint_envelope`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `inclusion_proof`
+  --> vendor\sigstore-verify\src\verify_impl\tlog.rs:83:5
+   |
+83 |     inclusion_proof: &InclusionProof,
+   |     ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_inclusion_proof`
+
+warning: unused variable: `trusted_root`
+  --> vendor\sigstore-verify\src\verify_impl\tlog.rs:84:5
+   |
+84 |     trusted_root: &TrustedRoot,
+   |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_trusted_root`
+
+warning: `sigstore-verify` (lib) generated 4 warnings (run `cargo fix --lib -p sigstore-verify` to apply 3 suggestions)
+    Finished `test` profile [unoptimized] target(s) in 6.91s
+     Running tests\negative.rs (D:\arkhe\arkhe-verify-self-demo\target\debug\deps\negative-47bf6da3d93dfb5b.exe)
+
+running 1 test
+test forged_checkpoint_rejected ... FAILED
+
+failures:
+
+---- forged_checkpoint_rejected stdout ----
+
+thread 'forged_checkpoint_rejected' (11696) panicked at tests\negative.rs:129:5:
+assertion failed: matches!(verify_self(A, &bad), Err(VerifyError::Verification(_)))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    forged_checkpoint_rejected
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--test negative`

@@ -1,0 +1,740 @@
+Counting Node test cases, not individual assertions or engine invocations.
+32 conformance cases each compare Node/browser within ONE test; they count as 32, not 64.
+Conformance file: 32 vectors + 10 supporting/property tests = 42.
+Previous 67 = 27 parser + 10 MMR + 11 verifier + 12 anchor + 7 app.
+Current 109 = previous 67 + 42 conformance/property cases.
+
+--- parser + wire vectors: scripts/e02_memo_commitment.test.mjs (expected 27) ---
+TAP version 13
+# Subtest: E02 wire golden vector anchor-max-n
+ok 1 - E02 wire golden vector anchor-max-n
+  ---
+  duration_ms: 5.3321
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector control
+ok 2 - E02 wire golden vector control
+  ---
+  duration_ms: 0.503
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector empty-field
+ok 3 - E02 wire golden vector empty-field
+  ---
+  duration_ms: 0.3458
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector extra-field
+ok 4 - E02 wire golden vector extra-field
+  ---
+  duration_ms: 0.2192
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector future-version
+ok 5 - E02 wire golden vector future-version
+  ---
+  duration_ms: 0.2795
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector invalid-base58
+ok 6 - E02 wire golden vector invalid-base58
+  ---
+  duration_ms: 0.4442
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector leading-zero
+ok 7 - E02 wire golden vector leading-zero
+  ---
+  duration_ms: 0.2171
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector non-ascii
+ok 8 - E02 wire golden vector non-ascii
+  ---
+  duration_ms: 0.1764
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector overflow
+ok 9 - E02 wire golden vector overflow
+  ---
+  duration_ms: 0.3628
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector ref-n1
+ok 10 - E02 wire golden vector ref-n1
+  ---
+  duration_ms: 1.9472
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector short-signature
+ok 11 - E02 wire golden vector short-signature
+  ---
+  duration_ms: 0.2298
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector space
+ok 12 - E02 wire golden vector space
+  ---
+  duration_ms: 0.135
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector too-large
+ok 13 - E02 wire golden vector too-large
+  ---
+  duration_ms: 0.1655
+  type: 'test'
+  ...
+# Subtest: E02 wire golden vector uppercase
+ok 14 - E02 wire golden vector uppercase
+  ---
+  duration_ms: 0.1538
+  type: 'test'
+  ...
+# Subtest: reference memo round-trips and stays inside the byte budget
+ok 15 - reference memo round-trips and stays inside the byte budget
+  ---
+  duration_ms: 2.5894
+  type: 'test'
+  ...
+# Subtest: anchor memo round-trips
+ok 16 - anchor memo round-trips
+  ---
+  duration_ms: 0.2116
+  type: 'test'
+  ...
+# Subtest: parser rejects non-ASCII, oversized and empty memos
+ok 17 - parser rejects non-ASCII, oversized and empty memos
+  ---
+  duration_ms: 0.1336
+  type: 'test'
+  ...
+# Subtest: parser rejects unknown profiles and versions
+ok 18 - parser rejects unknown profiles and versions
+  ---
+  duration_ms: 0.1178
+  type: 'test'
+  ...
+# Subtest: parser rejects malformed references with specific details
+ok 19 - parser rejects malformed references with specific details
+  ---
+  duration_ms: 0.3965
+  type: 'test'
+  ...
+# Subtest: parser enforces canonical base58
+ok 20 - parser enforces canonical base58
+  ---
+  duration_ms: 0.3694
+  type: 'test'
+  ...
+# Subtest: leaf count bounds are enforced
+ok 21 - leaf count bounds are enforced
+  ---
+  duration_ms: 0.2234
+  type: 'test'
+  ...
+# Subtest: canonical JSON sorts keys and rejects non-ASCII or floats
+ok 22 - canonical JSON sorts keys and rejects non-ASCII or floats
+  ---
+  duration_ms: 1.0687
+  type: 'test'
+  ...
+# Subtest: artifact parsing produces leaf and op_id preimages
+ok 23 - artifact parsing produces leaf and op_id preimages
+  ---
+  duration_ms: 0.5292
+  type: 'test'
+  ...
+# Subtest: artifact parsing rejects foreign keys, bad kinds and malformed JSON
+ok 24 - artifact parsing rejects foreign keys, bad kinds and malformed JSON
+  ---
+  duration_ms: 0.8347
+  type: 'test'
+  ...
+# Subtest: dataset parsing validates shape, profile and provenance
+ok 25 - dataset parsing validates shape, profile and provenance
+  ---
+  duration_ms: 0.9629
+  type: 'test'
+  ...
+# Subtest: dataset signing preimage excludes provenance and is canonical
+ok 26 - dataset signing preimage excludes provenance and is canonical
+  ---
+  duration_ms: 0.2635
+  type: 'test'
+  ...
+# Subtest: strict JSON rejects duplicate keys
+ok 27 - strict JSON rejects duplicate keys
+  ---
+  duration_ms: 0.1426
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 27
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 274.2672
+
+--- MMR builder + Rust WASM parity: scripts/e02_mmr.test.mjs (expected 10) ---
+TAP version 13
+# Subtest: peak decomposition matches the frozen profile
+ok 1 - peak decomposition matches the frozen profile
+  ---
+  duration_ms: 1.6837
+  type: 'test'
+  ...
+# Subtest: empty MMR and out-of-range targets are rejected
+ok 2 - empty MMR and out-of-range targets are rejected
+  ---
+  duration_ms: 1.9156
+  type: 'test'
+  ...
+# Subtest: MMR golden vector 1-leaves.json
+ok 3 - MMR golden vector 1-leaves.json
+  ---
+  duration_ms: 4.2139
+  type: 'test'
+  ...
+# Subtest: MMR golden vector 3-leaves.json
+ok 4 - MMR golden vector 3-leaves.json
+  ---
+  duration_ms: 4.1642
+  type: 'test'
+  ...
+# Subtest: MMR golden vector 4-leaves.json
+ok 5 - MMR golden vector 4-leaves.json
+  ---
+  duration_ms: 2.3832
+  type: 'test'
+  ...
+# Subtest: MMR golden vector 5-leaves.json
+ok 6 - MMR golden vector 5-leaves.json
+  ---
+  duration_ms: 3.2086
+  type: 'test'
+  ...
+# Subtest: MMR golden vector 7-leaves.json
+ok 7 - MMR golden vector 7-leaves.json
+  ---
+  duration_ms: 3.0722
+  type: 'test'
+  ...
+# Subtest: the WASM verifier rejects a wrong root and a mutated proof
+ok 8 - the WASM verifier rejects a wrong root and a mutated proof
+  ---
+  duration_ms: 0.5109
+  type: 'test'
+  ...
+# Subtest: reference and anchor commitments verify end to end
+ok 9 - reference and anchor commitments verify end to end
+  ---
+  duration_ms: 5.0013
+  type: 'test'
+  ...
+# Subtest: a production artifact parses but is out of v1 scope
+ok 10 - a production artifact parses but is out of v1 scope
+  ---
+  duration_ms: 0.6687
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 271.1132
+
+--- offline verifier: scripts/e02_verify.test.mjs (expected 11) ---
+TAP version 13
+# Subtest: a consistent reference and anchor verify offline
+ok 1 - a consistent reference and anchor verify offline
+  ---
+  duration_ms: 15.9765
+  type: 'test'
+  ...
+# Subtest: receipt decoding accepts jsonParsed account keys
+ok 2 - receipt decoding accepts jsonParsed account keys
+  ---
+  duration_ms: 2.4766
+  type: 'test'
+  ...
+# Subtest: failed, missing and mismatched receipts fail closed
+ok 3 - failed, missing and mismatched receipts fail closed
+  ---
+  duration_ms: 16.3048
+  type: 'test'
+  ...
+# Subtest: only devnet is in scope
+ok 4 - only devnet is in scope
+  ---
+  duration_ms: 2.4978
+  type: 'test'
+  ...
+# Subtest: dataset and commitment mismatches map to distinct reasons
+ok 5 - dataset and commitment mismatches map to distinct reasons
+  ---
+  duration_ms: 14.0841
+  type: 'test'
+  ...
+# Subtest: duplicate leaves are ambiguous
+ok 6 - duplicate leaves are ambiguous
+  ---
+  duration_ms: 1.6475
+  type: 'test'
+  ...
+# Subtest: anchor mismatches are reported before the artifact claim
+ok 7 - anchor mismatches are reported before the artifact claim
+  ---
+  duration_ms: 7.6478
+  type: 'test'
+  ...
+# Subtest: production artifacts parse but are out of scope for v1
+ok 8 - production artifacts parse but are out of scope for v1
+  ---
+  duration_ms: 1.7354
+  type: 'test'
+  ...
+# Subtest: provenance is surfaced but does not change the commitment
+ok 9 - provenance is surfaced but does not change the commitment
+  ---
+  duration_ms: 3.8778
+  type: 'test'
+  ...
+# Subtest: non-canonical artifact bytes inside a valid leaf are rejected
+ok 10 - non-canonical artifact bytes inside a valid leaf are rejected
+  ---
+  duration_ms: 2.5033
+  type: 'test'
+  ...
+# Subtest: a negative result never claims verification
+ok 11 - a negative result never claims verification
+  ---
+  duration_ms: 1.4744
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 306.3746
+
+--- devnet anchor + dataset signing: scripts/e02_anchor.test.mjs (expected 12) ---
+TAP version 13
+# Subtest: dataset provenance signs the canonical domain-separated body and detects tampering
+ok 1 - dataset provenance signs the canonical domain-separated body and detects tampering
+  ---
+  duration_ms: 15.7865
+  type: 'test'
+  ...
+# Subtest: keypair files hold only a seed and round-trip
+ok 2 - keypair files hold only a seed and round-trip
+  ---
+  duration_ms: 8.811
+  type: 'test'
+  ...
+# Subtest: datasets build from artifacts and recompute their root on load
+ok 3 - datasets build from artifacts and recompute their root on load
+  ---
+  duration_ms: 11.4219
+  type: 'test'
+  ...
+# Subtest: artifacts are located in the dataset by exact leaf bytes
+ok 4 - artifacts are located in the dataset by exact leaf bytes
+  ---
+  duration_ms: 2.4162
+  type: 'test'
+  ...
+# Subtest: commitDataset anchors the root and references an artifact
+ok 5 - commitDataset anchors the root and references an artifact
+  ---
+  duration_ms: 6.5584
+  type: 'test'
+  ...
+# Subtest: commitDataset can anchor without a reference
+ok 6 - commitDataset can anchor without a reference
+  ---
+  duration_ms: 3.1058
+  type: 'test'
+  ...
+# Subtest: commitDataset refuses inconsistent or out-of-scope input before sending
+ok 7 - commitDataset refuses inconsistent or out-of-scope input before sending
+  ---
+  duration_ms: 1.6884
+  type: 'test'
+  ...
+# Subtest: confirmation fails closed on error and timeout
+ok 8 - confirmation fails closed on error and timeout
+  ---
+  duration_ms: 2.0536
+  type: 'test'
+  ...
+# Subtest: sendMemo rejects oversized memos and tampered receipts
+ok 9 - sendMemo rejects oversized memos and tampered receipts
+  ---
+  duration_ms: 2.2422
+  type: 'test'
+  ...
+# Subtest: airdrop confirms the returned signature
+ok 10 - airdrop confirms the returned signature
+  ---
+  duration_ms: 1.7507
+  type: 'test'
+  ...
+# Subtest: the dataset CLI writes a loadable dataset
+ok 11 - the dataset CLI writes a loadable dataset
+  ---
+  duration_ms: 192.5578
+  type: 'test'
+  ...
+# Subtest: anchor receipts feed the verifier CLI
+ok 12 - anchor receipts feed the verifier CLI
+  ---
+  duration_ms: 201.6669
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 667.3997
+
+--- conformance + implementation properties: scripts/e02_conformance.test.mjs (expected 42) ---
+TAP version 13
+# Subtest: positive provenance vector has a valid Ed25519 signature independently of the verifier
+ok 1 - positive provenance vector has a valid Ed25519 signature independently of the verifier
+  ---
+  duration_ms: 3.7281
+  type: 'test'
+  ...
+# Subtest: all pure wire vectors have identical Node and browser parser results
+ok 2 - all pure wire vectors have identical Node and browser parser results
+  ---
+  duration_ms: 17.1159
+  type: 'test'
+  ...
+# Subtest: E02 conformance 01-positive-n1 (Node and browser WASM)
+ok 3 - E02 conformance 01-positive-n1 (Node and browser WASM)
+  ---
+  duration_ms: 8.5359
+  type: 'test'
+  ...
+# Subtest: E02 conformance 02-positive-n5 (Node and browser WASM)
+ok 4 - E02 conformance 02-positive-n5 (Node and browser WASM)
+  ---
+  duration_ms: 4.3151
+  type: 'test'
+  ...
+# Subtest: E02 conformance 03-positive-n7 (Node and browser WASM)
+ok 5 - E02 conformance 03-positive-n7 (Node and browser WASM)
+  ---
+  duration_ms: 2.8268
+  type: 'test'
+  ...
+# Subtest: E02 conformance 04-precomputed-proofs (Node and browser WASM)
+ok 6 - E02 conformance 04-precomputed-proofs (Node and browser WASM)
+  ---
+  duration_ms: 4.9157
+  type: 'test'
+  ...
+# Subtest: E02 conformance 05-signed-provenance (Node and browser WASM)
+ok 7 - E02 conformance 05-signed-provenance (Node and browser WASM)
+  ---
+  duration_ms: 2.5419
+  type: 'test'
+  ...
+# Subtest: E02 conformance 06-567-bytes (Node and browser WASM)
+ok 8 - E02 conformance 06-567-bytes (Node and browser WASM)
+  ---
+  duration_ms: 1.1033
+  type: 'test'
+  ...
+# Subtest: E02 conformance 07-uppercase-hex (Node and browser WASM)
+ok 9 - E02 conformance 07-uppercase-hex (Node and browser WASM)
+  ---
+  duration_ms: 0.6248
+  type: 'test'
+  ...
+# Subtest: E02 conformance 08-leading-zero (Node and browser WASM)
+ok 10 - E02 conformance 08-leading-zero (Node and browser WASM)
+  ---
+  duration_ms: 0.6495
+  type: 'test'
+  ...
+# Subtest: E02 conformance 09-invalid-base58 (Node and browser WASM)
+ok 11 - E02 conformance 09-invalid-base58 (Node and browser WASM)
+  ---
+  duration_ms: 0.7021
+  type: 'test'
+  ...
+# Subtest: E02 conformance 10-future-version (Node and browser WASM)
+ok 12 - E02 conformance 10-future-version (Node and browser WASM)
+  ---
+  duration_ms: 0.4503
+  type: 'test'
+  ...
+# Subtest: E02 conformance 11-empty-field (Node and browser WASM)
+ok 13 - E02 conformance 11-empty-field (Node and browser WASM)
+  ---
+  duration_ms: 0.4178
+  type: 'test'
+  ...
+# Subtest: E02 conformance 12-space (Node and browser WASM)
+ok 14 - E02 conformance 12-space (Node and browser WASM)
+  ---
+  duration_ms: 0.3788
+  type: 'test'
+  ...
+# Subtest: E02 conformance 13-leaf-absent (Node and browser WASM)
+ok 15 - E02 conformance 13-leaf-absent (Node and browser WASM)
+  ---
+  duration_ms: 1.5367
+  type: 'test'
+  ...
+# Subtest: E02 conformance 14-ambiguous-leaf (Node and browser WASM)
+ok 16 - E02 conformance 14-ambiguous-leaf (Node and browser WASM)
+  ---
+  duration_ms: 1.1974
+  type: 'test'
+  ...
+# Subtest: E02 conformance 15-root-mismatch (Node and browser WASM)
+ok 17 - E02 conformance 15-root-mismatch (Node and browser WASM)
+  ---
+  duration_ms: 1.5717
+  type: 'test'
+  ...
+# Subtest: E02 conformance 16-n-mismatch (Node and browser WASM)
+ok 18 - E02 conformance 16-n-mismatch (Node and browser WASM)
+  ---
+  duration_ms: 1.1365
+  type: 'test'
+  ...
+# Subtest: E02 conformance 17-wrong-precomputed-proof (Node and browser WASM)
+ok 19 - E02 conformance 17-wrong-precomputed-proof (Node and browser WASM)
+  ---
+  duration_ms: 1.2923
+  type: 'test'
+  ...
+# Subtest: E02 conformance 18-missing-anchor (Node and browser WASM)
+ok 20 - E02 conformance 18-missing-anchor (Node and browser WASM)
+  ---
+  duration_ms: 2.3643
+  type: 'test'
+  ...
+# Subtest: E02 conformance 19-anchor-root (Node and browser WASM)
+ok 21 - E02 conformance 19-anchor-root (Node and browser WASM)
+  ---
+  duration_ms: 1.8277
+  type: 'test'
+  ...
+# Subtest: E02 conformance 20-anchor-digest (Node and browser WASM)
+ok 22 - E02 conformance 20-anchor-digest (Node and browser WASM)
+  ---
+  duration_ms: 1.5395
+  type: 'test'
+  ...
+# Subtest: E02 conformance 21-arbitrary-op (Node and browser WASM)
+ok 23 - E02 conformance 21-arbitrary-op (Node and browser WASM)
+  ---
+  duration_ms: 1.4078
+  type: 'test'
+  ...
+# Subtest: E02 conformance 22-production (Node and browser WASM)
+ok 24 - E02 conformance 22-production (Node and browser WASM)
+  ---
+  duration_ms: 2.1406
+  type: 'test'
+  ...
+# Subtest: E02 conformance 23-4097-leaves (Node and browser WASM)
+ok 25 - E02 conformance 23-4097-leaves (Node and browser WASM)
+  ---
+  duration_ms: 3.7282
+  type: 'test'
+  ...
+# Subtest: E02 conformance 24-duplicate-json-key (Node and browser WASM)
+ok 26 - E02 conformance 24-duplicate-json-key (Node and browser WASM)
+  ---
+  duration_ms: 1.2402
+  type: 'test'
+  ...
+# Subtest: E02 conformance 25-failed-transaction (Node and browser WASM)
+ok 27 - E02 conformance 25-failed-transaction (Node and browser WASM)
+  ---
+  duration_ms: 0.3908
+  type: 'test'
+  ...
+# Subtest: E02 conformance 26-0-memos (Node and browser WASM)
+ok 28 - E02 conformance 26-0-memos (Node and browser WASM)
+  ---
+  duration_ms: 0.3741
+  type: 'test'
+  ...
+# Subtest: E02 conformance 26-2-memos (Node and browser WASM)
+ok 29 - E02 conformance 26-2-memos (Node and browser WASM)
+  ---
+  duration_ms: 0.3588
+  type: 'test'
+  ...
+# Subtest: E02 conformance 27-noncanonical-artifact (Node and browser WASM)
+ok 30 - E02 conformance 27-noncanonical-artifact (Node and browser WASM)
+  ---
+  duration_ms: 2.1547
+  type: 'test'
+  ...
+# Subtest: E02 conformance 28-anchor-n (Node and browser WASM)
+ok 31 - E02 conformance 28-anchor-n (Node and browser WASM)
+  ---
+  duration_ms: 3.0084
+  type: 'test'
+  ...
+# Subtest: E02 conformance 29-leaf-1041-bytes (Node and browser WASM)
+ok 32 - E02 conformance 29-leaf-1041-bytes (Node and browser WASM)
+  ---
+  duration_ms: 2.1012
+  type: 'test'
+  ...
+# Subtest: E02 conformance 30-proof-33-steps (Node and browser WASM)
+ok 33 - E02 conformance 30-proof-33-steps (Node and browser WASM)
+  ---
+  duration_ms: 2.4471
+  type: 'test'
+  ...
+# Subtest: E02 conformance 31-provenance-malformed (Node and browser WASM)
+ok 34 - E02 conformance 31-provenance-malformed (Node and browser WASM)
+  ---
+  duration_ms: 1.2521
+  type: 'test'
+  ...
+# Subtest: 16 MiB boundary is measured in UTF-8 bytes before dataset parsing in both engines
+ok 35 - 16 MiB boundary is measured in UTF-8 bytes before dataset parsing in both engines
+  ---
+  duration_ms: 1138.644
+  type: 'test'
+  ...
+# Subtest: dataset structural limits accept boundaries and reject boundary plus one
+ok 36 - dataset structural limits accept boundaries and reject boundary plus one
+  ---
+  duration_ms: 4.3979
+  type: 'test'
+  ...
+# Subtest: memo numeric, separator and encoding rejection cases are explicit
+ok 37 - memo numeric, separator and encoding rejection cases are explicit
+  ---
+  duration_ms: 0.5655
+  type: 'test'
+  ...
+# Subtest: exceptions fail closed and browser WASM errors never become success
+ok 38 - exceptions fail closed and browser WASM errors never become success
+  ---
+  duration_ms: 0.738
+  type: 'test'
+  ...
+# Subtest: a divergent precomputed proof for a non-target leaf is also rejected
+ok 39 - a divergent precomputed proof for a non-target leaf is also rejected
+  ---
+  duration_ms: 2.1586
+  type: 'test'
+  ...
+# Subtest: real devnet smoke remains reproducible with the observation warning in both engines
+ok 40 - real devnet smoke remains reproducible with the observation warning in both engines
+  ---
+  duration_ms: 5.3684
+  type: 'test'
+  ...
+# Subtest: coherent fabricated receipts can pass but always declare the observation trust boundary
+ok 41 - coherent fabricated receipts can pass but always declare the observation trust boundary
+  ---
+  duration_ms: 1.2875
+  type: 'test'
+  ...
+# Subtest: E02-12 verifier runs without write permission or signing and preserves its inputs
+ok 42 - E02-12 verifier runs without write permission or signing and preserves its inputs
+  ---
+  duration_ms: 197.2867
+  type: 'test'
+  ...
+1..42
+# tests 42
+# suites 0
+# pass 42
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1709.4653
+
+--- app/browser integration: apps/arkhe-intra/tests/e02.test.mjs (expected 7) ---
+TAP version 13
+# Subtest: the E02 fixture with real repo artifacts verifies
+ok 1 - the E02 fixture with real repo artifacts verifies
+  ---
+  duration_ms: 23.3472
+  type: 'test'
+  ...
+# Subtest: the browser WASM engine agrees with the server engine
+ok 2 - the browser WASM engine agrees with the server engine
+  ---
+  duration_ms: 7.4156
+  type: 'test'
+  ...
+# Subtest: a tampered root fails closed in both engines
+ok 3 - a tampered root fails closed in both engines
+  ---
+  duration_ms: 2.239
+  type: 'test'
+  ...
+# Subtest: the dataset digest binds the exact bytes in both engines
+ok 4 - the dataset digest binds the exact bytes in both engines
+  ---
+  duration_ms: 2.3266
+  type: 'test'
+  ...
+# Subtest: missing anchor and mismatched receipts stay verifiable failures
+ok 5 - missing anchor and mismatched receipts stay verifiable failures
+  ---
+  duration_ms: 2.8416
+  type: 'test'
+  ...
+# Subtest: the browser engine fails closed without a verifier
+ok 6 - the browser engine fails closed without a verifier
+  ---
+  duration_ms: 0.2193
+  type: 'test'
+  ...
+# Subtest: request validation rejects malformed input
+ok 7 - request validation rejects malformed input
+  ---
+  duration_ms: 1.0032
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 289.4987
+
+Measured breakdown (actual Node TAP counts):
+scripts/e02_memo_commitment.test.mjs: 27 tests, 27 passed
+scripts/e02_mmr.test.mjs: 10 tests, 10 passed
+scripts/e02_verify.test.mjs: 11 tests, 11 passed
+scripts/e02_anchor.test.mjs: 12 tests, 12 passed
+scripts/e02_conformance.test.mjs: 42 tests, 42 passed
+apps/arkhe-intra/tests/e02.test.mjs: 7 tests, 7 passed
+TOTAL: 109 tests; expected 109. All passed.

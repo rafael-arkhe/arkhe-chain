@@ -1,0 +1,111 @@
+{
+  "refined": false,
+  "results": [
+    {
+      "name": "reference-prefix-regression",
+      "test": "archived_real_memo_is_decoded_independently",
+      "source": "memo",
+      "kind": "behavior-regression",
+      "outcome": "killed",
+      "exit_code": 101
+    },
+    {
+      "name": "bypass-memo-layer-on-positive-test",
+      "test": "real_memo_plus_synthetic_invoice_matches_offline",
+      "source": "memo",
+      "kind": "protection-removal",
+      "outcome": "survived",
+      "exit_code": 0,
+      "whole_memo_suite_exit": 101,
+      "whole_memo_suite_detected": true
+    },
+    {
+      "name": "ignore-invoice-reference",
+      "test": "coherent_invoice_changes_classify_without_weakening_rule",
+      "source": "recon",
+      "kind": "protection-removal",
+      "outcome": "killed",
+      "exit_code": 101
+    },
+    {
+      "name": "remove-derived-transfer-binding",
+      "test": "changed_raw_memo_id_cannot_substitute_committed_evidence",
+      "source": "memo",
+      "kind": "protection-removal",
+      "outcome": "killed",
+      "exit_code": 101
+    },
+    {
+      "name": "skip-calldata-hash-check",
+      "test": "altered_calldata_hash_is_rejected_by_decoder",
+      "source": "memo",
+      "kind": "protection-removal",
+      "outcome": "killed",
+      "exit_code": 101
+    },
+    {
+      "name": "skip-receipt-sender-binding",
+      "test": "sender_frame_and_mirror_corruptions_are_rejected",
+      "source": "memo",
+      "kind": "protection-removal",
+      "outcome": "killed",
+      "exit_code": 101
+    },
+    {
+      "name": "skip-log-index-uniqueness",
+      "test": "malformed_abi_and_ambiguous_frames_rejected",
+      "source": "memo",
+      "kind": "protection-removal",
+      "outcome": "survived",
+      "exit_code": 0,
+      "whole_memo_suite_exit": 0,
+      "whole_memo_suite_detected": false
+    },
+    {
+      "name": "skip-network-check",
+      "test": "wrong_network_and_unfinalized_block_rejected",
+      "source": "memo",
+      "kind": "protection-removal",
+      "outcome": "killed",
+      "exit_code": 101
+    },
+    {
+      "name": "skip-evidence-profile",
+      "test": "unsupported_profile_and_size_are_rejected",
+      "source": "memo",
+      "kind": "protection-removal",
+      "outcome": "killed",
+      "exit_code": 101
+    },
+    {
+      "name": "skip-evidence-size-bound",
+      "test": "unsupported_profile_and_size_are_rejected",
+      "source": "memo",
+      "kind": "protection-removal",
+      "outcome": "survived",
+      "exit_code": 0,
+      "whole_memo_suite_exit": 0,
+      "whole_memo_suite_detected": false
+    },
+    {
+      "name": "skip-finalized-height-bound",
+      "test": "wrong_network_and_unfinalized_block_rejected",
+      "source": "memo",
+      "kind": "protection-removal",
+      "outcome": "killed",
+      "exit_code": 101
+    }
+  ],
+  "restored_exit": 0,
+  "hashes": {
+    "memo": {
+      "before": "f665a3ec714f8af20d7e32466389cf0ec65c1ef51cd8dd7f4fe1b4937947d2a5",
+      "after": "f665a3ec714f8af20d7e32466389cf0ec65c1ef51cd8dd7f4fe1b4937947d2a5"
+    },
+    "recon": {
+      "before": "0a9a9cd392268a7b339ba9a24c4b5a577a5fe3f612a5daace51cd234379798a7",
+      "after": "0a9a9cd392268a7b339ba9a24c4b5a577a5fe3f612a5daace51cd234379798a7"
+    }
+  },
+  "scope": "Selected first-order mutants only; positive-test survival is distinct from whole-suite survival; no exhaustive coverage/independence claim"
+}

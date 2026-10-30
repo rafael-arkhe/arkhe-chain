@@ -1,0 +1,20 @@
+[package]
+name = "aegis-license"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Verificador de licenca: raiz do vendor -> Chave OEM -> licenca. Uma implementacao, o formato do emissor."
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+ed25519-dalek = { version = "2", features = ["std"] }
+base64 = "0.22"
+chrono = { workspace = true }
+hex = "0.4"
+# O nonce da renovação. Vem do SO, e a casa prefere uma dependência de 4 KB
+# a um id derivado do relógio — que se repete quando dois pedidos saem no
+# mesmo tique, e um nonce repetido é um nonce que não amarra nada.
+getrandom = "0.3"

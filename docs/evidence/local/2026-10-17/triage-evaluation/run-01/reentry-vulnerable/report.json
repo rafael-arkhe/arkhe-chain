@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "report_id": "reentry-vulnerable",
+  "severity": "High",
+  "title": "Repeated withdrawal before balance reset",
+  "report_body": "Complete relevant function: mapping(address=>uint) balances; function withdraw() external { uint amount=balances[msg.sender]; require(amount>0); (bool ok,)=msg.sender.call{value:amount}(\"\"); require(ok); balances[msg.sender]=0; } No reentrancy guard exists. A depositor contract reenters withdraw from receive(), taking the same balance repeatedly from pooled ETH. Local trace: 1 ETH deposited, 3 withdrawals of 1 ETH before unwind, victim pool loses 2 ETH. Assess the stated High/Triaged proposal only.",
+  "submitted_at": 1,
+  "affected_assets": []
+}

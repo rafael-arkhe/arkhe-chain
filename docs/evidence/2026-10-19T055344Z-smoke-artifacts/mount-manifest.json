@@ -1,0 +1,3049 @@
+{
+  "candidate_adapter_requirements": [
+    "explicit /run tmpfs rw,nosuid,nodev,noexec,size=4MiB",
+    "explicit /var/tmp tmpfs rw,nosuid,nodev,noexec,size=8MiB",
+    "explicit /dev/shm size=64MiB and private IPC namespace",
+    "read-only generated identity files and empty secret directory mask",
+    "no host pid/network/IPC namespace and no privileged mode",
+    "same mount/device contract for all 22 targets; build is separate",
+    "explicit /run/secrets tmpfs ro,nosuid,nodev,noexec,size=4096,mode=700"
+  ],
+  "comparison": {
+    "cross_vector_paths": "bind fixture/run/container identities individually; do not compare raw temporary paths globally",
+    "ignore_only_volatile_fields": [
+      "mount_id",
+      "parent_mount_id",
+      "backing_device_number_after_source_identity_check"
+    ],
+    "input_9p_note": "fixture root and host origin must both bind; visibility of drive-backed filesystem source string is not authorization to mount the whole drive",
+    "missing_ambiguous_or_unreadable_metadata": "ERROR",
+    "mount_identity": "resolve mount root and source identity independently; never replace with wildcard",
+    "mount_identity_or_permissions_mismatch": "FAIL",
+    "mountinfo_parser": "split on literal separator, decode octal escapes before path comparison, reject malformed/duplicate targets",
+    "normalize_tmpfs_sizes": "convert observed units to bytes; require exact page-aligned declared limit",
+    "require_flags": [
+      "VFS flags and superblock options both recorded",
+      "root within mount",
+      "propagation",
+      "tmpfs size bytes",
+      "owner/mode/rdev/readlink metadata"
+    ],
+    "same_run_before_after_required": true,
+    "unknown_mount_or_node": "ERROR"
+  },
+  "device_policy": {
+    "allowed_directories": [
+      "/dev",
+      "/dev/pts",
+      "/dev/shm",
+      "/dev/mqueue"
+    ],
+    "block_devices": "ERROR",
+    "devpts_dynamic_entries": "not allowed at preflight; any required PTY behavior needs a new reviewed manifest version",
+    "readlink_not_followed_before_validation": true,
+    "uid_mapping": "host lstat IDs translated using independently read uid_map/gid_map; never compare raw host IDs with namespace IDs",
+    "unexpected_fifo_socket_or_regular_file_under_dev": "ERROR outside explicitly writable /dev/shm scratch; preflight /dev/shm and mqueue must be empty",
+    "unlisted_device_nodes": "ERROR"
+  },
+  "devices": [
+    {
+      "major": 1,
+      "minor": 3,
+      "path": "/dev/null",
+      "required_gid_host": 0,
+      "required_gid_mapping": "unmapped",
+      "required_mode": "0666",
+      "required_uid_host": 0,
+      "required_uid_mapping": "unmapped",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "character"
+    },
+    {
+      "major": 1,
+      "minor": 5,
+      "path": "/dev/zero",
+      "required_gid_host": 0,
+      "required_gid_mapping": "unmapped",
+      "required_mode": "0666",
+      "required_uid_host": 0,
+      "required_uid_mapping": "unmapped",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "character"
+    },
+    {
+      "major": 1,
+      "minor": 7,
+      "path": "/dev/full",
+      "required_gid_host": 0,
+      "required_gid_mapping": "unmapped",
+      "required_mode": "0666",
+      "required_uid_host": 0,
+      "required_uid_mapping": "unmapped",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "character"
+    },
+    {
+      "major": 5,
+      "minor": 0,
+      "path": "/dev/tty",
+      "required_gid_host": 5,
+      "required_gid_mapping": "unmapped",
+      "required_mode": "0666",
+      "required_uid_host": 0,
+      "required_uid_mapping": "unmapped",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "character"
+    },
+    {
+      "major": 1,
+      "minor": 8,
+      "path": "/dev/random",
+      "required_gid_host": 0,
+      "required_gid_mapping": "unmapped",
+      "required_mode": "0666",
+      "required_uid_host": 0,
+      "required_uid_mapping": "unmapped",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "character"
+    },
+    {
+      "major": 1,
+      "minor": 9,
+      "path": "/dev/urandom",
+      "required_gid_host": 0,
+      "required_gid_mapping": "unmapped",
+      "required_mode": "0666",
+      "required_uid_host": 0,
+      "required_uid_mapping": "unmapped",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "character"
+    },
+    {
+      "path": "/dev/fd",
+      "required_target": "/proc/self/fd",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "symlink"
+    },
+    {
+      "path": "/dev/stdin",
+      "required_target": "/proc/self/fd/0",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "symlink"
+    },
+    {
+      "path": "/dev/stdout",
+      "required_target": "/proc/self/fd/1",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "symlink"
+    },
+    {
+      "path": "/dev/stderr",
+      "required_target": "/proc/self/fd/2",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "symlink"
+    },
+    {
+      "path": "/dev/ptmx",
+      "required_target": "pts/ptmx",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "symlink"
+    },
+    {
+      "major": 5,
+      "minor": 2,
+      "path": "/dev/pts/ptmx",
+      "required_gid_inside": 0,
+      "required_mode": "0666",
+      "required_uid_inside": 0,
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION",
+      "type": "character"
+    },
+    {
+      "link_target_guard": {
+        "major": 1,
+        "minor": 3,
+        "path": "/proc/kcore",
+        "requires_ro_mount": true,
+        "same_object_as": "/dev/null",
+        "type": "character"
+      },
+      "path": "/dev/core",
+      "required_gid_inside": 0,
+      "required_target": "/proc/kcore",
+      "required_uid_inside": 0,
+      "status": "REVIEWED_EXPECTATION_REQUIRES_REPEAT",
+      "type": "symlink"
+    }
+  ],
+  "execution_enabled": false,
+  "historical_reference": {
+    "approval_transfer": false,
+    "mount_count": 38,
+    "path": "docs/evidence/2026-10-19T045147Z-syscall-trial/host-receipts/ffi-control.oracle.json",
+    "sha256": "b5e0ab5b912956c6cc09bf7eedbf34dfb0525de43085702087f2b5cb2a432cf6"
+  },
+  "id": "arkhe-mount-device-candidate/v3",
+  "mounts": [
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "9p",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only suite inputs; host verifies sentinel and fixture digests",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 117,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 281474977632860,
+        "mode": "0777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro"
+      ],
+      "root_binding": "exact fixture root within backing filesystem, bound to run_id/vector_id",
+      "source_binding": "exact read-only snapshot fixture; origin and mount root must both match; never entire drive",
+      "target": "/input"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "ext4",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 2112,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 64000,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "target": "/etc/group"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 452,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "target": "/run/.containerenv"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Explicit empty noexec read-only mask; do not import engine default secret directory",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 141,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0700",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "/",
+      "source_binding": "explicit fresh empty read-only tmpfs for exact target",
+      "target": "/run/secrets",
+      "tmpfs_size_bytes": 4096
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 462,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "target": "/etc/hostname"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 451,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "target": "/etc/hosts"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Private bounded shared-memory scratch",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 129,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "target": "/dev/shm",
+      "tmpfs_size_bytes": 67108864
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "ext4",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 2112,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 63999,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "target": "/etc/passwd"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "overlay",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only executable image for loader, libc and probe dependencies",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 108,
+        "gid_host": 534288,
+        "gid_inside": 10001,
+        "gid_mapping": "mapped",
+        "inode": 299236,
+        "mode": "0777",
+        "target": "/",
+        "type": "symlink",
+        "uid_host": 534288,
+        "uid_inside": 10001,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro"
+      ],
+      "root_binding": "/",
+      "source_binding": "image_overlay_for_exact_container_id_and_sealed_image_digest",
+      "target": "/"
+    },
+    {
+      "candidate_change": "explicit noexec tmpfs; proposed size, not observed",
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Bounded non-executable runtime metadata scratch",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 136,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "target": "/run",
+      "tmpfs_size_bytes": 4194304
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Non-executable temporary scratch",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 135,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "target": "/tmp",
+      "tmpfs_size_bytes": 67108864
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Executable probe scratch with cgroup accounting",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 134,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev"
+      ],
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "target": "/work",
+      "tmpfs_size_bytes": 1073741824
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "proc",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Process-local proc visibility with explicit read-only/empty submasks; not general write approval",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 1,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "/",
+      "source_binding": "target PID namespace procfs",
+      "target": "/proc"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Runtime device directory; only listed nodes and fixed metadata",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 138,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid"
+      ],
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "target": "/dev",
+      "tmpfs_size_bytes": 67108864
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "sysfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only system metadata; not assurance that every file is confidential",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 139,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 1,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "/",
+      "source_binding": "read-only sysfs with required masks",
+      "target": "/sys"
+    },
+    {
+      "candidate_change": "explicit noexec tmpfs; proposed size, not observed",
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Bounded non-executable temporary scratch",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 140,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "target": "/var/tmp",
+      "tmpfs_size_bytes": 8388608
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "devpts",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Private terminal infrastructure; no inherited host terminal",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 142,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "root_binding": "/",
+      "source_binding": "private devpts instance for target",
+      "target": "/dev/pts"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "mqueue",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "IPC exception confined to target; separate host IPC namespace required",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 132,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 294604,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "/",
+      "source_binding": "target IPC namespace mqueue",
+      "target": "/dev/mqueue"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "cgroup2",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only resource inventory; no cgroup administration",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 25,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 37406,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "exact target cgroup from independently correlated PID/container ID",
+      "source_binding": "cgroup v2 target view only; ancestor/controller access must be evaluated",
+      "target": "/sys/fs/cgroup"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "target": "/dev/null"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 5,
+        "major": 1,
+        "minor": 5,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "target": "/dev/zero"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 6,
+        "major": 1,
+        "minor": 7,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "target": "/dev/full"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 5,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 10,
+        "major": 5,
+        "minor": 0,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "target": "/dev/tty"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 7,
+        "major": 1,
+        "minor": 8,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "target": "/dev/random"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 8,
+        "major": 1,
+        "minor": 9,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "target": "/dev/urandom"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only empty directory mask; entries must be empty",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 92,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev"
+      ],
+      "root_binding": "root-owned empty masking directory, inode checked",
+      "source_binding": "engine-owned empty mask for exact container",
+      "target": "/proc/acpi"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only /dev/null mask over sensitive proc file",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid"
+      ],
+      "root_binding": "/null",
+      "source_binding": "character-device mask with rdev 1:3",
+      "target": "/proc/kcore"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only /dev/null mask over sensitive proc file",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid"
+      ],
+      "root_binding": "/null",
+      "source_binding": "character-device mask with rdev 1:3",
+      "target": "/proc/keys"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only empty directory mask; entries must be empty",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 92,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev"
+      ],
+      "root_binding": "root-owned empty masking directory, inode checked",
+      "source_binding": "engine-owned empty mask for exact container",
+      "target": "/proc/scsi"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only /dev/null mask over sensitive proc file",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid"
+      ],
+      "root_binding": "/null",
+      "source_binding": "character-device mask with rdev 1:3",
+      "target": "/proc/timer_list"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only empty directory mask; entries must be empty",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 92,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev"
+      ],
+      "root_binding": "root-owned empty masking directory, inode checked",
+      "source_binding": "engine-owned empty mask for exact container",
+      "target": "/sys/firmware"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "tmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only empty directory mask; entries must be empty",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 92,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev"
+      ],
+      "root_binding": "root-owned empty masking directory, inode checked",
+      "source_binding": "engine-owned empty mask for exact container",
+      "target": "/sys/fs/selinux"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed",
+      "filesystem": "devtmpfs",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only /dev/null mask over sensitive proc file",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid"
+      ],
+      "root_binding": "/null",
+      "source_binding": "character-device mask with rdev 1:3",
+      "target": "/proc/interrupts"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "proc",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only kernel-facing proc subtree mask",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026531853,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "target": "/proc/bus"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "proc",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only kernel-facing proc subtree mask",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026531845,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "target": "/proc/fs"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "proc",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only kernel-facing proc subtree mask",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026531861,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "target": "/proc/irq"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "proc",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only kernel-facing proc subtree mask",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026531854,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "target": "/proc/sys"
+    },
+    {
+      "evidence_state": "VERIFIED_IN_REFERENCE_SMOKE",
+      "filesystem": "proc",
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "justification": "Read-only kernel-facing proc subtree mask",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026532096,
+        "mode": "0200",
+        "type": "regular",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "target": "/proc/sysrq-trigger"
+    }
+  ],
+  "promotion": {
+    "keep_unified_runtime_verified_false": true,
+    "static_hash_is_final_mount_approval": false,
+    "update_final_manifest_sha256_only_after": [
+      "configure candidate adapter",
+      "read independent preflight mountinfo and node metadata",
+      "resolve every source/root/device binding",
+      "review every discrepancy; no silent learning/auto-allow",
+      "record before/after equivalence and cleanup smoke receipts",
+      "freeze reviewed exact manifest and source/runtime identities"
+    ]
+  },
+  "reference": {
+    "boot_id": "341a348d-f801-4cf0-b6cb-ff7bc247f558",
+    "container_id": "026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9",
+    "device_metadata": {
+      "/dev": {
+        "device": 138,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/core": {
+        "device": 138,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 15,
+        "mode": "0777",
+        "target": "/proc/kcore",
+        "type": "symlink",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/fd": {
+        "device": 138,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 11,
+        "mode": "0777",
+        "target": "/proc/self/fd",
+        "type": "symlink",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/full": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 6,
+        "major": 1,
+        "minor": 7,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/mqueue": {
+        "device": 132,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 294604,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/null": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/ptmx": {
+        "device": 138,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 16,
+        "mode": "0777",
+        "target": "pts/ptmx",
+        "type": "symlink",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/pts": {
+        "device": 142,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/pts/ptmx": {
+        "device": 142,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 2,
+        "major": 5,
+        "minor": 2,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/random": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 7,
+        "major": 1,
+        "minor": 8,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/shm": {
+        "device": 129,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/stderr": {
+        "device": 138,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 14,
+        "mode": "0777",
+        "target": "/proc/self/fd/2",
+        "type": "symlink",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/stdin": {
+        "device": 138,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 12,
+        "mode": "0777",
+        "target": "/proc/self/fd/0",
+        "type": "symlink",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/stdout": {
+        "device": 138,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 13,
+        "mode": "0777",
+        "target": "/proc/self/fd/1",
+        "type": "symlink",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/tty": {
+        "device": 6,
+        "gid_host": 5,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 10,
+        "major": 5,
+        "minor": 0,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/urandom": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 8,
+        "major": 1,
+        "minor": 9,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/zero": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 5,
+        "major": 1,
+        "minor": 5,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      }
+    },
+    "mount_metadata": {
+      "/": {
+        "device": 108,
+        "gid_host": 534288,
+        "gid_inside": 10001,
+        "gid_mapping": "mapped",
+        "inode": 299236,
+        "mode": "0777",
+        "target": "/",
+        "type": "symlink",
+        "uid_host": 534288,
+        "uid_inside": 10001,
+        "uid_mapping": "mapped"
+      },
+      "/dev": {
+        "device": 138,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/full": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 6,
+        "major": 1,
+        "minor": 7,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/mqueue": {
+        "device": 132,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 294604,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/null": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/pts": {
+        "device": 142,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/random": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 7,
+        "major": 1,
+        "minor": 8,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/shm": {
+        "device": 129,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/dev/tty": {
+        "device": 6,
+        "gid_host": 5,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 10,
+        "major": 5,
+        "minor": 0,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/urandom": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 8,
+        "major": 1,
+        "minor": 9,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/dev/zero": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 5,
+        "major": 1,
+        "minor": 5,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/etc/group": {
+        "device": 2112,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 64000,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/etc/hostname": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 462,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/etc/hosts": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 451,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/etc/passwd": {
+        "device": 2112,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 63999,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/input": {
+        "device": 117,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 281474977632860,
+        "mode": "0777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/proc": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 1,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/proc/acpi": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 92,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/proc/bus": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026531853,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/proc/fs": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026531845,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/proc/interrupts": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/proc/irq": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026531861,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/proc/kcore": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/proc/keys": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/proc/scsi": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 92,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/proc/sys": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026531854,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/proc/sysrq-trigger": {
+        "device": 137,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4026532096,
+        "mode": "0200",
+        "type": "regular",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/proc/timer_list": {
+        "device": 6,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 4,
+        "major": 1,
+        "minor": 3,
+        "mode": "0666",
+        "type": "character",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/run": {
+        "device": 136,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/run/.containerenv": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 452,
+        "mode": "0644",
+        "type": "regular",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/run/secrets": {
+        "device": 141,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "0700",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/sys": {
+        "device": 139,
+        "gid_host": 0,
+        "gid_inside": null,
+        "gid_mapping": "unmapped",
+        "inode": 1,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 0,
+        "uid_inside": null,
+        "uid_mapping": "unmapped"
+      },
+      "/sys/firmware": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 92,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/sys/fs/cgroup": {
+        "device": 25,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 37406,
+        "mode": "0755",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/sys/fs/selinux": {
+        "device": 128,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 92,
+        "mode": "0555",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/tmp": {
+        "device": 135,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/var/tmp": {
+        "device": 140,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      },
+      "/work": {
+        "device": 134,
+        "gid_host": 1000,
+        "gid_inside": 0,
+        "gid_mapping": "mapped",
+        "inode": 1,
+        "mode": "1777",
+        "type": "directory",
+        "uid_host": 1000,
+        "uid_inside": 0,
+        "uid_mapping": "mapped"
+      }
+    },
+    "source_bindings": [
+      {
+        "host_source": "/mnt/d/arkhe/docs/evidence/2026-10-19T054917Z-verified-captured-smoke/session/fixtures/identity",
+        "method": "exact OCI source and independent inode/content parity",
+        "object_key": [
+          117,
+          281474977632860,
+          16384,
+          511
+        ],
+        "oci_mount": {
+          "destination": "/input",
+          "options": [
+            "ro",
+            "rprivate",
+            "rbind"
+          ],
+          "source": "/mnt/d/arkhe/docs/evidence/2026-10-19T054917Z-verified-captured-smoke/session/fixtures/identity",
+          "type": "bind"
+        },
+        "root": "/arkhe/docs/evidence/2026-10-19T054917Z-verified-captured-smoke/session/fixtures/identity",
+        "source": "D:\\",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/input"
+      },
+      {
+        "content_sha256": "870fda3c29bbea1484fe0a89e2fee9ede24a1681abae71e56c4e33f4e7bb364c",
+        "host_source": "/home/user/.local/share/containers/storage/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/passwd",
+        "method": "exact OCI source and independent inode/content parity",
+        "object_key": [
+          2112,
+          63999,
+          32768,
+          420
+        ],
+        "oci_mount": {
+          "destination": "/etc/passwd",
+          "options": [
+            "bind",
+            "rprivate",
+            "ro",
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "/home/user/.local/share/containers/storage/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/passwd",
+          "type": "bind"
+        },
+        "root": "/home/user/.local/share/containers/storage/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/passwd",
+        "source": "/dev/sde",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/etc/passwd"
+      },
+      {
+        "content_sha256": "aaf9f1594203bac1e87c752da3f7f34b8dfcf5e25cea108b7872df417578c9e0",
+        "host_source": "/home/user/.local/share/containers/storage/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/group",
+        "method": "exact OCI source and independent inode/content parity",
+        "object_key": [
+          2112,
+          64000,
+          32768,
+          420
+        ],
+        "oci_mount": {
+          "destination": "/etc/group",
+          "options": [
+            "bind",
+            "rprivate",
+            "ro",
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "/home/user/.local/share/containers/storage/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/group",
+          "type": "bind"
+        },
+        "root": "/home/user/.local/share/containers/storage/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/group",
+        "source": "/dev/sde",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/etc/group"
+      },
+      {
+        "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "host_source": "/run/user/1000/containers/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/.containerenv",
+        "method": "exact OCI source and independent inode/content parity",
+        "object_key": [
+          128,
+          452,
+          32768,
+          420
+        ],
+        "oci_mount": {
+          "destination": "/run/.containerenv",
+          "options": [
+            "bind",
+            "rprivate",
+            "ro",
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "/run/user/1000/containers/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/.containerenv",
+          "type": "bind"
+        },
+        "root": "/containers/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/.containerenv",
+        "source": "tmpfs",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/run/.containerenv"
+      },
+      {
+        "content_sha256": "0ac66dd63f082f7ce0fbca9f47f7603f6179a6f27cd15b842ab8991676707561",
+        "host_source": "/run/user/1000/containers/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/hostname",
+        "method": "exact OCI source and independent inode/content parity",
+        "object_key": [
+          128,
+          462,
+          32768,
+          420
+        ],
+        "oci_mount": {
+          "destination": "/etc/hostname",
+          "options": [
+            "bind",
+            "rprivate",
+            "ro",
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "/run/user/1000/containers/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/hostname",
+          "type": "bind"
+        },
+        "root": "/containers/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/hostname",
+        "source": "tmpfs",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/etc/hostname"
+      },
+      {
+        "content_sha256": "ecf464699262faf347ddf292e372ba67aa1a195161561fc0cc9119df496073ed",
+        "host_source": "/run/user/1000/containers/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/hosts",
+        "method": "exact OCI source and independent inode/content parity",
+        "object_key": [
+          128,
+          451,
+          32768,
+          420
+        ],
+        "oci_mount": {
+          "destination": "/etc/hosts",
+          "options": [
+            "bind",
+            "rprivate",
+            "ro",
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "/run/user/1000/containers/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/hosts",
+          "type": "bind"
+        },
+        "root": "/containers/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/hosts",
+        "source": "tmpfs",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/etc/hosts"
+      },
+      {
+        "host_source": "/home/user/.local/share/containers/storage/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/shm",
+        "method": "exact OCI source and independent inode/content parity",
+        "object_key": [
+          129,
+          1,
+          16384,
+          1023
+        ],
+        "oci_mount": {
+          "destination": "/dev/shm",
+          "options": [
+            "bind",
+            "rprivate",
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "/home/user/.local/share/containers/storage/overlay-containers/026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9/userdata/shm",
+          "type": "bind"
+        },
+        "root": "/",
+        "source": "shm",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/dev/shm"
+      },
+      {
+        "graph": {
+          "LowerDir": "/home/user/.local/share/containers/storage/overlay/cd8398f30f24a952cab813d7e1c3e58cfe7417243c5157ce8a182a08600f7408/diff:/home/user/.local/share/containers/storage/overlay/90fff87368a7ae831b7d813f8690831655600b55ed48d650f51bc6bc5ab45e4c/diff:/home/user/.local/share/containers/storage/overlay/1e5ece216ff0d066b88dd944da58a9f8fbbafb2d3cffe8f6de55eb6bf10cd265/diff:/home/user/.local/share/containers/storage/overlay/0d6d3237ed3d30b0765553781e7ae20b3ed50db72472a3f3099bfb789cff30ab/diff:/home/user/.local/share/containers/storage/overlay/4daf52818b1736d1372470e52c5dbe13c590c76be9e9b682ce33e8979f93aebc/diff:/home/user/.local/share/containers/storage/overlay/9bb1d9169afe07f54f70a8ffae739c11472df6ca4dca74858daecd01939b168a/diff:/home/user/.local/share/containers/storage/overlay/b157b8c04250865143844ae3c4f435fa57d9567a5c2a02e5660a26c8928bae9e/diff",
+          "MergedDir": "/home/user/.local/share/containers/storage/overlay/833da93375c77cf3274812cfb8bdb805b293f226e0029cc010d149006dce2e3b/merged",
+          "UpperDir": "/home/user/.local/share/containers/storage/overlay/833da93375c77cf3274812cfb8bdb805b293f226e0029cc010d149006dce2e3b/diff",
+          "WorkDir": "/home/user/.local/share/containers/storage/overlay/833da93375c77cf3274812cfb8bdb805b293f226e0029cc010d149006dce2e3b/work"
+        },
+        "image": "1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "method": "OCI root plus engine graph paths and canonical lower layers",
+        "root": "/",
+        "source": "overlay",
+        "status": "VERIFIED",
+        "target": "/"
+      },
+      {
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/work",
+          "options": [
+            "rw",
+            "exec",
+            "size=1073741824",
+            "mode=1777",
+            "rprivate",
+            "nosuid",
+            "nodev",
+            "tmpcopyup"
+          ],
+          "source": "tmpfs",
+          "type": "tmpfs"
+        },
+        "root": "/",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/work"
+      },
+      {
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/tmp",
+          "options": [
+            "rw",
+            "noexec",
+            "size=67108864",
+            "rprivate",
+            "nosuid",
+            "nodev",
+            "tmpcopyup"
+          ],
+          "source": "tmpfs",
+          "type": "tmpfs"
+        },
+        "root": "/",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/tmp"
+      },
+      {
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/run",
+          "options": [
+            "rw",
+            "noexec",
+            "nosuid",
+            "nodev",
+            "size=4194304",
+            "mode=755",
+            "rprivate",
+            "tmpcopyup"
+          ],
+          "source": "tmpfs",
+          "type": "tmpfs"
+        },
+        "root": "/",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/run"
+      },
+      {
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/proc",
+          "options": [
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "proc",
+          "type": "proc"
+        },
+        "root": "/",
+        "source": "proc",
+        "status": "VERIFIED",
+        "target": "/proc"
+      },
+      {
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/dev",
+          "options": [
+            "nosuid",
+            "strictatime",
+            "mode=755",
+            "size=65536k"
+          ],
+          "source": "tmpfs",
+          "type": "tmpfs"
+        },
+        "root": "/",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/dev"
+      },
+      {
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/sys",
+          "options": [
+            "nosuid",
+            "noexec",
+            "nodev",
+            "ro"
+          ],
+          "source": "sysfs",
+          "type": "sysfs"
+        },
+        "root": "/",
+        "source": "sysfs",
+        "status": "VERIFIED",
+        "target": "/sys"
+      },
+      {
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/var/tmp",
+          "options": [
+            "rw",
+            "noexec",
+            "nosuid",
+            "nodev",
+            "size=8388608",
+            "mode=1777",
+            "rprivate",
+            "tmpcopyup"
+          ],
+          "source": "tmpfs",
+          "type": "tmpfs"
+        },
+        "root": "/",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/var/tmp"
+      },
+      {
+        "entries": [],
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/run/secrets",
+          "options": [
+            "ro",
+            "noexec",
+            "nosuid",
+            "nodev",
+            "size=4096",
+            "mode=700",
+            "rprivate",
+            "tmpcopyup"
+          ],
+          "source": "tmpfs",
+          "type": "tmpfs"
+        },
+        "root": "/",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/run/secrets"
+      },
+      {
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/dev/pts",
+          "options": [
+            "nosuid",
+            "noexec",
+            "newinstance",
+            "ptmxmode=0666",
+            "mode=0620",
+            "gid=5"
+          ],
+          "source": "devpts",
+          "type": "devpts"
+        },
+        "root": "/",
+        "source": "devpts",
+        "status": "VERIFIED",
+        "target": "/dev/pts"
+      },
+      {
+        "method": "OCI kernel mount kind, target namespace and exact root",
+        "oci_mount": {
+          "destination": "/dev/mqueue",
+          "options": [
+            "nosuid",
+            "noexec",
+            "nodev"
+          ],
+          "source": "mqueue",
+          "type": "mqueue"
+        },
+        "root": "/",
+        "source": "mqueue",
+        "status": "VERIFIED",
+        "target": "/dev/mqueue"
+      },
+      {
+        "method": "OCI cgroup mount bound to independently correlated target cgroup",
+        "oci_mount": {
+          "destination": "/sys/fs/cgroup",
+          "options": [
+            "rprivate",
+            "nosuid",
+            "noexec",
+            "nodev",
+            "relatime",
+            "ro"
+          ],
+          "source": "cgroup",
+          "type": "cgroup"
+        },
+        "root": "/arkhe-sandbox/libpod-026e5657d74c02b5a5718547e7dd30c79e35eb022f14733be0dbe3a74451d1b9",
+        "source": "cgroup2",
+        "status": "VERIFIED",
+        "target": "/sys/fs/cgroup"
+      },
+      {
+        "host_source": "/dev/null",
+        "method": "Explicit candidate character-device identity plus exact host device inode; OCI defaults not silently trusted",
+        "object_key": [
+          6,
+          4,
+          8192,
+          438
+        ],
+        "root": "/null",
+        "source": "none",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/dev/null"
+      },
+      {
+        "host_source": "/dev/zero",
+        "method": "Explicit candidate character-device identity plus exact host device inode; OCI defaults not silently trusted",
+        "object_key": [
+          6,
+          5,
+          8192,
+          438
+        ],
+        "root": "/zero",
+        "source": "none",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/dev/zero"
+      },
+      {
+        "host_source": "/dev/full",
+        "method": "Explicit candidate character-device identity plus exact host device inode; OCI defaults not silently trusted",
+        "object_key": [
+          6,
+          6,
+          8192,
+          438
+        ],
+        "root": "/full",
+        "source": "none",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/dev/full"
+      },
+      {
+        "host_source": "/dev/tty",
+        "method": "Explicit candidate character-device identity plus exact host device inode; OCI defaults not silently trusted",
+        "object_key": [
+          6,
+          10,
+          8192,
+          438
+        ],
+        "root": "/tty",
+        "source": "none",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/dev/tty"
+      },
+      {
+        "host_source": "/dev/random",
+        "method": "Explicit candidate character-device identity plus exact host device inode; OCI defaults not silently trusted",
+        "object_key": [
+          6,
+          7,
+          8192,
+          438
+        ],
+        "root": "/random",
+        "source": "none",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/dev/random"
+      },
+      {
+        "host_source": "/dev/urandom",
+        "method": "Explicit candidate character-device identity plus exact host device inode; OCI defaults not silently trusted",
+        "object_key": [
+          6,
+          8,
+          8192,
+          438
+        ],
+        "root": "/urandom",
+        "source": "none",
+        "source_namespace": "correlated conmon root",
+        "status": "VERIFIED",
+        "target": "/dev/urandom"
+      },
+      {
+        "method": "OCI maskedPath empty read-only runtime mask",
+        "root": "/crun/.empty-directory",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/proc/acpi"
+      },
+      {
+        "method": "OCI maskedPath bound to exact read-only null object",
+        "root": "/null",
+        "source": "none",
+        "status": "VERIFIED",
+        "target": "/proc/kcore"
+      },
+      {
+        "method": "OCI maskedPath bound to exact read-only null object",
+        "root": "/null",
+        "source": "none",
+        "status": "VERIFIED",
+        "target": "/proc/keys"
+      },
+      {
+        "method": "OCI maskedPath empty read-only runtime mask",
+        "root": "/crun/.empty-directory",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/proc/scsi"
+      },
+      {
+        "method": "OCI maskedPath bound to exact read-only null object",
+        "root": "/null",
+        "source": "none",
+        "status": "VERIFIED",
+        "target": "/proc/timer_list"
+      },
+      {
+        "method": "OCI maskedPath empty read-only runtime mask",
+        "root": "/crun/.empty-directory",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/sys/firmware"
+      },
+      {
+        "method": "OCI maskedPath empty read-only runtime mask",
+        "root": "/crun/.empty-directory",
+        "source": "tmpfs",
+        "status": "VERIFIED",
+        "target": "/sys/fs/selinux"
+      },
+      {
+        "method": "OCI maskedPath bound to exact read-only null object",
+        "root": "/null",
+        "source": "none",
+        "status": "VERIFIED",
+        "target": "/proc/interrupts"
+      },
+      {
+        "method": "OCI readonlyPath submount in target proc namespace",
+        "root": "/bus",
+        "source": "proc",
+        "status": "VERIFIED",
+        "target": "/proc/bus"
+      },
+      {
+        "method": "OCI readonlyPath submount in target proc namespace",
+        "root": "/fs",
+        "source": "proc",
+        "status": "VERIFIED",
+        "target": "/proc/fs"
+      },
+      {
+        "method": "OCI readonlyPath submount in target proc namespace",
+        "root": "/irq",
+        "source": "proc",
+        "status": "VERIFIED",
+        "target": "/proc/irq"
+      },
+      {
+        "method": "OCI readonlyPath submount in target proc namespace",
+        "root": "/sys",
+        "source": "proc",
+        "status": "VERIFIED",
+        "target": "/proc/sys"
+      },
+      {
+        "method": "OCI readonlyPath submount in target proc namespace",
+        "root": "/sysrq-trigger",
+        "source": "proc",
+        "status": "VERIFIED",
+        "target": "/proc/sysrq-trigger"
+      }
+    ]
+  },
+  "revision_review": {
+    "automatic_learning": false,
+    "changes": [
+      "Allow fixed /dev/core link only with read-only same /dev/null object at /proc/kcore (1:3)",
+      "Six basic devices require unmapped host UID 0; host GID 0 except tty GID 5; exact rdev and 0666 retained"
+    ],
+    "not_final_manifest": true,
+    "previous_candidate_sha256": "f06365590557bf8a5820c11f42a7a58203114119e7bc7f8ba52ff0f663ee40f2",
+    "receipt": "docs/evidence/2026-10-19T052446Z-unified-smoke/host-receipts/before.json",
+    "receipt_sha256": "e288ce38254f2e53fc5bf853edd5a6766ae032509cff5d2af4fe9683f6a39da8"
+  },
+  "revision_review_v3": {
+    "automatic_learning": false,
+    "reason": "Independent source binding found nonempty engine-default secret directory; remove its visibility with explicit empty read-only tmpfs",
+    "receipt": "docs/evidence/2026-10-19T054541Z-source-captured-smoke/source-bindings/result-1.json",
+    "weakens_permissions": false
+  },
+  "runtime_verified": false,
+  "schema": 1,
+  "sealed": false,
+  "state": "SMOKE_VERIFIED_CANDIDATE_MOUNT_MANIFEST",
+  "target_profile": "arkhe-unified-target-128m/v1",
+  "verification": {
+    "applicability": "Policy template only. Every new target must resolve its own container/fixture/namespace identities with the pinned verifier; observed raw host paths are references, not wildcards.",
+    "before_after_match": true,
+    "kernel_filter_chain_verified": false,
+    "method": "independent target and correlated conmon namespace reads, exact OCI source/engine root paths, inode/content parity and mask checks",
+    "reusable_previous_pass": false,
+    "source_bindings_verified": 38
+  }
+}

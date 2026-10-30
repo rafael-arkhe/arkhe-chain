@@ -1,0 +1,161 @@
+{
+  "scope": "Local execution only; no remote CI, protocol freeze or production attestation",
+  "context": {},
+  "attempts": [
+    {
+      "gate": "signed-postgres-ollama",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "ollama-integration,postgres-integration",
+        "--test",
+        "triage",
+        "actual_ollama_signed_postgres_gate_survives_reconnect_and_rejects_unauthorized_module",
+        "--locked",
+        "--",
+        "--nocapture"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:26:35.197907+00:00",
+      "duration_seconds": 71.269,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "6fe706a9638bca48b3f77906b38910c819d2642a34b3f918bad259dd0313d10b",
+      "source_after_sha256": "6fe706a9638bca48b3f77906b38910c819d2642a34b3f918bad259dd0313d10b",
+      "source_changed_during_execution": false,
+      "log": "01-signed-postgres-ollama.log",
+      "log_sha256": "fe26654b827d0f367ad0832fb5364927f9a73cd00bff13a84b825b3f997165ab",
+      "inputs": "01-signed-postgres-ollama.inputs.json"
+    },
+    {
+      "gate": "retained-signature-db-verification",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "ollama-integration,postgres-integration",
+        "--test",
+        "triage",
+        "retained_capture_verifies_signatures_and_exact_failure_graph_after_reconnect",
+        "--locked",
+        "--",
+        "--nocapture"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:28:30.663321+00:00",
+      "duration_seconds": 9.512,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_after_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_changed_during_execution": false,
+      "log": "02-retained-signature-db-verification.log",
+      "log_sha256": "665b15348ac259860ac4a8c7cb8c5980498a09209a63118c166fe010cd10426c",
+      "inputs": "02-retained-signature-db-verification.inputs.json"
+    },
+    {
+      "gate": "pinned-mcp-fixture",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--test",
+        "mcp_http",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:28:40.661175+00:00",
+      "duration_seconds": 18.417,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_after_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_changed_during_execution": false,
+      "log": "03-pinned-mcp-fixture.log",
+      "log_sha256": "34afc3545871439fc3eb56a9867c52f1f28856a134e22cfb9a2733cc7a625e81",
+      "inputs": "03-pinned-mcp-fixture.inputs.json"
+    },
+    {
+      "gate": "workspace-regression",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:29:59.521356+00:00",
+      "duration_seconds": 18.123,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_after_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_changed_during_execution": false,
+      "log": "04-workspace-regression.log",
+      "log_sha256": "027cc34b14de7f181381c871aaa61592057bf57e1dd3cd05858a9ff9257f4b24",
+      "inputs": "04-workspace-regression.inputs.json"
+    },
+    {
+      "gate": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:30:18.206096+00:00",
+      "duration_seconds": 1.177,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_after_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_changed_during_execution": false,
+      "log": "05-format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "inputs": "05-format.inputs.json"
+    },
+    {
+      "gate": "architecture",
+      "command": [
+        "python",
+        "scripts/check_architecture.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:30:19.917936+00:00",
+      "duration_seconds": 0.784,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_after_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_changed_during_execution": false,
+      "log": "06-architecture.log",
+      "log_sha256": "e9b8003c8db1621ac0be6d61077c1b89e7592af20b9fc41d763528b48732a19f",
+      "inputs": "06-architecture.inputs.json"
+    },
+    {
+      "gate": "signing-boundaries",
+      "command": [
+        "python",
+        "scripts/check_boundaries.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:30:21.319185+00:00",
+      "duration_seconds": 0.447,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_after_sha256": "3fcad9c2dc7214e8d615390441c4f9b57198677f457a88f027e6734efe8a15aa",
+      "source_changed_during_execution": false,
+      "log": "07-signing-boundaries.log",
+      "log_sha256": "084b677d74c76800bb54edbfb1832d8dd0188cd212cfec25c1fc945cdcf77752",
+      "inputs": "07-signing-boundaries.inputs.json"
+    }
+  ]
+}

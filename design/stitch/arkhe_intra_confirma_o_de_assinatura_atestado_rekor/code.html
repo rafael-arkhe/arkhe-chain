@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe-Intra — Confirmação de Assinatura Criptográfica &amp; Ancoragem Rekor</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Inter, Poppins, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN with forms and container-queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary": "#712ae2",
+            "border-strong": "#CBD5E1",
+            "primary-fixed": "#dde1ff",
+            "on-primary-fixed": "#001453",
+            "surface-tint": "#3755c3",
+            "surface-sunken": "#F1F5F9",
+            "tertiary-fixed": "#e1e0ff",
+            "on-error-container": "#93000a",
+            "on-primary-fixed-variant": "#173bab",
+            "on-tertiary-fixed": "#07006c",
+            "surface-bright": "#faf8ff",
+            "surface-container-low": "#f2f3ff",
+            "pass-surface": "#ECFDF5",
+            "on-primary-container": "#a8b8ff",
+            "secondary-container": "#8a4cfc",
+            "primary-dark": "#1E3A8A",
+            "on-secondary": "#ffffff",
+            "tertiary-fixed-dim": "#c0c1ff",
+            "surface-container-highest": "#dae2fd",
+            "on-error": "#ffffff",
+            "tertiary": "#170cae",
+            "on-secondary-fixed": "#25005a",
+            "on-surface": "#131b2e",
+            "success-pass": "#059669",
+            "surface-container": "#eaedff",
+            "primary-fixed-dim": "#b8c4ff",
+            "tertiary-container": "#3433c3",
+            "on-primary": "#ffffff",
+            "border": "#E2E8F0",
+            "inverse-on-surface": "#eef0ff",
+            "inverse-primary": "#b8c4ff",
+            "fail-surface": "#FEF2F2",
+            "danger-fail": "#DC2626",
+            "error-container": "#ffdad6",
+            "inverse-surface": "#283044",
+            "on-tertiary-fixed-variant": "#2f2ebe",
+            "inconclusive-border": "#FDE68A",
+            "primary-container": "#1e40af",
+            "surface-container-lowest": "#ffffff",
+            "pass-text": "#065F46",
+            "on-tertiary": "#ffffff",
+            "surface-container-high": "#e2e7ff",
+            "secondary-fixed": "#eaddff",
+            "info": "#0284C7",
+            "primary-light": "#DBEAFE",
+            "background": "#F8FAFC",
+            "outline-variant": "#c4c5d5",
+            "fail-text": "#991B1B",
+            "on-background": "#131b2e",
+            "error": "#ba1a1a",
+            "fail-border": "#FECACA",
+            "pass-border": "#A7F3D0",
+            "on-tertiary-container": "#b3b5ff",
+            "primary": "#00288e",
+            "outline": "#757684",
+            "secondary-fixed-dim": "#d2bbff",
+            "warning-inconclusive": "#D97706",
+            "surface": "#FFFFFF",
+            "on-surface-variant": "#444653",
+            "surface-variant": "#dae2fd",
+            "text-secondary": "#475569",
+            "text-primary": "#0F172A",
+            "inconclusive-surface": "#FFFBEB",
+            "surface-dim": "#d2d9f4",
+            "on-secondary-fixed-variant": "#5a00c6",
+            "text-tertiary": "#94A3B8",
+            "on-secondary-container": "#fffbff",
+            "inconclusive-text": "#92400E"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin-tablet": "1.5rem",
+            "gutter-lg": "1.5rem",
+            "margin-mobile": "1rem",
+            "margin-wide": "3rem",
+            "space-md": "1rem",
+            "margin-desktop": "2rem",
+            "gutter-md": "1.25rem",
+            "space-xl": "2rem",
+            "space-2xl": "2.5rem",
+            "margin-ultra": "4rem",
+            "gutter-xl": "2rem",
+            "gutter-sm": "1rem",
+            "gutter": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-3xl": "3rem",
+            "margin": "2rem"
+          },
+          "fontFamily": {
+            "body-lg": ["Inter"],
+            "heading-4": ["Inter"],
+            "display-lg-mobile": ["Poppins"],
+            "heading-3": ["Inter"],
+            "code-sm": ["JetBrains Mono"],
+            "display-md-mobile": ["Poppins"],
+            "display-lg": ["Poppins"],
+            "code": ["JetBrains Mono"],
+            "caption": ["Inter"],
+            "heading-2": ["Inter"],
+            "display-md": ["Poppins"],
+            "body-md": ["Inter"],
+            "label-md": ["Inter"],
+            "heading-1": ["Poppins"],
+            "body-sm": ["Inter"]
+          },
+          "fontSize": {
+            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+            "heading-4": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "heading-3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "code-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "display-md-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "code": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "caption": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "heading-2": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "display-md": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "heading-1": ["30px", { "lineHeight": "38px", "fontWeight": "600" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-full flex flex-col font-body-md text-text-primary bg-background relative overflow-x-hidden">
+<!-- ============================================================ -->
+<!-- 1. TOP APP BAR (Shared Components JSON Anchor)                 -->
+<!-- ============================================================ -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-border dark:border-outline shadow-sm dark:shadow-none docked full-width top-0 z-20 sticky">
+<div class="w-full px-space-xl max-w-7xl mx-auto flex items-center justify-between h-16">
+<!-- Left: Logo & Institutional Search -->
+<div class="flex items-center gap-space-lg">
+<a class="text-heading-3 font-heading-3 text-primary-dark dark:text-surface tracking-tight flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-primary-container" data-icon="shield" style="font-variation-settings: 'FILL' 1;">shield</span>
+<span>Arkhe-Intra</span>
+</a>
+<div class="relative hidden sm:block w-72">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-text-tertiary">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-sunken border border-border rounded-lg text-body-sm font-body-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-light" placeholder="Buscar diretivas, hashes ou actas..." type="text"/>
+</div>
+</div>
+<!-- Center: Navigation Links -->
+<nav class="hidden md:flex items-center gap-space-lg">
+<a class="text-text-secondary dark:text-text-tertiary hover:text-text-primary dark:hover:text-surface font-label-md text-label-md transition-colors" href="#">Governance</a>
+<a class="text-text-secondary dark:text-text-tertiary hover:text-text-primary dark:hover:text-surface font-label-md text-label-md transition-colors" href="#">Intelligence</a>
+<a class="text-primary-container dark:text-inverse-primary border-b-2 border-primary-container dark:border-inverse-primary font-heading-4 text-heading-4 pb-1" href="#">Policies</a>
+<a class="text-text-secondary dark:text-text-tertiary hover:text-text-primary dark:hover:text-surface font-label-md text-label-md transition-colors" href="#">Operations</a>
+</nav>
+<!-- Right: Action Buttons and Trailing Icons -->
+<div class="flex items-center gap-space-sm">
+<button class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-body-sm font-body-sm text-text-primary hover:bg-surface-sunken active:scale-[0.98] transition-all" type="button">
+<span class="material-symbols-outlined text-pass-text" data-icon="verified_user" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span>Quick Verify</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-container text-white rounded-lg text-body-sm font-label-md hover:bg-primary-dark active:scale-[0.98] transition-all" type="button">
+<span class="material-symbols-outlined" data-icon="draw">draw</span>
+<span>Sign Signature</span>
+</button>
+<div class="h-6 w-px bg-border mx-1 hidden sm:block"></div>
+<button aria-label="Notificações" class="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-sunken rounded-lg relative" type="button">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-secondary-container rounded-full"></span>
+</button>
+<div class="flex items-center gap-2 pl-2">
+<div class="w-8 h-8 rounded-full bg-primary-light text-primary-dark flex items-center justify-center font-heading-4 text-caption border border-primary-container/30">
+            MS
+          </div>
+</div>
+</div>
+</div>
+</header>
+<!-- ============================================================ -->
+<!-- 2. CANONICAL BACKGROUND SCREEN: MINUTA CONTRATUAL FIDUCIÁRIA  -->
+<!-- ============================================================ -->
+<main aria-hidden="true" class="flex-1 max-w-7xl w-full mx-auto px-space-xl py-space-xl opacity-85 filter blur-[0.5px] select-none pointer-events-none">
+<!-- Top Breadcrumb & Status Banner -->
+<div class="flex items-center justify-between pb-6 border-b border-border mb-6">
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-text-secondary">
+<span>Fiduciary Repository</span>
+<span class="material-symbols-outlined text-text-tertiary" data-icon="chevron_right">chevron_right</span>
+<span>Aditivos Tecnológicos</span>
+<span class="material-symbols-outlined text-text-tertiary" data-icon="chevron_right">chevron_right</span>
+<span class="font-label-md text-text-primary">Aditivo-CognitiveLabs-v2.1.arkhe</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-caption font-caption bg-inconclusive-surface border border-inconclusive-border text-inconclusive-text">
+<span class="material-symbols-outlined text-[14px]" data-icon="pending">pending</span>
+          Aguardando Assinatura 3/3 (Quórum Final)
+        </span>
+<span class="text-code-sm font-code-sm text-text-tertiary">Rev. #892-2025</span>
+</div>
+</div>
+<!-- Contract View Grid: Left Article View, Right Signatories Sidebar -->
+<div class="grid grid-cols-12 gap-space-lg">
+<!-- Contract Document Canvas -->
+<div class="col-span-8 bg-surface border border-border rounded-xl p-space-2xl shadow-sm space-y-6">
+<div class="border-b border-border pb-4 flex justify-between items-start">
+<div>
+<span class="text-caption font-caption text-primary-container tracking-wider font-semibold">INSTRUMENTO FORMAL DE COMPROMISSO FIDUCIÁRIO</span>
+<h1 class="text-heading-2 font-heading-2 text-text-primary mt-1">Aditivo de Salvaguarda de Dados e Inferência Segura v2.1</h1>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5">Partes: Arkhe Sovereign Trust Holding S.A. &amp; CognitiveLabs AI Solutions Ltd.</p>
+</div>
+<span class="px-2.5 py-1 bg-surface-sunken border border-border-strong rounded text-code-sm font-code-sm text-text-secondary">
+            SHA256: e82d...bc90
+          </span>
+</div>
+<!-- Cláusula 1 -->
+<section class="space-y-2">
+<h2 class="text-heading-4 font-heading-4 text-text-primary">Cláusula 1ª — Do Objeto e Fiduciariedade Operacional</h2>
+<p class="text-body-sm font-body-sm text-text-secondary leading-relaxed">
+            O presente termo aditivo estabelece os protocolos computacionais estritos para inferência em enclaves seguros (Confidential Computing - AMD SEV-SNP / Intel TDX), garantindo a não-persistência de vetores de pesos neuronais proprietários e a ancoragem de cada lote de inferência sob o regime fail-closed de consenso institucional Arkhe.
+          </p>
+</section>
+<!-- Cláusula 2 -->
+<section class="space-y-2">
+<h2 class="text-heading-4 font-heading-4 text-text-primary">Cláusula 2ª — Da Garantia Financeira e Liquidação Fiduciária</h2>
+<p class="text-body-sm font-body-sm text-text-secondary leading-relaxed">
+            Fica pactuado o aporte fiduciário no montante consolidado de <strong>R$ 1.850.000,00 (um milhão e oitocentos e cinquenta mil reais)</strong> em conta de liquidação irrevogável auditável via Merkle Tree multi-assinada, passível de bloqueio preventivo automático caso ocorra divergência de hash no log de transparência Rekor.
+          </p>
+</section>
+<!-- Cláusula 3 -->
+<section class="space-y-2">
+<h2 class="text-heading-4 font-heading-4 text-text-primary">Cláusula 3ª — Da Validação Criptográfica por Quórum 3/3</h2>
+<p class="text-body-sm font-body-sm text-text-secondary leading-relaxed">
+            A eficácia material e vigência deste aditivo dar-se-á única e exclusivamente mediante a homologação irrevogável da totalidade das 3 (três) chaves assimétricas designadas, com geração do respectivo Receipt de Transparência Sigstore Rekor.
+          </p>
+</section>
+<div class="p-4 bg-surface-sunken border-l-4 border-primary-container rounded-r-lg">
+<p class="text-code-sm font-code-sm text-text-secondary">
+            WireProjection Digest: BLAKE3(AKG-CBOR-v1:Aditivo-CognitiveLabs-v2.1.arkhe) = f4b7190e8c901a52de78cf00114b3012a9efb88972ca8e1329c2da19eef54988
+          </p>
+</div>
+</div>
+<!-- Right Signatories & Audit Rail -->
+<div class="col-span-4 space-y-4">
+<!-- Quorum Card -->
+<div class="bg-surface border border-border rounded-xl p-space-lg shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<span class="text-heading-4 font-heading-4 text-text-primary">Quórum de Firmantes</span>
+<span class="text-caption font-caption px-2 py-0.5 bg-primary-light text-primary-dark rounded font-semibold">2/3 Concluídos</span>
+</div>
+<div class="space-y-3">
+<!-- Signer 1 -->
+<div class="p-3 bg-pass-surface border border-pass-border rounded-lg flex items-start gap-3">
+<span class="material-symbols-outlined text-pass-text" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="text-xs">
+<div class="font-semibold text-text-primary">Dr. Henrique Antunes</div>
+<div class="text-text-secondary text-[11px]">Diretoria de Risco &amp; Compliance</div>
+<div class="font-code-sm text-text-tertiary text-[10px] mt-0.5">ed25519:3b1a...f902 • Assinado via HSM</div>
+</div>
+</div>
+<!-- Signer 2 -->
+<div class="p-3 bg-pass-surface border border-pass-border rounded-lg flex items-start gap-3">
+<span class="material-symbols-outlined text-pass-text" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="text-xs">
+<div class="font-semibold text-text-primary">Arthur Pendelton</div>
+<div class="text-text-secondary text-[11px]">CTO — CognitiveLabs AI</div>
+<div class="font-code-sm text-text-tertiary text-[10px] mt-0.5">ed25519:e450...aa81 • Assinado via Vault</div>
+</div>
+</div>
+<!-- Signer 3 (Pending Active Signer) -->
+<div class="p-3 bg-surface-sunken border border-primary-container rounded-lg flex items-start gap-3 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+<span class="material-symbols-outlined text-primary-container animate-pulse" data-icon="key">key</span>
+<div class="text-xs">
+<div class="font-semibold text-primary-container">Mariana Silva (Você)</div>
+<div class="text-text-secondary text-[11px]">Governança &amp; Políticas Corporativas</div>
+<div class="font-code-sm text-warning-inconclusive text-[10px] mt-0.5">Aguardando aposição Ed25519</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Ledger Node Verification Summary -->
+<div class="bg-surface border border-border rounded-xl p-space-lg shadow-sm">
+<span class="text-caption font-caption text-text-secondary block mb-2 uppercase tracking-wider">Atestação de Nós Rekor</span>
+<div class="flex items-center justify-between text-body-sm font-body-sm mb-1.5">
+<span class="text-text-secondary">Witness Quorum:</span>
+<span class="font-code-sm text-pass-text font-semibold">2/2 Nós Ativos</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm mb-1.5">
+<span class="text-text-secondary">Modo Consenso:</span>
+<span class="font-code-sm text-text-primary">Fail-Closed Strict</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-secondary">Árvore Merkle:</span>
+<span class="font-code-sm text-primary-container">RFC 6962 / SHA-256</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- ============================================================ -->
+<!-- 3. BACKDROP OVERLAY & MODAL FIDUCIÁRIO DE ALTA FIDELIDADE    -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300">
+<!-- Modal Container: max-w-3xl fiduciário Level 5 elevation -->
+<div aria-labelledby="modal-title" aria-modal="true" class="bg-surface w-full max-w-3xl rounded-xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200" role="dialog">
+<!-- 2. Cabeçalho do Modal -->
+<div class="px-space-xl py-5 border-b border-border bg-surface flex items-start justify-between gap-4">
+<div class="flex items-start gap-3.5">
+<div class="w-11 h-11 rounded-lg bg-pass-surface border border-pass-border flex items-center justify-center text-pass-text flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[26px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div>
+<h2 class="text-heading-3 font-heading-3 text-text-primary flex items-center gap-2" id="modal-title">
+              Confirmar Assinatura Criptográfica &amp; Ancoragem Rekor
+            </h2>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5">
+              Aposição irreversível de assinatura digital Ed25519 (FIPS 140-3 Nível 3) e integração causal ao WormGraph do tenant.
+            </p>
+</div>
+</div>
+<!-- Botão fechar (X) discreto -->
+<button aria-label="Fechar" class="text-text-tertiary hover:text-text-primary p-1.5 rounded-lg hover:bg-surface-sunken transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<!-- Scrollable Modal Body -->
+<div class="p-space-xl overflow-y-auto space-y-5 flex-1">
+<!-- 3. Resumo da Transação Fiduciária & Objeto -->
+<div class="bg-surface-sunken p-4 rounded-lg border border-border space-y-3">
+<div class="flex items-center justify-between pb-2.5 border-b border-border-strong/60">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]" data-icon="description">description</span>
+<span class="text-label-md font-label-md text-text-primary">
+                Aditivo de Salvaguarda de Dados e Inferência Segura v2.1
+              </span>
+<span class="text-caption font-code-sm text-text-secondary px-1.5 py-0.5 bg-surface rounded border border-border">#892-2025</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-caption font-caption bg-pass-surface border border-pass-border text-pass-text">
+<span class="w-1.5 h-1.5 rounded-full bg-success-pass"></span>
+              Quórum 3/3 (Disparador Final)
+            </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-body-sm font-body-sm">
+<div>
+<span class="text-caption font-caption text-text-secondary block">Signatária Ativa</span>
+<div class="flex items-center gap-1.5 mt-0.5 text-text-primary font-medium">
+<span>Mariana Silva</span>
+<span class="text-caption font-caption text-text-tertiary">(Governança &amp; Políticas)</span>
+</div>
+<div class="font-code-sm text-caption text-text-secondary mt-0.5 flex items-center gap-1">
+<span>ed25519:741e...092b</span>
+<span class="text-[10px] px-1 bg-surface border border-border rounded text-pass-text font-semibold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[11px]" data-icon="usb" style="font-variation-settings: 'FILL' 1;">usb</span>
+                  YubiKey 5 FIPS
+                </span>
+</div>
+</div>
+<div>
+<span class="text-caption font-caption text-text-secondary block">Valor Envolvido &amp; Regime</span>
+<div class="mt-0.5 font-semibold text-text-primary">
+                R$ 1.850.000,00
+              </div>
+<div class="font-code-sm text-caption text-text-secondary mt-0.5 flex items-center gap-1">
+<span>Regime:</span>
+<span class="font-semibold text-primary-dark">Fail-Closed Consensus</span>
+</div>
+</div>
+</div>
+<div class="pt-2 border-t border-border-strong/60 flex items-center gap-2 text-caption font-caption text-text-secondary">
+<span class="material-symbols-outlined text-[16px] text-info" data-icon="info">info</span>
+<span>Esta assinatura atinge 3/3 (100% quórum), disparando o selamento imutável e ancoragem externa imediata.</span>
+</div>
+</div>
+<!-- 4. Parâmetros Criptográficos & Evidência (Monospace / Code) -->
+<div class="border border-border rounded-lg p-3.5 bg-surface space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="text-label-md font-label-md text-text-primary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-text-secondary text-[17px]" data-icon="fingerprint">fingerprint</span>
+              Parâmetros Criptográficos &amp; Wire Projection
+            </span>
+<span class="text-code-sm font-code-sm text-text-tertiary">FIPS 140-3 L3</span>
+</div>
+<div class="bg-surface-sunken p-3 rounded border border-border font-code-sm text-code-sm text-text-secondary space-y-2">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+<span class="text-text-tertiary text-caption">Projeção Canônica:</span>
+<span class="text-text-primary font-medium">AKG-CBOR-v1 (WireProjection_v1)</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="text-text-tertiary text-caption">Digest BLAKE3 (UnsignedProjection):</span>
+<button class="text-primary-container hover:underline text-caption flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[12px]" data-icon="content_copy">content_copy</span>
+<span>Copiar Hash</span>
+</button>
+</div>
+<div class="bg-surface px-2.5 py-1.5 rounded border border-border-strong text-[#6366F1] font-mono break-all text-xs tracking-tight">
+                f4b7190e8c901a52de78cf00114b3012a9efb88972ca8e1329c2da19eef54988
+              </div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-border">
+<div class="flex items-center gap-1.5">
+<span class="text-text-tertiary text-caption">Domain Separator:</span>
+<span class="text-text-primary font-medium">AKG:VERIFY:v1\0</span>
+</div>
+<div class="flex items-center gap-1.5 sm:justify-end">
+<span class="text-text-tertiary text-caption">Destino Ancoragem:</span>
+<span class="text-pass-text font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-success-pass"></span>
+                  Sigstore Rekor Log Server
+                </span>
+</div>
+</div>
+</div>
+</div>
+<!-- 6. Prévia do Atestado de Inclusão Rekor (Tempo Real) -->
+<div class="p-3.5 bg-pass-surface/60 border border-success-pass/30 rounded-lg">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-success-pass text-[18px]" data-icon="receipt_long">receipt_long</span>
+<span class="text-label-md font-label-md text-pass-text font-semibold">
+                Prévia do Atestado de Inclusão Rekor (Merkle Witness)
+              </span>
+</div>
+<span class="text-caption font-code-sm px-2 py-0.5 bg-pass-surface text-pass-text border border-pass-border rounded font-semibold">
+              Live Stream OK
+            </span>
+</div>
+<div class="grid grid-cols-3 gap-2 text-center pt-1">
+<div class="bg-surface p-2 rounded border border-pass-border/70">
+<span class="text-[11px] text-text-secondary block">Log Index Estimado</span>
+<span class="font-code-sm text-label-md font-semibold text-text-primary">#491.802</span>
+</div>
+<div class="bg-surface p-2 rounded border border-pass-border/70">
+<span class="text-[11px] text-text-secondary block">MMR Checkpoint</span>
+<span class="font-code-sm text-label-md font-semibold text-success-pass">3 Nós Ativos</span>
+</div>
+<div class="bg-surface p-2 rounded border border-pass-border/70">
+<span class="text-[11px] text-text-secondary block">EvidenceBundle</span>
+<span class="font-code-sm text-label-md font-semibold text-primary-container">.cbor Exportável</span>
+</div>
+</div>
+</div>
+<!-- 5. Seção de Confirmação e PIN do Token Hardware -->
+<div class="space-y-3.5 pt-1">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<label class="text-label-md font-label-md text-text-primary flex items-center gap-1.5" for="fiduciary-pin">
+<span class="material-symbols-outlined text-[18px] text-primary-container" data-icon="lock">lock</span>
+              PIN Fiduciário do Hardware Token (YubiKey FIPS)
+            </label>
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-pass-surface border border-pass-border text-pass-text text-caption font-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-success-pass animate-ping"></span>
+              HSM Pronto • Token Presente
+            </div>
+</div>
+<!-- PIN input and Visual Indicator -->
+<div class="flex items-center gap-3">
+<div class="relative flex-1">
+<input aria-label="PIN Fiduciário de 6 dígitos" class="w-full tracking-[0.75em] text-center font-code text-heading-3 py-2.5 px-4 bg-surface border border-border-strong rounded-lg text-text-primary focus:border-primary-container focus:ring-4 focus:ring-primary-light transition-all outline-none" id="fiduciary-pin" maxlength="6" type="password" value="123456"/>
+<span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-pass-text flex items-center gap-1 text-caption font-label-md">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified_user">verified_user</span>
+                PIN Validado
+              </span>
+</div>
+</div>
+<!-- Declaratory Checkbox -->
+<label class="flex items-start gap-3 p-3 bg-surface-sunken border border-border rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+<input checked="" class="mt-0.5 w-4 h-4 text-primary-container rounded border-border-strong focus:ring-primary-light" type="checkbox"/>
+<span class="text-body-sm font-body-sm text-text-secondary leading-snug">
+              Declaro a verificação da integridade do digest BLAKE3 e autorizo a publicação da prova de inclusão no Merkle Transparency Log sob regime fiduciário.
+            </span>
+</label>
+</div>
+</div>
+<!-- 7. Rodapé do Modal (Ações) -->
+<div class="px-space-xl py-4 bg-surface-sunken border-t border-border flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+<div class="flex items-center gap-1.5 text-caption font-caption text-text-tertiary">
+<span class="material-symbols-outlined text-[15px]" data-icon="gavel">gavel</span>
+<span>Atestado amparado pela Lei 14.063/20 &amp; ICP-Brasil / Sigstore Rekor</span>
+</div>
+<div class="flex items-center gap-3 w-full sm:w-auto">
+<button class="w-full sm:w-auto px-4 py-2.5 bg-surface text-text-primary border border-border rounded-lg text-body-sm font-label-md hover:bg-surface-sunken active:scale-[0.98] transition-all" type="button">
+            Cancelar / Revisar Minuta
+          </button>
+<button class="w-full sm:w-auto px-6 py-2.5 bg-primary-container hover:bg-primary-dark text-white rounded-lg text-body-sm font-heading-4 flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-[0.98] transition-all" type="button">
+<span class="material-symbols-outlined text-[19px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span>Firmar e Emitir Atestado Rekor (Ed25519)</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- 8. FOOTER INSTITUCIONAL (Preservado conforme Shared JSON)     -->
+<!-- ============================================================ -->
+<footer class="bg-surface dark:bg-inverse-surface border-t border-border dark:border-outline flat no shadows docked full-width bottom-0 mt-auto z-10">
+<div class="w-full px-space-xl py-space-xl max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-space-md">
+<!-- Copyright text & Branding -->
+<div class="space-y-1 text-center md:text-left">
+<div class="text-heading-4 font-heading-4 text-text-primary dark:text-surface tracking-tight flex items-center justify-center md:justify-start gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="fingerprint">fingerprint</span>
+<span>Arkhe Enterprise Fiduciary Protocol</span>
+</div>
+<p class="text-caption font-caption text-text-secondary dark:text-text-tertiary max-w-xl">
+          © 2025 Arkhe Enterprise Fiduciary Protocol. All systemic operations verified cryptographically under Rekor Log transparency standard.
+        </p>
+</div>
+<!-- Links Fiduciários -->
+<div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-body-sm font-body-sm">
+<a class="text-text-secondary dark:text-text-tertiary hover:text-text-primary dark:hover:text-surface transition-colors" href="#">Merkle Transparency Log</a>
+<a class="text-text-secondary dark:text-text-tertiary hover:text-text-primary dark:hover:text-surface transition-colors" href="#">BLAKE3 Identity Digest</a>
+<a class="text-text-secondary dark:text-text-tertiary hover:text-text-primary dark:hover:text-surface transition-colors" href="#">System Attestation Tree</a>
+<a class="text-text-secondary dark:text-text-tertiary hover:text-text-primary dark:hover:text-surface transition-colors" href="#">Governance Registry</a>
+<a class="text-text-secondary dark:text-text-tertiary hover:text-text-primary dark:hover:text-surface transition-colors" href="#">Cryptographic Keyring</a>
+</div>
+</div>
+</footer>
+</body></html>

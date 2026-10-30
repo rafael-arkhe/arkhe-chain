@@ -1,0 +1,669 @@
+From fe4d90d5ef323ce7c3f19c78d7a0cf806081fc80 Mon Sep 17 00:00:00 2001
+From: ARKHE Developer <developer@arkhe.os>
+Date: Wed, 28 Oct 2026 13:20:58 -0300
+Subject: [PATCH] Add pinned Arkhe primitive interoperability profile
+
+---
+ .gitattributes                            |   4 +
+ .github/workflows/ci.yml                  |   2 +
+ README.md                                 |   9 ++
+ tests/interop/arkhe-v1/README.md          |  96 +++++++++++++
+ tests/interop/arkhe-v1/arkhe-vectors.json | 168 ++++++++++++++++++++++
+ tests/interop/arkhe-v1/expected.json      |  42 ++++++
+ tests/interop/arkhe-v1/manifest.json      |  34 +++++
+ tests/interop/arkhe-v1/provenance.json    |  17 +++
+ tests/test_arkhe_interop.py               |  66 +++++++++
+ tools/verify_arkhe_interop.py             | 130 +++++++++++++++++
+ 10 files changed, 568 insertions(+)
+ create mode 100644 .gitattributes
+ create mode 100644 tests/interop/arkhe-v1/README.md
+ create mode 100644 tests/interop/arkhe-v1/arkhe-vectors.json
+ create mode 100644 tests/interop/arkhe-v1/expected.json
+ create mode 100644 tests/interop/arkhe-v1/manifest.json
+ create mode 100644 tests/interop/arkhe-v1/provenance.json
+ create mode 100644 tests/test_arkhe_interop.py
+ create mode 100644 tools/verify_arkhe_interop.py
+
+diff --git a/.gitattributes b/.gitattributes
+new file mode 100644
+index 0000000..39072b8
+--- /dev/null
++++ b/.gitattributes
+@@ -0,0 +1,4 @@
++# The interop manifest hashes exact exchanged bytes, including line endings.
++tests/interop/arkhe-v1/* -text
++tools/verify_arkhe_interop.py text eol=lf
++tests/test_arkhe_interop.py text eol=lf
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 11011a7..6e1f361 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -22,6 +22,8 @@ jobs:
+         run: pytest -v
+       - name: Golden vectors reproduce
+         run: python tools/verify_golden.py
++      - name: Frozen Arkhe interoperability primitives
++        run: python tools/verify_arkhe_interop.py
+       - name: Worked example of decision explanations is reproducible
+         run: |
+           python tools/make_explained_examples.py
+diff --git a/README.md b/README.md
+index fb8eaa4..b488e53 100644
+--- a/README.md
++++ b/README.md
+@@ -125,8 +125,17 @@ decision = kernel.verify(VerificationRequest(
+ print(decision.final_epistemic_state, decision.status)
+ ```
+ 
++## Arkhe primitive interoperability profile
++
++The isolated [Arkhe v1 exchange](tests/interop/arkhe-v1/README.md) contains eight
++pinned inclusion, Ed25519 and witness-quorum checks. Run
++`python tools/verify_arkhe_interop.py` to check hashes and static verdicts.
++This profile does not change kernel decisions or establish full Gravit/Arkhe
++semantic equivalence.
++
+ ## Known open work (not finalized here)
+ 
++
+ - `CANON-NSD-007` is a re-verification-over-time invariant; this kernel is
+   stateless per call and only records it as informative. A production
+   deployment needs a scheduler that re-runs `verify()` per `artifact_id`
+diff --git a/tests/interop/arkhe-v1/README.md b/tests/interop/arkhe-v1/README.md
+new file mode 100644
+index 0000000..0bdf3dc
+--- /dev/null
++++ b/tests/interop/arkhe-v1/README.md
+@@ -0,0 +1,96 @@
++# Arkhe primitive interoperability profile v1
++
++Frozen 2026-10-28. These eight jobs and their expected verdicts are copied byte
++for byte from the Arkhe workspace's `verification/interop/gravit-golden-v1/`.
++They are a subset of its 2026-10-26 primitive exchange, which pins this upstream
++verifier at `6b2ecbabd098c9a381b0b08184703905c3cb8275`.
++`provenance.json` records the original file hashes and source manifest digest.
++The Arkhe workspace has no Git metadata; this is a byte pin, not an Arkhe commit
++or signed attestation. Preserve the manifest hash separately when exchanging it.
++
++| ID | accepted | Meaning |
++| --- | --- | --- |
++| merkle-valid-0 | true | Leaf 0 in a three-leaf tree |
++| merkle-wrong-leaf | false | Original proof with substituted leaf |
++| signature-valid | true | Exact witness message signed with Ed25519 |
++| signature-tampered | false | Message replaced with byte 00 |
++| quorum-valid | true | Two keys, two configured operators, threshold 2 |
++| quorum-insufficient | false | Only one submitted witness |
++| quorum-dependent | false | Two keys, one configured operator |
++| quorum-key-alias | false | Same key under two IDs |
++
++## Reproduce
++
++With this repository's Python dependencies installed (`pip install -e .`):
++
++```sh
++python tools/verify_arkhe_interop.py
++python tools/verify_arkhe_interop.py --json
++python -m pytest tests/test_arkhe_interop.py -q
++```
++
++The runner validates SHA-256 pins and compares ordered `{id, accepted}` results
++to static `expected.json`; `reason` is explanatory. No fixture regeneration,
++Gravit service, Rust install or Arkhe checkout is required. CI consumes these
++frozen files; the existing golden-vector generator does not produce them.
++
++To cross-check with Arkhe, run its
++`python verification/interop/gravit-golden-v1/verify.py` in the Arkhe workspace.
++That invokes `arkhe-verify-core --example gravit_interop`, using its production
++`gguf::supply_chain::verify_inclusion` and ed25519-dalek `verify_strict` paths.
++Compare all eight IDs and booleans. These vectors exercise ordinary Ed25519
++encodings; agreement does not establish parity on every adversarial encoding.
++
++## Reader specification
++
++All hex fields encode raw bytes using two lowercase hex characters per byte.
++Reject invalid encodings, missing fields, wrong lengths and unknown job kinds.
++Unsigned integers fit u64 and cannot be booleans. IDs are labels. JSON text is
++never implicitly signed. Roots, public keys and path nodes are 32 bytes;
++signatures are 64 bytes.
++
++**Inclusion:** SHA-256 `leaf_hash = H(00 || leaf_bytes)` and
++`node_hash = H(01 || left_hash || right_hash)`, with single-byte prefixes.
++The tree splits at the largest power of two strictly below its size. `index`
++is zero-based; `size` counts leaves; siblings in `path` are bottom-up. Require
++size > 0, index < size, exact path consumption and equality with `root_hex`.
++The fixture tree contains UTF-8 `arkhe-interop-a`, `arkhe-interop-b`,
++`arkhe-interop-c` without terminators. Its root is
++`5128b63cc0fbd21844460760d5764ade0badf77535eee278c685a8807550f40d`.
++For leaf 0, calculate `H(01 || H(01 || H(00 || leaf) || path[0]) || path[1])`.
++The runner uses an independent recursive RFC 6962 algorithm, not Arkhe's
++iterative implementation. This is a test reader, not a new Gravit log API.
++
++**Signature:** ordinary Ed25519 without prehash or context, over decoded
++`message_hex`, with `key_hex` and `signature_hex`. The reader calls the existing
++`gravit_verifier.registry._verify` primitive. The positive message is UTF-8
++`arkhe-interop-witness-v1`, LF, then the raw 32-byte root; no trailing LF.
++
++**Quorum:** `trusted` is out-of-band test configuration mapping unique IDs to
++keys and nonempty operator labels. `threshold` must be positive. Every submitted
++witness must resolve to a configured ID and have a valid signature on the same
++message. Any invalid witness, repeated key or repeated operator rejects the
++whole job, even when earlier witnesses meet the threshold. Accept only when
++the distinct operator count is at least the threshold. Operator independence
++is assumed from configuration, not demonstrated by cryptography.
++
++The public fixture seeds are 32 repetitions of byte 01, 02, 03 for w0, w1, w2;
++operators are op0, op1, op2. The positive quorum uses w0 and w1. The dependent
++case sets w1's operator to op0. The alias case assigns w0's public key and
++signature to w1. These are test keys and confer no production authority.
++
++## Boundary with Gravit decisions
++
++This is an explicit Arkhe exchange policy, not CANON-SIG-011 or a full kernel
++request. Gravit screens invalid evidence out and evaluates admissible evidence;
++this quorum profile rejects the whole job on any invalid witness. Gravit also
++signs a different domain (`gravit-evidence-v1`) and record fields, so these
++signatures cannot be relabeled as Gravit EvidenceRecords. No bindings, decision
++IDs, registry trust thresholds or upstream golden decisions are changed.
++
++History Keeper's Merkle code and the hosted receipt API are separate components;
++this test does not validate a live inclusion proof, RFC 3161 timestamp, service
++key ownership or a complete Gravit decision. A third-party reader can implement
++the three rules above, consume `arkhe-vectors.json` and compare with
++`expected.json` without importing this runner. Record its implementation/version
++and every verdict when reporting a reproduction.
+diff --git a/tests/interop/arkhe-v1/arkhe-vectors.json b/tests/interop/arkhe-v1/arkhe-vectors.json
+new file mode 100644
+index 0000000..6fd6877
+--- /dev/null
++++ b/tests/interop/arkhe-v1/arkhe-vectors.json
+@@ -0,0 +1,168 @@
++[
++  {
++    "id": "merkle-valid-0",
++    "kind": "inclusion",
++    "leaf_hex": "61726b68652d696e7465726f702d61",
++    "index": 0,
++    "size": 3,
++    "path": [
++      "497dcbcbced8d95f3746daba86451f2032a484878e940fd753325dbb62ba18ac",
++      "9b70506e9adc2b8d98b9ea9d0e951b6dcf2679d40fae708e349a988431794797"
++    ],
++    "root_hex": "5128b63cc0fbd21844460760d5764ade0badf77535eee278c685a8807550f40d"
++  },
++  {
++    "id": "merkle-wrong-leaf",
++    "kind": "inclusion",
++    "leaf_hex": "00",
++    "index": 0,
++    "size": 3,
++    "path": [
++      "497dcbcbced8d95f3746daba86451f2032a484878e940fd753325dbb62ba18ac",
++      "9b70506e9adc2b8d98b9ea9d0e951b6dcf2679d40fae708e349a988431794797"
++    ],
++    "root_hex": "5128b63cc0fbd21844460760d5764ade0badf77535eee278c685a8807550f40d"
++  },
++  {
++    "id": "signature-valid",
++    "kind": "signature",
++    "key_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
++    "message_hex": "61726b68652d696e7465726f702d7769746e6573732d76310a5128b63cc0fbd21844460760d5764ade0badf77535eee278c685a8807550f40d",
++    "signature_hex": "b25519227ed5ceced5bcd4b7d690f5324382c817236dc063c4306f86f94b7388f76cbe9168fbf48c9a277e0280e241330e23ced66e4cc9468fe09ec4c9dbd90f"
++  },
++  {
++    "id": "signature-tampered",
++    "kind": "signature",
++    "key_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
++    "message_hex": "00",
++    "signature_hex": "b25519227ed5ceced5bcd4b7d690f5324382c817236dc063c4306f86f94b7388f76cbe9168fbf48c9a277e0280e241330e23ced66e4cc9468fe09ec4c9dbd90f"
++  },
++  {
++    "id": "quorum-valid",
++    "kind": "quorum",
++    "message_hex": "61726b68652d696e7465726f702d7769746e6573732d76310a5128b63cc0fbd21844460760d5764ade0badf77535eee278c685a8807550f40d",
++    "threshold": 2,
++    "trusted": [
++      {
++        "id": "w0",
++        "operator": "op0",
++        "key_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
++      },
++      {
++        "id": "w1",
++        "operator": "op1",
++        "key_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
++      },
++      {
++        "id": "w2",
++        "operator": "op2",
++        "key_hex": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
++      }
++    ],
++    "witnesses": [
++      {
++        "id": "w0",
++        "signature_hex": "b25519227ed5ceced5bcd4b7d690f5324382c817236dc063c4306f86f94b7388f76cbe9168fbf48c9a277e0280e241330e23ced66e4cc9468fe09ec4c9dbd90f"
++      },
++      {
++        "id": "w1",
++        "signature_hex": "437dcf9c8f9d67780c922cdf127295f686072a1c6af890a9a64bf71390c0efa29223f6492c671553f8dc381ad100a1707a1204c12164ff872ff0d8c66b66ff0b"
++      }
++    ]
++  },
++  {
++    "id": "quorum-insufficient",
++    "kind": "quorum",
++    "message_hex": "61726b68652d696e7465726f702d7769746e6573732d76310a5128b63cc0fbd21844460760d5764ade0badf77535eee278c685a8807550f40d",
++    "threshold": 2,
++    "trusted": [
++      {
++        "id": "w0",
++        "operator": "op0",
++        "key_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
++      },
++      {
++        "id": "w1",
++        "operator": "op1",
++        "key_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
++      },
++      {
++        "id": "w2",
++        "operator": "op2",
++        "key_hex": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
++      }
++    ],
++    "witnesses": [
++      {
++        "id": "w0",
++        "signature_hex": "b25519227ed5ceced5bcd4b7d690f5324382c817236dc063c4306f86f94b7388f76cbe9168fbf48c9a277e0280e241330e23ced66e4cc9468fe09ec4c9dbd90f"
++      }
++    ]
++  },
++  {
++    "id": "quorum-dependent",
++    "kind": "quorum",
++    "message_hex": "61726b68652d696e7465726f702d7769746e6573732d76310a5128b63cc0fbd21844460760d5764ade0badf77535eee278c685a8807550f40d",
++    "threshold": 2,
++    "trusted": [
++      {
++        "id": "w0",
++        "operator": "op0",
++        "key_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
++      },
++      {
++        "id": "w1",
++        "operator": "op0",
++        "key_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
++      },
++      {
++        "id": "w2",
++        "operator": "op2",
++        "key_hex": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
++      }
++    ],
++    "witnesses": [
++      {
++        "id": "w0",
++        "signature_hex": "b25519227ed5ceced5bcd4b7d690f5324382c817236dc063c4306f86f94b7388f76cbe9168fbf48c9a277e0280e241330e23ced66e4cc9468fe09ec4c9dbd90f"
++      },
++      {
++        "id": "w1",
++        "signature_hex": "437dcf9c8f9d67780c922cdf127295f686072a1c6af890a9a64bf71390c0efa29223f6492c671553f8dc381ad100a1707a1204c12164ff872ff0d8c66b66ff0b"
++      }
++    ]
++  },
++  {
++    "id": "quorum-key-alias",
++    "kind": "quorum",
++    "message_hex": "61726b68652d696e7465726f702d7769746e6573732d76310a5128b63cc0fbd21844460760d5764ade0badf77535eee278c685a8807550f40d",
++    "threshold": 2,
++    "trusted": [
++      {
++        "id": "w0",
++        "operator": "op0",
++        "key_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
++      },
++      {
++        "id": "w1",
++        "operator": "op1",
++        "key_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
++      },
++      {
++        "id": "w2",
++        "operator": "op2",
++        "key_hex": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
++      }
++    ],
++    "witnesses": [
++      {
++        "id": "w0",
++        "signature_hex": "b25519227ed5ceced5bcd4b7d690f5324382c817236dc063c4306f86f94b7388f76cbe9168fbf48c9a277e0280e241330e23ced66e4cc9468fe09ec4c9dbd90f"
++      },
++      {
++        "id": "w1",
++        "signature_hex": "b25519227ed5ceced5bcd4b7d690f5324382c817236dc063c4306f86f94b7388f76cbe9168fbf48c9a277e0280e241330e23ced66e4cc9468fe09ec4c9dbd90f"
++      }
++    ]
++  }
++]
+diff --git a/tests/interop/arkhe-v1/expected.json b/tests/interop/arkhe-v1/expected.json
+new file mode 100644
+index 0000000..f2a073b
+--- /dev/null
++++ b/tests/interop/arkhe-v1/expected.json
+@@ -0,0 +1,42 @@
++[
++  {
++    "id": "merkle-valid-0",
++    "accepted": true,
++    "reason": "RFC 6962 three-leaf tree"
++  },
++  {
++    "id": "merkle-wrong-leaf",
++    "accepted": false,
++    "reason": "wrong-leaf"
++  },
++  {
++    "id": "signature-valid",
++    "accepted": true,
++    "reason": "Ed25519 raw message"
++  },
++  {
++    "id": "signature-tampered",
++    "accepted": false,
++    "reason": "tampered"
++  },
++  {
++    "id": "quorum-valid",
++    "accepted": true,
++    "reason": "two configured operators with distinct keys"
++  },
++  {
++    "id": "quorum-insufficient",
++    "accepted": false,
++    "reason": "insufficient"
++  },
++  {
++    "id": "quorum-dependent",
++    "accepted": false,
++    "reason": "same configured operator"
++  },
++  {
++    "id": "quorum-key-alias",
++    "accepted": false,
++    "reason": "one key under two identities"
++  }
++]
+diff --git a/tests/interop/arkhe-v1/manifest.json b/tests/interop/arkhe-v1/manifest.json
+new file mode 100644
+index 0000000..ad00753
+--- /dev/null
++++ b/tests/interop/arkhe-v1/manifest.json
+@@ -0,0 +1,34 @@
++[
++  {
++    "path": "tests/interop/arkhe-v1/arkhe-vectors.json",
++    "sha256": "c2844f18ad41e7290d0cef8b2e7def550f982718fb281e8e5a4558556efa26e1"
++  },
++  {
++    "path": "tests/interop/arkhe-v1/expected.json",
++    "sha256": "b6f0300cb301ed4ac47f94793445da20c4229db148d9fe688ff2b011278618cc"
++  },
++  {
++    "path": "tests/interop/arkhe-v1/provenance.json",
++    "sha256": "c41a562efb53857f6fd11c17b2771ca3cb79121e6d4190ca643e7a6c250275ad"
++  },
++  {
++    "path": "tests/interop/arkhe-v1/README.md",
++    "sha256": "979b9d24c57bafa09f5ea21091100be4a86c7e6e1868a0446954a122967efa53"
++  },
++  {
++    "path": "tools/verify_arkhe_interop.py",
++    "sha256": "5b02d8b39621d508740de3d33f6d311e0506c78693af77dad8e3efafc54eadc0"
++  },
++  {
++    "path": "tests/test_arkhe_interop.py",
++    "sha256": "da4a8ba642005fd38a9c5031146effacb5a1ae5397a874c60280c9d012bd52b2"
++  },
++  {
++    "path": "gravit_verifier/registry.py",
++    "sha256": "8e8c9afd7c7bb7f502f3471ba98f3a9672416d7e7b8e5e820308e8827ad4c36e"
++  },
++  {
++    "path": "pyproject.toml",
++    "sha256": "f395f747e69ffdb0ce1a9cfc13e894103b5fdc13c57d593f121455c3a9f26beb"
++  }
++]
+diff --git a/tests/interop/arkhe-v1/provenance.json b/tests/interop/arkhe-v1/provenance.json
+new file mode 100644
+index 0000000..1450bbd
+--- /dev/null
++++ b/tests/interop/arkhe-v1/provenance.json
+@@ -0,0 +1,17 @@
++{
++  "profile": "arkhe-gravit-golden-v1",
++  "frozen_date": "2026-10-28",
++  "source_workspace_path": "verification/interop/gravit-golden-v1",
++  "source_manifest_sha256": "923435813154b9d527d85a059c68561f5fda314465e73ae183f13ed1eb03b072",
++  "upstream_verifier_commit": "6b2ecbabd098c9a381b0b08184703905c3cb8275",
++  "source_files": [
++    {
++      "path": "arkhe-vectors.json",
++      "sha256": "c2844f18ad41e7290d0cef8b2e7def550f982718fb281e8e5a4558556efa26e1"
++    },
++    {
++      "path": "expected.json",
++      "sha256": "b6f0300cb301ed4ac47f94793445da20c4229db148d9fe688ff2b011278618cc"
++    }
++  ]
++}
+diff --git a/tests/test_arkhe_interop.py b/tests/test_arkhe_interop.py
+new file mode 100644
+index 0000000..9d17232
+--- /dev/null
++++ b/tests/test_arkhe_interop.py
+@@ -0,0 +1,66 @@
++"""Static contract and rejection boundaries of the isolated Arkhe profile."""
++import copy
++import hashlib
++import json
++
++import pytest
++
++from tools.verify_arkhe_interop import FIXTURES, accepted, replay
++
++JOBS = json.loads((FIXTURES / "arkhe-vectors.json").read_bytes())
++EXPECTED = json.loads((FIXTURES / "expected.json").read_bytes())
++BY_ID = {v["id"]: v for v in JOBS}
++
++
++@pytest.mark.parametrize("job,expected", zip(JOBS, EXPECTED), ids=[v["id"] for v in JOBS])
++def test_static_verdict(job, expected):
++    assert accepted(job) is expected["accepted"]
++
++
++def test_frozen_replay_and_pins():
++    assert len(replay()) == 8
++
++
++@pytest.mark.parametrize("changes", [
++    {"path": []}, {"index": 3}, {"size": 0}, {"index": True},
++    {"size": 2**64}, {"root_hex": "00" * 32},
++    {"path": BY_ID["merkle-valid-0"]["path"] + ["00" * 32]},
++])
++def test_inclusion_rejects_invalid_bounds_and_paths(changes):
++    assert not accepted(dict(BY_ID["merkle-valid-0"], **changes))
++
++
++def test_unbalanced_rightmost_leaf_and_single_empty_leaf():
++    a, b, c = [b"arkhe-interop-" + x for x in (b"a", b"b", b"c")]
++    leaf = lambda x: hashlib.sha256(b"\x00" + x).digest()
++    left = hashlib.sha256(b"\x01" + leaf(a) + leaf(b)).hexdigest()
++    assert accepted(dict(BY_ID["merkle-valid-0"], leaf_hex=c.hex(), index=2, path=[left]))
++    assert accepted(dict(kind="inclusion", leaf_hex="", index=0, size=1,
++                         path=[], root_hex=leaf(b"").hex()))
++
++
++@pytest.mark.parametrize("changes", [
++    {"signature_hex": "00"}, {"key_hex": "00"}, {"message_hex": "0g"},
++    {"key_hex": "AA" * 32}, {"signature_hex": "00 " * 64},
++])
++def test_signature_encoding_fails_closed(changes):
++    assert not accepted(dict(BY_ID["signature-valid"], **changes))
++
++
++@pytest.mark.parametrize("changes", [
++    {"threshold": 0}, {"threshold": True}, {"message_hex": "00"},
++    {"witnesses": [{"id": "unknown", "signature_hex": "00" * 64}]},
++])
++def test_quorum_invalid_input(changes):
++    assert not accepted(dict(BY_ID["quorum-valid"], **changes))
++
++
++def test_invalid_extra_witness_rejects_even_after_threshold():
++    job = copy.deepcopy(BY_ID["quorum-valid"])
++    job["witnesses"].append({"id": "w2", "signature_hex": "00" * 64})
++    assert not accepted(job)
++
++
++@pytest.mark.parametrize("job", [{}, None, [], {"kind": "unsupported"}])
++def test_missing_or_unsupported_job(job):
++    assert not accepted(job)
+diff --git a/tools/verify_arkhe_interop.py b/tools/verify_arkhe_interop.py
+new file mode 100644
+index 0000000..8371963
+--- /dev/null
++++ b/tools/verify_arkhe_interop.py
+@@ -0,0 +1,130 @@
++"""Frozen Arkhe primitive profile; not a Gravit kernel decision adapter."""
++import argparse
++import hashlib
++import json
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++from gravit_verifier.registry import _verify
++
++FIXTURES = ROOT / "tests/interop/arkhe-v1"
++
++
++def raw(value, length=None):
++    if not isinstance(value, str) or any(c not in "0123456789abcdef" for c in value):
++        raise ValueError("expected lowercase hex")
++    result = bytes.fromhex(value)
++    if len(value) != len(result) * 2 or (length is not None and len(result) != length):
++        raise ValueError("incorrect byte length")
++    return result
++
++
++def uint(value):
++    if type(value) is not int or not 0 <= value < 2**64:
++        raise ValueError("expected u64")
++    return value
++
++
++def text(value):
++    if not isinstance(value, str) or not value:
++        raise ValueError("expected nonempty text")
++    return value
++
++
++def signature(key, message, sig):
++    # Reuse Gravit's exact Ed25519 verification path, with decoded profile bytes.
++    return _verify(raw(key, 32), raw(sig, 64), raw(message))
++
++
++def inclusion(v):
++    size, index = uint(v["size"]), uint(v["index"])
++    if size == 0 or index >= size or not isinstance(v["path"], list) or len(v["path"]) > 64:
++        return False
++    siblings = iter(raw(s, 32) for s in v["path"])
++    leaf, root = raw(v["leaf_hex"]), raw(v["root_hex"], 32)
++
++    def ascend(i, n):
++        if n == 1:
++            return hashlib.sha256(b"\x00" + leaf).digest()
++        split = 1 << ((n - 1).bit_length() - 1)
++        if i < split:
++            child = ascend(i, split)
++            left, right = child, next(siblings)
++        else:
++            child = ascend(i - split, n - split)
++            left, right = next(siblings), child
++        return hashlib.sha256(b"\x01" + left + right).digest()
++
++    result = ascend(index, size)
++    return next(siblings, None) is None and result == root
++
++
++def quorum(v):
++    threshold = uint(v["threshold"])
++    raw(v["message_hex"])
++    if threshold == 0 or not isinstance(v["trusted"], list) or not isinstance(v["witnesses"], list):
++        return False
++    trusted = {}
++    for entry in v["trusted"]:
++        identity = text(entry["id"])
++        raw(entry["key_hex"], 32)
++        text(entry["operator"])
++        if identity in trusted:
++            return False
++        trusted[identity] = entry
++    keys, operators = set(), set()
++    for witness in v["witnesses"]:
++        entry = trusted.get(text(witness["id"]))
++        if entry is None:
++            return False
++        key, operator = entry["key_hex"], entry["operator"]
++        if key in keys or operator in operators:
++            return False
++        if not signature(key, v["message_hex"], witness["signature_hex"]):
++            return False
++        keys.add(key)
++        operators.add(operator)
++    return len(operators) >= threshold
++
++
++def accepted(v):
++    """Malformed or unsupported primitive jobs fail closed."""
++    try:
++        if v["kind"] == "inclusion":
++            return inclusion(v)
++        if v["kind"] == "signature":
++            return signature(v["key_hex"], v["message_hex"], v["signature_hex"])
++        if v["kind"] == "quorum":
++            return quorum(v)
++    except (KeyError, TypeError, ValueError, StopIteration):
++        return False
++    return False
++
++
++def replay():
++    for item in json.loads((FIXTURES / "manifest.json").read_bytes()):
++        actual = hashlib.sha256((ROOT / item["path"]).read_bytes()).hexdigest()
++        if actual != item["sha256"]:
++            raise ValueError(f"Hash mismatch: {item['path']}")
++    jobs = json.loads((FIXTURES / "arkhe-vectors.json").read_bytes())
++    expected = json.loads((FIXTURES / "expected.json").read_bytes())
++    ids = [v["id"] for v in jobs]
++    if len(ids) != 8 or len(set(ids)) != len(ids) or ids != [v["id"] for v in expected]:
++        raise ValueError("expected eight unique cases in matching order")
++    actual = [{"id": v["id"], "accepted": accepted(v)} for v in jobs]
++    if actual != [{"id": v["id"], "accepted": v["accepted"]} for v in expected]:
++        raise ValueError(f"Verdict mismatch: {actual}")
++    return actual
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--json", action="store_true", help="emit verified ordered verdicts")
++    args = parser.parse_args()
++    try:
++        results = replay()
++    except ValueError as error:
++        raise SystemExit(str(error))
++    print(json.dumps(results, indent=2) if args.json else f"PASS: {len(results)}/8 Arkhe primitive cases; SHA-256 pins match")
+-- 
+2.53.0.windows.2
+

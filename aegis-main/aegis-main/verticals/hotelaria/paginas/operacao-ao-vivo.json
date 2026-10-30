@@ -1,0 +1,16 @@
+{
+  "slug": "operacao-ao-vivo",
+  "titulo": "Operação ao vivo",
+  "_nota": "Formato do aegis_pagina::Pagina. Quem escreve e quem lê falam a mesma estrutura, e o round-trip tem prova. O vocabulario é object_set / agregacao; o verbo do bloco é kpi / tabela / texto.",
+  "variaveis": [
+    { "id": "quartos",     "tipo": "object_set", "objeto": "quarto" },
+    { "id": "reservas",    "tipo": "object_set", "objeto": "reserva" },
+    { "id": "hospedes",    "tipo": "object_set", "objeto": "hospede" },
+    { "id": "total_quartos", "tipo": "agregacao", "de": "quartos", "op": "count" }
+  ],
+  "blocos": [
+    { "tipo": "kpi", "rotulo": "Quartos", "variavel": "total_quartos" },
+    { "tipo": "tabela", "objeto": "quarto", "colunas": ["nome", "situacao", "andar", "cama"] },
+    { "tipo": "tabela", "objeto": "reserva", "colunas": ["codigo", "entrada", "saida", "situacao"] }
+  ]
+}

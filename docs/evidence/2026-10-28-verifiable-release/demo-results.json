@@ -1,0 +1,97 @@
+{
+  "results": [
+    {
+      "case": "01-verified-without-approval",
+      "status": "VERIFIED_ONLY",
+      "expected": "VERIFIED_ONLY",
+      "pass": true,
+      "reason": null
+    },
+    {
+      "case": "02-admitted-with-local-approval",
+      "status": "ADMITTED_LOCAL",
+      "expected": "ADMITTED_LOCAL",
+      "pass": true,
+      "reason": null
+    },
+    {
+      "case": "03-idempotent-replay",
+      "status": "ADMITTED_LOCAL",
+      "expected": "ADMITTED_LOCAL",
+      "pass": true,
+      "reason": null
+    },
+    {
+      "case": "04-primary-offline-replica-recovers",
+      "status": "ADMITTED_LOCAL",
+      "expected": "ADMITTED_LOCAL",
+      "pass": true,
+      "reason": null
+    },
+    {
+      "case": "05-obsolete-v1-rejected",
+      "status": "REJECTED",
+      "expected": "REJECTED",
+      "pass": true,
+      "reason": "Error: obsolete release sequence\n"
+    },
+    {
+      "case": "06-expired-approval-rejected",
+      "status": "REJECTED",
+      "expected": "REJECTED",
+      "pass": true,
+      "reason": "Error: local approval binding or validity mismatch\n"
+    },
+    {
+      "case": "07-tampered-artifact-rejected",
+      "status": "REJECTED",
+      "expected": "REJECTED",
+      "pass": true,
+      "reason": "release artifact is not the exact git archive of the reviewed commit"
+    },
+    {
+      "case": "08-approval-for-other-statement-rejected",
+      "status": "REJECTED",
+      "expected": "REJECTED",
+      "pass": true,
+      "reason": "Error: local approval binding or validity mismatch\n"
+    },
+    {
+      "case": "09-attestation-signature-rejected",
+      "status": "REJECTED",
+      "expected": "REJECTED",
+      "pass": true,
+      "reason": "Error: invalid signature\n"
+    },
+    {
+      "case": "10-same-sequence-equivocation-rejected",
+      "status": "REJECTED",
+      "expected": "REJECTED",
+      "pass": true,
+      "reason": "same sequence has a different signed statement"
+    },
+    {
+      "case": "11-public-hashtree-recovery",
+      "status": "ADMITTED_LOCAL",
+      "expected": "ADMITTED_LOCAL",
+      "pass": true,
+      "reason": null
+    }
+  ],
+  "sources": [
+    {
+      "sequence": 1,
+      "cid": "4db8aa49b642bf039668767e04faab72d19b8f6a6d533cc8d5237bac5e797b59:cd6db8e883e09246d56003293024f4aeb20d0600957a86b9446c02a1ee565e41",
+      "package_sha256": "cd6db8e883e09246d56003293024f4aeb20d0600957a86b9446c02a1ee565e41",
+      "primary": "http://127.0.0.1:61027",
+      "replica": "http://127.0.0.1:61029"
+    },
+    {
+      "sequence": 2,
+      "cid": "a9857e2391450b9b4d0ebd62e630813212fbdac73897989d316b89f0b9f84cbd:069ad48b80192e204fbc2e488b25c91935199e5e4024ab3a942d6508e4abe58a",
+      "package_sha256": "069ad48b80192e204fbc2e488b25c91935199e5e4024ab3a942d6508e4abe58a",
+      "primary": "http://127.0.0.1:61027",
+      "replica": "http://127.0.0.1:61029"
+    }
+  ]
+}

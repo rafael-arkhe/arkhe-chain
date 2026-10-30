@@ -1,0 +1,18 @@
+{
+  "assessment": {
+    "confidence_bps": 10000,
+    "reason": "The report describes a Solidity contract with a mapping from address to uint8 storing credit. The add function increments credit[msg.sender] by amount (uint8). The account credit is 250 (within uint8 range 0-255). Adding 10 would cause overflow (260 > 255) and revert with an arithmetic panic. The report claims a successful silent wrap to 4 (i.e., 260 mod 256 = 4) but the contract does not have any unchecked block or assembly, and the overflow would cause a revert, leaving storage unchanged at 250. The report's claim of a silent wrap is inconsistent with the described behavior (revert). Therefore, the proposal's severity Medium and state Triaged are not supported by the evidence; the actual behavior is a revert, not a silent wrap. Hence supports_proposal should be false.",
+    "supports_proposal": false
+  },
+  "cvss": null,
+  "parameters_digest": "1628a6ed72727610dec0e1c3cda458b3e601e7db17ea5c35c11dec7469a5f08e",
+  "provider": {
+    "content": "{\"confidence_bps\": 10000, \"reason\": \"The report describes a Solidity contract with a mapping from address to uint8 storing credit. The add function increments credit[msg.sender] by amount (uint8). The account credit is 250 (within uint8 range 0-255). Adding 10 would cause overflow (260 > 255) and revert with an arithmetic panic. The report claims a successful silent wrap to 4 (i.e., 260 mod 256 = 4) but the contract does not have any unchecked block or assembly, and the overflow would cause a revert, leaving storage unchanged at 250. The report's claim of a silent wrap is inconsistent with the described behavior (revert). Therefore, the proposal's severity Medium and state Triaged are not supported by the evidence; the actual behavior is a revert, not a silent wrap. Hence supports_proposal should be false.\", \"supports_proposal\": false}",
+    "eval_count": 189,
+    "model": "north-mini-code-1.0:latest",
+    "model_digest": "d8b269ad5c7c7144ce104b83ce93bc3efb85e0f74e01be6be5f5d6f7ca90b60f",
+    "total_duration": 22220538400
+  },
+  "report_digest": "6c23e8c959b65f6d3a45f806bd8cf3f6172188093a48ce4f2d920280f11a56ca",
+  "status": "UNTRUSTED_PROPOSAL"
+}

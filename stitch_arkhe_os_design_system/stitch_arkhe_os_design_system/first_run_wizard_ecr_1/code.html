@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Protocol Engine // Setup Wizard</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-bright": "#fcf8fa",
+            "status-fail-border": "#FECDD3",
+            "surface": "#fcf8fa",
+            "error-container": "#ffdad6",
+            "status-warning-bg": "#FFFBEB",
+            "tertiary-fixed-dim": "#dec29a",
+            "secondary-fixed-dim": "#b4c5ff",
+            "surface-container-low": "#f6f3f5",
+            "tertiary-container": "#271901",
+            "primary-container": "#131b2e",
+            "on-error-container": "#93000a",
+            "surface-dim": "#dcd9db",
+            "secondary-fixed": "#dbe1ff",
+            "surface-container-highest": "#e4e2e4",
+            "status-fail-bg": "#FFF1F2",
+            "status-pending-text": "#334155",
+            "primary-fixed": "#dae2fd",
+            "status-pending-border": "#CBD5E1",
+            "status-pass-text": "#047857",
+            "surface-tint": "#565e74",
+            "text-tertiary": "#6B7280",
+            "on-secondary": "#ffffff",
+            "status-pass-border": "#A7F3D0",
+            "secondary": "#0051d5",
+            "error": "#ba1a1a",
+            "on-primary-fixed-variant": "#3f465c",
+            "on-secondary-container": "#fefcff",
+            "on-secondary-fixed": "#00174b",
+            "status-warning-text": "#B45309",
+            "tertiary-fixed": "#fcdeb5",
+            "surface-container-high": "#eae7e9",
+            "primary": "#000000",
+            "on-primary-container": "#7c839b",
+            "inverse-primary": "#bec6e0",
+            "on-error": "#ffffff",
+            "on-primary": "#ffffff",
+            "on-surface": "#1b1b1d",
+            "surface-container-lowest": "#ffffff",
+            "canvas-subtle": "#F9FAFB",
+            "on-tertiary": "#ffffff",
+            "surface-variant": "#e4e2e4",
+            "status-pass-bg": "#ECFDF5",
+            "status-pending-bg": "#F1F5F9",
+            "status-warning-border": "#FDE68A",
+            "canvas-base": "#FFFFFF",
+            "secondary-container": "#316bf3",
+            "primary-fixed-dim": "#bec6e0",
+            "on-tertiary-fixed": "#271901",
+            "tertiary": "#000000",
+            "on-background": "#1b1b1d",
+            "text-secondary": "#4B5563",
+            "border-subtle": "#E5E7EB",
+            "outline": "#76777d",
+            "border-muted": "#E2E8F0",
+            "background": "#fcf8fa",
+            "surface-container": "#f0edef",
+            "inverse-on-surface": "#f3f0f2",
+            "on-secondary-fixed-variant": "#003ea8",
+            "outline-variant": "#c6c6cd",
+            "inverse-surface": "#303032",
+            "text-primary": "#111827",
+            "status-fail-text": "#BE123C",
+            "on-tertiary-container": "#98805d",
+            "on-tertiary-fixed-variant": "#574425",
+            "on-surface-variant": "#45464d",
+            "on-primary-fixed": "#131b2e"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "fontFamily": {
+            "headline-xl": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "label-md": ["JetBrains Mono"],
+            "label-sm": ["JetBrains Mono"],
+            "code-inline": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "code-inline": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full flex flex-col font-body-md text-text-primary bg-background antialiased selection:bg-surface-container-high selection:text-text-primary">
+<!-- 1. Header Institucional (Conforme TopNavBar Anchor) -->
+<header class="w-full px-6 h-14 flex items-center justify-between border-b border-border-muted bg-canvas-base flex-shrink-0 z-30">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2.5">
+<span class="w-2.5 h-2.5 bg-primary rounded-none inline-block"></span>
+<span class="font-headline-sm text-headline-sm text-text-primary tracking-tight">Arkhe Protocol Engine</span>
+</div>
+<div class="h-4 w-px bg-border-muted"></div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-text-secondary">SETUP WIZARD</span>
+<span class="px-1.5 py-0.5 rounded font-label-sm text-label-sm bg-status-pending-bg text-status-pending-text border border-status-pending-border">KERNEL v4.2-STABLE</span>
+</div>
+</div>
+<!-- Telemetria & Controles do Topo -->
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center gap-2 font-label-sm text-label-sm text-text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pass-text"></span>
+<span>ISOLATION: AMD SEV-SNP (ACTIVE)</span>
+</div>
+<div class="h-4 w-px bg-border-muted hidden md:block"></div>
+<a class="flex items-center gap-1.5 font-body-sm text-body-sm text-text-secondary hover:text-text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none" href="#docs">
+<span class="material-symbols-outlined text-[16px]" data-icon="menu_book">menu_book</span>
+<span>Documentação Técnica RFC-8785</span>
+</a>
+<button class="flex items-center gap-1.5 px-2.5 py-1 text-text-secondary hover:text-text-primary bg-canvas-subtle hover:bg-surface-container-high border border-border-muted rounded text-body-sm font-body-sm focus-visible:ring-2 focus-visible:ring-primary" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="terminal">terminal</span>
+<span>CLI Debug</span>
+</button>
+</div>
+</header>
+<!-- 2. Stepper Horizontal Institucional -->
+<nav aria-label="Progresso do Wizard" class="w-full bg-canvas-base border-b border-border-muted flex-shrink-0">
+<div class="max-w-[1440px] mx-auto px-6 py-3">
+<ol class="grid grid-cols-1 md:grid-cols-4 gap-3 lg:gap-4">
+<!-- Passo 1: Concluído -->
+<li class="flex items-center gap-3 p-2 bg-canvas-subtle border border-border-muted rounded">
+<div class="w-6 h-6 flex items-center justify-center bg-status-pass-bg border border-status-pass-border text-status-pass-text rounded font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]" data-icon="check">check</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-status-pass-text leading-none uppercase">Etapa 01 · Concluída</span>
+<span class="font-body-sm text-body-sm font-medium text-text-primary truncate mt-0.5">Identidade &amp; DID do Nó</span>
+</div>
+</li>
+<!-- Passo 2: Ativo -->
+<li class="flex items-center gap-3 p-2 bg-canvas-base border-2 border-primary rounded shadow-none">
+<div class="w-6 h-6 flex items-center justify-center bg-primary text-canvas-base rounded font-label-sm text-label-sm">
+            02
+          </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-primary font-semibold leading-none uppercase">Etapa 02 · Ativa</span>
+<span class="font-body-sm text-body-sm font-medium text-text-primary truncate mt-0.5">Provisionamento de Chaves (Ed25519 &amp; Hardware)</span>
+</div>
+</li>
+<!-- Passo 3: Pendente -->
+<li class="flex items-center gap-3 p-2 bg-canvas-subtle border border-border-muted rounded opacity-75">
+<div class="w-6 h-6 flex items-center justify-center bg-status-pending-bg border border-status-pending-border text-text-tertiary rounded font-label-sm text-label-sm">
+            03
+          </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-text-tertiary leading-none uppercase">Etapa 03 · Pendente</span>
+<span class="font-body-sm text-body-sm font-medium text-text-secondary truncate mt-0.5">Política de Integridade Institucional</span>
+</div>
+</li>
+<!-- Passo 4: Pendente -->
+<li class="flex items-center gap-3 p-2 bg-canvas-subtle border border-border-muted rounded opacity-75">
+<div class="w-6 h-6 flex items-center justify-center bg-status-pending-bg border border-status-pending-border text-text-tertiary rounded font-label-sm text-label-sm">
+            04
+          </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-text-tertiary leading-none uppercase">Etapa 04 · Pendente</span>
+<span class="font-body-sm text-body-sm font-medium text-text-secondary truncate mt-0.5">Endpoints de Ancoragem (WormGraph &amp; Rekor)</span>
+</div>
+</li>
+</ol>
+</div>
+</nav>
+<!-- Conteúdo Principal Scrollável -->
+<main class="flex-1 overflow-y-auto px-6 py-6 bg-canvas-subtle">
+<div class="max-w-[1440px] mx-auto">
+<!-- Cabeçalho de Contexto da Etapa -->
+<div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border-muted pb-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-sm text-label-sm text-text-secondary uppercase">Configuração Criptográfica de Origem</span>
+<span class="px-2 py-0.5 font-label-sm text-label-sm rounded bg-status-pass-bg text-status-pass-text border border-status-pass-border">NIST SP 800-56A REV 3</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-text-primary">Provisionamento de Par de Chaves Institucional</h1>
+<p class="font-body-md text-body-md text-text-secondary mt-1 max-w-3xl">
+            Vincule a raiz de assinatura do nó validador ao módulo criptográfico seguro. Todo estado auditável e transição de época do Arkhe Protocol Engine dependerá da atestação desta chave.
+          </p>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0">
+<button class="px-3 py-1.5 text-body-sm font-body-sm border border-border-muted bg-canvas-base text-text-primary hover:bg-surface-container-high rounded focus-visible:ring-2 focus-visible:ring-primary inline-flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="refresh">refresh</span>
+<span>Recarregar FIPS Slot</span>
+</button>
+<button class="px-3 py-1.5 text-body-sm font-body-sm border border-border-muted bg-canvas-base text-text-primary hover:bg-surface-container-high rounded focus-visible:ring-2 focus-visible:ring-primary inline-flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+<span>Exportar JCS</span>
+</button>
+</div>
+</div>
+<!-- Layout em Grid de Duas Colunas (65% / 35%) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- Coluna da Esquerda: Configuração Ativa (lg:col-span-7) -->
+<div class="lg:col-span-7 space-y-5">
+<!-- Card 1: Identificador DID e Par Ed25519 -->
+<section class="bg-canvas-base border border-border-muted rounded p-5">
+<div class="flex items-center justify-between pb-3 border-b border-border-muted mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[20px]" data-icon="key">key</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Identidade Criptográfica do Nó (DID)</h2>
+</div>
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg px-2 py-0.5 rounded border border-status-pass-border">BLAKE3 DIGEST OK</span>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block font-body-sm text-body-sm font-medium text-text-primary mb-1.5">
+                  DID Canónico Atribuído (W3C DID v1.0)
+                </label>
+<div class="flex items-center gap-2">
+<div class="flex-1 bg-canvas-subtle border border-border-muted rounded px-3 py-2 font-code-inline text-code-inline text-text-primary truncate select-all">
+                    did:arkhe:node:0x4a92f8b1c098e721a4d634cb9820e10c
+                  </div>
+<button class="px-3 py-2 border border-border-muted hover:border-primary bg-canvas-base rounded text-text-primary hover:bg-canvas-subtle font-body-sm text-body-sm inline-flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-primary" title="Copiar DID para Área de Transferência" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="content_copy">content_copy</span>
+<span>Copiar</span>
+</button>
+</div>
+</div>
+<!-- Chave Pública & Fingerprint BLAKE3 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+<div class="p-3 bg-canvas-subtle border border-border-muted rounded">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-text-secondary uppercase">Curva de Assinatura</span>
+<span class="font-label-sm text-label-sm text-text-primary font-semibold">Ed25519 (Edwards)</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-secondary block mb-1">Chave Pública (Hex 32-bytes)</span>
+<div class="font-code-inline text-code-inline text-text-primary bg-canvas-base border border-border-muted p-1.5 rounded truncate select-all">
+                    7d8c6b7145290f6c2436fbb481ad1243ca553f1246c4f5ea78cb8921df010ac4
+                  </div>
+</div>
+<div class="p-3 bg-canvas-subtle border border-border-muted rounded">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-text-secondary uppercase">Fingerprint Hash</span>
+<span class="font-label-sm text-label-sm text-text-primary font-semibold">BLAKE3-256</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-secondary block mb-1">Invariable Anchor ID</span>
+<div class="font-code-inline text-code-inline text-text-primary bg-canvas-base border border-border-muted p-1.5 rounded truncate select-all">
+                    a8e29184fc3b92d8e001946b5a34e021a00831fe7b2c91834190cbb1945a0e31
+                  </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Card 2: Método de Armazenamento Seguro de Chave -->
+<section class="bg-canvas-base border border-border-muted rounded p-5">
+<div class="flex items-center justify-between pb-3 border-b border-border-muted mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[20px]" data-icon="memory">memory</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Módulo de Armazenamento Criptográfico</h2>
+</div>
+<span class="font-label-sm text-label-sm text-text-secondary">ISOLAMENTO NÍVEL L4</span>
+</div>
+<fieldset class="space-y-3">
+<legend class="sr-only">Selecione o método de custódia e isolamento de chaves</legend>
+<!-- Opção HSM / Enclave (Recomendada / Selecionada) -->
+<label class="flex items-start gap-3 p-3.5 border-2 border-primary bg-canvas-base rounded cursor-pointer">
+<input checked="" class="mt-1 text-primary focus:ring-primary border-border-muted" name="storage_method" type="radio" value="hsm"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md font-semibold text-text-primary">Hardware Security Module (HSM) / Enclave TEE</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 bg-status-pass-bg text-status-pass-text border border-status-pass-border rounded">RECOMENDADO AUDITORIA</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-secondary">FIPS 140-3 Nível 3</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">
+                    Gera e mantém chaves em hardware dedicado e memória isolada (YubiKey 5 FIPS, Ledger ou AMD SEV enclave). A chave privada nunca é exposta à memória volátil do host.
+                  </p>
+<div class="mt-3 pt-3 border-t border-border-muted flex items-center justify-between bg-canvas-subtle p-2.5 rounded">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-pass-text text-[18px]" data-icon="usb">usb</span>
+<span class="font-label-sm text-label-sm text-text-primary">DISPOSITIVO DETETADO: YubiKey 5 Series (Firmware 5.4.3)</span>
+</div>
+<span class="font-label-sm text-label-sm text-status-pass-text font-semibold">PAIRED (SLOT 9A)</span>
+</div>
+</div>
+</label>
+<!-- Opção Keystore Local Criptografado -->
+<label class="flex items-start gap-3 p-3.5 border border-border-muted hover:border-outline bg-canvas-subtle rounded cursor-pointer">
+<input class="mt-1 text-primary focus:ring-primary border-border-muted" name="storage_method" type="radio" value="local_keystore"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md font-semibold text-text-primary">Keystore Criptografado Local (AES-GCM-256 + Argon2id)</span>
+<span class="font-label-sm text-label-sm text-status-warning-text bg-status-warning-bg px-1.5 py-0.2 border border-status-warning-border rounded">APENAS STAGING / DEV</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">
+                    Armazena as chaves no disco local protegidas por derivação PBKDF2/Argon2id. Não atende aos requisitos de auditoria rigorosa de nós validadores primários de produção.
+                  </p>
+</div>
+</label>
+</fieldset>
+</section>
+<!-- Card 3: Frase Mestre de Recuperação (BIP-39) & Checklist -->
+<section class="bg-canvas-base border border-border-muted rounded p-5">
+<div class="flex items-center justify-between pb-3 border-b border-border-muted mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[20px]" data-icon="lock_reset">lock_reset</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Frase Mestre de Recuperação (12 Palavras BIP-39)</h2>
+</div>
+<span class="font-label-sm text-label-sm text-text-secondary">ENTROPIA LOCAL: 128-BITS</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mb-3">
+              Garantia de reconstrução do estado de chave mestre em caso de falha física catastrófica de hardware. Guarde em cofre institucional à prova de fogo.
+            </p>
+<!-- Grid de Palavras BIP-39 Monospace -->
+<div class="grid grid-cols-3 md:grid-cols-4 gap-2 mb-4 bg-canvas-subtle p-3.5 border border-border-muted rounded">
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">01</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">absent</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">02</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">merkle</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">03</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">vector</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">04</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">canopy</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">05</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">shiver</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">06</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">hybrid</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">07</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">witness</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">08</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">enclave</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">09</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">anchor</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">10</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">rekor</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">11</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">epoch</span>
+</div>
+<div class="flex items-center gap-2 bg-canvas-base px-2 py-1.5 border border-border-muted rounded">
+<span class="font-label-sm text-label-sm text-text-tertiary">12</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium">genesis</span>
+</div>
+</div>
+<!-- Checklist de Verificação de Auditoria -->
+<div class="space-y-2 border-t border-border-muted pt-3">
+<label class="flex items-center gap-2.5 text-body-sm font-body-sm text-text-primary cursor-pointer select-none">
+<input checked="" class="w-4 h-4 rounded-none text-primary border-border-muted focus:ring-primary" type="checkbox"/>
+<span>Confirmo a cópia manual para suporte físico isolado (Air-gapped Steel Plate / HSM Backup).</span>
+</label>
+<label class="flex items-center gap-2.5 text-body-sm font-body-sm text-text-primary cursor-pointer select-none">
+<input checked="" class="w-4 h-4 rounded-none text-primary border-border-muted focus:ring-primary" type="checkbox"/>
+<span>Declaro estar ciente de que o Arkhe Engine opera sob custódia estrita e não recupera credenciais perdidas.</span>
+</label>
+</div>
+</section>
+</div>
+<!-- Coluna da Direita: Painel de Inspeção & Validação em Tempo Real (lg:col-span-5) -->
+<div class="lg:col-span-5 space-y-5">
+<!-- Card de Verificação de Ambiente de Execução -->
+<section class="bg-canvas-base border border-border-muted rounded p-5">
+<div class="flex items-center justify-between pb-3 border-b border-border-muted mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[20px]" data-icon="verified_user">verified_user</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Verificação de Ambiente de Execução</h2>
+</div>
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg px-2 py-0.5 rounded border border-status-pass-border">ATTESTED</span>
+</div>
+<div class="space-y-3">
+<!-- Item 1: TEE Isolation -->
+<div class="flex items-center justify-between p-2.5 bg-canvas-subtle border border-border-muted rounded">
+<div>
+<div class="font-body-sm text-body-sm font-medium text-text-primary">Isolamento de Memória TEE</div>
+<div class="font-label-sm text-label-sm text-text-secondary">AMD SEV-SNP Driver v2.10.4</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm px-2 py-0.5 bg-status-pass-bg text-status-pass-text border border-status-pass-border rounded font-semibold">HARDWARE VALIDATED</span>
+</div>
+</div>
+<!-- Item 2: Compilador WASM Offline -->
+<div class="flex items-center justify-between p-2.5 bg-canvas-subtle border border-border-muted rounded">
+<div>
+<div class="font-body-sm text-body-sm font-medium text-text-primary">Compilador WASM Determinístico</div>
+<div class="font-label-sm text-label-sm text-text-secondary">Wasmtime Sandboxed Runtime v14.0</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm px-2 py-0.5 bg-status-pass-bg text-status-pass-text border border-status-pass-border rounded font-semibold">PASS (AOT OFFLINE)</span>
+</div>
+</div>
+<!-- Item 3: Page Table Integrity -->
+<div class="flex items-center justify-between p-2.5 bg-canvas-subtle border border-border-muted rounded">
+<div>
+<div class="font-body-sm text-body-sm font-medium text-text-primary">Integridade de Páginas &amp; Stack Guard</div>
+<div class="font-label-sm text-label-sm text-text-secondary">CFI / Control Flow Guard Habilitado</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm px-2 py-0.5 bg-status-pass-bg text-status-pass-text border border-status-pass-border rounded font-semibold">ENFORCED</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Card de Política de Inicialização do Nó (E02) -->
+<section class="bg-canvas-base border border-border-muted rounded p-5">
+<div class="flex items-center justify-between pb-3 border-b border-border-muted mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[20px]" data-icon="fact_check">fact_check</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Política de Inicialização do Nó</h2>
+</div>
+<span class="font-label-sm text-label-sm text-text-secondary">ESPECIFICAÇÃO E02</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mb-3">
+              Validação formal e automatizada das 13 regras fundamentais de contenção de estado operacional do protocolo.
+            </p>
+<!-- Tabela Compacta de Invariantes -->
+<div class="border border-border-muted rounded overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-canvas-subtle border-b border-border-muted font-label-sm text-label-sm text-text-secondary">
+<th class="py-1.5 px-3">INVARIANTE</th>
+<th class="py-1.5 px-3">DESCRIÇÃO DA REGRA</th>
+<th class="py-1.5 px-3 text-right">RESULTADO</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-muted font-body-sm text-body-sm">
+<tr>
+<td class="py-2 px-3 font-code-inline text-code-inline font-medium text-text-primary">E02-01</td>
+<td class="py-2 px-3 text-text-secondary">Verificação de Entropia Não-Determinística</td>
+<td class="py-2 px-3 text-right">
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg px-1.5 py-0.5 rounded border border-status-pass-border">PASS</span>
+</td>
+</tr>
+<tr>
+<td class="py-2 px-3 font-code-inline text-code-inline font-medium text-text-primary">E02-04</td>
+<td class="py-2 px-3 text-text-secondary">Isolamento da Raiz de Assinatura Ed25519</td>
+<td class="py-2 px-3 text-right">
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg px-1.5 py-0.5 rounded border border-status-pass-border">PASS</span>
+</td>
+</tr>
+<tr>
+<td class="py-2 px-3 font-code-inline text-code-inline font-medium text-text-primary">E02-09</td>
+<td class="py-2 px-3 text-text-secondary">Validação de Canonical RFC-8785 JCS Engine</td>
+<td class="py-2 px-3 text-right">
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg px-1.5 py-0.5 rounded border border-status-pass-border">PASS</span>
+</td>
+</tr>
+<tr>
+<td class="py-2 px-3 font-code-inline text-code-inline font-medium text-text-primary">E02-13</td>
+<td class="py-2 px-3 text-text-secondary">Proibição de Persistência em Memória Desprotegida</td>
+<td class="py-2 px-3 text-right">
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg px-1.5 py-0.5 rounded border border-status-pass-border">PASS</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="mt-3 flex items-center justify-between text-body-sm font-body-sm text-text-secondary">
+<span>Status dos Invariantes: 13 de 13 validados</span>
+<span class="font-label-sm text-label-sm text-status-pass-text font-semibold">ZERO DRIFT DETECTED</span>
+</div>
+</section>
+<!-- Card de Pré-visualização do Certificado de Inicialização -->
+<section class="bg-canvas-base border border-border-muted rounded p-5">
+<div class="flex items-center justify-between pb-3 border-b border-border-muted mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[20px]" data-icon="description">description</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Node Initialization Certificate (JCS RFC-8785)</h2>
+</div>
+<span class="font-label-sm text-label-sm text-text-tertiary">PREVIEW DRAFT</span>
+</div>
+<!-- Terminal / Code Block Monospace -->
+<pre class="bg-canvas-subtle border border-border-muted rounded p-3 text-code-inline font-code-inline text-text-secondary overflow-x-auto text-[11px] leading-relaxed select-all"><code>{
+  "$schema": "https://arkhe.org/schemas/v4/node-init.json",
+  "node_did": "did:arkhe:node:0x4a92f8b1c098e721a4d634cb9820e10c",
+  "timestamp_utc": "2025-05-18T14:32:09.421Z",
+  "attestation": {
+    "type": "HardwareSecurityModule",
+    "fips_level": "140-3_L3",
+    "tee_model": "AMD_SEV_SNP",
+    "public_key_ed25519": "7d8c6b7145290f6c2436fbb481ad1243ca553f1246c4f5ea78cb8921df010ac4"
+  },
+  "jcs_canonical_hash_blake3": "4df12a760b938c83e1c0d48f98c8e100f983b632fa07e158cb123e710d021cfa",
+  "spec_conformance": "E02_VERIFIED_WASM"
+}</code></pre>
+<div class="mt-2.5 flex items-center justify-between font-label-sm text-label-sm text-text-secondary">
+<span>Canonical Encoding: UTF-8 No Bom</span>
+<span>Bytes: 486 bytes</span>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<!-- 4. Rodapé Fixo de Navegação e Ação do Wizard -->
+<footer class="w-full bg-canvas-base border-t border-border-muted px-6 py-3 flex-shrink-0 z-30">
+<div class="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+<!-- Indicador Discreto de Integridade (Esquerda) -->
+<div class="flex items-center gap-2 font-label-sm text-label-sm text-text-secondary">
+<span class="w-2 h-2 rounded-full bg-status-pass-text"></span>
+<span>Conformidade com Spec E02: Validada localmente via WASM</span>
+<span class="text-text-tertiary">|</span>
+<span class="text-text-tertiary">LATENCY: 0.4ms</span>
+</div>
+<!-- Ações do Wizard (Direita) -->
+<div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+<button class="px-3.5 py-2 border border-border-muted hover:border-text-secondary bg-canvas-base text-text-primary rounded font-body-sm text-body-sm transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none" type="button">
+          Salvar Rascunho / Exportar Config (JSON)
+        </button>
+<button class="px-3.5 py-2 border border-border-muted hover:bg-canvas-subtle bg-canvas-base text-text-secondary hover:text-text-primary rounded font-body-sm text-body-sm transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_back">arrow_back</span>
+<span>Voltar</span>
+</button>
+<button class="px-4 py-2 bg-primary hover:bg-neutral-800 text-canvas-base rounded font-body-sm text-body-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none flex items-center gap-2" type="button">
+<span>Assinar &amp; Avançar para Políticas (Passo 3 de 4)</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</footer>
+</body></html>

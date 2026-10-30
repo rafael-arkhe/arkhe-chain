@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Verificação de Transação PIX — Arkhe Protocol Engine</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#c6c6cd",
+            "status-warning-text": "#B45309",
+            "primary-fixed-dim": "#bec6e0",
+            "surface-variant": "#e4e2e4",
+            "status-pass-bg": "#ECFDF5",
+            "status-pending-bg": "#F1F5F9",
+            "primary-fixed": "#dae2fd",
+            "surface-container-lowest": "#ffffff",
+            "status-pending-text": "#334155",
+            "on-tertiary": "#ffffff",
+            "inverse-on-surface": "#f3f0f2",
+            "secondary-fixed-dim": "#b4c5ff",
+            "status-warning-border": "#FDE68A",
+            "on-surface": "#1b1b1d",
+            "on-tertiary-container": "#98805d",
+            "on-primary": "#ffffff",
+            "on-secondary-fixed-variant": "#003ea8",
+            "secondary-container": "#316bf3",
+            "on-secondary": "#ffffff",
+            "secondary": "#0051d5",
+            "inverse-primary": "#bec6e0",
+            "canvas-subtle": "#F9FAFB",
+            "on-primary-fixed": "#131b2e",
+            "surface-container-low": "#f6f3f5",
+            "border-muted": "#E2E8F0",
+            "tertiary": "#000000",
+            "canvas-base": "#FFFFFF",
+            "surface-dim": "#dcd9db",
+            "on-error": "#ffffff",
+            "on-primary-container": "#7c839b",
+            "on-surface-variant": "#45464d",
+            "tertiary-fixed-dim": "#dec29a",
+            "text-tertiary": "#6B7280",
+            "surface-container-highest": "#e4e2e4",
+            "border-subtle": "#E5E7EB",
+            "inverse-surface": "#303032",
+            "on-primary-fixed-variant": "#3f465c",
+            "tertiary-fixed": "#fcdeb5",
+            "text-secondary": "#4B5563",
+            "background": "#fcf8fa",
+            "surface-tint": "#565e74",
+            "surface-container": "#f0edef",
+            "secondary-fixed": "#dbe1ff",
+            "primary-container": "#131b2e",
+            "on-tertiary-fixed-variant": "#574425",
+            "status-pending-border": "#CBD5E1",
+            "surface-container-high": "#eae7e9",
+            "on-tertiary-fixed": "#271901",
+            "on-error-container": "#93000a",
+            "error-container": "#ffdad6",
+            "on-secondary-container": "#fefcff",
+            "surface-bright": "#fcf8fa",
+            "primary": "#000000",
+            "status-fail-bg": "#FFF1F2",
+            "outline": "#76777d",
+            "text-primary": "#111827",
+            "surface": "#fcf8fa",
+            "status-fail-text": "#BE123C",
+            "on-secondary-fixed": "#00174b",
+            "error": "#ba1a1a",
+            "tertiary-container": "#271901",
+            "status-pass-text": "#047857",
+            "on-background": "#1b1b1d",
+            "status-pass-border": "#A7F3D0",
+            "status-fail-border": "#FECDD3",
+            "status-warning-bg": "#FFFBEB"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "headline-xl": ["Inter", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "code-inline": ["JetBrains Mono", "monospace"],
+            "headline-md": ["Inter", "sans-serif"],
+            "headline-sm": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "label-sm": ["JetBrains Mono", "monospace"],
+            "label-md": ["JetBrains Mono", "monospace"]
+          },
+          "fontSize": {
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "code-inline": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-text-primary antialiased font-body-md selection:bg-primary selection:text-white">
+<!-- ================= TOP NAVIGATION (TopNavBar from JSON) ================= -->
+<header class="w-full px-6 h-14 flex items-center justify-between border-b border-border-subtle dark:border-outline-variant bg-canvas-base dark:bg-primary-container max-w-full fixed top-0 left-0 right-0 z-50">
+<div class="flex items-center gap-8">
+<!-- Brand Anchor -->
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-primary text-[20px]">terminal</span>
+<span class="text-headline-sm font-headline-sm font-semibold tracking-tight text-primary dark:text-surface-container-lowest">Arkhe Protocol Engine</span>
+<span class="font-label-sm text-label-sm bg-canvas-subtle border border-border-subtle px-1.5 py-0.5 rounded text-text-secondary">v4.2-PROD</span>
+</div>
+<!-- Navigation links matching JSON + active transactional view -->
+<nav class="hidden lg:flex items-center gap-6 h-14">
+<a class="text-text-secondary dark:text-outline hover:text-text-primary dark:hover:text-canvas-base transition-colors duration-150 text-body-md" href="#audit-trail">Audit Trail</a>
+<a class="text-text-primary dark:text-canvas-base font-semibold border-b-2 border-primary dark:border-canvas-base pb-1 text-body-md" href="#inclusion-proofs">Inclusion Proofs</a>
+<a class="text-text-secondary dark:text-outline hover:text-text-primary dark:hover:text-canvas-base transition-colors duration-150 text-body-md" href="#wormgraph">WormGraph</a>
+<a class="text-text-secondary dark:text-outline hover:text-text-primary dark:hover:text-canvas-base transition-colors duration-150 text-body-md" href="#hardware-enclaves">Hardware Enclaves</a>
+<a class="text-text-secondary dark:text-outline hover:text-text-primary dark:hover:text-canvas-base transition-colors duration-150 text-body-md" href="#revocation-registry">Revocation Registry</a>
+</nav>
+</div>
+<!-- Actions & Profile Image Alt -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1 border border-border-subtle rounded p-0.5 bg-canvas-subtle mr-2">
+<button class="p-1.5 text-text-secondary hover:text-text-primary rounded hover:bg-canvas-base transition-colors" onclick="navigator.clipboard.writeText('0x04d1668e1b3490aa897120e981bc92a8b340192e10c78f192b3a8849c00b9bb4'); alert('Hash do Checkpoint copiado!');" title="Copiar Checkpoint" type="button">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="p-1.5 text-text-secondary hover:text-text-primary rounded hover:bg-canvas-base transition-colors" title="Download State" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+<button class="p-1.5 text-text-secondary hover:text-text-primary rounded hover:bg-canvas-base transition-colors" title="Console RPC" type="button">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+</button>
+</div>
+<button class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-body-sm font-medium bg-canvas-base border border-border-muted hover:bg-canvas-subtle transition-colors text-text-primary" type="button">
+<span class="material-symbols-outlined text-[16px]">data_object</span>
+<span>Exportar JCS</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-body-sm font-medium bg-primary text-on-primary hover:bg-text-secondary transition-colors shadow-none" type="button">
+<span class="material-symbols-outlined text-[16px]">memory</span>
+<span>Verificar Offline WASM</span>
+</button>
+<!-- Profile Avatar -->
+<div class="ml-2 pl-3 border-l border-border-subtle flex items-center gap-2">
+<div class="w-8 h-8 rounded border border-border-muted bg-canvas-subtle flex items-center justify-center font-label-sm text-text-primary" title="Operador Criptográfico Credenciado">
+          OP
+        </div>
+<div class="hidden xl:flex flex-col text-left">
+<span class="font-body-sm text-[12px] font-semibold text-text-primary leading-tight">SecOp #4902</span>
+<span class="font-label-sm text-[10px] text-text-secondary">ICP-Brasil A1</span>
+</div>
+</div>
+</div>
+</header>
+<!-- ================= SIDEBAR NAVIGATION (SideNavBar from JSON) ================= -->
+<aside class="fixed top-14 left-0 bottom-0 w-64 flex flex-col justify-between p-3 border-r border-border-subtle dark:border-outline-variant bg-canvas-subtle dark:bg-inverse-surface z-40 hidden md:flex">
+<div class="space-y-4">
+<!-- Header side branding -->
+<div class="px-3 py-2 border-b border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[18px]">shield</span>
+<span class="text-headline-sm font-headline-sm font-bold text-text-primary dark:text-surface-bright tracking-tight">ARKHE KERNEL v4.2</span>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="font-label-sm text-label-sm text-text-secondary">MMR Checkpoint #849,204</span>
+<span class="w-2 h-2 rounded-full bg-status-pass-text"></span>
+</div>
+</div>
+<!-- Navigation Tabs strictly adhering to JSON labels and icons -->
+<nav class="space-y-0.5">
+<a class="flex items-center gap-3 px-3 py-2 text-text-primary dark:text-canvas-base bg-canvas-base dark:bg-primary-container border-l-2 border-primary font-medium text-body-sm" href="#proof-explorer">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span>Proof Explorer</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary dark:text-outline hover:bg-surface-container-high dark:hover:bg-surface-variant hover:text-text-primary text-body-sm transition-colors duration-150" href="#enclave-attestation">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+<span>Enclave Attestation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary dark:text-outline hover:bg-surface-container-high dark:hover:bg-surface-variant hover:text-text-primary text-body-sm transition-colors duration-150" href="#rekor-anchor">
+<span class="material-symbols-outlined text-[18px]">hub</span>
+<span>Rekor Anchor</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary dark:text-outline hover:bg-surface-container-high dark:hover:bg-surface-variant hover:text-text-primary text-body-sm transition-colors duration-150" href="#status-list">
+<span class="material-symbols-outlined text-[18px]">fact_check</span>
+<span>Status List v1.0</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary dark:text-outline hover:bg-surface-container-high dark:hover:bg-surface-variant hover:text-text-primary text-body-sm transition-colors duration-150" href="#ed25519-keys">
+<span class="material-symbols-outlined text-[18px]">key</span>
+<span>Ed25519 Keys</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary dark:text-outline hover:bg-surface-container-high dark:hover:bg-surface-variant hover:text-text-primary text-body-sm transition-colors duration-150" href="#epoch-root-log">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span>Epoch Root Log</span>
+</a>
+<!-- Specific domain entry -->
+<div class="pt-3 pb-1 px-3">
+<span class="font-label-sm text-[10px] tracking-wider text-text-tertiary uppercase">Domínio de Liquidação</span>
+</div>
+<a class="flex items-center gap-3 px-3 py-2 text-text-primary font-medium text-body-sm bg-canvas-base border border-border-muted rounded" href="#pix-verification">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+<span>Recibos PIX (JCS/MMR)</span>
+</a>
+</nav>
+<!-- Side CTA -->
+<div class="px-2 pt-2">
+<button class="w-full py-1.5 px-3 border border-border-muted bg-canvas-base hover:bg-canvas-subtle text-text-primary font-label-md text-label-sm flex items-center justify-center gap-2 rounded transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">anchor</span>
+<span>Anchor State</span>
+</button>
+</div>
+</div>
+<!-- SideNavBar Footer Items from JSON -->
+<div class="pt-3 border-t border-border-subtle space-y-1">
+<a class="flex items-center gap-3 px-3 py-1.5 text-text-secondary hover:text-text-primary text-body-sm" href="#diagnostics">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+<span>System Diagnostics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-1.5 text-text-secondary hover:text-text-primary text-body-sm" href="#docs">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span>API Documentation</span>
+</a>
+<div class="px-3 pt-2 text-text-tertiary font-label-sm text-[10px]">
+        Engine Runtime: WASM-Opt 2.1
+      </div>
+</div>
+</aside>
+<!-- ================= MAIN CONTENT CANVAS ================= -->
+<main class="md:ml-64 pt-14 pb-16 min-h-screen">
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+<!-- 1. Institutional Header Banner -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-border-subtle gap-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-sm text-label-sm bg-canvas-subtle border border-border-subtle text-text-secondary px-2 py-0.5 rounded">
+              ARBITRAGEM &amp; AUDITORIA DE PAGAMENTOS
+            </span>
+<span class="font-label-sm text-label-sm text-text-tertiary">
+              MMR LEAF_INDEX: 849,204
+            </span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-text-primary">
+            Verificação de Transação PIX — Recibo Canónico &amp; Prova MMR
+          </h1>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1 max-w-4xl">
+            Auditoria offline de liquidação, conformidade de mandato de agente, ancoragem WormGraph e verificação matemática de não-repúdio.
+          </p>
+</div>
+<!-- Top Actions -->
+<div class="flex flex-wrap items-center gap-2">
+<button class="inline-flex items-center gap-2 px-3 py-2 bg-canvas-base border border-border-muted text-text-primary font-body-sm rounded hover:bg-canvas-subtle transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">file_upload</span>
+<span>Validar Novo Recibo (JSON)</span>
+</button>
+<button class="inline-flex items-center gap-2 px-3 py-2 bg-canvas-base border border-border-muted text-text-primary font-body-sm rounded hover:bg-canvas-subtle transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">description</span>
+<span>Exportar Laudo (PDF/JCS)</span>
+</button>
+<button class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-on-primary font-body-sm font-medium rounded hover:bg-text-secondary transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">offline_bolt</span>
+<span>Verificar Offline no Browser (WASM)</span>
+</button>
+</div>
+</div>
+<!-- Institutional Integrity Verdict Badges -->
+<div class="flex flex-wrap items-center gap-3">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 bg-status-pass-bg border border-status-pass-border rounded">
+<span class="material-symbols-outlined text-[18px] text-status-pass-text">check_circle</span>
+<span class="font-label-sm text-label-sm text-status-pass-text font-semibold">VEREDICTO: VERIFICADO (PASS)</span>
+</div>
+<div class="inline-flex items-center gap-2 px-3 py-1.5 bg-canvas-base border border-border-subtle rounded text-text-secondary">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">policy</span>
+<span class="font-label-sm text-label-sm font-medium">POLÍTICA: BACEN BR-PIX v2.4 + KYA MANDATO</span>
+</div>
+<div class="inline-flex items-center gap-2 px-3 py-1.5 bg-canvas-base border border-border-subtle rounded text-text-secondary">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">speed</span>
+<span class="font-label-sm text-label-sm">LATÊNCIA AUDITORIA: 0.14 ms (LOCAL WASM)</span>
+</div>
+<div class="inline-flex items-center gap-2 px-3 py-1.5 bg-status-pending-bg border border-status-pending-border rounded text-status-pending-text">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span class="font-label-sm text-label-sm">REKOR INCLUSION: LOG #14,092</span>
+</div>
+</div>
+<!-- 2. Transaction Canonical Receipt Overview (Card) -->
+<section class="bg-canvas-base border border-border-subtle rounded p-5 space-y-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border-subtle gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[20px]">account_balance_wallet</span>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Recibo Canónico de Liquidação PIX</h2>
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-2 py-0.5 rounded">STATUS: SETTLED</span>
+</div>
+<div class="flex items-center gap-2 font-label-sm text-label-sm text-text-secondary">
+<span>Canonical Digest BLAKE3:</span>
+<span class="font-code-inline text-code-inline bg-canvas-subtle px-2 py-0.5 border border-border-muted rounded text-text-primary">0xe3b0c442...98fc1c</span>
+</div>
+</div>
+<!-- Transaction Data Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+<!-- Item 1: EndToEndId -->
+<div class="p-3 bg-canvas-subtle border border-border-muted rounded">
+<div class="text-body-sm font-body-sm text-text-secondary mb-1">EndToEndId (BACEN SPI)</div>
+<div class="flex items-center justify-between">
+<span class="font-code-inline text-code-inline font-medium text-text-primary">E00038166202610241432A9812401B2</span>
+<button class="p-1 hover:bg-canvas-base rounded text-text-secondary hover:text-text-primary" onclick="navigator.clipboard.writeText('E00038166202610241432A9812401B2'); alert('EndToEndId copiado com sucesso.');" title="Copiar ID" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Item 2: Liquidation Value -->
+<div class="p-3 bg-canvas-subtle border border-border-muted rounded">
+<div class="text-body-sm font-body-sm text-text-secondary mb-1">Valor Liquidador</div>
+<div class="flex items-baseline justify-between">
+<span class="text-headline-md font-headline-md text-text-primary">R$ 48.500,00</span>
+<span class="font-label-sm text-label-sm text-text-secondary">BRL (ISO 4217)</span>
+</div>
+</div>
+<!-- Item 3: Timestamp -->
+<div class="p-3 bg-canvas-subtle border border-border-muted rounded">
+<div class="text-body-sm font-body-sm text-text-secondary mb-1">Data/Hora da Liquidação</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">schedule</span>
+<span class="font-code-inline text-code-inline text-text-primary">2026-10-24 14:32:08 UTC</span>
+</div>
+</div>
+<!-- Item 4: Payer (Origem) -->
+<div class="p-3 bg-canvas-subtle border border-border-muted rounded">
+<div class="text-body-sm font-body-sm text-text-secondary mb-1">Pagador (Instituição &amp; e-CNPJ)</div>
+<div class="font-body-md font-medium text-text-primary">Banco Santander (Brasil) S.A.</div>
+<div class="font-label-sm text-label-sm text-text-secondary mt-0.5">CNPJ: 00.360.305/0001-04 (ICP-Brasil A1)</div>
+</div>
+<!-- Item 5: Receiver (Destino) -->
+<div class="p-3 bg-canvas-subtle border border-border-muted rounded">
+<div class="text-body-sm font-body-sm text-text-secondary mb-1">Recebedor (Destinatário DLT)</div>
+<div class="font-body-md font-medium text-text-primary">Liquidatech Soluções DLT Ltda</div>
+<div class="font-code-inline text-code-inline text-text-secondary mt-0.5">Chave PIX: liquid@arkhe.network</div>
+</div>
+<!-- Item 6: KYA Agent Mandate -->
+<div class="p-3 bg-canvas-subtle border border-border-muted rounded">
+<div class="text-body-sm font-body-sm text-text-secondary mb-1">Agente Autorizador (KYA Mandato)</div>
+<div class="font-body-md font-medium text-text-primary">Liquidator Auto-Settler v1.4</div>
+<div class="font-code-inline text-code-inline text-text-secondary mt-0.5">did:arkhe:ag-9941 (Submetido)</div>
+</div>
+</div>
+<!-- Mandate Limits and Drift Banner -->
+<div class="p-3 bg-canvas-base border border-border-muted rounded flex flex-col md:flex-row md:items-center justify-between gap-3 text-body-sm">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-secondary">verified_user</span>
+<div>
+<span class="font-medium text-text-primary">Mandato Criptográfico:</span>
+<span class="font-code-inline text-code-inline text-text-secondary ml-1">purpose_hash: 0x4a92e10c78f19...bb4</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<span class="text-text-secondary text-body-sm">Consumo de Teto Diário:</span>
+<span class="font-medium text-text-primary ml-1">R$ 48.500,00 de R$ 100.000,00</span>
+</div>
+<div class="w-24 bg-border-subtle h-2 rounded overflow-hidden">
+<div class="bg-primary h-full" style="width: 48.5%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-1.5 py-0.5 rounded">48.5% (PASS)</span>
+</div>
+</div>
+</section>
+<!-- 3. Four Institutional Verification Pillars (4 Eixos Institucionais) -->
+<section class="space-y-3">
+<div class="flex items-center justify-between">
+<h2 class="text-headline-sm font-headline-sm text-text-primary">
+            Quatro Eixos Institucionais de Não-Repúdio
+          </h2>
+<span class="font-label-sm text-label-sm text-text-tertiary">
+            Conformidade Criptográfica Deterministica
+          </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Pillar 1 -->
+<div class="p-4 bg-canvas-base border border-border-subtle rounded flex flex-col justify-between space-y-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-tertiary">EIXO 01</span>
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-2 py-0.5 rounded">VERIFIED</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary text-[15px]">Assinatura Recibo Canónico</h3>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1">
+                JCS (RFC 8785) com hashing BLAKE3 de 256 bits assinado via curva Ed25519.
+              </p>
+</div>
+<div class="pt-2 border-t border-border-subtle font-code-inline text-[11px] text-text-secondary truncate">
+              Chave: ed25519:pub_73a1fe0c...9a2
+            </div>
+</div>
+<!-- Pillar 2 -->
+<div class="p-4 bg-canvas-base border border-border-subtle rounded flex flex-col justify-between space-y-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-tertiary">EIXO 02</span>
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-2 py-0.5 rounded">VERIFIED</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary text-[15px]">Mandato KYA &amp; ICP-Brasil</h3>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1">
+                Certificado e-CNPJ A1 Serpro v5 válido; sem desvio de escopo financeiro ou teto diário.
+              </p>
+</div>
+<div class="pt-2 border-t border-border-subtle font-code-inline text-[11px] text-text-secondary truncate">
+              AC Serpro v5 | Serial: #492810AA
+            </div>
+</div>
+<!-- Pillar 3 -->
+<div class="p-4 bg-canvas-base border border-border-subtle rounded flex flex-col justify-between space-y-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-tertiary">EIXO 03</span>
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-2 py-0.5 rounded">VERIFIED</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary text-[15px]">Inclusão WormGraph MMR</h3>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1">
+                Transação inserida no Checkpoint #849,204 na posição de nó #1,698,407 da árvore.
+              </p>
+</div>
+<div class="pt-2 border-t border-border-subtle font-code-inline text-[11px] text-text-secondary truncate">
+              MMR Checkpoint: #849,204
+            </div>
+</div>
+<!-- Pillar 4 -->
+<div class="p-4 bg-canvas-base border border-border-subtle rounded flex flex-col justify-between space-y-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-tertiary">EIXO 04</span>
+<span class="font-label-sm text-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-2 py-0.5 rounded">VERIFIED</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary text-[15px]">Revogação Bitstring v1.0</h3>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1">
+                Consulta em lista bitstring W3C Status List v1.0. Bit 4,912 = 0x0 (Válido / Ativo).
+              </p>
+</div>
+<div class="pt-2 border-t border-border-subtle font-code-inline text-[11px] text-text-secondary truncate">
+              StatusList: bit 4912 = 0x0
+            </div>
+</div>
+</div>
+</section>
+<!-- 4. Interactive MMR Proof Path Visualizer -->
+<section class="bg-canvas-base border border-border-subtle rounded p-5 space-y-5">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border-subtle gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[20px]">account_tree</span>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">
+                Caminho da Prova de Inclusão MMR (Merkle Mountain Range)
+              </h2>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5">
+              Trajetória determinística de colapso de nós até a raiz do checkpoint verificado offline via motor WASM.
+            </p>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-status-pass-text"></span>
+<span class="font-label-sm text-label-sm font-medium text-text-primary">WASM Proof Verifier: 100% OK</span>
+</div>
+</div>
+<!-- Flow Steps in Bento Grid Style -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+<!-- Step 1 -->
+<div class="p-4 bg-canvas-subtle border border-border-muted rounded relative flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-tertiary">PASSO 1: FOLHA</span>
+<span class="material-symbols-outlined text-text-secondary text-[16px]">pin</span>
+</div>
+<div class="font-body-md font-medium text-text-primary">Leaf Hash BLAKE3</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1">
+                Hash canónico da transação (Posição #849,204 na MMR).
+              </p>
+</div>
+<div class="mt-4 p-2 bg-canvas-base border border-border-subtle rounded">
+<div class="font-label-sm text-[10px] text-text-tertiary">LEAF HASH:</div>
+<div class="font-code-inline text-[11px] text-text-primary truncate">
+                0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+              </div>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="p-4 bg-canvas-subtle border border-border-muted rounded relative flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-tertiary">PASSO 2: PICOS</span>
+<span class="material-symbols-outlined text-text-secondary text-[16px]">landscape</span>
+</div>
+<div class="font-body-md font-medium text-text-primary">Picos MMR do Checkpoint</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1">
+                Peak 0 (Altura 19, Nó 1,048,575) e Peak 1 (Altura 3, Nó 1,698,406).
+              </p>
+</div>
+<div class="mt-4 p-2 bg-canvas-base border border-border-subtle rounded space-y-1">
+<div class="font-label-sm text-[10px] text-text-tertiary">P0: <span class="font-code-inline text-text-secondary">0x7f9a88...c112</span></div>
+<div class="font-label-sm text-[10px] text-text-tertiary">P1: <span class="font-code-inline text-text-secondary">0x81b0a2...fe89</span></div>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="p-4 bg-canvas-subtle border border-border-muted rounded relative flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-tertiary">PASSO 3: FUSÃO</span>
+<span class="material-symbols-outlined text-text-secondary text-[16px]">merge</span>
+</div>
+<div class="font-body-md font-medium text-text-primary">Bagging Right-Fold</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1">
+                Convolução determinística H(P0 || P1) com vetor de altura e tamanho de árvore.
+              </p>
+</div>
+<div class="mt-4 p-2 bg-canvas-base border border-border-subtle rounded">
+<div class="font-label-sm text-[10px] text-text-tertiary">BAGGING DIGEST:</div>
+<div class="font-code-inline text-[11px] text-text-primary truncate">
+                0x9102ca11082ef...481b2
+              </div>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="p-4 bg-canvas-subtle border border-border-muted rounded relative flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-tertiary">PASSO 4: ROOT ANCHOR</span>
+<span class="material-symbols-outlined text-text-secondary text-[16px]">lock</span>
+</div>
+<div class="font-body-md font-medium text-text-primary">MMR Checkpoint Root</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1">
+                Assinado com Ed25519 e ancorado na Rekor Transparência Log #14,092.
+              </p>
+</div>
+<div class="mt-4 p-2 bg-status-pass-bg border border-status-pass-border rounded">
+<div class="font-label-sm text-[10px] text-status-pass-text font-semibold">ROOT CONFIRMADA:</div>
+<div class="font-code-inline text-[11px] text-status-pass-text truncate font-semibold">
+                0x04d1668e1b3490aa...
+              </div>
+</div>
+</div>
+</div>
+<!-- Offline Zero-Network Attestation Box -->
+<div class="p-3 bg-canvas-subtle border border-border-subtle rounded flex items-center justify-between text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-pass-text text-[20px]">offline_pin</span>
+<span class="text-text-primary font-medium">Garantia Criptográfica de Privacidade:</span>
+<span class="text-text-secondary">Verificado localmente via WebAssembly sem transmissão de tráfego de rede (0 ms RTT, 0 chamadas de API).</span>
+</div>
+<button class="px-2.5 py-1 bg-canvas-base border border-border-muted hover:bg-canvas-subtle text-text-primary text-body-sm font-medium rounded transition-colors" onclick="alert('Recalculando árvore MMR com semente estrita...');" type="button">
+            Re-executar Verificador WASM
+          </button>
+</div>
+</section>
+<!-- 5. Canonical JSON Inspector (JCS RFC 8785) & Submissions -->
+<section class="bg-canvas-base border border-border-subtle rounded p-5 space-y-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border-subtle gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[20px]">code</span>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">
+              Inspeção do Recibo Canónico Serializado (JSON JCS RFC 8785)
+            </h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3 py-1 bg-canvas-subtle hover:bg-surface-variant border border-border-muted rounded text-body-sm text-text-primary transition-colors" onclick="navigator.clipboard.writeText(document.getElementById('canonical-jcs-code').innerText); alert('Payload JSON canónico copiado!');" type="button">
+<span class="material-symbols-outlined text-[15px]">content_copy</span>
+<span>Copiar Payload</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1 bg-canvas-subtle hover:bg-surface-variant border border-border-muted rounded text-body-sm text-text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px]">download</span>
+<span>Baixar (.arkhe)</span>
+</button>
+</div>
+</div>
+<!-- Code Block -->
+<div class="relative bg-canvas-subtle border border-border-muted rounded p-4 overflow-x-auto">
+<pre class="font-code-inline text-code-inline text-text-primary leading-relaxed" id="canonical-jcs-code"><code>{
+  "protocol": "arkhe/settlement/pix/v2.4",
+  "receipt": {
+    "endToEndId": "E00038166202610241432A9812401B2",
+    "amount": "48500.00",
+    "currency": "BRL",
+    "settlementTimestamp": "2026-10-24T14:32:08Z",
+    "payer": {
+      "ispb": "00360305",
+      "legalName": "Banco Santander (Brasil) S.A.",
+      "taxId": "00360305000104",
+      "authCertificate": "ICP-Brasil A1 SERPRO #492810AA"
+    },
+    "payee": {
+      "key": "liquid@arkhe.network",
+      "legalName": "Liquidatech Soluções DLT Ltda",
+      "destinationAccount": "dlt:arkhe:acc-8820"
+    },
+    "kyaMandate": {
+      "agentDid": "did:arkhe:ag-9941",
+      "mandatePurposeHash": "0x4a92e10c78f192b3a8849c00b9bb4e9812401b22e10c78f192b3a8849c00b9bb4",
+      "dailyCeiling": "100000.00",
+      "allocatedAmount": "48500.00"
+    }
+  },
+  "mmrInclusionProof": {
+    "checkpointIndex": 849204,
+    "leafPosition": 1698407,
+    "leafHash": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "peaks": [
+      "0x7f9a88c112e432a98f12cb49120ac92019b88491230198234abcf091231a4819",
+      "0x81b0a2fe8941092830192e10c78f192b3a8849c00b9bb4e9812401b22e10c78f"
+    ],
+    "checkpointRoot": "0x04d1668e1b3490aa897120e981bc92a8b340192e10c78f192b3a8849c00b9bb4"
+  },
+  "signatures": [
+    {
+      "signer": "ed25519:pub_73a1fe0c9a281029384729102837491028374910283749102837491028374910",
+      "algorithm": "Ed25519",
+      "sig": "0x5c4f19028e3b1c902...fe981a"
+    }
+  ],
+  "rekorAnchor": {
+    "logIndex": 14092,
+    "integratedTime": 1792852328
+  }
+}</code></pre>
+</div>
+<!-- Compliance & Regulatory Submission Buttons -->
+<div class="flex flex-wrap items-center justify-between pt-2 gap-3">
+<div class="flex items-center gap-2 text-body-sm text-text-secondary">
+<span class="material-symbols-outlined text-[16px] text-text-tertiary">shield_lock</span>
+<span>Documento apto para instrução judicial e resolução de contestações regulatórias.</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 bg-canvas-base border border-border-muted hover:bg-canvas-subtle text-text-primary text-body-sm font-medium rounded transition-colors" type="button">
+              Submeter à RBB / Anbima
+            </button>
+<button class="px-3 py-1.5 bg-canvas-base border border-border-muted hover:bg-canvas-subtle text-text-primary text-body-sm font-medium rounded transition-colors" type="button">
+              Notificar BACEN SPI
+            </button>
+<button class="px-3 py-1.5 bg-primary text-on-primary text-body-sm font-medium rounded hover:bg-text-secondary transition-colors" type="button">
+              Emitir Certificado Pericial
+            </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-22",
+  "scope": "Targeted local Part V tests; synthetic receipts and local mock provider only",
+  "runs": [
+    {
+      "command": "cargo test --locked -p arkhe-depin --test portable_proof_composite",
+      "chunks": [
+        {
+          "chunk_id": "bb2d54",
+          "wall_time_seconds": 6.3048068,
+          "exit_code": 0,
+          "original_token_count": 152,
+          "output": "   Compiling arkhe-depin v0.1.0 (D:\\arkhe\\integration\\arkhe-depin)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.18s\n     Running tests\\portable_proof_composite.rs (target\\debug\\deps\\portable_proof_composite-7073ab40199f9316.exe)\n\nrunning 4 tests\ntest normalization_is_deterministic_and_rejects_invalid_fields ... ok\ntest invalid_receipt_does_not_mutate_mmr ... ok\ntest rejects_content_hardware_checkpoint_and_path_tampering ... ok\ntest offline_roundtrip_across_mmr_peak_boundaries ... ok\n\ntest result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+        }
+      ]
+    },
+    {
+      "command": "cargo test --locked -p arkhe-verify-core --test c2pa_signature",
+      "chunks": [
+        {
+          "chunk_id": "d7df7f",
+          "wall_time_seconds": 3.8575414,
+          "exit_code": 0,
+          "original_token_count": 223,
+          "output": "   Compiling arkhe-verify-core v0.1.0 (D:\\arkhe\\verification\\crates\\arkhe-verify-core)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.94s\n     Running tests\\c2pa_signature.rs (target\\debug\\deps\\c2pa_signature-4009260b5c09faab.exe)\n\nrunning 9 tests\ntest envelope_deserialization_rejects_unknown_fields ... ok\ntest signing_payload_is_deterministic_and_domain_separated ... ok\ntest unsupported_algorithm_never_reports_verification ... ok\ntest missing_and_revoked_roots_are_rejected ... ok\ntest malformed_profiles_duplicates_and_fields_are_errors ... ok\ntest matching_identity_with_rogue_key_fails_signature ... ok\ntest valid_signature_over_pinned_ed25519_root ... ok\ntest tampered_claim_reuses_signature_and_fails ... ok\ntest identity_binding_includes_kid_and_issuer ... ok\n\ntest result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s\n\n"
+        }
+      ]
+    },
+    {
+      "command": "cargo test --locked --manifest-path agi-coder/Cargo.toml -p agi-coder-tests --test jules_completion --test e2e_mock_jules",
+      "chunks": [
+        {
+          "chunk_id": "579805",
+          "wall_time_seconds": 10.0105294,
+          "session_id": 17777,
+          "original_token_count": 20,
+          "output": "   Compiling agi-coder-tests v0.1.0 (D:\\arkhe\\agi-coder\\crates\\agi-coder-tests)\n"
+        },
+        {
+          "chunk_id": "a5f9c4",
+          "wall_time_seconds": 0.000009,
+          "exit_code": 0,
+          "original_token_count": 223,
+          "output": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 26.39s\n     Running tests\\e2e_mock_jules.rs (agi-coder\\target\\debug\\deps\\e2e_mock_jules-246f7caa57d09d08.exe)\n\nrunning 3 tests\ntest unsupported_schema_and_missing_tests_never_imply_success ... ok\ntest created_session_is_recorded_before_return_and_recording_failure_is_uncertain ... ok\ntest mock_http_to_signed_evidence_gate_journal_and_mmr ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s\n\n     Running tests\\jules_completion.rs (agi-coder\\target\\debug\\deps\\jules_completion-13bdc18d99fad029.exe)\n\nrunning 2 tests\ntest missing_ambiguous_foreign_or_invalid_completion_cannot_use_local_time ... ok\ntest completion_time_comes_from_provider_event_and_record_stays_unsigned ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,readFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+import {sign,generateKeyPairSync} from 'node:crypto';
+process.env.ARKHE_INTRA_DATA_DIR=mkdtempSync(join(tmpdir(),'arkhe-lifecycle-'));
+execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/setup.mjs',import.meta.url))],{env:process.env,stdio:'pipe'});
+const {login,session,accounts}=await import('../lib/auth.mjs');
+const {accountChallenge,executeAccountAction,inspectRecovery,submitRecovery,recoveryPossession}=await import('../lib/account-management.mjs');
+const {exportTrust}=await import('../lib/credentials.mjs');
+const {createDocument,challenge,transition,exportDocument}=await import('../lib/documents.mjs');
+const {verifyBundle}=await import('../public/offline/verify.mjs');
+const {digest}=await import('../lib/crypto.mjs');
+const {db}=await import('../lib/store.mjs');
+const credentials=JSON.parse(readFileSync(join(process.env.ARKHE_INTRA_DATA_DIR,'credentials.json')));
+const credential=role=>credentials.find(row=>row.email===role+'@arkhe.local');
+const ownerKey=readFileSync(join(process.env.ARKHE_INTRA_DATA_DIR,'owner.private.pem'));
+const authorKey=readFileSync(join(process.env.ARKHE_INTRA_DATA_DIR,'author.private.pem'));
+const owner=login(credential('owner').email,credential('owner').password).user;
+function action(target,kind,extra={}) {
+ const c=accountChallenge(owner,target,{action:kind,...extra});
+ return {c,result:executeAccountAction(owner,target,{challengeId:c.id,signature:sign(null,Buffer.from(c.statement),ownerKey).toString('base64')})};
+}
+test('signed revocation and recovery preserve account identity and mathematical historical signatures',async()=>{
+ const original=login(credential('author').email,credential('author').password);
+ const doc=createDocument(original.user,{title:'Historic',department:'Synthetic',body:'Immutable signed content'});
+ const signed=challenge(original.user,doc.id,'submit');transition(original.user,doc.id,{action:'submit',digest:doc.digest,revision:doc.revision,signature:sign(null,Buffer.from(signed.statement),authorKey).toString('base64')});
+ assert.throws(()=>accountChallenge(original.user,'author',{action:'revoke'}),error=>error.status===403);
+ assert.throws(()=>accountChallenge(owner,'owner',{action:'revoke'}),error=>error.status===403);
+ const revoked=action('author','revoke');assert.equal(revoked.result.status,'revoked');
+ assert.equal(session(original.token),null);assert.throws(()=>login(credential('author').email,credential('author').password));
+ assert.throws(()=>executeAccountAction(owner,'author',{challengeId:revoked.c.id,signature:'bad'}));
+ const issued=action('author','issue-recovery').result;
+ assert.equal(db().prepare('SELECT token_hash FROM account_recovery_grants').get().token_hash.includes(issued.token),false);
+ const inspected=inspectRecovery({token:issued.token}),keys=generateKeyPairSync('ed25519'),publicKey=keys.publicKey.export({type:'spki',format:'pem'});
+ const row={id:inspected.grantId,target_id:inspected.targetId,revision:inspected.revision,challenge:inspected.challenge};
+ const input={token:issued.token,password:'New synthetic recovery password!',publicKey,signature:sign(null,Buffer.from(recoveryPossession(row,publicKey)),keys.privateKey).toString('base64')};
+ const pending=submitRecovery(input);assert.equal(pending.status,'pending');assert.throws(()=>submitRecovery(input));
+ assert.throws(()=>login(credential('author').email,input.password));
+ assert.equal(action('author','approve-recovery',{requestId:pending.id}).result.status,'active');
+ const recovered=login(credential('author').email,input.password);assert.equal(recovered.user.id,'author');assert.equal(recovered.user.publicKey,publicKey);
+ assert.throws(()=>login(credential('author').email,credential('author').password));
+ assert.equal(accounts().find(user=>user.id==='author').keyHistory[0].publicKey,original.user.publicKey);
+ const verified=await verifyBundle(exportDocument(doc.id),exportTrust(owner),{blake3_hex:digest});
+ assert.equal(verified.details[0].valid,true);assert.equal(verified.details[0].keyStatus,'revoked');assert.equal(verified.signatures,'INCONCLUSIVE');
+ assert.throws(()=>db().exec('DELETE FROM account_lifecycle'),/append only/);
+});
+test('stale grants and missing signatures do not alter a different account revision',()=>{
+ const next=action('reviewer','issue-recovery').result;
+ action('reviewer','revoke');assert.throws(()=>inspectRecovery({token:next.token}),error=>error.status===409);
+ const c=accountChallenge(owner,'reviewer',{action:'issue-recovery'});
+ assert.throws(()=>executeAccountAction(owner,'reviewer',{challengeId:c.id,signature:'AA=='}),error=>error.status===422);
+});

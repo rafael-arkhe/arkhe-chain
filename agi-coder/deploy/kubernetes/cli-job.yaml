@@ -1,0 +1,26 @@
+# Explicit one-shot offline validation job. The CLI is not a daemon.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: agi-coder-demo
+  namespace: agi-coder
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+        - name: cli
+          image: agi-coder:local
+          args: ["run", "--demo"]
+          resources:
+            requests: {cpu: 100m, memory: 64Mi}
+            limits: {cpu: '1', memory: 256Mi}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]

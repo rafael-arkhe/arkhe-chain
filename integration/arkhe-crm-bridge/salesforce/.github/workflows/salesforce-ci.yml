@@ -1,0 +1,69 @@
+name: Salesforce CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: salesforce-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24', cache: npm}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: dtolnay/rust-toolchain@1.96.0
+        with: {components: 'rustfmt, clippy'}
+      - run: npm ci --ignore-scripts
+      - run: npm run check:syntax
+      - run: python scripts/check_metadata.py
+      - run: python -m unittest discover -s scripts -p 'test_*.py' -v
+      - run: cargo fmt --manifest-path native/Cargo.toml --all --check
+      - run: cargo test --manifest-path native/Cargo.toml -p arkhe-crm-bridge-cli --locked
+      - run: cargo clippy --manifest-path native/Cargo.toml -p arkhe-crm-bridge-cli --all-targets --locked -- -D warnings
+      - run: cargo build --manifest-path native/Cargo.toml -p arkhe-crm-bridge-cli --locked
+      - run: python scripts/e2e_bridge.py --binary native/target/debug/arkhe-crm-bridge-cli
+  sandbox:
+    needs: offline
+    # No pull_request_target and no secrets for fork code.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: validation-qa
+    concurrency:
+      group: salesforce-qa-org
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli@2.155.7
+      - name: Authenticate dedicated validation principal
+        env:
+          SF_JWT_KEY: ${{ secrets.SF_JWT_KEY }}
+          SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_INSTANCE_URL: ${{ vars.SF_INSTANCE_URL }}
+        run: python scripts/login_jwt.py --alias validate-sandbox
+      - name: Check-only deployment and regression tests
+        run: python scripts/validate-sandbox.py --org validate-sandbox --evidence evidence/validation.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sandbox-validation-${{ github.sha }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove session
+        if: always()
+        run: sf org logout --target-org validate-sandbox --no-prompt

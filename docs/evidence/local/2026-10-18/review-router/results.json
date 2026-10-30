@@ -1,0 +1,158 @@
+{
+  "scope": "Local execution only; no remote CI, protocol freeze or production attestation",
+  "context": {},
+  "attempts": [
+    {
+      "gate": "review-router-workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:46:25.315601+00:00",
+      "duration_seconds": 58.395,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "188cc81654354283cedf4a5e4dfe0ae791886e573eabf610f3989aea5b2d7846",
+      "source_after_sha256": "188cc81654354283cedf4a5e4dfe0ae791886e573eabf610f3989aea5b2d7846",
+      "source_changed_during_execution": false,
+      "log": "01-review-router-workspace.log",
+      "log_sha256": "46c0185d855b28c637d8118264b4f875acd0504efa6d181a820ae6fd67b223d8",
+      "inputs": "01-review-router-workspace.inputs.json"
+    },
+    {
+      "gate": "seed-origin-corrected",
+      "command": [
+        "cargo",
+        "run",
+        "-p",
+        "arkhe-bugbounty",
+        "--bin",
+        "review_queue",
+        "--locked",
+        "--",
+        "seed-origin",
+        "docs/evidence/local/2026-10-18/review-router/queue.json",
+        "docs/evidence/local/2026-10-17/triage-evaluation/run-01"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:48:10.512351+00:00",
+      "duration_seconds": 18.112,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_after_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_changed_during_execution": false,
+      "log": "02-seed-origin-corrected.log",
+      "log_sha256": "2269e79ba1072f1fb9506b9844bbf7a1262d0246293aa68e888cc53152b45c96",
+      "inputs": "02-seed-origin-corrected.inputs.json"
+    },
+    {
+      "gate": "review-queue-list",
+      "command": [
+        "cargo",
+        "run",
+        "-p",
+        "arkhe-bugbounty",
+        "--bin",
+        "review_queue",
+        "--locked",
+        "--",
+        "list",
+        "docs/evidence/local/2026-10-18/review-router/queue.json"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:48:29.164285+00:00",
+      "duration_seconds": 1.536,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_after_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_changed_during_execution": false,
+      "log": "03-review-queue-list.log",
+      "log_sha256": "77e47bf77c1a13a8fa02db7783fd82b71a0bbb6bcd3914c515fce141fe6f355d",
+      "inputs": "03-review-queue-list.inputs.json"
+    },
+    {
+      "gate": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:48:31.219896+00:00",
+      "duration_seconds": 1.171,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_after_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_changed_during_execution": false,
+      "log": "04-format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "inputs": "04-format.inputs.json"
+    },
+    {
+      "gate": "architecture",
+      "command": [
+        "python",
+        "scripts/check_architecture.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:48:32.905515+00:00",
+      "duration_seconds": 0.732,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_after_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_changed_during_execution": false,
+      "log": "05-architecture.log",
+      "log_sha256": "e9b8003c8db1621ac0be6d61077c1b89e7592af20b9fc41d763528b48732a19f",
+      "inputs": "05-architecture.inputs.json"
+    },
+    {
+      "gate": "authority-boundaries",
+      "command": [
+        "python",
+        "scripts/check_boundaries.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:48:34.117440+00:00",
+      "duration_seconds": 0.379,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_after_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_changed_during_execution": false,
+      "log": "06-authority-boundaries.log",
+      "log_sha256": "084b677d74c76800bb54edbfb1832d8dd0188cd212cfec25c1fc945cdcf77752",
+      "inputs": "06-authority-boundaries.inputs.json"
+    },
+    {
+      "gate": "wasm-build",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "arkhe-verify-wasm",
+        "--target",
+        "wasm32-unknown-unknown",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T10:48:35.009850+00:00",
+      "duration_seconds": 4.768,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_after_sha256": "3ed7866ac4df27e7ebb7886e90e96d05941384eaa8edb61a3e4395a5a65b064c",
+      "source_changed_during_execution": false,
+      "log": "07-wasm-build.log",
+      "log_sha256": "ed4da8bbbcdedddc04c7fa817e8fb40db2a8dfa940e9bc371700c9f5a6dfd01e",
+      "inputs": "07-wasm-build.inputs.json"
+    }
+  ]
+}

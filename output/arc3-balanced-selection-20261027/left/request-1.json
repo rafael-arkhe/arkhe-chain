@@ -1,0 +1,36 @@
+{
+  "model": "north-mini-code-1.0:latest",
+  "prompt": "{\"candidate_descriptions\":[{\"candidate_id\":\"B05\",\"description\":\"For any action, move the first detected object by dx=1, dy=0 if unblocked; otherwise preserve the grid. Empty object list preserves grid. Preserve state. This rule ignores action direction/kind.\"},{\"candidate_id\":\"B07\",\"description\":\"For any action, move the first detected object by dx=0, dy=1 if unblocked; otherwise preserve the grid. Empty object list preserves grid. Preserve state. This rule ignores action direction/kind.\"},{\"candidate_id\":\"B08\",\"description\":\"For any action, move the first detected object by dx=0, dy=-1 if unblocked; otherwise preserve the grid. Empty object list preserves grid. Preserve state. This rule ignores action direction/kind.\"},{\"candidate_id\":\"B01\",\"description\":\"On CLICK set the clicked cell to color 2. On other actions preserve the grid. Preserve state.\"},{\"candidate_id\":\"B06\",\"description\":\"For any action, move the first detected object by dx=-1, dy=0 if unblocked; otherwise preserve the grid. Empty object list preserves grid. Preserve state. This rule ignores action direction/kind.\"},{\"candidate_id\":\"B02\",\"description\":\"On CLICK set the clicked cell to color 5. On other actions preserve the grid. Preserve state.\"},{\"candidate_id\":\"B03\",\"description\":\"On CLICK set the clicked cell to color 8. On other actions preserve the grid. Preserve state.\"},{\"candidate_id\":\"B04\",\"description\":\"On CLICK set the clicked cell to color 9. On other actions preserve the grid. Preserve state.\"},{\"candidate_id\":\"B00\",\"description\":\"Return the grid and state unchanged for every action.\"}],\"current_best_id\":null,\"explicit_dev_mismatch\":[],\"grid_transport_encoding\":\"Lossless 64x64: initialize every pixel to base_color, then set each override[x,y,color]. DSL still receives actual grids; this JSON is input-output evidence, not executable AST.\",\"previous_training_feedback\":[],\"scope\":\"Known synthetic development controls; candidate algorithms are supplied, no holdout access or production admission.\",\"task\":\"Select one supplied deterministic hypothesis that best reproduces every training input/output. Return exactly JSON with candidate_id. No code or new program is requested.\",\"training_episodes\":[[[{\"base_color\":0,\"encoding\":\"background_overrides\",\"height\":64,\"overrides\":[[3,3,5]],\"width\":64},{\"dx\":-1,\"dy\":0,\"kind\":\"MOVE\"},{\"base_color\":0,\"encoding\":\"background_overrides\",\"height\":64,\"overrides\":[[2,3,5]],\"width\":64}],[{\"base_color\":0,\"encoding\":\"background_overrides\",\"height\":64,\"overrides\":[[0,3,5]],\"width\":64},{\"dx\":-1,\"dy\":0,\"kind\":\"MOVE\"},{\"base_color\":0,\"encoding\":\"background_overrides\",\"height\":64,\"overrides\":[[0,3,5]],\"width\":64}]]]}",
+  "stream": false,
+  "format": {
+    "type": "object",
+    "properties": {
+      "candidate_id": {
+        "type": "string",
+        "enum": [
+          "B05",
+          "B07",
+          "B08",
+          "B01",
+          "B06",
+          "B02",
+          "B03",
+          "B04",
+          "B00"
+        ]
+      }
+    },
+    "required": [
+      "candidate_id"
+    ],
+    "additionalProperties": false
+  },
+  "think": false,
+  "keep_alive": "5m",
+  "options": {
+    "temperature": 0,
+    "seed": 0,
+    "num_predict": 1024,
+    "num_ctx": 8192
+  }
+}

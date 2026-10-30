@@ -1,0 +1,80 @@
+{
+  "pilot": "support-semantic-triage v5 (sentence segmentation corrected)",
+  "status": "NOT_PROMOTED",
+  "calibration_status": "PENDING",
+  "different_verifier_family": "DeBERTa NLI vs Cohere generator/joint judge",
+  "error_independence_established": false,
+  "unit_test_execution": {
+    "command": "python -m unittest discover -s examples/sde-publication/golden-set -p test_nli_triage.py -v",
+    "passed": 7
+  },
+  "cases": [
+    {
+      "id": "wixqa-expert-001",
+      "base_decision": "ALLOW",
+      "base_composite": 0.96,
+      "v5_decision": "REQUIRE_APPROVAL",
+      "reason": "nli_contradiction",
+      "claim_units": 3,
+      "max_contradiction": 0.9998120665550232
+    },
+    {
+      "id": "wixqa-expert-002",
+      "base_decision": "ALLOW",
+      "base_composite": 0.96,
+      "v5_decision": "REQUIRE_APPROVAL",
+      "reason": "nli_contradiction",
+      "claim_units": 3,
+      "max_contradiction": 0.9992448091506958
+    },
+    {
+      "id": "wixqa-expert-003",
+      "base_decision": "ALLOW_WITH_LOGGING",
+      "base_composite": 0.74,
+      "v5_decision": "REQUIRE_APPROVAL",
+      "reason": "acceptance_without_entailment",
+      "claim_units": 3,
+      "max_contradiction": 0.006603690329939127
+    }
+  ],
+  "case_001_evidence": {
+    "claim": "No, you cannot accept payments while your Wix Payments account is still under verification.",
+    "premise": "to Accept Payments in your site's dashboard. Click Complete Setup under Accept Credit/Debit Cards with Wix. Click Complete Account Setup. Fill in the relevant information and click Submit.Learn more about account set-up. Wix is required to review and verify the personal and business information you provide as well as your site content. In some cases, we may need your cooperation in order to complete the verification process. From the time of the first transaction on your site, you have 30 days to complete your account setup or verification process. If you do not complete these processes within 30 days, your Wix Payments account will be suspended and you will not be able to accept payments through your site. ActiveYou have connected your Wix Payments account and your site is accepting payments. You are all set to receive weekly payouts to your bank account when applicable. Go to Accept Payments in",
+    "article_id": "b6c9353c04f2a5e3907ffad8c44109b18c32fbce3efd1a25a7ad0ea9897cb5e1",
+    "scores": {
+      "contradiction": 0.9998120665550232,
+      "entailment": 5.023447556595784e-06,
+      "neutral": 0.00018294861365575343
+    }
+  },
+  "limits": [
+    "Sentence units may contain multiple atomic propositions",
+    "NLI scores and 0.8 thresholds are not domain-calibrated",
+    "Maximum over evidence windows may increase false alarms",
+    "No human labels, independent generative panel, or external effects",
+    "Original system prompt presence confirmed by native renderer debug output"
+  ],
+  "model_load_observation": "Transformers reported unexpected deberta.embeddings.position_ids; classifier inference and three synthetic label-order probes completed. This is not a formal model equivalence check.",
+  "files": [
+    {
+      "file": "runs\\wixqa-nli-v5-sentencefix\\triage.jsonl",
+      "sha256": "c49c2a3b1b7873f72c624224d320c09acb295c25b411ea5711e22f83aad3c132"
+    },
+    {
+      "file": "runs\\wixqa-nli-v5-sentencefix\\run-manifest.json",
+      "sha256": "21c2a9552cc51bb98e02de558eec2cdefef5ec9fb041a2d852357e0df57cb86a"
+    },
+    {
+      "file": "runs\\wixqa-nli-v5-sentencefix\\nli_triage.snapshot.py",
+      "sha256": "c697fd374101a87ed17e77bfb3e91ed3cc181866764a16eb4b308b28a8405458"
+    },
+    {
+      "file": "v5-policy.json",
+      "sha256": "68a64b16bc820cc6829aa7b3fcfed285530216dd859e3a8ee29301aae88b9001"
+    },
+    {
+      "file": "test_nli_triage.py",
+      "sha256": "9170e9f4ae2e4ac5c5c5c50cf2aa3b237884d278fe5753729eb8995aa44fb109"
+    }
+  ]
+}

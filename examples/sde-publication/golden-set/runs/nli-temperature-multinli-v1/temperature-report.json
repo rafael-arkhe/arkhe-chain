@@ -1,0 +1,111 @@
+{
+  "created_at": "2026-10-24T21:02:00.262167+00:00",
+  "status": "EXPERIMENTAL_GENERIC_NLI_ONLY",
+  "support_domain_calibration": "PENDING",
+  "temperature": 2.1687846760564096,
+  "labels": [
+    "contradiction",
+    "entailment",
+    "neutral"
+  ],
+  "fit": {
+    "method": "bounded golden-section on log(T), dev NLL only",
+    "log_temperature_bounds": [
+      -3,
+      3
+    ],
+    "iterations": 80
+  },
+  "development": {
+    "before": {
+      "count": 100,
+      "nll": 0.4211062801993644,
+      "accuracy": 0.92,
+      "multiclass_brier_sum": 0.15560488748056986,
+      "top_label_ece_10bins": 0.0768189598195597,
+      "contradiction_ece_10bins": 0.03193374123706349
+    },
+    "after": {
+      "count": 100,
+      "nll": 0.2677143786687948,
+      "accuracy": 0.92,
+      "multiclass_brier_sum": 0.136439681481658,
+      "top_label_ece_10bins": 0.047329178112602274,
+      "contradiction_ece_10bins": 0.022553767587942603
+    }
+  },
+  "holdout": {
+    "before": {
+      "count": 100,
+      "nll": 0.4565360808201286,
+      "accuracy": 0.89,
+      "multiclass_brier_sum": 0.19981105990667192,
+      "top_label_ece_10bins": 0.10623940462659642,
+      "contradiction_ece_10bins": 0.04606749508117969
+    },
+    "after": {
+      "count": 100,
+      "nll": 0.3078050439987038,
+      "accuracy": 0.89,
+      "multiclass_brier_sum": 0.17462487033271967,
+      "top_label_ece_10bins": 0.060772218035170925,
+      "contradiction_ece_10bins": 0.04765174645955178
+    }
+  },
+  "source_sha256": "cdb65d97f51fa409065dc6acf6a36e780064d187429872f87e065bee4461acee",
+  "model": {
+    "repository": "cross-encoder/nli-deberta-v3-base",
+    "revision": "6c749ce3425cd33b46d187e45b92bbf96ee12ec7",
+    "files": [
+      {
+        "file": "config.json",
+        "sha256": "897e756eb59d3183adb505952e7910e7cbc7750a43f3b3747a96b688d2b02a47",
+        "bytes": 1052
+      },
+      {
+        "file": "tokenizer_config.json",
+        "sha256": "f3eecd07c370ef0bf7dd3780d3cd68cf9c8b00c267e21a208ddcd8f82bfec1a6",
+        "bytes": 1346
+      },
+      {
+        "file": "tokenizer.json",
+        "sha256": "5124ef2ead1a10a717703bc436de7f353da76d6340e4587719b42b1693707964",
+        "bytes": 8656624
+      },
+      {
+        "file": "special_tokens_map.json",
+        "sha256": "ed7c099c988dbb414b18a6980d20cb57b91b7cd119f6f6941eb364b0e892e712",
+        "bytes": 301
+      },
+      {
+        "file": "spm.model",
+        "sha256": "c679fbf93643d19aab7ee10c0b99e460bdbc02fedf34b92b05af343b4af586fd",
+        "bytes": 2464616
+      },
+      {
+        "file": "added_tokens.json",
+        "sha256": "a4b6bfe668f2b3cf6f0cd535e98a0663d2d0d4a4a15f13075ad3597d33985a23",
+        "bytes": 26
+      },
+      {
+        "file": "README.md",
+        "sha256": "b6a6dd82d5fee7036e3b815ce1d28458df294d8525fc234fb7e7277b6b79d878",
+        "bytes": 2856
+      },
+      {
+        "file": "model.safetensors",
+        "sha256": "d8148c6d49e0a7925134294c56326c71fe0ab1dc390e37355e00c7efbb488afa",
+        "bytes": 737726552
+      }
+    ]
+  },
+  "runner_sha256": "f855c44570612508b1c6896734f9752840f497a2043e6b556f249711d8195281",
+  "excluded": [],
+  "limits": [
+    "Small generic NLI sample, not support-domain evidence",
+    "Model training or selection exposure to this benchmark cannot be excluded",
+    "Positive temperature preserves class argmax; it cannot fix wrong class predictions",
+    "ECE is sample/bin dependent; no guarantee of out-of-domain or max-over-window calibration",
+    "No automatic promotion, threshold change or live policy update"
+  ]
+}

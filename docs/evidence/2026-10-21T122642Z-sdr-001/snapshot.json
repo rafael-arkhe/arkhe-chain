@@ -1,0 +1,281 @@
+{
+  "schema": 1,
+  "kind": "generated-status-report",
+  "authority": false,
+  "runtime_verified": false,
+  "generated_at": "2026-10-21T12:26:42Z",
+  "report": "docs/SDR-001-CONSOLIDATED.md",
+  "report_sha256": "3cfa1ae2c0d343ccda719a195221dd72b19a0726f8653c82d4d30a6fee214ba3",
+  "sources": {
+    "implementation-backlog": {
+      "path": "config/implementation-backlog.json",
+      "sha256": "3809aec9296dfeabebd9d4f5a8a5e083125744984532ef2f4e47050c180e6a71"
+    },
+    "capability-status": {
+      "path": "config/capability-status.json",
+      "sha256": "d2029a520a221620cce4ec802edd17bf828be6429e6919536e3c3a9a6f3446ec"
+    },
+    "e01-onboarding-backlog": {
+      "path": "config/e01-onboarding-backlog.json",
+      "sha256": "a49d418d2874a1aad18ce33d7b5a021681a14538cc9eceb566a4e9b03f4d03f3"
+    },
+    "architecture": {
+      "path": "config/architecture.json",
+      "sha256": "bca87d88e434997782fd2865f18f4d32f2e178d7a9ddea808caa436a59c99341"
+    }
+  },
+  "counts": {
+    "findings": 15,
+    "findings_by_state": {
+      "OPEN": 11,
+      "PARTIAL": 2,
+      "ARKHE_SIGNATURE_PROFILE_TESTED": 1,
+      "OBSERVATIONS_COMPLETE": 1
+    },
+    "findings_by_priority": {
+      "P1": 10,
+      "P0": 3,
+      "P2": 2
+    },
+    "capabilities": 11,
+    "capabilities_by_status": {
+      "CANONICALIZATION_ONLY": 2,
+      "DEVNET_MATRIX_AND_CONTROLLED_RECOVERY_TESTED": 1,
+      "ED25519_PROFILE_TESTED": 1,
+      "IMPLEMENTED": 1,
+      "INTERFACE_CONTRACT_TESTED": 1,
+      "LOCAL_APPLICATION_PROFILE": 1,
+      "NOT_DEMONSTRATED": 1,
+      "OBSERVATIONS_COMPLETE": 1,
+      "OFFLINE_VECTORS_AND_MCP_TESTED": 1,
+      "SYNTHETIC_CONTRACT_TESTED": 1
+    },
+    "cohort_items": 8,
+    "cohort_pending": 7,
+    "rust_members": 24,
+    "node_packages": 6,
+    "evidence_directories": 100
+  },
+  "findings": [
+    {
+      "id": "A01",
+      "priority": "P0",
+      "state": "OBSERVATIONS_COMPLETE",
+      "depends_on": [],
+      "next_step": "Revisão semântica independente e admissão explícita; sem selo automático. Depois, matriz independente por runtime/perfil/imagem (gVisor/runwasi/WASM/TEE)."
+    },
+    {
+      "id": "A02",
+      "priority": "P0",
+      "state": "ARKHE_SIGNATURE_PROFILE_TESTED",
+      "depends_on": [],
+      "next_step": "Definir provisionamento, rotação e revogação das trust roots; mapear o perfil Arkhe para C2PA/COSE padrão apenas com auditoria dedicada; manter o contrato v2 sem valid genérico."
+    },
+    {
+      "id": "A03",
+      "priority": "P0",
+      "state": "OPEN",
+      "depends_on": [
+        "A02",
+        "A09",
+        "A10"
+      ],
+      "next_step": "Definir uma jornada protegida do Intra e integrar WorkIntent/admissão/journal/commit, preservando a separação do perfil local."
+    },
+    {
+      "id": "A04",
+      "priority": "P1",
+      "state": "PARTIAL",
+      "depends_on": [],
+      "next_step": "Vincular status e evidência de cada perfil antes de qualquer freeze; usar o inventário ativo para atualizar os diagramas restantes."
+    },
+    {
+      "id": "A05",
+      "priority": "P1",
+      "state": "PARTIAL",
+      "depends_on": [
+        "A10"
+      ],
+      "next_step": "Integrar ingestão histórica autenticada no host; avaliar coortes reais e generalização; implementar simulador causal e RSI medido como capacidades separadas."
+    },
+    {
+      "id": "A06",
+      "priority": "P1",
+      "state": "OPEN",
+      "depends_on": [
+        "A02",
+        "A10"
+      ],
+      "next_step": "Validar digest/prova de cada fonte e chunk; separar existência de citação de grounding e implementar recuperação testável."
+    },
+    {
+      "id": "A07",
+      "priority": "P1",
+      "state": "OPEN",
+      "depends_on": [],
+      "next_step": "Escolher uma jornada que exija fila, definir leases/retries e enqueue transacional, implementar crash recovery e DLQ."
+    },
+    {
+      "id": "A08",
+      "priority": "P1",
+      "state": "OPEN",
+      "depends_on": [],
+      "next_step": "Definir custódia/rotação/revogação por perfil e implementar apenas o mecanismo selecionado; não anunciar HSM/TEE/ML-DSA sem evidência."
+    },
+    {
+      "id": "A09",
+      "priority": "P1",
+      "state": "OPEN",
+      "depends_on": [],
+      "next_step": "Acrescentar testes vivos das APIs escolhidas para tenant/ator, conflito de parâmetros e replay; preservar migrações publicadas."
+    },
+    {
+      "id": "A10",
+      "priority": "P1",
+      "state": "OPEN",
+      "depends_on": [],
+      "next_step": "Testar autenticação, replay e duplicidade na fronteira do host; manter SDK, grafo e sandbox como camadas distintas."
+    },
+    {
+      "id": "A11",
+      "priority": "P1",
+      "state": "OPEN",
+      "depends_on": [],
+      "next_step": "Uniformizar pins da cadeia CI e obter receipts remotos vinculados ao commit e à identidade de workflow."
+    },
+    {
+      "id": "A12",
+      "priority": "P1",
+      "state": "OPEN",
+      "depends_on": [
+        "A01",
+        "A11"
+      ],
+      "next_step": "Definir infraestrutura e autoridades de imagem; preencher política candidata e provar rejeições no cluster de destino."
+    },
+    {
+      "id": "A13",
+      "priority": "P1",
+      "state": "OPEN",
+      "depends_on": [],
+      "next_step": "Validar instalação/backup/restauração/upgrade em máquina limpa; selecionar identidade de editor e atualizar distribuição com rollback."
+    },
+    {
+      "id": "A14",
+      "priority": "P2",
+      "state": "OPEN",
+      "depends_on": [],
+      "next_step": "Selecionar infraestrutura a partir de carga medida e implementar um componente por vez com testes de falha."
+    },
+    {
+      "id": "A15",
+      "priority": "P2",
+      "state": "OPEN",
+      "depends_on": [],
+      "next_step": "Definir política comercial e textos de licença com os responsáveis; medir custos antes de publicar preços."
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "artifact-digest",
+      "status": "IMPLEMENTED",
+      "source": "integrations/verify-mcp/src/tools/verify-artifact.ts"
+    },
+    {
+      "id": "c2pa-claim",
+      "status": "CANONICALIZATION_ONLY",
+      "source": "verification/crates/arkhe-verify-core/src/c2pa/claim.rs"
+    },
+    {
+      "id": "c2pa-claim-signature-arkhe-profile",
+      "status": "ED25519_PROFILE_TESTED",
+      "source": "verification/crates/arkhe-verify-core/src/c2pa/signature.rs"
+    },
+    {
+      "id": "gguf-metadata",
+      "status": "CANONICALIZATION_ONLY",
+      "source": "verification/crates/arkhe-verify-core/src/gguf/canonical.rs"
+    },
+    {
+      "id": "mmr-inclusion-mcp",
+      "status": "OFFLINE_VECTORS_AND_MCP_TESTED",
+      "source": "integrations/verify-mcp/src/tools/verify-mmr.ts"
+    },
+    {
+      "id": "cognition-sdk",
+      "status": "INTERFACE_CONTRACT_TESTED",
+      "source": "cognition/arkhe-cognition-sdk/src/lib.rs"
+    },
+    {
+      "id": "intra-documents",
+      "status": "LOCAL_APPLICATION_PROFILE",
+      "source": "apps/arkhe-intra/lib/documents.mjs"
+    },
+    {
+      "id": "candidate-runtime",
+      "status": "OBSERVATIONS_COMPLETE",
+      "source": "config/runtime-unified-contract.json"
+    },
+    {
+      "id": "rsi-general",
+      "status": "NOT_DEMONSTRATED",
+      "source": "cognition/arkhe-learning/src/lib.rs"
+    },
+    {
+      "id": "historical-calibration",
+      "status": "SYNTHETIC_CONTRACT_TESTED",
+      "source": "cognition/arkhe-metacognition/src/self_model.rs"
+    },
+    {
+      "id": "mmr-anchor-devnet",
+      "status": "DEVNET_MATRIX_AND_CONTROLLED_RECOVERY_TESTED",
+      "source": "scripts/poc_e01_devnet.mjs"
+    }
+  ],
+  "cohort": {
+    "cohort_id": "E01-WIN-X64-C01",
+    "human_study_status": "NOT_RUN",
+    "items": [
+      {
+        "id": "ONB01",
+        "state": "DONE",
+        "title": "Fixar materiais C01"
+      },
+      {
+        "id": "ONB02",
+        "state": "PENDING_HUMAN_REVIEW",
+        "title": "Revisão humana por admin"
+      },
+      {
+        "id": "ONB03",
+        "state": "PENDING_ENVIRONMENT",
+        "title": "Selecionar ambiente Windows x64 limpo"
+      },
+      {
+        "id": "ONB04",
+        "state": "NOT_RUN",
+        "title": "Preparar isolamento e snapshot S0"
+      },
+      {
+        "id": "ONB05",
+        "state": "NOT_RUN",
+        "title": "Executar ensaio técnico dentro da VM"
+      },
+      {
+        "id": "ONB06",
+        "state": "NOT_RUN",
+        "title": "Preparar cinco sessões autorizadas"
+      },
+      {
+        "id": "ONB07",
+        "state": "NOT_RUN",
+        "title": "Executar sessões e limpeza entre pessoas"
+      },
+      {
+        "id": "ONB08",
+        "state": "NOT_RUN",
+        "title": "Consolidar resultados e decisão exploratória"
+      }
+    ]
+  }
+}

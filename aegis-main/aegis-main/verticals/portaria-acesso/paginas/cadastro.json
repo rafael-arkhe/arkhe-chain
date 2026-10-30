@@ -1,0 +1,18 @@
+{
+  "slug": "cadastro",
+  "titulo": "Cadastro",
+  "refresh_segundos": 120,
+  "icone_nav": "users",
+  "variaveis": [
+    { "id": "pessoas",     "tipo": "object_set", "objeto": "pessoa" },
+    { "id": "unidades",    "tipo": "object_set", "objeto": "unidade" },
+    { "id": "dispositivos","tipo": "object_set", "objeto": "dispositivo" },
+    { "id": "total_pessoas", "tipo": "agregacao", "de": "pessoas", "op": "count" }
+  ],
+  "blocos": [
+    { "tipo": "kpi", "rotulo": "Pessoas", "variavel": "total_pessoas" },
+    { "tipo": "tabela", "objeto": "pessoa", "colunas": ["nome", "documento", "telefone"] },
+    { "tipo": "tabela", "objeto": "unidade", "colunas": ["nome", "entrada", "saida"] },
+    { "tipo": "tabela", "objeto": "dispositivo", "colunas": ["nome", "local", "online"] }
+  ]
+}

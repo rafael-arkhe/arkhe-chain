@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fade-in usado por <main> da home quando o template termina de
+   resolver (useResolvedApp.loading=false). Evita pop visual entre
+   skeleton e conteúdo real. */
+@keyframes home-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Shimmer sutil mostrado enquanto o chunk dinâmico do Cesium carrega
+   no MiniMap (mini-map.tsx · MiniMapSkeleton). */
+@keyframes mini-map-shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    @apply bg-deep text-text-on-dark font-sans antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  * {
+    border-radius: 0 !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* Inputs nativos (checkbox/radio/range) usam accent-color do browser —
+     em Chrome moderno isso default pra accent do sistema (laranja/azul).
+     Forçamos a primary do tema sharp pra ficar consistente com o resto
+     da UI. Cobre tudo de uma vez sem precisar customizar cada <input>. */
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'],
+  progress {
+    accent-color: #2d77be; /* tailwind: theme.colors.primary.DEFAULT */
+  }
+
+  /* Scrollbars padrão = LIGHT (operador opera quase sempre em tema
+     claro). Áreas dark — Cesium, /globe, headers — usam o seletor
+     .scope-dark abaixo pra reverter localmente. */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #eef0f3;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #c5cad3;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a9afba;
+  }
+  .scope-dark ::-webkit-scrollbar-track {
+    background: #14181e;
+  }
+  .scope-dark ::-webkit-scrollbar-thumb {
+    background: #2a2f3a;
+  }
+  .scope-dark ::-webkit-scrollbar-thumb:hover {
+    background: #3a4150;
+  }
+}
+
+@layer utilities {
+  .surface-light {
+    @apply bg-canvas-light text-text-on-light;
+    /* A app é color-scheme:dark no :root — sem isto, controles nativos (input/
+       select/checkbox) numa superfície CLARA renderizam texto BRANCO (invisível).
+       Modais em portal p/ document.body escapam o color-scheme da página clara e
+       precisam deste reset explícito. */
+    color-scheme: light;
+  }
+  .surface-dark {
+    @apply bg-deep text-text-on-dark;
+    color-scheme: dark;
+  }
+
+  /* Esconde a barra de scroll mantendo o scroll funcional (roda/touch/
+     teclado). Usado no sidenav do Painel de Controle e, por padrão, nos
+     componentes de tabs. Maior especificidade que o `::-webkit-scrollbar`
+     base, então some sem !important. */
+  .scrollbar-hide {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Edge legado */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome / Safari / Webkit */
+    width: 0;
+    height: 0;
+  }
+}
+
+@layer components {
+  /* ELO BACKDROP — overlay CANÔNICO de modal/popup full-screen.
+     "A Sala de Situação Clara": scrim ESCURO SÓLIDO, idêntico em toda a app.
+
+     Por que existe:
+       1. Glassmorphism/`backdrop-blur` é BANIDO pelo DS (blur só vale em
+          elementos que FLUTUAM dentro de um canvas — nunca no backdrop de um
+          modal). Vários modais traziam `backdrop-blur-sm`/`[2px]` (o "blur
+          branco" do SettingsDialog). Aqui zeramos qualquer backdrop-filter.
+       2. A "linha branca no topo" relatada NÃO era z-index nem buraco de
+          cobertura: o chrome (banner de classificação + header `bg-canvas-light`
+          #FFFFFF) é base-level e SEMPRE fica sob o overlay (`fixed`/`absolute`
+          + z>=50). O que vazava era a OPACIDADE: scrims translúcidos
+          (`bg-black/30`–`/40`) deixavam o header branco transparecer como uma
+          faixa clara no topo. Um scrim escuro sólido único (token `deep` @85%)
+          cobre o chrome de forma consistente e mata o vazamento.
+
+     Uso: aplique junto de `fixed inset-0 z-..` (overlay que também centraliza)
+     ou `absolute inset-0` (scrim filho de um root posicionado). Esta classe
+     define APENAS a cor do scrim + anula backdrop-filter; posição/inset/z
+     continuam vindo das utilities (preserva a ordem de empilhamento entre
+     modais aninhados, ex.: confirm-dialog sobre um modal). Para NOVOS modais
+     prefira o primitivo `components/ui/modal-backdrop.tsx` (ModalBackdrop). */
+  .ds-overlay {
+    /* token `deep` (#0A0E14) @ 85%. Subiu de 70%→85% (2026-06-28): a 70% o
+       header branco (#FFFFFF) do shell do operador ainda transparecia como uma
+       FAIXA CLARA no topo do scrim (o "backblur branco" reportado no modal de
+       Instruções do AIP). 85% derruba esse vazamento pela metade e mantém o
+       scrim como scrim (não blackout). NUNCA usar backdrop-blur aqui. */
+    background-color: rgba(10, 14, 20, 0.85);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Onda I.2 (2026-05-23) — Feedback #5: modo "Editar em tela cheia" do
+   composer /painel-de-controle/app-shell. A página seta o atributo
+   data-app-shell-fullscreen no <body>; aqui ocultamos a sidenav do Painel
+   de Controle (cp-sidebar) pra liberar 100vw/100vh ao composer. O seletor
+   de atributo no <body> já tem especificidade suficiente — sem !important. */
+body[data-app-shell-fullscreen='true'] [data-testid='cp-sidebar'] {
+  display: none;
+}
+
+/* Fase 2 (overhaul DAG n8n) — nó RODANDO no canvas da Tela de Dados: pulso da
+   BORDA (topo/direita/baixo) entre o acento e um tom claro. SÓ borda, SEM GLOW
+   (régua do operador: "só borda, sem glow, nível Palantir"). A faixa de
+   categoria (borda-esquerda) fica intacta. Respeita prefers-reduced-motion
+   (bloco abaixo neutraliza o movimento). */
+/* F8.1 - NodesPanel: slide-in do drawer 385px (200ms ease-out, paridade n8n).
+   Aplicado via motion-safe:; em prefers-reduced-motion o painel so aparece. */
+@keyframes pb-nodes-slide {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes aegis-node-running {
+  0%, 100% { border-top-color: #2D77BE; border-right-color: #2D77BE; border-bottom-color: #2D77BE; }
+  50%      { border-top-color: #9DC1E6; border-right-color: #9DC1E6; border-bottom-color: #9DC1E6; }
+}
+.pb-node-running { animation: aegis-node-running 1.2s ease-in-out infinite; }
+
+@keyframes aegis-edge-flow {
+  to { stroke-dashoffset: -24; }
+}
+.pb-edge-running { animation: aegis-edge-flow 0.7s linear infinite; }
+
+/* F8.5 - drag-box de multi-selecao (paridade n8n, pele AEGIS): canto reto,
+   SO BORDA no aco #2D77BE + tinta minima; idem p/ o retangulo da selecao. */
+.react-flow__selection {
+  border: 1px solid #2D77BE;
+  background: rgba(45, 119, 190, 0.06);
+  border-radius: 0;
+}
+.react-flow__nodesselection-rect {
+  border: 1px dashed #2D77BE;
+  background: transparent;
+  border-radius: 0;
+}
+
+body[data-variable-dragging='true'] [data-drop-target='true'] {
+  outline: 2px solid #2D77BE !important;
+  outline-offset: 2px;
+  background-color: rgba(45, 119, 190, 0.08) !important;
+}
+
+/* Reduced motion não é opcional (DS): quando o operador/SO pede menos
+   movimento, neutralizamos animações e transições app-wide. Mantém o
+   layout intacto — só remove o movimento. Padrão de mercado (a11y). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

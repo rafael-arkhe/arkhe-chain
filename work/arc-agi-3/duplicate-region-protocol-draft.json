@@ -1,0 +1,110 @@
+{
+  "status": "ENUMERATOR_IMPLEMENTED_SYNTHETIC_ONLY",
+  "hypothesis": "Repeated regions can sometimes be matched with training-derived constraints without discarding their pixels.",
+  "prior_full_render_gate_unchanged": {
+    "training_coverage": 1,
+    "training_exact_hit_rate": 1
+  },
+  "inference_contract": {
+    "inputs": [
+      "before render",
+      "action including click coordinates",
+      "frozen training model"
+    ],
+    "forbidden": [
+      "after render",
+      "test-future trajectory",
+      "semantic labels inferred from border position alone"
+    ],
+    "matching": "Enumerate complete scene assignments: Cartesian product of per-region/per-group alternatives, then enforce constraints across all groups and all occupied shape cells. Each candidate covers every represented region exactly once.",
+    "ambiguous_identity": "Emit only if exhaustive nonempty complete-scene candidates all produce byte-identical full next renders. Agreement is relative to the retained hypothesis set, not a correctness guarantee.",
+    "unmodeled_region": "Any region without supported modeled displacement causes full-render abstention. Optional region-only output is separate, never counted as a full-render prediction.",
+    "empty_candidate_set": "abstain; no prediction by vacuous agreement",
+    "computation_limit": "If enumeration exceeds a declared budget before exhaustion, return SEARCH_INCOMPLETE. Agreement among a truncated prefix never permits emission."
+  },
+  "controls": [
+    "Static identical duplicates plus a distinct moving region; require full-render prediction including duplicates.",
+    "Identical duplicates with different uniquely identifiable local contexts; test held-out translated configurations.",
+    "Symmetric ambiguous identities whose alternatives give the same rendered successor; distinguish identity ambiguity from pixel ambiguity.",
+    "Ambiguous contexts with alternative different rendered successors; require full-render abstention.",
+    "Stationary duplicates in training that later move under a hidden mode; count any wrong prediction rather than certifying them static.",
+    "Multiple-region interactions and predicted overlaps; reject incompatible assignments.",
+    "Moving in training but stationary in test due to hidden mode: score wrong prediction if emitted; training fit cannot guarantee future correctness.",
+    "Equal next render but different two-step continuation under the same action sequence: no latent-state equivalence inferred.",
+    "Different signature groups individually feasible but globally colliding: reject complete scene candidate.",
+    "Multi-cell regions with distinct anchors but overlapping occupied cells: reject.",
+    "Enumeration budget exhausted with agreeing prefix but a possible later disagreement: SEARCH_INCOMPLETE, never issue.",
+    "Identical full before/action with conflicting training next renders: record conflict and FAIL unchanged gate."
+  ],
+  "report": [
+    "training and test queries/issued/correct/abstained",
+    "whole-render versus explicitly labeled region-only targets",
+    "seen/unseen raw state-action pair metrics",
+    "assignment candidate counts and reasons for abstention",
+    "exact historical gate PASS/FAIL and frozen hashes"
+  ],
+  "interpretation": [
+    "No proof of semantic background from agreement of heuristics.",
+    "Rules learned are not evidence of successful training fit; current fit remains zero-coverage FAIL.",
+    "No guarantee local context disambiguates independent identical movers.",
+    "Future results are posthoc exploratory; no policy promotion or Kaggle actions authorized by this protocol alone."
+  ],
+  "revision": 3,
+  "prediction_horizon": 1,
+  "training_contract": {
+    "movement_and_static_hypotheses": "derived only from training before/action/after triples; no border-based static classification",
+    "repeated_region_matching": "retain all one-to-one within-signature training matchings compatible with declared constraints; never silently choose nearest",
+    "unresolved_training_matching": "retain ambiguity; do not pool alternatives as if each were independently observed ground-truth displacement",
+    "scope": "shape-preserving constant-palette translations only; other transitions may fail the unchanged full-render gate",
+    "exact_training_conflicts": "detect identical canonical full observation/action with multiple different next renders; report counts and FAIL gate; never exclude them to obtain PASS"
+  },
+  "displacement_constraints": {
+    "support": "enumerate finite displacement alternatives supported by declared training hypotheses; lack of support is abstention",
+    "maximum_displacement": "no arbitrary one-cell cap: prior ls20 inspection observed dx=5. Candidate limits, if introduced, must be declared before evaluation and reported with excluded transitions",
+    "stationary": "zero displacement only if supported as an explicit training hypothesis; no implicit persistence",
+    "bounds": "every translated shape cell must lie inside actual render dimensions",
+    "overlap": "reject any final-cell overlap across regions; overlap/occlusion requires a different model, not exception based only on observed overlapping pixels",
+    "crossing": "only final occupancy constrained in this one-step model; no claim about continuous collision paths"
+  },
+  "abstention_reasons": {
+    "NO_SUPPORTED_DISPLACEMENT": "at least one region has no supported displacement hypothesis",
+    "NO_ADMISSIBLE_SCENE": "supported alternatives exist but no complete globally feasible assignment remains",
+    "AMBIGUOUS_RENDER": "at least two admissible complete candidates produce different whole renders",
+    "SEARCH_INCOMPLETE": "candidate enumeration budget reached before exhaustive completion",
+    "UNSUPPORTED_ACTION": "clicks or other unmodeled action families",
+    "UNSUPPORTED_REPRESENTATION": "shape/background changes or unmatched regions exceed the model class"
+  },
+  "horizon_contract": {
+    "one_step": "may issue t+1 if rendered consensus holds; do not merge underlying latent hypotheses merely because renderings agree",
+    "rollout": "not implemented in first version; future h-step extension must propagate all latent hypotheses under the same declared action sequence and abstain at first divergent predicted output",
+    "test_control": "two latent hypotheses render the same t+1 but different t+2: allow one-step consensus; do not certify latent equivalence or h=2 consensus"
+  },
+  "implementation_status": {
+    "enumerator_implemented": true,
+    "controls_executed": "11 synthetic unit tests of enumerator; explicit options, no training matcher",
+    "real_traces_executed": false,
+    "training_hypothesis_learner_implemented": false,
+    "multi_step_rollout_implemented": false
+  },
+  "enumeration_budget": {
+    "unit": "complete raw Cartesian assignments examined including invalid ones",
+    "default": 100000,
+    "ordering": "scene extraction order then sorted deduplicated integer displacement pairs",
+    "limit": "at budget exhaustion before product completion abstain SEARCH_INCOMPLETE; exactly exhausted complete product may succeed",
+    "report": "explored, raw_cartesian_total, admissible_examined; total admissible not claimed unless complete"
+  },
+  "canonicalization": {
+    "encoding": "UTF8 canonical JSON: sorted keys, compact separators, NaN forbidden",
+    "frame": "validated rectangular integer0..255 grid; dimensions retained by nested structure; no animation grouping",
+    "observation_conflict": "include entire available observation payload and action, not only last-render bytes; target must be declared",
+    "warning": "no semantic state-equivalence claim"
+  },
+  "render_contract": {
+    "background": "most frequent before-grid color, smallest palette value tie-break",
+    "construction": "initialize entire canvas with inferred background then place every translated shape; check bounds and all-cell overlaps before output",
+    "all_regions": "every represented region modeled exactly once; no fallback persistence",
+    "assumption": "uniform background; no hidden surface recovery, occlusion or new regions"
+  },
+  "empty_scene": "NO_REGIONS",
+  "clipping_contract": "No ground-truth clipping status available. Extract visible shapes; require translated visible cells remain in bounds. A region touching border is not certified clipped. Shape changes are outside this translation hypothesis; do not claim unchanged clipping status."
+}

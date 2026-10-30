@@ -1,0 +1,36 @@
+{
+  "id": "document-publication",
+  "version": "1.6.0",
+  "rules": {
+    "evaluator.available": "O avaliador está disponível.",
+    "action.allowed": "A ação solicitada é publish.",
+    "document.exists": "O documento existe.",
+    "actor.publisher": "O ator possui o papel configurado para publicação.",
+    "document.requiredFields": "Os campos obrigatórios são strings não vazias.",
+    "output.schema": "O documento candidato atende ao perfil de saída estruturada declarado.",
+    "document.sourceState": "O documento está no estado de origem configurado.",
+    "document.approvedContent": "O hash aprovado corresponde ao título e corpo.",
+    "publication.admissible": "Todas as condições de publicação foram satisfeitas.",
+    "stencil.changed": "O stencil mudou entre avaliação e aplicação.",
+    "decision.stale": "O estado vinculado à decisão mudou."
+  },
+  "requiredFields": ["title", "body"],
+  "output_contract": {
+    "schema": {
+      "type": "object",
+      "required": ["title", "body", "state", "revision", "approvedHash"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "state": { "type": "string" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "approvedHash": { "type": "string" }
+      }
+    }
+  },
+  "publisherRole": "publisher",
+  "sourceState": "approved",
+  "targetState": "published",
+  "evidenceFields": ["operationId", "documentId", "actorId", "action", "stencilId", "stencilVersion", "stencilHash", "rule", "decision", "enforcement", "observedEffect", "before", "after", "evaluationDecision", "evaluationRule", "evaluatedSnapshot", "evaluatedAt", "appliedAt", "revalidationOutcome", "mismatchFields", "appliedStencilHash", "recordedAt"]
+}

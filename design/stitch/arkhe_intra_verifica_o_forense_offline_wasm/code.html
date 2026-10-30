@@ -1,0 +1,1123 @@
+<!DOCTYPE html><html class="h-full bg-background" lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Perícia Forense Offline &amp; Verificador WASM — Arkhe-Intra</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Fonts: Inter, Poppins, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "text-secondary": "#475569",
+            "success-pass": "#059669",
+            "primary-light": "#DBEAFE",
+            "primary-fixed": "#dde1ff",
+            "secondary": "#712ae2",
+            "inconclusive-border": "#FDE68A",
+            "on-primary-fixed": "#001453",
+            "on-tertiary-fixed-variant": "#2f2ebe",
+            "secondary-container": "#8a4cfc",
+            "on-background": "#131b2e",
+            "surface-dim": "#d2d9f4",
+            "on-primary-fixed-variant": "#173bab",
+            "pass-surface": "#ECFDF5",
+            "border-strong": "#CBD5E1",
+            "surface-variant": "#dae2fd",
+            "primary-dark": "#1E3A8A",
+            "inconclusive-text": "#92400E",
+            "danger-fail": "#DC2626",
+            "surface-container-high": "#e2e7ff",
+            "fail-surface": "#FEF2F2",
+            "outline": "#757684",
+            "fail-text": "#991B1B",
+            "on-secondary-container": "#fffbff",
+            "text-tertiary": "#94A3B8",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed-dim": "#c0c1ff",
+            "surface-container-highest": "#dae2fd",
+            "on-tertiary-fixed": "#07006c",
+            "on-surface-variant": "#444653",
+            "inverse-surface": "#283044",
+            "surface-bright": "#faf8ff",
+            "on-secondary": "#ffffff",
+            "info": "#0284C7",
+            "secondary-fixed": "#eaddff",
+            "border": "#E2E8F0",
+            "surface-container": "#eaedff",
+            "on-surface": "#131b2e",
+            "on-error": "#ffffff",
+            "tertiary-container": "#3433c3",
+            "inconclusive-surface": "#FFFBEB",
+            "on-secondary-fixed": "#25005a",
+            "text-primary": "#0F172A",
+            "surface-container-low": "#f2f3ff",
+            "primary-container": "#1e40af",
+            "on-primary-container": "#a8b8ff",
+            "fail-border": "#FECACA",
+            "background": "#F8FAFC",
+            "surface-sunken": "#F1F5F9",
+            "inverse-primary": "#b8c4ff",
+            "error-container": "#ffdad6",
+            "primary-fixed-dim": "#b8c4ff",
+            "pass-border": "#A7F3D0",
+            "on-error-container": "#93000a",
+            "secondary-fixed-dim": "#d2bbff",
+            "tertiary": "#170cae",
+            "on-tertiary-container": "#b3b5ff",
+            "surface-tint": "#3755c3",
+            "primary": "#00288e",
+            "error": "#ba1a1a",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed-variant": "#5a00c6",
+            "pass-text": "#065F46",
+            "warning-inconclusive": "#D97706",
+            "surface": "#FFFFFF",
+            "outline-variant": "#c4c5d5",
+            "inverse-on-surface": "#eef0ff",
+            "on-primary": "#ffffff",
+            "tertiary-fixed": "#e1e0ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter-sm": "1rem",
+            "margin-mobile": "1rem",
+            "margin-wide": "3rem",
+            "space-3xl": "3rem",
+            "space-sm": "0.5rem",
+            "space-2xl": "2.5rem",
+            "space-lg": "1.5rem",
+            "gutter": "1.5rem",
+            "space-xl": "2rem",
+            "margin": "2rem",
+            "margin-ultra": "4rem",
+            "gutter-md": "1.25rem",
+            "space-xs": "0.25rem",
+            "margin-desktop": "2rem",
+            "margin-tablet": "1.5rem",
+            "gutter-xl": "2rem",
+            "space-md": "1rem",
+            "gutter-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "display-md-mobile": ["Poppins"],
+            "display-lg": ["Poppins"],
+            "heading-4": ["Inter"],
+            "heading-3": ["Inter"],
+            "body-md": ["Inter"],
+            "label-md": ["Inter"],
+            "display-lg-mobile": ["Poppins"],
+            "body-sm": ["Inter"],
+            "heading-1": ["Poppins"],
+            "display-md": ["Poppins"],
+            "heading-2": ["Inter"],
+            "caption": ["Inter"],
+            "code": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "code-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "display-md-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "heading-4": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+            "heading-3": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "heading-1": ["30px", { "lineHeight": "38px", "fontWeight": "600" }],
+            "display-md": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "heading-2": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "caption": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "code": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+            "code-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col font-body-md text-text-primary bg-background antialiased selection:bg-primary-light selection:text-primary-dark">
+<!-- 1. Top Arkhe Global Status Banner (Fail-Closed Zero-Knowledge Proof Anchor) -->
+<div class="w-full bg-pass-surface border-b border-pass-border px-space-xl py-2 flex items-center justify-between text-pass-text z-50">
+<div class="max-w-7xl mx-auto w-full flex flex-wrap items-center justify-between gap-space-sm text-body-sm font-label-md">
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center justify-center p-0.5 rounded-full bg-success-pass text-surface">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</span>
+<span class="font-heading-4 text-sm text-pass-text tracking-tight font-semibold">
+          Verificador WASM Standalone v1.8.4 Ativo
+        </span>
+<span class="text-text-secondary">•</span>
+<span class="text-pass-text font-normal">Modo Zero-Knowledge Offline (Sem Telemetria / Sem Rede)</span>
+</div>
+<div class="flex items-center gap-space-md text-caption">
+<div class="flex items-center gap-1.5 bg-surface/80 border border-pass-border px-2.5 py-1 rounded">
+<span class="text-text-secondary uppercase font-code-sm">WASM Runtime SHA-256:</span>
+<span class="font-code-sm text-primary-dark font-medium">9f88c3a12b...e41d88</span>
+<button class="text-text-tertiary hover:text-text-primary ml-1" onclick="navigator.clipboard.writeText('9f88c3a12b4e89f332c1a827dd129038234ea72314e1f72834b92c4314e41d88')" title="Copiar Digest">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+<div class="flex items-center gap-1 text-pass-text bg-pass-surface border border-pass-border px-2.5 py-1 rounded">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span class="font-code-sm">Isolated V8 Worker / Pure WASM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 2. Top Navigation Bar (Arkhe-Intra Shell) -->
+<header class="bg-surface border-b border-border shadow-sm sticky top-0 z-40">
+<div class="w-full px-space-xl max-w-7xl mx-auto flex items-center justify-between h-16">
+<!-- Logo & Brand Badge -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-2">
+<span class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-container text-surface">
+<span class="material-symbols-outlined text-[20px]">shield</span>
+</span>
+<a class="text-heading-3 font-heading-3 text-primary-dark tracking-tight flex items-center gap-2" href="#">
+            Arkhe-Intra
+          </a>
+<span class="text-[10px] font-code-sm font-semibold tracking-wide uppercase px-2 py-0.5 rounded bg-primary-light text-primary-dark border border-primary-container/20">
+            v4.2 PROVED
+          </span>
+</div>
+<!-- Links (Shared Component Anchor) -->
+<nav class="hidden md:flex items-center space-x-6 ml-4">
+<a class="text-text-secondary hover:text-text-primary font-label-md transition-colors" href="#">
+            Governance
+          </a>
+<a class="text-text-secondary hover:text-text-primary font-label-md transition-colors" href="#">
+            Intelligence
+          </a>
+<a class="text-primary-container border-b-2 border-primary-container font-heading-4 pb-1" href="#">
+            Policies
+          </a>
+<a class="text-text-secondary hover:text-text-primary font-label-md transition-colors" href="#">
+            Operations
+          </a>
+</nav>
+</div>
+<!-- Search and Actions Cluster -->
+<div class="flex items-center gap-space-md">
+<!-- Search Input -->
+<div class="relative hidden lg:block w-72">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary text-[18px]">
+            search
+          </span>
+<input class="w-full pl-9 pr-12 py-1.5 text-body-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:border-primary-container focus:ring-2 focus:ring-primary-light transition-all outline-none" placeholder="Buscar digest, log index ou bundle..." type="text">
+<kbd class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-code-sm text-text-tertiary bg-surface-sunken border border-border px-1.5 py-0.5 rounded">
+            Ctrl+K
+          </kbd>
+</div>
+<!-- Action: Quick Verify Button -->
+<button class="hidden sm:inline-flex items-center gap-1.5 bg-surface text-text-primary border border-border hover:bg-surface-sunken active:scale-[0.98] transition-transform duration-150 px-3.5 py-2 rounded-lg font-label-md text-sm">
+<span class="material-symbols-outlined text-[18px] text-primary-container">offline_bolt</span>
+          Quick Verify
+        </button>
+<!-- Action: Sign Signature / Carregar Bundle Primary Action -->
+<button class="inline-flex items-center gap-1.5 bg-primary-container text-surface hover:bg-primary-dark active:scale-[0.98] transition-transform duration-150 px-4 py-2 rounded-lg font-label-md text-sm shadow-sm">
+<span class="material-symbols-outlined text-[18px]">upload_file</span>
+          Carregar Bundle (.cbor)
+        </button>
+<!-- Notification & Verified User Actions -->
+<div class="flex items-center pl-2 border-l border-border gap-1">
+<button class="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-sunken rounded-lg transition-colors" title="Notificações do Sistema">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="p-2 text-primary-container hover:bg-surface-sunken rounded-lg transition-colors" title="Credencial Institucional Verificada">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</button>
+</div>
+<!-- Auditor Badge & Profile Preview -->
+<div class="flex items-center gap-2.5 pl-2">
+<div class="w-8 h-8 rounded-full bg-primary-light border border-primary-container/20 flex items-center justify-center text-primary-dark font-code text-xs font-semibold">
+            EX
+          </div>
+<div class="hidden xl:flex flex-col text-left">
+<span class="text-caption font-semibold text-text-primary leading-tight">Auditor Externo / Perícia</span>
+<span class="text-[10px] text-text-secondary font-code-sm">ICP-Brasil • FIPS-140</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- 3. Breadcrumbs & Header Section -->
+<main class="flex-grow w-full max-w-7xl mx-auto px-space-xl py-space-lg">
+<!-- Breadcrumb trail -->
+<nav aria-label="Breadcrumb" class="flex items-center gap-2 text-caption text-text-secondary mb-3">
+<a class="hover:text-primary-container transition-colors" href="#">Home</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary-container transition-colors" href="#">Hubs</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary-container transition-colors" href="#">Jurídico &amp; Compliance</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary-container transition-colors" href="#">Perícia Forense Externa</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-text-primary font-medium">Verificador Autônomo WASM</span>
+</nav>
+<!-- Header & Page Actions -->
+<div class="flex flex-col md:flex-row md:items-end justify-between pb-6 border-b border-border gap-space-md">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="text-heading-1 font-heading-1 text-text-primary tracking-tight">
+            Perícia Forense Offline &amp; Verificador Criptográfico WASM
+          </h1>
+<span class="px-2.5 py-0.5 rounded-full bg-pass-surface border border-pass-border text-pass-text text-caption font-semibold tracking-wide flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">gavel</span>
+            PODER PROBATÓRIO PLENO
+          </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1 max-w-4xl">
+          Ambiente hermético e auditável para validação local de EvidenceBundles (.cbor), prova matemática de inclusão Rekor (MMR) e assinaturas Ed25519 sem dependência de rede corporativa.
+        </p>
+</div>
+<!-- Action buttons -->
+<div class="flex items-center gap-space-sm flex-shrink-0">
+<button class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface border border-border rounded-lg text-text-primary text-body-sm font-label-md hover:bg-surface-sunken active:scale-[0.98] transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+          Baixar Binário WASM
+        </button>
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary-container text-surface rounded-lg text-body-sm font-label-md hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+          Exportar Laudo Pericial (PDF/A)
+        </button>
+</div>
+</div>
+<!-- 4. Interactive Audit Workstation Grid (65% / 35%) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+<!-- LEFT COLUMN (65% -> 8 cols of 12): Audit Execution & Forensic Breakdown -->
+<div class="lg:col-span-8 flex flex-col gap-6">
+<!-- a) Upload & Active File Inspector Card (Arkhe-Verified Card Variant with Green Left Accent) -->
+<div class="bg-surface rounded-xl border border-border border-l-4 border-l-success-pass p-space-lg shadow-sm">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-sunken border border-border flex items-center justify-center text-primary-container flex-shrink-0">
+<span class="material-symbols-outlined text-[24px]">description</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-heading-4 font-semibold text-text-primary">EvidenceBundle-Minuta-892-2025.cbor</span>
+<span class="text-caption font-code-sm bg-surface-sunken text-text-secondary px-2 py-0.5 rounded border border-border">42.8 KB</span>
+</div>
+<div class="flex items-center gap-3 mt-1 text-caption text-text-secondary">
+<span class="">Protocolo: <code class="font-code-sm font-medium text-text-primary">AKG-CBOR-v1 (Canonical RFC-8949)</code></span>
+<span class="">•</span>
+<span class="">Timestamp do Bundle: <span class="font-code-sm text-text-primary">2025-02-26T14:38:12Z</span></span>
+</div>
+</div>
+</div>
+<!-- Execution Verdict & Time -->
+<div class="flex flex-col items-start sm:items-end">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-caption font-semibold bg-pass-surface text-pass-text border border-pass-border">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                100% PASS (WASM: 3.2ms)
+              </span>
+<span class="text-[11px] font-code-sm text-text-tertiary mt-1">Tempo CPU de Avaliação Local</span>
+</div>
+</div>
+<!-- Digest & Cryptographic Fingerprints Bar -->
+<div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+<div class="p-3 bg-surface-sunken border border-border rounded-lg">
+<div class="flex items-center justify-between text-caption text-text-secondary mb-1">
+<span class="font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">fingerprint</span>
+                  BLAKE3 Bundle Digest
+                </span>
+<button class="text-text-tertiary hover:text-primary-container text-caption flex items-center gap-0.5" onclick="navigator.clipboard.writeText('8a7b91c04839de215f9b41e3d4c029fa8172c918237190ebf492019482d9e11')">
+<span class="material-symbols-outlined text-[13px]">content_copy</span>
+                  Copiar
+                </button>
+</div>
+<div class="font-code text-xs text-primary-dark break-all select-all font-medium">
+                8a7b91c04839de215f9b41...d9e11
+              </div>
+</div>
+<div class="p-3 bg-surface-sunken border border-border rounded-lg">
+<div class="flex items-center justify-between text-caption text-text-secondary mb-1">
+<span class="font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">tag</span>
+                  SHA-256 Bundle Digest
+                </span>
+<button class="text-text-tertiary hover:text-primary-container text-caption flex items-center gap-0.5" onclick="navigator.clipboard.writeText('3c2b189ff02e77b10294c8fa1723eecb2019481273948b81237cdafe2849182a')">
+<span class="material-symbols-outlined text-[13px]">content_copy</span>
+                  Copiar
+                </button>
+</div>
+<div class="font-code text-xs text-primary-dark break-all select-all font-medium">
+                3c2b189ff02e77b10294c8...182a
+              </div>
+</div>
+</div>
+</div>
+<!-- b) Forensic Step-by-Step Verification Pipeline -->
+<div class="bg-surface rounded-xl border border-border p-space-lg shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<div>
+<h2 class="text-heading-3 font-heading-3 text-text-primary">Pipeline Pericial Forense (WASM Core)</h2>
+<p class="text-body-sm text-text-secondary">Validação rigorosa fail-closed executada linearmente em sandbox local.</p>
+</div>
+<span class="text-caption font-code-sm bg-pass-surface text-pass-text border border-pass-border px-2.5 py-1 rounded font-semibold">
+              5/5 INVARIANTES ATENDIDAS
+            </span>
+</div>
+<div class="space-y-3">
+<!-- Step 1 -->
+<div class="p-3.5 border border-border rounded-lg bg-surface hover:bg-surface-sunken/40 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-3">
+<div class="w-6 h-6 rounded-full bg-pass-surface text-pass-text border border-pass-border flex items-center justify-center font-code-sm text-xs font-semibold mt-0.5">
+                    1
+                  </div>
+<div>
+<h3 class="text-body-sm font-semibold text-text-primary">Integridade Estrutural &amp; Parser CBOR Canônico</h3>
+<p class="text-caption text-text-secondary mt-0.5">
+                      Conformidade rigorosa RFC 8949 (Deterministic Core). Chaves ordenadas lexicamente, zero dados residuais não declarados ou campos malformados.
+                    </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-caption font-semibold bg-pass-surface text-pass-text border border-pass-border">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">check</span>
+                  PASS
+                </span>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="p-3.5 border border-border rounded-lg bg-surface hover:bg-surface-sunken/40 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-3">
+<div class="w-6 h-6 rounded-full bg-pass-surface text-pass-text border border-pass-border flex items-center justify-center font-code-sm text-xs font-semibold mt-0.5">
+                    2
+                  </div>
+<div>
+<h3 class="text-body-sm font-semibold text-text-primary">Projeção Causal &amp; Hash BLAKE3 da Minuta Contratual</h3>
+<p class="text-caption text-text-secondary mt-0.5">
+                      Hash computado localmente sobre os bytes da minuta jurídica: <code class="font-code-sm text-primary-dark">f4b7190e8c...12</code> coincide sem desvio com a declaração original do <span class="font-code-sm">UnsignedProjection</span>.
+                    </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-caption font-semibold bg-pass-surface text-pass-text border border-pass-border">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">check</span>
+                  PASS
+                </span>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="p-3.5 border border-border rounded-lg bg-surface hover:bg-surface-sunken/40 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-3">
+<div class="w-6 h-6 rounded-full bg-pass-surface text-pass-text border border-pass-border flex items-center justify-center font-code-sm text-xs font-semibold mt-0.5">
+                    3
+                  </div>
+<div>
+<h3 class="text-body-sm font-semibold text-text-primary">Cadeia Criptográfica de Assinaturas Ed25519</h3>
+<p class="text-caption text-text-secondary mt-0.5">
+                      Quórum 3/3 auditado: Dr. Carlos Eduardo, Dra. Beatriz Ramos e Dra. Mariana Silva. Curvas elípticas Ed25519 e verificação de assinatura sem falhas.
+                    </p>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="text-[11px] font-code-sm bg-surface-sunken border border-border px-2 py-0.5 rounded text-text-primary">key_01: carlos.e@fiduciary.arkhe</span>
+<span class="text-[11px] font-code-sm bg-surface-sunken border border-border px-2 py-0.5 rounded text-text-primary">key_02: beatriz.r@governance.intra</span>
+<span class="text-[11px] font-code-sm bg-surface-sunken border border-border px-2 py-0.5 rounded text-text-primary">key_03: mariana.s@fiduciary.arkhe</span>
+</div>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-caption font-semibold bg-pass-surface text-pass-text border border-pass-border">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">check</span>
+                  PASS
+                </span>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="p-3.5 border border-border rounded-lg bg-surface hover:bg-surface-sunken/40 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-3">
+<div class="w-6 h-6 rounded-full bg-pass-surface text-pass-text border border-pass-border flex items-center justify-center font-code-sm text-xs font-semibold mt-0.5">
+                    4
+                  </div>
+<div>
+<h3 class="text-body-sm font-semibold text-text-primary">Prova de Inclusão Merkle Rekor (MMR Audit Path)</h3>
+<p class="text-caption text-text-secondary mt-0.5">
+                      Caminho de auditoria validado matematicamente até a Raiz Pública Rekor <code class="font-code-sm text-primary-dark">b3f9c801...</code> no Log Index <span class="font-code-sm text-text-primary">#491.802</span>. Prova de transparência inalterada.
+                    </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-caption font-semibold bg-pass-surface text-pass-text border border-pass-border">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">check</span>
+                  PASS
+                </span>
+</div>
+</div>
+<!-- Step 5 -->
+<div class="p-3.5 border border-border rounded-lg bg-surface hover:bg-surface-sunken/40 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-start gap-3">
+<div class="w-6 h-6 rounded-full bg-pass-surface text-pass-text border border-pass-border flex items-center justify-center font-code-sm text-xs font-semibold mt-0.5">
+                    5
+                  </div>
+<div>
+<h3 class="text-body-sm font-semibold text-text-primary">Assertivas Formais WASM de Não-Retenção de PII</h3>
+<p class="text-caption text-text-secondary mt-0.5">
+                      14/14 invariantes formais satisfeitas sob a Política de Salvaguarda PolicyCore v1.0. Anonimização estrita e eliminação de vestígios em memória volátil.
+                    </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-caption font-semibold bg-pass-surface text-pass-text border border-pass-border">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">check</span>
+                  PASS
+                </span>
+</div>
+</div>
+</div>
+</div>
+<!-- c) Inspeção Profunda de Prova de Inclusão Merkle (MMR Visualization) -->
+<div class="bg-surface rounded-xl border border-border p-space-lg shadow-sm">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border gap-2">
+<div>
+<h2 class="text-heading-3 font-heading-3 text-text-primary">Árvore Merkle Mountain Range (MMR Proof Tree)</h2>
+<p class="text-caption text-text-secondary">Computação matemática da raiz criptográfica executada isoladamente no browser.</p>
+</div>
+<span class="text-caption font-code-sm text-primary-dark bg-primary-light px-2.5 py-1 rounded font-medium">
+              Log Index #491.802 • Depth 4
+            </span>
+</div>
+<!-- Cryptographic Diagram -->
+<div class="mt-4 p-4 bg-surface-sunken rounded-lg border border-border flex flex-col items-center">
+<!-- Root Node -->
+<div class="flex flex-col items-center">
+<div class="px-4 py-2 bg-primary-dark text-surface rounded-lg border border-primary-container shadow-sm flex flex-col items-center">
+<span class="text-[10px] font-code-sm text-primary-light uppercase tracking-wider">Rekor Tree Head Root (Validada)</span>
+<span class="font-code text-xs font-semibold">b3f9c8019aa2778e9b01...04c</span>
+</div>
+<div class="h-6 w-0.5 bg-border-strong my-1"></div>
+</div>
+<!-- Level 1 Sibling & Parent -->
+<div class="w-full max-w-lg grid grid-cols-2 gap-8 relative">
+<div class="flex flex-col items-center">
+<div class="px-3 py-1.5 bg-surface border border-border rounded text-center w-full shadow-sm">
+<span class="text-[10px] font-code-sm text-text-secondary block">Left Intermediate Node</span>
+<span class="font-code text-xs text-text-primary">c88a7b12d...41</span>
+</div>
+<div class="h-5 w-0.5 bg-border-strong mt-1"></div>
+</div>
+<div class="flex flex-col items-center">
+<div class="px-3 py-1.5 bg-surface border border-pass-border text-center w-full shadow-sm bg-pass-surface/40">
+<span class="text-[10px] font-code-sm text-pass-text font-semibold block">Right Sibling Hash (Audit Path)</span>
+<span class="font-code text-xs text-primary-dark">a129d84ef...98</span>
+</div>
+<div class="h-5 w-0.5 bg-border-strong mt-1"></div>
+</div>
+</div>
+<!-- Level 0 (Leaf Node - Target) -->
+<div class="w-full max-w-lg grid grid-cols-2 gap-8 mt-1">
+<div class="flex flex-col items-center">
+<div class="px-3 py-2 bg-pass-surface border-2 border-success-pass rounded text-center w-full shadow-sm">
+<div class="flex items-center justify-center gap-1 text-[11px] font-semibold text-pass-text">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+                    Leaf Hash (Folha do Bundle)
+                  </div>
+<span class="font-code text-xs text-pass-text font-bold">f4b7190e8c...12</span>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center text-center">
+<span class="text-caption text-text-secondary italic">
+                  Calculado via Blake3 &amp; SHA-256 local
+                </span>
+<span class="text-[11px] font-code-sm text-success-pass font-medium">Coincidência Exata com Rekor Log</span>
+</div>
+</div>
+</div>
+</div>
+<!-- d) Terminal / CLI Reproducibility Box -->
+<div class="bg-[#0b1329] text-surface rounded-xl p-space-lg shadow-sm border border-border-strong/20">
+<div class="flex items-center justify-between pb-3 border-b border-surface/10 mb-3">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+<span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+<span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+<span class="font-code-sm text-xs text-slate-400 ml-2">arkhe-verify-cli-standalone</span>
+</div>
+<button class="text-slate-400 hover:text-surface text-caption flex items-center gap-1 font-code-sm" onclick="navigator.clipboard.writeText('arkhe-verify --offline --bundle EvidenceBundle-Minuta-892-2025.cbor --rekor-public-key rekor.pub')">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+              Copiar Linha de Comando
+            </button>
+</div>
+<p class="text-caption text-slate-400 mb-2">Para reprodutibilidade forense independente em sistemas Linux/macOS isolados:</p>
+<pre class="font-code text-xs text-slate-200 overflow-x-auto leading-relaxed bg-black/40 p-3 rounded border border-white/5"><span class="text-primary-light">$</span> arkhe-verify --offline \
+    --bundle EvidenceBundle-Minuta-892-2025.cbor \
+    --rekor-public-key rekor.pub \
+    --expected-root b3f9c8019aa2778e9b01...04c
+
+<span class="text-emerald-400">[VERDICT: PASS] All 5 cryptographic invariants satisfied.</span>
+[AUDIT] Leaf verified against Merkle Mountain Range at log index 491802.
+[AUDIT] Ed25519 Quorum 3/3 cryptographically non-repudiable.
+[AUDIT] Zero network sockets opened during verification process.</pre>
+</div>
+</div>
+<!-- RIGHT COLUMN (35% -> 4 cols of 12): Audit Parameters, Trust Anchors & Hex Inspection -->
+<div class="lg:col-span-4 flex flex-col gap-6">
+<!-- a) Laudo Pericial Resumido (Fiduciary Verdict Card) -->
+<div class="bg-surface rounded-xl border-2 border-success-pass p-space-lg shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 w-24 h-24 bg-pass-surface rounded-bl-full -z-0 pointer-events-none opacity-50"></div>
+<div class="relative z-10">
+<span class="text-[10px] font-code-sm font-bold uppercase tracking-wider text-pass-text bg-pass-surface px-2.5 py-1 rounded-full border border-pass-border inline-block mb-3">
+              Conclusão Pericial Definitiva
+            </span>
+<h3 class="text-heading-3 font-heading-3 text-text-primary leading-tight">
+              AUTENTICIDADE E NÃO-REPÚDIO COMPROVADOS
+            </h3>
+<div class="mt-4 pt-4 border-t border-border space-y-3">
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-text-secondary font-label-md">Eficácia Jurídica:</span>
+<span class="font-semibold text-text-primary">Plena (Art. 10 MP 2.200-2)</span>
+</div>
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-text-secondary font-label-md">Conformidade Legal:</span>
+<span class="font-semibold text-text-primary">Lei 14.063/20 (Avançada)</span>
+</div>
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-text-secondary font-label-md">Nível de Garantia:</span>
+<span class="font-semibold text-primary-dark font-code-sm">EAL4+ / FIPS 140-3 N3</span>
+</div>
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-text-secondary font-label-md">Carimbo Inviolável:</span>
+<span class="font-code-sm text-text-primary">2025-02-26 14:38:12Z</span>
+</div>
+</div>
+<div class="mt-5 p-3 rounded-lg bg-surface-sunken border border-border text-caption text-text-secondary leading-relaxed">
+<strong class="text-text-primary">Parecer do Auditor:</strong> O documento digital encapsulado possui integridade inalterada desde seu lançamento no livro-razão de transparência. Inexiste vulnerabilidade de repúdio por qualquer dos signatários.
+            </div>
+<button class="w-full mt-4 py-2.5 px-4 bg-success-pass text-surface hover:bg-emerald-700 active:scale-[0.98] transition-transform duration-150 rounded-lg font-label-md text-sm flex items-center justify-center gap-2 shadow-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+              Gerar Certificado de Perícia
+            </button>
+</div>
+</div>
+<!-- b) Painel de Chaves Públicas e Raiz de Confiança (Trust Anchors) -->
+<div class="bg-surface rounded-xl border border-border p-space-lg shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-heading-4 font-heading-4 text-text-primary">Raízes de Confiança (Anchors)</h3>
+<span class="material-symbols-outlined text-text-tertiary text-[20px]">vpn_key</span>
+</div>
+<div class="space-y-3">
+<!-- Anchor 1 -->
+<div class="p-3 bg-surface-sunken border border-border rounded-lg">
+<div class="flex items-center justify-between">
+<span class="text-caption font-semibold text-text-primary">Rekor Sigstore Public Key</span>
+<span class="text-[10px] font-code-sm text-pass-text bg-pass-surface px-1.5 py-0.5 rounded border border-pass-border">VERIFICADO</span>
+</div>
+<p class="text-caption text-text-secondary mt-0.5">Chave Ed25519 pública do Log de Transparência</p>
+<div class="mt-2 font-code-sm text-[11px] text-text-primary bg-surface p-1.5 rounded border border-border break-all">
+                ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...rekor
+              </div>
+</div>
+<!-- Anchor 2 -->
+<div class="p-3 bg-surface-sunken border border-border rounded-lg">
+<div class="flex items-center justify-between">
+<span class="text-caption font-semibold text-text-primary">Arkhe Fiduciary Vault Root</span>
+<span class="text-[10px] font-code-sm text-pass-text bg-pass-surface px-1.5 py-0.5 rounded border border-pass-border">VINCULADO</span>
+</div>
+<p class="text-caption text-text-secondary mt-0.5">Autoridade de Certificação Institucional</p>
+<div class="mt-2 font-code-sm text-[11px] text-text-primary bg-surface p-1.5 rounded border border-border break-all">
+                ed25519-vault-root-90a82f1b4...arkhe-auth
+              </div>
+</div>
+<!-- Anchor 3 -->
+<div class="p-3 bg-surface-sunken border border-border rounded-lg">
+<div class="flex items-center justify-between">
+<span class="text-caption font-semibold text-text-primary">Tenant Node #wg-bra-01</span>
+<span class="text-[10px] font-code-sm text-primary-dark bg-primary-light px-1.5 py-0.5 rounded border border-primary-container/20">CONFIRMADO</span>
+</div>
+<p class="text-caption text-text-secondary mt-0.5">Nó Corporativo de Carimbo e Custódia</p>
+<div class="mt-2 font-code-sm text-[11px] text-text-primary bg-surface p-1.5 rounded border border-border break-all">
+                tenant-node-brazil-sp-b1089...cluster
+              </div>
+</div>
+</div>
+</div>
+<!-- c) Inspetor Hex / Estrutura Canônica CBOR -->
+<div class="bg-surface rounded-xl border border-border p-space-lg shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-heading-4 font-heading-4 text-text-primary">Estrutura Canônica CBOR</h3>
+<span class="material-symbols-outlined text-text-tertiary text-[20px]">account_tree</span>
+</div>
+<p class="text-caption text-text-secondary mb-3">
+            Árvore hierárquica extraída do envelope <code class="font-code-sm">.cbor</code> verificado:
+          </p>
+<div class="bg-surface-sunken border border-border rounded-lg p-3 font-code-sm text-xs text-text-primary space-y-2">
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="material-symbols-outlined text-[14px]">folder_open</span>
+<span class="font-semibold text-text-primary">EvidenceBundle Envelope</span>
+</div>
+<div class="pl-4 border-l border-border space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-primary-dark">├── 01_header (v4.2)</span>
+<span class="text-[10px] text-text-tertiary">38B</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-primary-dark">├── 02_signatures (Quorum 3)</span>
+<span class="text-[10px] text-text-tertiary">192B</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-primary-dark">├── 03_wire_projection</span>
+<span class="text-[10px] text-text-tertiary">38.4KB</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-primary-dark">├── 04_rekor_inclusion_set</span>
+<span class="text-[10px] text-text-tertiary">1.2KB</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-primary-dark">└── 05_policy_attestations</span>
+<span class="text-[10px] text-text-tertiary">2.8KB</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-4"><button class="py-2 px-2.5 bg-primary-container text-surface hover:bg-primary-dark active:scale-[0.98] transition-transform duration-150 rounded-lg font-label-md text-caption flex items-center justify-center gap-1 shadow-sm" onclick="window.openCborModal('tree')"><span class="material-symbols-outlined text-[16px]">account_tree</span>Árvore Interativa</button><button class="py-2 px-2.5 bg-surface border border-border text-text-primary hover:bg-surface-sunken active:scale-[0.98] transition-transform duration-150 rounded-lg font-label-md text-caption flex items-center justify-center gap-1" onclick="window.openCborModal('hex')"><span class="material-symbols-outlined text-[16px]">data_object</span>Hex Dump</button></div>
+</div>
+</div>
+</div>
+</main>
+<!-- 5. Standard Institutional Arkhe Footer (Shared Component Anchor) -->
+<footer class="bg-surface border-t border-border mt-12">
+<div class="w-full px-space-xl py-space-2xl max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-space-md">
+<div class="flex flex-col items-start gap-1">
+<div class="text-heading-4 font-heading-4 text-text-primary tracking-tight flex items-center gap-2">
+          Arkhe Enterprise Fiduciary Protocol
+        </div>
+<p class="text-caption font-caption text-text-secondary max-w-xl">
+          © 2025 Arkhe Enterprise Fiduciary Protocol. All systemic operations verified cryptographically under Rekor Log transparency standard.
+        </p>
+</div>
+<nav class="flex flex-wrap items-center gap-x-6 gap-y-2 text-caption">
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">
+          Merkle Transparency Log
+        </a>
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">
+          BLAKE3 Identity Digest
+        </a>
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">
+          System Attestation Tree
+        </a>
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">
+          Governance Registry
+        </a>
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">
+          Cryptographic Keyring
+        </a>
+</nav>
+</div>
+</footer>
+
+
+<div id="hexDumpModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm" onclick="if(event.target===this) this.classList.add('hidden')"><div class="relative w-full max-w-6xl max-h-[90vh] flex flex-col bg-[#0b1329] border border-border-strong/40 rounded-2xl shadow-2xl text-slate-200 overflow-hidden" onclick="event.stopPropagation()"><div class="px-6 py-4 border-b border-white/10 bg-[#0d1730] flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-primary-container text-white flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-[20px]" id="cborModalIcon">account_tree</span></span><div><div class="flex items-center gap-2"><h3 class="font-heading-4 text-base font-semibold text-white" id="cborModalTitle">Inspeção e Parser CBOR Canônico (RFC 8949)</h3><span class="text-[10px] font-code-sm uppercase px-2 py-0.5 rounded bg-pass-surface text-pass-text border border-pass-border font-bold">Deterministic Core</span></div><p class="text-caption text-slate-400 mt-0.5 font-code-sm">EvidenceBundle-Minuta-892-2025.cbor • 42.8 KB (43.824 bytes) • SHA-256: 3c2b189f...182a • BLAKE3: 8a7b91c0...d9e11</p></div></div><div class="flex items-center gap-2"><div class="inline-flex p-1 rounded-lg bg-[#070b16] border border-white/10" role="tablist"><button id="tabBtnTree" onclick="window.switchCborTab('tree')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-caption font-label-md transition-all bg-primary-container text-white shadow-sm"><span class="material-symbols-outlined text-[16px]">account_tree</span>Árvore Interativa</button><button id="tabBtnHex" onclick="window.switchCborTab('hex')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-caption font-label-md transition-all text-slate-400 hover:text-white"><span class="material-symbols-outlined text-[16px]">data_object</span>Hex Dump</button></div><button onclick="navigator.clipboard.writeText('a56776657273696f6e6476342e326662756e646c655f69646a414b472d45562d383932'); alert('Dados copiados para a área de transferência!')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-caption font-label-md rounded border border-slate-700 transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">content_copy</span>Copiar</button><button onclick="document.getElementById('hexDumpModal').classList.add('hidden')" class="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"><span class="material-symbols-outlined text-[20px]">close</span></button></div></div><div id="treeViewContainer" class="flex-1 overflow-auto bg-[#070b16] p-5 font-code text-xs leading-relaxed" style="max-height: 58vh;"><div class="mb-4 pb-3 border-b border-white/10 space-y-2.5"><!-- 01_header (com correspondência de BLAKE3 Bundle Digest) -->
+<div class="rounded border border-primary-container/60 bg-[#091024] p-2.5 transition-all shadow-sm">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-slate-400">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-semibold">"01_header"</span>
+      <span class="text-slate-500 font-code-sm">: Map(4)</span>
+      <span class="text-[10px] font-code-sm px-1.5 py-0.2 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/40 flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">fingerprint</span>blake3 digest</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-sky-950/60 text-sky-300 border border-sky-800/40">Major Type 5</span>
+      <span class="text-[10px] text-slate-400">64 B</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-2 pl-4 border-l border-white/10 space-y-1 text-slate-300 font-mono text-[11px]">
+    <div><span class="text-slate-400">• version:</span> <span class="text-emerald-300 font-semibold">"v4.2"</span> <span class="text-[10px] text-slate-500">(Major Type 3 - Text)</span></div>
+    <div><span class="text-slate-400">• bundle_id:</span> <span class="text-emerald-300 font-semibold">"AKG-EV-892"</span> <span class="text-[10px] text-slate-500">(Major Type 3)</span></div>
+    <div><span class="text-slate-400">• created_at:</span> <span class="text-cyan-300">1740580692</span> <span class="text-[10px] text-slate-500">(Major Type 0 - PosInt)</span></div>
+    <div class="p-1.5 rounded bg-indigo-950/40 border border-indigo-800/40 mt-1 flex items-center justify-between gap-2">
+      <div><span class="text-slate-400">• <span class="bg-amber-400/20 text-amber-300 px-1 rounded font-semibold">blake3</span>_bundle_digest:</span> <span class="text-primary-light font-semibold break-all">8a7b91c04839de215f9b41...d9e11</span></div>
+      <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">check</span>Match</span>
+    </div>
+  </div>
+</div>
+
+<!-- 02_signatures (esmaecido) -->
+<div class="rounded border border-white/5 bg-[#091024] p-2.5 opacity-40 transition-opacity hover:opacity-75">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-slate-400">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-semibold">"02_signatures"</span>
+      <span class="text-slate-500 font-code-sm">: Array(3)</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">Major Type 4</span>
+      <span class="text-[10px] text-slate-400">192 B</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-2 pl-4 border-l border-white/10 space-y-1.5 text-slate-300 font-mono text-[11px] hidden">
+    <div class="p-1.5 rounded bg-slate-900 border border-slate-800"><span class="text-slate-400">[0] Ed25519 Sig:</span> <span class="text-emerald-400 break-all">409b21f8c4710289e34dbb90172fc18a...</span></div>
+    <div class="p-1.5 rounded bg-slate-900 border border-slate-800"><span class="text-slate-400">[1] Ed25519 Sig:</span> <span class="text-emerald-400 break-all">882a10bf9e3401fa910283bd7810aa12...</span></div>
+    <div class="p-1.5 rounded bg-slate-900 border border-slate-800"><span class="text-slate-400">[2] Ed25519 Sig:</span> <span class="text-emerald-400 break-all">e4129b87da104820bc3918da8723b102...</span></div>
+  </div>
+</div>
+
+<!-- 03_wire_projection (Destaque Principal com correspondência BLAKE3) -->
+<div class="rounded-lg border-2 border-primary-container bg-[#091024] p-3 shadow-lg transition-all">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-primary-light">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-bold text-sm">"03_wire_projection"</span>
+      <span class="text-slate-400 font-code-sm">: ByteString</span>
+      <span class="text-[10px] font-code-sm px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-800/60 font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">verified</span>BLAKE3 Projeção Causal Validada</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-indigo-950/60 text-indigo-300 border border-indigo-800/40">Major Type 2</span>
+      <span class="text-[10px] text-slate-400">38.4 KB</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-3 pl-4 border-l-2 border-primary-container/40 space-y-2 text-slate-300 font-mono text-[11px]">
+    <div class="p-2 rounded bg-slate-900/90 border border-white/5 flex items-start justify-between gap-3">
+      <div>
+        <span class="text-slate-400 block text-[10px] uppercase font-semibold mb-0.5">Payload Jurídico Decodificado:</span>
+        <span class="text-cyan-200 font-medium text-xs">CONTRATO DE CUSTODIA FIDUCIARIA E PROVA DE DEPOSITO</span>
+      </div>
+      <span class="text-[10px] font-code-sm bg-surface-sunken text-text-secondary px-1.5 py-0.5 rounded">RFC-8949 Canonical</span>
+    </div>
+    <div class="p-2.5 rounded bg-indigo-950/60 border border-indigo-800/60 space-y-1.5">
+      <div class="flex items-center justify-between">
+        <span class="text-slate-300 font-semibold flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px] text-primary-light">fingerprint</span>Computed <span class="bg-amber-400/20 text-amber-300 px-1 rounded font-bold">BLAKE3</span> Hash:</span>
+        <span class="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.5 rounded flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">check_circle</span>Exato (Zero Desvio)</span>
+      </div>
+      <div class="font-code text-xs text-primary-light bg-black/40 p-2 rounded border border-white/10 select-all font-semibold break-all">
+        f4b7190e8c892b1a039d48123908234190823419082341908234190823419012
+      </div>
+      <p class="text-[10px] text-slate-400 italic">Hash computado hermeticamente pelo módulo Rust/WASM sem vazamento de PII.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 04_rekor_inclusion_set (esmaecido) -->
+<div class="rounded border border-white/5 bg-[#091024] p-2.5 opacity-40 transition-opacity hover:opacity-75">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-slate-400">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-semibold">"04_rekor_inclusion_set"</span>
+      <span class="text-slate-500 font-code-sm">: Map(4)</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-amber-950/60 text-amber-300 border border-amber-800/40">Major Type 5</span>
+      <span class="text-[10px] text-slate-400">1.2 KB</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-2 pl-4 border-l border-white/10 space-y-1 text-slate-300 font-mono text-[11px] hidden">
+    <div><span class="text-slate-400">• log_index:</span> <span class="text-yellow-400 font-semibold">491802</span></div>
+    <div><span class="text-slate-400">• tree_size:</span> <span class="text-yellow-400 font-semibold">1048576</span></div>
+    <div><span class="text-slate-400">• root_hash:</span> <span class="text-sky-300">b3f9c8019aa2778e9b01...04c</span></div>
+  </div>
+</div>
+
+<!-- 05_policy_attestations (esmaecido) -->
+<div class="rounded border border-white/5 bg-[#091024] p-2.5 opacity-40 transition-opacity hover:opacity-75">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-slate-400">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-semibold">"05_policy_attestations"</span>
+      <span class="text-slate-500 font-code-sm">: Map(2)</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-purple-950/60 text-purple-300 border border-purple-800/40">Major Type 5</span>
+      <span class="text-[10px] text-slate-400">2.8 KB</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-2 pl-4 border-l border-white/10 space-y-1 text-slate-300 font-mono text-[11px] hidden">
+    <div><span class="text-slate-400">• policy_core:</span> <span class="text-purple-300 font-semibold">"PolicyCore-v1.0-StrictZeroRetention"</span></div>
+    <div><span class="text-slate-400">• pii_sanitized:</span> <span class="text-emerald-400 font-semibold">true</span></div>
+  </div>
+</div></div><div class="space-y-2"><div class="rounded-lg border border-white/10 bg-[#0d1730] p-3"><div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-amber-400 transition-transform">unfold_more</span><span class="text-sky-300 font-bold">Root [Map(5)]</span><span class="text-slate-400">— EvidenceBundle Envelope Principal</span></div><div class="flex items-center gap-2"><span class="px-2 py-0.5 rounded text-[10px] bg-primary-container text-white font-semibold">Major Type 5</span><span class="text-[11px] text-slate-400 font-code-sm">42.8 KB</span></div></div><div class="cbor-collapsible-content mt-3 pl-4 border-l-2 border-primary-container/40 space-y-2.5"><!-- 01_header (com correspondência de BLAKE3 Bundle Digest) -->
+<div class="rounded border border-primary-container/60 bg-[#091024] p-2.5 transition-all shadow-sm">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-slate-400">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-semibold">"01_header"</span>
+      <span class="text-slate-500 font-code-sm">: Map(4)</span>
+      <span class="text-[10px] font-code-sm px-1.5 py-0.2 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/40 flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">fingerprint</span>blake3 digest</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-sky-950/60 text-sky-300 border border-sky-800/40">Major Type 5</span>
+      <span class="text-[10px] text-slate-400">64 B</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-2 pl-4 border-l border-white/10 space-y-1 text-slate-300 font-mono text-[11px]">
+    <div><span class="text-slate-400">• version:</span> <span class="text-emerald-300 font-semibold">"v4.2"</span> <span class="text-[10px] text-slate-500">(Major Type 3 - Text)</span></div>
+    <div><span class="text-slate-400">• bundle_id:</span> <span class="text-emerald-300 font-semibold">"AKG-EV-892"</span> <span class="text-[10px] text-slate-500">(Major Type 3)</span></div>
+    <div><span class="text-slate-400">• created_at:</span> <span class="text-cyan-300">1740580692</span> <span class="text-[10px] text-slate-500">(Major Type 0 - PosInt)</span></div>
+    <div class="p-1.5 rounded bg-indigo-950/40 border border-indigo-800/40 mt-1 flex items-center justify-between gap-2">
+      <div><span class="text-slate-400">• <span class="bg-amber-400/20 text-amber-300 px-1 rounded font-semibold">blake3</span>_bundle_digest:</span> <span class="text-primary-light font-semibold break-all">8a7b91c04839de215f9b41...d9e11</span></div>
+      <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">check</span>Match</span>
+    </div>
+  </div>
+</div>
+
+<!-- 02_signatures (esmaecido) -->
+<div class="rounded border border-white/5 bg-[#091024] p-2.5 opacity-40 transition-opacity hover:opacity-75">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-slate-400">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-semibold">"02_signatures"</span>
+      <span class="text-slate-500 font-code-sm">: Array(3)</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">Major Type 4</span>
+      <span class="text-[10px] text-slate-400">192 B</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-2 pl-4 border-l border-white/10 space-y-1.5 text-slate-300 font-mono text-[11px] hidden">
+    <div class="p-1.5 rounded bg-slate-900 border border-slate-800"><span class="text-slate-400">[0] Ed25519 Sig:</span> <span class="text-emerald-400 break-all">409b21f8c4710289e34dbb90172fc18a...</span></div>
+    <div class="p-1.5 rounded bg-slate-900 border border-slate-800"><span class="text-slate-400">[1] Ed25519 Sig:</span> <span class="text-emerald-400 break-all">882a10bf9e3401fa910283bd7810aa12...</span></div>
+    <div class="p-1.5 rounded bg-slate-900 border border-slate-800"><span class="text-slate-400">[2] Ed25519 Sig:</span> <span class="text-emerald-400 break-all">e4129b87da104820bc3918da8723b102...</span></div>
+  </div>
+</div>
+
+<!-- 03_wire_projection (Destaque Principal com correspondência BLAKE3) -->
+<div class="rounded-lg border-2 border-primary-container bg-[#091024] p-3 shadow-lg transition-all">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-primary-light">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-bold text-sm">"03_wire_projection"</span>
+      <span class="text-slate-400 font-code-sm">: ByteString</span>
+      <span class="text-[10px] font-code-sm px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-800/60 font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">verified</span>BLAKE3 Projeção Causal Validada</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-indigo-950/60 text-indigo-300 border border-indigo-800/40">Major Type 2</span>
+      <span class="text-[10px] text-slate-400">38.4 KB</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-3 pl-4 border-l-2 border-primary-container/40 space-y-2 text-slate-300 font-mono text-[11px]">
+    <div class="p-2 rounded bg-slate-900/90 border border-white/5 flex items-start justify-between gap-3">
+      <div>
+        <span class="text-slate-400 block text-[10px] uppercase font-semibold mb-0.5">Payload Jurídico Decodificado:</span>
+        <span class="text-cyan-200 font-medium text-xs">CONTRATO DE CUSTODIA FIDUCIARIA E PROVA DE DEPOSITO</span>
+      </div>
+      <span class="text-[10px] font-code-sm bg-surface-sunken text-text-secondary px-1.5 py-0.5 rounded">RFC-8949 Canonical</span>
+    </div>
+    <div class="p-2.5 rounded bg-indigo-950/60 border border-indigo-800/60 space-y-1.5">
+      <div class="flex items-center justify-between">
+        <span class="text-slate-300 font-semibold flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px] text-primary-light">fingerprint</span>Computed <span class="bg-amber-400/20 text-amber-300 px-1 rounded font-bold">BLAKE3</span> Hash:</span>
+        <span class="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.5 rounded flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">check_circle</span>Exato (Zero Desvio)</span>
+      </div>
+      <div class="font-code text-xs text-primary-light bg-black/40 p-2 rounded border border-white/10 select-all font-semibold break-all">
+        f4b7190e8c892b1a039d48123908234190823419082341908234190823419012
+      </div>
+      <p class="text-[10px] text-slate-400 italic">Hash computado hermeticamente pelo módulo Rust/WASM sem vazamento de PII.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 04_rekor_inclusion_set (esmaecido) -->
+<div class="rounded border border-white/5 bg-[#091024] p-2.5 opacity-40 transition-opacity hover:opacity-75">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-slate-400">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-semibold">"04_rekor_inclusion_set"</span>
+      <span class="text-slate-500 font-code-sm">: Map(4)</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-amber-950/60 text-amber-300 border border-amber-800/40">Major Type 5</span>
+      <span class="text-[10px] text-slate-400">1.2 KB</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-2 pl-4 border-l border-white/10 space-y-1 text-slate-300 font-mono text-[11px] hidden">
+    <div><span class="text-slate-400">• log_index:</span> <span class="text-yellow-400 font-semibold">491802</span></div>
+    <div><span class="text-slate-400">• tree_size:</span> <span class="text-yellow-400 font-semibold">1048576</span></div>
+    <div><span class="text-slate-400">• root_hash:</span> <span class="text-sky-300">b3f9c8019aa2778e9b01...04c</span></div>
+  </div>
+</div>
+
+<!-- 05_policy_attestations (esmaecido) -->
+<div class="rounded border border-white/5 bg-[#091024] p-2.5 opacity-40 transition-opacity hover:opacity-75">
+  <div class="flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-[15px] text-slate-400">subdirectory_arrow_right</span>
+      <span class="text-yellow-300 font-semibold">"05_policy_attestations"</span>
+      <span class="text-slate-500 font-code-sm">: Map(2)</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-1.5 py-0.2 rounded text-[10px] bg-purple-950/60 text-purple-300 border border-purple-800/40">Major Type 5</span>
+      <span class="text-[10px] text-slate-400">2.8 KB</span>
+    </div>
+  </div>
+  <div class="cbor-collapsible-content mt-2 pl-4 border-l border-white/10 space-y-1 text-slate-300 font-mono text-[11px] hidden">
+    <div><span class="text-slate-400">• policy_core:</span> <span class="text-purple-300 font-semibold">"PolicyCore-v1.0-StrictZeroRetention"</span></div>
+    <div><span class="text-slate-400">• pii_sanitized:</span> <span class="text-emerald-400 font-semibold">true</span></div>
+  </div>
+</div></div></div></div></div><div id="hexViewContainer" class="hidden flex-col flex-1"><div class="px-6 py-2.5 bg-[#091024] border-b border-white/10 flex items-center justify-between gap-3 text-caption overflow-x-auto"><div class="flex items-center gap-2"><span class="text-slate-400 font-code-sm">Seções:</span><button class="px-2.5 py-1 rounded text-[11px] font-code-sm bg-primary-container text-white">Todos (0x0000-0xAB30)</button><button class="px-2.5 py-1 rounded text-[11px] font-code-sm text-sky-300 bg-sky-950/60 border border-sky-800/40">01_header [0x0000-0x0025]</button><button class="px-2.5 py-1 rounded text-[11px] font-code-sm text-emerald-300 bg-emerald-950/60 border border-emerald-800/40">02_signatures [0x0026-0x00e6]</button><button class="px-2.5 py-1 rounded text-[11px] font-code-sm text-indigo-300 bg-indigo-950/60 border border-indigo-800/40">03_wire_projection [0x00e7-0x9a4f]</button><button class="px-2.5 py-1 rounded text-[11px] font-code-sm text-amber-300 bg-amber-950/60 border border-amber-800/40">04_rekor_inclusion [0x9a50-0x9ef0]</button><button class="px-2.5 py-1 rounded text-[11px] font-code-sm text-purple-300 bg-purple-950/60 border border-purple-800/40">05_policy_attestations [0x9ef1-0xab30]</button></div></div><div class="flex-1 overflow-auto bg-[#070b16] p-5 font-code text-xs leading-relaxed select-text" style="max-height: 52vh;"><div class="grid grid-cols-12 gap-3 pb-2 mb-2 border-b border-white/10 text-slate-500 font-semibold sticky top-0 bg-[#070b16]"><div class="col-span-2">OFFSET</div><div class="col-span-7 tracking-widest text-slate-400">00 01 02 03 04 05 06 07 | 08 09 0A 0B 0C 0D 0E 0F</div><div class="col-span-3 text-slate-400 pl-2">DECODIFICAÇÃO ASCII</div></div><div class="space-y-1 text-slate-300"><div class="grid grid-cols-12 gap-3 py-0.5 hover:bg-slate-800/60 rounded px-1"><div class="col-span-2 text-slate-500 font-mono">00000000</div><div class="col-span-7 flex justify-between font-mono"><span class=""><span class="text-sky-400 font-bold" title="Tag 0xa5: Map com 5 pares (RFC 8949)">a5</span> <span class="text-sky-300">67</span> 76 65 72 73 69 6f</span><span class="text-slate-600">|</span><span class="">6e <span class="text-emerald-400">64</span> 76 34 2e 32 <span class="text-sky-300">66</span> 62</span></div><div class="col-span-3 text-slate-400 pl-2 font-mono border-l border-white/5 truncate">.gversion.dv4.2fb</div></div><div class="grid grid-cols-12 gap-3 py-0.5 hover:bg-slate-800/60 rounded px-1"><div class="col-span-2 text-slate-500 font-mono">00000010</div><div class="col-span-7 flex justify-between font-mono"><span class="">75 6e 64 6c 65 5f 69 64</span><span class="text-slate-600">|</span><span class=""><span class="text-yellow-300">6a</span> 41 4b 47 2d 45 56 2d</span></div><div class="col-span-3 text-slate-400 pl-2 font-mono border-l border-white/5 truncate">undle_idjAKG-EV-</div></div><div class="grid grid-cols-12 gap-3 py-0.5 hover:bg-slate-800/60 rounded px-1"><div class="col-span-2 text-slate-500 font-mono">00000020</div><div class="col-span-7 flex justify-between font-mono"><span class="">38 39 32 <span class="text-emerald-400 font-bold" title="Tag 0x6a: 'signatures'">6a</span> 73 69 67 6e</span><span class="text-slate-600">|</span><span class="">61 74 75 72 65 73 <span class="text-teal-400 font-bold" title="0x83: Array 3 assinaturas (Quórum 3/3)">83</span> <span class="text-emerald-300">58</span></span></div><div class="col-span-3 text-slate-400 pl-2 font-mono border-l border-white/5 truncate">892jsignatures.X</div></div><div class="grid grid-cols-12 gap-3 py-0.5 hover:bg-slate-800/60 rounded px-1"><div class="col-span-2 text-slate-500 font-mono">00000030</div><div class="col-span-7 flex justify-between font-mono"><span class=""><span class="text-emerald-400" title="Length 64 bytes Ed25519 Sig 1">40</span> 9b 21 f8 c4 71 02 89</span><span class="text-slate-600">|</span><span class="">e3 4d bb 90 17 2f c1 8a</span></div><div class="col-span-3 text-slate-400 pl-2 font-mono border-l border-white/5 truncate">@.!.q..M.../...</div></div><div class="grid grid-cols-12 gap-3 py-0.5 hover:bg-slate-800/60 rounded px-1"><div class="col-span-2 text-slate-500 font-mono">000000E0</div><div class="col-span-7 flex justify-between font-mono"><span class=""><span class="text-indigo-400 font-bold" title="Text string: 'wire_projection'">6f</span> 77 69 72 65 5f 70 72</span><span class="text-slate-600">|</span><span class="">6f 6a 65 63 74 69 6f 6e</span></div><div class="col-span-3 text-indigo-300 pl-2 font-mono border-l border-white/5 truncate">.wire_projection</div></div><div class="grid grid-cols-12 gap-3 py-0.5 hover:bg-slate-800/60 rounded px-1"><div class="col-span-2 text-slate-500 font-mono">000000F0</div><div class="col-span-7 flex justify-between font-mono"><span class=""><span class="text-cyan-300">43 4f 4e 54 52 41 54 4f</span></span><span class="text-slate-600">|</span><span class=""><span class="text-cyan-300">20 44 45 20 43 55 53 54</span></span></div><div class="col-span-3 text-cyan-200 pl-2 font-mono border-l border-white/5 truncate">CONTRATO DE CUST</div></div><div class="grid grid-cols-12 gap-3 py-0.5 hover:bg-slate-800/60 rounded px-1"><div class="col-span-2 text-slate-500 font-mono">00009A50</div><div class="col-span-7 flex justify-between font-mono"><span class=""><span class="text-amber-400 font-bold" title="Text string: 'rekor_inclusion_set'">73</span> 72 65 6b 6f 72 5f 69</span><span class="text-slate-600">|</span><span class="">6e 63 6c 75 73 69 6f 6e</span></div><div class="col-span-3 text-amber-300 pl-2 font-mono border-l border-white/5 truncate">srekor_inclusion</div></div><div class="grid grid-cols-12 gap-3 py-0.5 hover:bg-slate-800/60 rounded px-1"><div class="col-span-2 text-slate-500 font-mono">00009A60</div><div class="col-span-7 flex justify-between font-mono"><span class="">5f 73 65 74 <span class="text-yellow-400 font-bold" title="Log Index: 491802">1a 00 07 81</span></span><span class="text-slate-600">|</span><span class=""><span class="text-yellow-400">1a</span> <span class="text-sky-400">58 20 b3 f9 c8 01 9a</span></span></div><div class="col-span-3 text-slate-400 pl-2 font-mono border-l border-white/5 truncate">_set...X ...</div></div><div class="grid grid-cols-12 gap-3 py-0.5 hover:bg-slate-800/60 rounded px-1"><div class="col-span-2 text-slate-500 font-mono">0000AB20</div><div class="col-span-7 flex justify-between font-mono"><span class=""><span class="text-emerald-400 font-bold">f5</span> 00 00 00 00 00 00 00</span><span class="text-slate-600">|</span><span class="">00 00 00 00 00 00 00 <span class="text-pass-text bg-pass-surface/80 font-bold">ff</span></span></div><div class="col-span-3 text-slate-500 pl-2 font-mono border-l border-white/5 truncate">................</div></div></div></div></div><div class="px-6 py-3 bg-[#0a1126] border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-caption"><div class="flex items-center gap-3 font-code-sm text-slate-400 text-[11px] bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800"><span class="text-slate-300 font-semibold">Inspetor:</span><span class="">Modo: <code class="text-sky-300" id="activeModeLabel">Árvore Hierárquica</code></span><span class="">•</span><span class="">Protocolo: <code class="text-emerald-300">RFC 8949 (Deterministic Core)</code></span><span class="">•</span><span class="">Estado: <code class="text-pass-text">Fail-Closed Validated</code></span></div><div class="flex items-center gap-2"><span class="text-[11px] text-emerald-400 font-code-sm hidden md:inline flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">verified</span> RFC 8949 Deterministic Core Verified</span><button onclick="document.getElementById('hexDumpModal').classList.add('hidden')" class="px-4 py-1.5 bg-primary-container hover:bg-primary-dark text-white rounded font-label-md transition-colors">Fechar</button></div></div></div></div><script class="">
+window.switchCborTab = function(mode) {
+  const treeView = document.getElementById('treeViewContainer');
+  const hexView = document.getElementById('hexViewContainer');
+  const tabTree = document.getElementById('tabBtnTree');
+  const tabHex = document.getElementById('tabBtnHex');
+  const modeLabel = document.getElementById('activeModeLabel');
+  const modalIcon = document.getElementById('cborModalIcon');
+  const modalTitle = document.getElementById('cborModalTitle');
+
+  if (mode === 'tree') {
+    treeView.classList.remove('hidden');
+    hexView.classList.add('hidden');
+    tabTree.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-caption font-label-md transition-all bg-primary-container text-white shadow-sm';
+    tabHex.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-caption font-label-md transition-all text-slate-400 hover:text-white';
+    if (modeLabel) modeLabel.textContent = 'Árvore Hierárquica';
+    if (modalIcon) modalIcon.textContent = 'account_tree';
+    if (modalTitle) modalTitle.textContent = 'Árvore CBOR Interativa (RFC 8949)';
+  } else {
+    treeView.classList.add('hidden');
+    hexView.classList.remove('hidden');
+    hexView.classList.add('flex');
+    tabHex.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-caption font-label-md transition-all bg-primary-container text-white shadow-sm';
+    tabTree.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-caption font-label-md transition-all text-slate-400 hover:text-white';
+    if (modeLabel) modeLabel.textContent = 'Hex Dump Side-by-Side';
+    if (modalIcon) modalIcon.textContent = 'data_object';
+    if (modalTitle) modalTitle.textContent = 'Visualizador Hexadecimal & Parser CBOR Canônico';
+  }
+};
+
+window.openCborModal = function(mode) {
+  const modal = document.getElementById('hexDumpModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    window.switchCborTab(mode);
+  }
+};
+</script><script class="">
+window.expandAllCborNodes = function() {
+  document.querySelectorAll('#treeViewContainer .cbor-collapsible-content').forEach(el => el.classList.remove('hidden'));
+};
+
+window.collapseAllCborNodes = function() {
+  document.querySelectorAll('#treeViewContainer .cbor-collapsible-content').forEach(el => el.classList.add('hidden'));
+};
+
+window.clearCborSearch = function() {
+  const input = document.getElementById('cborTreeSearchInput');
+  if (input) {
+    input.value = '';
+    window.filterCborTree('');
+    input.focus();
+  }
+};
+
+window.setQuickSearch = function(term) {
+  const input = document.getElementById('cborTreeSearchInput');
+  if (input) {
+    input.value = term;
+    window.filterCborTree(term);
+  }
+};
+
+window.filterCborTree = function(term) {
+  const rawTerm = (term || '').trim();
+  const searchStr = rawTerm.toLowerCase();
+  const matchBadge = document.getElementById('cborSearchMatchBadge');
+  const clearBtn = document.getElementById('cborClearSearchBtn');
+  const treeContainer = document.getElementById('treeViewContainer');
+  if (!treeContainer) return;
+
+  // Gerenciar visibilidade dos controles de limpar e badge
+  if (clearBtn) {
+    if (rawTerm.length > 0) {
+      clearBtn.classList.remove('hidden');
+    } else {
+      clearBtn.classList.add('hidden');
+    }
+  }
+
+  // Restaurar conteúdo original se guardado, ou inicializar cache
+  const treeNodes = treeContainer.querySelectorAll('.space-y-2 > .rounded-lg, .space-y-2.5 > .rounded, .space-y-1 > div, .space-y-1.5 > div');
+
+  if (!searchStr) {
+    if (matchBadge) matchBadge.classList.add('hidden');
+    treeNodes.forEach(node => {
+      node.classList.remove('hidden', 'opacity-30');
+      node.style.display = '';
+    });
+    // Remove highlights
+    treeContainer.querySelectorAll('.cbor-highlight').forEach(el => {
+      const parent = el.parentNode;
+      if (parent) {
+        parent.replaceChild(document.createTextNode(el.textContent), el);
+        parent.normalize();
+      }
+    });
+    return;
+  }
+
+  // Limpar destaques anteriores antes de nova busca
+  treeContainer.querySelectorAll('.cbor-highlight').forEach(el => {
+    const parent = el.parentNode;
+    if (parent) {
+      parent.replaceChild(document.createTextNode(el.textContent), el);
+      parent.normalize();
+    }
+  });
+
+  let matchCount = 0;
+  const subSections = treeContainer.querySelectorAll('.space-y-2.5 > .rounded');
+
+  subSections.forEach(section => {
+    const sectionText = section.textContent.toLowerCase();
+    const isMatch = sectionText.includes(searchStr);
+    const collapsible = section.querySelector('.cbor-collapsible-content');
+
+    if (isMatch) {
+      matchCount++;
+      section.classList.remove('hidden');
+      section.classList.remove('opacity-30');
+      section.style.display = '';
+      if (collapsible) collapsible.classList.remove('hidden');
+
+      // Filtrar itens internos dentro da seção
+      const items = section.querySelectorAll('.space-y-1 > div, .space-y-1.5 > div');
+      items.forEach(item => {
+        if (item.textContent.toLowerCase().includes(searchStr)) {
+          item.classList.remove('opacity-30');
+        } else {
+          item.classList.add('opacity-30');
+        }
+      });
+    } else {
+      section.classList.add('opacity-30');
+    }
+  });
+
+  // Expandir a raiz principal se houver qualquer correspondência
+  const rootCollapsible = treeContainer.querySelector('.space-y-2 > .rounded-lg > .cbor-collapsible-content');
+  if (rootCollapsible) {
+    rootCollapsible.classList.remove('hidden');
+  }
+
+  // Atualizar badge de contador
+  if (matchBadge) {
+    matchBadge.classList.remove('hidden');
+    if (matchCount > 0) {
+      matchBadge.textContent = matchCount + (matchCount === 1 ? ' seção encontrada' : ' seções encontradas');
+      matchBadge.className = 'text-[10px] font-code-sm px-1.5 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-800/60 font-semibold';
+    } else {
+      matchBadge.textContent = 'Nenhum resultado';
+      matchBadge.className = 'text-[10px] font-code-sm px-1.5 py-0.5 rounded bg-red-950/90 text-red-300 border border-red-800/60 font-semibold';
+    }
+  }
+};
+</script></body></html>

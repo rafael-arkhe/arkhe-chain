@@ -1,0 +1,46 @@
+# Contexto de build do security-app (F1.2).
+#
+# Regra de ouro: NADA que carregue segredo ou configuração de cliente entra
+# aqui. O Next carrega `.env*` durante o `next build` e INLINA todo
+# `NEXT_PUBLIC_*` que encontrar — um .env.local vazado no contexto voltaria a
+# amarrar a imagem a um cliente. (O Dockerfile também falha ruidosamente se
+# algum escapar, mas a primeira barreira é esta.)
+
+.env
+.env.*
+!.env.example
+
+node_modules
+.next
+out
+coverage
+.swc
+tsconfig.tsbuildinfo
+
+# Assets do Cesium: em desenvolvimento isto é um symlink/junction para
+# node_modules. O runtime materializa os arquivos de verdade a partir do
+# node_modules do builder — copiar o link daria 404 no globo.
+public/cesium
+
+# Artefatos de teste e captura — pesam e não servem à imagem.
+__tests__
+e2e
+e2e-record
+test-results
+playwright-report
+playwright.config.ts
+playwright.record.config.ts
+jest.config.js
+jest.setup.js
+__mocks__
+.playwright-n2
+.playwright-shots
+*.png
+*.log
+
+.git
+.gitignore
+.github
+README.md
+docs
+NUL

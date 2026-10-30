@@ -1,0 +1,32 @@
+Dear Alex,
+
+I have completed a source-informed independent implementation of the 54 golden
+cases pinned at verifier commit 6b2ecbabd098c9a381b0b08184703905c3cb8275.
+All 54 complete DecisionRecords match, including decision IDs, metrics and traces.
+No Gravit module was imported or executed. I did review the public implementation
+to resolve details not explicit in the prose, so this is not a blind text-only test.
+
+The original Rust primitive comparison also remains reproducible: 118 evidence
+signatures, three individual registry root signatures and the hosted size-14
+tree-head signature. Our new reader additionally authenticates the registry with
+its three-of-five test trust root. Seventeen controls cover tampering, duplicate
+signers, replay, source grouping, time boundaries and related failure cases.
+
+One clarification emerged. CANON-RES-012 and docs/signed-result.md require two
+independent supporting sources. In two_keys_one_operator, the expected record
+reports supporting_sources=1 but constraint_ok=true for RES-012. Our strict reading
+would mark this false; our compatibility mode matches your output. Both yield
+Probabilistic Assessment/DEGRADED because SIG-011 caps it independently. Should
+RES-012 explicitly delegate that independence check to SIG-011 when all results
+are true, or should its constraint_ok reflect the written two-source requirement?
+
+For hosted inclusion, the public head verifies, but the proof route returns 401
+without an API key. Could you publish a leaf/path fixture against a pinned signed
+head? The publisher appears to use the decoded 32-byte entry_hash as the raw leaf.
+
+We have also frozen 22 small Arkhe exchange vectors and a written specification
+for inclusion, Ed25519 and a proposed witness-quorum policy. A public immutable
+revision is still pending; no claim of public publication is intended here.
+
+Best regards,
+Rafael

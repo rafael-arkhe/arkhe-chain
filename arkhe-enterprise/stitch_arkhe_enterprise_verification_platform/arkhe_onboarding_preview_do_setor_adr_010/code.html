@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Enterprise - Preview do Sector Profile (Onboarding)</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary": "#003640",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-surface": "#dfe2ee",
+            "on-error": "#690005",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-tertiary-container": "#00452e",
+            "outline": "#869397",
+            "surface-tint": "#4cd7f6",
+            "outline-variant": "#3d494c",
+            "on-secondary": "#002a78",
+            "secondary-fixed-dim": "#b4c5ff",
+            "inverse-surface": "#dfe2ee",
+            "surface-container-lowest": "#0a0e16",
+            "surface-container-highest": "#31353e",
+            "surface-container-high": "#262a33",
+            "secondary": "#b4c5ff",
+            "on-error-container": "#ffdad6",
+            "tertiary-container": "#1bbd85",
+            "on-background": "#dfe2ee",
+            "primary-fixed": "#acedff",
+            "primary-fixed-dim": "#4cd7f6",
+            "secondary-fixed": "#dbe1ff",
+            "on-tertiary-fixed": "#002113",
+            "surface-container": "#1c2028",
+            "on-primary-container": "#00424f",
+            "on-secondary-container": "#cdd7ff",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-variant": "#31353e",
+            "surface-bright": "#353942",
+            "on-tertiary": "#003824",
+            "surface-dim": "#0f131c",
+            "on-primary-fixed-variant": "#004e5c",
+            "surface": "#0f131c",
+            "inverse-primary": "#00687a",
+            "primary-container": "#06b6d4",
+            "surface-container-low": "#181c24",
+            "on-secondary-fixed": "#00174b",
+            "error-container": "#93000a",
+            "on-surface-variant": "#bcc9cd",
+            "primary": "#4cd7f6",
+            "background": "#0f131c",
+            "on-primary-fixed": "#001f26",
+            "tertiary": "#4edea3",
+            "secondary-container": "#0053db",
+            "on-secondary-fixed-variant": "#003ea8",
+            "error": "#ffb4ab",
+            "inverse-on-surface": "#2c3039"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "gutter-mobile": "0.75rem",
+            "space-xs": "0.25rem",
+            "margin": "2rem",
+            "space-md": "1rem",
+            "margin-mobile": "1rem"
+          },
+          "fontFamily": {
+            "body-md": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "label-badge": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "mono-md": ["JetBrains Mono"],
+            "display-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-sm": ["Inter"],
+            "mono-sm": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-badge": ["10px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    }
+    /* Hairline and subtle gradient aesthetics */
+    .telemetry-grid {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(61, 73, 76, 0.15) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(61, 73, 76, 0.15) 1px, transparent 1px);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen pb-space-xl telemetry-grid">
+<!-- TopAppBar (From Shared Component JSON) -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-md py-space-xs border-b border-outline-variant/30 bg-surface-container-lowest/85 backdrop-blur-md">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="shield">shield</span>
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight">Arkhe Enterprise</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="px-space-xs py-[2px] rounded-lg bg-surface-container border border-outline-variant/50 text-label-badge font-label-badge text-on-surface-variant uppercase">
+        BACEN Tier 1
+      </span>
+</div>
+</header>
+<!-- Main Content Canvas (Wizard Step 3 - Sub-task Linear Flow) -->
+<main class="pt-[60px] px-gutter-mobile max-w-md mx-auto flex flex-col gap-space-md">
+<!-- Progress Tracker (Wizard 3 of 6) -->
+<section class="mt-space-sm bg-surface-container-lowest/90 border border-outline-variant/30 rounded-xl p-space-sm">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm text-on-surface-variant mb-space-xs">
+<span class="flex items-center gap-1 text-primary font-medium">
+<span class="material-symbols-outlined text-[14px]" data-icon="terminal">terminal</span>
+          PASSO 3 DE 6: PREVIEW
+        </span>
+<span class="text-primary-fixed-dim">ADR-010 COMPLIANCE</span>
+</div>
+<!-- Segmented Step Indicator Bar -->
+<div class="grid grid-cols-6 gap-1 mb-space-xs">
+<div class="h-1 rounded-full bg-primary" title="1. Empresa"></div>
+<div class="h-1 rounded-full bg-primary" title="2. Setor"></div>
+<div class="h-1 rounded-full bg-primary-container relative" title="3. Preview">
+<span class="absolute -top-1 right-0 w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+</div>
+<div class="h-1 rounded-full bg-surface-container-highest" title="4. Deptos"></div>
+<div class="h-1 rounded-full bg-surface-container-highest" title="5. Integrações"></div>
+<div class="h-1 rounded-full bg-surface-container-highest" title="6. 1º Doc"></div>
+</div>
+<!-- Horizontal Flow Labels -->
+<div class="flex items-center justify-between text-[9px] font-mono-sm text-outline uppercase tracking-wider overflow-x-auto whitespace-nowrap py-0.5">
+<span class="text-on-surface-variant">1.Empresa</span>
+<span class="text-on-surface-variant">2.Setor</span>
+<span class="text-primary font-bold">3.Preview</span>
+<span>4.Deptos</span>
+<span>5.Integ</span>
+<span>6.Doc</span>
+</div>
+</section>
+<!-- Header & ADR Context -->
+<section class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="px-space-xs py-[2px] rounded-DEFAULT bg-primary/10 border border-primary/30 text-primary text-label-badge font-label-badge uppercase">
+          Confirmação Obrigatória
+        </span>
+<span class="text-outline text-mono-sm font-mono-sm">ADR-009 / ADR-010</span>
+</div>
+<h1 class="text-headline-md font-headline-md text-on-surface tracking-tight">
+        Confirmar Perfil Setorial
+      </h1>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+        O perfil setorial é um <span class="text-on-surface font-medium underline decoration-outline-variant">preset imutável por tenant (ADR-009)</span>. Verifique os parâmetros regulatórios antes da assinatura definitiva.
+      </p>
+</section>
+<!-- 1. Technical Tenant Identification Badge -->
+<div class="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-space-sm shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="text-label-badge font-label-badge text-outline uppercase tracking-widest">Identificação do Tenant</span>
+<span class="px-space-xs py-[2px] rounded-DEFAULT bg-primary-container/15 text-primary text-label-badge font-label-badge uppercase">
+          Auto-Resolved
+        </span>
+</div>
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[20px] mt-0.5" data-icon="domain">domain</span>
+<div class="flex flex-col">
+<span class="text-body-md font-body-md font-semibold text-on-surface">Acme Pagamentos S.A.</span>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant">CNPJ: 12.345.678/0001-90 • CNAE: 64.10-7</span>
+</div>
+</div>
+<div class="mt-space-xs pt-space-xs border-t border-outline-variant/20 flex items-center justify-between">
+<span class="text-mono-sm font-mono-sm text-outline">Preset Arquitetural:</span>
+<code class="px-1.5 py-0.5 bg-surface-container-high rounded text-primary text-mono-sm font-mono-sm">arkhe:sector:finance v1.0.0</code>
+</div>
+</div>
+<!-- 2. Mandatory Evidence Card (Bento item) -->
+<section class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="fact_check">fact_check</span>
+<h2 class="text-body-md font-body-md font-semibold text-on-surface uppercase tracking-wide">
+            Evidências Obrigatórias Exigidas
+          </h2>
+</div>
+<span class="text-label-badge font-label-badge text-tertiary border border-tertiary/30 px-1.5 py-0.5 rounded-DEFAULT bg-tertiary/10">
+          STRICT
+        </span>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Item 1 -->
+<div class="flex items-center justify-between p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="check_circle">check_circle</span>
+<div class="flex flex-col">
+<span class="text-mono-sm font-mono-sm text-on-surface font-semibold">bacen_audit</span>
+<span class="text-[11px] font-body-sm text-on-surface-variant">Trilha de auditoria BACEN</span>
+</div>
+</div>
+<span class="text-label-badge font-label-badge text-outline">REQ-BC-01</span>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center justify-between p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="check_circle">check_circle</span>
+<div class="flex flex-col">
+<span class="text-mono-sm font-mono-sm text-on-surface font-semibold">reconciliation</span>
+<span class="text-[11px] font-body-sm text-on-surface-variant">Extrato de reconciliação canónico</span>
+</div>
+</div>
+<span class="text-label-badge font-label-badge text-outline">CANON-HASH</span>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center justify-between p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="check_circle">check_circle</span>
+<div class="flex flex-col">
+<span class="text-mono-sm font-mono-sm text-on-surface font-semibold">aml_check</span>
+<span class="text-[11px] font-body-sm text-on-surface-variant">Verificação AML/PLD</span>
+</div>
+</div>
+<span class="text-label-badge font-label-badge text-outline">COAF-COMPLIANT</span>
+</div>
+<!-- Item 4 -->
+<div class="flex items-center justify-between p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="check_circle">check_circle</span>
+<div class="flex flex-col">
+<span class="text-mono-sm font-mono-sm text-on-surface font-semibold">e_cnpj</span>
+<span class="text-[11px] font-body-sm text-on-surface-variant">Assinatura digital ICP-Brasil A3</span>
+</div>
+</div>
+<span class="text-label-badge font-label-badge text-outline">ICP-A3</span>
+</div>
+</div>
+<!-- Rule Badge Container -->
+<div class="mt-space-xs p-space-xs bg-primary/5 rounded border border-primary/20 flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[16px] mt-0.5" data-icon="supervised_user_circle">supervised_user_circle</span>
+<div class="flex flex-col">
+<span class="text-mono-sm font-mono-sm text-primary font-medium">Regra de Revisão Humana (Dual Custody)</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant">Obrigatória em operações > R$ 50.000,00</span>
+</div>
+</div>
+</section>
+<!-- 3. Cryptographic Policies & Governance -->
+<section class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="key">key</span>
+<h2 class="text-body-md font-body-md font-semibold text-on-surface uppercase tracking-wide">
+            Políticas Criptográficas & Governança
+          </h2>
+</div>
+<span class="px-space-xs py-[2px] rounded bg-secondary-container/20 border border-secondary/30 text-secondary text-label-badge font-label-badge uppercase">
+          FIPS 140-2 L3
+        </span>
+</div>
+<div class="grid grid-cols-1 gap-space-xs">
+<!-- Chave de Assinatura -->
+<div class="flex flex-col p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<span class="text-[10px] font-mono-sm uppercase text-outline">Chave de Assinatura</span>
+<div class="flex items-center justify-between mt-0.5">
+<span class="text-body-sm font-body-sm text-on-surface font-medium">HSM Dedicado + e-CNPJ</span>
+<span class="text-mono-sm font-mono-sm text-primary">ICP-Brasil</span>
+</div>
+</div>
+<!-- Política de Retenção -->
+<div class="flex flex-col p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<span class="text-[10px] font-mono-sm uppercase text-outline">Política de Retenção</span>
+<div class="flex items-center justify-between mt-0.5">
+<span class="text-body-sm font-body-sm text-on-surface font-medium">10 Anos com Imutabilidade</span>
+<span class="text-label-badge font-label-badge text-tertiary">Legal Hold LGPD</span>
+</div>
+</div>
+<!-- Ancoragem -->
+<div class="flex flex-col p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<span class="text-[10px] font-mono-sm uppercase text-outline">Camada de Ancoragem Dual</span>
+<div class="mt-1 flex flex-col gap-1">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-on-surface">RBB Primária (Besu Enterprise)</span>
+<span class="text-tertiary">FINAL</span>
+</div>
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-on-surface-variant">Rekor Secundário (Transparency Log)</span>
+<span class="text-outline">Janela: 5 min</span>
+</div>
+</div>
+</div>
+<!-- Limiar de Ancoragem -->
+<div class="flex flex-col p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<span class="text-[10px] font-mono-sm uppercase text-outline">Governança Multi-Party</span>
+<div class="flex items-center justify-between mt-0.5">
+<span class="text-body-sm font-body-sm text-on-surface font-medium">Limiar de Ancoragem</span>
+<span class="text-mono-sm font-mono-sm text-primary font-bold">Multisig 3-de-5</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Quotas & Previsão de Custos -->
+<section class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="analytics">analytics</span>
+<h2 class="text-body-md font-body-md font-semibold text-on-surface uppercase tracking-wide">
+            Quotas & Previsão de Custos
+          </h2>
+</div>
+<span class="px-space-xs py-[2px] rounded bg-primary/10 border border-primary/30 text-primary text-label-badge font-label-badge uppercase">
+          Billing Tier
+        </span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs">
+<div class="p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20 flex flex-col">
+<span class="text-[10px] font-mono-sm text-outline uppercase">Plano Selecionado</span>
+<span class="text-body-sm font-body-sm text-on-surface font-bold mt-1">Starter Finance</span>
+<span class="text-[10px] font-mono-sm text-tertiary mt-0.5">Assinatura Ativa</span>
+</div>
+<div class="p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20 flex flex-col">
+<span class="text-[10px] font-mono-sm text-outline uppercase">Storage WORM</span>
+<span class="text-body-sm font-body-sm text-on-surface font-bold mt-1">50 GB</span>
+<span class="text-[10px] font-mono-sm text-outline mt-0.5">Dedicado Cripto</span>
+</div>
+</div>
+<div class="p-space-xs bg-surface-container-lowest rounded-lg border border-outline-variant/20 flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface">Franquia Mensal</span>
+<span class="text-mono-sm font-mono-sm text-primary font-bold">500 docs / mês</span>
+</div>
+<div class="flex items-center justify-between text-mono-sm font-mono-sm text-outline border-t border-outline-variant/20 pt-1">
+<span>Tarifa Excedente:</span>
+<span class="text-on-surface-variant font-medium">R$ 0,25 por documento</span>
+</div>
+</div>
+</section>
+<!-- 5. Pre-Commit Proof Seal (Mathematical / Cryptographic Lemma) -->
+<div class="bg-surface-container-lowest border border-primary-container/40 rounded-xl p-space-sm flex flex-col gap-space-xs shadow-[0_0_12px_rgba(6,182,212,0.08)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="lock">lock</span>
+<span class="text-label-badge font-label-badge text-primary uppercase tracking-wider">Selo de Validade Pré-Commit</span>
+</div>
+<span class="px-space-xs py-[2px] rounded-DEFAULT bg-primary-container/10 border border-primary-container text-primary text-label-badge font-label-badge uppercase font-bold">
+          LEMMA
+        </span>
+</div>
+<div class="flex flex-col gap-1 bg-surface-container-high/40 p-space-xs rounded">
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-mono-sm text-outline">PREVIEW SIGNED DIGEST:</span>
+<span class="text-[10px] font-mono-sm text-primary">sha256</span>
+</div>
+<code class="text-mono-sm font-mono-sm text-primary break-all">
+          sha256:7f8a3d9e84b2c174f8812c19842a7810398402194aebca7119f07a2131b9
+        </code>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono-sm text-on-surface-variant pt-1 border-t border-outline-variant/20">
+<span>Classificação Formal τ:</span>
+<span class="text-primary font-semibold">FORMAL_LEMMA_VERIFIED</span>
+</div>
+</div>
+<!-- 6. Footer Actions -->
+<footer class="mt-space-sm flex flex-col gap-space-xs pb-space-lg">
+<!-- High Impact Primary Commit Action -->
+<button class="w-full bg-primary-container text-surface-container-lowest font-headline-sm text-[15px] font-semibold py-3 px-space-md rounded-lg flex items-center justify-center gap-2 hover:bg-surface-tint active:scale-[0.99] transition duration-150 shadow-[0_0_14px_rgba(6,182,212,0.25)]" onclick="confirmAndCommit()" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="verified_user">verified_user</span>
+<span>Confirmar & Aplicar Perfil (Assinar e-CNPJ)</span>
+</button>
+<!-- Secondary Structural Actions -->
+<div class="grid grid-cols-2 gap-space-xs mt-1">
+<button class="bg-surface-container-low border border-outline-variant/60 text-on-surface hover:border-primary transition-colors duration-150 py-2.5 px-space-xs rounded-lg text-body-sm font-body-sm font-medium flex items-center justify-center gap-1.5" onclick="history.back()" type="button">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="edit">edit</span>
+<span>Alterar Setor (CNAE)</span>
+</button>
+<button class="bg-surface-container-low border border-outline-variant/60 text-on-surface hover:border-primary transition-colors duration-150 py-2.5 px-space-xs rounded-lg text-body-sm font-body-sm font-medium flex items-center justify-center gap-1.5" onclick="openAdvisoryModal()" type="button">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="contact_support">contact_support</span>
+<span>Falar com Regulatório</span>
+</button>
+</div>
+<p class="text-center text-[10px] font-mono-sm text-outline mt-2">
+        A assinatura via Hardware Token / HSM gera entrada definitiva no Ledger RBB. Ação irreversível.
+      </p>
+</footer>
+</main>
+<!-- Interactive Modal / Drawer Simulation for Regulatory Specialist -->
+<div class="fixed inset-0 z-50 bg-surface-container-lowest/80 backdrop-blur-sm hidden flex items-end justify-center" id="advisory-modal">
+<div class="w-full max-w-md bg-surface-container border-t border-outline-variant/50 rounded-t-2xl p-space-md flex flex-col gap-space-md shadow-2xl">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="support_agent">support_agent</span>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Consultoria Regulatória</h3>
+</div>
+<button class="text-outline hover:text-on-surface" onclick="closeAdvisoryModal()">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+        Um Engenheiro de Conformidade Arkhe está pronto para revisar suas regras de custódia e equivalência de prova para BACEN e CVM.
+      </p>
+<div class="p-space-xs bg-surface-container-lowest rounded border border-outline-variant/30 text-mono-sm font-mono-sm text-primary">
+        Canal Seguro mTLS: compliance-desk@arkhe.enterprise.rbb
+      </div>
+<button class="w-full bg-primary-container text-surface-container-lowest py-2.5 rounded-lg text-body-md font-semibold" onclick="closeAdvisoryModal()">
+        Conectar via Canal Seguro
+      </button>
+</div>
+</div>
+<script>
+    function confirmAndCommit() {
+      const btn = event.currentTarget;
+      btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[20px]" data-icon="progress_activity">progress_activity</span><span>Invocando HSM e-CNPJ...</span>`;
+      btn.classList.add('opacity-90', 'cursor-not-allowed');
+      setTimeout(() => {
+        alert("Transação assinada com sucesso pelo e-CNPJ. Hash ancorado no bloco RBB com validação ICP-Brasil.");
+        btn.innerHTML = `<span class="material-symbols-outlined text-[20px]" data-icon="check_circle">check_circle</span><span>Perfil Imutável Aplicado!</span>`;
+      }, 1500);
+    }
+
+    function openAdvisoryModal() {
+      document.getElementById('advisory-modal').classList.remove('hidden');
+    }
+
+    function closeAdvisoryModal() {
+      document.getElementById('advisory-modal').classList.add('hidden');
+    }
+  </script>
+</body></html>

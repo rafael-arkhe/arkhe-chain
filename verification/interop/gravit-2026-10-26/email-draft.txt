@@ -1,0 +1,28 @@
+Dear Alex,
+
+I have started the independent cross-check against verifier commit
+6b2ecbabd098c9a381b0b08184703905c3cb8275.
+
+Our initial local run agrees on 118 evidence signature checks extracted from your
+registry-enabled golden cases, the three individual registry root signatures,
+and the hosted tree-head signature for size 14, written at 2026-10-26T12:58:35Z.
+Nine pre-signature exclusion comparisons also agree. This does not yet reproduce
+the full decisions of the 54 golden vectors or validate the RFC 3161 anchors.
+
+We also prepared 22 exchange vectors for RFC 6962 inclusion, Ed25519 signatures,
+and a proposed witness-quorum profile, with expected acceptance and rejection
+verdicts and explicit trust assumptions. The inclusion reader calls Arkhe's
+existing implementation. The quorum profile is an explicit interop proposal.
+The files are frozen locally by SHA-256; a public immutable revision is pending.
+
+The remaining hosted inclusion step needs a leaf and path. latest.json publishes
+the signed head, while the proof route appears to require an account-owned receipt.
+Could you publish a small leaf/path fixture against a pinned signed head, together
+with the exact leaf encoding? That would let us check it without running your code
+or requiring a service account.
+
+Once the exchange set is publicly pinned, you can implement your reader from its
+specification and freeze your outputs before comparing ours.
+
+Best regards,
+Rafael

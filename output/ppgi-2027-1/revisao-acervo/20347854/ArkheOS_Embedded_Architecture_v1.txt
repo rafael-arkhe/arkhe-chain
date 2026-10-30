@@ -1,0 +1,819 @@
+
+=== PAGINA 1 ===
+ARKHE OS v∞.Ω
+Embedded Systems Architecture
+Principal / Staff Architecture Reference Document
+Document
+ARKHE-EMBEDDED-ARCH-v1.0
+Classification
+Principal / Staff Architecture Reference
+Architect
+ORCID 0009-0005-2697-4668
+Date
+2026-05-22
+Status
+CANONIZED — Seal validated by 473-SEAL-VALIDATOR
+Kernel Version
+Hybrid Microkernel — Arkhe-Kernel v∞.Ω
+Compute Tiers
+TIER-0 (Cortex-M0+) through TIER-3 (Hybrid Quantum-Classical)
+Substrate Range
+Sub 228 – 490 (incl. Quantum, Photonic, Spintronic, Neural)
+TABLE OF CONTENTS
+1
+Executive Architecture Vision
+3
+2
+Arkhe-Kernel: Hybrid Microkernel Architecture
+3
+2.1
+Kernel Philosophy
+3
+2.2
+Memory Management — Multi-Domain Allocator (MDMA)
+4
+2.3
+Scheduler — Hierarchical Deterministic Scheduler (HDS)
+4
+2.4
+Context Switch Performance
+5
+3
+Board Support Package (BSP) & Boot Architecture
+5
+3.1
+Boot Stages (ARM TrustZone)
+5
+3.2
+Device Tree Overlays — Multi-Product Support
+5
+3.3
+Secure Boot Chain of Trust
+6
+4
+Driver Framework: Unified Substrate Abstraction Layer (USAL)
+6
+5
+Memory Management: MDMA Allocation API
+7
+6
+Scheduler: Task Classes and Scheduling Policies
+7
+7
+Power Management: ATEC
+8
+8
+AI/ML Acceleration: Neural Engine Substrate (NES-490)
+8
+9
+Secure Boot & Trust Architecture
+9
+10
+OTA Update Framework: Differential Delta-Chain
+9
+11
+Production Provisioning: Factory Floor Integration
+10
+12
+Multi-Product Platform Strategy: Compute Tiers
+11
+13
+Hardware/Software Co-Design Interface (HSCI)
+11
+14
+Open-Source Integration Matrix
+12
+15
+Toolchain, CI/CD, and Verification
+12
+App A
+Substrate-to-Hardware Mapping
+13
+
+
+=== PAGINA 2 ===
+App B
+Glossary
+13
+
+
+=== PAGINA 3 ===
+1. EXECUTIVE ARCHITECTURE VISION
+Arkhe OS is a production embedded operating system designed for heterogeneous compute platforms spanning
+consumer electronics, industrial edge, and hybrid quantum-classical systems. The architecture rests on three
+foundational pillars:
+PILAR I — SUBSTRATE
+UNIFICATION
+All hardware IP blocks — from ARM Cortex-M0+ microcontrollers to D-Wave quantum
+annealers, photonic gyrotrons (sub 488), and superconducting cavities (sub 440) — are
+abstracted through the Unified Substrate Abstraction Layer (USAL). A single driver model,
+a single memory allocator, and a single scheduler orchestrate classical, quantum, and
+photonic resources uniformly.
+PILAR II —
+NPI-TO-PRODUCTION
+CONTINUITY
+The same OS image, the same Yocto-based build system, and the same provisioning
+pipeline used during New Product Introduction (NPI) is byte-identical to the image
+shipped in high-volume manufacturing (HVM). No recompilation, no configuration drift.
+The only difference is the signing key (dev → prod).
+PILAR III —
+MULTI-PRODUCT
+CONVERGENCE
+A single kernel binary supports four compute tiers, selectable at runtime via Device Tree
+overlays: TIER-0 (Cortex-M0+ / Zephyr-class), TIER-1 (Cortex-A55 / Linux-class), TIER-2
+(Cortex-A78 + NPU / Android-class), and TIER-3 (Hybrid Quantum-Classical / Custom
+SoC).
+2. ARKHE-KERNEL: HYBRID MICROKERNEL ARCHITECTURE
+2.1 Kernel Philosophy
+Arkhe-Kernel is a hybrid microkernel — neither a pure microkernel (like seL4) nor a monolith (like Linux), but a
+"secure monolith with microkernel islands". Critical services (scheduler, IPC, memory manager) run in privileged
+kernel space. Untrusted drivers, AI models, and applications run in "substrate sandboxes" in user space, with
+capability-based access control.
+2.2 Architectural Layer Stack
+USER SPACE
+ Application (POSIX)
+ AI Runtime (TFLite Micro)
+ Driver Sandbox (USAL)
+ Quantum Sandbox (PennyLane)
+CAPABILITY IPC (L4-inspired)
+ Message passing with capability transfer between sandboxes
+ARKHE-KERNEL CORE
+ Scheduler (HDS) | Memory (MDMA) | IPC (Fast Path) | Power (ATEC) | Trust (Root)
+ USAL DRIVER CORE: Quantum HAL | Photonic HAL | Spin HAL | Neural HAL | Classical HAL
+HARDWARE ABSTRACTION
+ ARM TrustZone | RISC-V PMP | Quantum Control | Photonic Control | Custom SoC
+2.3 Memory Management — Multi-Domain Allocator (MDMA)
+Domain
+Use
+Strategy
+Isolation
+DOMAIN 0
+Kernel text/rodata
+Contiguous physical,
+write-protected
+ARM TrustZone Secure World / RISC-V PMP region 0
+
+
+=== PAGINA 4 ===
+DOMAIN 1
+Kernel heap
+Slab allocator + buddy
+system (>4 KB)
+Lock-free per-CPU caches
+DOMAIN 2
+Device DMA
+Physically contiguous pages
+IOMMU/SMMU scatter-gather
+DOMAIN 3
+Classical user
+space
+Demand-paged,
+copy-on-write
+ASLR, stack canaries
+DOMAIN 4
+Quantum / Photonic
+substrate
+Non-cacheable,
+write-through buffers
+Protected by 453-QUANTUM surface code (d=5); page
+coloring anti cross-talk
+2.4 Scheduler — Hierarchical Deterministic Scheduler (HDS)
+HDS is a three-level scheduler for mixed-criticality systems:
+Level 1 — Hardware Threads: Round-robin within priority class. Preemption at 1 kHz tick (configurable 100 Hz–10
+kHz). RT tasks (RT-1 to RT-99) use deadline-monotonic scheduling.
+Level 2 — Substrate Domains: Quantum: time-sliced annealing slots (ms-scale). Photonic: event-driven (fs-ps pulse
+triggers). Neural: batch inference scheduling (µs-scale). Classical: POSIX standard.
+Level 3 — Power-Aware Migration: Tasks migrate between big.LITTLE clusters based on performance counters and
+thermal headroom. Quantum tasks prefer "cold" cores (lower T1/T2 noise). Photonic tasks require cores with optical
+interconnects.
+2.5 Context Switch Performance
+Tier
+Target
+Cycles
+Time @ Typical Freq
+TIER-0 (Cortex-M0+)
+< 12 cycles
+~12
+~150 ns @ 80 MHz
+TIER-1 (Cortex-A55)
+< 200 cycles
+~200
+~500 ns @ 1.5 GHz
+TIER-2 (Cortex-A78)
+< 400 cycles
+~400
+~200 ns @ 2.4 GHz
+TIER-3 (Hybrid)
+< 1000 cycles
+~1000
+~500 ns @ 2.0 GHz + quantum state save
+Quantum context switch includes: classical register save, quantum state snapshot (if qubit allocation active), surface code
+syndrome extraction (453-QUANTUM protection), and substrate sandbox capability revocation.
+3. BOARD SUPPORT PACKAGE (BSP) & BOOT ARCHITECTURE
+3.1 Boot Stages — ARM TrustZone
+Stage
+Component
+Function
+STAGE 0
+ROM Code
+(SoC-internal,
+immutable)
+Verifies Stage 1 signature (RSA-4096 or ECDSA P-384); anti-rollback check against
+OTP fuses
+STAGE 1
+Trusted Bootloader
+(TF-A / OP-TEE)
+Initializes DRAM, clocks, PMIC; loads and verifies Stage 2; establishes Secure
+Monitor (EL3→EL1); measures kernel in TPM PCR-4
+STAGE 2
+Arkhe-Kernel + initrd
+Parses DTB for hardware detection; initializes USAL driver core; mounts rootfs
+(squashfs read-only, overlayfs RW); hands off to Stage 3
+STAGE 3
+Init system
+(arkhe-init)
+Mounts /data (f2fs/ext4 encrypted); starts substrate daemons; launches application
+container
+3.2 Device Tree Overlays — Multi-Product Support
+arkhe-kernel.bin (universal)
+■■■ tier0-sensor.dtbo → Cortex-M0+, 64 KB RAM, I2C sensors
+■■■ tier1-gateway.dtbo → Cortex-A55, 512 MB RAM, WiFi/BT
+■■■ tier2-mobile.dtbo → Cortex-A78, 8 GB RAM, NPU, 5G
+
+
+=== PAGINA 5 ===
+■■■ tier3-hybrid.dtbo → Custom SoC, 32 GB RAM, D-Wave, BIC
+ Listing 1 — Single kernel binary supporting all four compute tiers via DTO loading at runtime.
+The bootloader selects the correct overlay based on: SoC ID from OTP fuses, Board ID from GPIO strapping or
+EEPROM, and Product SKU from the manufacturing database (barcode scan at boot).
+3.3 Secure Boot Chain of Trust
+Lev
+el
+Name
+Implementation
+Scope
+L0
+OEM Root Key
+RSA-4096 (offline HSM)
+Never on device — signs L1
+L1
+SoC Vendor Key
+OTP Fuse (immutable)
+Signed by L0; fused at manufacture
+L2
+Device Unique
+Key
+DICE (TEE-derived)
+Derived from device UID + L1
+L3
+Image Signing
+Key
+ECDSA (per-product)
+Rotated quarterly; old key revoked after 90 days
+L4
+OTA Update Key
+ECDSA (per-release)
+Ephemeral — 24-hour validity window
+4. DRIVER FRAMEWORK: UNIFIED SUBSTRATE ABSTRACTION LAYER (USAL)
+USAL treats each hardware IP block — whether a GPIO controller, a quantum annealer, or a photonic metasurface
+— as a "substrate device" with a unified lifecycle:
+probe() → init() → start() → run() → stop() → suspend() → resume() → remove()
+ Listing 2 — USAL substrate device unified lifecycle.
+struct substrate_device {
+// Identity
+uint32_t substrate_id; // e.g., 466=GYROTRON, 487=PHOTONIC
+uint32_t seal; // SHA3-256 truncated to 32 bits (runtime check)
+char name[32]; // "mn3sn_gyrotron_0", "tio2_photonic_0"
+// Hardware abstraction
+struct substrate_hal *hal; // Classical / Quantum / Photonic / Neural
+void __iomem *reg_base; // MMIO region
+dma_addr_t dma_handle; // DMA buffer (classical)
+struct qubit_bank *qbank; // Quantum state buffer (quantum)
+struct bic_controller *bic; // BIC resonance controller (photonic)
+// Power & thermal
+struct power_domain *pd;
+struct thermal_zone *tz;
+uint32_t power_state; // ACTIVE | IDLE | SUSPENDED | OFF
+// Capabilities (for sandbox isolation)
+struct capability_list caps;
+};
+ Listing 3 — substrate_device structure (include/arkhe/substrate.h).
+
+
+=== PAGINA 6 ===
+HAL
+Primary Functions
+Substrates
+CLASSICAL_HAL
+read_reg32 / write_reg32, dma_submit_sg,
+irq_request/free, clock_enable/disable
+GPIO, I2C, SPI, PCIe, DMA
+QUANTUM_HAL (482)
+qubo_submit(), anneal_schedule_set(),
+sample_extract(), chain_strength_calibrate()
+D-Wave Advantage, IBM, Rigetti
+PHOTONIC_HAL (487)
+phase_set(), bic_resonance_tune(),
+hologram_project(), spectral_scan()
+TiO2 metasurface, BIC controller
+NEURAL_HAL (490)
+tensor_load(), inference_submit(),
+accelerator_status()
+NPU (Ethos-U85), TPU v4, DSP
+SPINTRONIC_HAL
+(466)
+sot_pulse_trigger(), ahe_readout(),
+neel_vector_get(), thermal_erase()
+Mn3Sn gyrotron, SOT driver
+5. MEMORY MANAGEMENT: MDMA ALLOCATION API
+/* Classical domain — cached, demand-paged */
+void *kmalloc_classical(size_t size, gfp_t flags);
+void kfree_classical(void *ptr);
+/* Device DMA domain — contiguous, possibly non-cacheable */
+dma_addr_t dma_alloc_coherent(struct device *dev, size_t size,
+void **cpu_addr, gfp_t flags);
+void dma_free_coherent(struct device *dev, size_t size,
+void *cpu_addr, dma_addr_t dma_handle);
+/* Quantum domain — non-cacheable, write-through, protected */
+struct qpage *qalloc_pages(struct qubit_bank *bank, uint32_t order);
+void qfree_pages(struct qpage *page);
+/* Photonic domain — page-colored, coherence-critical */
+struct ppage *palloc_pages(struct bic_controller *bic, uint32_t order);
+void pfree_pages(struct ppage *page);
+ Listing 4 — MDMA allocation API (include/arkhe/mdma.h).
+Page Coloring for Substrate Isolation (Tier-3)
+Color Range
+Use
+Cache Policy
+0 – 3
+Classical user space
+LRU replacement
+4 – 7
+Kernel heap / slab
+Hot data — pinned
+8 – 11
+Device DMA
+Streaming buffers — non-cacheable
+12 – 13
+Quantum state
+Non-cacheable, isolated
+14 – 15
+Photonic control
+BIC resonance tables — write-through
+6. SCHEDULER: TASK CLASSES AND SCHEDULING POLICIES
+#define TASK_CLASS_RT_HARD 0 /* Deadline-critical: motor control, SOT pulse */
+#define TASK_CLASS_RT_SOFT 1 /* Latency-sensitive: audio, UI */
+#define TASK_CLASS_AI_INFER 2 /* Neural batch: NPU-bound */
+
+
+=== PAGINA 7 ===
+#define TASK_CLASS_QUANTUM 3 /* Annealing slots: D-Wave-bound */
+#define TASK_CLASS_PHOTONIC 4 /* BIC modulation: fs-ps events */
+#define TASK_CLASS_BACKGROUND 5 /* Logging, telemetry, OTA prep — 5% CPU cap */
+ Listing 5 — HDS task class definitions (include/arkhe/sched.h).
+Class
+Policy
+Characteristic
+RT_HARD
+Earliest Deadline First (EDF)
+Admission control guarantees schedulability; hard real-time
+RT_SOFT
+SCHED_FIFO
+Priority inheritance for priority inversion prevention
+AI_INFER
+Weighted Fair Queueing
+Batch size × deadline weighting
+QUANTUM
+Time-sliced Round-Robin
+Annealer is single-threaded — sequential time slots
+PHOTONIC
+Event-driven
+Interrupt-triggered; no polling
+BACKGROUND
+CFS
+5% CPU cap; lowest priority
+7. POWER MANAGEMENT: ADAPTIVE THERMAL & ENERGY CONTROLLER
+(ATEC)
+Power Domain
+Components
+Policy
+PD_SOC
+CPU, GPU, NPU
+Dynamic Voltage & Frequency Scaling (DVFS)
+PD_IO
+PCIe, USB, SDIO
+Runtime clock gating
+PD_MEMORY
+DRAM, SRAM
+Self-refresh; partial array refresh
+PD_QUANTUM
+D-Wave controller,
+cryo-electronics
+Always-on in Tier-3
+PD_PHOTONIC
+BIC laser, modulator, detector
+Burst-mode (1 µs on / 1 ms sleep)
+PD_RADIO
+WiFi, BT, 5G, LPTV
+Sleep/wake duty cycles
+Substrate-Aware DVFS Governor (custom — replaces ondemand/conservative):
+ Classical load > 80% → ramp up big core to max OPP
+ AI inference active → lock NPU at nominal voltage (prevent voltage droop)
+ Quantum annealing → freeze CPU at idle OPP (minimize T1/T2 decoherence noise)
+ Photonic modulation → burst-mode: full power for 1 µs, sleep for 1 ms
+Big.LITTLE Thermal Score Migration
+thermal_score = (current_temp - trip_point_0) / (trip_point_1 - trip_point_0)
+thermal_score < 0.30 → Big core preferred (performance)
+thermal_score > 0.70 → Little core forced (efficiency)
+thermal_score > 0.90 → Throttle to 50% frequency
+thermal_score > 0.95 → Emergency shutdown + save quantum state
+ Listing 6 — ATEC thermal score policy.
+8. AI/ML ACCELERATION: NEURAL ENGINE SUBSTRATE (NES-490)
+NES-490 is the unified AI runtime for Arkhe OS, supporting on-device inference (TensorFlow Lite Micro, ONNX
+Runtime), hardware acceleration (NPU, TPU, DSP, GPU), distributed inference (multi-device via
+375-ALERT-MESH), and quantum-enhanced layers (via 482-QUBO-OPTIMIZER for combinatorial sub-problems).
+Quantum-Classical Hybrid Inference Pipeline (Tier-3)
+
+
+=== PAGINA 8 ===
+Step
+Action
+Step 1
+Classical CNN extracts feature vector (NPU, Ethos-U85)
+Step 2
+Feature vector discretized into QUBO variables
+Step 3
+482-QUBO-OPTIMIZER submits to D-Wave Advantage annealer
+Step 4
+Annealed solution decoded back to classical logits
+Step 5
+483-ENSEMBLE-AGGREGATOR combines classical + quantum predictions
+Latency budget: < 100 ms end-to-end for real-time applications.
+9. SECURE BOOT & TRUST ARCHITECTURE
+Ste
+p
+Component
+Action
+1
+ROM
+Verifies BL1 (RSA-4096 / ECDSA P-384)
+2
+BL1
+Verifies BL2 (Arkhe-Kernel) + DTB + initrd
+3
+BL2
+Measures kernel in TPM PCR-4
+4
+Kernel
+Verifies substrate drivers (seal check against 473-SEAL-VALIDATOR)
+5
+Init system
+Verifies application signatures (ECDSA per-app)
+6
+Runtime
+dm-verity protects rootfs (SHA3-256 Merkle tree)
+10. OTA UPDATE FRAMEWORK: DIFFERENTIAL DELTA-CHAIN
+Type
+Use
+Typical Size
+FULL
+Complete system image (fallback, factory reset)
+100%
+DELTA
+Binary diff from current version (arkhe-delta-gen)
+5 – 15%
+INCREMENTAL
+Patch for individual substrate
+< 1%
+EMERGENCY
+Critical security patch (bypasses normal queue)
+Variable
+Delta Generation Process (arkhe-delta-gen, based on bsdiff + zstd)
+Input: old_image.bin, new_image.bin
+Output: delta.bin (compressed patch)
+1. Split images into 4 KB blocks
+2. Compute rolling hash (Adler-32) per block
+3. Match identical blocks (reference old image)
+4. Encode differences as (offset, length, data) triples
+5. Compress with zstd level 19
+ Listing 7 — Delta generation algorithm summary.
+Atomic Update (A/B Partition Scheme): Update applied to inactive partition (B). Boot attempts B; if it fails 3 times,
+falls back to A. On success: swap labels (A↔B), mark old A as updateable. Quantum state preserved across update
+(saved to DRAM before reboot). Rollback decision logged to 474-TELEMETRY-REPLAY for analysis.
+11. PRODUCTION PROVISIONING: FACTORY FLOOR INTEGRATION
+Stage
+Activity
+Pass Criteria
+
+
+=== PAGINA 9 ===
+1: PCB Assembly
+Flash bootloader (debug enabled); Run
+ICT
+Power rails OK; clocks stable
+2: Board-Level Test
+Load test firmware; verify all substrates;
+calibrate sensors
+All substrates detected (466, 487, etc.); sensors calibrated
+3: Secure
+Provisioning
+Generate DICE key; fuse SVN=1; lock
+debug; flash production kernel
+L3 signature valid; debug interfaces locked
+4: Final Test
+Boot production image; end-to-end test;
+verify seal; power check
+App launch < 2 s; AI inference < 100 ms; seal valid; power
+< 500 mW
+5: Packaging
+Update inventory; register OTA fleet; set
+initial policy
+IMEI/serial logged; OTA canary group assigned
+Factory Automation API (Python)
+from arkhe_factory import DeviceUnderTest
+dut = DeviceUnderTest(serial="ARKHE-466-001")
+# Stage 2: Board-Level Test
+dut.flash_test_firmware("arkhe-test-v2.3.bin")
+dut.run_ict()
+assert dut.power_rails_ok()
+assert dut.clock_stable(freq=24.0e6, tolerance=50e-6)
+assert dut.substrate_probe(466) # Gyrotron detected
+assert dut.substrate_probe(487) # Photonic crystal detected
+# Stage 3: Secure Provisioning
+dut.generate_dice_key()
+dut.fuse_svn(1)
+dut.lock_debug()
+dut.flash_production_image("arkhe-prod-v1.0.signed.bin")
+# Stage 4: Final Test
+dut.boot()
+assert dut.app_launch_time_ms < 2000
+assert dut.ai_inference_latency_ms < 100
+assert dut.seal_valid()
+assert dut.power_consumption_mw < 500
+dut.ship()
+ Listing 8 — Factory automation API (tools/arkhe_factory.py).
+12. MULTI-PRODUCT PLATFORM STRATEGY: COMPUTE TIERS
+Attribute
+TIER-0
+Sensor/Wearable
+TIER-1 Smart
+Home/GW
+TIER-2 Mobile/AR-VR
+TIER-3 Hybrid Q-C
+SoC
+Cortex-M0+ /
+RV32IMAC
+Cortex-A55 dual /
+i.MX8M
+Cortex-A78 + Mali-G710 +
+Ethos-U85
+Custom ARM +
+RISC-V + D-Wave
+RAM
+64 – 256 KB
+512 MB DDR4
+8 GB LPDDR5
+32 GB HBM2e
+
+
+=== PAGINA 10 ===
+Storage
+512 KB flash
+4 GB eMMC
+128 GB UFS 3.1
+2 TB NVMe + 8 TB
+QSM
+OS
+Arkhe-Zephyr (RTOS)
+Arkhe-Linux (Yocto)
+Arkhe-Android (AOSP)
+Arkhe-Hybrid (full)
+Power
+< 1 mW sleep
+1 – 5 W active
+5 – 15 W active
+100 – 500 W (incl.
+cryo)
+BOM Cost
+< $2
+< $15
+< $80
+$10K+
+Example
+Fitness tracker, env
+sensor
+Smart speaker,
+industrial hub
+Smartphone, AR glasses
+Edge HPC node,
+satellite
+13. HARDWARE/SOFTWARE CO-DESIGN INTERFACE (HSCI)
+Phase
+Activity
+Deliverables
+1: Requirements
+Functional, performance, interface,
+security specifications
+Spec document; power/thermal budgets
+2:
+Co-Simulation
+RTL simulation (Verilator + SystemC
+TLM); software driver prototype
+Simulation passes timing; driver validated in Python
+3: FPGA
+Validation
+Peripheral on FPGA; full USAL driver on
+FPGA soft-CPU
+Performance matches spec
+4: Silicon
+Bring-up
+First silicon: basic R/W; characterization;
+production certification
+Characterization report; production driver
+5: Production
+Integration
+USAL HAL merge; DTO overlay; factory
+test; OTA package
+Substrate available in meta-arkhe
+14. OPEN-SOURCE INTEGRATION MATRIX
+Project
+Version
+Use
+Arkhe Modifications
+Linux Kernel
+6.8.y
+Arkhe-Kernel base
+(Tier-1/2/3)
+USAL subsystem; substrate scheduler
+Zephyr RTOS
+3.6.y
+Arkhe-Zephyr base
+(Tier-0)
+HDS micro-scheduler; USAL micro-HAL
+Yocto / OE
+scarthgap
+Build system (all tiers)
+meta-arkhe layer; substrate recipes
+OP-TEE
+4.2.y
+Secure World
+(Tier-1/2/3)
+Quantum state encryption
+TF-A
+2.10.y
+Bootloader (Tier-1/2/3)
+Substrate init in BL2
+TFLite Micro
+2.16.y
+AI runtime (Tier-1/2/3)
+NES-490 backend
+ONNX Runtime
+1.17.y
+AI runtime (Tier-2/3)
+Quantum layer ops
+PennyLane
+0.35.y
+Quantum ML (Tier-3)
+Arkhe plugin for D-Wave backend
+JAX
+0.4.y
+Lattice simulation
+(Tier-3)
+484-LATTICE backend
+dimod
+0.12.y
+QUBO classical solver
+(all)
+482-QUBO fallback
+15. TOOLCHAIN, CI/CD, AND VERIFICATION
+Release Criteria — HVM Gate
+Criterion
+Gate
+✓ All unit tests pass
+> 95% code coverage
+
+
+=== PAGINA 11 ===
+✓ All integration tests pass
+Substrate interoperability verified
+✓ All HIL tests pass
+Real hardware, all tiers
+✓ Static analysis
+Zero critical/high defects (Coverity, CodeQL)
+✓ Fuzzing gate
+Zero crashes in 24-hour AFL++ / syzkaller run
+✓ Security audit
+No unmitigated CVEs
+✓ Performance
+Within 5% of golden reference (448-BIS-OPT)
+✓ Power
+Within 10% of ATEC model
+✓ OTA delta
+Delta generation verified; rollback tested
+✓ Factory provisioning
+Script validated on 3 production lines
+
+
+=== PAGINA 12 ===
+A. APPENDIX A: SUBSTRATE-TO-HARDWARE MAPPING
+Substrate
+Hardware IP Block
+Tier
+Status
+418-JOSEPHSON
+Nb SQUID rings (6×)
+3
+Production
+440-CAVITY
+Fabry-Perot TiO2
+3
+NPI
+466-GYROTRON
+Mn3Sn SOT cell
+2/3
+Production
+482-QUBO
+D-Wave Advantage
+3
+Research
+484-LATTICE
+FPGA Artix-7 (HVFF sim)
+3
+NPI
+487-PHOTONIC
+TiO2 metasurface array
+3
+Research
+488-PHOTONIC-GYRO
+Hybrid TiO2 + Mn3Sn
+3
+Concept
+489-OPTICAL-COMP
+BIC photonic array
+3
+Concept
+490-NES
+Ethos-U85 / TPU v4
+2/3
+Production
+B. APPENDIX B: GLOSSARY
+Abbrev.
+Term
+Abbrev.
+Term
+AHE
+Anomalous Hall Effect
+MMIO
+Memory-Mapped Input/Output
+ATEC
+Adaptive Thermal & Energy Controller
+NES
+Neural Engine Substrate
+BIC
+Bound States in the Continuum
+NPI
+New Product Introduction
+BSP
+Board Support Package
+NPU
+Neural Processing Unit
+DICE
+Device Identifier Composition Engine
+OTA
+Over-The-Air update
+DTO
+Device Tree Overlay
+PMP
+Physical Memory Protection (RISC-V)
+DVFS
+Dynamic Voltage and Frequency Scaling
+QUBO
+Quadratic Unconstrained Binary Optimization
+HDS
+Hierarchical Deterministic Scheduler
+SMMU
+System Memory Management Unit (ARM)
+HIL
+Hardware-in-the-Loop
+SOT
+Spin-Orbit Torque
+HSCI
+Hardware/Software Co-Design Interface
+SVN
+Security Version Number
+HSM
+Hardware Security Module
+TEE
+Trusted Execution Environment
+HVM
+High-Volume Manufacturing
+TPM
+Trusted Platform Module
+ICT
+In-Circuit Test
+USAL
+Unified Substrate Abstraction Layer
+MDMA
+Multi-Domain Memory Allocator
+ARKHE-EMBEDDED-ARCH-v1.0 · ORCID 0009-0005-2697-4668 · Status: CANONIZED · Seal: 473-SEAL-VALIDATOR ·
+2026-05-22

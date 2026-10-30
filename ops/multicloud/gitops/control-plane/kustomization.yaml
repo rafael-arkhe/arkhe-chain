@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: arkhe-system
+configMapGenerator:
+  - name: arkhe-control-contract
+    literals:
+      - policy.mode=required
+      - evidence.writer.mode=active-passive
+      - identity.mode=external-oidc
+# This contract describes intent; it does not activate runtime enforcement.
+# Add the actual signed policy payload + trust settings consumed by each service.

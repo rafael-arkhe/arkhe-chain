@@ -1,0 +1,14 @@
+.PHONY: check demo golden
+check:
+	cargo build --locked --workspace
+	cargo test --locked --workspace
+	cargo clippy --locked --workspace --all-targets -- -D warnings
+	cargo fmt --all --check
+	python -m unittest discover -s integrations/deepinfer -p test_bridge.py -v
+	pnpm install --frozen-lockfile
+	pnpm build
+	pnpm test
+demo:
+	cargo run --locked -p agi-coder-cli -- run --demo
+golden:
+	cargo test --locked -p agi-coder-tests --test golden_vectors

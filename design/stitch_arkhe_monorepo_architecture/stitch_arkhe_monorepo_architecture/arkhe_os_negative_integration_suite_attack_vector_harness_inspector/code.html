@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // OS - Negative Integration Suite &amp; Attack Vector Harness</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Space Grotesk & JetBrains Mono & Geist -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&amp;family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with configuration -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#00354a",
+            "surface-container-highest": "#31353d",
+            "on-secondary-fixed-variant": "#004c69",
+            "surface-container-high": "#262a32",
+            "on-tertiary-fixed": "#002113",
+            "inverse-surface": "#dfe2ed",
+            "outline-variant": "#3b494b",
+            "secondary-fixed": "#c4e7ff",
+            "tertiary-container": "#65f2b5",
+            "on-surface-variant": "#b9cacb",
+            "primary-container": "#00f0ff",
+            "on-tertiary-container": "#006d4a",
+            "surface-dim": "#0f131b",
+            "surface-container-lowest": "#0a0e15",
+            "on-tertiary": "#003824",
+            "surface": "#0f131b",
+            "surface-container-low": "#181c23",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-bright": "#353941",
+            "secondary": "#7bd0ff",
+            "error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-primary-fixed-variant": "#004f54",
+            "secondary-fixed-dim": "#7bd0ff",
+            "surface-container": "#1c2027",
+            "tertiary": "#d8ffe7",
+            "on-error": "#690005",
+            "on-primary": "#00363a",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-error-container": "#ffdad6",
+            "primary-fixed": "#7df4ff",
+            "on-secondary-container": "#00374d",
+            "primary-fixed-dim": "#00dbe9",
+            "secondary-container": "#00a6e0",
+            "on-secondary-fixed": "#001e2c",
+            "on-background": "#dfe2ed",
+            "on-primary-fixed": "#002022",
+            "on-surface": "#dfe2ed",
+            "outline": "#849495",
+            "surface-tint": "#00dbe9",
+            "primary": "#dbfcff",
+            "background": "#0f131b",
+            "inverse-on-surface": "#2d3038",
+            "inverse-primary": "#006970",
+            "surface-variant": "#31353d",
+            "on-primary-container": "#006970",
+            "error": "#ffb4ab"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "0.75rem",
+            "margin": "1rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "margin-desktop": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter-desktop": "1rem",
+            "space-xl": "2rem",
+            "space-md": "0.75rem"
+          },
+          "fontFamily": {
+            "label-caps": ["JetBrains Mono"],
+            "body-lg": ["Geist"],
+            "headline-lg": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "mono-lg": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "display-lg": ["Space Grotesk"],
+            "mono-sm": ["JetBrains Mono"],
+            "display-lg-mobile": ["Space Grotesk"],
+            "mono-md": ["JetBrains Mono"],
+            "body-sm": ["Geist"]
+          },
+          "fontSize": {
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0a0e15;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #3b494b;
+      border-radius: 2px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #00f0ff;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.22);
+    }
+    .code-line:hover {
+      background-color: rgba(0, 240, 255, 0.04);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden h-screen flex flex-col font-mono-sm select-none">
+<!-- TOP NAVIGATION BAR (Shared Component: TopNavBar) -->
+<header class="flex justify-between items-center w-full px-space-md h-12 bg-surface border-b border-outline-variant flex-shrink-0 z-50">
+<div class="flex items-center gap-space-md">
+<!-- Brand Anchor -->
+<div class="flex items-center gap-2">
+<span class="text-primary font-headline-md text-headline-md font-bold tracking-tight">ARKHE // OS</span>
+<span class="text-on-surface-variant font-mono-sm text-mono-sm px-1.5 py-0.5 bg-surface-container-high border border-outline-variant rounded">v0.1.0</span>
+</div>
+<div class="h-4 w-px bg-outline-variant hidden md:block"></div>
+<!-- Context Inspector Breadcrumb -->
+<div class="hidden lg:flex items-center gap-1.5 px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded">
+<span class="material-symbols-outlined text-primary-container text-sm">terminal</span>
+<span class="text-on-surface-variant font-mono-sm text-mono-sm">inspect:</span>
+<span class="text-primary font-mono-sm text-mono-sm font-semibold">tests/pipeline.rs</span>
+<span class="text-on-surface-variant font-mono-sm text-mono-sm">[Negative Test Harness &amp; Attack Suite]</span>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-4 ml-2">
+<a class="text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150" href="#">Monorepo Explorer</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150" href="#">GGUF 4-Gate Pipeline</a>
+<a class="border-b-2 border-primary-container text-primary pb-1 font-mono-sm text-mono-sm flex items-center gap-1" href="#">
+<span>Formal Verification</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150" href="#">ADR Matrix</a>
+</nav>
+</div>
+<!-- Trailing Action Controls -->
+<div class="flex items-center gap-2">
+<!-- Fail-Closed Status Badge -->
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-error-container/20 border border-error/40 text-error rounded font-label-caps text-label-caps tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span>
+<span>Fail-Closed [ARMED]</span>
+</div>
+<!-- Tooling Badges -->
+<div class="hidden xl:flex items-center gap-1.5 px-2 py-1 bg-surface-container border border-outline-variant rounded text-on-surface-variant font-mono-sm text-mono-sm">
+<span class="material-symbols-outlined text-xs text-primary-container">shield</span>
+<span>TCB: ARKHE-VERIFY-CORE v0.2.0</span>
+</div>
+<div class="hidden 2xl:flex items-center gap-1 px-2 py-1 bg-surface-container border border-outline-variant rounded text-on-surface-variant font-mono-sm text-mono-sm">
+<span>UTF-8 // Rust 1.78</span>
+</div>
+<!-- Quick Action Buttons -->
+<button class="px-2 py-1 bg-surface-container-high border border-outline-variant hover:bg-surface-bright hover:border-primary-container text-on-surface font-mono-sm text-mono-sm rounded transition-colors flex items-center gap-1" title="Copy Full Crate Path">
+<span class="material-symbols-outlined text-xs">content_copy</span>
+<span class="hidden sm:inline">Copy Full Crate</span>
+</button>
+<button class="px-2.5 py-1 bg-primary-container text-surface-container-lowest font-mono-sm text-mono-sm font-semibold rounded hover:bg-secondary-fixed transition-colors flex items-center gap-1 glow-cyan">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span>Verify Cargo Test</span>
+</button>
+<!-- Trailing Icon Cluster -->
+<div class="flex items-center border-l border-outline-variant pl-2 ml-1 gap-1 text-on-surface-variant">
+<button class="p-1 hover:text-primary transition-colors" title="Terminal Console"><span class="material-symbols-outlined text-sm">terminal</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="Security Boundary"><span class="material-symbols-outlined text-sm">shield</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="Graph Hub"><span class="material-symbols-outlined text-sm">hub</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="Engine Settings"><span class="material-symbols-outlined text-sm">tune</span></button>
+</div>
+</div>
+</header>
+<!-- MAIN MULTI-PANE WORKBENCH -->
+<div class="flex-1 flex overflow-hidden">
+<!-- LEFT SIDEBAR (Shared Component: SideNavBar / Tree & Gate Matrix) -->
+<aside class="w-64 bg-surface-container-lowest border-r border-outline-variant flex flex-col justify-between flex-shrink-0 z-40 select-none">
+<!-- Top Section: Identity & Gate Selectors -->
+<div class="flex flex-col">
+<!-- Cryptographic Operator Identity Card -->
+<div class="p-space-sm border-b border-outline-variant bg-surface-container-low/60">
+<div class="flex items-center justify-between mb-1">
+<span class="text-on-surface-variant font-label-caps text-label-caps tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary-container">lock_clock</span>
+              OPERATOR KEY
+            </span>
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-ping"></span>
+</div>
+<div class="text-primary font-mono-sm text-mono-sm font-semibold tracking-wide">ROOT::0x8f2a...c01d</div>
+<div class="text-tertiary-fixed-dim font-label-caps text-label-caps tracking-wider mt-0.5">MMR VERIFIED // ZERO-DRIFT</div>
+</div>
+<!-- Pipeline Gates Switcher -->
+<div class="p-2 border-b border-outline-variant">
+<div class="text-on-surface-variant font-label-caps text-label-caps mb-1.5 px-1">PIPELINE GATES</div>
+<div class="grid grid-cols-5 gap-1">
+<button class="py-1 text-center bg-surface-container-high border border-outline-variant hover:border-primary-container text-on-surface-variant hover:text-primary font-mono-sm text-mono-sm rounded">G1</button>
+<button class="py-1 text-center bg-surface-container-high border border-outline-variant hover:border-primary-container text-on-surface-variant hover:text-primary font-mono-sm text-mono-sm rounded">G2</button>
+<button class="py-1 text-center bg-surface-container-high border border-outline-variant hover:border-primary-container text-on-surface-variant hover:text-primary font-mono-sm text-mono-sm rounded">G3</button>
+<button class="py-1 text-center bg-surface-container-high border border-outline-variant hover:border-primary-container text-on-surface-variant hover:text-primary font-mono-sm text-mono-sm rounded">G4</button>
+<button class="py-1 text-center bg-primary-container/20 border border-primary-container text-primary font-mono-sm text-mono-sm font-semibold rounded">ALL</button>
+</div>
+</div>
+<!-- Navigation Tabs from Shared Component -->
+<div class="py-1 border-b border-outline-variant">
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm" href="#">
+<span class="material-symbols-outlined text-sm">account_tree</span>
+<span>AST WormGraph</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm" href="#">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span>GGUF Gates</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 border-l-2 border-primary-container bg-surface-container-low text-primary font-mono-sm text-mono-sm" href="#">
+<span class="material-symbols-outlined text-sm text-primary-container">rule</span>
+<span>Prover Lemmata</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm" href="#">
+<span class="material-symbols-outlined text-sm">monitoring</span>
+<span>Telemetry Log</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm" href="#">
+<span class="material-symbols-outlined text-sm">lock_clock</span>
+<span>Audit Chain</span>
+</a>
+</div>
+<!-- Crate File Explorer -->
+<div class="p-2 border-b border-outline-variant">
+<div class="text-on-surface-variant font-label-caps text-label-caps mb-1.5 px-1 flex justify-between items-center">
+<span>CRATE WORKBENCH</span>
+<span class="text-outline">RUST 2021</span>
+</div>
+<div class="space-y-0.5">
+<div class="flex items-center justify-between px-2 py-1 text-on-surface-variant hover:bg-surface-container text-mono-sm rounded cursor-pointer">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-outline">description</span>
+<span>src/lib.rs</span>
+</div>
+<span class="text-outline text-label-caps">48L</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1 text-on-surface-variant hover:bg-surface-container text-mono-sm rounded cursor-pointer">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-outline">description</span>
+<span>src/gguf.rs</span>
+</div>
+<span class="text-secondary text-label-caps">[G1]</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1 text-on-surface-variant hover:bg-surface-container text-mono-sm rounded cursor-pointer">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-outline">description</span>
+<span>src/canon.rs</span>
+</div>
+<span class="text-secondary text-label-caps">[G2]</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1 text-on-surface-variant hover:bg-surface-container text-mono-sm rounded cursor-pointer">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-outline">description</span>
+<span>src/gate3.rs</span>
+</div>
+<span class="text-secondary text-label-caps">[G3]</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1 text-on-surface-variant hover:bg-surface-container text-mono-sm rounded cursor-pointer">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-outline">description</span>
+<span>src/gate4.rs</span>
+</div>
+<span class="text-secondary text-label-caps">[G4]</span>
+</div>
+<!-- Active Test Pipeline File -->
+<div class="flex items-center justify-between px-2 py-1.5 bg-surface-container border-l-2 border-primary-container text-primary font-semibold text-mono-sm rounded-r cursor-pointer">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-primary-container" style="font-variation-settings: 'FILL' 1;">bug_report</span>
+<span>tests/pipeline.rs</span>
+</div>
+<span class="px-1.5 py-0.2 bg-primary-container/20 text-primary-container text-label-caps rounded">12T</span>
+</div>
+</div>
+</div>
+<!-- Invariant / Proof Lemmata Summary -->
+<div class="p-2.5">
+<div class="text-on-surface-variant font-label-caps text-label-caps mb-2 px-1 flex items-center justify-between">
+<span>VERIFICATION LEMMATA</span>
+<span class="text-tertiary-fixed-dim">Q.E.D.</span>
+</div>
+<div class="space-y-1.5">
+<div class="p-1.5 bg-surface-container-high/50 border border-outline-variant/60 rounded">
+<div class="flex justify-between items-center text-mono-sm">
+<span class="text-on-surface">G1 Structural Faults</span>
+<span class="text-tertiary-fixed-dim font-bold">6 Q.E.D.</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1 rounded mt-1 overflow-hidden">
+<div class="bg-tertiary-container h-full w-full"></div>
+</div>
+</div>
+<div class="p-1.5 bg-surface-container-high/50 border border-outline-variant/60 rounded">
+<div class="flex justify-between items-center text-mono-sm">
+<span class="text-on-surface">G2 Deterministic CBOR</span>
+<span class="text-tertiary-fixed-dim font-bold">4 Q.E.D.</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1 rounded mt-1 overflow-hidden">
+<div class="bg-tertiary-container h-full w-full"></div>
+</div>
+</div>
+<div class="p-1.5 bg-surface-container-high/50 border border-outline-variant/60 rounded">
+<div class="flex justify-between items-center text-mono-sm">
+<span class="text-on-surface">G3 Cryptographic Attacks</span>
+<span class="text-tertiary-fixed-dim font-bold">8 Q.E.D.</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1 rounded mt-1 overflow-hidden">
+<div class="bg-tertiary-container h-full w-full"></div>
+</div>
+</div>
+<div class="p-1.5 bg-surface-container-high/50 border border-outline-variant/60 rounded">
+<div class="flex justify-between items-center text-mono-sm">
+<span class="text-on-surface">G4 Fail-Closed Combinator</span>
+<span class="text-tertiary-fixed-dim font-bold">2 Q.E.D.</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1 rounded mt-1 overflow-hidden">
+<div class="bg-tertiary-container h-full w-full"></div>
+</div>
+</div>
+</div>
+<div class="mt-2 pt-2 border-t border-outline-variant/50 flex justify-between text-label-caps text-on-surface-variant px-1">
+<span>TOTAL SUITE:</span>
+<span class="text-tertiary-fixed font-bold">20/20 PASS (100%)</span>
+</div>
+</div>
+</div>
+<!-- Bottom Action Area -->
+<div class="p-space-sm border-t border-outline-variant bg-surface-container-lowest">
+<button class="w-full py-2 px-3 bg-primary-container text-surface-container-lowest font-mono-sm text-mono-sm font-bold rounded flex items-center justify-center gap-1.5 hover:bg-primary-fixed transition-all shadow-md active:scale-[0.99]">
+<span class="material-symbols-outlined text-sm font-bold">bolt</span>
+<span>EXEC CARGO TEST</span>
+</button>
+<!-- Footer Tab Links from JSON -->
+<div class="flex items-center justify-around mt-2 pt-2 border-t border-outline-variant/40 text-on-surface-variant font-mono-sm text-mono-sm">
+<a class="flex items-center gap-1 hover:text-on-surface" href="#">
+<span class="material-symbols-outlined text-xs">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-1 hover:text-on-surface" href="#">
+<span class="material-symbols-outlined text-xs">menu_book</span>
+<span>Docs</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- CENTRAL CODE & TEST INSPECTION WORKSPACE -->
+<main class="flex-1 flex flex-col bg-surface-dim overflow-hidden border-r border-outline-variant">
+<!-- Tab Header Bar -->
+<div class="flex items-center justify-between bg-surface-container-lowest px-3 border-b border-outline-variant h-9">
+<div class="flex items-center h-full">
+<!-- Active Tab -->
+<div class="flex items-center gap-2 px-3 h-full bg-surface-dim border-t-2 border-primary-container border-x border-outline-variant text-primary font-mono-sm text-mono-sm font-semibold">
+<span class="material-symbols-outlined text-xs text-primary-container">science</span>
+<span>tests/pipeline.rs</span>
+<span class="text-outline text-label-caps ml-1">184 lines</span>
+<span class="material-symbols-outlined text-xs hover:text-error cursor-pointer ml-1">close</span>
+</div>
+</div>
+<!-- Verification Status Badges -->
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-tertiary-container/15 border border-tertiary-container/40 text-tertiary-fixed-dim rounded font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+            THEOREM PROVED
+          </span>
+<span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-primary-container/10 border border-primary-container/30 text-primary rounded font-label-caps text-label-caps">
+            NEGATIVE HARNESS: 100% REJECTION
+          </span>
+<span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 bg-surface-container-high border border-outline-variant text-on-surface-variant rounded font-label-caps text-label-caps">
+            DETERMINISTIC FIXTURES
+          </span>
+</div>
+</div>
+<!-- Invariant Suite Callout Banner -->
+<div class="p-3 bg-surface-container-low border-b border-outline-variant flex items-start gap-3">
+<div class="p-1.5 bg-primary-container/15 border border-primary-container/40 text-primary-container rounded mt-0.5">
+<span class="material-symbols-outlined text-base">verified_user</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h2 class="text-primary font-headline-md text-headline-md tracking-tight flex items-center gap-2">
+<span>INVARIANT SUITE // NEGATIVE ADVERSARIAL INTEGRATION TESTS</span>
+<span class="text-on-surface-variant text-mono-sm font-normal">[tests/pipeline.rs]</span>
+</h2>
+<span class="text-tertiary-fixed-dim font-label-caps text-label-caps px-2 py-0.5 bg-surface-container rounded border border-outline-variant">FAIL-CLOSED PROTOCOL</span>
+</div>
+<p class="text-on-surface-variant font-body-sm text-body-sm mt-1 leading-relaxed">
+            Adversarial tests codify fail-closed guarantees into executable invariants: malformed magic, integer overflow, byte-encoded order divergence, weight-swap tampering (dual-hash invalidation), rogue Ed25519 resignation, and pending-to-pass state promotion attacks are deterministically defeated.
+          </p>
+</div>
+</div>
+<!-- Syntax-Highlighted Code Editor View -->
+<div class="flex-1 overflow-y-auto custom-scrollbar bg-surface-container-lowest font-mono-sm text-mono-sm text-on-surface p-2">
+<div class="grid grid-cols-[38px_1fr] text-mono-sm leading-5">
+<!-- Line Numbers & Code Stream -->
+<!-- Header imports -->
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">1</div>
+<div class="code-line text-on-surface-variant"><span class="text-secondary">use</span> arkhe_verify_core::{gates::*, pipeline::*, error::*};</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">2</div>
+<div class="code-line text-on-surface-variant"><span class="text-secondary">use</span> ed25519_dalek::{SigningKey, Signer};</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">3</div>
+<div class="code-line text-on-surface-variant"><span class="text-secondary">use</span> sha2::{Sha256, Digest};</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">4</div>
+<div class="code-line text-outline">// =========================================================================</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">5</div>
+<div class="code-line text-outline">// FIXTURE BUILDER // Deterministic GGUF Envelope Synthesizer</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">6</div>
+<div class="code-line text-outline">// =========================================================================</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">7</div>
+<div class="code-line"><span class="text-secondary">struct</span> <span class="text-primary-fixed">B</span> { magic: [u8; 4], ver: u32, tensors: u64, kv_count: u64, body: Vec&lt;u8&gt; }</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">8</div>
+<div class="code-line"><span class="text-secondary">impl</span> <span class="text-primary-fixed">B</span> {</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">9</div>
+<div class="code-line pl-4"><span class="text-secondary">fn</span> <span class="text-primary">sample</span>() -&gt; <span class="text-secondary">Self</span> { <span class="text-secondary">Self</span> { magic: *<span class="text-tertiary">b"GGUF"</span>, ver: <span class="text-secondary-fixed">3</span>, tensors: <span class="text-secondary-fixed">1</span>, kv_count: <span class="text-secondary-fixed">2</span>, body: <span class="text-primary">vec!</span>[<span class="text-secondary-fixed">0xAA</span>; <span class="text-secondary-fixed">64</span>] } }</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">10</div>
+<div class="code-line pl-4"><span class="text-secondary">fn</span> <span class="text-primary">key</span>(seed: u8) -&gt; SigningKey { SigningKey::from_bytes(&amp;[seed; <span class="text-secondary-fixed">32</span>]) }</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">11</div>
+<div class="code-line pl-4"><span class="text-secondary">fn</span> <span class="text-primary">signed</span>(&amp;<span class="text-secondary">self</span>, k: &amp;SigningKey) -&gt; Vec&lt;u8&gt; { <span class="text-secondary">/* Canonical serialization &amp; detached signature */</span> }</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">12</div>
+<div class="code-line">}</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">13</div>
+<div class="code-line"></div>
+<!-- Gate 1 Tests -->
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">14</div>
+<div class="code-line text-outline">// --- GATE 1: PARSE STRUCTURAL INTEGRITY &amp; BOUNDS [FAIL-CLOSED] ---</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">15</div>
+<div class="code-line"><span class="text-tertiary-fixed-dim">#[test]</span></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">16</div>
+<div class="code-line"><span class="text-secondary">fn</span> <span class="text-primary font-semibold">g1_minimal_24_bytes_zero_tensors_zero_kv</span>() {</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">17</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> raw = <span class="text-primary">B::sample</span>().with_tensors(<span class="text-secondary-fixed">0</span>).with_kv(<span class="text-secondary-fixed">0</span>).build();</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">18</div>
+<div class="code-line pl-4"><span class="text-primary">assert!</span>(Gate1Parser::verify_header(&amp;raw).is_ok());</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">19</div>
+<div class="code-line">}</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">20</div>
+<div class="code-line"></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">21</div>
+<div class="code-line"><span class="text-tertiary-fixed-dim">#[test]</span></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">22</div>
+<div class="code-line"><span class="text-secondary">fn</span> <span class="text-primary font-semibold">g1_bad_magic</span>() {</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">23</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> bad = <span class="text-primary">B::sample</span>().with_magic(*<span class="text-tertiary">b"BAD!"</span>).build();</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">24</div>
+<div class="code-line pl-4"><span class="text-primary">assert_eq!</span>(Gate1Parser::verify_header(&amp;bad), <span class="text-error">Err(Gate1Error::InvalidMagic)</span>);</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">25</div>
+<div class="code-line">}</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">26</div>
+<div class="code-line"></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">27</div>
+<div class="code-line"><span class="text-tertiary-fixed-dim">#[test]</span></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">28</div>
+<div class="code-line"><span class="text-secondary">fn</span> <span class="text-primary font-semibold">g1_dim_overflow</span>() {</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">29</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> forged = <span class="text-primary">B::sample</span>().with_dim_shape(&amp;[u64::MAX, <span class="text-secondary-fixed">2</span>]).build();</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">30</div>
+<div class="code-line pl-4"><span class="text-primary">assert_eq!</span>(Gate1Parser::verify_tensors(&amp;forged), <span class="text-error">Err(Gate1Error::IntegerOverflow)</span>);</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">31</div>
+<div class="code-line">}</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">32</div>
+<div class="code-line"></div>
+<!-- Gate 2 Tests -->
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">33</div>
+<div class="code-line text-outline">// --- GATE 2: CANONICAL DETERMINISTIC CBOR ENCODING (RFC 8949) ---</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">34</div>
+<div class="code-line"><span class="text-tertiary-fixed-dim">#[test]</span></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">35</div>
+<div class="code-line"><span class="text-secondary">fn</span> <span class="text-primary font-semibold">cbor_map_order_is_by_encoded_key_not_raw_string</span>() {</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">36</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> uncanonical_bytes = [<span class="text-secondary-fixed">0xa2</span>, <span class="text-secondary-fixed">0x62</span>, <span class="text-tertiary">b'a'</span>, <span class="text-tertiary">b'a'</span>, <span class="text-secondary-fixed">0x01</span>, <span class="text-secondary-fixed">0x61</span>, <span class="text-tertiary">b'b'</span>, <span class="text-secondary-fixed">0x02</span>];</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">37</div>
+<div class="code-line pl-4"><span class="text-primary">assert_eq!</span>(Gate2Canon::validate(&amp;uncanonical_bytes), <span class="text-error">Err(Gate2Error::LexicalOrderViolation)</span>);</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">38</div>
+<div class="code-line">}</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">39</div>
+<div class="code-line"></div>
+<!-- Gate 3 Attack Vectors -->
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">40</div>
+<div class="code-line text-outline">// --- GATE 3: CRYPTOGRAPHIC SIGNATURE &amp; TAMPER REJECTION SUITE ---</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">41</div>
+<div class="code-line"><span class="text-tertiary-fixed-dim">#[test]</span></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">42</div>
+<div class="code-line"><span class="text-secondary">fn</span> <span class="text-primary font-semibold">g3_ATTACK_swap_weights_keep_header</span>() {</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">43</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> legitimate = <span class="text-primary">B::sample</span>().signed(&amp;<span class="text-primary">B::key</span>(<span class="text-secondary-fixed">1</span>));</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">44</div>
+<div class="code-line pl-4"><span class="text-secondary">let mut</span> tampered = legitimate.clone();</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">45</div>
+<div class="code-line pl-4">tampered[<span class="text-secondary-fixed">128</span>] ^= <span class="text-secondary-fixed">0xFF</span>; <span class="text-outline">// Invert single tensor weight byte</span></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">46</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> verdict = Gate3Crypt::verify(&amp;tampered, &amp;LegitimatePolicy::strict());</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">47</div>
+<div class="code-line pl-4"><span class="text-primary">assert_eq!</span>(verdict, <span class="text-error font-semibold">Err(Gate3Error::Sha256Mismatch)</span>);</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">48</div>
+<div class="code-line">}</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">49</div>
+<div class="code-line"></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">50</div>
+<div class="code-line"><span class="text-tertiary-fixed-dim">#[test]</span></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">51</div>
+<div class="code-line"><span class="text-secondary">fn</span> <span class="text-primary font-semibold">g3_ATTACK_attacker_resigns_with_own_key</span>() {</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">52</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> attacker_key = <span class="text-primary">B::key</span>(<span class="text-secondary-fixed">66</span>); <span class="text-outline">// Malicious untrusted identity</span></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">53</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> resigned = <span class="text-primary">B::sample</span>().signed(&amp;attacker_key);</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">54</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> policy = LegitimatePolicy::allowed_keys(&amp;[<span class="text-primary">B::key</span>(<span class="text-secondary-fixed">1</span>).verifying_key()]);</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">55</div>
+<div class="code-line pl-4"><span class="text-primary">assert_eq!</span>(Gate3Crypt::verify(&amp;resigned, &amp;policy), <span class="text-error font-semibold">Err(Gate3Error::KeyNotAllowed)</span>);</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">56</div>
+<div class="code-line">}</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">57</div>
+<div class="code-line"></div>
+<!-- Gate 4 Tests -->
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">58</div>
+<div class="code-line text-outline">// --- GATE 4: COMBINATOR VERDICTS // NO PENDING PASS ALLOWANCE ---</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">59</div>
+<div class="code-line"><span class="text-tertiary-fixed-dim">#[test]</span></div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">60</div>
+<div class="code-line"><span class="text-secondary">fn</span> <span class="text-primary font-semibold">verdict_pending_is_never_pass</span>() {</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">61</div>
+<div class="code-line pl-4"><span class="text-secondary">let</span> pipe = PipelineState { g1: Pass, g2: Pass, g3: Pass, g4: Pending };</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">62</div>
+<div class="code-line pl-4"><span class="text-primary">assert_eq!</span>(pipe.finalize(), <span class="text-error">Verdict::Incomplete</span>);</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">63</div>
+<div class="code-line pl-4"><span class="text-primary">assert_ne!</span>(pipe.finalize(), Verdict::Pass);</div>
+<div class="text-outline select-none text-right pr-3 font-mono-sm text-mono-sm opacity-60">64</div>
+<div class="code-line">}</div>
+</div>
+</div>
+<!-- Integrated Test Terminal Panel -->
+<div class="h-44 bg-surface-container-lowest border-t border-outline-variant flex flex-col flex-shrink-0">
+<!-- Terminal Header -->
+<div class="flex items-center justify-between px-3 py-1 bg-surface-container border-b border-outline-variant h-7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-primary-container">terminal</span>
+<span class="text-on-surface font-mono-sm text-mono-sm font-semibold">INTEGRATED CARGO HARNESS</span>
+<span class="text-outline font-label-caps text-label-caps">$ cargo test --test pipeline -- --nocapture</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-tertiary-fixed-dim font-label-caps text-label-caps flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+              20 PASSED / 0 FAILED (0.08ms)
+            </span>
+<span class="material-symbols-outlined text-xs text-outline hover:text-on-surface cursor-pointer">keyboard_arrow_down</span>
+</div>
+</div>
+<!-- Terminal Output Stream -->
+<div class="flex-1 p-2 overflow-y-auto custom-scrollbar font-mono-sm text-mono-sm space-y-0.5 text-on-surface-variant">
+<div class="text-outline">   Compiling arkhe-verify-core v0.2.0 (/workspace/arkhe-os)</div>
+<div class="text-outline">    Finished test [unoptimized + debuginfo] target(s) in 0.42s</div>
+<div class="text-primary-container font-semibold">     Running tests/pipeline.rs (target/debug/deps/pipeline-8902f)</div>
+<div class="flex justify-between items-center text-xs">
+<span>test g1_minimal_24_bytes_zero_tensors_zero_kv ... <span class="text-tertiary-fixed-dim font-bold">ok</span></span>
+<span class="text-outline">0.01ms</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span>test g1_bad_magic ... <span class="text-tertiary-fixed-dim font-bold">ok</span></span>
+<span class="text-outline">0.01ms</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span>test g1_dim_overflow ... <span class="text-tertiary-fixed-dim font-bold">ok</span></span>
+<span class="text-outline">0.01ms</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span>test cbor_map_order_is_by_encoded_key_not_raw_string ... <span class="text-tertiary-fixed-dim font-bold">ok</span></span>
+<span class="text-outline">0.02ms</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span>test g3_ATTACK_swap_weights_keep_header ... <span class="text-tertiary-fixed-dim font-bold">ok [ASSERT REJECTION: Sha256Mismatch]</span></span>
+<span class="text-outline">0.03ms</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span>test g3_ATTACK_attacker_resigns_with_own_key ... <span class="text-tertiary-fixed-dim font-bold">ok [ASSERT REJECTION: KeyNotAllowed]</span></span>
+<span class="text-outline">0.02ms</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span>test verdict_pending_is_never_pass ... <span class="text-tertiary-fixed-dim font-bold">ok [ASSERT REJECTION: Incomplete]</span></span>
+<span class="text-outline">0.01ms</span>
+</div>
+<div class="pt-1 text-tertiary-fixed font-bold border-t border-outline-variant/50">
+            test result: <span class="text-primary-container">ok</span>. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08ms
+          </div>
+</div>
+</div>
+</main>
+<!-- RIGHT SIDEBAR: ATTACK VECTOR DEFENSE MATRIX & TELEMETRY -->
+<aside class="w-80 bg-surface-container-lowest flex flex-col flex-shrink-0 overflow-y-auto custom-scrollbar select-none">
+<!-- Panel Header -->
+<div class="p-3 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+<div>
+<div class="text-primary font-headline-md text-headline-md tracking-tight flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-primary-container">security</span>
+<span>ATTACK DEFENSE MATRIX</span>
+</div>
+<div class="text-outline font-label-caps text-label-caps">EXECUTABLE INVARIANTS // FAIL-CLOSED</div>
+</div>
+<span class="px-1.5 py-0.5 bg-error-container/20 border border-error/50 text-error rounded font-label-caps text-label-caps">
+          STRICT
+        </span>
+</div>
+<!-- Real-Time Defense Telemetry Stats -->
+<div class="p-3 border-b border-outline-variant grid grid-cols-2 gap-2 bg-surface-container-lowest">
+<div class="p-2 bg-surface-container border border-outline-variant rounded">
+<div class="text-outline font-label-caps text-label-caps">NEGATIVE ASSERTIONS</div>
+<div class="text-primary font-mono-lg text-mono-lg font-bold">48 Checked</div>
+</div>
+<div class="p-2 bg-surface-container border border-outline-variant rounded">
+<div class="text-outline font-label-caps text-label-caps">REJECTION LATENCY</div>
+<div class="text-tertiary-fixed-dim font-mono-lg text-mono-lg font-bold">0.08 ms</div>
+</div>
+<div class="p-2 bg-surface-container border border-outline-variant rounded">
+<div class="text-outline font-label-caps text-label-caps">PROOF DRIFT</div>
+<div class="text-tertiary-fixed font-mono-lg text-mono-lg font-bold">0.000 ppm</div>
+</div>
+<div class="p-2 bg-surface-container border border-outline-variant rounded">
+<div class="text-outline font-label-caps text-label-caps">PASS RATIO</div>
+<div class="text-primary-container font-mono-lg text-mono-lg font-bold">20/20 (100%)</div>
+</div>
+</div>
+<!-- Categorized Defense Cards List -->
+<div class="p-3 space-y-2.5 flex-1">
+<!-- Attack Card 1 -->
+<div class="p-2.5 bg-surface-container border border-outline-variant hover:border-primary-container transition-colors rounded">
+<div class="flex items-center justify-between mb-1">
+<span class="text-on-surface font-semibold text-mono-sm">1. Weight-Swap Under Static Header</span>
+<span class="px-1.5 py-0.2 bg-tertiary-container/15 text-tertiary-fixed-dim font-label-caps text-label-caps rounded">DEFEATED</span>
+</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm text-xs leading-normal">
+            SHA-256 + BLAKE3 dual-hash verified across all raw byte offsets. Single-bit delta triggers immediate <code class="text-error font-mono-sm">Sha256Mismatch</code>.
+          </div>
+<div class="mt-1.5 pt-1 border-t border-outline-variant/40 flex justify-between text-label-caps text-outline">
+<span>TEST: g3_ATTACK_swap_weights</span>
+<span class="text-tertiary-fixed">LATENCY: 0.03ms</span>
+</div>
+</div>
+<!-- Attack Card 2 -->
+<div class="p-2.5 bg-surface-container border border-outline-variant hover:border-primary-container transition-colors rounded">
+<div class="flex items-center justify-between mb-1">
+<span class="text-on-surface font-semibold text-mono-sm">2. Rogue Ed25519 Resignation</span>
+<span class="px-1.5 py-0.2 bg-tertiary-container/15 text-tertiary-fixed-dim font-label-caps text-label-caps rounded">DEFEATED</span>
+</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm text-xs leading-normal">
+            Gate 3 enforces whitelist policy bounds. Arbitrary key signatures are rejected with <code class="text-error font-mono-sm">KeyNotAllowed</code> regardless of signature validity.
+          </div>
+<div class="mt-1.5 pt-1 border-t border-outline-variant/40 flex justify-between text-label-caps text-outline">
+<span>TEST: g3_attacker_resigns</span>
+<span class="text-tertiary-fixed">LATENCY: 0.02ms</span>
+</div>
+</div>
+<!-- Attack Card 3 -->
+<div class="p-2.5 bg-surface-container border border-outline-variant hover:border-primary-container transition-colors rounded">
+<div class="flex items-center justify-between mb-1">
+<span class="text-on-surface font-semibold text-mono-sm">3. CBOR Lexical Malleability</span>
+<span class="px-1.5 py-0.2 bg-tertiary-container/15 text-tertiary-fixed-dim font-label-caps text-label-caps rounded">DEFEATED</span>
+</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm text-xs leading-normal">
+            RFC 8949 §4.2.1 strict canonical sorting by encoded byte sequence. Prevents lexical string spoofing &amp; duplicate map keys.
+          </div>
+<div class="mt-1.5 pt-1 border-t border-outline-variant/40 flex justify-between text-label-caps text-outline">
+<span>TEST: cbor_map_order</span>
+<span class="text-tertiary-fixed">LATENCY: 0.02ms</span>
+</div>
+</div>
+<!-- Attack Card 4 -->
+<div class="p-2.5 bg-surface-container border border-outline-variant hover:border-primary-container transition-colors rounded">
+<div class="flex items-center justify-between mb-1">
+<span class="text-on-surface font-semibold text-mono-sm">4. Dim Product Integer Overflow</span>
+<span class="px-1.5 py-0.2 bg-tertiary-container/15 text-tertiary-fixed-dim font-label-caps text-label-caps rounded">DEFEATED</span>
+</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm text-xs leading-normal">
+            Safe <code class="text-primary font-mono-sm">checked_mul</code> bounds calculation prevents DoS wrapping &amp; heap overflow during tensor geometry reconstruction.
+          </div>
+<div class="mt-1.5 pt-1 border-t border-outline-variant/40 flex justify-between text-label-caps text-outline">
+<span>TEST: g1_dim_overflow</span>
+<span class="text-tertiary-fixed">LATENCY: 0.01ms</span>
+</div>
+</div>
+<!-- Attack Card 5 -->
+<div class="p-2.5 bg-surface-container border border-outline-variant hover:border-primary-container transition-colors rounded">
+<div class="flex items-center justify-between mb-1">
+<span class="text-on-surface font-semibold text-mono-sm">5. Offline Pending State Promotion</span>
+<span class="px-1.5 py-0.2 bg-tertiary-container/15 text-tertiary-fixed-dim font-label-caps text-label-caps rounded">DEFEATED</span>
+</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm text-xs leading-normal">
+            Combinator invariant: Gate 4 converts unverified <code class="text-primary font-mono-sm">Pending</code> states to <code class="text-error font-mono-sm">Incomplete</code> verdicts without execution access.
+          </div>
+<div class="mt-1.5 pt-1 border-t border-outline-variant/40 flex justify-between text-label-caps text-outline">
+<span>TEST: verdict_pending</span>
+<span class="text-tertiary-fixed">LATENCY: 0.01ms</span>
+</div>
+</div>
+<!-- Attack Card 6 -->
+<div class="p-2.5 bg-surface-container border border-outline-variant hover:border-primary-container transition-colors rounded">
+<div class="flex items-center justify-between mb-1">
+<span class="text-on-surface font-semibold text-mono-sm">6. Float NaN / -0.0 Canonical Collapse</span>
+<span class="px-1.5 py-0.2 bg-tertiary-container/15 text-tertiary-fixed-dim font-label-caps text-label-caps rounded">DEFEATED</span>
+</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm text-xs leading-normal">
+            Bit-exact IEEE-754 projection preservation halts float representation mutation across heterogeneous target architectures.
+          </div>
+<div class="mt-1.5 pt-1 border-t border-outline-variant/40 flex justify-between text-label-caps text-outline">
+<span>TEST: projection_preserves_float</span>
+<span class="text-tertiary-fixed">LATENCY: 0.01ms</span>
+</div>
+</div>
+</div>
+<!-- Telemetry Status Footer -->
+<div class="p-2.5 bg-surface-container border-t border-outline-variant text-center">
+<div class="text-on-surface-variant font-label-caps text-label-caps">
+          CRYPTO ENCLAVE ATTESTATION: <span class="text-primary-container">SYNCHRONIZED</span>
+</div>
+</div>
+</aside>
+</div>
+</body></html>

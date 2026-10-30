@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-22",
+  "scope": "Local targeted reproduction for Part IV; no live database or economic effects",
+  "runs": [
+    {
+      "command": "cargo test --locked -p arkhe-kernel --test budget_pco --test rejection_gates",
+      "chunks": [
+        {
+          "chunk_id": "6730a4",
+          "wall_time_seconds": 2.3591857,
+          "exit_code": 0,
+          "original_token_count": 365,
+          "output": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.48s\n     Running tests\\budget_pco.rs (target\\debug\\deps\\budget_pco-89b973e88efd35db.exe)\n\nrunning 9 tests\ntest producer_has_bounded_fail_closed_domain ... ok\ntest all_gate_entry_points_reject_proof_bypass_and_review_still_applies ... ok\ntest specification_change_during_evidence_lookup_rejects_old_certificate ... ok\ntest checker_rejects_false_arithmetic_and_over_budget_conclusion_without_producer ... ok\ntest generated_certificate_roundtrips_and_authorizes_only_after_admission ... ok\ntest valid_human_review_and_budget_proof_are_both_required ... ok\ntest proof_cannot_override_denial_stop_or_transfer_between_requests ... ok\ntest missing_offline_or_wrong_proof_provenance_fails_closed ... ok\ntest malicious_certificates_are_rejected_even_when_admitted ... ok\n\ntest result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n\n     Running tests\\rejection_gates.rs (target\\debug\\deps\\rejection_gates-8f7eda2e78a97ad0.exe)\n\nrunning 5 tests\ntest no_evidence_missing_wer_rejects_before_policy ... ok\ntest emergency_stop_rejects_before_policy ... ok\ntest policy_denied_rejects_even_with_worker_evidence ... ok\ntest unprotected_intents_still_follow_governance_without_worker_evidence ... ok\ntest every_protected_intent_requires_admitted_evidence_before_policy ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+        }
+      ]
+    },
+    {
+      "command": "cargo test --locked -p arkhe-bugbounty --test durable_gates full_prefix_consistency_rejects_rewritten_history_and_bad_lengths -- --exact",
+      "chunks": [
+        {
+          "chunk_id": "e8f58d",
+          "wall_time_seconds": 10.0133879,
+          "session_id": 25498,
+          "original_token_count": 96,
+          "output": "   Compiling arkhe-core v0.1.0 (D:\\arkhe\\kernel\\arkhe-core)\n   Compiling spdx v0.13.5\n   Compiling arkhe-verify-core v0.1.0 (D:\\arkhe\\verification\\crates\\arkhe-verify-core)\n   Compiling arkhe-governance v0.1.0 (D:\\arkhe\\governance\\arkhe-governance)\n   Compiling arkhe-sql v0.1.0 (D:\\arkhe\\storage\\sql\\crates\\arkhe-sql)\n   Compiling arkhe-kernel v0.1.0 (D:\\arkhe\\kernel\\arkhe-kernel)\n"
+        },
+        {
+          "chunk_id": "016df4",
+          "wall_time_seconds": 0.0000101,
+          "exit_code": 0,
+          "original_token_count": 126,
+          "output": "   Compiling arkhe-wormgraph v0.1.0 (D:\\arkhe\\evidence\\arkhe-wormgraph)\n   Compiling arkhe-bugbounty v0.1.0 (D:\\arkhe\\integration\\arkhe-bugbounty)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 53.45s\n     Running tests\\durable_gates.rs (target\\debug\\deps\\durable_gates-1b1de743c330c218.exe)\n\nrunning 1 test\ntest full_prefix_consistency_rejects_rewritten_history_and_bad_lengths ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+        }
+      ]
+    },
+    {
+      "command": "cargo test --locked --manifest-path agi-coder/Cargo.toml -p agi-coder-tests --test cognition_verification",
+      "chunks": [
+        {
+          "chunk_id": "13e4e1",
+          "wall_time_seconds": 10.0142695,
+          "session_id": 25407,
+          "original_token_count": 42,
+          "output": "   Compiling agi-coder-pipeline v0.1.0 (D:\\arkhe\\agi-coder\\crates\\agi-coder-pipeline)\n   Compiling agi-coder-tests v0.1.0 (D:\\arkhe\\agi-coder\\crates\\agi-coder-tests)\n"
+        },
+        {
+          "chunk_id": "063e9b",
+          "wall_time_seconds": 0.0000163,
+          "exit_code": 0,
+          "original_token_count": 181,
+          "output": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.85s\n     Running tests\\cognition_verification.rs (agi-coder\\target\\debug\\deps\\cognition_verification-14dfe04fe0173a23.exe)\n\nrunning 6 tests\ntest research_resolution_requires_evidence_and_costs_check_overflow ... ok\ntest failed_verification_blocks_downstream_and_exhausts_retries ... ok\ntest dependency_cycles_and_missing_nodes_are_rejected ... ok\ntest bounded_loop_resumes_and_finishes_in_dependency_order ... ok\ntest mutation_score_requires_baseline_and_independent_specification ... ok\ntest memory_round_trip_preserves_sources_and_refuses_overwrite ... ok\n\ntest result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s\n\n"
+        }
+      ]
+    }
+  ],
+  "synthetic_arithmetic": {
+    "inputs_micro_usd": [
+      200000,
+      20000,
+      30000,
+      300000,
+      50000
+    ],
+    "total_micro_usd": 600000,
+    "proposals": 10,
+    "accepted": 8,
+    "usd_per_proposal": "0.06",
+    "usd_per_accepted": "0.075",
+    "status": "checked with Python Decimal; invented costs"
+  }
+}

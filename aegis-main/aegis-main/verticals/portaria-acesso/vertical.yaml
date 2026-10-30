@@ -1,0 +1,158 @@
+# Controle de acesso por LPR — o vertical que está NO CAMPO.
+#
+# Este ficheiro substitui `seed_portaria_acesso.py`, que tinha 1.015 linhas.
+# E encontrou o buraco mais importante da reconstrução, escrito pela própria
+# seed: metade do que ela fazia era **aposar as páginas do produto anterior**,
+# e fazia-o importando as seeds alheias (`slugs_de_outras_verticais()`), com o
+# comentário "deriving beats listing" — e a derivação era o import.
+#
+# Num produto isso não é um detalhe: é um grafo de dependências entre produtos.
+# Trocar a ordem de instalação muda o resultado, e ninguém descobre até a tela
+# abrir errada. A docstring da seed `_de_3_para_4` diz, medido na VPS em
+# 17/09/2026: *"a ilha rodou a CONTAGEM antes, e trocar o AEGIS_VERTICAL não
+# basta — as páginas da contagem continuavam registradas e o cliente abria o
+# produto da contagem dentro da guarita"*.
+#
+# Aqui isso deixa de ser do produto. Uma ilha corre UM produto, portanto
+# instalar um aposar o anterior é propriedade de **quem instala** — e o
+# critério é o contrato: os tipos que este manifesto declara são meus, e tudo
+# o resto é de quem saiu. O `vertical.yaml` nunca menciona o produto
+# anterior, nem pelo nome.
+
+id: portaria-acesso
+versao: 1
+titulo: Controle de Acesso
+
+licenca:
+  exige: portaria-acesso
+  node_locked: true
+
+brand:
+  nome: Controle de Acesso
+  cor_primaria: '#2D77BE'
+
+ontologia:
+  tipos:
+    # O cadastro neutro, os tipos horizontais da casa. Numa ilha de acesso não
+    # nasce condomínio: nasce quem tem de ser reconhecido.
+    - nome: pessoa
+      rotulo: Pessoa
+      propriedade_titulo: nome
+      reforco: strict
+      propriedades:
+        - { nome: nome,     rotulo: Nome,     tipo: texto }
+        - { nome: documento, rotulo: Documento, tipo: texto }
+        - { nome: telefone,  rotulo: Telefone,  tipo: texto }
+
+    - nome: unidade
+      rotulo: Unidade
+      propriedade_titulo: nome
+      reforco: strict
+      propriedades:
+        - { nome: nome,    rotulo: Nome,      tipo: texto }
+        - { nome: entrada,  rotulo: Entrada,   tipo: texto }
+        - { nome: saida,    rotulo: Saída,     tipo: texto }
+
+    - nome: local
+      rotulo: Local
+      propriedade_titulo: nome
+      reforco: strict
+      propriedades:
+        - { nome: nome,     rotulo: Nome,    tipo: texto }
+        - { nome: unidade,  rotulo: Unidade, tipo: texto }
+
+    - nome: dispositivo
+      rotulo: Dispositivo
+      propriedade_titulo: nome
+      reforco: strict
+      propriedades:
+        - { nome: nome,  rotulo: Nome,      tipo: texto }
+        - { nome: local, rotulo: Local,     tipo: texto }
+        - { nome: online, rotulo: Em linha, tipo: booleano }
+
+    # O que a guarita vive: a leitura da placa.
+    - nome: acesso
+      rotulo: Acesso
+      propriedade_titulo: placa
+      reforco: strict
+      propriedades:
+        - { nome: placa,       rotulo: Placa,       tipo: texto }
+        - { nome: confianca,   rotulo: Confiança,   tipo: numero }
+        - { nome: detectado_em, rotulo: Detectado,   tipo: data }
+        - { nome: quadro_url,  rotulo: Evidência,   tipo: texto }
+        - { nome: camera,      rotulo: Câmera,      tipo: texto }
+
+    - nome: veiculo
+      rotulo: Veículo
+      propriedade_titulo: placa
+      reforco: strict
+      propriedades:
+        - { nome: placa,         rotulo: Placa,          tipo: texto }
+        - { nome: marca,         rotulo: Marca,          tipo: texto }
+        - { nome: cor,           rotulo: Cor,            tipo: texto }
+        - { nome: visto_em,      rotulo: Visto em,       tipo: data }
+        - { nome: vezes_vista,   rotulo: Vezes avistada, tipo: numero }
+
+    - nome: camera
+      rotulo: Câmera
+      propriedade_titulo: nome
+      reforco: strict
+      propriedades:
+        - { nome: nome,        rotulo: Nome,    tipo: texto }
+        - { nome: local,       rotulo: Local,   tipo: texto }
+        - { nome: fonte,       rotulo: Fonte,   tipo: texto }
+        - { nome: analise,     rotulo: Análise, tipo: texto }
+
+  links:
+    # 🔴 A leitura pertence a UMA câmara e a UM veículo, no máximo. Uma leitura
+    # com duas câmaras é o mesmo defeito que o `gate` de antes: a relação
+    # declarada e não forçada.
+    - { nome: lida_pela,     de: acesso,  para: camera,   cardinalidade: many_to_one, rotulo: Lida pela }
+    - { nome: do_veiculo,    de: acesso,  para: veiculo,  cardinalidade: many_to_one, rotulo: Do veículo }
+    # 🔴 Nomes de relação são ÚNICOS, e a validação recusa o duplicado. Não é
+    # preciosismo: o limite de cardinalidade é medido **pelo nome**, e duas
+    # relações com o mesmo nome e alvos diferentes passavam a contar uma pela
+    # outra — e a garantia "uma leitura, uma câmara" deixava de valer.
+    - { nome: pessoa_na_unidade, de: pessoa, para: unidade, cardinalidade: many_to_one, rotulo: Pessoa na unidade }
+    - { nome: pessoa_no_local,   de: pessoa, para: local,   cardinalidade: many_to_one, rotulo: Pessoa no local }
+    - { nome: camara_no,     de: camera,  para: local,    cardinalidade: many_to_one, rotulo: Câmera em }
+    - { nome: dispositivo_em, de: dispositivo, para: local, cardinalidade: many_to_one, rotulo: Dispositivo em }
+
+  acoes:
+    - { nome: registrar_acesso, rotulo: Registar acesso, alvo: acesso,  regra: criar_objeto }
+    - { nome: marcar_veiculo,   rotulo: Marcar veículo,   alvo: veiculo, regra: criar_objeto }
+    - { nome: vincular_pessoa,  rotulo: Vincular pessoa,  alvo: pessoa,  regra: modificar_objeto }
+
+paginas:
+  # 🔴 O `refresh_segundos` é o que torna isto uma tela de **guarita** e não um
+  # relatório. A seed dizia 15 s, e sem o campo a conversão tava a tirar-lhe o
+  # "ao vivo" sem dar por isso.
+  - { slug: ao-vivo,     rotulo: Ao vivo,     ficheiro: paginas/ao-vivo.json }
+  - { slug: livro,       rotulo: Livro,       ficheiro: paginas/livro.json }
+  - { slug: veiculos,    rotulo: Veículos,    ficheiro: paginas/veiculos.json }
+  - { slug: cadastro,    rotulo: Cadastro,    ficheiro: paginas/cadastro.json }
+
+menu:
+  home: ao-vivo
+  # 🔴 A busca da guarita não anuncia o que a operação NÃO faz. Este texto
+  # não é escolha do operador — é da vertical, e é por isso que a seed só o
+  # escreve quando o campo está vazio ou no valor de fábrica.
+  busca_placeholder: Buscar placas, veículos e pessoas…
+
+saude:
+  exigido:
+    - "@banco"
+    - "@catalogo"
+    - "@isolamento"
+  opcional:
+    - saude.d/opcional/psql.sh
+
+dados:
+  # O cadastro neutro. A ilha de acesso não nasce com condomínio: nasce com
+  # quem tem de ser reconhecido.
+  - { tipo: unidade, chave: U-PORTAO, propriedades: { nome: Portão da guarita, entrada: "06:00", saida: "22:00" } }
+  - { tipo: local,   chave: L-Rampa,  propriedades: { nome: Rampa de acesso, unidade: Portão da guarita } }
+  - { tipo: camera,   chave: C-ENTRADA, propriedades: { nome: Entrada principal, local: Rampa de acesso, fonte: camera-demo, analise: lpr } }
+
+ligacoes:
+  - { nome: camara_no, de: { tipo: camera, chave: C-ENTRADA }, para: { tipo: local, chave: L-Rampa } }

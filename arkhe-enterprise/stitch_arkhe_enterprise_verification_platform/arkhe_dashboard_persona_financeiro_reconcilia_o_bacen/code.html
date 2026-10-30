@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Arkhe Enterprise - Tesouraria &amp; Finanças</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface": "#0f131c",
+            "surface-container-lowest": "#0a0e16",
+            "tertiary-container": "#1bbd85",
+            "on-surface": "#dfe2ee",
+            "outline-variant": "#3d494c",
+            "on-primary": "#003640",
+            "inverse-surface": "#dfe2ee",
+            "surface-dim": "#0f131c",
+            "on-tertiary": "#003824",
+            "surface-container-highest": "#31353e",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "surface-container-low": "#181c24",
+            "primary-container": "#06b6d4",
+            "on-primary-container": "#00424f",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container-high": "#262a33",
+            "secondary": "#b4c5ff",
+            "secondary-fixed": "#dbe1ff",
+            "secondary-fixed-dim": "#b4c5ff",
+            "primary": "#4cd7f6",
+            "tertiary-fixed-dim": "#4edea3",
+            "primary-fixed-dim": "#4cd7f6",
+            "on-background": "#dfe2ee",
+            "on-primary-fixed-variant": "#004e5c",
+            "outline": "#869397",
+            "on-tertiary-fixed": "#002113",
+            "tertiary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#2c3039",
+            "surface-variant": "#31353e",
+            "on-secondary-fixed-variant": "#003ea8",
+            "on-secondary-container": "#cdd7ff",
+            "surface-container": "#1c2028",
+            "on-surface-variant": "#bcc9cd",
+            "surface-bright": "#353942",
+            "secondary-container": "#0053db",
+            "inverse-primary": "#00687a",
+            "error": "#ffb4ab",
+            "on-primary-fixed": "#001f26",
+            "on-secondary-fixed": "#00174b",
+            "tertiary": "#4edea3",
+            "primary-fixed": "#acedff",
+            "error-container": "#93000a",
+            "on-tertiary-container": "#00452e",
+            "surface-tint": "#4cd7f6",
+            "on-secondary": "#002a78",
+            "background": "#0f131c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter-mobile": "0.75rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "margin": "2rem",
+            "margin-mobile": "1rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "label-badge": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "mono-sm": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "mono-md": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "headline-sm": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-badge": ["10px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    }
+    /* Hide scrollbar for tabs */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased font-body-md selection:bg-primary-container selection:text-on-primary-container min-h-screen pb-24">
+<!-- TopAppBar: Anchored Shared Component -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-md py-space-xs border-b border-outline-variant/30 bg-surface-container-lowest/85 backdrop-blur-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary" data-icon="shield">shield</span>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight leading-tight">Arkhe Enterprise</span>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+          Persona: Financeiro / Tesouraria
+        </span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="text-label-badge font-label-badge uppercase px-space-xs py-0.5 rounded border border-outline-variant/50 text-secondary bg-surface-container-high/60 tracking-wider">
+        BACEN Tier 1
+      </span>
+</div>
+</header>
+<!-- Main View Container -->
+<main class="pt-16 px-gutter-mobile space-y-space-md max-w-lg mx-auto">
+<!-- Persona Selector Tabs (Horizontal Scrollable) -->
+<section class="mt-2 space-y-space-xs">
+<div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-1 text-mono-sm font-mono-sm">
+<button class="px-space-sm py-1 rounded bg-surface-container border border-outline-variant/30 text-on-surface-variant whitespace-nowrap active:opacity-80 transition-opacity">
+          Jurídico
+        </button>
+<button class="px-space-sm py-1 rounded bg-primary/10 border-b-2 border-primary text-primary font-semibold whitespace-nowrap flex items-center gap-1">
+<span class="w-1 h-1 rounded-full bg-primary"></span>
+          Financeiro
+        </button>
+<button class="px-space-sm py-1 rounded bg-surface-container border border-outline-variant/30 text-on-surface-variant whitespace-nowrap active:opacity-80 transition-opacity">
+          Compliance
+        </button>
+<button class="px-space-sm py-1 rounded bg-surface-container border border-outline-variant/30 text-on-surface-variant whitespace-nowrap active:opacity-80 transition-opacity">
+          Engenharia
+        </button>
+<button class="px-space-sm py-1 rounded bg-surface-container border border-outline-variant/30 text-on-surface-variant whitespace-nowrap active:opacity-80 transition-opacity">
+          Executivo
+        </button>
+</div>
+<!-- Canonical ADR Badge Banner -->
+<div class="p-space-xs rounded bg-surface-container-low border border-outline-variant/40 flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-outline text-[16px] leading-tight mt-0.5" data-icon="policy">policy</span>
+<p class="text-label-badge font-label-badge text-on-surface-variant leading-tight">
+          ADR-008: A persona é apresentação, não autorização. O RBAC reside na API.
+        </p>
+</div>
+</section>
+<!-- DDD Ubiquitous Language Mapping Drawer -->
+<section class="p-space-sm rounded-xl bg-surface-container border border-outline-variant/40 space-y-space-xs">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="menu_book">menu_book</span>
+<span class="text-label-badge font-label-badge uppercase text-on-surface font-semibold tracking-wider">
+            Vocabulário DDD Financeiro
+          </span>
+</div>
+<span class="text-label-badge font-label-badge text-primary bg-primary/10 px-1 py-0.5 rounded border border-primary/20">
+          ADR-011
+        </span>
+</div>
+<div class="grid grid-cols-1 gap-1 text-mono-sm font-mono-sm pt-1">
+<div class="flex items-baseline justify-between bg-surface-container-lowest/60 px-2 py-1 rounded border border-outline-variant/20">
+<span class="text-primary font-mono-sm">mmr.root</span>
+<span class="text-on-surface-variant text-body-sm font-body-sm text-right">Raiz de Reconciliação Contábil</span>
+</div>
+<div class="flex items-baseline justify-between bg-surface-container-lowest/60 px-2 py-1 rounded border border-outline-variant/20">
+<span class="text-primary font-mono-sm">mmr.proof</span>
+<span class="text-on-surface-variant text-body-sm font-body-sm text-right">Trilha de Auditoria Transacional</span>
+</div>
+<div class="flex items-baseline justify-between bg-surface-container-lowest/60 px-2 py-1 rounded border border-outline-variant/20">
+<span class="text-primary font-mono-sm">anchor.rbb</span>
+<span class="text-on-surface-variant text-body-sm font-body-sm text-right">Fecho Contabilístico na RBB</span>
+</div>
+<div class="flex items-baseline justify-between bg-surface-container-lowest/60 px-2 py-1 rounded border border-outline-variant/20">
+<span class="text-primary font-mono-sm">evidence.hash</span>
+<span class="text-on-surface-variant text-body-sm font-body-sm text-right">Identificador Canônico de Liquidação</span>
+</div>
+</div>
+</section>
+<!-- Operational Metrics Bento Grid -->
+<section class="space-y-space-xs">
+<div class="flex items-center justify-between">
+<h2 class="text-body-sm font-body-sm font-semibold uppercase tracking-wider text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-tertiary text-[16px]" data-icon="query_stats">query_stats</span>
+          Métricas de Auditoria Soberana
+        </h2>
+<span class="text-label-badge font-label-badge text-tertiary uppercase flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span> Sincronizado
+        </span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs">
+<!-- Metric 1: Reconciliação -->
+<div class="p-space-sm rounded-xl bg-surface-container border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-label-badge font-label-badge text-on-surface-variant uppercase">Reconciliação</span>
+<span class="text-label-badge font-label-badge uppercase px-1 py-0.5 rounded bg-tertiary/10 text-tertiary border border-tertiary/30">
+              VERIFIED
+            </span>
+</div>
+<div class="my-space-xs">
+<div class="text-headline-md font-headline-md text-on-surface font-bold">100%</div>
+<p class="text-body-sm font-body-sm text-tertiary font-medium">Fechado</p>
+</div>
+<p class="text-mono-sm font-mono-sm text-on-surface-variant/80 border-t border-outline-variant/20 pt-1 truncate">
+            R$ 48.920.000,00
+          </p>
+</div>
+<!-- Metric 2: Custo Rollup -->
+<div class="p-space-sm rounded-xl bg-surface-container border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-label-badge font-label-badge text-on-surface-variant uppercase">Custo / Prova</span>
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="toll">toll</span>
+</div>
+<div class="my-space-xs">
+<div class="text-headline-md font-headline-md text-on-surface font-bold">R$ 0,004</div>
+<p class="text-body-sm font-body-sm text-primary font-medium">Batch Rollup RBB</p>
+</div>
+<p class="text-mono-sm font-mono-sm text-on-surface-variant/80 border-t border-outline-variant/20 pt-1">
+            4.096 txs/merkle
+          </p>
+</div>
+<!-- Metric 3: Anomalias -->
+<div class="p-space-sm rounded-xl bg-surface-container border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-label-badge font-label-badge text-on-surface-variant uppercase">Discrepâncias</span>
+<span class="material-symbols-outlined text-tertiary text-[16px]" data-icon="check_circle">check_circle</span>
+</div>
+<div class="my-space-xs">
+<div class="text-headline-md font-headline-md text-on-surface font-bold">0</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Detectadas</p>
+</div>
+<p class="text-mono-sm font-mono-sm text-tertiary border-t border-outline-variant/20 pt-1">
+            Zero Drift Contábil
+          </p>
+</div>
+<!-- Metric 4: Bacen-Jud Fechamento -->
+<div class="p-space-sm rounded-xl bg-surface-container border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-label-badge font-label-badge text-on-surface-variant uppercase">Ordens Bacen-Jud</span>
+<span class="text-label-badge font-label-badge uppercase px-1 py-0.5 rounded bg-secondary-container/20 text-secondary border border-secondary/30">
+              ICP
+            </span>
+</div>
+<div class="my-space-xs">
+<div class="text-headline-md font-headline-md text-on-surface font-bold">142</div>
+<p class="text-body-sm font-body-sm text-secondary font-medium">Seladas e-CNPJ</p>
+</div>
+<p class="text-mono-sm font-mono-sm text-on-surface-variant/80 border-t border-outline-variant/20 pt-1 truncate">
+            Validade Jurídica MP 2.200
+          </p>
+</div>
+</div>
+</section>
+<!-- Ações Rápidas Soberanas -->
+<section class="space-y-space-xs">
+<h2 class="text-body-sm font-body-sm font-semibold uppercase tracking-wider text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="bolt">bolt</span>
+        Ações Rápidas de Tesouraria
+      </h2>
+<div class="space-y-space-xs">
+<!-- Primária -->
+<button class="w-full bg-primary-container text-on-primary-container px-space-md py-space-sm rounded-lg font-body-md font-medium flex items-center justify-between hover:bg-primary transition-colors active:scale-[0.99] shadow-sm">
+<div class="flex items-center gap-space-sm text-left">
+<span class="material-symbols-outlined text-on-primary-container text-[20px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+<div>
+<div class="font-semibold text-body-md leading-tight">Reconciliar Lote em Aberto</div>
+<div class="text-mono-sm font-mono-sm opacity-90">Commit criptográfico na RBB</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-primary-container" data-icon="chevron_right">chevron_right</span>
+</button>
+<div class="grid grid-cols-2 gap-space-xs">
+<!-- Secundária 1 -->
+<button class="p-space-sm rounded-lg bg-surface-container border border-outline-variant/40 text-on-surface hover:border-primary/60 transition-colors text-left flex flex-col justify-between active:scale-[0.98]">
+<span class="material-symbols-outlined text-secondary text-[20px] mb-1" data-icon="history_toggle_off">history_toggle_off</span>
+<div>
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Fechar Período Contábil</div>
+<div class="text-mono-sm font-mono-sm text-on-surface-variant">Carimbo de Tempo TSA</div>
+</div>
+</button>
+<!-- Secundária 2 -->
+<button class="p-space-sm rounded-lg bg-surface-container border border-outline-variant/40 text-on-surface hover:border-primary/60 transition-colors text-left flex flex-col justify-between active:scale-[0.98]">
+<span class="material-symbols-outlined text-tertiary text-[20px] mb-1" data-icon="file_download">file_download</span>
+<div>
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Exportar Bacen</div>
+<div class="text-mono-sm font-mono-sm text-on-surface-variant">CSV / XLSX Auditável</div>
+</div>
+</button>
+</div>
+</div>
+</section>
+<!-- Feed de Lançamentos e Fechamentos Financeiros Recentes -->
+<section class="space-y-space-xs">
+<div class="flex items-center justify-between">
+<h2 class="text-body-sm font-body-sm font-semibold uppercase tracking-wider text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="receipt_long">receipt_long</span>
+          Fechamentos e Liquidações Recentes
+        </h2>
+<span class="text-label-badge font-label-badge text-on-surface-variant">Últimos 3 eventos</span>
+</div>
+<div class="space-y-space-xs">
+<!-- Item 1: Lote PIX Interbancário -->
+<article class="p-space-sm rounded-xl bg-surface-container border border-outline-variant/30 space-y-space-xs hover:border-outline-variant transition-colors">
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-badge font-label-badge uppercase px-1.5 py-0.5 rounded bg-tertiary/10 text-tertiary border border-tertiary/30">
+                  RECONCILIADO
+                </span>
+<span class="text-mono-sm font-mono-sm text-on-surface font-semibold">#LOTE-2026-881</span>
+</div>
+<h3 class="text-body-sm font-body-sm font-medium text-on-surface mt-1">
+                Fechamento de Lote PIX Interbancário
+              </h3>
+</div>
+<div class="text-right">
+<span class="text-mono-lg font-mono-lg text-primary font-bold">R$ 14.250.000,00</span>
+<span class="block text-mono-sm font-mono-sm text-on-surface-variant">14:32:08 UTC-3</span>
+</div>
+</div>
+<div class="p-space-xs rounded bg-surface-container-lowest/80 border border-outline-variant/20 space-y-0.5 text-mono-sm font-mono-sm">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Fecho RBB:</span>
+<span class="text-secondary font-medium">Bloco #19.842.102</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Hash BLAKE3:</span>
+<span class="text-on-surface truncate max-w-[180px]">7f8a9e21bc4d90e812f8a...</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1 text-label-badge font-label-badge text-tertiary">
+<span class="material-symbols-outlined text-[14px]" data-icon="lock">lock</span>
+              Imutável WORM
+            </div>
+<button class="px-space-xs py-0.5 rounded bg-surface-container-high border border-outline-variant/40 text-on-surface hover:text-primary transition-colors text-mono-sm font-mono-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="download">download</span>
+              Exportar CSV
+            </button>
+</div>
+</article>
+<!-- Item 2: Swap Cambial / CVM -->
+<article class="p-space-sm rounded-xl bg-surface-container border border-outline-variant/30 space-y-space-xs hover:border-outline-variant transition-colors">
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-badge font-label-badge uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/30">
+                  CHANCELA HSM ATIVA
+                </span>
+<span class="text-mono-sm font-mono-sm text-on-surface font-semibold">#LIQ-4491</span>
+</div>
+<h3 class="text-body-sm font-body-sm font-medium text-on-surface mt-1">
+                Ordem de Liquidação CVM / Swap Cambial
+              </h3>
+</div>
+<div class="text-right">
+<span class="text-mono-lg font-mono-lg text-secondary font-bold">US$ 2.400.000,00</span>
+<span class="block text-mono-sm font-mono-sm text-on-surface-variant">11:15:44 UTC-3</span>
+</div>
+</div>
+<div class="p-space-xs rounded bg-surface-container-lowest/80 border border-outline-variant/20 space-y-0.5 text-mono-sm font-mono-sm">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Assinatura Digital:</span>
+<span class="text-tertiary font-medium">e-CNPJ Titular (ICP-Brasil A3)</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">HSM FIPS 140-2:</span>
+<span class="text-on-surface">Slot #04 / Luna HSM</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1 text-label-badge font-label-badge text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified_user">verified_user</span>
+              Validado Bacen Circular 3.978
+            </div>
+<span class="text-label-badge font-label-badge uppercase px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/40 text-on-surface">
+              Auditoria Ativa
+            </span>
+</div>
+</article>
+<!-- Item 3: Provisão Regulatória Bacen -->
+<article class="p-space-sm rounded-xl bg-surface-container border border-outline-variant/30 space-y-space-xs hover:border-outline-variant transition-colors">
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-badge font-label-badge uppercase px-1.5 py-0.5 rounded bg-tertiary/10 text-tertiary border border-tertiary/30">
+                  FECHADO COM AUDITORIA WORM
+                </span>
+<span class="text-mono-sm font-mono-sm text-on-surface font-semibold">#PROV-092</span>
+</div>
+<h3 class="text-body-sm font-body-sm font-medium text-on-surface mt-1">
+                Provisão Regulatória Resolução 4.327
+              </h3>
+</div>
+<div class="text-right">
+<span class="text-mono-lg font-mono-lg text-on-surface font-bold">R$ 850.000,00</span>
+<span class="block text-mono-sm font-mono-sm text-on-surface-variant">09:02:11 UTC-3</span>
+</div>
+</div>
+<div class="p-space-xs rounded bg-surface-container-lowest/80 border border-outline-variant/20 space-y-0.5 text-mono-sm font-mono-sm">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Carimbo de Tempo:</span>
+<span class="text-on-surface">TSA Presidência da República</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Integridade WORM:</span>
+<span class="text-tertiary">Rekor Log ID #892.441</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1 text-label-badge font-label-badge text-secondary">
+<span class="material-symbols-outlined text-[14px]" data-icon="policy">policy</span>
+              Auditoria de Risco Socioambiental
+            </div>
+<button class="px-space-xs py-0.5 rounded bg-surface-container-high border border-outline-variant/40 text-on-surface hover:text-primary transition-colors text-mono-sm font-mono-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="visibility">visibility</span>
+              Detalhes
+            </button>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- BottomNavBar: Anchored Shared Component -->
+<!-- Contextual Logic: Active item is 'Evidências' matching destination intent -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs border-t border-outline-variant/30 bg-surface-container-lowest/90 backdrop-blur-md">
+<!-- Item 1: Evidências (ACTIVE) -->
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary bg-primary/10 rounded-lg px-space-sm py-space-xs active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[20px]" data-icon="fingerprint">fingerprint</span>
+<span class="text-mono-sm font-mono-sm mt-0.5 font-medium">Evidências</span>
+</button>
+<!-- Item 2: Perfis (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-space-sm py-space-xs hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[20px]" data-icon="domain">domain</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Perfis</span>
+</button>
+<!-- Item 3: Verificar (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-space-sm py-space-xs hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[20px]" data-icon="verified">verified</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Verificar</span>
+</button>
+<!-- Item 4: Custódia (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-space-sm py-space-xs hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_tree">account_tree</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Custódia</span>
+</button>
+</nav>
+</body></html>

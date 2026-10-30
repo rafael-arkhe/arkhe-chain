@@ -1,0 +1,186 @@
+{
+  "scope": "Local execution only; no remote CI, protocol freeze or production attestation",
+  "context": {},
+  "attempts": [
+    {
+      "gate": "postgres-classified-governance",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "postgres-integration",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:06:47.246852+00:00",
+      "duration_seconds": 41.243,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "bc8d616ef9852aa250d72b723c9d4979e97ac34294a9f7c39d00cc18caa91a92",
+      "source_after_sha256": "5b58d5abbf9ba5b4f4ac2f890bb9bc28eaf399dde7a1eef1f5c32a76ec5f0788",
+      "source_changed_during_execution": true,
+      "log": "01-postgres-classified-governance.log",
+      "log_sha256": "e8f689324173da155396e647d303585582c46497707f44ffe01ba7ebd372852f",
+      "inputs": "01-postgres-classified-governance.inputs.json"
+    },
+    {
+      "gate": "workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:07:51.571729+00:00",
+      "duration_seconds": 55.356,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "519954129194eb273b5e714cf5d9c7410bf6e9a2b22a5427651b4eeacbca1b47",
+      "source_after_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_changed_during_execution": true,
+      "log": "02-workspace.log",
+      "log_sha256": "b16d8ffcfbf68c6da01676ebe4555091728f33a008ec5a1add83b38453898d6b",
+      "inputs": "02-workspace.inputs.json"
+    },
+    {
+      "gate": "legacy-vectors",
+      "command": [
+        "python",
+        "scripts/generate_work_vectors.py",
+        "--check"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:08:47.473189+00:00",
+      "duration_seconds": 0.433,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_after_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_changed_during_execution": false,
+      "log": "03-legacy-vectors.log",
+      "log_sha256": "6f7100f93cdb5c37e294d1bc8c76ea8ba178c5b5c403b45281d597b48c66236b",
+      "inputs": "03-legacy-vectors.inputs.json"
+    },
+    {
+      "gate": "classified-vectors",
+      "command": [
+        "python",
+        "scripts/generate_classification_vectors.py",
+        "--check"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:08:48.411785+00:00",
+      "duration_seconds": 0.391,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_after_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_changed_during_execution": false,
+      "log": "04-classified-vectors.log",
+      "log_sha256": "2bb9ea897ec4baeaf0f9d373ffa2500e58ab821e6acbe2e98703f813c44f3b20",
+      "inputs": "04-classified-vectors.inputs.json"
+    },
+    {
+      "gate": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:08:49.296279+00:00",
+      "duration_seconds": 1.161,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_after_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_changed_during_execution": false,
+      "log": "05-format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "inputs": "05-format.inputs.json"
+    },
+    {
+      "gate": "architecture",
+      "command": [
+        "python",
+        "scripts/check_architecture.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:08:50.962700+00:00",
+      "duration_seconds": 0.693,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_after_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_changed_during_execution": false,
+      "log": "06-architecture.log",
+      "log_sha256": "cffffe005243e0774f9de6698fc248ecdd73eb92d60ad65f8ed342412b9a479d",
+      "inputs": "06-architecture.inputs.json"
+    },
+    {
+      "gate": "final-postgres-governance",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "postgres-integration",
+        "--test",
+        "governance",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:09:33.614581+00:00",
+      "duration_seconds": 10.545,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "53d150aeeb452202cf191e54e0655e633f438757e91801d1258c4e915c2ca12e",
+      "source_after_sha256": "c4f5c2d3789dc3d6d794acf8600b37b09e4cdfbbfbca1d5b8366378c8d865b07",
+      "source_changed_during_execution": true,
+      "log": "07-final-postgres-governance.log",
+      "log_sha256": "3ec298be879a1ffa6bebb63cb74b5f2fee80540578c9fc1524904263c34cb9ee",
+      "inputs": "07-final-postgres-governance.inputs.json"
+    },
+    {
+      "gate": "candidate-files",
+      "command": [
+        "python",
+        "scripts/check_triage_candidates.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:10:14.141321+00:00",
+      "duration_seconds": 0.485,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "c4f5c2d3789dc3d6d794acf8600b37b09e4cdfbbfbca1d5b8366378c8d865b07",
+      "source_after_sha256": "c4f5c2d3789dc3d6d794acf8600b37b09e4cdfbbfbca1d5b8366378c8d865b07",
+      "source_changed_during_execution": false,
+      "log": "08-candidate-files.log",
+      "log_sha256": "de3ab076dda39db2a2c8c97e5af7066d84819e23d891249deefa2b74d7eca2e7",
+      "inputs": "08-candidate-files.inputs.json"
+    },
+    {
+      "gate": "architecture-final",
+      "command": [
+        "python",
+        "scripts/check_architecture.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:10:15.103308+00:00",
+      "duration_seconds": 0.6,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "c4f5c2d3789dc3d6d794acf8600b37b09e4cdfbbfbca1d5b8366378c8d865b07",
+      "source_after_sha256": "c4f5c2d3789dc3d6d794acf8600b37b09e4cdfbbfbca1d5b8366378c8d865b07",
+      "source_changed_during_execution": false,
+      "log": "09-architecture-final.log",
+      "log_sha256": "cffffe005243e0774f9de6698fc248ecdd73eb92d60ad65f8ed342412b9a479d",
+      "inputs": "09-architecture-final.inputs.json"
+    }
+  ]
+}

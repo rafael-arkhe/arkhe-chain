@@ -1,0 +1,909 @@
+
+=== PAGINA 1 ===
+Hashtree: Content-Addressed, Encrypted, Peer-to-Peer
+Storage with Nostr-Anchored Mutable References — An
+ Architectural and Comparative Analysis
+ Rafael Oliveira
+  https://orcid.org/0009-0005-2697-4668
+ Safe Core — Psychology Behavioral Analysis, São Paulo, Brazil
+ Corresponding author: Rafael Oliveira (ORCID: https://orcid.org/0009-0005-2697-4668)
+ 15 September 2026
+ Abstract
+Centralized content delivery networks and cloud object stores concentrate publication, authentication, and
+distribution in a small number of operators, and the global outages of 2021–2025 demonstrated how quickly that
+concentration propagates failure to the application layer. This paper presents an architectural and comparative
+analysis of Hashtree, an MIT-licensed storage system that couples content-addressed Merkle trees with
+content-hash-key (CHK) encryption, Nostr-anchored mutable references of the form npub/tree/path, and
+peer-to-peer distribution over the Federated Interoperable Peering System (FIPS), WebRTC data channels, and
+Blossom blob servers. Using documentary analysis of specifications, package registries, and the reference
+implementation, the study reconstructs the write path, the per-block read-path cascade, and the authorization
+model, and situates Hashtree within the lineage of Freenet/Hyphanet, Venti, Git, IPFS, and BitTorrent v2. The
+analysis suggests that the design delivers meaningful properties — end-to-end verification,
+deduplication-compatible encryption, and self-certifying addressing that requires no DNS, certificate authorities,
+or accounts — while inheriting known limitations of convergent-style encryption, depending on unremunerated
+seeding for availability, and deferring content governance to server operators and social-graph heuristics. The
+demand-scaled distribution claims appear plausible for popular content but not for the long tail. The paper
+contributes a structured comparative matrix, a threat-and-availability assessment, and a research agenda spanning
+measurement, formal transport verification, and privacy-preserving deduplication.
+Keywords: content-addressed storage; Merkle trees; convergent encryption; content hash keys (CHK); Nostr;
+peer-to-peer networks; decentralized content delivery
+
+
+=== PAGINA 2 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 2
+1. Introduction
+ On three occasions in the last fifty-three months, the operational fragility of concentrated
+web infrastructure became visible to non-specialists. On 8 June 2021, a single software defect
+propagated through the configuration service of the content delivery network (CDN) Fastly and
+removed approximately 85% of its traffic, including major news sites, e-commerce platforms, and
+public-sector portals, for much of an hour (Fastly, 2021; ThousandEyes, 2021). On 19 October
+2025, an empty DNS record for the DynamoDB API endpoint in the AWS US-EAST-1 region
+cascaded across dependent services and temporarily disabled large parts of the consumer internet
+(Amazon Web Services, 2025; Pragmatic Engineer, 2025). On 18 November 2025, Cloudflare
+disclosed a global outage that again disrupted dashboards, gateways, and downstream applications
+(Cloudflare, 2025; ThousandEyes, 2025). These incidents did not involve data loss, and in each
+case recovery was measured in minutes to hours; what they exposed instead is a structural property:
+when publication, authentication, and delivery are leased from one vendor, that vendor's worst hour
+becomes everyone's worst hour.
+ The academic and free-software communities have proposed structural alternatives for
+decades: Merkle trees for verifiable content addressing (Merkle, 1987), archival write-once stores
+such as Venti (Quinlan & Dorward, 2002), anonymous storage networks such as Freenet, now
+maintained as Hyphanet (Clarke et al., 2001; Clarke et al., 2002), distributed hash tables such as
+Kademlia (Maymounkov & Mazières, 2002), and generalized content-addressed hypermedia
+systems such as IPFS (Benet, 2014). Nevertheless, the deployment center of gravity for code
+hosting, media distribution, and web publication remains centralized. The reasons are well
+understood and are not purely technical: incumbent platforms bundle naming, discovery, payments,
+moderation, and reliable availability into one contract, and decentralized substitutes have
+historically asked users to sacrifice one or more of those functions.
+ Hashtree is a recent open-source attempt to reassemble that bundle without a central
+operator. The project, published under the MIT license and under active development (1,880
+commits and 72 tags at the time of access, with release 0.2.148 dated 10 September 2026),
+describes itself as content-addressed storage, git transport, and an application runtime on Nostr, in
+which data is chunked, CHK-encrypted by default, and fetchable from Blossom-compatible storage,
+FIPS peers, or a local daemon (Hashtree, 2026b). Merkle roots can be published to Nostr relays to
+obtain mutable npub/tree/path addresses, and a git remote helper allows push and clone over the
+same fabric (Hashtree, 2026a, 2026e). Production usage is reported for video streaming at
+video.iris.to, which the project documents as serving content over Hashtree rather than a
+conventional CDN (Hashtree, 2026a).
+ This paper asks three questions. First, does the architecture cohere: do the merkle data
+model, the CHK encryption layer, the Nostr resolution layer, and the FIPS/Blossom/WebRTC
+transport layer compose into a system whose guarantees are stronger than its parts? Second, what
+does the design cost: which security, privacy, availability, and governance trade-offs are intrinsic to
+the approach, and which are incidental? Third, how does Hashtree compare with the systems from
+which it borrows — and with the centralized fabric it aims to replace? The central thesis is that
+
+
+=== PAGINA 3 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 3
+Hashtree demonstrates a plausible post-CDN design point in which verification is pushed to the
+edges and coordination is pushed to a public-key event protocol, but that its availability story
+remains structurally weaker than its integrity story, and that several claims about encryption and
+gatekeeper-free operation deserve sharper qualification than the project's own documentation
+provides.
+ The contributions are fourfold. C1 is a reconstructed architecture, assembled from the
+reference implementation, the crates.io and npm package documentation, and the project website,
+covering the write path, the read-path cascade, and the authorization model (Section 3). C2 is a
+security and availability analysis that maps the design onto the peer-reviewed literature on
+convergent encryption, deduplication side channels, DHT security, and peer-to-peer performance
+modeling (Section 4). C3 is a structured comparison against IPFS, Hyphanet, BitTorrent v2,
+Radicle, and conventional CDNs (Section 4.4). C4 is a limitations section that takes the project's
+own claims seriously and identifies where they hold and where they do not (Section 5), followed by
+a research agenda (Section 6). The intended audience includes distributed-systems researchers,
+reviewers of decentralized-infrastructure claims, and practitioners evaluating alternatives to
+CDN-dependent delivery.
+2. Background and Related Systems
+2.1 Content-Addressed Storage and Merkle Trees
+ A content-addressed store identifies data by the cryptographic hash of its contents rather
+than by a mutable name, so that any reader can verify integrity by recomputing the identifier and
+any two identical objects collapse to the same address. Merkle introduced the tree-shaped
+generalization in the context of digital signatures: leaves carry hashes of data blocks, interior nodes
+carry hashes of their children, and a single root commits to the entire dataset, enabling membership
+proofs of logarithmic size (Merkle, 1987). Content-addressed storage (CAS) matured in archival
+systems: Venti used the hash of block contents as its write-once identifier across a network storage
+service, demonstrating that deduplication and immutable provenance follow naturally (Quinlan &
+Dorward, 2002). The same discipline underlies modern version control: Git names every object —
+blob, tree, commit — by its cryptographic hash, which makes repository history a Merkle DAG and
+enables safe peer-to-peer exchange of objects (Chacon & Straub, 2014).
+ Two refinements matter for what follows. Content-defined chunking, introduced by LBFS,
+cuts files at content-dependent offsets so that insertions and deletions only reshuffle chunks locally
+rather than invalidating the remainder of a file; Muthitacharoen, Chen, and Mazières (2001) showed
+that Rabin-fingerprint breakpoints reduce transferred bandwidth by an order of magnitude on
+typical edits. Second, BitTorrent v2 replaced flat piece hashes with per-file Merkle trees over
+SHA-256 so that a torrent's integrity metadata scales gracefully with file size and hybrid swarms
+remain verifiable (BEP 52; Bittorrent.org, 2021). IPFS generalized both ideas into a
+transport-independent Merkle DAG with content identifiers (CIDs), positioning CAS as a substrate
+for the web itself (Benet, 2014). Hashtree's data model — chunking, hashing, and tree construction
+— sits squarely in this lineage, and Section 3.1 makes its specific choices explicit.
+
+
+=== PAGINA 4 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 4
+2.2 Encrypting for Deduplication: Convergent Encryption and CHK
+ Encryption and deduplication pull in opposite directions: encryption randomizes plaintexts,
+while deduplication requires identical ciphertexts for identical contents. Convergent encryption
+resolves the tension by deriving the data-encryption key from the plaintext itself, typically as its
+hash, so identical plaintexts yield identical ciphertexts that a server can deduplicate without reading
+them (Douceur, Adya, Bolosky, Simon, & Theimer, 2002). The Freenet storage network
+independently operationalized the same idea as the content hash key (CHK): the key under which a
+chunk is stored is derived from hashing the content, so fetches verify themselves and no naming
+authority is needed (Clarke et al., 2001; Clarke et al., 2002; Hyphanet contributors, 2026). Storer,
+Greenan, Long, and Miller (2008) later systematized secure-deduplication designs for storage
+systems, including the hash-as-key variant.
+ The cost of convergent-style schemes is a well-mapped attack surface. Because the key is a
+deterministic function of content, an adversary who guesses a file's contents can test the guess
+offline; a malicious storage server can additionally run confirmation-of-file attacks, learning
+whether a client owns a target file by observing the deduplication response (Harnik, Pinkas, &
+Shulman-Peleg, 2010). Halevi, Harnik, Pinkas, and Shulman-Peleg (2011) proposed proofs of
+ownership to blunt the client-side-deduplication variant of the attack, and Bellare, Keelveedhi, and
+Ristenpart (2013) formalized message-locked encryption and its limits, including interactive
+constructions that require an online server. These results define the honest threat model for any
+system whose encryption key is the hash of the plaintext, and Section 4.2 applies them to Hashtree's
+CHK layer.
+2.3 Nostr, NIP-34, and Blossom
+ Nostr is a public-key event protocol in which each user holds a keypair, publishes signed
+events of typed kinds, and delegates relay servers for distribution; relays forward but cannot forge,
+since signatures bind events to their authors (NIP-01; Nostr NIPs, 2026). The protocol has become
+a coordination layer for applications that want publisher-held identity without DNS or certificate
+authorities. Two NIPs matter here. NIP-34 defines git collaboration events — repository
+announcements, repository state, patches, pull requests, and issues — so that hosting and review
+can be conducted over relays rather than through a single forge (Nostr NIPs, 2024). Blossom is a
+companion standard: a set of BUD specifications for servers that store and serve blobs addressable
+by their SHA-256 digests, giving Nostr applications a conventional HTTP storage tier without
+conventional account systems (Blossom contributors, 2025). Hashtree's design places Nostr relays
+and Blossom servers at exactly these two coordination points, as Section 3.4 details.
+2.4 The FIPS Peer Transport
+ Beneath Hashtree's storage semantics runs a mesh transport called FIPS. Project design
+documentation expands the name as the Federated Interoperable Peering System and describes a
+self-organizing encrypted mesh that requires no registrars, central authorities, or administratively
+assignable names (FIPS Design Documents, 2026; Sovereign Engineering, 2026). Nodes
+authenticate with Nostr keypairs, discover and relay through neighbors without a privileged
+
+
+=== PAGINA 5 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 5
+coordinator, and are transport-agnostic in the sense that the design contemplates UDP overlays,
+Bluetooth, Tor, or serial links as carriers (Sovereign Engineering, 2026). An independently evolved
+fork powers a mesh-VPN data plane with byte-metered exit nodes, which corroborates the
+transport's existence and maturity for byte-carrying workloads (mmalmi, 2026). Two cautions
+apply. First, the abbreviation collides with the United States Federal Information Processing
+Standards (FIPS 140-3), which certify cryptographic modules — a naming accident that will
+confuse indexing and search but has no technical relationship to the mesh (NIST, 2019). Second,
+specification maturity claims for the mesh rest largely on project documentation; this study treats
+them as claims, not as verified properties.
+2.5 Scope, Sources, and Method
+ The study is a documentary architectural analysis conducted on 15 September 2026.
+Primary sources comprise the project website and its documentation, including the package
+descriptions and data-flow specifications (Hashtree, 2026a), the reference implementation
+repository with its release history (Hashtree, 2026b), the crates.io package page for the CLI and
+daemon, including its configuration and command reference (Hashtree, 2026c), the scoped npm
+packages (Hashtree, 2026d), and the FIPS design documentation (FIPS Design Documents, 2026).
+Secondary sources comprise protocol specifications (Nostr NIPs, 2024, 2026; Blossom
+contributors, 2025) and the peer-reviewed literature cited throughout. No source code was executed,
+no network measurements were performed, and no interviews were conducted; claims about
+runtime behavior are therefore as strong as the documentation behind them, and this limitation is
+revisited in Section 5.6. Where the documentation is silent — the hash construction behind the
+project's nhash primitive and the chunking strategy are the clearest examples — the silence itself is
+reported as a finding rather than papered over with assumptions.
+3. The Hashtree Architecture
+3.1 Data Model: Chunked Merkle Trees and Content Identifiers
+ Hashtree organizes all stored content as chunked Merkle trees. Files and directories are read
+and written in a streaming fashion, chunk by chunk, without whole-file buffering; each chunk is
+encrypted and hashed, and hashes are combined into interior nodes up to a tree root that commits to
+the entire object (Hashtree, 2026a). The project's JavaScript core package, @hashtree/core, exposes
+the content-hash and nhash primitives together with shared types for content-addressed storage,
+which places the identifier algebra at the center of the design rather than in an auxiliary library
+(Hashtree, 2026a, 2026d). The root hash plays the role that Git assigns to commit objects and IPFS
+assigns to CIDs: a self-authenticating name from which the full object can be retrieved and verified
+from any cooperative replica (Chacon & Straub, 2014; Benet, 2014). Figure 1 summarizes the
+resulting layering.
+ Two properties follow directly from the data model and are worth stating before any
+implementation detail. First, verification is local and end-to-end: once a reader holds the root
+identifier, every block received from any peer, server, or cache can be checked against the tree, so
+
+
+=== PAGINA 6 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 6
+no transport is trusted for integrity. Second, addressing is self-certifying and deduplication is
+global: identical chunks found in different repositories, uploaded by different users at different
+times, produce identical identifiers and can collapse to a single stored copy wherever the storage
+tier permits. Both properties are inherited from the CAS lineage rather than invented here; the
+architectural question is how Hashtree combines them with encryption and mutable naming, which
+the next two subsections address.
+3.2 CHK Encryption and Deduplication-Compatible Confidentiality
+ By default, chunks are encrypted with what the project calls CHK encryption: the key is the
+hash of the plaintext, so the same content always produces the same ciphertext and deduplication
+remains possible even on encrypted data (Hashtree, 2026a). This is convergent encryption by
+another name, and the lineage matters: the technique was introduced for encrypted network storage
+(Douceur et al., 2002), shipped at scale in Freenet's CHK keys (Clarke et al., 2002), and has been
+analyzed formally as message-locked encryption (Bellare et al., 2013). The direct benefit is that a
+Blossom server or FIPS peer can store and serve ciphertext blocks, participate in global
+deduplication, and never need to understand either the user's identity or the plaintext. The
+documented visibility modes build on this primitive and are summarized in Table 1: public content
+is readable by anyone with the URL; link-visible content is encrypted and readable only by link
+holders; private content is encrypted to the owner's key only (Hashtree, 2026a).
+ The costs of the primitive are inherited rather than eliminated. A deterministic
+key-derivation function leaks equality: any party who holds a chunk identifier can test whether any
+other party holds the same chunk, and an adversary who can guess plaintext content can derive keys
+and verify guesses offline. Section 4.2 develops the consequences, including the confirmation
+attacks characterized by Harnik et al. (2010) and the mitigations proposed by Halevi et al. (2011)
+and Bellare et al. (2013). For the present analysis it suffices to note that Hashtree's documentation
+presents CHK as confidentiality by default without engaging the known side-channel literature, and
+that the gap between those two framings is where an evaluator's attention belongs.
+3.3 Mutable References: npub/path Addresses and Nostr-Published Roots
+ Immutable trees need a mutable naming layer, and Hashtree obtains it from Nostr rather
+than from a naming service. A stable permalink takes the form npub/tree/path, where npub is the
+bech32 encoding of a Nostr public key; the latest Merkle root for a tree is published to relays as a
+signed event, and resolution means querying relays for the current root of a given npub and path
+(Hashtree, 2026a). Because roots are signed events, the mutable layer inherits Nostr's trust model:
+relays can lose, delay, or refuse events, but cannot forge a root, and clients can consult multiple
+relays and verify signatures locally (Nostr NIPs, 2026). The project's nostr package provides root
+resolution and signed tree-snapshot helpers, indicating that snapshot freshness and authenticity are
+handled as first-class concerns in the client library (Hashtree, 2026a, 2026d).
+ The design choice is best understood against the alternatives. IPFS uses IPNS records or
+DNSLink for mutable names, both of which reintroduce infrastructure whose failure modes differ
+from the data plane (Benet, 2014); conventional web publishing leans on DNS registrars and
+
+
+=== PAGINA 7 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 7
+certificate authorities, the exact dependency set that Hashtree eliminates (FIPS Design Documents,
+2026; Sovereign Engineering, 2026). Nostr-published roots have their own failure mode — relay
+liveness becomes a freshness dependency — but the dependency is plural (many relays), verifiable
+(signatures), and separable from data availability, since a stale root yields old-but-valid content
+rather than no content. A further affordance is portability of administration: the FUSE mount
+interface exposes any npub/tree as a local filesystem path, so the mutable-reference layer doubles as
+a sync fabric for ordinary applications (Hashtree, 2026c).
+3.4 Transports and Placement: FIPS, WebRTC, Blossom, and the Local Daemon
+ Distribution is multi-transport by design. The Rust daemon and CLI (hashtree-cli) maintain
+an LMDB-backed local store, optional FUSE mounts, pins, and an adaptive blob router; peers can
+be declared statically in configuration as FIPS origin/cache peers with npub identities and UDP
+addresses; Nostr relays are likewise configurable (Hashtree, 2026c). Blob transfer over the mesh
+uses verified request/response frames over FIPS, and the documentation is explicit about two
+boundaries: a share link names the remote provider with a hops-to-live parameter of ten, in the
+manner of Hyphanet's request routing, and merely connecting a WebRTC peer never makes it a
+blob source — FIPS owns path discovery and authentication (Hashtree, 2026a). Blossom servers
+form the conventional HTTP tier of the same fabric; the default configuration ships with cdn.iris.to
+as a read server and upload.iris.to as a write server, with optional write-behind replication targets
+and a bounded replication queue (Hashtree, 2026c).
+ The authorization model is unusual and merits attention. The daemon maintains a local
+social-graph store, crawls follow lists (kind-3 events) from relays at startup, and uses follow
+distance to control write access to the operator's Blossom server, replacing manual allow-lists with
+a social distance threshold; a companion API exposes the computed distance per public key
+(Hashtree, 2026c). New identities also seed a bootstrap follow of the project's release-signing
+identity so that the graph begins with a usable entrypoint (Hashtree, 2026c). The design is elegant in
+that admission control follows the same keypair identity that already secures the data plane, but it
+converts a governance problem into a graph-shape problem, and Section 4.2 examines the Sybil
+exposure that follows. Payment rails appear at the edges: a Cashu wallet helper ships alongside the
+CLI, and the companion mesh-VPN project demonstrates byte-metered exit nodes paid in Bitcoin
+through Cashu, suggesting an emerging micro-payment economy for transport services in this
+ecosystem (Hashtree, 2026c; mmalmi, 2026).
+3.5 The Client Data Plane: Write Path, Read-Path Cascade, and Media Streaming
+ The browser data plane is documented as a strict cascade. On the write path, uploads are
+stream-read and stream-written chunk by chunk; encrypted chunks are persisted to local IndexedDB
+first, the nhash is returned immediately, and upload to configured Blossom write servers proceeds
+in the background. On the read path, each needed block is looked up first in the IndexedDB cache;
+on a miss, from Blossom read servers; and only then from the provider named by the share link,
+with remote hits cached back to IndexedDB (Hashtree, 2026a). Media streaming is handled by a
+service worker that intercepts /htree// requests and forwards them to the worker, which serves
+
+
+=== PAGINA 8 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 8
+HEAD and byte-range requests so that video elements can seek using partial responses under the
+HTTP range mechanism (Hashtree, 2026a; IETF, 2022). The cascade is a deliberate availability
+hierarchy: local persistence absorbs latency and offline use, serverless peering absorbs popularity,
+and the named provider backstop guarantees liveness for cold blocks. Figure 2 renders the cascade;
+Table 2 inventories the component surface across registries.
+ The CLI mirrors the same structure for non-browser use. htree add ingests a file or
+directory (CHK-encrypted by default, with an explicit unencrypted escape hatch), htree push places
+content on configured Blossom servers, htree get and htree cat retrieve by hash, pin management
+controls local retention, htree start --daemon joins the peer network, and htree mount exposes a tree
+through FUSE; publishing binds a tree to an npub/path address via htree publish (Hashtree, 2026c).
+Identity is local and self-generated: an auto-created Nostr keypair lives in the configuration
+directory, and the htree user command reports the resulting npub (Hashtree, 2026b, 2026c). No
+account, DNS name, or certificate appears anywhere in the lifecycle, which is the concrete meaning
+of the project's no-gatekeepers claim at the client level (Hashtree, 2026a).
+3.6 Git Without GitHub
+ The most tangible application of the fabric is code hosting. A remote helper
+(git-remote-htree) implements the gitremote-helpers interface so that standard git push and git clone
+operate against htree:// URLs: htree://self/name resolves the local identity, while
+htree://npub.../name resolves any third party's published tree, making a repository cloneable from
+its author's key alone (Hashtree, 2026a, 2026e; Git contributors, 2026). Pull requests and review
+ride on NIP-34, which encodes repositories, patches, pull requests, and issues as signed Nostr
+events, and the project operates a web application at git.iris.to for that workflow (Nostr NIPs, 2024;
+Hashtree, 2026a). The release channel is self-hosted on the same fabric: the installer for the CLI is
+distributed through an npub-addressed release path, an instance of the system bootstrapping itself
+(Hashtree, 2026a).
+ Radicle is the closest prior art and the comparison is instructive. Radicle replicates git
+repositories across peer nodes with gossip and seed nodes, using decentralized identities for nodes
+and repositories, and deliberately leaves review to clients (Radicle contributors, 2026; LWN.net,
+2024). Hashtree instead grafts hosting onto a general-purpose storage fabric whose
+mutable-reference and blob-transfer layers it shares with media delivery and application runtime;
+git support is one consumer of the CAS rather than the system's reason to exist. The architectural
+bet differs accordingly: Radicle optimizes for code-collaboration semantics, while Hashtree
+optimizes for a uniform verified-storage substrate, and the web of trust used for write authorization
+in Hashtree has no direct counterpart in Radicle's node model. Whether the bet pays off is an
+empirical question that Section 4.3 frames in terms of availability economics.
+
+
+=== PAGINA 9 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 9
+COORDINATION PLANE — NOSTR
+npub / nsec
+keypairs
+Relays
+(NIP-01)
+NIP-34 repos,
+patches, PRs
+Signed root
+events
+DATA PLANE — CONTENT ADDRESSING
+Stream
+chunker
+CHK encryption
+key = hash(plaintext)
+Merkle tree
+(nhash nodes)
+Tree root
+(self-certifying name)
+STORAGE AND TRANSPORT PLANE
+Local daemon
+(LMDB store, pins)
+Browser:
+IndexedDB + service worker
+Blossom servers
+(SHA-256 blob store)
+FIPS peers
+(Federated Interoperable
+Peering System) + WebRTC
+DELIVERY SURFACES
+CLI + git
+remote helper
+FUSE mount
+npub/tree as path
+Web apps
+(video streaming, git.iris.to)
+publish latest root
+(signed event)
+resolve npub/path
+serve verified blocks
+(check vs root)
+fetch blocks / upload
+Integrity: every block verifiable against the tree root at the client (CAS lineage).
+ Figure 1. Layered view of the Hashtree architecture reconstructed from the project documentation: a coordination plane on
+Nostr, a content-addressed data plane with CHK encryption, a storage-and-transport plane spanning local daemons, browser
+ storage, Blossom servers and FIPS peers, and delivery surfaces for CLI, git, FUSE and web applications (Hashtree, 2026a,
+ 2026b, 2026c).
+ Table 1. Documented visibility modes and their access semantics (Hashtree, 2026a).
+ Mode
+ URL form
+ Access semantics
+ Confidentiality basis
+Public
+htree://self/myrepo
+Readable by anyone holding the address;
+suitable for distribution
+CHK still applies; content
+verifiable by hash
+Link-visible
+htree://self/myrepo#link-visible
+Encrypted; readable only by holders of
+the link fragment (bearer capability)
+Key material bound to the link;
+no revocation documented
+Private
+htree://self/myrepo#private
+Encrypted to the owner; not intended for
+sharing
+Owner-key encryption; no
+cross-user read
+
+
+=== PAGINA 10 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 10
+1. Local IndexedDB cache
+(browser worker)
+2. Blossom read servers
+(e.g. cdn.iris.to)
+3. Provider named by the share link
+FIPS verified frames, hops-to-live 10
+On hit: verify nhash against
+the tree root
+then: cache to IndexedDB
+or: cache and serve
+or: verify, cache, serve
+miss
+miss
+hit
+hit
+hit
+Boundary: merely connecting a WebRTC peer never makes it a blob source — FIPS owns path discovery and authentication
+(Hashtree, 2026a; RFC 8831 data channels carry transport, not trust).
+ Figure 2. Per-block read-path cascade as documented: IndexedDB cache, then Blossom read servers, then the provider
+named by the share link over FIPS with hops-to-live 10; every hit is hash-verified and cached back (Hashtree, 2026a).
+ Table 2. Component surface of the Hashtree ecosystem as documented in the project materials (Hashtree, 2026a, 2026b,
+ 2026c, 2026d, 2026e).
+ Component
+ Channel
+ Documented responsibility
+hashtree-cli / daemon
+crates.io (Rust)
+Content-addressed store, adaptive blob routing, pins, FIPS peers, FUSE mounts,
+social-graph write authorization, Cashu helper
+git-remote-htree
+crates.io (Rust)
+gitremote-helpers adapter: push/pull/clone over htree:// URLs
+@hashtree/core
+npm
+Content-hash and nhash primitives; shared content-addressed-storage types
+@hashtree/worker
+npm
+IndexedDB persistence, Blossom transport, connectivity stats, service-worker media
+streaming
+@hashtree/fips-transport
+npm
+Verified block transfer over authenticated FIPS endpoints
+@hashtree/nostr
+npm
+Nostr root resolution and signed tree-snapshot helpers
+4. System Analysis
+4.1 Trust and Verification Model
+ Hashtree's security argument begins from the CAS property: content is named by hashes, so
+every byte received over any transport — local daemon, FIPS peer, WebRTC peer, Blossom server,
+or browser cache — can be verified against the tree root before use (Hashtree, 2026a). Integrity
+therefore does not depend on the honesty of any intermediary, only on the preimage resistance of
+the hash construction and on the correctness of the client's verification logic. Authenticated naming
+likewise reduces to key custody: an npub/tree/path address resolves through signed Nostr events, so
+the authority to update a name is exactly the authority of the corresponding private key, and relay
+
+
+=== PAGINA 11 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 11
+misbehavior can affect freshness but not authenticity (Nostr NIPs, 2026; Hashtree, 2026a). In the
+vocabulary of self-certifying identifiers, Hashtree sits with Git, Venti, and IPFS on one side of the
+ledger, and with DNS- and CA-mediated publishing on the other (Benet, 2014; Chacon & Straub,
+2014).
+ The trust reduction is real but bounded, and three residuals deserve explicit statement. First,
+verification presposes possession of the correct root, which typically arrives through a link, a relay
+query, or out-of-band communication; an attacker who controls the channel through which the root
+is first communicated can mount a substitution attack until the user cross-checks the root
+fingerprint. Second, verification logic is implemented in clients across at least two runtimes (Rust
+daemon and browser worker), and implementation divergence is a classic source of verification
+gaps, as the web-PKI literature has repeatedly shown. Third, hash-function agility is unstated in the
+documentation reviewed; a system whose addresses are hashes must plan for hash-break and
+upgrade events the way BitTorrent v2 fixed SHA-256 at the outset (Bittorrent.org, 2021). None of
+these residuals is unique to Hashtree, but all three belong in any deployment threat model.
+4.2 Security Analysis
+ The CHK layer inherits the convergent-encryption attack surface. Deterministic key
+derivation means chunk equality is public: any observer of an identifier can confirm possession of
+the corresponding content elsewhere, and any party who can guess high-entropy-deficient content
+— a well-known installer image, a popular license file, a leaked document — can derive the key
+offline and test the guess directly (Douceur et al., 2002). Against storage operators, the
+confirmation attacks of Harnik et al. (2010) apply nearly verbatim: a curious Blossom server can
+time deduplication responses to learn whether a client already holds a target file, and the read-path
+cascade's cache-first design adds a browser-side timing oracle for link-holders probing visitor state.
+The published mitigations — proofs of ownership (Halevi et al., 2011), interactive message-locked
+encryption (Bellare et al., 2013), or simply disabling cross-user deduplication for sensitive classes
+(Harnik et al., 2010) — are absent from the documentation reviewed, which treats CHK as a
+confidentiality feature. A charitable reading is that Hashtree targets the Freenet threat model, in
+which CHK protects availability and naming rather than per-file privacy against global adversaries;
+the documentation should say so.
+ Capability URLs are the second exposure. Link-visible content is readable by anyone who
+holds the link, a bearer-capacity model that is convenient and matches the casual sharing behavior
+of the web, but which converts every referrer header, server log, chat archive, and browser history
+entry into a potential access-control failure (Hashtree, 2026a). The fragment-based visibility
+distinction mitigates accidental indexing — content behind a fragment is not fetchable without the
+fragment — yet links leak in practice, and there is no documented revocation mechanism short of
+re-uploading content to new keys. Third, relay dependence reappears as a liveness and freshness
+attack surface: relays can selectively withhold root announcements to serve stale trees, and although
+signatures prevent forgery, nothing in the model obliges relays to serve the latest root. The
+documented mitigations — multiple relays, signed snapshots, client-side signature verification —
+reduce the attack to partitioning, which is the best any relay-based design can do without a stronger
+
+
+=== PAGINA 12 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 12
+gossip substrate (Nostr NIPs, 2026).
+ The social-graph write authorization introduces a Sybil dimension. Follow distance is
+computed from kind-3 contact lists, which any key can fabricate at will: an adversary who creates a
+cluster of mutually-following keys can insert itself at an arbitrary graph distance from a target
+operator, because trust here is attested by edges rather than by scarce resources or verified identity
+(Hashtree, 2026c). The classic DHT security literature makes the general point — id-based
+admission without a sybil-resistant resource invites identity inflation (Sit & Morris, 2002) — and
+the bootstrap follow shipped by default slightly concentrates initial trust in the project's own
+identity, a soft centralization worth flagging (Hashtree, 2026c). Finally, operational maturity signals
+are encouraging but early: the 0.2.148 release notes describe mesh retry and rekey corrections
+(Hashtree, 2026b), which suggests active hardening of exactly the key-rotation and recovery paths
+that matter most when accounts are keypairs and there is no customer support desk to reset them.
+4.3 Availability and the Economics of Demand-Scaled Distribution
+ The project's distribution thesis is that a decentralized CDN gets stronger with demand:
+delivery continues over peers and alternate routes during centralized outages, costs do not grow
+linearly with popularity, and each successful fetch can add another source for subsequent viewers
+(Hashtree, 2026a). The mechanisms reviewed in Section 3 support a qualified version of each
+claim. Peer-to-peer swarms do convert popularity into replica count, and fluid models of
+BitTorrent-like systems established long ago that service capacity grows with the seeding
+population under reciprocity (Qiu & Srikant, 2004), with measurement studies confirming both the
+availability benefits and the flash-crowd dynamics (Guo, Chen, Xiao, & Zhang, 2005). Figure 3
+renders the underlying analytical intuition: availability rises steeply with the number of reachable
+seeders, while publisher cost under seeded distribution grows sub-linearly with demand, in contrast
+with the linear egress economics of a conventional CDN.
+Figure 3. Illustrative availability and cost models (analytical, not measurement). (a) Probability that at least one of k seeders
+is reachable, for per-seeder uptime p in {0.25, 0.35, 0.50}. (b) Normalized publisher cost versus demand: linear egress for a
+ conventional CDN versus a saturating seeded-distribution model.
+ The qualification is the long tail. The availability function in Figure 3a is a statement about
+populations: for content with a handful of seeders, the probability that at least one is online is low,
+
+
+=== PAGINA 13 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 13
+and churn makes it lower at night and across time zones — precisely the regime in which most
+content lives (Qiu & Srikant, 2004; Guo et al., 2005). Hashtree's cascade mitigates the cold-tail
+problem with the named-provider backstop and Blossom servers, but that backstop is, in the
+common case, a small set of project-operated servers (cdn.iris.to, upload.iris.to), which reintroduces
+a partial centralization at the availability layer even while the integrity layer remains decentralized
+(Hashtree, 2026c). The IPFS ecosystem displays the same equilibrium: gateway operators and
+pinning services exist because pure peer-to-peer retrieval is uneven, and operational guidance
+recommends pinning to multiple nodes for reliability (IPFS Docs, 2026). The honest summary is
+that Hashtree buys outage-independence and cost decoupling for popular content while re-assuming
+cold-tail risk that a paid CDN does not have.
+ Incentives are the missing institution. BitTorrent's tit-for-tat made reciprocity local and
+self-enforcing (Cohen, 2003); Hashtree's seeding is documented as voluntary — the daemon
+participates when started, pins retain content, and the social graph gates who may upload, but no
+economic mechanism rewards byte-serving (Hashtree, 2026c). The ecosystem's own experiments
+point in the direction the literature predicts: the companion VPN ships byte-metered exits paid in
+Bitcoin over Cashu, and the CLI includes a Cashu wallet helper, suggesting that
+micropayment-denominated transport is anticipated if not yet wired into storage placement
+(mmalmi, 2026; Hashtree, 2026c). Production evidence is correspondingly early: the cited
+deployment is a video application within the same ecosystem (Hashtree, 2026a), and the
+repository's engagement metrics — eleven stars and two forks at the time of access — place the
+project in a pre-network-effect stage where its availability claims are prospective rather than
+demonstrated at scale (Hashtree, 2026b).
+4.4 Comparative Evaluation
+ Table 3 positions Hashtree against the systems it descends from and the incumbent it
+challenges. Three observations follow from the table. First, Hashtree is the only entry that combines
+default encryption with cross-user deduplication and gatekeeper-free naming in a single fabric;
+IPFS achieves the CAS and naming properties but leaves encryption to applications, Hyphanet
+achieves encryption and anonymity but has never been positioned as an application runtime, and
+BitTorrent v2 remains a distribution protocol rather than a storage system (Benet, 2014; Clarke et
+al., 2002; Bittorrent.org, 2021). Second, every decentralized entry pays for coordination
+somewhere: IPNS records, Hyphanet's routing overhead, Radicle's seed nodes, Hashtree's relays
+and project-operated Blossom defaults — the differences are about which dependency is cheapest
+to tolerate, not about whether one exists. Third, the conventional CDN remains unmatched on
+worst-case latency and on contractual availability guarantees; the 2021–2025 incidents argue for
+complementarity rather than replacement, which is exactly the hybrid posture Hashtree's cascade
+implements.
+
+
+=== PAGINA 14 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 14
+ Table 3. Comparative positioning of Hashtree against adjacent systems. Entries summarize documented designs and the
+ cited literature.
+ System
+ Data model
+Default encryption
+ Mutable naming
+ Discovery and
+ transport
+ Coordination and
+ incentives
+Hashtree (2026)
+Chunked Merkle trees
+(nhash identifiers)
+CHK (key = hash of
+plaintext) by default
+npub/tree/path via
+signed Nostr root
+events
+FIPS mesh, WebRTC,
+Blossom servers, local
+daemon
+Social-graph write
+admission; voluntary
+seeding; Cashu rails
+emerging
+IPFS (2014–)
+Merkle DAG with
+CIDs
+None by default
+(application layer)
+IPNS records;
+DNSLink
+libp2p DHT
+(Kademlia-based);
+HTTP gateways
+Pinning markets;
+Filecoin incentives
+optional
+Hyphanet /
+Freenet (2000–)
+CHK/SSK keyed
+chunks
+Encryption and
+anonymity by default
+Signed subspace keys
+(SSK)
+Friend-to-friend/openne
+t routing with
+hops-to-live
+Volunteer nodes; no
+direct incentives
+BitTorrent v2
+(2021–)
+Per-file Merkle trees
+(SHA-256)
+None by default
+Magnet links plus
+trackers/DHT
+Peer swarms; DHT
+(Kademlia variant)
+Tit-for-tat reciprocity;
+large installed base
+Radicle (2019–)
+Git objects with gossip
+None at storage layer
+(repo-level identity)
+Node and repository
+DIDs
+Gossip between peers
+and seed nodes
+Voluntary seeds;
+funding experiments
+Conventional
+CDN
+Origin plus cache
+hierarchy
+TLS in transit;
+origin-controlled
+DNS plus certificate
+authorities
+Vendor edge networks
+and peering
+Commercial contracts;
+SLAs; single-vendor
+risk
+5. Counterarguments and Limitations
+5.1 Privacy Limits of Hash-Keyed Encryption
+ A defender of the design might argue that convergent encryption's weaknesses are
+theoretical for this threat model, since link-visible and private content is not advertised and the
+mesh has no global view. The counterargument is that equality leakage is not an exotic capability
+but a property of the public identifiers themselves: chunk hashes appear in share links, relay events,
+and any network observation, so possession correlation is available to anyone with passive visibility
+of the fabric (Douceur et al., 2002; Harnik et al., 2010). For high-entropy content the practical risk
+is negligible; for low-entropy content — contact lists, configuration files, short documents —
+offline guessing is straightforward. The literature's mitigations exist but cost either server
+interaction or deduplication (Halevi et al., 2011; Bellare et al., 2013), and adopting them is a design
+decision Hashtree has not documented; until then, the correct guidance is that CHK protects against
+passive storage parties, not against adversaries who can guess or observe.
+5.2 No Gatekeepers, Examined
+ The no-gatekeepers claim is accurate at the level of accounts, DNS, and certificates: the
+lifecycle from keypair generation to publication requires none of them (Hashtree, 2026a). It
+weakens at three other levels. Relay operators are gatekeepers of freshness, since they choose which
+roots to serve; Blossom operators are gatekeepers of admission and jurisdiction, since they decide
+whose bytes their servers accept and under which legal regime they operate; and the bootstrap
+follow plus default read/write servers concentrate initial trust in project-operated infrastructure
+(Hashtree, 2026c; Blossom contributors, 2025). None of this restores the credential gatekeeping of
+the incumbent web, and pluralism — many relays, many servers — is a structural mitigation the
+protocol permits. The fair conclusion is narrower than the slogan: Hashtree replaces identifiable,
+
+
+=== PAGINA 15 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 15
+accountable gatekeepers with unaccountable, plural, and mostly voluntary ones, which is a different
+and not obviously worse failure surface, but not an empty one.
+5.3 Availability Caveats and the Incentive Vacuum
+ The demand-scaled CDN claim, as Section 4.3 argued, holds for content with active
+seeding populations and fails asymptotically for cold content; the named-provider backstop
+resolves liveness but reintroduces exactly the single-operator risk profile the project criticizes, at
+smaller scale (Hashtree, 2026a, 2026c). A sympathetic reader might respond that early deployments
+are seed-funded by enthusiasm, as BitTorrent's were, and that economic layers can be added later
+(Cohen, 2003; mmalmi, 2026). The counterargument is asymmetry of expectations: a CDN
+advertises worst-case performance under contract, while a swarm's worst case is unbounded in the
+tail, and applications that assume swarm-average behavior will observe it as flakiness precisely on
+the rare-but-critical requests that define user trust. Measurement is the deciding instrument, and
+none is yet public; until swarm-level retrieval distributions for Hashtree content are published, its
+availability thesis should be treated as a hypothesis with a plausible mechanism rather than a
+demonstrated property.
+5.4 Client-Side and Platform Constraints
+ The browser data plane inherits the platform's storage semantics. IndexedDB persistence is
+subject to storage pressure and eviction policies, service workers are terminated under memory
+pressure and lifecycle rules, and neither mechanism offers the durable guarantees of the daemon's
+LMDB store; the documented cache-first design is therefore strongest on the desktop and weakest
+on mobile browsers, where eviction is aggressive and background networking is throttled
+(Hashtree, 2026a). The FUSE mount and daemon path avoid these constraints but require
+installation, which re-raises distribution questions that the browser path was designed to avoid
+(Hashtree, 2026c). These are constraints of the environment rather than defects of the design, and
+the project's dual-plane architecture is a reasonable response; the residual risk is behavioral
+divergence between the two planes, which multiplies the verification-implementation surface noted
+in Section 4.1.
+5.5 Governance, Content Policy, and Regulation
+ Removing gatekeepers does not remove liability. Blossom server operators, relay operators,
+and application publishers each occupy positions that domestic law already regulates for hosting
+and intermediary services; the European Union's Digital Services Act, for instance, imposes
+notice-and-action and transparency obligations on hosting services irrespective of their storage
+architecture (European Union, 2022). CHK encryption complicates, but does not dissolve, these
+duties: operators of ciphertext stores hold less knowledge than conventional hosts, which may
+reduce certain liabilities while attracting the attention that encryption-by-default storage always
+attracts. The project's social-graph admission control is also a governance choice with political
+consequences — web-of-trust admission historically reproduces the biases of the seed community,
+and the default bootstrap follow hard-codes one community's entry point (Hashtree, 2026c). None
+of these observations is disqualifying; all of them belong in an honest roadmap.
+
+
+=== PAGINA 16 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 16
+5.6 Methodological Limitations of This Study
+ The analysis has boundaries that readers should weigh. It is documentary: the project
+website's data-flow descriptions were reviewed as published, the repository and registry pages as
+indexed on 15 September 2026, and no binary was executed, no protocol exchange observed, and
+no performance measurement attempted; runtime claims — including streaming behavior, daemon
+routing, and mesh transport properties — are therefore documentation-conditional. The
+documentation itself is incomplete on security-relevant specifics: the nhash construction, chunking
+parameters, chunk sizes, and cipher details are not stated in the materials reviewed, which limits
+both this analysis and third-party audit generally. Production evidence for CDN independence is a
+single in-ecosystem deployment (Hashtree, 2026a). Finally, the project is young and moving
+quickly — 1,880 commits with release 0.2.148 in September 2026 — so specific implementation
+details cited here may age faster than the architectural analysis, which is anchored in properties that
+the CAS, CHK, and Nostr substrates guarantee independently of release numbers.
+6. Conclusion and Implications
+ Hashtree is best read as a synthesis experiment: take the verification discipline of
+content-addressed storage, the deduplication-compatible confidentiality of CHK encryption, the
+publisher-held identity of Nostr, and the transport pluralism of FIPS, WebRTC, and Blossom, and
+ask whether the composition holds together as a general storage and delivery fabric. On the
+evidence reviewed, the composition holds. The data model guarantees end-to-end verification that
+no intermediary can subvert; the naming layer inherits authentication from signatures and freshness
+pluralism from relays; the cascade gives applications a graceful degradation path from local cache
+to swarm to named provider; and the git surface demonstrates that the fabric can carry one of the
+web's most demanding workloads without a forge. The costs are equally clear: convergent
+encryption's side channels are inherited and unmitigated as documented; availability for cold
+content depends on backstops that partially recentralize; seeding is unpaid; and governance
+questions are displaced into graph shape and operator jurisdiction rather than resolved.
+ Four research directions follow. First, measurement: public retrieval-latency and
+availability distributions for real workloads, particularly the long tail, would convert the
+demand-scaled-CDN hypothesis into an evidence-based claim; the IPFS experience shows both the
+feasibility and the value of such studies (IPFS Docs, 2026). Second, privacy engineering:
+integrating proofs of ownership or message-locked encryption with explicit deduplication policy
+would let the system make differentiated promises for public, link-visible, and private content
+(Halevi et al., 2011; Bellare et al., 2013). Third, formal transport verification: the FIPS mesh is the
+least-specified layer with the largest trust surface, and machine-checked session-type or symbolic
+models of its authenticated frames would be a disproportionate contribution for their cost. Fourth,
+incentive design: the ecosystem's Cashu experiments suggest a path from voluntary seeding to
+metered reciprocity, and the open question is whether such a layer can be added without recreating
+the concentrated markets that peer-to-peer systems exist to avoid (mmalmi, 2026).
+
+
+=== PAGINA 17 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 17
+ The broader implication concerns autonomous agents. Systems that verify content by hash,
+name resources by public key, and pay for transport at the margin are precisely the infrastructure
+that machine-scale traffic requires, because agents cannot hold accounts everywhere but can hold
+keypairs, and cannot read terms of service at every hop but can verify every byte (Hashtree, 2026a;
+Nostr NIPs, 2026). If the measurement and incentive questions are answered well, fabrics of this
+kind are plausible default substrates for agentic publication and exchange; if they are answered
+poorly, Hashtree will remain what it is today — a technically coherent, honestly licensed,
+early-stage demonstration that the post-CDN design space is larger than the incidents of 2021–2025
+made it look. Either outcome is informative, and the project has already earned the second-order
+contribution of making the trade-offs explicit enough to argue about.
+References
+Amazon Web Services (2025). Summary of the Amazon DynamoDB service disruption in the Northern Virginia
+ (US-EAST-1) region, October 19, 2025. AWS Post-Event Summaries. https://aws.amazon.com/ (accessed 15
+September 2026).
+Bellare, M., Keelveedhi, S., & Ristenpart, T. (2013). Message-locked encryption and secure deduplication. In
+ Advances in Cryptology — EUROCRYPT 2013 (LNCS 7881, pp. 296–312). Springer.
+https://eprint.iacr.org/2012/631
+Benet, J. (2014). IPFS — content addressed, versioned, P2P file system. arXiv:1407.3561.
+ https://arxiv.org/abs/1407.3561
+Bittorrent.org (2021). BEP 52: BitTorrent v2 merkle torrent protocol. https://www.bittorrent.org/beps/bep_0052.html
+ (accessed 15 September 2026).
+Blossom contributors (2025). Blossom: BUD specifications for Nostr file storage.
+ https://github.com/hzrd149/blossom-server (accessed 15 September 2026).
+Chacon, S., & Straub, B. (2014). Pro Git (2nd ed.). Apress. https://git-scm.com/book/en/v2
+ 
+Clarke, I., Sandberg, O., Wiley, B., & Hong, T. W. (2001). Freenet: A distributed anonymous information storage and
+ retrieval system. In Designing Privacy Enhancing Technologies (LNCS 2009, pp. 46–66). Springer.
+https://freenet.org/
+Clarke, I., Sandberg, O., Wiley, B., & Hong, T. W. (2002). Protecting free expression online with Freenet. IEEE
+ Internet Computing, 6(1), 40–49. https://www.hyphanet.org/
+Cloudflare (2025). Cloudflare outage on November 18, 2025. Cloudflare Blog. https://blog.cloudflare.com/ (accessed
+ 15 September 2026).
+Cohen, B. (2003). Incentives build robustness in BitTorrent. In Proceedings of the 1st Workshop on Economics of
+ Peer-to-Peer Systems, Berkeley, CA.
+Douceur, J. R., Adya, A., Bolosky, W. J., Simon, D., & Theimer, M. (2002). Reconciling efficient encrypted storage
+ with deduplication (Technical Report MSR-TR-2002-60). Microsoft Research.
+European Union (2022). Regulation (EU) 2022/2065 on a Single Market for Digital Services (Digital Services Act).
+ Official Journal of the European Union, L 277. https://eur-lex.europa.eu/eli/reg/2022/2065/oj
+Fastly (2021). Summary of June 8 outage. Fastly Blog. https://www.fastly.com/blog/summary-of-june-8-outage
+ (accessed 15 September 2026).
+FIPS Design Documents (2026). Protocol design specifications for the Federated Interoperable Peering System — a
+ self-organizing encrypted mesh network. https://15.235.3.231/fips/docs/design/README.md (accessed 15
+September 2026).
+
+
+=== PAGINA 18 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 18
+Git contributors (2026). gitremote-helpers — Git documentation. https://git-scm.com/docs/gitremote-helpers (accessed
+ 15 September 2026).
+Guo, L., Chen, S., Xiao, Z., & Zhang, X. (2005). Measurements, analysis, and modeling of BitTorrent-like systems. In
+ Proceedings of the Internet Measurement Conference 2005 (IMC '05). ACM.
+Halevi, S., Harnik, D., Pinkas, B., & Shulman-Peleg, A. (2011). Proofs of ownership in remote storage systems. In
+ Proceedings of the 18th ACM Conference on Computer and Communications Security (CCS '11, pp. 187–200).
+ACM. https://eprint.iacr.org/2011/207
+Harnik, D., Pinkas, B., & Shulman-Peleg, A. (2010). Side channels in cloud services: Deduplication in cloud storage.
+ IEEE Security and Privacy, 8(6), 40–47. https://www.pinkas.net/
+Hashtree (2026a). Hashtree documentation: content-addressed storage, CHK encryption, mutable references,
+ peer-to-peer distribution, and decentralized CDN. https://hashtree.cc (accessed 15 September 2026).
+Hashtree (2026b). mmalmi/hashtree: Content-addressed storage, git transport, and app runtime on Nostr. GitHub
+ repository and release notes (v0.2.148, September 2026). https://github.com/mmalmi/hashtree (accessed 15
+September 2026).
+Hashtree (2026c). hashtree-cli: Hashtree daemon and CLI with content-addressed storage and adaptive blob routing
+ (v0.2.150). crates.io. https://crates.io/crates/hashtree-cli (accessed 15 September 2026).
+Hashtree (2026d). @hashtree/nostr: Nostr root resolution and signed tree snapshot helpers. npm.
+ https://www.npmjs.com/package/@hashtree/nostr (accessed 15 September 2026).
+Hashtree (2026e). git-remote-htree: Git remote helper for htree:// remotes. crates.io.
+ https://crates.io/crates/git-remote-htree (accessed 15 September 2026).
+Hyphanet contributors (2026). Hyphanet (formerly Freenet): CHK and SSK keys, hops-to-live routing.
+ https://en.wikipedia.org/wiki/Hyphanet and https://www.hyphanet.org/ (accessed 15 September 2026).
+IETF (2022). RFC 9110: HTTP semantics (Section 14, Range Requests). https://www.rfc-editor.org/rfc/rfc9110
+ 
+IETF (2021). RFC 8831: WebRTC data channels. https://www.rfc-editor.org/rfc/rfc8831
+ 
+IPFS Docs (2026). Best practices for HTTP gateways. https://docs.ipfs.tech/ (accessed 15 September 2026).
+ 
+LWN.net (2024). Radicle: Peer-to-peer collaboration with Git. https://lwn.net/ (accessed 15 September 2026).
+ 
+Maymounkov, P., & Mazières, D. (2002). Kademlia: A peer-to-peer information system based on the XOR metric. In
+ Peer-to-Peer Systems: First International Workshop, IPTPS 2002 (LNCS 2429, pp. 53–65). Springer.
+https://link.springer.com/chapter/10.1007/3-540-45748-8_5
+Merkle, R. C. (1987). A digital signature based on a conventional encryption function. In Advances in Cryptology —
+ CRYPTO '87 (LNCS 293, pp. 369–378). Springer. https://doi.org/10.1007/3-540-48184-2_32
+mmalmi (2026). mmalmi/nostr-vpn: Tailscale-style private mesh VPN powered by an independently evolved FIPS
+ implementation, with byte-metered exit nodes paid in Bitcoin through Cashu. GitHub.
+https://github.com/mmalmi/nostr-vpn (accessed 15 September 2026).
+Muthitacharoen, A., Chen, B., & Mazières, D. (2001). A low-bandwidth network file system. In Proceedings of the
+ 18th ACM Symposium on Operating Systems Principles (SOSP '01, pp. 174–187). ACM.
+NIST (2019). FIPS 140-3: Security requirements for cryptographic modules. National Institute of Standards and
+ Technology. https://csrc.nist.gov/pubs/fips/140/3/final
+Nostr NIPs (2024). NIP-34: Git collaboration. https://github.com/nostr-protocol/nips/blob/master/34.md (accessed 15
+ September 2026).
+Nostr NIPs (2026). NIP-01: Basic protocol flow description. https://nostr-nips.com/ (accessed 15 September 2026).
+ 
+Pragmatic Engineer (2025). What caused the large AWS outage? https://blog.pragmaticengineer.com/ (accessed 15
+ September 2026).
+
+
+=== PAGINA 19 ===
+HASHTREE: CONTENT-ADDRESSED P2P STORAGE
+Page 19
+Qiu, D., & Srikant, R. (2004). Modeling and performance analysis of BitTorrent-like peer-to-peer networks. In
+ Proceedings of ACM SIGCOMM 2004. ACM.
+Quinlan, S., & Dorward, S. (2002). Venti: A new approach to archival storage. In Proceedings of the 1st USENIX
+ Conference on File and Storage Technologies (FAST '02, pp. 89–101). USENIX.
+Radicle contributors (2026). Radicle: Peer-to-peer code collaboration. https://radicle.xyz/ (accessed 15 September
+ 2026).
+Sit, E., & Morris, R. (2002). Security considerations for peer-to-peer distributed hash tables. In Peer-to-Peer Systems:
+ First International Workshop, IPTPS 2002 (LNCS 2429). Springer.
+Storer, M. W., Greenan, K., Long, D. D. E., & Miller, E. L. (2008). Secure data deduplication. In Proceedings of the
+ 4th ACM International Workshop on Storage Security and Survivability (StorageSS '08, pp. 1–10). ACM.
+Sovereign Engineering (2026). Building FIPS, with Johnathan Corgan (No Solutions, episode 24).
+ https://sovereignengineering.io/podcast/24-building-fips-w-johnathan-corgan (accessed 15 September 2026).
+ThousandEyes (2021). Inside the Fastly outage: Analysis and lessons learned.
+ https://www.thousandeyes.com/blog/inside-the-fastly-outage-analysis-and-lessons-learned (accessed 15
+September 2026).
+ThousandEyes (2025). Cloudflare outage analysis: November 18, 2025. https://www.thousandeyes.com/ (accessed 15
+ September 2026).

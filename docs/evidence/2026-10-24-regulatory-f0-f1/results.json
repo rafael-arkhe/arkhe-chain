@@ -1,0 +1,139 @@
+{
+  "scope": "Local regression gates and disposable PostgreSQL; no production certificate validation, compliance attestation or remote CI",
+  "started_at": "2026-10-24T12:25:42.287035+00:00",
+  "gates": [
+    {
+      "name": "root-format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 1.317,
+      "log": "root-format.log",
+      "log_sha256": "28a46ddf25669d392727bde1ecc5f905be42f4fbae23569b97843d1f77c726f6"
+    },
+    {
+      "name": "root-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 116.256,
+      "log": "root-tests.log",
+      "log_sha256": "7b8f0eb0b9dac7bfb652feca8eb05ada030638080ae354ca7ab15ce2ad9873c6",
+      "tests": {
+        "passed": 296,
+        "failed": 0,
+        "ignored": 3
+      }
+    },
+    {
+      "name": "root-clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 17.572,
+      "log": "root-clippy.log",
+      "log_sha256": "6f6cea23ed563c041262c1d4f25319180532547c3ebf33ae7e34d8c08cfe7fc7"
+    },
+    {
+      "name": "pix-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": "integration\\arkhe-pix",
+      "exit_code": 0,
+      "seconds": 10.556,
+      "log": "pix-tests.log",
+      "log_sha256": "c79a40b2564c976d0bd761fc867bb03b76e99d5660ed14fdbc143c0f699893d5",
+      "tests": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "pix-clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "integration\\arkhe-pix",
+      "exit_code": 0,
+      "seconds": 0.817,
+      "log": "pix-clippy.log",
+      "log_sha256": "5cdd6925bf173991d641a20c63657ee323fd61787f2762ec2931c4f3dd7e1b66"
+    },
+    {
+      "name": "runtime-build",
+      "argv": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "arkhe-runtime",
+        "--bin",
+        "arkhe-runtime"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 8.707,
+      "log": "runtime-build.log",
+      "log_sha256": "458095fce5a129020d5ed32145c907d141257c1c978a2d88cca6f445f0712b2a"
+    },
+    {
+      "name": "live-http-postgres",
+      "argv": [
+        "python",
+        "scripts/regulatory_f0_f1_live.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 18.361,
+      "log": "live-http-postgres.log",
+      "log_sha256": "a2b0708ce8682d382180b28684f8b0248591e5cc687192167b020cbc6e9b3161"
+    }
+  ],
+  "status": "PASS",
+  "source_sha256": {
+    "Cargo.toml": "6560386e4bfc84e51bb4527efa0ce98fbf6592f8688afdd4cdad3908c82b070e",
+    "Cargo.lock": "4d525208b62256a960ee9e61003049c45dae7857a5203aaa1978b5b1513a66ac",
+    "orchestration/arkhe-runtime/Cargo.toml": "c6d72764263ae9e92191b129b85c172036865c0a4afd11a0d085205c2a4b5b01",
+    "orchestration/arkhe-runtime/src/main.rs": "c5e1bf8dd4485f2247c3b08049e5ecfda7037cd80bcbcef549ce588858e3cf75",
+    "orchestration/arkhe-runtime/src/http_routes.rs": "1e8a599c0851a21dbccfbae4acc1eabcf2f7b2db6e6dc4a704a997e0e67b4c67",
+    "orchestration/arkhe-runtime/tests/http_versioning.rs": "1a43c82c8886802b50e9be3a185b70f5f2768036b6d261729a02fa0525fe4cf5",
+    "evidence/arkhe-wormgraph/src/retention.rs": "f0d32f31e31c9e07261126cfd6fabda592e6c2ae573750dfb630d55149b3e3b0",
+    "integration/arkhe-pix/crates/arkhe-pix-bcb/src/certificates.rs": "91c64af86bd1be9679c91087e5fa2af2365576ecaa91c2644020d1d6cb8482dd",
+    "integration/arkhe-pix/crates/arkhe-pix-bcb/src/lib.rs": "b97dbbdad16ed691c097debc99db7f0b9b2e8fe291bc663b8a804fbfc6a457ac",
+    "integration/arkhe-pix/crates/arkhe-pix-bcb/tests/certificates.rs": "268b73626d9c47dfa69d4a96f060fcfb0a1b903d72fbc4190ac97e3700953aca",
+    "scripts/regulatory_f0_f1_live.py": "b760ab0a41575f338b36400c45306a89af4912ebbf1ea2794a93bcbcc97c24af",
+    "scripts/regulatory_f0_f1_checks.py": "a353062a9a91892b20b10b20842adb83539e337034c7d1bd8992df659bd8c990"
+  },
+  "finished_at": "2026-10-24T12:28:35.884718+00:00"
+}

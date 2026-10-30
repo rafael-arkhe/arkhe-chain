@@ -1,0 +1,200 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mandate",
+    "record",
+    "principal_signature",
+    "agent_signature",
+    "inclusion"
+  ],
+  "properties": {
+    "mandate": {
+      "$ref": "#/$defs/mandate"
+    },
+    "record": {
+      "$ref": "#/$defs/record"
+    },
+    "principal_signature": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "agent_signature": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "inclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "leaf_count",
+        "leaf_index",
+        "steps"
+      ],
+      "properties": {
+        "leaf_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "leaf_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999999
+        },
+        "steps": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "direction",
+              "hash"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "node",
+                  "bag"
+                ]
+              },
+              "direction": {
+                "enum": [
+                  "left",
+                  "right"
+                ]
+              },
+              "hash": {
+                "type": "array",
+                "minItems": 32,
+                "maxItems": 32,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Arkhe experimental synthetic passport envelope",
+  "$defs": {
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "label",
+        "agent_id",
+        "principal_did",
+        "declared_model_blake3",
+        "mandate_digest",
+        "audience",
+        "challenge",
+        "issued_at"
+      ],
+      "properties": {
+        "profile": {
+          "const": "arkhe-kya-experimental@1"
+        },
+        "label": {
+          "const": "synthetic-poc"
+        },
+        "agent_id": {
+          "type": "string",
+          "pattern": "^did:key:z[1-9A-HJ-NP-Za-km-z]{46,48}$"
+        },
+        "principal_did": {
+          "type": "string",
+          "pattern": "^did:key:z[1-9A-HJ-NP-Za-km-z]{46,48}$"
+        },
+        "declared_model_blake3": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "mandate_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "audience": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "challenge": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 128
+        },
+        "issued_at": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "mandate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "label",
+        "agent_id",
+        "principal_did",
+        "audience",
+        "actions",
+        "not_before",
+        "expires_at"
+      ],
+      "properties": {
+        "profile": {
+          "const": "arkhe-kya-experimental@1"
+        },
+        "label": {
+          "const": "synthetic-poc"
+        },
+        "agent_id": {
+          "type": "string",
+          "pattern": "^did:key:z[1-9A-HJ-NP-Za-km-z]{46,48}$"
+        },
+        "principal_did": {
+          "type": "string",
+          "pattern": "^did:key:z[1-9A-HJ-NP-Za-km-z]{46,48}$"
+        },
+        "audience": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "not_before": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "expires_at": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    }
+  },
+  "$comment": "Wire shape only. Rust verifier also enforces byte bounds, signatures, time, trust, challenge, mandate binding and indexed MMR. No W3C VC claim."
+}

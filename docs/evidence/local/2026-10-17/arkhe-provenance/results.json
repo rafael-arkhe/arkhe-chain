@@ -1,0 +1,124 @@
+{
+  "scope": "Local execution only; no remote CI, protocol freeze or production attestation",
+  "context": {},
+  "attempts": [
+    {
+      "gate": "signed-admission-mcp-and-reconciliation",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "postgres-integration",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T19:28:32.736802+00:00",
+      "duration_seconds": 25.656,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "0c075523c1d4c6ffd057b58a615300353b66ecbc7440818a558c31595fddeb5a",
+      "source_after_sha256": "0c075523c1d4c6ffd057b58a615300353b66ecbc7440818a558c31595fddeb5a",
+      "source_changed_during_execution": false,
+      "log": "01-signed-admission-mcp-and-reconciliation.log",
+      "log_sha256": "7aad42bde76d3379bac17aca678f9fe297ef1e8bbd3c1ded94195819e952c61c",
+      "inputs": "01-signed-admission-mcp-and-reconciliation.inputs.json"
+    },
+    {
+      "gate": "postgres-security",
+      "command": [
+        "python",
+        "scripts/postgres_conformance.py",
+        "--engine",
+        "podman",
+        "--connection",
+        "arkhe-runtime",
+        "--container",
+        "arkhe-live-postgres"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T19:29:39.175142+00:00",
+      "duration_seconds": 24.203,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "4bb416142ab6b673d327651dd86589f7e93a381ecb57041d79ab0d06a7d22788",
+      "source_after_sha256": "4bb416142ab6b673d327651dd86589f7e93a381ecb57041d79ab0d06a7d22788",
+      "source_changed_during_execution": false,
+      "log": "02-postgres-security.log",
+      "log_sha256": "36cd7f8e0f5f7bdb9250983159544448769aa3bf4ede0a197dab1e2107628d6e",
+      "inputs": "02-postgres-security.inputs.json"
+    },
+    {
+      "gate": "signed-admission-mcp-and-reconciliation",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "-p",
+        "arkhe-core",
+        "-p",
+        "arkhe-kernel",
+        "--features",
+        "arkhe-bugbounty/postgres-integration",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T19:31:27.378513+00:00",
+      "duration_seconds": 22.419,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "1862a52ac586e70dd80f85c30cde038c8fe3bc878ddff75986bc278133736bb5",
+      "source_after_sha256": "1862a52ac586e70dd80f85c30cde038c8fe3bc878ddff75986bc278133736bb5",
+      "source_changed_during_execution": false,
+      "log": "03-signed-admission-mcp-and-reconciliation.log",
+      "log_sha256": "7cc94978505f619ce5d74b00f00868cd78a487256af38676743ce3f1f7e4d905",
+      "inputs": "03-signed-admission-mcp-and-reconciliation.inputs.json"
+    },
+    {
+      "gate": "cargo-workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T19:31:50.264282+00:00",
+      "duration_seconds": 54.543,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "1862a52ac586e70dd80f85c30cde038c8fe3bc878ddff75986bc278133736bb5",
+      "source_after_sha256": "1862a52ac586e70dd80f85c30cde038c8fe3bc878ddff75986bc278133736bb5",
+      "source_changed_during_execution": false,
+      "log": "04-cargo-workspace.log",
+      "log_sha256": "9c5810656e4a77fb0e373f6c3f21917f54853749ad2491688becd7e20d28f156",
+      "inputs": "04-cargo-workspace.inputs.json"
+    },
+    {
+      "gate": "postgres-security",
+      "command": [
+        "python",
+        "scripts/postgres_conformance.py",
+        "--engine",
+        "podman",
+        "--connection",
+        "arkhe-runtime",
+        "--container",
+        "arkhe-live-postgres"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T19:32:45.251901+00:00",
+      "duration_seconds": 23.868,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "1862a52ac586e70dd80f85c30cde038c8fe3bc878ddff75986bc278133736bb5",
+      "source_after_sha256": "1862a52ac586e70dd80f85c30cde038c8fe3bc878ddff75986bc278133736bb5",
+      "source_changed_during_execution": false,
+      "log": "05-postgres-security.log",
+      "log_sha256": "62addbc802edc640648ce6564e4cd7eda3bfa71bacb346481679b1b07ad451e3",
+      "inputs": "05-postgres-security.inputs.json"
+    }
+  ]
+}

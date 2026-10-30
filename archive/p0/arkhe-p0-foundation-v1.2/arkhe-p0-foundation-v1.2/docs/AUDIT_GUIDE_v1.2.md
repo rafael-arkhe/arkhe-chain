@@ -1,0 +1,70 @@
+# Audit Guide — Arkhe P0 Foundation v1.2
+
+## Integrity
+
+1. Verify the release ZIP SHA-256 against `arkhe-p0-foundation-v1.2.zip.sha256`.
+2. Extract the archive.
+3. Verify the full internal manifest with `sha256sum -c ARTIFACT_MANIFEST.sha256`.
+4. Verify the exact vector file with `sha256sum -c vectors/VECTOR_SET_DIGEST.sha256`.
+5. `FOUNDATION_DIGEST.sha256` is a lineage declaration. It is verifiable only when the predecessor ZIP is separately available.
+
+## Authoritative vector gate
+
+Run:
+
+`python3 scripts/verify_vectors.py`
+
+Do not use undocumented CLI arguments on the reference encoder.
+
+The authoritative vector schema is the checked-in `vectors/canonicalization-v1.1.json`.
+
+## Exact structured digest formula
+
+The code hashes:
+
+`DomainLabel || u16_be(ProfileIdLength) || ProfileId || CanonicalCBOR(Object)`
+
+The domain labels are defined in `src/digest.rs`.
+
+## Rust gate
+
+Standalone release:
+1. `cargo generate-lockfile`
+2. review the dependency graph
+3. commit/pin `Cargo.lock`
+4. then run all normal gates with `--locked`
+
+Monorepo integration:
+use the authoritative workspace `Cargo.lock`.
+
+Required gates after a lock exists:
+
+- `cargo fmt --check`
+- `cargo check --locked --workspace`
+- `cargo clippy --locked --workspace --all-targets -- -D warnings`
+- `cargo test --locked --workspace`
+- `cargo audit`
+- `cargo deny check`
+
+## Resource-exhaustion review
+
+The strict decoder enforces bounds before allocation/iteration:
+- total input bytes;
+- byte-string bytes;
+- text-string UTF-8 bytes;
+- collection member count;
+- nesting depth.
+
+Audit invariant:
+
+`UntrustedCBOR => BoundedMemory ∧ BoundedDepth ∧ BoundedItems`
+
+and:
+
+`DeclaredContainerLength > ProfileLimit => RejectBeforeAllocation`
+
+## Provenance semantics
+
+P0 v1.x freezes causal parents as a mathematical set:
+duplicate `(RelationType, Digest)` parents are semantically idempotent.
+Multiplicity is not represented.

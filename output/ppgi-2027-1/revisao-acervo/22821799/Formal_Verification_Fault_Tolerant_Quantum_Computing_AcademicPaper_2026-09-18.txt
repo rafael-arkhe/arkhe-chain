@@ -1,0 +1,2207 @@
+
+=== PAGINA 1 ===
+ACADEMIC MONOGRAPH
+ Formal Verification and Physical-Mathematical
+Modeling for Fault-Tolerant Quantum Computing:
+Integrating PACIR and Arkhe OS in the Context of
+ the DOE Quantum Genesis Q Competition
+ Rafael Oliveira
+ ORCID 0009-0005-2697-4668
+ Safe Core — Psychology Behavioral Analysis, São Paulo, Brazil
+ Jameson Bednarski
+ ORCID 0009-0002-5963-6196
+ Independent Researcher
+ Corresponding author: Rafael Oliveira (Safe Core — Psychology Behavioral Analysis, São Paulo,
+ Brazil)
+ São Paulo — September 18, 2026
+
+
+=== PAGINA 2 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 2
+Abstract
+The Quantum Genesis Q competition, announced by the United States Department of
+Energy (DOE) in September 2026 with planned funding of up to $215 million, established
+the first explicit engineering target for fault-tolerant, scientifically relevant quantum
+computers (SRQC): at least 100 logical qubits performing hundreds of millions of
+fault-tolerant operations — including the program's defined ladder of hard, non-Clifford
+operations — by 2028, with every layer of the computing stack subject to independent
+validation by a $45 million V&V; Testbed. This monograph argues that in this operational
+regime verification ceases to be a support activity and becomes an engineering
+prerequisite, and it presents a revised, unified verification architecture that integrates the
+physical-mathematical modeling of PACIR (Tsallis entropy, the Penrose–Diósi model,
+quantum marginals) with the formal verification of quantum error correction provided by
+Arkhe OS. Relative to an earlier draft, this version incorporates an external audit:
+substantive (non-tautological) contract-based Kani harnesses with negative and existence
+assertions, a coherent invariant numbering that separates software invariants (INV-SW)
+from empirical hardware metrics (MET-HW), explicit falsifiers for every empirical metric, a
+declared table of opaque API dependencies, a fallback protocol for non-terminating proofs,
+and — as the central conceptual contribution — the Verification Gap: a six-node, five-link
+decomposition (Intention → Specification → Physical model → Software → Hardware →
+World) that assigns each link its admissible class of evidence. The Tsallis module remains
+the complete case study: three implementation branches with numerically justified
+boundaries, ten verifiable invariants, five Kani harnesses with bit-precise universal proofs
+up to n = 8 via loop contracts, and an optimal Lipschitz constant derived analytically for the
+Hölder-continuity harness. We conclude that transforming engineering requirements into
+verifiable contracts — while stating precisely what is proven, sampled, or merely
+measured — is a concrete path toward meeting the DOE's validation and verification
+mandate.
+Keywords: fault-tolerant quantum computing; quantum error correction; formal verification;
+Tsallis entropy; Kani; Quantum Genesis Q
+
+
+=== PAGINA 3 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 3
+Table of Contents
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 5
+1 Introduction
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 5
+1.1 Context
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+1.2 The Verification Problem
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+1.3 Objectives
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+1.4 Rationale
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+1.5 Structure of the Monograph
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+2 Theoretical Background
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+2.1 Quantum Error Correction (QEC)
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 10
+2.2 The Tsallis Entropy
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 12
+2.3 Formal Verification of Numerical Software
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 13
+2.4 Formal Verification of QEC Programs: Veri-QEC
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+2.5 Penrose–Diósi: gravitational decoherence
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+3 The Quantum Genesis Q Competition
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+3.1 Program Structure and Phases
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 15
+3.2 Performance Metrics and the Error-Rate Target
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 16
+3.3 Implications for Verification
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 16
+4 The PACIR + Arkhe OS Architecture
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 17
+4.1 Overview
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 18
+4.2 Design Principles
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+4.3 Mapping Quantum Genesis → Modules
+ .  .  .  .  .  .  .  .  .  .  .  . 19
+5 Formal Verification: Kani, Proptest, and Contracts
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+5.1 Kani: Universal Proofs
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 20
+5.2 Contract-Based Harnesses for the Arkhe Modules
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 22
+5.3 Proptest: Sampling Coverage
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 23
+5.4 What Is Not Proven
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 25
+5.5 Guarantee Classes
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 25
+5.6 Reducing Harnesses and the Fallback Protocol
+ .  .  .  .  .  .  .  .  .  .  .  . 26
+6 The Tsallis Module: Implementation and Invariants
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 26
+6.1 The Physical Contract
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 26
+6.2 Implementation Branches
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 27
+6.3 Invariants
+
+
+=== PAGINA 4 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 4
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 28
+6.4 Historical Errors Corrected
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 29
+6.5 The Optimal Lipschitz Constant
+ .  .  .  .  .  .  . 29
+7 The Arkhe Modules: QEC, Fault Tolerance, Testbed, Decoder
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 29
+7.1 arkhe-qec-verify
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 30
+7.2 arkhe-fault-tolerant-verify
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 31
+7.3 arkhe-quantum-testbed
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 31
+7.4 arkhe-qec-decoder
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 32
+8 The Verification Gap: Six Nodes, Five Links
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 32
+8.1 The Chain and Its Links
+ .  .  .  .  .  .  .  .  .  .  .  .  .  . 33
+8.2 Terminology: Falsifiers versus Empirical Rejection Criteria
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 33
+8.3 The Links in Detail
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 34
+8.4 The Global Falsifier: Against Theatrical Verification
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 34
+9 Results and Analysis
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 34
+9.1 Verification Coverage
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 35
+9.2 Proven versus Sampled versus Measured
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 35
+9.3 Limitations
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 36
+10 Conclusion
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 36
+10.1 Contributions
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 37
+10.2 Future Work
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 37
+10.3 Closing Remarks
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 38
+References
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 41
+Appendix A — Consolidated Invariant Catalog
+ .  . 42
+Appendix B — Verification Commands, API Dependencies, and Fallback
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 42
+B.1 Reproduction commands
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 42
+B.2 API dependencies of the contract harnesses
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 43
+B.3 Fallback protocol
+
+
+=== PAGINA 5 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 5
+1 Introduction
+1.1 Context
+Fault-tolerant quantum computing has ceased to be a theoretical promise and has become
+an engineering goal with concrete deadlines. On September 16–17, 2026, the United States
+Department of Energy (DOE) announced the Quantum Genesis Q competition, a
+first-of-its-kind effort with planned funding of up to $215 million to demonstrate the world's
+first fault-tolerant, scientifically relevant quantum computer (SRQC): a system with at least
+100 logical qubits, capable of executing hundreds of millions of fault-tolerant operations and
+scientific demonstration programs by 2028 [1, 2, 20]. The initiative builds on the Genesis
+Mission and implements the goals of the Executive Order “Ushering in the Next Frontier of
+Quantum Innovation” and the Blueprint for DOE Quantum Supercomputing [1].
+The competition does not target a single device class. As documented in the program
+materials [1, 2], the performance metrics form a three-rung ladder of hard operations —
+operations from the hard (non-Clifford) family of the participant's error-correction scheme,
+the genuinely scarce resource in fault-tolerant computation:
+Generation
+Logical
+qubits
+Hard
+operations
+Scientific relevance
+Prototype
+≈ 10
+10³
+Scientific subroutine (e.g., phase
+estimation)
+First generation (SRQC)
+≥ 100
+10⁵
+Complete scientific workflow
+Next generation
+≈ 1,000
+10⁷
+Scientific discovery at production scale
+ Table 2 — The program's performance-metric ladder of hard operations [2]. A hard operation is an
+ operation from the hard (non-Clifford) family of the participant's error-correction scheme.
+The incentive structure is equally novel. Phase I awards fixed prizes of up to $1.5 million per
+awardee for early milestones; Phase II reserves a general incentive pool of $100 million for
+the first-generation SRQC demonstration, plus two $50 million bonus pools for
+demonstrations with 150 and 200 logical qubits [1, 20]. In parallel, the Quantum
+High-Performance Computing Validation and Verification Testbed Lab Call commits $45
+million ($14 million in FY2026) for the National Laboratories to establish instruments that
+characterize and validate every layer of the computing stack — physical hardware, quantum
+gates, logical architectures, algorithms and applications, and classical control [1]. The DOE
+will act as verifier and validator, with National Laboratory personnel accessing and
+operating the competing devices directly [1, 2]. The Tabela 1 summarizes the funding
+structure.
+Component
+Planned
+amount
+Content
+Phase I — fixed
+prizes
+up to $1.5
+M/awardee
+Early milestones: V&V; plan approval ($250 K) and
+intermediate prototype of ≈ 10 logical qubits with ≈ 1,000 hard
+operations ($1.25 M)
+
+
+=== PAGINA 6 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 6
+Component
+Planned
+amount
+Content
+Phase II — general
+pool
+$100 M
+Split among awardees demonstrating the first-generation
+SRQC (≥ 100 logical qubits, hundreds of millions of
+fault-tolerant operations)
+Phase II — bonus 150
+$50 M
+Bonus pool for demonstration with 150 logical qubits
+Phase II — bonus 200
+$50 M
+Bonus pool for demonstration with 200 logical qubits
+V&V; Testbed (Lab
+Call)
+$45 M
+National Laboratories: characterization and validation of every
+stack layer ($14 M in FY2026)
+Total
+up to $215 M
+Planned funding; $2.5 M in FY2026, subject to congressional
+appropriations
+ Table 1 — Funding structure of the Quantum Genesis Q competition and of the V&V; Testbed [1, 2, 20].
+The competition is not an isolated event. In June 2026, D-Wave announced a gate-model
+roadmap targeting 100 logical qubits performing more than one million operations by 2032
+[16]; in late 2024, Google's Willow processor demonstrated, for the first time, surface-code
+operation below threshold, with logical error suppression by a factor Λ = 2.14 ± 0.02 per
+two-step distance increase [12]. The field is thus transitioning from the NISQ regime
+characterized by Preskill [13] to scalable fault tolerance. The gap between 10⁶ operations
+(D-Wave, 2032) and 10⁸ operations (DOE, 2028) illustrates how aggressive the competition
+target is — and why verification sits at the center of the problem.
+1.2 The Verification Problem
+The central challenge is not merely to build quantum hardware, but to verify that the system
+computes correctly. Executing hundreds of millions of fault-tolerant operations imposes, by
+an elementary union-bound argument, a per-operation logical error rate target of order
+10⁻⁸: with N = 10⁸ operations and per-operation logical error pL, the survival probability of
+the full computation is (1 − pL)N ≈ e−N·pL, so pL ≈ 10⁻⁸ already reduces the survival
+probability to e−1 ≈ 0.37; any substantially larger value renders the complete computation
+unlikely (Section 3.3, Equation 3.1).
+In the surface-code model, a logical error rate of 10⁻⁸ calls for code distances of order d =
+17 at physical error rates near 10⁻³ — tens of thousands of physical qubits per configuration
+(Section 7.1). In this regime, informal verification — point tests, manual inspection, trust in
+prototype reviews — is insufficient for three converging reasons. First, the state space of a
+system with 10⁵ components is not explorable by naive sampling. Second, the competition's
+operating conditions (phased milestones, external validation by the Testbed) demand
+auditable, reproducible evidence rather than declarations. Third, the quantum stack
+contains numerically delicate components — decoders, entropy estimators, noise models —
+whose failures are silent and surface only under extreme inputs. Formal verification and
+rigorous physical modeling therefore become engineering prerequisites. One further
+distinction governs everything that follows: what is genuinely proven (software, under a
+stated execution model) must never be conflated with what is measured empirically
+(hardware). Chapter 8 formalizes this distinction as the Verification Gap.
+
+
+=== PAGINA 7 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 7
+1.3 Objectives
+General objective: to develop and document a unified verification architecture for
+fault-tolerant quantum computing, integrating the physical-mathematical modeling of
+PACIR (Tsallis entropy, the Penrose–Diósi model, quantum marginals) with the QEC and
+fault-tolerance verification of Arkhe OS, through verifiable contracts, falsifiable invariants,
+and coverage combining exhaustive proofs (Kani) with property-based testing (proptest).
+The general objective decomposes into five specific objectives:
+1. To implement and verify the Tsallis entropy module with fail-closed contracts and Kani
+proofs, covering the exact, series, and general computation regimes;
+2. To implement and verify the Arkhe OS QEC modules (codes, logical error rate model,
+decoding) with falsifiable invariants;
+3. To integrate the modules into a single Cargo workspace with automated verification
+pipelines (CI, xtask, record hashes);
+4. To map every Quantum Genesis Q requirement onto a verifiable invariant with an
+explicit falsifier — and every empirical metric onto an independent measurement
+criterion;
+5. To document with epistemic honesty what is proven universally (Kani), what is
+sampled (proptest), and what is not proven.
+1.4 Rationale
+The competition establishes objective metrics — logical qubits, hard operations, logical
+error rate — and, simultaneously, creates the first public layer-by-layer validation apparatus
+for the quantum stack [1]. Every metric can be translated into a falsifiable invariant: a
+precisely stated claim accompanied by the concrete procedure that would refute it. The
+PACIR + Arkhe OS integration proposes exactly this: transforming engineering
+requirements into verifiable contracts, with formal evidence where possible and sampled
+evidence where necessary.
+The rationale is threefold. From the scientific standpoint, the Tsallis entropy is the most
+widely applied non-extensive generalization of Boltzmann–Gibbs statistics — from LHC
+particle spectra [4] to the decoherence dynamics of RbCl quantum-dot qubits [25] — and
+deserves the same implementation rigor as error-correcting codes; sign errors in series
+expansions, for instance, silently invalidate physical applications. From the engineering 
+standpoint, the recent record of bounded model checking in production Rust — Kani's
+standard-library campaign verifies over 16,000 harnesses per code change, and its
+contract-based Hifitime case study uncovered six previously unknown bugs [8] —
+demonstrates that formal methods capture whole defect classes that conventional testing
+misses. From the programmatic standpoint, aligning with the competition's phase,
+milestone, and layer-validation structure increases the auditability of a future candidacy and
+reduces the risk of structural rework.
+1.5 Structure of the Monograph
+
+
+=== PAGINA 8 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 8
+The monograph is organized in ten chapters. Chapter 2 establishes the theoretical
+foundations: quantum error correction and surface codes; the Tsallis entropy and its series
+expansion; Lesche stability and the homogeneous entropy alternative; formal verification
+with Kani and proptest; and the formal verification of QEC programs with Veri-QEC.
+Chapter 3 characterizes the Quantum Genesis Q competition — program structure, metrics,
+phases — and derives its verification implications. Chapter 4 presents the PACIR + Arkhe
+OS architecture, its design principles, and the mapping requirements → modules →
+invariants. Chapter 5 details the formal verification system: Kani harnesses, contract-based
+harnesses for the Arkhe modules, reduction strategies, the fallback protocol, and the
+explicit record of what is not proven. Chapter 6 examines the Tsallis module as a complete
+case study. Chapter 7 describes the Arkhe modules. Chapter 8 formalizes the Verification
+Gap — six nodes, five links — and its global falsifier against theatrical verification. Chapter
+9 consolidates results, coverage, and limitations. Chapter 10 concludes. Appendix A
+consolidates the full invariant catalog; Appendix B documents reproduction commands, API
+dependencies, and the fallback protocol.
+2 Theoretical Background
+2.1 Quantum Error Correction (QEC)
+2.1.1 Surface codes
+The surface code is the leading candidate for error correction in solid-state hardware,
+combining relatively high thresholds with nearest-neighbor interactions on a
+two-dimensional lattice [10, 11]. Physical qubits are arranged in a mesh where data and
+measurement qubits alternate; stabilizers — products of Pauli operators — are measured
+repeatedly, and the discrepancy between consecutive measurements (the syndrome) feeds a
+decoder that infers the most likely error chain. The practical result is a logical qubit whose
+error rate decreases exponentially with the code distance d, provided the physical error rate
+remains below the threshold [11]. For the regime of interest, the empirical model of Fowler
+et al. [10] describes the relationship:
+ (2.1)
+where pph is the physical error rate, pth is the threshold, d is the code distance, and A is an
+empirical prefactor (A ≈ 0.03 in [10]). Two caveats are essential for honest use of this
+formula. First, it is an asymptotic approximation, valid for pph   pth and large d;
+higher-order corrections are not captured. Second, A is not universal — it depends on the
+decoder and the noise model. The threshold itself is noise-model dependent: ≈ 0.57% under
+independent depolarizing errors with matching-based decoding, rising toward ≈ 1% under
+circuit-level noise [10], and to 1.4% in the recent random-coupled-plaquette-gauge-model
+analysis that optimally accounts for Y errors [27]. Throughout this monograph we declare
+the assumption explicitly: pth = 0.57% and A = 0.03, a deliberately conservative pairing.
+Figure 1 presents the suppression curves for d ∈ {7, 9, 11, 15, 17, 21} with the threshold
+band 0.57%–1.4% shaded. For the design point d = 17 and pph = 10⁻³, the projected logical
+
+
+=== PAGINA 9 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 9
+error rate is pL ≈ 0.03 × (10⁻³/0.0057)⁹ ≈ 4.7 × 10⁻⁹ — comfortably within the 10⁻⁸ target
+derived in Section 3.3, with d = 15 (≈ 2.7 × 10⁻⁸) marking the optimistic boundary. Willow's
+experimental demonstration — Λ = 2.14 ± 0.02, a distance-7 code with 101 qubits and a
+real-time decoder [12] — validates the exponential-suppression regime empirically.
+ Figure 1 — Logical error rate versus physical error rate for increasing surface-code distances, from model
+(2.1) with A = 0.03 and pth = 0.57%. The shaded band delimits the noise-model-dependent threshold range
+ (0.57%–1.4%) [10, 27]. The highlighted points mark the design point d = 17 (≈ 4.7 × 10⁻⁹) and the
+optimistic boundary d = 15 (≈ 2.7 × 10⁻⁸) at pph = 10⁻³. Source: authors' elaboration from [10, 27].
+The physical-qubit budget is the counterpart of exponential suppression. Under the
+conservative 2d² allocation per logical qubit [10], the 100-logical qubit fleet at d = 17
+requires ≈ 57,800 physical qubits — an order of magnitude above current demonstrations
+(Willow's distance-7 code uses 101 qubits [12]) and consistent with the literature's resource
+estimates [10, 14]. Budgets of this scale turn allocation decisions (code distance, decoding
+budget, characterized layers) into engineering decisions with direct economic
+consequences, reinforcing the need for verifiable contracts at every level of the stack.
+2.1.2 Real-time decoding
+Quantum error correction is a streaming problem: stabilizers are measured every cycle, and
+the accumulated syndrome must be decoded faster than the logical qubit's coherence
+time — otherwise the decoder backlog degrades the effective error rate and can nullify the
+code's gain [10, 12]. The experimental state of the art has consolidated decisively. The
+HELIOS system, described in Godawatte Liyanage's doctoral thesis (Yale, 2025), achieves 
+11.5 ns of latency per round at distance 21 on a Xilinx VCU129 FPGA, with sustained
+real-time decoding up to distance 51 under 0.1% phenomenological noise [22]. Because
+HELIOS addresses a single logical qubit, the competition-relevant reference is its
+networked successor: DECONET, which integrates multiple interacting logical qubits and
+demonstrates real-time decoding of 100 logical qubits at distance 5 with a mean latency of
+2.40 μs and inverse throughput of 0.84 μs per round under 0.1% noise [22, 23].
+Independently, Caune et al. demonstrated low-latency feedback with a scalable FPGA
+
+
+=== PAGINA 10 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 10
+decoder integrated into a superconducting processor's control system [24]. Two conclusions
+follow for this monograph. First, real-time decoding is an active engineering requirement,
+not a theoretical concern — and system-level architectures (DECONET), not single-qubit
+latency records (HELIOS), are the correct comparison class for a ≥100-logical-qubit target.
+Second, a decoder that silently exceeds its time budget is a first-class failure mode, which
+motivates arkhe-qec-decoder's typed-timeout design (Section 7.4).
+2.2 The Tsallis Entropy
+2.2.1 Definition
+Proposed by Tsallis in 1988 as a generalization of Boltzmann–Gibbs statistics [3], the
+non-extensive entropy is defined, for a probability distribution p = (p₁, …, pn), by:
+ (2.2)
+with the Shannon limit S₁ = −Σ pᵢ ln pᵢ recovered as q → 1:
+ (2.3)
+The entropic index q controls the weight attributed to the distribution's tails: q > 1 amplifies
+rare events; q < 1 emphasizes frequent ones. In the quantum setting, the same form applies
+to the eigenvalues of the density matrix ρ, generalizing the von Neumann entropy (Section
+6.1). The Tsallis entropy is concave for q > 0, vanishes for pure states, and is invariant
+under permutation of the weights — properties that appear as verifiable invariants in the
+implemented module (Section 6.3).
+2.2.2 Non-extensivity
+The distinctive property of the Tsallis entropy is pseudo-additivity. For two statistically
+independent systems A and B:
+ (2.4)
+For q = 1 the cross term vanishes and Shannon additivity is recovered; for q ≠ 1 the joint
+entropy is superadditive (q < 1) or subadditive (q > 1). This property is unique to the Tsallis
+entropy and distinguishes it, for example, from the Rényi entropy, which is genuinely
+additive for independent systems. The simplest numerical example illustrates the formula:
+for A = B = the uniform two-outcome distribution, the uniform four-outcome joint
+distribution has S₂ = (1 − 4 × 1/4)/(2 − 1) = 0.75, while S₂(A) = S₂(B) = 0.5 and the cross
+term (1 − 2) × 0.5 × 0.5 = −0.25 accounts exactly for the difference. Numerically verifying
+this identity — including the higher-order cross terms in the series regime — constitutes
+invariant INV-TS-06 (Section 6.3) and exposed an important implementation error during
+development, documented in Section 6.4.
+2.2.3 Applications in quantum computing
+Beyond high-energy physics, where the Tsallis distribution with q near unity fits LHC
+particle spectra with remarkable accuracy [4], the entropy has found concrete applications
+
+
+=== PAGINA 11 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 11
+in quantum information and device physics that motivate its presence in a
+quantum-computing verification stack. Khordad and Rastegar Sedehi applied the
+non-extensive entropy to the decoherence dynamics of RbCl quantum-dot qubits, showing
+that the Tsallis entropy oscillates in time and can be tuned through system parameters such
+as the Coulomb impurity — a control-theoretic view of decoherence with no von Neumann
+counterpart [25]. More broadly, Tsallis-type entropies capture non-classical correlation
+structure that linear entropies miss, offering a bridge between quantum information and
+non-extensive thermodynamics. Within PACIR, the module's role is deliberately narrow and
+contract-bound: a numerically robust, fail-closed implementation of S_q over classical
+distributions and density-matrix spectra, available as a substrate for noise and correlation
+modeling — with its epistemic limits (Section 2.2.5) recorded in code.
+2.2.4 Series expansion
+Around q = 1, with t = q − 1, the power sum admits a Taylor expansion of arbitrary order.
+Through fourth order [4]:
+ (2.5)
+from which the entropy expansion follows:
+ (2.6)
+where Mk = Σ pᵢ lnk pᵢ are the Shannon moments of order k. Two details of this expansion
+deserve emphasis because they surfaced as implementation errors (Section 6.4). First,
+every corrective coefficient carries a negative sign: for t > 0, Sq is strictly decreasing in q,
+so that S1+t < S₁ < S1−t; a positive sign on the cubic-coefficient term — a frequent error in
+reimplementations — inverts the local monotonicity and breaks thermodynamic consistency.
+Second, the expansion converges rapidly: at t = 10⁻⁴ the O(t⁴) remainder is of order 10⁻¹⁶ ×
+M₅, practically indistinguishable from IEEE-754 double precision. The implemented module
+uses the expansion through M₄ as its second computation branch, with regime boundaries
+justified numerically (Section 6.2 and Figure 4).
+2.2.5 Lesche stability and the homogeneous entropy
+An entropy is Lesche-stable (continuously stable) when nearby probability maps produce
+nearby entropy values, uniformly across dimensions — the property that legitimizes
+comparing experimentally measured entropies across systems of different sizes [6]. Lesche
+showed in 1982 that the Rényi entropies are unstable in this sense [6]. For Tsallis the
+picture is subtler and was clarified by Lutsko, Boon and Grosfils (2009) [5]: the Tsallis
+entropy is not Lesche-stable when escort probabilities are used for physical averages — the
+prevailing practice in non-extensive thermodynamics. Stability is recovered only when the 
+homogeneous entropy is adopted as the basis of the non-extensive formalism; notably,
+Lutsko et al. show that thermodynamic averages remain stable even when the entropy itself
+does not [5]. Abe (2002) complements this picture with the stability analysis of normalized
+forms [7].
+
+
+=== PAGINA 12 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 12
+This is a fundamental limitation of the theory — not of the software — and, precisely for that
+reason, it is not masked by the implemented module. The module's documentation records
+explicitly that Lesche stability is not an invariant, cites Lutsko et al. (2009), and explains
+that including Lesche as an invariant would assert something false under the standard
+formalism. We further record the constructive counterpart: the homogeneous entropy offers
+a mathematically validated route to a stability metric that could be implemented and
+verified (Section 10.2), connecting this work to an active research line rather than merely
+dismissing the property. This decision exemplifies the epistemic-honesty principle that
+pervades the architecture: the record of what is not proven is as much a part of the contract
+as the list of what is.
+2.3 Formal Verification of Numerical Software
+2.3.1 Kani: bit-precise universal proofs
+Kani is an open-source, bit-precise model checker for Rust, developed with roots at AWS,
+that compiles proof harnesses from Rust's Mid-level Intermediate Representation (MIR) into
+CBMC's bit-precise verification engine [8, 9]. Harnesses construct symbolic inputs with
+kani::any(), declare preconditions with kani::assume(), and assert properties with
+kani::assert(). When the SAT solver finds a counterexample, Kani reproduces it with
+concrete values and an execution trace; when it proves unsatisfiability, the property holds
+universally within the declared scope [8]. Beyond panic-freedom — checked automatically
+with no user annotation — Kani's specification language extends verification from bounded
+to unbounded through function contracts, loop contracts, quantifiers, and function stubbing 
+[8].
+Three characteristics are decisive for the numerical software treated here. First, the
+semantics are bit-precise over the IEEE-754 domain — proofs hold over the real space of f64
+bit patterns, including quiet NaNs, ±Inf, and subnormals, not over the mathematical body
+ℝ; this makes proofs consistent with the machine but also delimits their scope (Section 5.4).
+Second, loop contracts — the kani::loop_invariant and kani::loop_decreases annotations —
+allow proving properties of loops without unrolling every iteration, with production code
+kept identical when the annotations are conditioned on Kani compilation via cfg_attr. The
+practical gain is dramatic: in the project's exemplar case, verifying an f64-based Duration
+multiplication takes 91.8 s without the contract and 0.2 s with it — two orders of magnitude;
+in the context of the full crate, the contracted verification completes in under 70 s where
+the uncontracted run is intractable. Third, the class of guarantee is not fixed: Kani's default
+campaign proves panic-freedom, while contract-based verification upgrades the guarantee
+to functional correctness. The ASE 2026 report quantifies this progression at production
+scale: over 16,000 harnesses verified per code change in the Rust standard library
+campaign, and a Hifitime case study adding 125 contract annotations to 153 harnesses over
+a 9.5K-line library — which uncovered six previously unknown bugs, including a violation of
+the standard library's Eq and Ord trait contracts [8]. For a monograph arguing that
+verification is an engineering prerequisite, this is the strongest available empirical
+argument: contracts did not merely decorate the code — they changed the class of
+guarantee and found real bugs.
+
+
+=== PAGINA 13 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 13
+Honest use of Kani also requires recording its trust base. Kani operates over a model of
+Rust that is not itself formally verified: the aliasing model (Tree Borrows versus Stacked
+Borrows) remains an open research question; the MIR → GOTO translation is not verified;
+CBMC and the underlying SAT/SMT solvers are not verified; and Kani focuses on sequential
+Rust, with partial support for concurrency and SIMD [8, 9]. What a Kani proof establishes,
+precisely, is that the code respects the specification under the current execution model.
+This is exactly the scope claim the Verification Gap (Chapter 8) assigns to link E3 — and no
+more.
+2.3.2 Proptest: property-based sampling coverage
+Proptest is Rust's reference library for property-based testing with explicit strategies and
+automatic counterexample shrinking [19]. Unlike QuickCheck, whose generation derives
+from types, proptest allows composable declarative strategies — ranges, weighted unions
+(prop_oneof!), collections, transformations — concentrating sampling where numerical risk
+resides [19]. The strategy proptest::num::f64::ANY generates literally arbitrary f64 values,
+including all quiet NaNs, ±Inf, and subnormals (though not signaling NaNs) — a decisive
+contrast with naive random generators, which rarely produce pathological values.
+Proptest is complementary to Kani, not a substitute. Where Kani proves universally for fixed
+n (or n delimited by contracts), proptest explores variable n and larger input spaces under a
+sampling budget; where Kani delivers exhaustively minimal counterexamples, proptest
+delivers fast, reproducible reductions (seed persistence in proptest-regressions). The PACIR
++ Arkhe OS architecture formalizes this complementarity in the coverage pyramid of Figure
+3 (Chapter 5): point tests at the base, sampling above, delimited exhaustive proof above
+that, and, at the top, by-construction guarantees from the type system.
+2.4 Formal Verification of QEC Programs: Veri-QEC
+A distinct line of work verifies quantum programs rather than classical software. Veri-QEC,
+published at PLDI 2025, is an automatic verification framework for quantum error
+correcting programs: it defines an assertion logic and a program logic specifically crafted
+for QEC, with a proof system whose soundness is formalized in Coq [21]. For Pauli errors,
+verification conditions reduce to classical assertions discharged by SMT solvers; for
+non-Pauli errors, a heuristic algorithm applies. The framework was evaluated on a
+benchmark of 14 stabilizer codes [21].
+The scope distinction matters for everything that follows: Veri-QEC operates at the level of
+quantum circuits and QEC protocols, while Kani operates at the level of classical software 
+(Rust) — the decoders, controllers, and modeling code that surround the quantum program.
+They are complementary, not competing. The PACIR + Arkhe OS architecture therefore
+positions itself explicitly in a two-layer verification ecosystem:
+Layer
+Tool class
+Target
+Guarantee
+Quantum program
+(QEC circuits)
+Veri-QEC (PLDI
+2025) [21]
+Stabilizer-code programs; Pauli
+errors → SMT; Coq-sound proof
+system
+Circuit-level
+correctness
+
+
+=== PAGINA 14 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 14
+Layer
+Tool class
+Target
+Guarantee
+Classical software
+(Rust)
+Kani + proptest [8, 9,
+19]
+Controllers, decoders, modeling
+code
+Panic-freedom
+(default) → functional
+correctness
+(contracts)
+ Table 14 — The two-layer verification ecosystem: quantum-program verification and classical-software
+ verification are complementary.
+Integrating both layers — proving, for example, that the Rust controller emits exactly the
+circuit structures Veri-QEC has verified — is a natural and valuable extension, recorded as
+future work (Section 10.2). The two-layer view also sharpens the Verification Gap of
+Chapter 8: link E3 (model → software) is where Kani and proptest operate; the circuit level
+sits between N2 and N3 in the same link, but demands the Veri-QEC class of tools.
+2.5 Penrose–Diósi: gravitational decoherence
+The Penrose–Diósi model proposes that quantum state reduction has a gravitational origin:
+superpositions of distinct mass distributions are unstable and collapse within a time
+determined by the gravitational self-energy of the difference between the distributions [17,
+18]. The energy involved is:
+ (2.7)
+where G is the gravitational constant, V the superposition volume, and Δmi, Δmj the mass
+differences between elementary configurations i and j, separated by rij. The associated
+collapse time is:
+ (2.8)
+Diósi formulated the model as a parameter-free unification of micro- and macroscopic
+dynamics, applying gravitational measures to the reduction of macroscopic quantum
+fluctuations [17]; Penrose reached the same constitution from the principle that
+superpositions of distinct space-time metrics are physically unstable [18]. Tabletop
+proposals — mesoscopic mirrors in superposition whose collapse would be temporally
+consistent with τ = ħ/EG — now delimit the model's parameter space. PACIR incorporates
+Penrose–Diósi as a fundamental-noise modeling module under the same contract discipline
+as the rest: INV-PD-01 requires the gravitational self-energy to return a typed error for
+incompatible shapes, and INV-PD-02 guarantees that the collapse time is finite and positive
+for finite, positive EG. The module's role in the competition context is fundamental-noise
+modeling: for relevant mass configurations, τ provides a theoretical decoherence floor
+against which the error budgets of Chapter 7 can be contrasted — an illustration of how the
+physical domain (PACIR) and the engineering domain (Arkhe) complement without fusing.
+3 The Quantum Genesis Q Competition
+3.1 Program Structure and Phases
+
+
+=== PAGINA 15 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 15
+The competition invites commercial entities to propose the development and deployment of
+quantum computers with at least 100 logical qubits capable of executing hundreds of
+millions of fault-tolerant operations and scientific demonstration programs [1, 2]. The
+central operational concept is the SRQC — a scientifically relevant quantum computer —
+and the named application domains are chemistry, materials, physics, and applied
+mathematics [1]. These domains are not arbitrary: the PNNL perspective on quantum
+chemistry applications with 25–100 logical qubits maps the scientific problems that become
+accessible exactly in the resource range the competition requires [15], and D-Wave's
+roadmap to 100 logical qubits and one million operations by 2032 [16] provides the calendar
+contrast that makes the DOE's 2028 target notably aggressive.
+A logical qubit, per the program materials, is an effective qubit distributed across multiple
+subsystems and operated under error correction; a hard operation is an operation from the
+hard family of the participant's error-correction scheme (for instance, non-Clifford
+operations under stabilizer QEC), required for computational universality [2]. The
+hard-operation ladder of Tabela 2 is the program's performance metric: the Prototype
+milestone (≈ 10 logical qubits, 10³ hard operations, a scientific subroutine such as phase
+estimation), the first-generation SRQC (≥ 100 logical qubits, 10⁵ hard operations, a
+complete scientific workflow), and the next generation (≈ 1,000 logical qubits, 10⁷ hard
+operations, scientific discovery at production scale) [2]. Hard operations are the scarce
+resource because fault-tolerant Clifford operations are comparatively inexpensive; counting
+them separately prevents inflated claims.
+The incentive structure has two phases [1]. Phase I awards fixed prizes of up to $1.5 million
+per awardee for early milestones: per the RFA's milestone structure, $250 thousand
+attached to the approval of the verification and validation plan (the award minimum listed in
+the opportunity [2]), and $1.25 million attached to completing the intermediate prototype of
+≈ 10 logical qubits executing ≈ 1,000 hard operations. Phase II consists of the $100 million
+general pool, split among awardees demonstrating a first-generation SRQC, plus the two
+$50 million bonus pools for 150 and 200 logical qubits [1, 20]. Three design traits stand out.
+First, Phase I explicitly pays for verification planning — the V&V; plan is the first paid
+milestone, signaling that the DOE assesses verification maturity before hardware. Second,
+the progression 10 logical qubits/10³ hard operations → 100/10⁵ → 1,000/10⁷ establishes an
+evidence ladder in which each rung must be demonstrated — not declared — before the
+Testbed. Third, eligibility restricted to private companies, with ten expected awards and
+proposals due October 19, 2026, makes the quality of existing verification infrastructure —
+such as the architecture proposed here — an immediate differentiator [1, 2, 20].
+3.2 Performance Metrics and the Error-Rate Target
+The metrics ladder of Tabela 2 (logical qubits, hard operations, scientific relevance per
+generation) is complemented by the total-operation requirement of the announcement —
+hundreds of millions of fault-tolerant operations — which imposes, by a union-bound
+argument, the per-operation logical error target:
+ (3.1)
+
+
+=== PAGINA 16 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 16
+that is, with pL = 10⁻⁸ per operation and N = 10⁸ total operations, the probability that the
+complete computation survives without a logical failure is only e−1 ≈ 0.37; any substantially
+larger pL makes the full computation improbable. The hard-operation counts (10³ → 10⁵ →
+10⁷) are the scarcest subset of this total budget — each hard operation must run at the same
+error rate, and their scarcity is exactly why they are counted separately. This pL ≤ 10⁻⁸
+target governs the code-distance choices of Chapter 7 and the empirical metric MET-HW-03
+of Tabela 13.
+3.3 Implications for Verification
+Every operational requirement of the competition can be translated into a verifiable
+invariant — a precisely stated claim with a concrete falsifier — or into an empirical metric
+with an independent measurement criterion. The translation is disciplined by the
+Verification Gap of Chapter 8: only software-level claims admit formal falsifiers;
+hardware-level claims admit empirical rejection criteria executed by the DOE Testbed.
+Tabela 3 consolidates the mapping.
+Competition
+requirement
+Software
+invariant
+Falsifier
+Empirica
+l metric
+DOE rejection criterion
+≥ 100 logical
+qubits
+INV-SW-09
+Config with d < 3
+accepted
+MET-HW-
+01
+Characterization counts < 100
+10⁵ hard operations
+INV-SW-10
+Sub-threshold budget
+accepted
+MET-HW-
+02
+Independent count < 10⁵
+LER ≤ 10⁻⁸
+INV-SW-09
+(modeled)
+Modeled LER >
+target accepted
+MET-HW-
+03
+Measured LER > 10⁻⁸ (≥ 3
+replicas)
+Layer-by-layer
+validation
+INV-SW-11
+Uncharacterized
+layer accepted
+MET-HW-
+04
+Parameters outside DOE
+confidence interval
+Real-time decoding
+INV-SW-12
+Timeout accepted
+MET-HW-
+05/06
+Latency > coherence (≥ 3
+replicas)
+ Table 3 — Requirement → invariant → falsifier / metric → rejection criterion. The split between formal
+falsifiers (software) and empirical rejection criteria (hardware) follows the Verification Gap of Chapter 8.
+The Tabela 3 mapping has two properties that make it operational rather than rhetorical.
+First, every falsifier is executable: an insufficient code distance is detectable in the QEC
+module; an unhandled failure, in the fault-tolerance module; an accepted decoding timeout,
+in the decoder module; an uncharacterized layer, in the testbed. Second, the invariants are
+composable with the empirical metrics: the DOE's six-layer validation requirement
+corresponds one-to-one to the six invariant categories of the Appendix A catalog, so the
+evidence emitted by the architecture can be consumed directly by the National
+Laboratories' Testbed without additional format translation. The correction of an earlier
+draft's mapping error deserves note: the logical-error-rate requirement maps to INV-SW-09
+(the software rejects configurations whose modeled LER exceeds the target) jointly with
+MET-HW-03 (the measured LER), not to an entropy invariant — an inconsistency introduced
+by identifier reuse and eliminated by the INV-SW/MET-HW split.
+4 The PACIR + Arkhe OS Architecture
+
+
+=== PAGINA 17 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 17
+4.1 Overview
+The architecture materializes as a single Cargo workspace — pacir-arkhe-os — that
+separates the two domains of knowledge and connects them through verifiable contracts.
+The physical-mathematical domain (PACIR) hosts the theoretical modeling: Penrose–Diósi
+gravitational decoherence, quantum marginals, channel capacity, and the Tsallis entropy.
+The quantum engineering domain (Arkhe OS) hosts QEC verification, fault tolerance,
+layer-by-layer characterization, and decoding. Continuous integration triggers unit tests,
+proptest properties, and Kani harnesses on every commit; the xtask tool orchestrates the
+verification (verify-all) and experimentation (experiment) flows and emits blake3 record
+hashes for the audit trail. Figure 2 presents the structural view; Listing 1 reproduces the
+directory layout.
+ Figure 2 — The pacir-arkhe-os workspace architecture: automation infrastructure (CI + xtask), the bridge
+ of verifiable contracts, and the two knowledge domains with their modules (crates). Source: authors'
+ elaboration.
+
+
+=== PAGINA 18 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 18
+pacir-arkhe-os/
+├── crates/
+│   ├── pacir-core/          # Penrose-Diosi, quantum marginal, Tsallis
+│   │   └── src/
+│   │       ├── penrose_diosi.rs     (INV-PD-01/02)
+│   │       ├── quantum_marginal.rs  (INV-QM-01)
+│   │       ├── channel_capacity.rs
+│   │       └── tsallis.rs           (INV-TS-01..10)
+│   ├── pacir-chaos/         # adversarial strategies + chaos (proptest)
+│   ├── arkhe-qec-verify/    # codes, LER model      (INV-SW-09, INV-QEC-01/02)
+│   ├── arkhe-fault-tolerant-verify/   (INV-SW-10, INV-FT-01..03)
+│   ├── arkhe-quantum-testbed/         (INV-SW-11, INV-QTB-01..03)
+│   └── arkhe-qec-decoder/             (INV-SW-12, INV-QECD-01/02)
+├── xtask/                   # verify-all, experiment (status ledger)
+└── .github/workflows/       # CI: tests + proptest + Kani
+ Listing 1 — The pacir-arkhe-os workspace layout.
+The pacir-core module exposes four subsystems with contracts documented in its top-level
+documentation: penrose_diosi (gravitational self-energy and collapse time, under invariants
+INV-PD-01/02), quantum_marginal (density matrix validation and TSVF states, under
+INV-QM-01), channel_capacity, and tsallis (ten invariants INV-TS-01..10, detailed in Chapter
+6). The pacir-chaos module isolates adversarial injection strategies and chaos tests,
+guaranteeing that no public function panics under NaN, ±Inf, subnormals, overflow, or
+degenerate shapes. In the Arkhe domain, the four verification modules correspond
+one-to-one to the stack layers the DOE Testbed will characterize (Section 7.3).
+4.2 Design Principles
+Four principles govern the architecture and explain every non-obvious structural decision.
+1. Fail-closed. Every invalid input produces a typed Err — never a panic, never a silently
+corrected value. The policy is systematic: negative weights, NaN, ±Inf, non-normalized
+sums, non-Hermitian matrices, negative eigenvalues, and invalid entropic indices each
+have dedicated error variants (TsallisError), and the tests assert the rejection, not merely
+the absence of panic. The principle converts the security posture “deny by default” into a
+typing requirement.
+2. Record hash. Every verification produces a registered blake3 hash. Evidence is
+content-addressable: the hash uniquely identifies (code, inputs, parameters, result),
+allowing the Testbed — and any auditor — to re-execute and cross-check without trusting
+external metadata.
+3. Falsifiable invariants. Every invariant has a concrete, executable falsifier (Tabela 3 and
+Appendix A). Invariants without falsifiers are rhetorical declarations; the architecture's
+catalog refuses to contain them.
+4. Domain separation. PACIR models physics; Arkhe verifies engineering. The boundary
+is deliberate: physical models (with their own theoretical uncertainties, such as the
+experimental status of the Penrose–Diósi model) must not cross-contaminate the binary
+engineering contracts (LER ≤ target, decoding time ≤ coherence). The bridge between
+domains runs through verifiable contracts and record hashes — never through code
+dependencies.
+
+
+=== PAGINA 19 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 19
+4.3 Mapping Quantum Genesis → Modules
+The correspondence between competition requirements, the modules that verify them, and
+the invariants that materialize them is explicit in Tabela 4. The mapping is exhaustive in
+both directions: every row of Tabela 3 (requirements) finds at least one module with
+coverage, and every invariant in Appendix A finds at least one requirement that motivates it.
+This double coverage is the architecture's completeness criterion. The table also situates
+the architecture within the broader verification ecosystem of Section 2.4: classical-software
+invariants (Kani/proptest) cover the controller layer, while quantum-program verification
+(Veri-QEC class tools) covers the circuit layer — the two layers meeting at the model
+boundary of the Verification Gap (Chapter 8).
+Requirement
+Module
+Invariants / metrics
+≥ 100 logical qubits
+arkhe-qec-verify
+INV-SW-09, INV-QEC-01/02,
+INV-LER-01/02; MET-HW-01
+Hard operations ladder
+arkhe-fault-tolerant-verify
+INV-SW-10, INV-FT-01/02/03; MET-HW-02
+LER ≤ 10⁻⁸
+arkhe-qec-verify
+INV-LER-01/02, INV-QEC-02; MET-HW-03
+Layer validation (Testbed)
+arkhe-quantum-testbed
+INV-SW-11, INV-QTB-01/02/03;
+MET-HW-04
+Real-time decoding
+arkhe-qec-decoder
+INV-SW-12, INV-QECD-01/02;
+MET-HW-05/06
+Fundamental noise
+modeling
+pacir-core (penrose_diosi,
+tsallis)
+INV-PD-01/02, INV-QM-01, INV-TS-01..10
+Adversarial injection /
+non-panic
+pacir-chaos
+f64::ANY coverage over INV-TS-04/10
+ Table 4 — Mapping Quantum Genesis → modules → invariants and metrics.
+5 Formal Verification: Kani, Proptest, and Contracts
+5.1 Kani: Universal Proofs
+Kani proves properties over the IEEE-754 domain — the real space of f64 bit patterns —
+through five harnesses in the Tsallis module. The harnesses follow the canonical pattern:
+symbolic inputs with kani::any(), preconditions with kani::assume(), assertions with
+kani::assert(). Tabela 5 summarizes the five harnesses, their preconditions, and the asserted
+properties.
+Kani harness
+Preconditions (assume)
+Asserted property
+Invariant
+proof_tsallis_series_sign_multi
+_t
+p ∈ (10⁻³, 1−10⁻³); t ∈
+{10⁻⁷, 10⁻⁶, 10⁻⁵}
+S₁₊ₜ < S₁ < S₁₋ₜ (local
+monotonicity)
+INV-TS-08
+proof_tsallis_holder_continuity
+_q2
+p ∈ (10⁻², 1−10⁻²); |δ| ≤
+10⁻³
+|ΔS₂| ≤ K|δ| + 10⁻¹² (K = 2,
+optimal — §6.5)
+INV-TS-09
+proof_tsallis_classical_never_n
+an_for_valid_input
+w₀, w₁ ∈ [0,1] summing to 1
+± 10⁻¹⁰; q ∈ (0, 100)
+Result is never
+NonFiniteResult
+INV-TS-10
+
+
+=== PAGINA 20 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 20
+Kani harness
+Preconditions (assume)
+Asserted property
+Invariant
+proof_stable_power_sum_finit
+e
+w₀, w₁ ∈ [0,1] normalized; q
+∈ (0, 100)
+stable_power_sum is finite
+(n = 2)
+INV-TS-07
+proof_tsallis_power_sum_finite
+_arbitrary_n
+n ∈ [1, 8] symbolic;
+normalized weights; q ∈ (0,
+100)
+stable_power_sum is finite
+(n ≤ 8, loop contracts)
+INV-TS-07
+Table 5 — Kani harnesses of the Tsallis module: preconditions and universally proven properties (IEEE-754
+ domain, per-harness unwind).
+The first harness proves local monotonicity (INV-TS-08): for symbolic weight p ∈ (10⁻³, 1 −
+10⁻³) and t ∈ {10⁻⁷, 10⁻⁶, 10⁻⁵}, S1+t < S₁ < S1−t holds universally — the negative signs of
+the series coefficients (2.6) are verified, not merely tested on remembered cases. The
+second proves Hölder continuity at q = 2 (INV-TS-09): the Tsallis entropy at q = 2 is
+Lipschitz with the optimal constant derived in Section 6.5, within perturbation radius δ ≤
+10⁻³. The third proves the absence of NonFiniteResult (INV-TS-10) for every valid
+two-weight input with q ∈ (0, 100). The last two prove the finiteness of stable_power_sum 
+(INV-TS-07) — the first for fixed n = 2, the second for symbolic n ∈ [1, 8].
+The fifth harness illustrates the central technique that makes the proof tractable. The
+dimension n is symbolic (kani::any() constrained to 1 ≤ n ≤ 8), and the summation loop
+carries conditionally applied loop contracts:
+// crates/pacir-core/src/tsallis.rs (excerpt)
+#[inline]
+pub fn stable_power_sum(weights: &[f64], q: f64) -> f64 {
+    let mut max_log = f64::NEG_INFINITY;
+    let mut log_terms: Vec<f64> = Vec::with_capacity(weights.len());
+    let mut i = 0usize;
+    #[cfg_attr(kani, kani::loop_invariant(i <= weights.len()))]
+    #[cfg_attr(kani, kani::loop_decreases(weights.len() - i))]
+    while i < weights.len() {
+        let w = weights[i];
+        i += 1;
+        if w <= 0.0 { continue; }
+        let lt = q * w.ln();
+        if lt > max_log { max_log = lt; }
+        log_terms.push(lt);
+    }
+    // ... log-sum-exp composition
+}
+ Listing 2 — Loop contracts in stable_power_sum: annotations are applied only when compiled under Kani
+ (cfg_attr), keeping the production code identical under cargo build.
+The loop invariant (i ≤ weights.len()) and the termination measure (weights.len() − i strictly
+decreasing) let the verifier reason about the loop without unrolling all iterations — the same
+technique that reduces the exemplar case from 91.8 s to 0.2 s (Section 2.3.1). The n ≤ 8
+scope is not arbitrary: it delimits the SMT solver's path explosion to a verification budget
+that runs in CI on every commit. Section 5.4 documents exactly what this scope leaves
+uncovered, and Section 5.6 defines the fallback protocol when a harness fails to terminate.
+5.2 Contract-Based Harnesses for the Arkhe Modules
+
+
+=== PAGINA 21 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 21
+The Arkhe modules' harnesses — INV-SW-09 through INV-SW-12 — test contracts over
+configuration types whose implementations are not shown in this document. An earlier draft
+of these harnesses contained three tautological assertions of the form
+kani::assert(result.is_ok() || result.is_err()), which are always true for any Result and
+therefore prove nothing while manufacturing a false sense of coverage — a small but
+textbook instance of what Chapter 8 calls theatrical verification. All three were removed:
+absence of panic is guaranteed by the symbolic execution itself, not by an assertion. The
+harnesses were rewritten with substantive assertions — implications and negative
+properties — and renamed to state what they actually prove.
+Listing 3 shows the corrected INV-SW-09 harness. It asserts two properties: the negative
+property that any configuration with distance d < 3 is rejected (never accepted), and the
+substantive implication that any accepted configuration has a modeled logical error rate
+within the competition target. Listing 4 shows the corrected INV-SW-10, renamed from its
+former name (which promised an operations check its body never performed) to
+inv_sw_10_accepted_config_has_adequate_operations, now asserting that acceptance
+implies both decoding-below-coherence and at least 10⁵ target operations, plus the negative
+property that fewer operations are rejected.
+/// INV-SW-09: if `meets_competition_target()` returns `Ok(true)`,
+/// then d >= 3 (already assumed) AND the modeled LER is within target.
+/// The tautological `is_ok() || is_err()` assertion was removed.
+#[kani::proof]
+#[kani::unwind(4)]
+fn inv_sw_09_accepted_config_implies_target() {
+    let d: u8 = kani::any();
+    let p_ph: f64 = kani::any();
+    let p_th: f64 = kani::any();
+    kani::assume(d <= 31);
+    kani::assume(p_ph.is_finite() && p_ph > 0.0 && p_ph < 1.0);
+    kani::assume(p_th.is_finite() && p_th > 0.0 && p_th < 1.0);
+    let cfg = QecConfig { distance: d, p_ph, p_th };
+    let result = cfg.meets_competition_target();
+    // Property 1 (negative): d < 3 implies rejection.
+    if d < 3 {
+        kani::assert!(!matches!(result, Ok(true)),
+            "config with d < 3 must not be accepted");
+    }
+    // Property 2 (substantive): acceptance implies the modeled
+    // LER is within the competition target.
+    if let Ok(true) = result {
+        let ler = cfg.modeled_ler();
+        kani::assert!(ler <= cfg.target_ler(),
+            "accepted config violates LER <= target: ler={ler}");
+    }
+}
+ Listing 3 — The corrected INV-SW-09 harness: substantive implication plus negative property; the
+ tautological assertion was removed.
+
+
+=== PAGINA 22 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 22
+/// INV-SW-10 (renamed): if a fault-tolerance configuration is
+/// accepted, then (a) decoding_ns < coherence_ns AND (b) n_ops >= 1e5.
+/// The tautological `is_ok() || is_err()` assertion was removed.
+#[kani::proof]
+#[kani::unwind(4)]
+fn inv_sw_10_accepted_config_has_adequate_operations() {
+    let n_ops: u64 = kani::any();
+    let coherence_ns: u64 = kani::any();
+    let decoding_ns: u64 = kani::any();
+    kani::assume(n_ops <= 1_000_000_000);
+    kani::assume(coherence_ns > 0 && coherence_ns < 1_000_000);
+    kani::assume(decoding_ns > 0 && decoding_ns < 1_000_000);
+    let cfg = FaultToleranceConfig {
+        target_operations: n_ops,
+        coherence_time_ns: coherence_ns,
+        decoding_time_ns: decoding_ns,
+    };
+    let result = cfg.verify_all(0.01);
+    if let Ok(true) = result {
+        kani::assert!(decoding_ns < coherence_ns,
+            "accepted config violates decoding < coherence");
+        kani::assert!(n_ops >= 100_000,
+            "accepted config violates n_ops >= 1e5");
+    }
+    if n_ops < 100_000 {
+        kani::assert!(!matches!(result, Ok(true)),
+            "config with < 1e5 operations must not be accepted");
+    }
+}
+Listing 4 — The corrected and renamed INV-SW-10 harness: acceptance implies decoding-below-coherence
+ and n_ops ≥ 10⁵; sub-threshold configurations are rejected.
+Two design rules generalize from these corrections. First, every harness over an opaque API
+must include a negative property (invalid input ⇒ rejection) so that a trivially failing
+implementation cannot satisfy the invariant vacuously. Second, where feasible, harnesses
+should include existence assertions — a witness configuration for which the contract
+returns acceptance — proving the function is not permanently closed. Kani's assume/assert
+structure supports both patterns directly [9]. The set of opaque APIs and their assumed
+contracts is declared explicitly in Appendix B (API Dependencies); if any of these functions
+changes, the corresponding harnesses must be re-run, and the proofs are conditional on
+those contracts.
+5.3 Proptest: Sampling Coverage
+The pacir-chaos module centralizes the adversarial generation strategies and the eight
+chaos properties of the Tsallis module, executed with 512 cases per property on every CI
+run. The fundamental strategy — any_f64_adversarial — combines full coverage of
+proptest::num::f64::ANY with weighted pathological cases:
+
+
+=== PAGINA 23 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 23
+// crates/pacir-chaos/src/strategies.rs (excerpt)
+pub fn any_f64_adversarial() -> impl Strategy<Value = f64> {
+    prop_oneof![
+        2 => proptest::num::f64::ANY,   // full f64 space:
+                                        // NaN, +Inf, -Inf, subnormals
+        1 => Just(f64::NAN),
+        1 => Just(f64::INFINITY),
+        1 => Just(f64::NEG_INFINITY),
+        1 => Just(f64::MIN_POSITIVE),
+        1 => Just(f64::EPSILON),
+        1 => Just(0.0),
+        1 => Just(-0.0),
+        4 => -1e300_f64..1e300,         // extreme normals
+        2 => 0.0_f64..1e-10,            // near zero
+        2 => 1.0_f64 - 1e-10..1.0_f64 + 1e-10,  // near one
+    ]
+}
+ Listing 5 — The any_f64_adversarial strategy: a weighted union of the full f64 space with specific
+ pathological cases.
+The weighting (weight 2 for f64::ANY, weight 4 for extreme normal values, weight 1 for the
+canonical pathological constants) concentrates sampling in the regions that historically
+break numerical code without abandoning systematic coverage. On this base, three
+composed strategies feed the properties: valid distributions (positive weights summing to 1,
+dimension 2–8), valid diagonal density matrices, and raw adversarial inputs. Tabela 6
+summarizes the properties and their associated invariants.
+proptest property (512 cases)
+Generation strategy
+Invariant
+tsallis_classical_never_panics
+adversarial weights (0–16) + adversarial q
+INV-TS-04
+tsallis_quantum_never_panics
+adversarial 2×2 matrix + adversarial q
+INV-TS-04
+tsallis_q1_matches_shannon
+valid_distribution (2–8)
+INV-TS-01
+tsallis_nonnegative
+valid_distribution (2–8), q ∈ [0.1; 10]
+INV-TS-02
+tsallis_permutation_invariant
+valid_distribution + reversal
+INV-TS-05
+tsallis_non_extensive
+two independent distributions, q ∈ [0.5; 3]
+INV-TS-06
+tsallis_rejects_invalid_weight
+invalid weight at symbolic position
+INV-TS-04
+tsallis_local_monotonicity
+t ∈ [10⁻⁷; 10⁻⁴]
+INV-TS-08
+tsallis_valid_input_never_nonfinite
+valid_distribution, q ∈ [0.01; 50]
+INV-TS-10
+ Table 6 — Chaos properties of the Tsallis module (pacir-chaos).
+Two design decisions deserve emphasis. First, the non-panic property uses catch_unwind
+explicitly: the contract “no public function panics” is tested as a property, not assumed.
+Second, the invalid-weight rejection property (INV-TS-04) injects NaN, ±Inf, and negative
+values at a symbolic position and asserts the exact error variant — explicit rejection, not
+silent filtering (the corresponding historical error is documented in Section 6.4).
+5.4 What Is Not Proven
+Epistemic honesty requires the record of limitations to be as precise as the record of proofs.
+Tabela 7 enumerates the properties that remain outside the scope of universal proofs, the
+
+
+=== PAGINA 24 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 24
+method that approximates them, and the exact nature of the gap — including, prominently,
+the entire hardware layer, which no classical proof touches.
+Property
+Current method
+Limitation
+Arbitrary dimension n
+Kani proves n ≤ 8 (loop contracts)
+For large n, sampling coverage only
+(proptest)
+Lesche stability
+Not proven — and false under escort
+probabilities [5]
+Negative theorem recorded; a valid
+metric would require the homogeneous
+entropy
+Precision over ℝ
+Kani proves over f64 (IEEE-754)
+Rounding error not formally bounded
+Series convergence
+Point tests at the boundaries
+Convergence unproven; interval
+analysis identified
+Real hardware
+N/A — outside Kani's scope
+All hardware properties are measured
+(MET-HW), never proven
+ Table 7 — Explicit record of what is not proven.
+Each row corresponds to a conscious decision. The dimension limitation (Kani proves up to
+n = 8) is the price of SMT tractability — and the reason the coverage pyramid (Figure 3)
+stacks sampling and point tests above the proof layer. Lesche stability is not an
+implementation gap but a negative theorem of the theory (Section 2.2.5); recording it in the
+module documentation prevents a future version from announcing it by mistake. Precision
+over ℝ is simply not Kani's contract: proofs hold over f64, and the rounding error relative to
+the mathematical ideal is managed by the tests' explicit tolerances (1e-10, 1e-11, 1e-12 as
+appropriate). The series' convergence is observed by point tests, not proven — the
+interval-arithmetic proof is listed as future work. And every hardware property — logical
+qubit counts, measured LER, coherence times — is outside Kani's reach by construction;
+those claims belong to the DOE Testbed's empirical rejection criteria (Tabela 13), and
+conflating the two classes is precisely the theatrical-verification failure the global falsifier of
+Section 8.7 exists to catch.
+
+
+=== PAGINA 25 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 25
+Figure 3 — The Tsallis module's verification coverage pyramid: each layer complements the others, and the
+ top layer (type contracts and fail-closed design) reduces the proof burden of the lower ones. Source:
+ authors' elaboration.
+5.5 Guarantee Classes
+Beyond the coverage hierarchy, the architecture tracks the class of guarantee each
+mechanism provides — a distinction the Kani ASE 2026 report makes explicit at production
+scale [8]. Three classes matter here. Panic-freedom: no execution within scope diverges or
+panics; Kani proves this by default, with no user annotation. Functional correctness: the
+code computes what the specification states; this is the class the contract-based harnesses
+of Sections 5.1–5.2 upgrade to, and the class whose absence the six Hifitime bugs
+exemplify — those bugs were found precisely when contracts upgraded the verification
+beyond panic-freedom [8]. By-construction guarantees: properties enforced by the type
+system and API design (typed errors, total validation), which no test or proof needs to
+re-establish. Every row of the invariant catalog (Appendix A) carries its tool column
+precisely so that the class of guarantee is never implied where it does not hold.
+5.6 Reducing Harnesses and the Fallback Protocol
+Bounded model checking has a budget. The project's reduction strategies, in order of
+preference, are: (1) concretize values — replace kani::any() with concrete values for
+variables that control loop bounds, drastically shrinking the state space; (2) tune the
+unwind — bound loop iterations with #[kani::unwind(N)], knowing that too low a bound fails
+the proof and too high a bound invites timeout; (3) bound the solver — set --cbmc-timeout
+per harness so a single hard harness cannot stall CI; and (4) assert existence — prove that a
+
+
+=== PAGINA 26 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 26
+valid input succeeds, guarding against vacuous truth where an always-failing function
+would make every implication trivially hold (Section 5.2).
+When a harness still fails to terminate, the fallback protocol is explicit and non-negotiable.
+First, reduce the scope: prove n = 2 instead of n = 8, and document the reduction in the
+verification report. Second, substitute sampling: run 10⁴ adversarial proptest cases —
+strong statistical evidence, but not proof. Third, record the outcome: the xtask verify-all
+report emits, for every harness, a status of proved, reduced (with the reduced parameters),
+proptest-only (with the case count), or unproved (with the justification) — and an invariant
+is never marked as proven without a proof (Appendix B). This protocol converts CI timeouts
+from a silent integrity risk into a first-class, auditable outcome.
+6 The Tsallis Module: Implementation and Invariants
+6.1 The Physical Contract
+The module implements the classical Tsallis entropy (2.2) and the quantum version, defined
+over the eigenvalues of the density matrix ρ:
+ (6.1)
+The quantum version depends only on ρ's spectrum — spectral invariance is invariant
+INV-TS-03 — and requires, before any computation, fail-closed validation of the input:
+finiteness of every component, Hermiticity (‖ρ − ρ†‖ ≤ 10⁻¹⁰ per element), unit trace (|Tr ρ
+− 1| ≤ 10⁻¹⁰, with vanishing imaginary part), and a non-negative spectrum (λ ≥ −10⁻¹⁰;
+negative eigenvalues are rejected with a dedicated typed error). These validations
+implement INV-TS-04 in the quantum domain and mirror the classical domain's treatment,
+where non-finite, negative, or non-normalized weights (sum ≠ 1 ± 10⁻¹⁰) are rejected
+explicitly, with the offending weight's index carried in the error. The manual comparison of
+TsallisError (impl PartialEq) ignores f64 fields and compares variants — a decision that
+preserves InvalidQ(NaN) == InvalidQ(NaN) and, with it, the testability of variants.
+6.2 Implementation Branches
+The numerical core of the module is a three-branch decomposition, selected by the distance
+|q − 1| from the Shannon limit. Tabela 8 summarizes the branches; Figure 4 justifies the
+boundaries graphically.
+Branch
+Condition
+Computation method
+Exact Shannon/von
+Neumann
+|q − 1| < 10⁻⁸
+S₁ = −Σ pᵢ ln pᵢ (Shannon moments)
+Taylor series
+10⁻⁸ ≤ |q − 1| < 10⁻⁴
+Expansion through M₄: S₁ − t/2·M₂ − t²/6·M₃ −
+t³/24·M₄
+General formula
+|q − 1| ≥ 10⁻⁴
+(1 − Σ pᵢ^q)/(q − 1) with log-sum-exp stable sum
+ Table 8 — Implementation branches of the Tsallis entropy.
+
+
+=== PAGINA 27 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 27
+ Figure 4 — Numerical regimes of the three implementation branches: (a) the Tsallis entropy Sq as a
+function of q for uniform distributions (n = 2, 4, 8), with Shannon limits S₁ = ln n (dotted); (b) the error of
+ the M₄-truncated series (O(t⁴) decay) versus the general formula's cancellation error (ε·S₁/t), with the
+ branch boundaries (10⁻⁸, 10⁻⁴) and the boundary tolerance (10⁻¹¹). Source: authors' elaboration.
+The boundaries are not stylistic conventions — they are justified numerical decisions. For |q
+− 1| < 10⁻⁸, the difference Sq − S₁ is O(10⁻⁸), below f64's meaningful precision in the
+relevant region; evaluating the general formula there measures rounding noise, and the
+exact Shannon/von Neumann branch is the only significant answer. For 10⁻⁸ ≤ |q − 1| < 
+10⁻⁴, the M₄-truncated series dominates: the O(t⁴) remainder is ≈ 10⁻¹⁶ · M₅, while the
+general formula's catastrophic cancellation error — ε·S₁/t — already reaches ≈ 7 × 10⁻¹³ at
+t = 10⁻⁴ and grows as 1/t as t decreases. For |q − 1| ≥ 10⁻⁴, the general formula with a
+log-sum-exp stable power sum is accurate and free of relevant cancellation. The general
+branch uses the classic maximum-logarithm technique: max_log = max(q·ln pᵢ), a sum of
+exp(lt − max_log), and exponential recomposition — avoiding underflow and overflow for
+subnormal weights and large q.
+Continuity across branches is verified by dedicated boundary tests: with q placed 10⁻¹² on
+either side of the boundaries t = 10⁻⁸ and t = 10⁻⁴, the difference |Sin − Sout| must remain
+below 10⁻¹¹. The tolerance was calibrated deliberately: at t = 10⁻⁴ the general formula's
+residual cancellation error is ε·S₁/t ≈ 7 × 10⁻¹³, so 10⁻¹¹ detects jumps larger than the
+residue without false positives — the test's earlier 10⁻¹² tolerance was fragile precisely
+because of that residue.
+6.3 Invariants
+The module declares ten invariants INV-TS-01..10, each with a concrete falsifier and
+documented coverage (universal proof, sampling, or point test). Tabela 9 presents the
+catalog in the project's canonical format, now including the tool column that makes the
+guarantee class explicit (Section 5.5).
+ID
+Statement
+Falsifier
+Tool
+INV-TS-01
+q → 1 recovers Shannon/von Neumann
+Divergent limit
+test + Kani
+INV-TS-02
+S_q ≥ 0 for valid inputs and q > 0
+S_q < 0
+proptest + Kani
+
+
+=== PAGINA 28 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 28
+ID
+Statement
+Falsifier
+Tool
+INV-TS-03
+Quantum S_q depends only on ρ's eigenvalues
+Basis dependence
+test
+INV-TS-04
+Typed failure for every invalid input
+(fail-closed)
+Panic or silent
+acceptance
+Kani + proptest
+INV-TS-05
+Classical S_q permutation-invariant
+Order dependence
+proptest
+INV-TS-06
+Non-extensivity holds for independent
+systems
+Violation of formula (2.4)
+test
+INV-TS-07
+Stable power sum via log-sum-exp
+Overflow / underflow
+Kani
+INV-TS-08
+S_q locally decreasing at q = 1 (multiple
+scales)
+S₁₊ₜ ≥ S₁
+Kani
+INV-TS-09
+Hölder continuity at q = 2 (Lipschitz, K = 2)
+|ΔS₂| > 2|δ|
+Kani
+INV-TS-10
+No NaN/Inf for valid inputs
+NonFiniteResult
+Kani + proptest
+ Table 9 — Catalog of invariants INV-TS-01..10 with the tool (guarantee class) column.
+Three invariants merit additional comment. INV-TS-07 (stable power sum) is the only one
+with two dedicated Kani harnesses (n = 2 and n ≤ 8), reflecting its role as the foundation of
+every other computation. INV-TS-08 (local monotonicity) is verified at multiple scales — t
+from 10⁻⁷ to 10⁻⁵ in Kani and 10⁻⁷ to 10⁻⁴ in proptest — because the sign error that
+motivated it (Section 6.4) manifests exactly at those scales. INV-TS-09 (Hölder at q = 2)
+formalizes continuity with an explicit Lipschitz constant — now derived rather than
+assumed (Section 6.5).
+6.4 Historical Errors Corrected
+The module's development produced three significant errors that were detected, fixed, and
+converted into permanent regressions. Documenting them is part of epistemic honesty:
+corrected, regression-tested errors are evidence that the verification process works.
+1. The cubic-coefficient sign. The series expansion (2.6) has all-negative coefficients —
+including the term associated with the third moment, t²/6·M₃. An earlier version of the
+code carried a positive sign there, inverting the local monotonicity in the series regime.
+The error was caught by the combination of the series_q_plus_1e6_decreases (S1+t < S₁)
+and series_q_minus_1e6_increases (S1−t > S₁) tests and is now barred universally by the
+proof_tsallis_series_sign_multi_t harness, which verifies monotonicity for t ∈ {10⁻⁷, 10⁻⁶,
+10⁻⁵}.
+2. Cross terms in verify_non_extensive. Verifying pseudo-additivity (2.4) in the series
+regime requires the joint moments of the independent distribution pij = aᵢ·bj, which are
+not the sums of the marginal moments. The correct identities are:
+3. Silent filtering of invalid weights. An earlier version silently discarded invalid weights
+(negative, NaN) and renormalized the rest — convenient and dangerous behavior: it
+masked upstream bugs and violated the fail-closed principle. The fix replaced filtering
+with explicit rejection carrying a typed error (InvalidWeight { index, value }), and the
+proptest property tsallis_rejects_invalid_weight guarantees the rejection occurs for any
+position and any invalid value.
+
+
+=== PAGINA 29 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 29
+ (6.2)
+ (6.3)
+Equations (6.2) and (6.3) complete item 2: M₂joint and M₃joint in terms of the marginal
+moments. The error consisted of omitting the cross terms −3(M₂ᵃS₁ᵇ + S₁ᵃM₂ᵇ) in (6.3),
+which made the non-extensivity check fail for q near 1 with asymmetric distributions. The
+non_extensive_formula_holds tests for q = 2, 1 + 10⁻⁶, and 1 − 10⁻⁶ are the permanent
+regressions, and the proptest property tsallis_non_extensive covers the sampling space with
+distributions of dimension 2–4 and q ∈ [0.5; 3].
+6.5 The Optimal Lipschitz Constant
+An earlier draft of the Hölder-continuity harness used the constant K = 2.0 as an ad-hoc
+value, and an intermediate revision proposed the expression K = 2|ln(p/(1−p))| + 2 as an
+“optimal” constant. Direct differentiation shows both choices can be improved by a
+transparent analytical derivation. For q = 2 over two outcomes, the entropy has the closed
+form:
+ (6.4)
+since Σpᵢ² = p² + (1−p)² = 1 − 2p(1−p) and S₂ = 1 − Σpᵢ². The derivative is linear, so the
+optimal Lipschitz constant over any domain D ⊆ [0,1] is the maximum absolute slope:
+ (6.5)
+On the harness's effective domain — the perturbed weight is clamped to [10⁻⁶, 1 − 10⁻⁶] —
+the supremum is 2 − 4×10⁻⁶ → 2, so the harness's existing constant K = 2 is optimal up to
+2×10⁻⁶ and the assertion |ΔS₂| ≤ 2|δ| + 10⁻¹² holds with no slack beyond the floating-point
+tolerance. On the narrower training domain [10⁻², 1 − 10⁻²] the optimal constant tightens to
+K* = 1.96. The proposed logarithmic expression, by contrast, yields ≈ 11.2 at p = 0.01 — a
+valid but far from optimal upper bound — and diverges as p → 0, where the true slope
+converges to 2. We therefore retain K = 2 for the clamped harness (now justified rather
+than assumed), record 1.96 as the domain-restricted refinement, and note the
+methodological lesson: constants used in formal assertions should be derived, and the
+derivation recorded alongside the proof, so that the assertion is a certificate rather than a
+guess.
+7 The Arkhe Modules: QEC, Fault Tolerance, Testbed,
+Decoder
+7.1 arkhe-qec-verify
+The QEC verification module implements the candidate codes — SurfaceCode,
+RepetitionCode, ColorCode, and QuantumLdpc — and the logical error rate model that
+
+
+=== PAGINA 30 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 30
+governs distance decisions:
+ (7.1)
+with the target pL ≤ 10⁻⁸ derived in Section 3.2. The module exposes two primary software
+invariants. INV-QEC-01 requires every registered configuration to declare distance ≥ 3 —
+the minimum distance with genuinely quantum correction — and rejects configurations with
+insufficient distance; the falsifier is a configuration with d < 3 accepted by the verifier.
+INV-QEC-02 requires the declared logical error rate to be consistent with model (7.1) for
+the registered parameters (p, pth, d); the falsifier is a declared rate contradicting the model.
+INV-LER-01 and INV-LER-02 complement the pair by checking that the operating
+configuration meets the 10⁻⁸ target and that the empirical prefactors used are those
+registered. The contract-based harness INV-SW-09 (Listing 3) lifts these checks to the
+universal level: within the harness scope, acceptance implies the modeled LER meets the
+target, and sub-minimal distances are rejected.
+The physical-qubit budget is computed as 2d² per logical qubit [10] — Tabela 10 presents
+the budgets for the 100-logical-qubit target fleet at the relevant distances. The conservative
+2d² allocation (data and measurement qubits) sits slightly above the exact count of the
+rotated surface code, d² + (d − 1)²; the deliberately generous difference serves as margin
+for routing and measurement redundancy. The table's reading is direct: at the design point
+d = 17, the competition target requires ≈ 57,800 physical qubits, with d = 15 (≈ 45,000)
+marking the optimistic boundary — consistent with the resource estimates of the literature
+[10, 14] and an order of magnitude above current demonstrations [12].
+Distance d
+Physical qubits/logical
+(2d²)
+Total for 100 logical
+Projected LER (p = 10⁻³)
+9
+162
+16,200
+≈ 4.9 × 10⁻⁶
+11
+242
+24,200
+≈ 8.7 × 10⁻⁷
+13
+338
+33,800
+≈ 1.5 × 10⁻⁷
+15
+450
+45,000
+≈ 2.7 × 10⁻⁸
+17 (design point)
+578
+57,800
+≈ 4.7 × 10⁻⁹
+21
+882
+88,200
+≈ 1.4 × 10⁻¹⁰
+ Table 10 — Physical-qubit budgets and projected logical error rates for the 100-logical-qubit fleet, from
+ (7.1) with A = 0.03 and p_th = 0.57% [10].
+7.2 arkhe-fault-tolerant-verify
+The fault-tolerance module verifies the two restrictions that define fault-tolerant operation
+in the competition's sense. The first is temporal: decoding each cycle must complete before
+the logical qubit's coherence time expires (Section 2.1.2); the module requires tdec <
+Tcoherence and records violations as failures, not degradations. The second is the operations
+budget: each logical operation consumes, in the module's model, a budget of 10 correction
+cycles (including gauge fixing, syndrome extraction, and proportional distillation), so the
+complete N-operation computation accumulates the failure risk:
+
+
+=== PAGINA 31 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 31
+ (7.2)
+The module's three invariants operationalize these restrictions. INV-FT-01 (no unhandled
+failure) requires every execution path to handle upstream errors — the falsifier is any
+unhandled failure reaching the integration verifier. INV-FT-02 (cycle budget) requires the
+total cycles per operation not to exceed the registered budget. INV-FT-03 (accumulated
+error ≤ target) verifies (7.2) for N = 10⁸ and the survival target derived in Section 3.2 —
+connecting the invariant directly to the competition's hundreds-of-millions-of-operations
+requirement. The contract harness INV-SW-10 (Listing 4) adds the universal-level check
+that accepted configurations satisfy both the temporal restriction and the 10⁵
+hard-operation floor.
+7.3 arkhe-quantum-testbed
+The testbed module mirrors, as data structures, the six characterization layers required by
+the DOE's V&V; Lab Call: PhysicalHardware, QuantumGates, LogicalArchitecture,
+QuantumAlgorithms, Applications, and ClassicalControl [1]. Each layer is characterized
+independently — its own metrics, its own procedure, its own owner — and each
+characterization emits a blake3 record hash that uniquely identifies the result. The design
+follows the principle that layer-by-layer validation demands content-addressable evidence:
+re-executing a characterization procedure must reproduce its hash, and any divergence is
+detectable without trusting logs or external metadata. The methodological foundation for
+comparing testbeds — standardized, low-level noise characterization across federally
+funded platforms — follows the stakeholder workshop white paper of Shaydulin, Suchara
+and Larson [26], which informs the metrics vocabulary the module records per layer.
+The module's three invariants guarantee the process's integrity. INV-QTB-01
+(uncharacterized layer → failure) requires no layer to be missing from the characterization
+record — the falsifier is a configuration with a missing layer accepted. INV-QTB-02 (hashes
+registered) requires every characterized layer to have an emitted record hash. INV-QTB-03
+(re-execution reproduces the hash) connects the testbed to the audit trail: re-running the
+procedure on the same state must reproduce the registered hash. Together they transform
+the rhetorical requirement of “validating every layer of the stack” into a machine-verifiable
+data state.
+7.4 arkhe-qec-decoder
+The decoder module abstracts the four candidate decoder types — MWPM, UnionFind,
+NeuralNetwork, and LookupTable — behind a single interface with an explicit time budget.
+The real-time restriction of Section 2.1.2 is implemented as a contract check:
+time_budget_ns < coherence_time_ns, evaluated per decoding operation. A budget
+violation — a timeout — is never silently tolerated: it produces a typed Err and is recorded
+as an invariant violation. This decision directly counters the backlog risk: a decoder that
+silently delays degrades the effective error rate without a visible signal, and detection
+would come — too late — from the Testbed's LER measurement. The corrected harness
+INV-SW-12 (Section 5.2) lifts the contract to the universal level: within scope,
+
+
+=== PAGINA 32 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 32
+can_operate_realtime() == true implies budget < coherence.
+The module's two invariants cover the two failure classes. INV-QECD-01 (accepted timeout
+→ violation) requires no execution path to accept a decoding result outside the temporal
+budget; INV-QECD-02 (registered precision) requires each decoder type to declare and
+record its decoding precision against the maximum-likelihood limit, enabling fair
+comparison across types in the Testbed. The architecture keeps the decoder swappable by
+configuration — MWPM for precision, UnionFind for quasi-linear latency, neural networks
+for scale — provided the temporal contract holds; at the scale the competition demands, the
+system-level architectures of Section 2.1.2 (DECONET's networked decoding of 100 logical
+qubits) are the appropriate reference class, and the module's interface is designed to admit
+such decoders without contract changes.
+8 The Verification Gap: Six Nodes, Five Links
+8.1 The Chain and Its Links
+The architecture's most consequential conceptual contribution separates what verification
+can mean along the chain that connects an intention to a measured phenomenon. An earlier
+draft presented this decomposition as five nodes and called its sections “links”, producing a
+counting inconsistency (five nodes, four arrows, five “links”). This version fixes the
+terminology: the chain has six nodes N0–N5 and five links E1–E5, where a link is precisely
+an arrow — a transition between different epistemic models. Figure 5 presents the chain;
+Tabela 11 assigns each link its content and its admissible evidence class.
+ Figure 5 — The Verification Gap: six nodes (N0 Intention → N1 Specification → N2 Physical model → N3
+Software → N4 Hardware → N5 World) connected by five links (E1–E5), each with its admissible class of
+ evidence. Feedback loops (N2 → N1, N4 → N2, N5 → N0) are listed beneath the linear chain. Source:
+ authors' elaboration.
+Link
+Arrow
+What crosses
+Covered by
+E1
+N0 → N1
+Intention formalized as specification
+Human judgment (not formalizable)
+E2
+N1 → N2
+Specification realized as physical model
+Empirical validation (not formal)
+E3
+N2 → N3
+Model implemented as code
+Kani + proptest
+
+
+=== PAGINA 33 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 33
+Link
+Arrow
+What crosses
+Covered by
+E4
+N3 → N4
+Software controls / models hardware
+DOE Testbed measurement
+E5
+N4 → N5
+Hardware realizes the phenomenon
+Metrology
+Table 11 — The five links of the Verification Gap and their admissible evidence classes. Feedback loops: N2
+ → N1, N4 → N2, N5 → N0.
+Three linear-chain feedback loops complete the picture and were added in response to the
+audit: N2 → N1 (the physical model informs the specification — e.g., the asymptotic caveat
+of model (2.1) changes what the specification may claim), N4 → N2 (hardware
+characterization informs the model — exactly what the DOE Testbed will produce, entering
+as calibrated pph and pth), and N5 → N0 (the observed phenomenon informs the intention —
+the scientific loop that closes the program). The chain is thus a cycle in practice, traversed
+once per verification campaign.
+8.2 Terminology: Falsifiers versus Empirical Rejection Criteria
+The audit also sharpened the vocabulary. A falsifier, in the Popperian sense, requires a
+universal assertion refutable by an observable counterexample — which only exists at link
+E3, where the assertion is formalized in code and the counterexample is executable. For E1,
+E2, E4, and E5, the correct term is empirical rejection criterion: a defined test protocol over
+a hypothesis, executed by a designated party (the DOE Testbed, or the metrology layer),
+whose adverse outcome rejects the claim — without the claim ever having been “proven”.
+The invariant catalog of Appendix A respects this distinction column by column: software
+invariants carry falsifiers; hardware metrics carry rejection criteria. The distinction is not
+pedantic — it is what prevents a measured quantity from being described as proven.
+8.3 The Links in Detail
+E1 — Intention → Specification. Choosing the specification is an engineering decision and a
+scientific judgment. No formal system can prove that the correct specification was written:
+the gap between formal specification and user intention is a recognized grand challenge of
+dependable software engineering. This is the most invisible and most fundamental link —
+every subsequent proof is relative to it. E2 — Specification → Physical model. The formula
+pL ≈ A(p/pth)⌈(d+1)/2⌉ is an asymptotic approximation, valid for p   pth and large d, with a
+decoder- and noise-model-dependent prefactor (Section 2.1.1); higher-order corrections are
+not captured. The link is traversed by empirical validation — comparing predicted against
+measured LER — with an explicit rejection criterion, not by proof. E3 — Physical model →
+Software. Covered by Kani and proptest. What is proven: the code respects the specification
+under the current execution model — with Kani's trust base (Section 2.3.1) honestly
+recorded as part of the claim's scope. E4 — Software → Hardware. The software computes
+pL = 10⁻⁸ if pph and pth are correct; those parameters come from experimental
+characterization — exactly what the DOE Testbed will perform, and the point where the
+architecture's record hashes meet the Testbed's measurements. E5 — Hardware → World.
+The measurement of the physical phenomenon is outside the reach of any formal
+verification; it belongs to metrology, with its own calibrated instruments and uncertainty
+budgets.
+
+
+=== PAGINA 34 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 34
+8.4 The Global Falsifier: Against Theatrical Verification
+The decomposition yields a single, acutely actionable check that every derived report must
+respect — the program's global falsifier against theatrical verification:
+If a PACIR report claims that a hardware property (≥ 100 logical qubits, 10⁵ hard
+operations, LER ≤ 10⁻⁸) was proven by Kani, the report is falsified. Kani does not
+access hardware. The only admissible formulation is: “the software rejects
+configurations that violate this target in the model.”
+The three tautological assertions removed in Section 5.2 were, in miniature, exactly this
+failure mode: assertions that appear to establish something while establishing nothing. The
+global falsifier generalizes the lesson to the report level, and the INV-SW/MET-HW split of
+the invariant catalog makes the admissible claim class a structural property of the
+documentation rather than a matter of authorial discipline.
+9 Results and Analysis
+9.1 Verification Coverage
+Tabela 12 consolidates the workspace's verification coverage by module and method. The
+Tsallis module concentrates the formal coverage — 25+ unit tests, 8 proptest properties,
+and 5 Kani harnesses — being the numerically most delicate module and the method's
+standard-bearer; the Arkhe modules carry unit coverage with contract-based harnesses
+(Section 5.2) and universal proofs listed as planned evolution (Section 10.2). This
+asymmetry is deliberate and declared: the methodology was proven end-to-end on the
+hardest module before being extended to the others.
+Module
+Unit tests
+proptest
+Kani
+pacir-core/tsallis
+25+
+8 properties
+5 harnesses
+arkhe-qec-verify
+5
+—
+INV-SW-09 harness
+arkhe-fault-tolerant-verify
+4
+—
+INV-SW-10 harness
+arkhe-quantum-testbed
+3
+—
+— (integration test)
+arkhe-qec-decoder
+4
+—
+INV-SW-12 harness
+pacir-chaos (strategies)
+—
+via the properties
+above
+—
+ Table 12 — Verification coverage by module and method (repository state).
+The full suite's execution is automated and reproducible: the commands of Appendix B
+cover unit tests (cargo test per module), chaos properties (cargo test -p pacir-chaos), the
+complete workspace, and the Kani harnesses individually or in batch (cargo kani).
+Continuous integration executes the suite on every commit, and the blake3 record hashes
+emitted by verifications form the audit trail connecting every result to the exact code state
+that produced it. Each harness outcome is classified by the fallback protocol's status
+vocabulary (proved / reduced / proptest-only / unproved), keeping the evidence ledger
+
+
+=== PAGINA 35 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 35
+honest under CI time constraints (Section 5.6).
+9.2 Proven versus Sampled versus Measured
+Tabela 13 presents the Tsallis module's epistemic map, classifying each property by
+evidence level: universal proof by Kani (with declared scope), sampling by proptest, or a
+deterministic point test. The correct reading is row-wise: local monotonicity, for example, is
+proven universally for fixed t ∈ {10⁻⁷, 10⁻⁶, 10⁻⁵} and sampled for t ∈ [10⁻⁷; 10⁻⁴] — which
+is different from being proven for all t. The final row makes the hardware boundary explicit:
+no hardware property appears with any formal-evidence mark.
+Property
+Kani
+(universal)
+proptest
+(sampled)
+Point test
+Hardware
+(measured)
+Non-panic (INV-TS-04)
+—
+  (2 properties)
+  (rejections)
+—
+S_q ≥ 0 (INV-TS-02)
+—
+ 
+—
+—
+Local monotonicity
+(INV-TS-08)
+  (fixed t)
+ 
+ 
+—
+Non-extensivity (INV-TS-06)
+—
+ 
+  (q = 2, 1 ± 10⁻⁶)
+—
+Finiteness of
+stable_power_sum
+(INV-TS-07)
+  (n ≤ 8)
+—
+—
+—
+No NonFiniteResult
+(INV-TS-10)
+  (n = 2)
+ 
+—
+—
+Hölder at q = 2 (INV-TS-09)
+  (δ ≤ 10⁻³)
+—
+  (δ = 10⁻³)
+—
+Series/general and
+series/exact boundaries
+—
+—
+  (tolerance 10⁻¹¹)
+—
+q = 1 = Shannon (INV-TS-01)
+—
+ 
+  (exact values)
+—
+Hardware metrics
+(MET-HW-01..06)
+—
+—
+—
+  (DOE
+Testbed)
+ Table 13 — Epistemic map: what is proven universally, sampled, point-tested, and measured (Tsallis
+ module and hardware boundary).
+The map exhibits the architecture's general pattern: structural foundation properties
+(finiteness, non-panic, monotonicity, local continuity) climb the pyramid to universal proof
+within declared scope; aggregation and boundary properties (non-extensivity with cross
+terms, inter-branch continuity) are verified by sampling and dedicated tests; properties
+depending on external theory (series convergence) remain at point level with an identified
+formal path; and hardware properties remain, permanently, in the empirical column. No cell
+of the table is optimistic by convenience — where the evidence is sampled, the table says
+sampled; where it is measured, the table says measured.
+9.3 Limitations
+Five limitations delimit the results' reach and orient future work.
+
+
+=== PAGINA 36 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 36
+1. Dimension. Universal proofs cover n ≤ 8 (via loop contracts); for larger dimensions
+coverage is sampled. Extending to arbitrary n requires function contracts over
+stable_power_sum and is the first item of the future agenda.
+2. Precision. Proofs hold over the IEEE-754 domain, not over ℝ; the rounding error
+relative to the mathematical ideal is managed by explicit tolerances (10⁻¹⁰ to 10⁻¹²) and is
+not formally bounded. Interval analysis is the natural path to closing this gap.
+3. Lesche. Lesche stability is not proven — and is known to be false for the Tsallis entropy
+under escort probabilities [5]. The module records the negative theorem in its
+documentation; substitution by a valid metric based on the homogeneous entropy [5, 7] is
+future work.
+4. Integration. The QEC → FT → Testbed integration tests are point tests, not formal ones.
+Composing invariants across modules (e.g., proving that the LER entering the
+fault-tolerance module satisfies (7.2) for every configuration accepted by the QEC
+module) is the architecture's next formal frontier.
+5. Hardware. No hardware property is proven; all are measured — by the DOE Testbed
+under the empirical rejection criteria of Tabela 13's companion, MET-HW. The
+architecture's contribution is to make this boundary structural, not rhetorical.
+An epistemic status record completes the analysis: the Tsallis module stands at the stage of
+operational formal proofs (Kani harnesses running in CI), while the Arkhe modules stand at
+the stage of specified contracts with unit coverage and contract harnesses. The
+differentiation is voluntary and reproduces the monograph's methodological strategy: prove
+the method on the most delicate module, document the remaining gaps, and scale the
+formalization with the verification budget.
+10 Conclusion
+10.1 Contributions
+The monograph presents five contributions:
+1. A unified architecture — PACIR + Arkhe OS — for fault-tolerant quantum computing
+verification, with explicit separation between the physical-mathematical and engineering
+domains, a bridge of verifiable contracts, and a blake3 audit trail, materialized as a
+six-module Cargo workspace with full CI automation.
+2. The Tsallis module with fail-closed contracts, ten verifiable invariants, three
+implementation branches with numerically justified boundaries (10⁻⁸ and 10⁻⁴, boundary
+tolerance 10⁻¹¹), five Kani harnesses with bit-precise universal proofs up to n = 8 via loop
+contracts, an analytically derived optimal Lipschitz constant, and eight proptest
+properties with full adversarial f64 coverage.
+3. An exhaustive mapping of every Quantum Genesis Q requirement onto verifiable
+invariants with concrete falsifiers — and every hardware metric onto empirical rejection
+criteria — including the union-bound derivation of the LER ≤ 10⁻⁸ target and the
+correspondence with the Testbed's six layers.
+
+
+=== PAGINA 37 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 37
+4. The Verification Gap — a six-node, five-link decomposition (Intention → Specification →
+Physical model → Software → Hardware → World) with feedback loops, per-link evidence
+classes, and a global falsifier against theatrical verification; the conceptual tool that
+keeps proof, design assertion, and human judgment in their respective places.
+5. Epistemic honesty as an engineering artifact: explicit documentation of what is proven
+(universally, within scope), sampled, and unproven — including the Lesche negative
+theorem with its correct reference (Lutsko, Boon and Grosfils, 2009), the removal of
+tautological assertions, declared opaque-API dependencies, and the conversion of every
+historical error into a permanent regression.
+10.2 Future Work
+Six lines of work follow directly from the documented limitations:
+1. Loop contracts on every loop of stable_power_sum for arbitrary n, eliminating the
+dimension boundary of the universal proofs;
+2. Integration verification of QEC → FT → Testbed via Kani, proving the cross-module
+composition of invariants rather than each invariant in isolation;
+3. Extension to multiple logical qubits (n > 8) via function contracts, approaching the
+proof scope of the competition's target fleet size;
+4. A convergence proof for the Taylor series via interval analysis, raising that property
+from point level to universal level;
+5. Substituting Lesche with a valid stability metric — grounded in the homogeneous
+entropy [5, 7] — converting a recorded negative theorem into an implementable positive
+invariant;
+6. Integration with the DOE Testbed — consuming the Testbed's characterization outputs
+as calibrated model parameters (link N4 → N2 of the Verification Gap) and emitting the
+architecture's record hashes as candidate evidence — together with a two-layer
+integration in which Veri-QEC-class circuit verification composes with the Rust-level
+proofs (Section 2.4).
+10.3 Closing Remarks
+The Quantum Genesis Q competition demands more than hardware: it demands verification.
+The September 2026 announcement established, for the first time, that the initial paid
+milestone of a quantum competition is a verification and validation plan — and the parallel
+Lab Call committed $45 million to characterizing every layer of the stack [1]. The PACIR +
+Arkhe OS architecture offers a concrete answer to that demand: transform engineering
+requirements into verifiable contracts, with formal evidence where possible, sampled
+evidence where necessary, and honestly labeled measurement everywhere else.
+The method's gain is not “proving Tsallis” — nor proving any physical theorem. The gain is a 
+contract that survives: refactoring (the production and proof code remain identical under
+cargo build), adversarial inputs (the full f64 space, not merely the cases the author
+
+
+=== PAGINA 38 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 38
+remembered), precision changes (regime boundaries are tested, not assumed), and — the
+decisive test — the scrutiny of an independent verifier with every claim's evidence class
+structurally explicit. In an engineering program whose final milestone is a public
+demonstration of 10⁸ operations before an independent Testbed, contracts that survive are
+the difference between a demonstration and a declaration.
+References
+[1]  U.S. Department of Energy, Office of Science. “DOE Launches Competition to Accelerate
+Development of World’s First Fault-Tolerant Quantum Computer.” Press release, September
+16–17, 2026. Available at: https://www.energy.gov/science/articles/doe-launches-competition-accel
+erate-development-worlds-first-fault-tolerant. Accessed: September 18, 2026.
+[2]  U.S. Department of Energy, Office of Science. “The DOE Quantum Genesis Q Competition.”
+Request for Applications DE-FOA-0003657. Simpler.Grants.gov, September 16, 2026 (closing:
+October 19, 2026). Available at:
+https://simpler.grants.gov/opportunity/05ea4b35-7c9b-45a7-98cb-7579ac2c0b19. Accessed:
+September 18, 2026.
+[3]  Tsallis, C. “Possible Generalization of Boltzmann-Gibbs Statistics.” Journal of Statistical
+Physics 52, 479–487 (1988). Available at: https://doi.org/10.1007/BF01016429. Accessed:
+September 18, 2026.
+[4]  Bhattacharyya, T. et al. “Small (q−1) expansion of the Tsallis distribution and study of particle
+spectra at LHC.” South African Institute of Physics (SAIP) Conference Proceedings (2016).
+Available at: https://inspirehep.net/literature/1484326. Accessed: September 18, 2026.
+[5]  Lutsko, J. F.; Boon, J. P.; Grosfils, P. “Is the Tsallis entropy stable?” Europhysics Letters (EPL)
+86, 40005 (2009). Available at: https://doi.org/10.1209/0295-5075/86/40005. Accessed: September
+18, 2026.
+[6]  Lesche, B. “Instabilities of Rényi entropies.” Journal of Statistical Physics 27, 419–422 (1982).
+Available at: https://doi.org/10.1007/BF01008947. Accessed: September 18, 2026.
+[7]  Abe, S. “Stability of Tsallis entropy and instabilities of Rényi and normalized Tsallis entropies:
+a basis for q-exponential distributions.” Physical Review E 66, 046134 (2002). Available at:
+https://doi.org/10.1103/PhysRevE.66.046134. Accessed: September 18, 2026.
+[8]  Delmas, R.; Hassan, Z.; Hu, Q.; Kumar, R.; Monteiro, F. R.; Nguyen, T.; Palacios, A.; Val, C.;
+Tautschnig, M.; Adam, J.; Schwartz-Narbonne, D.; Zech, C. “Kani: A Model Checker for Rust.” 39th
+IEEE/ACM International Conference on Automated Software Engineering (ASE 2026), Industry
+Showcase Track. arXiv:2607.01504 (2026). Available at: https://arxiv.org/abs/2607.01504.
+Accessed: September 18, 2026.
+[9]  Model Checking Group. “Kani Rust Verifier.” Official repository and documentation (2026).
+Available at: https://github.com/model-checking/kani. Accessed: September 18, 2026.
+[10]  Fowler, A. G.; Mariantoni, M.; Martinis, J. M.; Cleland, A. N. “Surface codes: Towards
+practical large-scale quantum computation.” Physical Review A 86, 032324 (2012). Available at:
+https://doi.org/10.1103/PhysRevA.86.032324. Accessed: September 18, 2026.
+[11]  Dennis, E.; Kitaev, A.; Landahl, A.; Preskill, J. “Topological quantum memory.” Journal of
+Mathematical Physics 43, 4452–4505 (2002). Available at: https://doi.org/10.1063/1.1499754.
+Accessed: September 18, 2026.
+[12]  Google Quantum AI and Collaborators. “Quantum error correction below the surface code
+threshold.” Nature 638, 920–926 (2025). Available at: https://doi.org/10.1038/s41586-024-08449-y.
+
+
+=== PAGINA 39 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 39
+Accessed: September 18, 2026.
+[13]  Preskill, J. “Quantum Computing in the NISQ era and beyond.” Quantum 2, 79 (2018).
+Available at: https://doi.org/10.22331/q-2018-08-06-79. Accessed: September 18, 2026.
+[14]  Gidney, C.; Ekerå, M. “How to factor 2048 bit RSA integers in 8 hours using 20 million noisy
+qubits.” Quantum 5, 433 (2021). Available at: https://doi.org/10.22331/q-2021-06-07-433.
+Accessed: September 18, 2026.
+[15]  Alexeev, Y. et al. “A Perspective on Quantum Computing Applications in Quantum Chemistry
+Using 25–100 Logical Qubits.” Pacific Northwest National Laboratory (PNNL), 2025. Available at: 
+https://www.pnnl.gov/publications/perspective-quantum-computing-applications-quantum-chemistr
+y-using-25-100. Accessed: September 18, 2026.
+[16]  D-Wave Quantum Inc. “D-Wave Charts a New Course to Fault-Tolerant Quantum Computing
+with Gate-Model Roadmap.” Press release, June 1, 2026. Available at: https://www.dwavequantum.
+com/company/newsroom/press-release/d-wave-charts-a-new-course-to-fault-tolerant-quantum-com
+puting-with-gate-model-roadmap. Accessed: September 18, 2026.
+[17]  Diósi, L. “Models for universal reduction of macroscopic quantum fluctuations.” Physical
+Review A 40, 1165–1174 (1989). Available at: https://doi.org/10.1103/PhysRevA.40.1165. Accessed:
+September 18, 2026.
+[18]  Penrose, R. “On Gravity’s Role in Quantum State Reduction.” General Relativity and
+Gravitation 28, 581–600 (1996). Available at: https://doi.org/10.1007/BF02105068. Accessed:
+September 18, 2026.
+[19]  Lingle, J. et al. “proptest: Property testing for Rust.” Official documentation (docs.rs), 2026.
+Available at: https://docs.rs/proptest. Accessed: September 18, 2026.
+[20]  Quantum Zeitgeist. “DOE Puts Up $215 Million Competition to Build Fault-Tolerant Quantum
+Computers.” September 17, 2026. Available at:
+https://quantumzeitgeist.com/energy-fault-tolerant-quantum-215-million. Accessed: September 18,
+2026.
+[21]  Huang, Q. et al. “Efficient Formal Verification of Quantum Error Correcting Programs.”
+Proceedings of the ACM on Programming Languages (PLDI 2025), vol. 9, article 190.
+arXiv:2504.07732. Available at: https://arxiv.org/abs/2504.07732. Accessed: September 18, 2026.
+[22]  Godawatte Liyanage, N. “Towards Practical and Real-Time Decoding of Quantum Error
+Correction.” Ph.D. thesis, Yale University, 2025. Available at: https://elischolar.library.yale.edu/.
+Accessed: September 18, 2026.
+[23]  Liyanage, N.; Wu, Y.; Houghton, E.; Zhong, L. “Network-Integrated Decoding System for
+Real-Time Quantum Error Correction with Lattice Surgery.” IEEE International Conference on
+Quantum Computing and Engineering (QCE), 2025. Available at: https://ieeexplore.ieee.org/.
+Accessed: September 18, 2026.
+[24]  Caune, L. et al. “Demonstrating real-time and low-latency quantum error correction with
+superconducting qubits.” Nature Communications 17, 7383 (2026). Available at:
+https://doi.org/10.1038/s41467-026-7383. Accessed: September 18, 2026.
+[25]  Khordad, R.; Rastegar Sedehi, H. R. “Application of non-extensive entropy to study of
+decoherence of RbCl quantum dot qubit: Tsallis entropy.” The European Physical Journal Plus
+(2019). Available at: https://doi.org/10.1140/EPJP/I2019-12558-5. Accessed: September 18, 2026.
+[26]  Shaydulin, R.; Suchara, M.; Larson, J. “Standardized Low-Level Noise Characterization to
+Improve the Usability of Quantum Computing Testbeds.” Quantum Computing Testbeds
+Stakeholder Workshop White Paper, Argonne National Laboratory, 2021. Available at:
+https://bibbase.org/. Accessed: September 18, 2026.
+
+
+=== PAGINA 40 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 40
+[27]  Rispler, M. et al. “The random coupled-plaquette gauge model and the surface code under
+circuit-level noise.” 2026. Available at: https://inspirehep.net/literature/2860875. Accessed:
+September 18, 2026.
+
+
+=== PAGINA 41 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 41
+Appendix A — Consolidated Invariant Catalog
+The catalog below consolidates the invariants referenced in the monograph, in two tables
+that mirror the Verification Gap's evidence classes. Table A.1 lists the software invariants —
+formal falsifiers, verified by the tools of the tool column; INV-SW-06 was removed from the
+catalog during the audit (a coupling regression, not an invariant) and is retained as a row
+for traceability. Table A.2 lists the empirical hardware metrics with their measurement
+protocols and DOE rejection criteria — evidence classes that are measured, never proven.
+The Tsallis invariants INV-TS-01..10 appear in Table 9 of the main text; INV-PD-01/02 and
+INV-QM-01 complete the PACIR core.
+ Table A.1 — Software invariants (formal falsifiers).
+ID
+Invariant (software)
+Tsallis
+equivalent
+Tool
+Scope
+INV-SW-01
+stable_power_sum finite for valid
+input
+INV-TS-07
+Kani
+n ≤ 8, q < 100
+INV-SW-02
+No NonFiniteResult for valid p
+INV-TS-10
+Kani
+same scope
+INV-SW-03
+Local monotonicity at q = 1
+INV-TS-08
+(local)
+Kani
+t ∈ {10⁻⁷, 10⁻⁶,
+10⁻⁵}
+INV-SW-04
+Local continuity at q = 2 (Lipschitz)
+INV-TS-09
+(local)
+Kani
+L∞ perturbation ≤
+10⁻³
+INV-SW-05
+Fail-closed on invalid weights
+INV-TS-04
+proptest +
+Kani
+n ≤ 16
+INV-SW-07
+q → 1 recovers Shannon
+INV-TS-01
+test + Kani
+|q−1| < 10⁻⁵
+INV-SW-08
+Non-extensivity honors the
+definition
+INV-TS-06
+test + Kani
+q ∈ (0.1, 10)
+INV-SW-09
+Accepted config ⇒ d ≥ 3 and
+modeled LER ≤ target
+—
+Kani
+d ≤ 31
+INV-SW-10
+Accepted config ⇒ decoding <
+coherence and ops ≥ 10⁵
+—
+Kani
+n_ops ≤ 10⁹
+INV-SW-11
+Characterized layer ⇒ metrics
+registered
+—
+test
+—
+INV-SW-12
+Accepted decoder ⇒ budget <
+coherence
+—
+Kani
+budget < 10⁶ ns
+INV-SW-06
+(removed)
+stable_eigen_power_sum delegates
+to stable_power_sum — coupling
+test, not an invariant
+—
+regression
+—
+ Table A.2 — Empirical hardware metrics (rejection criteria).
+ID
+Empirical metric
+Measurement protocol
+Rejection criterion (DOE)
+MET-HW-0
+1
+≥ 100 logical
+qubits
+Device characterization
+DOE characterization counts < 100
+MET-HW-0
+2
+10⁵ hard operations
+On-hardware counting
+Independent count < 10⁵
+
+
+=== PAGINA 42 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 42
+ID
+Empirical metric
+Measurement protocol
+Rejection criterion (DOE)
+MET-HW-0
+3
+LER ≤ 10⁻⁸
+Cycle benchmark
+Measured LER > 10⁻⁸ across ≥ 3
+replicas
+MET-HW-0
+4
+p_ph, p_th
+Experimental characterization
+Declared values outside DOE
+confidence interval
+MET-HW-0
+5
+Decoding latency
+Real-time measurement
+Latency > coherence across ≥ 3
+replicas
+MET-HW-0
+6
+Coherence time
+Spectroscopy
+Coherence below declared operating
+threshold
+Appendix B — Verification Commands, API
+Dependencies, and Fallback
+B.1 Reproduction commands
+The workspace's full verification suite is reproducible with the commands below, executable
+in any environment with a stable Rust toolchain, the Kani verifier installed (cargo install
+--locked kani), and initial access to the crates.io registry. Continuous integration runs the
+same commands on every commit; the blake3 record hashes emitted by verifications
+compose the audit trail described in Section 4.2.
+# 1. Unit tests of the Tsallis module
+cargo test -p pacir-core tsallis
+# 2. proptest (chaos) of the Tsallis module
+cargo test -p pacir-chaos tsallis
+# 3. Full workspace
+cargo test --workspace
+# 4. Kani - individual harnesses
+cargo kani -p pacir-core --harness proof_tsallis_series_sign_multi_t
+cargo kani -p pacir-core --harness proof_tsallis_holder_continuity_q2
+cargo kani -p pacir-core --harness proof_tsallis_classical_never_nan_for_valid_input
+cargo kani -p pacir-core --harness proof_stable_power_sum_finite
+cargo kani -p pacir-core --harness proof_tsallis_power_sum_finite_arbitrary_n
+# 5. Kani - all harnesses (with per-harness solver timeout)
+cargo kani -p pacir-core --cbmc-timeout 900
+B.2 API dependencies of the contract harnesses
+The INV-SW-09..12 harnesses test contracts over functions whose implementations are not
+shown in this document. The proofs are conditional on the following assumed contracts; if
+any of these functions changes, the corresponding harnesses must be re-run. If a function
+always returned Err or false, the corresponding invariant would be vacuously true — which
+is why every harness includes a negative assertion (e.g., d < 3 ⇒ rejection) that fails if the
+function is trivial, and why existence assertions are recommended where feasible (Section
+5.2).
+
+
+=== PAGINA 43 ===
+Formal Verification and Fault-Tolerant Quantum Computing
+Page 43
+Function
+Assumed contract
+Verified in
+QecConfig::meets_competition_tar
+get()
+Returns Ok(true) iff d ≥ 3 and modeled LER
+≤ target
+Harness INV-SW-09
+FaultToleranceConfig::verify_all()
+Returns Ok(true) iff decoding < coherence
+and ops ≥ 10⁵
+Harness INV-SW-10
+QuantumTestbed::verify_all_layers
+()
+Returns Ok(true) iff every layer is
+characterized
+Integration test
+DecoderConfig::can_operate_realti
+me()
+Returns true iff budget < coherence
+Harness INV-SW-12
+B.3 Fallback protocol
+Fallback when Kani does not prove. If a Kani harness does not terminate (timeout, state
+explosion): (1) reduce the scope — prove n = 2 instead of n = 8, documenting the reduction
+in the verification report; (2) substitute sampling — run 10⁴ adversarial proptest cases,
+recording the case count; (3) record the outcome — mark the invariant as unproved in the
+catalog if neither (1) nor (2) is viable; an invariant is never marked as proven without a
+proof. The xtask verify-all report emits, for each harness, a status of proved, reduced (with
+the reduced parameters), proptest-only (with the case count), or unproved (with the
+justification), keeping the evidence ledger honest under CI time constraints.

@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "kind": "implementation-tracking-only",
+  "cohort_id": "E01-WIN-X64-C01",
+  "material_revision": 1,
+  "authority": false,
+  "runtime_verified": false,
+  "human_study_status": "NOT_RUN",
+  "roles": {
+    "operator": "admin",
+    "observer": "admin",
+    "reviewer": "admin",
+    "independence": "NOT_ESTABLISHED_SAME_IDENTITY",
+    "source": "human user reply admin"
+  },
+  "artifact": "dist/Arkhe-E01-Verifier-0.1.0-windows-x64.zip",
+  "artifact_sha256": "1484bbad22f04b50caa508343fd7cabe765e3d4f654c80cd62f67aafed55d2ea",
+  "runbook": "docs/E01-CLEAN-INSTALL-RUNBOOK.md",
+  "items": [
+    {
+      "id": "ONB01",
+      "title": "Fixar materiais C01",
+      "state": "DONE",
+      "owner": "admin",
+      "depends_on": [],
+      "acceptance": "ZIP, tutorial, fixtures, entrypoints e critérios vinculados aos hashes do registro da coorte; digest do ZIP conferido novamente."
+    },
+    {
+      "id": "ONB02",
+      "title": "Revisão humana por admin",
+      "state": "DONE",
+      "evidence": "docs/evidence/2026-10-21-e01-operator-review/operator-review.json",
+      "owner": "admin",
+      "depends_on": [
+        "ONB01"
+      ],
+      "acceptance": "Registrar leitura do tutorial, decisão, data e observações por admin; mesma identidade nas três funções, sem alegação de independência."
+    },
+    {
+      "id": "ONB03",
+      "title": "Selecionar ambiente Windows x64 limpo",
+      "state": "PENDING_ENVIRONMENT",
+      "owner": "admin",
+      "depends_on": [
+        "ONB01"
+      ],
+      "acceptance": "Identificar VM/hipervisor, build e imagem de origem disponível; inventário de comandos local inconclusivo, sem provisionar ou instalar automaticamente."
+    },
+    {
+      "id": "ONB04",
+      "title": "Preparar isolamento e snapshot S0",
+      "state": "NOT_RUN",
+      "owner": "admin",
+      "depends_on": [
+        "ONB03"
+      ],
+      "acceptance": "Conta exclusiva, estado inicial inventariado, snapshot identificado, sem discos/pastas graváveis ou clipboard do host; estado de rede da VM observado."
+    },
+    {
+      "id": "ONB05",
+      "title": "Executar ensaio técnico dentro da VM",
+      "state": "NOT_RUN",
+      "owner": "admin",
+      "depends_on": [
+        "ONB02",
+        "ONB04"
+      ],
+      "acceptance": "Hash fixado, extração nova, doctor PASS/0, A PROOF_VALID/0, B PROOF_INVALID/1; sem SDK do host, com encerramento dos processos observado. Logs e limitações preservados."
+    },
+    {
+      "id": "ONB06",
+      "title": "Preparar cinco sessões autorizadas",
+      "state": "NOT_RUN",
+      "owner": "admin",
+      "depends_on": [
+        "ONB02",
+        "ONB05"
+      ],
+      "acceptance": "IDs P01–P05, participação autorizada, tutorial fixo, gabarito separado e método de cronometragem. Contatos não são enviados por este backlog."
+    },
+    {
+      "id": "ONB07",
+      "title": "Executar sessões e limpeza entre pessoas",
+      "state": "NOT_RUN",
+      "owner": "admin",
+      "depends_on": [
+        "ONB06"
+      ],
+      "acceptance": "Restaurar/verificar S0 por pessoa; medir extração até interpretação, registrar ajuda/desistências e tempos; expurgar segredos e verificar limpeza antes da próxima sessão."
+    },
+    {
+      "id": "ONB08",
+      "title": "Consolidar resultados e decisão exploratória",
+      "state": "NOT_RUN",
+      "owner": "admin",
+      "depends_on": [
+        "ONB07"
+      ],
+      "acceptance": "Cinco sessões avaliáveis e >=4 sucessos sem ajuda em <=900s para atingir o alvo; publicar todos os resultados, denominadores, tempos e limitações. Sem extrapolação de adoção ampla."
+    }
+  ],
+  "conditional_rework": "If kit/tutorial/fixtures change after a failure, retain evidence and create another material revision/cohort before restarting; do not silently alter C01.",
+  "deferred_research": {
+    "flock": "RESEARCH_CANDIDATE_NOT_REPRODUCED",
+    "changes_to_keys_profiles_dependencies": false
+  }
+}

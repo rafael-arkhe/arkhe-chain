@@ -1,0 +1,1048 @@
+diff -ruN a/crates/arkhe-provenance-mcp/.env.example b/crates/arkhe-provenance-mcp/.env.example
+--- a/crates/arkhe-provenance-mcp/.env.example	1970-01-01 00:00:00.000000000 +0000
++++ b/crates/arkhe-provenance-mcp/.env.example	2026-10-13 10:52:17.626697435 +0000
+@@ -0,0 +1,10 @@
++DATABASE_URL=postgres://arkhe:arkhe@localhost:5432/arkhe
++ARKHE_PREFLIGHT_URL=http://127.0.0.1:8081
++ARKHE_PRICE_BOOK_VERSION=phase-a-free-v1
++PORT=8080
++
++# Optional measurement snapshots only. They are NOT a billing oracle.
++# In Phase A verify_provenance performs no on-chain write, so Solana tx fee is zero.
++# ARKHE_SOL_PRICE_USD=107.00
++# ARKHE_VERIFY_ESTIMATED_COST_USD=
++# ARKHE_ROYALTY_LOOKUP_ESTIMATED_COST_USD=
+diff -ruN a/crates/arkhe-provenance-mcp/Cargo.toml b/crates/arkhe-provenance-mcp/Cargo.toml
+--- a/crates/arkhe-provenance-mcp/Cargo.toml	2026-10-13 10:53:23.616693477 +0000
++++ b/crates/arkhe-provenance-mcp/Cargo.toml	2026-10-13 10:50:21.436391165 +0000
+@@ -1,4 +1,27 @@
+ [package]
+ name = "arkhe-provenance-mcp"
+-version = "0.1.0"
++version = "0.2.0"
+ edition = "2021"
++publish = false
++
++[[bin]]
++name = "arkhe-provenance-mcp"
++path = "src/main.rs"
++
++[dependencies]
++anyhow = "1"
++axum = "0.8"
++chrono = { version = "0.4", features = ["serde"] }
++hex = "0.4"
++reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
++rmcp = { version = "3.5.1", features = ["server", "macros", "schemars", "transport-streamable-http-server"] }
++schemars = "1"
++serde = { version = "1", features = ["derive"] }
++serde_json = "1"
++sha2 = "0.10"
++sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json"] }
++tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "net", "time"] }
++tokio-util = "0.7"
++tracing = "0.1"
++tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
++uuid = { version = "1", features = ["serde", "v4"] }
+diff -ruN a/crates/arkhe-provenance-mcp/Dockerfile b/crates/arkhe-provenance-mcp/Dockerfile
+--- a/crates/arkhe-provenance-mcp/Dockerfile	1970-01-01 00:00:00.000000000 +0000
++++ b/crates/arkhe-provenance-mcp/Dockerfile	2026-10-13 10:50:21.436444165 +0000
+@@ -0,0 +1,14 @@
++FROM rust:1.88-bookworm AS builder
++WORKDIR /src
++COPY . .
++RUN cargo build --release -p arkhe-provenance-mcp
++
++FROM debian:bookworm-slim
++RUN apt-get update \
++    && apt-get install -y --no-install-recommends ca-certificates \
++    && rm -rf /var/lib/apt/lists/* \
++    && useradd --create-home --uid 10001 arkhe
++COPY --from=builder /src/target/release/arkhe-provenance-mcp /usr/local/bin/arkhe-provenance-mcp
++USER arkhe
++ENV RUST_LOG=info
++CMD ["arkhe-provenance-mcp"]
+diff -ruN a/crates/arkhe-provenance-mcp/src/lib.rs b/crates/arkhe-provenance-mcp/src/lib.rs
+--- a/crates/arkhe-provenance-mcp/src/lib.rs	2026-10-13 10:53:23.616693477 +0000
++++ b/crates/arkhe-provenance-mcp/src/lib.rs	2026-10-13 10:48:38.546110032 +0000
+@@ -0,0 +1,7 @@
++pub mod metering;
++pub mod preflight;
++pub mod royalty;
++pub mod server;
++pub mod tools;
++
++pub use server::{ArkheMcp, ArkheMcpConfig};
+diff -ruN a/crates/arkhe-provenance-mcp/src/main.rs b/crates/arkhe-provenance-mcp/src/main.rs
+--- a/crates/arkhe-provenance-mcp/src/main.rs	1970-01-01 00:00:00.000000000 +0000
++++ b/crates/arkhe-provenance-mcp/src/main.rs	2026-10-13 10:50:21.436569824 +0000
+@@ -0,0 +1,77 @@
++use anyhow::Context;
++use arkhe_provenance_mcp::{ArkheMcp, ArkheMcpConfig};
++use axum::{routing::get, Router};
++use rmcp::transport::streamable_http_server::{
++    session::local::LocalSessionManager, StreamableHttpServerConfig, StreamableHttpService,
++};
++use sqlx::postgres::PgPoolOptions;
++use std::net::SocketAddr;
++use tokio_util::sync::CancellationToken;
++
++#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    tracing_subscriber::fmt()
++        .with_env_filter(
++            tracing_subscriber::EnvFilter::try_from_default_env()
++                .unwrap_or_else(|_| "info,arkhe_provenance_mcp=info".into()),
++        )
++        .init();
++
++    let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL is required")?;
++    let preflight_url =
++        std::env::var("ARKHE_PREFLIGHT_URL").context("ARKHE_PREFLIGHT_URL is required")?;
++    let price_book_version =
++        std::env::var("ARKHE_PRICE_BOOK_VERSION").unwrap_or_else(|_| "phase-a-free-v1".into());
++    let port: u16 = std::env::var("PORT")
++        .unwrap_or_else(|_| "8080".into())
++        .parse()
++        .context("PORT must be u16")?;
++
++    let pool = PgPoolOptions::new()
++        .max_connections(10)
++        .connect(&database_url)
++        .await
++        .context("failed to connect to PostgreSQL")?;
++
++    // Startup invariant: metering schema must exist before accepting tool calls.
++    sqlx::query("SELECT 1 FROM usage_events LIMIT 1")
++        .fetch_optional(&pool)
++        .await
++        .context("usage_events missing; run database migrations first")?;
++
++    let shared = ArkheMcp::new(
++        pool,
++        preflight_url,
++        price_book_version,
++        ArkheMcpConfig::from_env(),
++    )?;
++
++    let cancellation = CancellationToken::new();
++    let config = StreamableHttpServerConfig::default()
++        .with_legacy_session_mode(false)
++        .with_json_response(true)
++        .with_cancellation_token(cancellation.child_token());
++
++    let service = StreamableHttpService::new(
++        move || Ok(shared.clone()),
++        LocalSessionManager::default().into(),
++        config,
++    );
++
++    let app = Router::new()
++        .route("/health", get(|| async { "ok" }))
++        .nest_service("/mcp", service);
++
++    let addr = SocketAddr::from(([0, 0, 0, 0], port));
++    let listener = tokio::net::TcpListener::bind(addr).await?;
++    tracing::info!(%addr, "Arkhe metered MCP server listening");
++
++    axum::serve(listener, app)
++        .with_graceful_shutdown(async move {
++            let _ = tokio::signal::ctrl_c().await;
++            cancellation.cancel();
++        })
++        .await?;
++
++    Ok(())
++}
+diff -ruN a/crates/arkhe-provenance-mcp/src/metering.rs b/crates/arkhe-provenance-mcp/src/metering.rs
+--- a/crates/arkhe-provenance-mcp/src/metering.rs	1970-01-01 00:00:00.000000000 +0000
++++ b/crates/arkhe-provenance-mcp/src/metering.rs	2026-10-13 10:52:17.442850728 +0000
+@@ -0,0 +1,102 @@
++use chrono::{DateTime, Utc};
++use serde::Serialize;
++use serde_json::Value;
++use sqlx::{PgPool, Row};
++use uuid::Uuid;
++
++#[derive(Debug, Clone, Serialize)]
++pub struct UsageEvent {
++    pub request_id: Uuid,
++    pub idempotency_key: String,
++    pub tenant_id: String,
++    pub tool: String,
++    pub price_book_version: String,
++    pub pricing_rule_id: String,
++    pub sol_price_usd_at_event: Option<String>,
++    pub started_at: DateTime<Utc>,
++    pub duration_ms: i64,
++    pub bytes_in: i64,
++    pub bytes_out: i64,
++    pub result: String,
++    pub verification_level: Option<String>,
++    pub estimated_cost_usd: Option<String>,
++    pub billable_units: i64,
++    pub billable_amount_usd: String,
++    pub evidence_hash: Option<String>,
++    pub metadata: Value,
++}
++
++#[derive(Clone)]
++pub struct UsageLedger {
++    pool: PgPool,
++    price_book_version: String,
++}
++
++impl UsageLedger {
++    pub fn new(pool: PgPool, price_book_version: impl Into<String>) -> Self {
++        Self {
++            pool,
++            price_book_version: price_book_version.into(),
++        }
++    }
++
++    pub fn price_book_version(&self) -> &str {
++        &self.price_book_version
++    }
++
++    pub async fn append(&self, event: &UsageEvent) -> Result<(), sqlx::Error> {
++        sqlx::query(
++            r#"
++            INSERT INTO usage_events (
++                request_id, idempotency_key, tenant_id, tool,
++                price_book_version, pricing_rule_id, sol_price_usd_at_event,
++                started_at, duration_ms, bytes_in, bytes_out, result,
++                verification_level, estimated_cost_usd, billable_units,
++                billable_amount_usd, evidence_hash, metadata
++            ) VALUES (
++                $1, $2, $3, $4,
++                $5, $6, $7::numeric,
++                $8, $9, $10, $11, $12,
++                $13, $14::numeric, $15,
++                $16::numeric, $17, $18
++            )
++            "#,
++        )
++        .bind(event.request_id)
++        .bind(&event.idempotency_key)
++        .bind(&event.tenant_id)
++        .bind(&event.tool)
++        .bind(&event.price_book_version)
++        .bind(&event.pricing_rule_id)
++        .bind(event.sol_price_usd_at_event.as_deref())
++        .bind(event.started_at)
++        .bind(event.duration_ms)
++        .bind(event.bytes_in)
++        .bind(event.bytes_out)
++        .bind(&event.result)
++        .bind(event.verification_level.as_deref())
++        .bind(event.estimated_cost_usd.as_deref())
++        .bind(event.billable_units)
++        .bind(&event.billable_amount_usd)
++        .bind(event.evidence_hash.as_deref())
++        .bind(&event.metadata)
++        .execute(&self.pool)
++        .await?;
++        Ok(())
++    }
++
++    pub async fn seen_idempotency_key(
++        &self,
++        tenant_id: &str,
++        idempotency_key: &str,
++    ) -> Result<Option<Uuid>, sqlx::Error> {
++        let row = sqlx::query(
++            "SELECT request_id FROM usage_events WHERE tenant_id = $1 AND idempotency_key = $2 LIMIT 1",
++        )
++        .bind(tenant_id)
++        .bind(idempotency_key)
++        .fetch_optional(&self.pool)
++        .await?;
++        Ok(row.map(|r| r.get::<Uuid, _>("request_id")))
++    }
++}
+diff -ruN a/crates/arkhe-provenance-mcp/src/preflight.rs b/crates/arkhe-provenance-mcp/src/preflight.rs
+--- a/crates/arkhe-provenance-mcp/src/preflight.rs	1970-01-01 00:00:00.000000000 +0000
++++ b/crates/arkhe-provenance-mcp/src/preflight.rs	2026-10-13 10:52:16.902338224 +0000
+@@ -0,0 +1,304 @@
++use reqwest::Client;
++use schemars::JsonSchema;
++use serde::{Deserialize, Serialize};
++use serde_json::Value;
++use sha2::{Digest, Sha256};
++use std::collections::HashSet;
++
++#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
++pub struct AssetRef {
++    pub url: String,
++    pub expected_sha256: String,
++}
++
++#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
++pub struct VerifyProvenanceArgs {
++    /// Metering label. Phase A treats this as caller-supplied/untrusted until OAuth is enabled.
++    pub tenant_id: String,
++    /// Caller-generated idempotency key. Reuse is rejected in Phase A.
++    pub idempotency_key: String,
++    /// Full Arkhe report JSON.
++    pub report: Value,
++    pub audio_a: AssetRef,
++    pub audio_b: AssetRef,
++    #[serde(default)]
++    pub c2pa_a: Option<AssetRef>,
++    #[serde(default)]
++    pub c2pa_b: Option<AssetRef>,
++    /// `sanity` or `release`.
++    #[serde(default = "default_mode")]
++    pub mode: String,
++    #[serde(default)]
++    pub online: bool,
++}
++
++fn default_mode() -> String {
++    "sanity".to_owned()
++}
++
++#[derive(Debug, Clone, Serialize)]
++pub struct PreflightVerifyRequest {
++    pub mode: String,
++    pub report: Value,
++    pub audio_a: AssetRef,
++    pub audio_b: AssetRef,
++    pub c2pa_a: Option<AssetRef>,
++    pub c2pa_b: Option<AssetRef>,
++    pub online: bool,
++}
++
++#[derive(Debug, Clone, Serialize, Deserialize)]
++pub struct ReleaseGate {
++    pub applied: bool,
++    pub passed: Option<bool>,
++    #[serde(default)]
++    pub issues: Vec<String>,
++}
++
++#[derive(Debug, Clone, Serialize, Deserialize)]
++pub struct CheckEntry {
++    pub id: String,
++    pub name: String,
++    pub result: String,
++    pub severity: String,
++    #[serde(default)]
++    pub detail: String,
++}
++
++#[derive(Debug, Clone, Serialize, Deserialize)]
++pub struct PreflightEvidence {
++    pub result: String,
++    pub mode: String,
++    pub verifier_version: String,
++    pub verifier_sha256: String,
++    pub content_hash: Option<String>,
++    pub envelope_hash: Option<String>,
++    pub release_gate: ReleaseGate,
++    pub hard_failures: u32,
++    #[serde(default)]
++    pub checks: Vec<CheckEntry>,
++}
++
++#[derive(Debug, Clone)]
++pub struct VerifiedPreflightResponse {
++    pub evidence: PreflightEvidence,
++    /// SHA-256 of the exact HTTP response body returned by the private preflight service.
++    pub wire_sha256: String,
++    pub wire_len: usize,
++}
++
++#[derive(Clone)]
++pub struct PreflightClient {
++    client: Client,
++    base_url: String,
++}
++
++impl PreflightClient {
++    pub fn new(base_url: impl Into<String>) -> Result<Self, reqwest::Error> {
++        let client = Client::builder()
++            .timeout(std::time::Duration::from_secs(330))
++            .redirect(reqwest::redirect::Policy::none())
++            .build()?;
++        Ok(Self {
++            client,
++            base_url: base_url.into().trim_end_matches('/').to_owned(),
++        })
++    }
++
++    pub async fn verify(&self, args: &VerifyProvenanceArgs) -> anyhow::Result<VerifiedPreflightResponse> {
++        validate_request(args)?;
++
++        let req = PreflightVerifyRequest {
++            mode: args.mode.clone(),
++            report: args.report.clone(),
++            audio_a: args.audio_a.clone(),
++            audio_b: args.audio_b.clone(),
++            c2pa_a: args.c2pa_a.clone(),
++            c2pa_b: args.c2pa_b.clone(),
++            online: args.online,
++        };
++
++        let url = format!("{}/internal/verify", self.base_url);
++        let response = self.client.post(url).json(&req).send().await?;
++        let status = response.status();
++        let body = response.bytes().await?;
++        if !status.is_success() {
++            anyhow::bail!(
++                "preflight returned HTTP {}: {}",
++                status,
++                String::from_utf8_lossy(&body)
++            );
++        }
++
++        let wire_sha256 = hex::encode(Sha256::digest(&body));
++        let wire_len = body.len();
++        let evidence: PreflightEvidence = serde_json::from_slice(&body)?;
++        validate_evidence(args, &evidence)?;
++        Ok(VerifiedPreflightResponse {
++            evidence,
++            wire_sha256,
++            wire_len,
++        })
++    }
++}
++
++fn validate_request(args: &VerifyProvenanceArgs) -> anyhow::Result<()> {
++    if args.mode != "sanity" && args.mode != "release" {
++        anyhow::bail!("mode must be 'sanity' or 'release'");
++    }
++    if args.tenant_id.trim().is_empty() || args.idempotency_key.trim().is_empty() {
++        anyhow::bail!("tenant_id and idempotency_key are required");
++    }
++    if args.mode == "release" && (!args.online || args.c2pa_a.is_none() || args.c2pa_b.is_none()) {
++        anyhow::bail!("release requires online=true and c2pa_a/c2pa_b");
++    }
++    Ok(())
++}
++
++fn report_str<'a>(report: &'a Value, key: &str) -> Option<&'a str> {
++    report.get(key).and_then(Value::as_str)
++}
++
++pub(crate) fn validate_evidence(
++    args: &VerifyProvenanceArgs,
++    evidence: &PreflightEvidence,
++) -> anyhow::Result<()> {
++    if evidence.mode != args.mode {
++        anyhow::bail!("preflight mode mismatch");
++    }
++    if evidence.result != "PASS" && evidence.result != "FAIL" {
++        anyhow::bail!("invalid preflight result");
++    }
++
++    // Evidence check IDs must be unique. A consumer must never collapse conflicting checks.
++    let mut ids = HashSet::new();
++    for check in &evidence.checks {
++        if !ids.insert(check.id.as_str()) {
++            anyhow::bail!("duplicate preflight check id: {}", check.id);
++        }
++    }
++
++    if args.mode == "release" {
++        if !evidence.release_gate.applied {
++            anyhow::bail!("release evidence did not apply release gate");
++        }
++        if evidence.result == "PASS" && evidence.release_gate.passed != Some(true) {
++            anyhow::bail!("release PASS without release_gate.passed=true");
++        }
++    } else if evidence.release_gate.applied || evidence.release_gate.passed.is_some() {
++        anyhow::bail!("sanity evidence has invalid release gate state");
++    }
++
++    if evidence.result == "PASS" {
++        if evidence.hard_failures != 0 {
++            anyhow::bail!("PASS evidence contains hard failures");
++        }
++        if evidence.checks.is_empty() {
++            anyhow::bail!("PASS evidence contains no checks");
++        }
++
++        let report_content = report_str(&args.report, "content_hash")
++            .ok_or_else(|| anyhow::anyhow!("report missing content_hash"))?;
++        if evidence.content_hash.as_deref() != Some(report_content) {
++            anyhow::bail!("content_hash subject mismatch");
++        }
++
++        let report_script = report_str(&args.report, "script_sha256")
++            .ok_or_else(|| anyhow::anyhow!("report missing script_sha256"))?;
++        if evidence.verifier_sha256 != report_script {
++            anyhow::bail!("verifier_sha256 subject mismatch");
++        }
++
++        if args.mode == "release" {
++            let report_envelope = report_str(&args.report, "envelope_hash")
++                .ok_or_else(|| anyhow::anyhow!("release report missing envelope_hash"))?;
++            if evidence.envelope_hash.as_deref() != Some(report_envelope) {
++                anyhow::bail!("envelope_hash subject mismatch");
++            }
++        }
++    }
++
++    Ok(())
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use serde_json::json;
++
++    fn args(mode: &str) -> VerifyProvenanceArgs {
++        VerifyProvenanceArgs {
++            tenant_id: "tenant-a".into(),
++            idempotency_key: "idem-a".into(),
++            report: json!({
++                "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++                "envelope_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
++                "script_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
++            }),
++            audio_a: AssetRef { url: "https://assets.example/a".into(), expected_sha256: "0".repeat(64) },
++            audio_b: AssetRef { url: "https://assets.example/b".into(), expected_sha256: "1".repeat(64) },
++            c2pa_a: if mode == "release" { Some(AssetRef { url: "https://assets.example/a".into(), expected_sha256: "0".repeat(64) }) } else { None },
++            c2pa_b: if mode == "release" { Some(AssetRef { url: "https://assets.example/b".into(), expected_sha256: "1".repeat(64) }) } else { None },
++            mode: mode.into(),
++            online: mode == "release",
++        }
++    }
++
++    fn pass_evidence(mode: &str) -> PreflightEvidence {
++        PreflightEvidence {
++            result: "PASS".into(),
++            mode: mode.into(),
++            verifier_version: "23".into(),
++            verifier_sha256: "c".repeat(64),
++            content_hash: Some("a".repeat(64)),
++            envelope_hash: if mode == "release" { Some("b".repeat(64)) } else { None },
++            release_gate: ReleaseGate {
++                applied: mode == "release",
++                passed: if mode == "release" { Some(true) } else { None },
++                issues: vec![],
++            },
++            hard_failures: 0,
++            checks: vec![CheckEntry { id: "I1".into(), name: "test".into(), result: "PASS".into(), severity: "hard".into(), detail: String::new() }],
++        }
++    }
++
++    #[test]
++    fn release_pass_requires_some_true() {
++        let a = args("release");
++        let mut e = pass_evidence("release");
++        e.release_gate.passed = None;
++        assert!(validate_evidence(&a, &e).is_err());
++    }
++
++    #[test]
++    fn sanity_rejects_applied_release_gate() {
++        let a = args("sanity");
++        let mut e = pass_evidence("sanity");
++        e.release_gate.applied = true;
++        assert!(validate_evidence(&a, &e).is_err());
++    }
++
++    #[test]
++    fn pass_binds_content_hash() {
++        let a = args("sanity");
++        let mut e = pass_evidence("sanity");
++        e.content_hash = Some("d".repeat(64));
++        assert!(validate_evidence(&a, &e).is_err());
++    }
++
++    #[test]
++    fn pass_binds_verifier_hash() {
++        let a = args("sanity");
++        let mut e = pass_evidence("sanity");
++        e.verifier_sha256 = "d".repeat(64);
++        assert!(validate_evidence(&a, &e).is_err());
++    }
++
++    #[test]
++    fn duplicate_check_ids_are_rejected() {
++        let a = args("sanity");
++        let mut e = pass_evidence("sanity");
++        e.checks.push(e.checks[0].clone());
++        assert!(validate_evidence(&a, &e).is_err());
++    }
++}
+diff -ruN a/crates/arkhe-provenance-mcp/src/royalty.rs b/crates/arkhe-provenance-mcp/src/royalty.rs
+--- a/crates/arkhe-provenance-mcp/src/royalty.rs	1970-01-01 00:00:00.000000000 +0000
++++ b/crates/arkhe-provenance-mcp/src/royalty.rs	2026-10-13 10:50:21.436279828 +0000
+@@ -0,0 +1,94 @@
++use schemars::JsonSchema;
++use serde::{Deserialize, Serialize};
++use serde_json::Value;
++use sqlx::{PgPool, Row};
++use uuid::Uuid;
++
++#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
++pub struct RoyaltyStatusArgs {
++    /// Metering identity. Phase A accepts a caller-supplied tenant; OAuth replaces this later.
++    pub tenant_id: String,
++    /// Caller-generated idempotency key. Reuse is rejected.
++    pub idempotency_key: String,
++    /// Work UUID or 64-hex BLAKE3 hash.
++    pub work_id: String,
++}
++
++#[derive(Debug, Clone, Serialize, Deserialize)]
++pub struct RoyaltyStatus {
++    pub found: bool,
++    pub work_uuid: Option<Uuid>,
++    pub blake3_hash: Option<String>,
++    pub state: Option<String>,
++    pub split: Option<Value>,
++    pub currency: Option<String>,
++    pub source: Option<String>,
++    pub updated_at: Option<String>,
++}
++
++#[derive(Clone)]
++pub struct RoyaltyStore {
++    pool: PgPool,
++}
++
++impl RoyaltyStore {
++    pub fn new(pool: PgPool) -> Self {
++        Self { pool }
++    }
++
++    pub async fn get(&self, work_id: &str) -> Result<RoyaltyStatus, sqlx::Error> {
++        let row = if let Ok(id) = Uuid::parse_str(work_id) {
++            sqlx::query(
++                r#"
++                SELECT w.uuid, w.blake3_hash, r.state, r.split, r.currency, r.source,
++                       r.updated_at::text AS updated_at
++                FROM works w
++                LEFT JOIN royalty_status r ON r.work_uuid = w.uuid
++                WHERE w.uuid = $1
++                LIMIT 1
++                "#,
++            )
++            .bind(id)
++            .fetch_optional(&self.pool)
++            .await?
++        } else {
++            sqlx::query(
++                r#"
++                SELECT w.uuid, w.blake3_hash, r.state, r.split, r.currency, r.source,
++                       r.updated_at::text AS updated_at
++                FROM works w
++                LEFT JOIN royalty_status r ON r.work_uuid = w.uuid
++                WHERE w.blake3_hash = $1
++                LIMIT 1
++                "#,
++            )
++            .bind(work_id)
++            .fetch_optional(&self.pool)
++            .await?
++        };
++
++        let Some(row) = row else {
++            return Ok(RoyaltyStatus {
++                found: false,
++                work_uuid: None,
++                blake3_hash: None,
++                state: None,
++                split: None,
++                currency: None,
++                source: None,
++                updated_at: None,
++            });
++        };
++
++        Ok(RoyaltyStatus {
++            found: true,
++            work_uuid: Some(row.get("uuid")),
++            blake3_hash: row.try_get::<String, _>("blake3_hash").ok(),
++            state: row.try_get::<Option<String>, _>("state").unwrap_or(None),
++            split: row.try_get::<Option<Value>, _>("split").unwrap_or(None),
++            currency: row.try_get::<Option<String>, _>("currency").unwrap_or(None),
++            source: row.try_get::<Option<String>, _>("source").unwrap_or(None),
++            updated_at: row.try_get::<Option<String>, _>("updated_at").unwrap_or(None),
++        })
++    }
++}
+diff -ruN a/crates/arkhe-provenance-mcp/src/server.rs b/crates/arkhe-provenance-mcp/src/server.rs
+--- a/crates/arkhe-provenance-mcp/src/server.rs	2026-10-13 10:53:23.616693477 +0000
++++ b/crates/arkhe-provenance-mcp/src/server.rs	2026-10-13 10:52:17.442803107 +0000
+@@ -0,0 +1,67 @@
++use crate::{
++    metering::UsageLedger,
++    preflight::{PreflightClient, VerifyProvenanceArgs},
++    royalty::{RoyaltyStatusArgs, RoyaltyStore},
++};
++use rmcp::{handler::server::wrapper::Parameters, tool, tool_router};
++use sqlx::PgPool;
++
++#[derive(Debug, Clone)]
++pub struct ArkheMcpConfig {
++    pub sol_price_usd: Option<String>,
++    pub verify_cost_usd: Option<String>,
++    pub royalty_lookup_cost_usd: Option<String>,
++}
++
++impl ArkheMcpConfig {
++    pub fn from_env() -> Self {
++        Self {
++            sol_price_usd: std::env::var("ARKHE_SOL_PRICE_USD").ok(),
++            verify_cost_usd: std::env::var("ARKHE_VERIFY_ESTIMATED_COST_USD").ok(),
++            royalty_lookup_cost_usd: std::env::var("ARKHE_ROYALTY_LOOKUP_ESTIMATED_COST_USD").ok(),
++        }
++    }
++}
++
++#[derive(Clone)]
++pub struct ArkheMcp {
++    pub(crate) preflight: PreflightClient,
++    pub(crate) royalties: RoyaltyStore,
++    pub(crate) usage: UsageLedger,
++    pub(crate) config: ArkheMcpConfig,
++}
++
++impl ArkheMcp {
++    pub fn new(
++        pool: PgPool,
++        preflight_base_url: impl Into<String>,
++        price_book_version: impl Into<String>,
++        config: ArkheMcpConfig,
++    ) -> anyhow::Result<Self> {
++        Ok(Self {
++            preflight: PreflightClient::new(preflight_base_url)?,
++            royalties: RoyaltyStore::new(pool.clone()),
++            usage: UsageLedger::new(pool, price_book_version),
++            config,
++        })
++    }
++}
++
++#[tool_router(server_handler)]
++impl ArkheMcp {
++    #[tool(description = "Verify an Arkhe provenance report using the hardened internal preflight verifier. This tool verifies only; it does not anchor or settle anything.")]
++    async fn verify_provenance(
++        &self,
++        params: Parameters<VerifyProvenanceArgs>,
++    ) -> Result<rmcp::model::CallToolResult, rmcp::ErrorData> {
++        self.verify_provenance_impl(params).await
++    }
++
++    #[tool(description = "Read the current royalty status for an Arkhe work by UUID or BLAKE3 hash. This is a read-only lookup and does not settle royalties.")]
++    async fn get_royalty_status(
++        &self,
++        params: Parameters<RoyaltyStatusArgs>,
++    ) -> Result<rmcp::model::CallToolResult, rmcp::ErrorData> {
++        self.get_royalty_status_impl(params).await
++    }
++}
+diff -ruN a/crates/arkhe-provenance-mcp/src/tools/mod.rs b/crates/arkhe-provenance-mcp/src/tools/mod.rs
+--- a/crates/arkhe-provenance-mcp/src/tools/mod.rs	2026-10-13 10:53:23.616693477 +0000
++++ b/crates/arkhe-provenance-mcp/src/tools/mod.rs	2026-10-13 10:48:38.549123363 +0000
+@@ -0,0 +1,2 @@
++pub mod provenance;
++pub mod royalty;
+diff -ruN a/crates/arkhe-provenance-mcp/src/tools/provenance.rs b/crates/arkhe-provenance-mcp/src/tools/provenance.rs
+--- a/crates/arkhe-provenance-mcp/src/tools/provenance.rs	1970-01-01 00:00:00.000000000 +0000
++++ b/crates/arkhe-provenance-mcp/src/tools/provenance.rs	2026-10-13 10:52:17.442674593 +0000
+@@ -0,0 +1,123 @@
++use crate::{metering::UsageEvent, preflight::VerifyProvenanceArgs, server::ArkheMcp};
++use chrono::Utc;
++use rmcp::{
++    handler::server::wrapper::Parameters,
++    model::{CallToolResult, ContentBlock},
++    ErrorData as McpError,
++};
++use serde_json::json;
++use std::time::Instant;
++use uuid::Uuid;
++
++impl ArkheMcp {
++    pub(crate) async fn verify_provenance_impl(
++        &self,
++        Parameters(args): Parameters<VerifyProvenanceArgs>,
++    ) -> Result<CallToolResult, McpError> {
++        if args.tenant_id.trim().is_empty() || args.idempotency_key.trim().is_empty() {
++            return Err(McpError::invalid_params(
++                "tenant_id and idempotency_key are required",
++                None,
++            ));
++        }
++
++        match self
++            .usage
++            .seen_idempotency_key(&args.tenant_id, &args.idempotency_key)
++            .await
++        {
++            Ok(Some(existing)) => {
++                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
++                    "idempotency key already used; original request_id={existing}"
++                ))]));
++            }
++            Ok(None) => {}
++            Err(e) => {
++                tracing::error!(error = ?e, "usage ledger lookup failed");
++                return Ok(CallToolResult::error(vec![ContentBlock::text(
++                    "metering unavailable; request rejected fail-closed",
++                )]));
++            }
++        }
++
++        let started_at = Utc::now();
++        let timer = Instant::now();
++        let input_bytes = serde_json::to_vec(&args).map(|v| v.len()).unwrap_or(0) as i64;
++        let request_id = Uuid::new_v4();
++
++        let outcome = self.preflight.verify(&args).await;
++        let (tool_result, result_label, verification_level, evidence_hash, bytes_out, metadata) =
++            match outcome {
++                Ok(verified) => {
++                    let evidence = verified.evidence;
++                    let verification_level = if evidence.result == "PASS" {
++                        Some(if evidence.mode == "release" {
++                            "release_verified".to_owned()
++                        } else {
++                            "sanity_valid".to_owned()
++                        })
++                    } else {
++                        Some("verification_failed".to_owned())
++                    };
++                    let text = serde_json::to_string_pretty(&evidence)
++                        .unwrap_or_else(|_| "{\"result\":\"FAIL\"}".to_owned());
++                    (
++                        CallToolResult::success(vec![ContentBlock::text(text)]),
++                        evidence.result.clone(),
++                        verification_level,
++                        Some(verified.wire_sha256),
++                        verified.wire_len as i64,
++                        json!({
++                            "mode": evidence.mode,
++                            "verifier_version": evidence.verifier_version,
++                            "verifier_sha256": evidence.verifier_sha256,
++                            "hard_failures": evidence.hard_failures,
++                            "onchain_write": false,
++                            "solana_tx_count": 0
++                        }),
++                    )
++                }
++                Err(e) => {
++                    let message = format!("provenance verification failed to execute: {e}");
++                    (
++                        CallToolResult::error(vec![ContentBlock::text(message.clone())]),
++                        "ERROR".to_owned(),
++                        None,
++                        None,
++                        message.len() as i64,
++                        json!({"error": e.to_string()}),
++                    )
++                }
++            };
++
++        let event = UsageEvent {
++            request_id,
++            idempotency_key: args.idempotency_key,
++            tenant_id: args.tenant_id,
++            tool: "verify_provenance".to_owned(),
++            price_book_version: self.usage.price_book_version().to_owned(),
++            pricing_rule_id: "phase-a-free-verify-provenance-v1".to_owned(),
++            sol_price_usd_at_event: self.config.sol_price_usd.clone(),
++            started_at,
++            duration_ms: timer.elapsed().as_millis().min(i64::MAX as u128) as i64,
++            bytes_in: input_bytes,
++            bytes_out,
++            result: result_label,
++            verification_level,
++            estimated_cost_usd: self.config.verify_cost_usd.clone(),
++            billable_units: 1,
++            billable_amount_usd: "0".to_owned(),
++            evidence_hash,
++            metadata,
++        };
++
++        if let Err(e) = self.usage.append(&event).await {
++            tracing::error!(error = ?e, request_id = %request_id, "usage ledger append failed");
++            return Ok(CallToolResult::error(vec![ContentBlock::text(
++                "verification completed but metering commit failed; response withheld fail-closed",
++            )]));
++        }
++
++        Ok(tool_result)
++    }
++}
+diff -ruN a/crates/arkhe-provenance-mcp/src/tools/royalty.rs b/crates/arkhe-provenance-mcp/src/tools/royalty.rs
+--- a/crates/arkhe-provenance-mcp/src/tools/royalty.rs	2026-10-13 10:53:23.616693477 +0000
++++ b/crates/arkhe-provenance-mcp/src/tools/royalty.rs	2026-10-13 10:48:38.550873905 +0000
+@@ -0,0 +1,108 @@
++use crate::{metering::UsageEvent, royalty::RoyaltyStatusArgs, server::ArkheMcp};
++use chrono::Utc;
++use rmcp::{
++    handler::server::wrapper::Parameters,
++    model::{CallToolResult, ContentBlock},
++    ErrorData as McpError,
++};
++use serde_json::json;
++use sha2::{Digest, Sha256};
++use std::time::Instant;
++use uuid::Uuid;
++
++impl ArkheMcp {
++    pub(crate) async fn get_royalty_status_impl(
++        &self,
++        Parameters(args): Parameters<RoyaltyStatusArgs>,
++    ) -> Result<CallToolResult, McpError> {
++        if args.tenant_id.trim().is_empty()
++            || args.idempotency_key.trim().is_empty()
++            || args.work_id.trim().is_empty()
++        {
++            return Err(McpError::invalid_params(
++                "tenant_id, idempotency_key, and work_id are required",
++                None,
++            ));
++        }
++
++        match self
++            .usage
++            .seen_idempotency_key(&args.tenant_id, &args.idempotency_key)
++            .await
++        {
++            Ok(Some(existing)) => {
++                return Ok(CallToolResult::error(vec![ContentBlock::text(format!(
++                    "idempotency key already used; original request_id={existing}"
++                ))]));
++            }
++            Ok(None) => {}
++            Err(e) => {
++                tracing::error!(error = ?e, "usage ledger lookup failed");
++                return Ok(CallToolResult::error(vec![ContentBlock::text(
++                    "metering unavailable; request rejected fail-closed",
++                )]));
++            }
++        }
++
++        let started_at = Utc::now();
++        let timer = Instant::now();
++        let input_bytes = serde_json::to_vec(&args).map(|v| v.len()).unwrap_or(0) as i64;
++        let request_id = Uuid::new_v4();
++
++        let outcome = self.royalties.get(&args.work_id).await;
++        let (tool_result, result_label, evidence_hash, bytes_out, metadata) = match outcome {
++            Ok(status) => {
++                let body = serde_json::to_vec(&status).unwrap_or_default();
++                let evidence_hash = hex::encode(Sha256::digest(&body));
++                let text = serde_json::to_string_pretty(&status).unwrap_or_else(|_| "{}".into());
++                (
++                    CallToolResult::success(vec![ContentBlock::text(text)]),
++                    if status.found { "FOUND" } else { "NOT_FOUND" }.to_owned(),
++                    Some(evidence_hash),
++                    body.len() as i64,
++                    json!({"found": status.found}),
++                )
++            }
++            Err(e) => {
++                let message = format!("royalty lookup failed: {e}");
++                (
++                    CallToolResult::error(vec![ContentBlock::text(message.clone())]),
++                    "ERROR".to_owned(),
++                    None,
++                    message.len() as i64,
++                    json!({"error": e.to_string()}),
++                )
++            }
++        };
++
++        let event = UsageEvent {
++            request_id,
++            idempotency_key: args.idempotency_key,
++            tenant_id: args.tenant_id,
++            tool: "get_royalty_status".to_owned(),
++            price_book_version: self.usage.price_book_version().to_owned(),
++            pricing_rule_id: "phase-a-free-royalty-status-v1".to_owned(),
++            sol_price_usd_at_event: self.config.sol_price_usd.clone(),
++            started_at,
++            duration_ms: timer.elapsed().as_millis().min(i64::MAX as u128) as i64,
++            bytes_in: input_bytes,
++            bytes_out,
++            result: result_label,
++            verification_level: None,
++            estimated_cost_usd: self.config.royalty_lookup_cost_usd.clone(),
++            billable_units: 1,
++            billable_amount_usd: "0".to_owned(),
++            evidence_hash,
++            metadata,
++        };
++
++        if let Err(e) = self.usage.append(&event).await {
++            tracing::error!(error = ?e, request_id = %request_id, "usage ledger append failed");
++            return Ok(CallToolResult::error(vec![ContentBlock::text(
++                "lookup completed but metering commit failed; response withheld fail-closed",
++            )]));
++        }
++
++        Ok(tool_result)
++    }
++}
+diff -ruN a/database/migrations/003_phase_a_metering.sql b/database/migrations/003_phase_a_metering.sql
+--- a/database/migrations/003_phase_a_metering.sql	1970-01-01 00:00:00.000000000 +0000
++++ b/database/migrations/003_phase_a_metering.sql	2026-10-13 10:52:17.442898921 +0000
+@@ -0,0 +1,60 @@
++-- Phase A: append-only usage ledger + read-only royalty status projection.
++-- No billing or payment mutation is introduced in this migration.
++
++CREATE TABLE IF NOT EXISTS usage_events (
++    request_id UUID PRIMARY KEY,
++    idempotency_key TEXT NOT NULL,
++    tenant_id TEXT NOT NULL,
++    tool TEXT NOT NULL,
++    price_book_version TEXT NOT NULL,
++    pricing_rule_id TEXT NOT NULL,
++    sol_price_usd_at_event NUMERIC(20, 8),
++    started_at TIMESTAMPTZ NOT NULL,
++    duration_ms BIGINT NOT NULL CHECK (duration_ms >= 0),
++    bytes_in BIGINT NOT NULL CHECK (bytes_in >= 0),
++    bytes_out BIGINT NOT NULL CHECK (bytes_out >= 0),
++    result TEXT NOT NULL,
++    verification_level TEXT,
++    estimated_cost_usd NUMERIC(20, 10) CHECK (estimated_cost_usd IS NULL OR estimated_cost_usd >= 0),
++    billable_units BIGINT NOT NULL CHECK (billable_units >= 0),
++    billable_amount_usd NUMERIC(20, 10) NOT NULL CHECK (billable_amount_usd >= 0),
++    evidence_hash TEXT,
++    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
++    CONSTRAINT usage_events_idempotency UNIQUE (tenant_id, idempotency_key),
++    CONSTRAINT usage_events_evidence_hash_format CHECK (
++        evidence_hash IS NULL OR evidence_hash ~ '^[0-9a-f]{64}$'
++    )
++);
++
++CREATE INDEX IF NOT EXISTS idx_usage_events_tenant_started
++    ON usage_events (tenant_id, started_at DESC);
++CREATE INDEX IF NOT EXISTS idx_usage_events_tool_started
++    ON usage_events (tool, started_at DESC);
++
++CREATE OR REPLACE FUNCTION arkhe_reject_usage_event_mutation()
++RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++    RAISE EXCEPTION 'usage_events is append-only';
++END;
++$$;
++
++DROP TRIGGER IF EXISTS usage_events_no_update ON usage_events;
++CREATE TRIGGER usage_events_no_update
++BEFORE UPDATE ON usage_events
++FOR EACH ROW EXECUTE FUNCTION arkhe_reject_usage_event_mutation();
++
++DROP TRIGGER IF EXISTS usage_events_no_delete ON usage_events;
++CREATE TRIGGER usage_events_no_delete
++BEFORE DELETE ON usage_events
++FOR EACH ROW EXECUTE FUNCTION arkhe_reject_usage_event_mutation();
++
++-- Projection populated by the existing/future indexer. The MCP tool is read-only.
++CREATE TABLE IF NOT EXISTS royalty_status (
++    work_uuid UUID PRIMARY KEY REFERENCES works(uuid) ON DELETE RESTRICT,
++    state TEXT NOT NULL CHECK (state IN ('unknown', 'registered', 'claimable', 'settled', 'disputed', 'frozen')),
++    split JSONB,
++    currency TEXT,
++    source TEXT NOT NULL DEFAULT 'indexer',
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
++);

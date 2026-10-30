@@ -1,0 +1,2359 @@
+{
+  "date": "2026-10-22",
+  "source_sha256": "84195c48dba1131e7bc6025e6b438c05503f55c86dad3ab81338de568e180a13",
+  "sections": {
+    "1": "Primitivos — `arkhe-core`",
+    "2": "Pipeline de verificação GGUF — `arkhe-verify-core`",
+    "3": "Verificador offline WASM — `arkhe-verify-wasm`",
+    "4": "Kernel — `arkhe-kernel`",
+    "5": "WormGraph / MMR — `arkhe-wormgraph`",
+    "6": "Deteção de equivocação — `arkhe-depin::slashing`",
+    "7": "Journal — `arkhe-journal`",
+    "8": "Adaptador de codificação — `arkhe-coding-agent` (Jules)",
+    "9": "Camada cognitiva (P1–P2)",
+    "10": "DePIN — `arkhe-depin`",
+    "11": "Camada financeira (P0–P1)",
+    "12": "PCO — `arkhe-pco` + `arkhe-validator`",
+    "13": "Broker / enforcement (P0–P1)",
+    "14": "`arkhe-dsa` — estruturas de dados (P0–P2)",
+    "15": "Custo e governança",
+    "16": "Interfaces — MCP + CLI",
+    "17": "Infraestrutura e framework de maturidade",
+    "18": "Ordem de execução recomendada (P0 → P1 → P2)",
+    "19": "Nota de honestidade"
+  },
+  "items": [
+    {
+      "id": "1.1",
+      "feature": "`ContentHash` (BLAKE3, domain separation)",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "—",
+      "status": "ALTERNATIVA",
+      "assessment": "Digest32/AKG no principal e ContentHash/AGI no workspace independente; ambos com domínios e vetores. Não renomear nem misturar identidades.",
+      "evidence": [
+        "kernel/arkhe-core/src",
+        "kernel/arkhe-core/tests/golden_vectors.rs",
+        "agi-coder/crates/agi-coder-core/src",
+        "agi-coder/crates/agi-coder-tests/tests/security.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "contratos por perfil"
+    },
+    {
+      "id": "1.2",
+      "feature": "Canonical CBOR (RFC 8949 §4.2.1, chaves ordenadas pelo encoding, duplicados rejeitados, floats determinísticos)",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "—",
+      "status": "ALTERNATIVA",
+      "assessment": "Perfis existentes rejeitam floats e usam ordenações definidas nos próprios contratos. Não substituir por floats determinísticos nem alegar decoder CBOR geral com rejeição de duplicatas.",
+      "evidence": [
+        "kernel/arkhe-core/src",
+        "kernel/arkhe-core/tests/golden_vectors.rs",
+        "agi-coder/crates/agi-coder-core/src",
+        "agi-coder/crates/agi-coder-tests/tests/security.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "contratos por perfil"
+    },
+    {
+      "id": "1.3",
+      "feature": "`Did`, `RequestIdentity`, `Timestamp`",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "1.1",
+      "status": "ALTERNATIVA",
+      "assessment": "Tipos RequestIdentity e Timestamp/Did no AGI; principal usa String/i64 tipados por contrato. Vetores cobrem a identidade, não validação universal de DID.",
+      "evidence": [
+        "kernel/arkhe-core/src",
+        "kernel/arkhe-core/tests/golden_vectors.rs",
+        "agi-coder/crates/agi-coder-core/src",
+        "agi-coder/crates/agi-coder-tests/tests/security.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "contratos por perfil"
+    },
+    {
+      "id": "1.4",
+      "feature": "`ArtifactEnvelope` (envelope genérico de artefacto)",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "1.1, 1.2",
+      "status": "PARCIAL",
+      "assessment": "EvidenceEnvelope principal e Evidence AGI existem; envelope genérico ArtifactEnvelope com wire contract próprio não foi adotado. Aceite: especificar perfil/versionamento antes de criar outro envelope.",
+      "evidence": [
+        "kernel/arkhe-core/src",
+        "kernel/arkhe-core/tests/golden_vectors.rs",
+        "agi-coder/crates/agi-coder-core/src",
+        "agi-coder/crates/agi-coder-tests/tests/security.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "contratos por perfil"
+    },
+    {
+      "id": "1.5",
+      "feature": "`ArkheError` (erros do core)",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "—",
+      "status": "ALTERNATIVA",
+      "assessment": "Core possui Error/ArkheError por módulo; ausência do nome proposto não é lacuna funcional.",
+      "evidence": [
+        "kernel/arkhe-core/src",
+        "kernel/arkhe-core/tests/golden_vectors.rs",
+        "agi-coder/crates/agi-coder-core/src",
+        "agi-coder/crates/agi-coder-tests/tests/security.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "contratos por perfil"
+    },
+    {
+      "id": "1.6",
+      "feature": "`WorkIntent`, `WorkIntentType`, `OperationId` (exclui parâmetros)",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "1.1, 1.3",
+      "status": "IMPLEMENTADO",
+      "assessment": "operation_id exclui parâmetros nos dois perfis; journals comparam parâmetros ou digest integral. Manter testes de conflito e separar principal/AGI.",
+      "evidence": [
+        "kernel/arkhe-core/src",
+        "kernel/arkhe-core/tests/golden_vectors.rs",
+        "agi-coder/crates/agi-coder-core/src",
+        "agi-coder/crates/agi-coder-tests/tests/security.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "contratos por perfil"
+    },
+    {
+      "id": "1.7",
+      "feature": "`WorkerExecutionRecord` (WER) com `finalized() -> Result`",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "1.1, 1.2",
+      "status": "ALTERNATIVA",
+      "assessment": "WER principal tem digest/admissão; WER AGI tem sign/verify com self_check derivado. finalized não é API vigente; não adicionar método sem contrato.",
+      "evidence": [
+        "kernel/arkhe-core/src",
+        "kernel/arkhe-core/tests/golden_vectors.rs",
+        "agi-coder/crates/agi-coder-core/src",
+        "agi-coder/crates/agi-coder-tests/tests/security.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "contratos por perfil"
+    },
+    {
+      "id": "2.1",
+      "feature": "**Gate 1** — parser GGUF v2/v3 com bounds checks, `checked_mul`, validação de `offset+nbytes`, `general.alignment`",
+      "original_priority": "P1",
+      "original_status": "`CONJECTURE` (spec escrita, não executada)",
+      "original_dependencies": "1.1",
+      "status": "PARCIAL",
+      "assessment": "Parser executado aceita apenas GGUF v3 little-endian, F32 e metadados restritos com limites. Pendente: perfil v2, arrays, tipos/quantizações gerais e testes independentes de cada extensão.",
+      "evidence": [
+        "verification/crates/arkhe-verify-core/src/gguf",
+        "verification/crates/arkhe-verify-core/tests/gguf_supply_chain.rs",
+        "integrations/cosign/README.md"
+      ],
+      "depends_on": [
+        "1.1"
+      ],
+      "priority": "P1",
+      "scope": "verificador GGUF"
+    },
+    {
+      "id": "2.2",
+      "feature": "**Gate 2** — projeção canónica (CBOR determinístico, tipo de array preservado, floats por bit-pattern) + raiz Merkle de tensores",
+      "original_priority": "P1",
+      "original_status": "`CONJECTURE`",
+      "original_dependencies": "1.2, 2.1",
+      "status": "PARCIAL",
+      "assessment": "Canonicalização restrita e digest do arquivo completo existem. Raiz Merkle de tensores, arrays tipados e floats por bits não implementados; exigem novo perfil sem alterar vetores atuais.",
+      "evidence": [
+        "verification/crates/arkhe-verify-core/src/gguf",
+        "verification/crates/arkhe-verify-core/tests/gguf_supply_chain.rs",
+        "integrations/cosign/README.md"
+      ],
+      "depends_on": [
+        "1.2",
+        "2.1"
+      ],
+      "priority": "P1",
+      "scope": "verificador GGUF"
+    },
+    {
+      "id": "2.3",
+      "feature": "**Gate 3** — statement assinado in-toto v1 (`_type`, `subject`, `predicateType`, `predicate`), digest SHA-256+BLAKE3 comparado com assinado, política de identidade",
+      "original_priority": "P1",
+      "original_status": "`CONJECTURE`",
+      "original_dependencies": "2.2, 1.1",
+      "status": "PARCIAL",
+      "assessment": "Statement local assinado e adapter Sigstore messageSignature verificam o arquivo completo. DSSE/in-toto v1 não suportado; aceite: schema e subjects vinculados sob política independente.",
+      "evidence": [
+        "verification/crates/arkhe-verify-core/src/gguf",
+        "verification/crates/arkhe-verify-core/tests/gguf_supply_chain.rs",
+        "integrations/cosign/README.md"
+      ],
+      "depends_on": [
+        "2.1",
+        "2.2"
+      ],
+      "priority": "P1",
+      "scope": "verificador GGUF"
+    },
+    {
+      "id": "2.4",
+      "feature": "**Gate 4** — combinador de veredito; `PENDING` nunca vira `PASS`",
+      "original_priority": "P1",
+      "original_status": "`CONJECTURE`",
+      "original_dependencies": "2.1–2.3",
+      "status": "ALTERNATIVA",
+      "assessment": "Verificação retorna sucesso apenas após quatro gates, falhas são erro. Não há combinador público PASS/PENDING geral; não equiparar o perfil sintético à verificação universal.",
+      "evidence": [
+        "verification/crates/arkhe-verify-core/src/gguf",
+        "verification/crates/arkhe-verify-core/tests/gguf_supply_chain.rs",
+        "integrations/cosign/README.md"
+      ],
+      "depends_on": [
+        "2.1",
+        "2.3"
+      ],
+      "priority": "P1",
+      "scope": "verificador GGUF"
+    },
+    {
+      "id": "2.5",
+      "feature": "Fixture mínimo de 24 bytes (cabeçalho vazio, zero tensores)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "2.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "Fixture de 24 bytes agora testada como rejeição explícita do perfil lab: zero tensores não é modelo aceito. Aceitar o header exigiria outro contrato de parser.",
+      "evidence": [
+        "verification/crates/arkhe-verify-core/src/gguf",
+        "verification/crates/arkhe-verify-core/tests/gguf_supply_chain.rs",
+        "integrations/cosign/README.md"
+      ],
+      "depends_on": [
+        "2.1"
+      ],
+      "priority": "P0",
+      "scope": "verificador GGUF"
+    },
+    {
+      "id": "2.6",
+      "feature": "12+ testes unitários negativos (magic inválido, versão, alinhamento, overflow, tensor fora dos limites, digest mismatch, assinatura de outra chave)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "2.1–2.4",
+      "status": "IMPLEMENTADO",
+      "assessment": "Suíte negativa executa truncamentos, versões, duplicatas, tipos, overflow, alinhamento, sobreposição, digests, chaves, assinatura e prova. Quantidade de funções não substitui cobertura por caso.",
+      "evidence": [
+        "verification/crates/arkhe-verify-core/src/gguf",
+        "verification/crates/arkhe-verify-core/tests/gguf_supply_chain.rs",
+        "integrations/cosign/README.md"
+      ],
+      "depends_on": [
+        "2.1",
+        "2.3"
+      ],
+      "priority": "P0",
+      "scope": "verificador GGUF"
+    },
+    {
+      "id": "2.7",
+      "feature": "Correção do design de assinatura: statement assinado deve incluir digest do artefacto completo (não só metadados)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "2.3",
+      "status": "IMPLEMENTADO",
+      "assessment": "Statement local vincula SHA-256 e BLAKE3 do GGUF completo; teste altera payload mantendo metadados. Adapter Sigstore recebe os mesmos bytes da inspeção.",
+      "evidence": [
+        "verification/crates/arkhe-verify-core/src/gguf",
+        "verification/crates/arkhe-verify-core/tests/gguf_supply_chain.rs",
+        "integrations/cosign/README.md"
+      ],
+      "depends_on": [
+        "2.3"
+      ],
+      "priority": "P0",
+      "scope": "verificador GGUF"
+    },
+    {
+      "id": "3.1",
+      "feature": "Prova de inclusão MMR portátil (`PortableInclusionProof`, verificação offline)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.2",
+      "status": "IMPLEMENTADO",
+      "assessment": "MMR offline no WASM e PortableInclusionProof no DePIN; raiz deve ser fornecida por canal confiável. Não autentica provider/hardware.",
+      "evidence": [
+        "verification/crates/arkhe-verify-wasm/src/lib.rs",
+        "verification/crates/arkhe-verify-core/tests/golden_contract.rs",
+        "integrations/verify-mcp"
+      ],
+      "depends_on": [
+        "5.2"
+      ],
+      "priority": "P1",
+      "scope": "verificacao offline WASM"
+    },
+    {
+      "id": "3.2",
+      "feature": "Verificação de manifesto C2PA (proveniência de conteúdo)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "3.1",
+      "status": "PARCIAL",
+      "assessment": "Claim próprio com assinatura Ed25519 e roots fixadas; não é validação C2PA/COSE padrão de manifesto completo. Aceite: engine C2PA padrão com fixtures e política.",
+      "evidence": [
+        "verification/crates/arkhe-verify-wasm/src/lib.rs",
+        "verification/crates/arkhe-verify-core/tests/golden_contract.rs",
+        "integrations/verify-mcp"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "verificacao offline WASM"
+    },
+    {
+      "id": "3.3",
+      "feature": "Paridade WASM ↔ nativo (mesmos test vectors)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "3.1, 5.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "Golden vectors são consumidos pelo núcleo e adapters WASM; executar build e testes do adapter com os mesmos vetores, sem regenerar expected values.",
+      "evidence": [
+        "verification/crates/arkhe-verify-wasm/src/lib.rs",
+        "verification/crates/arkhe-verify-core/tests/golden_contract.rs",
+        "integrations/verify-mcp"
+      ],
+      "depends_on": [
+        "3.1"
+      ],
+      "priority": "P1",
+      "scope": "verificacao offline WASM"
+    },
+    {
+      "id": "3.4",
+      "feature": "Bindings `wasm-bindgen` para browser e Node",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "3.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "wasm-bindgen e build Node/browser existentes via build_verifier.py; publicação npm não é inferida.",
+      "evidence": [
+        "verification/crates/arkhe-verify-wasm/src/lib.rs",
+        "verification/crates/arkhe-verify-core/tests/golden_contract.rs",
+        "integrations/verify-mcp"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "verificacao offline WASM"
+    },
+    {
+      "id": "4.1",
+      "feature": "`ContainmentGate::authorize()` — passos 1–8 (journal, hash recomputado, allowlist, `self_check` derivado, binding via `OperationId`)",
+      "original_priority": "P0",
+      "original_status": "`LEMMA` (auditado, não compilado)",
+      "original_dependencies": "1.6, 1.7, 7.1",
+      "status": "ALTERNATIVA",
+      "assessment": "Gate principal e AGI compilam/testam; principal exige admissão em ações protegidas e AGI verifica assinatura/bindings. Journal é orquestração separada, não passos 1–8 idênticos ao pseudocódigo.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [
+        "1.6",
+        "1.7"
+      ],
+      "priority": "P0",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.2",
+      "feature": "**Passo 9** — certificado formal (`ProofCarryingOutput`) quando a política exige",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1, 14.2",
+      "status": "PARCIAL",
+      "assessment": "Gate suporta License e PaymentMandate além de budget, com reexecução independente e envelope admitido. Rocq e solvência ZK continuam pendentes.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [
+        "4.1"
+      ],
+      "priority": "P1",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.3",
+      "feature": "`GateDecision::Allow/Reject` com razões tipadas",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "4.1",
+      "status": "ALTERNATIVA",
+      "assessment": "Principal Allow/Reject com reason String; AGI GateError tipa classe e mensagem. Enum exaustivo de todas as razões requer migração de API, não bloqueia rejeição atual.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.4",
+      "feature": "`EvidenceStore` trait + `InMemoryEvidenceStore` (não test-only)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "EvidenceStore e InMemoryEvidenceStore públicos no AGI; principal tem EvidenceReader/Committer e stores por integração. Não cruzar os perfis.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.5",
+      "feature": "`PolicyEvaluator` trait + `EvidenceKindRequirement` (`#[non_exhaustive]`)",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "4.1",
+      "status": "ALTERNATIVA",
+      "assessment": "Principal usa PolicyResolver e EvidenceKindRequirement; AGI Policy concreto. Non_exhaustive não adotado; adicionar agora quebraria construção externa vigente.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.6",
+      "feature": "`Binding` enum com 4 variantes (`AnalysisRecord`, `OperationId`, `OutputIsTarget`, `InputContainsTarget`), obrigatório (sem \"none\")",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1",
+      "status": "ALTERNATIVA",
+      "assessment": "Bindings obrigatórios aplicados diretamente pelo gate principal e gate AGI. Enum universal com quatro variantes não adotado; nova variante exige predicado e teste por operação.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.7",
+      "feature": "Política escolhe binding por `WorkIntentType` (fixo em código, não escolha do avaliador)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.6",
+      "status": "PARCIAL",
+      "assessment": "Triage e budget têm bindings fixos no código e exigências da governança. Restantes intent types protegidos ficam sem permissão de desenvolvimento; criar perfil por capacidade antes de ativar.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [
+        "4.6"
+      ],
+      "priority": "P1",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.8",
+      "feature": "`ReviewRouter` — decisão `AutoAccept`/`ReviewRequired`/`AutoReject` derivada de evidência (não de contagem fornecida pelo caller)",
+      "original_priority": "P1",
+      "original_status": "`LEMMA` (mínimo)",
+      "original_dependencies": "4.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "ReviewRouter principal deriva de evidências admitidas/política; AGI router mínimo separado. Perfil padrão não habilita autoexecução.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [
+        "4.1"
+      ],
+      "priority": "P1",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.9",
+      "feature": "`is_trivial_diff` (requer `diff_size_bytes` no record ou allowlist de hashes triviais)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.8",
+      "status": "PENDENTE",
+      "assessment": "Não inferir trivialidade por contagem livre do caller. Aceite: diff autenticado, parser e tamanho/escopo derivados em worker confiável, com casos adversariais.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.10",
+      "feature": "`records_equal_except_signature` (comparação completa, defense-in-depth)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1",
+      "status": "ALTERNATIVA",
+      "assessment": "Digests canônicos vinculam todos os campos sem assinatura; WER AGI verifica hash/assinatura e derivação. Helper com nome sugerido não é necessário no contrato atual.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.11",
+      "feature": "`JournalConfirmation` assinado pelo journal (não construído pelo caller)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "7.2",
+      "status": "PENDENTE",
+      "assessment": "Sem JournalConfirmation universal assinado. Aceite: identidade/chave do journal, binding do estado/owner e testes de replay; recibo não pode ser construído pelo caller.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "4.12",
+      "feature": "Verificação de assinatura Ed25519 do WER",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "1.7",
+      "status": "IMPLEMENTADO",
+      "assessment": "SignedWorkerVerifier Ed25519 na admissão principal; WER AGI usa verify_strict. Roots/version/revogação pertencem ao host, não ao bundle.",
+      "evidence": [
+        "kernel/arkhe-kernel/src/lib.rs",
+        "kernel/arkhe-kernel/tests",
+        "agi-coder/crates/agi-coder-kernel/src",
+        "integration/arkhe-bugbounty/src/provenance.rs",
+        "kernel/arkhe-core/src/formal_proof.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "autorizacao protegida"
+    },
+    {
+      "id": "5.1",
+      "feature": "MMR com domínios separados (`0x00` leaf, `0x01` node, `0x02` root, `0x03` bag)",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "1.1",
+      "status": "ALTERNATIVA",
+      "assessment": "Arkhe congelado usa 00/01/02; AGI usa domínios textuais próprios. Esquema 00/01/02/03 do anexo conflita com vetores e não será aplicado.",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "5.2",
+      "feature": "`PortableInclusionProof` + `verify_portable_inclusion` (offline, O(log n))",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "Provas portáteis existentes; verificador principal agora valida shape, limite de count e oferece índice explícito. Builder de referência continua O(n), não O(log n).",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [
+        "5.1",
+        "5.3"
+      ],
+      "priority": "P0",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "5.3",
+      "feature": "**`MMR-PROFILE.md`** — pinar 7 pontos (domain separation, peak ordering, bagging direction, acc init, empty tree, inclusion proof format, consistency proof format)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "IMPLEMENTADO",
+      "assessment": "Perfil normativo já fixa domínios, ordem, bag, inicialização, empty e inclusão; índice docs/MMR-PROFILE.md documenta que consistência não está congelada.",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "5.4",
+      "feature": "Bagging right-to-left (corrigir `.rev()` e comentário contraditório)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.3",
+      "status": "IMPLEMENTADO",
+      "assessment": "Bagging right-to-left em ambos os perfis com vetores independentes. Não aplicar correção textual antiga sobre implementação já correta.",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [
+        "5.3"
+      ],
+      "priority": "P0",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "5.5",
+      "feature": "`hash_bag` com marcador explícito `0x00`/`0x01` para `acc=None` (evitar ambiguidade de comprimento)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.3",
+      "status": "ALTERNATIVA",
+      "assessment": "AGI já usa marcadores 0/1; Arkhe-v1 inicia no último peak sem Option. Inserir marcador no principal alteraria o protocolo congelado.",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [
+        "5.3"
+      ],
+      "priority": "P0",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "5.6",
+      "feature": "Teste de tamper em todas as posições para 3, 5, 7 folhas",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "Testes agora adulteram cada folha e cada elemento do caminho para 1/3/4/5/7; shape/index/count incorretos são rejeitados sem alterar roots congelados.",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [
+        "5.2"
+      ],
+      "priority": "P0",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "5.7",
+      "feature": "Referência independente (`merkleberg`/MMRIVER) nos testes",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.2, 5.3",
+      "status": "ALTERNATIVA",
+      "assessment": "Referências Python independentes e vetores estáticos existentes; merkleberg/MMRIVER não são autoridade obrigatória nem garantem mesmo perfil.",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [
+        "5.3"
+      ],
+      "priority": "P1",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "5.8",
+      "feature": "Checkpoint assinado (raiz + timestamp + assinatura)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.1",
+      "status": "PARCIAL",
+      "assessment": "Checkpoint assinado em perfis sintéticos gov e novo mandato; principal possui persistência de checkpoints. Serviço genérico de assinatura/retention/revogação continua necessário por implantação.",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "5.9",
+      "feature": "Prova de consistência (append-only: novo estado estende antigo) — **só se decidido**",
+      "original_priority": "P3",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.3, 5.8",
+      "status": "ADIADO",
+      "assessment": "Sem prova de consistência congelada. Exigir se for necessário provar extensão entre checkpoints; inclusão não substitui consistência.",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [],
+      "priority": "P3",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "5.10",
+      "feature": "`BTreeSet<[u8;32]>` como índice de folhas (substitui Bloom filter, YAGNI)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.1",
+      "status": "PENDENTE",
+      "assessment": "Não há índice BTreeSet universal de folhas. Medir consultas e definir duplicata/namespace antes de adicionar; não bloqueia inclusão.",
+      "evidence": [
+        "specs/mmr/spec/mmr-profile-v1.md",
+        "verification/crates/arkhe-verify-core/src/mmr",
+        "verification/crates/arkhe-verify-core/tests/mmr.rs",
+        "agi-coder/crates/agi-coder-wormgraph/src/mmr.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "MMR por perfil"
+    },
+    {
+      "id": "6.1",
+      "feature": "`HashMap<OperationId, SmallVec<[u8;32]>>` para agrupar `parameters_digest` por operação",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "1.6",
+      "status": "PENDENTE",
+      "assessment": "Journal detecta conflito de parâmetros, mas não é detector público de equivocação assinada. Definir slot, principal, epoch e namespace antes de agrupar mensagens.",
+      "evidence": [
+        "integration/arkhe-depin/src",
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "equivocacao sancionavel"
+    },
+    {
+      "id": "6.2",
+      "feature": "`SlashingEvidence` com duas assinaturas válidas sobre digests divergentes",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "6.1",
+      "status": "PENDENTE",
+      "assessment": "Aceite: duas declarações incompatíveis autenticadas da mesma autoridade no mesmo slot, roots e política fixadas; conflito do caller não basta para punição.",
+      "evidence": [
+        "integration/arkhe-depin/src",
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md"
+      ],
+      "depends_on": [
+        "6.1",
+        "4.12"
+      ],
+      "priority": "P1",
+      "scope": "equivocacao sancionavel"
+    },
+    {
+      "id": "6.3",
+      "feature": "`detect_equivocation(operation_id)` — retry idempotente ≠ conflito",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "6.1, 6.2",
+      "status": "PENDENTE",
+      "assessment": "Retry/conflict são cobertos nos journals; detect_equivocation sancionável depende do contrato de evidência, sem presumir má-fé.",
+      "evidence": [
+        "integration/arkhe-depin/src",
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md"
+      ],
+      "depends_on": [
+        "6.2"
+      ],
+      "priority": "P1",
+      "scope": "equivocacao sancionavel"
+    },
+    {
+      "id": "6.4",
+      "feature": "`SlashingEngine` — submissão on-chain/off-chain conforme política",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "6.2",
+      "status": "NÃO ADOTADO",
+      "assessment": "Slashing econômico exige adjudicação e política de penalidade; não submeter transação como consequência automática de conflito local.",
+      "evidence": [
+        "integration/arkhe-depin/src",
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md"
+      ],
+      "depends_on": [
+        "6.3"
+      ],
+      "priority": "P2",
+      "scope": "equivocacao sancionavel"
+    },
+    {
+      "id": "7.1",
+      "feature": "`InMemoryJournal` (admissão, idempotência, conflito)",
+      "original_priority": "P0",
+      "original_status": "`THEOREM` (unit)",
+      "original_dependencies": "1.6",
+      "status": "IMPLEMENTADO",
+      "assessment": "OperationJournal em memória nos dois perfis com replay/conflito; principal e AGI têm testes diferentes, sem THEOREM herdado.",
+      "evidence": [
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "integration/arkhe-bugbounty/src/postgres.rs",
+        "agi-coder/crates/agi-coder-journal/src/lib.rs",
+        "agi-coder/crates/agi-coder-tests/tests/journal_pipeline.rs",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "journal por perfil"
+    },
+    {
+      "id": "7.2",
+      "feature": "**Journal durável** com `rusqlite` (SQLite WAL) como default; `redb` como alternativa",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "PARCIAL",
+      "assessment": "PostgreSQL preservado; broker standalone agora tem SQLite WAL/FULL opcional, owner, reopen e concorrência testados. Pipeline AGI ainda em memória.",
+      "evidence": [
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "integration/arkhe-bugbounty/src/postgres.rs",
+        "agi-coder/crates/agi-coder-journal/src/lib.rs",
+        "agi-coder/crates/agi-coder-tests/tests/journal_pipeline.rs",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [
+        "7.3",
+        "7.4"
+      ],
+      "priority": "P1",
+      "scope": "journal por perfil"
+    },
+    {
+      "id": "7.3",
+      "feature": "**ADR-018** — decisão `rusqlite` vs `redb` com critérios enumerados (durabilidade, maturidade, supply chain no journal **não-TCB**, cross-compile, tamanho)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "IMPLEMENTADO",
+      "assessment": "ADR-018 registra PostgreSQL existente e critérios SQLite/redb para standalone; journal integra a confiança operacional de não duplicação e não é genericamente não-TCB.",
+      "evidence": [
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "integration/arkhe-bugbounty/src/postgres.rs",
+        "agi-coder/crates/agi-coder-journal/src/lib.rs",
+        "agi-coder/crates/agi-coder-tests/tests/journal_pipeline.rs",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "journal por perfil"
+    },
+    {
+      "id": "7.4",
+      "feature": "`enum Status` (`Pending`, `Completed`, `Failed`, `ManualReconciliationRequired`) com transições válidas",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "7.1",
+      "status": "ALTERNATIVA",
+      "assessment": "AGI tem enum Pending/Completed/Failed/ManualReconciliationRequired e transições; principal PREPARED/DISPATCHED/COMPLETED mais escalonamento. Não unificar renomeando estados publicados.",
+      "evidence": [
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "integration/arkhe-bugbounty/src/postgres.rs",
+        "agi-coder/crates/agi-coder-journal/src/lib.rs",
+        "agi-coder/crates/agi-coder-tests/tests/journal_pipeline.rs",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "journal por perfil"
+    },
+    {
+      "id": "7.5",
+      "feature": "`mark_failed`, `mark_manual_reconciliation`, `mark_completed` com validação de transição",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "7.4",
+      "status": "ALTERNATIVA",
+      "assessment": "finish valida transições no AGI; claim/mark_dispatched/complete e require_manual_reconciliation no principal. APIs com nomes diferentes satisfazem o perfil existente.",
+      "evidence": [
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "integration/arkhe-bugbounty/src/postgres.rs",
+        "agi-coder/crates/agi-coder-journal/src/lib.rs",
+        "agi-coder/crates/agi-coder-tests/tests/journal_pipeline.rs",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [
+        "7.4"
+      ],
+      "priority": "P1",
+      "scope": "journal por perfil"
+    },
+    {
+      "id": "7.6",
+      "feature": "Reconciler — processo externo que deteta `Pending` expirado e transita para `ManualReconciliationRequired`",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "7.4",
+      "status": "PARCIAL",
+      "assessment": "Principal lista/escalona pendências e mantém reconciliação explícita. Aceite restante AGI: processo durável de expiração/investigação que nunca reenvia efeito incerto automaticamente.",
+      "evidence": [
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "integration/arkhe-bugbounty/src/postgres.rs",
+        "agi-coder/crates/agi-coder-journal/src/lib.rs",
+        "agi-coder/crates/agi-coder-tests/tests/journal_pipeline.rs",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [
+        "7.2",
+        "7.5"
+      ],
+      "priority": "P2",
+      "scope": "journal por perfil"
+    },
+    {
+      "id": "7.7",
+      "feature": "Idempotência **antes** do side effect (admissão com `OperationId` conhecido a priori)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "1.6, 7.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "Reserva anterior ao efeito nos pipelines existentes e contrato do broker novo; testes verificam contadores e replay. In-memory não prova sobrevivência a crash.",
+      "evidence": [
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "integration/arkhe-bugbounty/src/postgres.rs",
+        "agi-coder/crates/agi-coder-journal/src/lib.rs",
+        "agi-coder/crates/agi-coder-tests/tests/journal_pipeline.rs",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [
+        "1.6",
+        "7.1"
+      ],
+      "priority": "P0",
+      "scope": "journal por perfil"
+    },
+    {
+      "id": "7.8",
+      "feature": "Journalar `session_name` imediatamente após `create_session` (para reconciliação)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "7.5",
+      "status": "PARCIAL",
+      "assessment": "create_recorded chama recorder antes do polling; record_session valida admissão e nome. Falha conserva nome para reconciliação, sem retry; callback durável do host live ainda necessário.",
+      "evidence": [
+        "integration/arkhe-bugbounty/src/journal.rs",
+        "integration/arkhe-bugbounty/src/postgres.rs",
+        "agi-coder/crates/agi-coder-journal/src/lib.rs",
+        "agi-coder/crates/agi-coder-tests/tests/journal_pipeline.rs",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [
+        "7.2",
+        "8.1"
+      ],
+      "priority": "P1",
+      "scope": "journal por perfil"
+    },
+    {
+      "id": "8.1",
+      "feature": "`JulesClient` REST (`sessions`, `activities`)",
+      "original_priority": "P1",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "—",
+      "status": "PARCIAL",
+      "assessment": "Cliente REST com sessions/activities, paginação e polling e mock HTTP. Live alpha API não foi exercitada; não atribuir autoridade ao resultado remoto.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-jules/src",
+        "agi-coder/crates/agi-coder-tests/tests/e2e_mock_jules.rs",
+        "agi-coder/crates/agi-coder-core/src/wer.rs",
+        "agi-coder/crates/agi-coder-tests/tests/jules_completion.rs",
+        "docs/JULES-COMPLETION.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "worker Jules/AGI"
+    },
+    {
+      "id": "8.2",
+      "feature": "`extract_diff` com fallback `session.outputs` → `activities.artifacts` (logar qual funcionou)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "8.1",
+      "status": "PARCIAL",
+      "assessment": "Extrai apenas gitPatch das activities; fallback validado de outputs e diagnóstico da fonte ainda ausentes. URL de PR ou JSON arbitrário não é diff.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-jules/src",
+        "agi-coder/crates/agi-coder-tests/tests/e2e_mock_jules.rs",
+        "agi-coder/crates/agi-coder-core/src/wer.rs",
+        "agi-coder/crates/agi-coder-tests/tests/jules_completion.rs",
+        "docs/JULES-COMPLETION.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "worker Jules/AGI"
+    },
+    {
+      "id": "8.3",
+      "feature": "`JulesWorkerRecord::from_session` com `operation_id` como parâmetro (conhecido antes do dispatch)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "1.6, 8.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "from_session exige OperationId pré-dispatch e vínculo ao intent, conclusão e patch documentados; gera WER sem assinatura com testes independentes fornecidos pelo host.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-jules/src",
+        "agi-coder/crates/agi-coder-tests/tests/e2e_mock_jules.rs",
+        "agi-coder/crates/agi-coder-core/src/wer.rs",
+        "agi-coder/crates/agi-coder-tests/tests/jules_completion.rs",
+        "docs/JULES-COMPLETION.md"
+      ],
+      "depends_on": [
+        "1.6",
+        "8.1"
+      ],
+      "priority": "P0",
+      "scope": "worker Jules/AGI"
+    },
+    {
+      "id": "8.4",
+      "feature": "`self_check` derivado de `tests` (não hard-coded `Pass`)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "8.3",
+      "status": "IMPLEMENTADO",
+      "assessment": "WER AGI sign deriva self_check de TestResults; testes ausentes/skipped/falhos não passam. A autenticidade do runner independente continua requisito da implantação.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-jules/src",
+        "agi-coder/crates/agi-coder-tests/tests/e2e_mock_jules.rs",
+        "agi-coder/crates/agi-coder-core/src/wer.rs",
+        "agi-coder/crates/agi-coder-tests/tests/jules_completion.rs",
+        "docs/JULES-COMPLETION.md"
+      ],
+      "depends_on": [
+        "8.3"
+      ],
+      "priority": "P0",
+      "scope": "worker Jules/AGI"
+    },
+    {
+      "id": "8.5",
+      "feature": "`#[serde(untagged)]` com `Unknown(Value)` **último**",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "8.1",
+      "status": "ALTERNATIVA",
+      "assessment": "Cliente usa Session tipado e artifacts Value com extração explícita; não há enum untagged com catch-all a reordenar. Objetos desconhecidos não geram patch válido.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-jules/src",
+        "agi-coder/crates/agi-coder-tests/tests/e2e_mock_jules.rs",
+        "agi-coder/crates/agi-coder-core/src/wer.rs",
+        "agi-coder/crates/agi-coder-tests/tests/jules_completion.rs",
+        "docs/JULES-COMPLETION.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "worker Jules/AGI"
+    },
+    {
+      "id": "8.6",
+      "feature": "`completed_at` da API Jules (não do relógio local)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "8.3",
+      "status": "IMPLEMENTADO",
+      "assessment": "completed_at vem de createTime da atividade sessionCompleted da mesma sessão, validado RFC3339. Ausência/duplicata/sessão alheia/hora inválida rejeitadas sem fallback local.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-jules/src",
+        "agi-coder/crates/agi-coder-tests/tests/e2e_mock_jules.rs",
+        "agi-coder/crates/agi-coder-core/src/wer.rs",
+        "agi-coder/crates/agi-coder-tests/tests/jules_completion.rs",
+        "docs/JULES-COMPLETION.md"
+      ],
+      "depends_on": [
+        "8.1"
+      ],
+      "priority": "P0",
+      "scope": "worker Jules/AGI"
+    },
+    {
+      "id": "8.7",
+      "feature": "`ReviewRouter` integrado (AutoAccept/ReviewRequired/AutoReject)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.8, 8.3",
+      "status": "PARCIAL",
+      "assessment": "Routers existem, mas fluxo Jules live com revisão independente não está integrado. Aceite: decisão admitida e vinculada ao diff/testes antes de merge/deploy.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-jules/src",
+        "agi-coder/crates/agi-coder-tests/tests/e2e_mock_jules.rs",
+        "agi-coder/crates/agi-coder-core/src/wer.rs",
+        "agi-coder/crates/agi-coder-tests/tests/jules_completion.rs",
+        "docs/JULES-COMPLETION.md"
+      ],
+      "depends_on": [
+        "4.8",
+        "8.3"
+      ],
+      "priority": "P2",
+      "scope": "worker Jules/AGI"
+    },
+    {
+      "id": "9.1",
+      "feature": "`arkhe-coder` — orquestrador de pipeline (design → impl → test → audit → deploy)",
+      "original_priority": "P2",
+      "original_status": "`CONJECTURE`",
+      "original_dependencies": "",
+      "status": "PARCIAL",
+      "assessment": "Pipeline e demo de cinco estágios no AGI; autonomia design/edição/deploy real não demonstrada. Sem autoridade de produção por default.",
+      "evidence": [
+        "cognition",
+        "agi-coder/crates/agi-coder-cognition/src",
+        "agi-coder/crates/agi-coder-tests/tests/cognition_verification.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "cognicao de referencia"
+    },
+    {
+      "id": "9.2",
+      "feature": "`arkhe-planner` — HTN, task graph, replan",
+      "original_priority": "P2",
+      "original_status": "`CONJECTURE`",
+      "original_dependencies": "",
+      "status": "PARCIAL",
+      "assessment": "Planner DAG determinístico, dependências, resume e retry limitado testados. HTN e replan semântico de modelo não implementados.",
+      "evidence": [
+        "cognition",
+        "agi-coder/crates/agi-coder-cognition/src",
+        "agi-coder/crates/agi-coder-tests/tests/cognition_verification.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "cognicao de referencia"
+    },
+    {
+      "id": "9.3",
+      "feature": "`arkhe-memory` — working (`pvec`), episodic, semantic",
+      "original_priority": "P2",
+      "original_status": "`CONJECTURE`",
+      "original_dependencies": "",
+      "status": "PARCIAL",
+      "assessment": "Working BTreeMap, episodic/semantic e persistência JSON no AGI, memória de referência principal. pvec e banco transacional não implementados.",
+      "evidence": [
+        "cognition",
+        "agi-coder/crates/agi-coder-cognition/src",
+        "agi-coder/crates/agi-coder-tests/tests/cognition_verification.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "cognicao de referencia"
+    },
+    {
+      "id": "9.4",
+      "feature": "`arkhe-spec-verifier` — mutation testing, oracles independentes",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "",
+      "status": "PARCIAL",
+      "assessment": "SpecificationVerifier com baseline, autor independente e campanha de mutação em subprocesso testada. Não comprova verdade de todo oráculo/spec externa.",
+      "evidence": [
+        "cognition",
+        "agi-coder/crates/agi-coder-cognition/src",
+        "agi-coder/crates/agi-coder-tests/tests/cognition_verification.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "cognicao de referencia"
+    },
+    {
+      "id": "9.5",
+      "feature": "`arkhe-research` — hipóteses, knowledge graph",
+      "original_priority": "P3",
+      "original_status": "`PENDING`",
+      "original_dependencies": "",
+      "status": "PARCIAL",
+      "assessment": "Research com hipóteses, fontes e resolução exigindo evidência no AGI. Knowledge graph geral e pesquisa autônoma continuam fora do escopo demonstrado.",
+      "evidence": [
+        "cognition",
+        "agi-coder/crates/agi-coder-cognition/src",
+        "agi-coder/crates/agi-coder-tests/tests/cognition_verification.rs"
+      ],
+      "depends_on": [],
+      "priority": "P3",
+      "scope": "cognicao de referencia"
+    },
+    {
+      "id": "9.6",
+      "feature": "`arkhe-bugbounty` — triagem com `ContainmentGate` + `ReviewRouter`",
+      "original_priority": "P2",
+      "original_status": "`THEOREM` parcial",
+      "original_dependencies": "",
+      "status": "IMPLEMENTADO",
+      "assessment": "Triagem admitida, gate e ReviewRouter no principal com testes. Validação live/upstream e chaves de produção não inferidas do teste local.",
+      "evidence": [
+        "cognition",
+        "agi-coder/crates/agi-coder-cognition/src",
+        "agi-coder/crates/agi-coder-tests/tests/cognition_verification.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "cognicao de referencia"
+    },
+    {
+      "id": "9.7",
+      "feature": "`arkhe-agent` — `AuthorizationProof`, `ToolContractDigest`",
+      "original_priority": "P2",
+      "original_status": "`CONJECTURE`",
+      "original_dependencies": "",
+      "status": "PARCIAL",
+      "assessment": "Agente principal e loop limitado AGI existem; AuthorizationProof/ToolContractDigest universais não encontrados. Perfil de ferramenta precisa ser fixado por capacidade.",
+      "evidence": [
+        "cognition",
+        "agi-coder/crates/agi-coder-cognition/src",
+        "agi-coder/crates/agi-coder-tests/tests/cognition_verification.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "cognicao de referencia"
+    },
+    {
+      "id": "10.1",
+      "feature": "`ContinuousAttestation` (nonce fresco + NRAS JWT + PPCIE + TTL)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "PENDENTE",
+      "assessment": "Campos NRAS/PPCIE são material não autenticado no receipt atual. Nenhuma attestation contínua qualificada; definir plataforma suportada, janela e workload/key binding.",
+      "evidence": [
+        "integration/arkhe-depin/src/types.rs",
+        "integration/arkhe-depin/tests/portable_proof_composite.rs",
+        "docs/security/WORKLOAD-ATTESTATION-2026-10-18.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "DePIN/hardware"
+    },
+    {
+      "id": "10.2",
+      "feature": "`WorkerVerifier::verify_continuous` (nonce match, JWT verify, PPCIE, stale check)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "10.1",
+      "status": "PENDENTE",
+      "assessment": "Verificação real de assinatura/claims/nonce/validade e qualificação hardware ausente. Não aceitar mera presença de JWT como evidência.",
+      "evidence": [
+        "integration/arkhe-depin/src/types.rs",
+        "integration/arkhe-depin/tests/portable_proof_composite.rs",
+        "docs/security/WORKLOAD-ATTESTATION-2026-10-18.md"
+      ],
+      "depends_on": [
+        "10.1",
+        "10.3"
+      ],
+      "priority": "P1",
+      "scope": "DePIN/hardware"
+    },
+    {
+      "id": "10.3",
+      "feature": "Cliente NRAS",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "PENDENTE",
+      "assessment": "Cliente NRAS qualificado não implementado. Exige endpoint/schema/roots/version e testes sem segredos, depois hardware real.",
+      "evidence": [
+        "integration/arkhe-depin/src/types.rs",
+        "integration/arkhe-depin/tests/portable_proof_composite.rs",
+        "docs/security/WORKLOAD-ATTESTATION-2026-10-18.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "DePIN/hardware"
+    },
+    {
+      "id": "10.4",
+      "feature": "Verificação PPCIE (multi-GPU isolation)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "NÃO ADOTADO",
+      "assessment": "PPCIE universal não é requisito válido para toda GPU. Selecionar perfil suportado e evidência apropriada; validação de plataforma continua pendente.",
+      "evidence": [
+        "integration/arkhe-depin/src/types.rs",
+        "integration/arkhe-depin/tests/portable_proof_composite.rs",
+        "docs/security/WORKLOAD-ATTESTATION-2026-10-18.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "DePIN/hardware"
+    },
+    {
+      "id": "10.5",
+      "feature": "`Nonce` — geração e verificação (anti-replay)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "10.1",
+      "status": "PARCIAL",
+      "assessment": "Outros perfis têm anti-replay/challenge; DePIN não tem nonce fresco autenticado com NRAS. Aceite: geração host, consumo e binding ao workload.",
+      "evidence": [
+        "integration/arkhe-depin/src/types.rs",
+        "integration/arkhe-depin/tests/portable_proof_composite.rs",
+        "docs/security/WORKLOAD-ATTESTATION-2026-10-18.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "DePIN/hardware"
+    },
+    {
+      "id": "10.6",
+      "feature": "Consistent hashing (`pingora-ketama`) — **movido do `arkhe-dsa` para cá**",
+      "original_priority": "P3",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "ADIADO",
+      "assessment": "Consistent hashing ainda sem demanda medida. Se adotado, pertence ao DePIN; pinagem de biblioteca só após contrato de roteamento.",
+      "evidence": [
+        "integration/arkhe-depin/src/types.rs",
+        "integration/arkhe-depin/tests/portable_proof_composite.rs",
+        "docs/security/WORKLOAD-ATTESTATION-2026-10-18.md"
+      ],
+      "depends_on": [],
+      "priority": "P3",
+      "scope": "DePIN/hardware"
+    },
+    {
+      "id": "10.7",
+      "feature": "Roteamento DePIN entre nós",
+      "original_priority": "P3",
+      "original_status": "`PENDING`",
+      "original_dependencies": "10.6",
+      "status": "PENDENTE",
+      "assessment": "Sem roteador DePIN operacional. Aceite: seleção, falhas, identidades, disponibilidade e autorização por nó, após perfil de attestation.",
+      "evidence": [
+        "integration/arkhe-depin/src/types.rs",
+        "integration/arkhe-depin/tests/portable_proof_composite.rs",
+        "docs/security/WORKLOAD-ATTESTATION-2026-10-18.md"
+      ],
+      "depends_on": [
+        "10.6",
+        "10.2"
+      ],
+      "priority": "P3",
+      "scope": "DePIN/hardware"
+    },
+    {
+      "id": "11.1",
+      "feature": "**`ActionProof`** — `execution ⊆ mandate` (4 verificações: assinatura do mandato, `OperationId` match, `parameters_digest` contido, MMR prova mandato ancorado **antes** da execução)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1, 5.2, 6.2",
+      "status": "IMPLEMENTADO",
+      "assessment": "ActionProof e ponte AP2-role vinculam operação/parâmetros/política. Direct ancora closed; Autonomous ancora open antes do closed, sob tempo/log/role confiáveis. Não prova execução observada.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "verification/crates/arkhe-verify-core/src/action_proof.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md",
+        "verification/crates/arkhe-verify-core/src/payment.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "4.1",
+        "5.2",
+        "7.7"
+      ],
+      "priority": "P0",
+      "scope": "canal financeiro"
+    },
+    {
+      "id": "11.2",
+      "feature": "`TemporalSealer` — colateral/RWA com hash de estado ancorado",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1, 5.2",
+      "status": "PENDENTE",
+      "assessment": "TemporalSealer/RWA não implementado. Aceite: fonte autenticada, freshness, estado/ativo e checkpoint ligados à ação, distinguindo âncora de verdade econômica.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "verification/crates/arkhe-verify-core/src/action_proof.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md",
+        "verification/crates/arkhe-verify-core/src/payment.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "5.8"
+      ],
+      "priority": "P1",
+      "scope": "canal financeiro"
+    },
+    {
+      "id": "11.3",
+      "feature": "`PolicyBinding` — compliance como predicado decidível (rejeita, não pontua)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.5, 4.6",
+      "status": "PARCIAL",
+      "assessment": "Predicados SPDX/AP2 fail-closed integrados ao gate por governança; semântica jurídica, tabela de obrigações e role reais exigem qualificação.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "verification/crates/arkhe-verify-core/src/action_proof.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md",
+        "verification/crates/arkhe-verify-core/src/payment.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "canal financeiro"
+    },
+    {
+      "id": "11.4",
+      "feature": "`ProofCarryingOutput` de solvência — verifica que prova ZK foi gerada sob a política correta",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "14.2",
+      "status": "PENDENTE",
+      "assessment": "Certificado de orçamento não é prova ZK de solvência. Aceite: statement, política e inputs fixados, prover/verifier revisados e contraexemplos de replay/policy swap.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "verification/crates/arkhe-verify-core/src/action_proof.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md",
+        "verification/crates/arkhe-verify-core/src/payment.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "4.2"
+      ],
+      "priority": "P1",
+      "scope": "canal financeiro"
+    },
+    {
+      "id": "11.5",
+      "feature": "Integração AP2 → `ActionProof` (Fase 1 do roadmap financeiro)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "11.1",
+      "status": "PARCIAL",
+      "assessment": "AP2 v0.2 Payment Mandate leg escolhido: ponte autenticada Direct/Autonomous, SD-JWT/checkout/execução vinculados, MMR e consumo atômico de closed implementados. Role externo e pagamento real não qualificados. Consumo usa identidade estavel do closed autenticada pelo role, nao bytes variaveis da apresentacao SD-JWT.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "verification/crates/arkhe-verify-core/src/action_proof.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md",
+        "verification/crates/arkhe-verify-core/src/payment.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "11.1",
+        "13.1"
+      ],
+      "priority": "P0",
+      "scope": "canal financeiro"
+    },
+    {
+      "id": "11.6",
+      "feature": "Integração x402/Circle Agent Wallet → `OperationId` (Fase 2)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "11.1",
+      "status": "PENDENTE",
+      "assessment": "x402/Circle não integrados. Aceite: política do canal, request/response binding, credenciais no broker e reconciliação de resultado incerto.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "verification/crates/arkhe-verify-core/src/action_proof.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md",
+        "verification/crates/arkhe-verify-core/src/payment.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "11.1",
+        "13.1"
+      ],
+      "priority": "P1",
+      "scope": "canal financeiro"
+    },
+    {
+      "id": "11.7",
+      "feature": "Integração Chronicle Proof of Asset → `TemporalSealer` (Fase 3)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "11.2",
+      "status": "PENDENTE",
+      "assessment": "Chronicle Proof of Asset não integrado. Aceite: contrato/schema, publisher e tempo fixados; prova de inclusão não é prova de existência/solvência do ativo.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "verification/crates/arkhe-verify-core/src/action_proof.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md",
+        "verification/crates/arkhe-verify-core/src/payment.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "11.2"
+      ],
+      "priority": "P2",
+      "scope": "canal financeiro"
+    },
+    {
+      "id": "11.8",
+      "feature": "Integração ZKSL/ZKredit → `ProofCarryingOutput` (Fase 4)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "11.4",
+      "status": "PENDENTE",
+      "assessment": "ZKSL/ZKredit não integrados nem usados como requisito executável; validar especificação e statement antes de selecionar SDK.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "verification/crates/arkhe-verify-core/src/action_proof.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md",
+        "verification/crates/arkhe-verify-core/src/payment.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "11.4"
+      ],
+      "priority": "P2",
+      "scope": "canal financeiro"
+    },
+    {
+      "id": "11.9",
+      "feature": "`SpecCompiler` + `SpecGovernance` (Fase 5)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.5",
+      "status": "PENDENTE",
+      "assessment": "SpecCompiler e SpecGovernance gerais ausentes. Não compilar linguagem natural diretamente em autoridade; exigir schema e aprovação de perfil.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "verification/crates/arkhe-verify-core/src/action_proof.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md",
+        "verification/crates/arkhe-verify-core/src/payment.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "canal financeiro"
+    },
+    {
+      "id": "12.1",
+      "feature": "`license_compliance` — parser GGUF + predicado decidível",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "2.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "Predicado transparente sobre subconjunto SPDX-2.3 JSON, root SHA256 ligado ao artefato, hash SBOM no WER e avaliação AND/OR/WITH por obrigações da governança. Não é validador SPDX completo ou garantia jurídica.",
+      "evidence": [
+        "docs/PROOF-CARRYING-BUDGET.md",
+        "verification/crates/arkhe-verify-core/src/output_proof.rs",
+        "kernel/arkhe-kernel/tests/budget_pco.rs",
+        "verification/crates/arkhe-verify-core/src/license.rs",
+        "cognition/arkhe-agent/src/license_pco.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "licenciamento SPDX"
+    },
+    {
+      "id": "12.2",
+      "feature": "`PcoInferenceEngine::prove_license` → `ProofCarryingOutput`",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "12.1",
+      "status": "IMPLEMENTADO",
+      "assessment": "license_pco::prove_license empacota proposta e bindings; checker do gate reexecuta o predicado. require_zk é recusado sem backend.",
+      "evidence": [
+        "docs/PROOF-CARRYING-BUDGET.md",
+        "verification/crates/arkhe-verify-core/src/output_proof.rs",
+        "kernel/arkhe-kernel/tests/budget_pco.rs",
+        "verification/crates/arkhe-verify-core/src/license.rs",
+        "cognition/arkhe-agent/src/license_pco.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "12.1"
+      ],
+      "priority": "P1",
+      "scope": "licenciamento SPDX"
+    },
+    {
+      "id": "12.3",
+      "feature": "`FormalProofValidator::validate_license` — re-executa predicado + reconstrói prova",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "12.2",
+      "status": "IMPLEMENTADO",
+      "assessment": "license::verify reconfirma checker/spec/política/intent/worker/SBOM/artefato/output e reexecuta o predicado; envelope não admitido é recusado pelo gate.",
+      "evidence": [
+        "docs/PROOF-CARRYING-BUDGET.md",
+        "verification/crates/arkhe-verify-core/src/output_proof.rs",
+        "kernel/arkhe-kernel/tests/budget_pco.rs",
+        "verification/crates/arkhe-verify-core/src/license.rs",
+        "cognition/arkhe-agent/src/license_pco.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "12.2"
+      ],
+      "priority": "P1",
+      "scope": "licenciamento SPDX"
+    },
+    {
+      "id": "12.4",
+      "feature": "`RocqProver` — port WASM de `coqchk`",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "PENDENTE",
+      "assessment": "Rocq/coqchk WASM não implementado. Port exige versão, subset, artefatos e validação independente, não simples wrapper de status.",
+      "evidence": [
+        "docs/PROOF-CARRYING-BUDGET.md",
+        "verification/crates/arkhe-verify-core/src/output_proof.rs",
+        "kernel/arkhe-kernel/tests/budget_pco.rs",
+        "verification/crates/arkhe-verify-core/src/license.rs",
+        "cognition/arkhe-agent/src/license_pco.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "licenciamento SPDX"
+    },
+    {
+      "id": "12.5",
+      "feature": "**6 testes negativos** (certificado válido, prova adulterada, predicado falso, política trocada, replay, `formal_proof=None`)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "12.2, 12.3",
+      "status": "IMPLEMENTADO",
+      "assessment": "formal_predicates cobre licença válida, artefato adulterado, predicado falso, policy swap, replay, prova ausente/não admitida, kind incorreto e ZK indisponível.",
+      "evidence": [
+        "docs/PROOF-CARRYING-BUDGET.md",
+        "verification/crates/arkhe-verify-core/src/output_proof.rs",
+        "kernel/arkhe-kernel/tests/budget_pco.rs",
+        "verification/crates/arkhe-verify-core/src/license.rs",
+        "cognition/arkhe-agent/src/license_pco.rs",
+        "kernel/arkhe-kernel/tests/formal_predicates.rs",
+        "docs/FORMAL-PREDICATES.md"
+      ],
+      "depends_on": [
+        "12.2",
+        "12.3"
+      ],
+      "priority": "P0",
+      "scope": "licenciamento SPDX"
+    },
+    {
+      "id": "13.1",
+      "feature": "**Capability broker** — agente sem credenciais; broker executa em nome do agente",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1",
+      "status": "PARCIAL",
+      "assessment": "Broker e SQLite durável opcionais implementados com gate antes do efeito, owner, replay e consumo closed global. Serviço isolado, credenciais e executor real/sandbox continuam bloqueadores de ativação.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "kernel/arkhe-kernel/src/broker.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "scripts/runtime_containment.py",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [
+        "4.1",
+        "7.7",
+        "11.1"
+      ],
+      "priority": "P0",
+      "scope": "execucao externa isolada"
+    },
+    {
+      "id": "13.2",
+      "feature": "Integração **Executor** (MCP gateway) — gate a montante do `execute`",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "13.1",
+      "status": "PENDENTE",
+      "assessment": "Gateway Executor/MCP de efeitos não implementado. Verificador MCP atual não executa ações protegidas; gate precisa ser incontornável no executor real.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "kernel/arkhe-kernel/src/broker.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "scripts/runtime_containment.py",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [
+        "13.1"
+      ],
+      "priority": "P1",
+      "scope": "execucao externa isolada"
+    },
+    {
+      "id": "13.3",
+      "feature": "Integração **MXC** (Microsoft Execution Containers) — gate a montante da política MXC (tratar MXC como canal, não como fronteira de segurança)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "13.1",
+      "status": "NÃO ADOTADO",
+      "assessment": "Integração MXC não demonstrada. Tratar provider de execução como canal com qualificação própria; não inferir isolamento pelo nome.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "kernel/arkhe-kernel/src/broker.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "scripts/runtime_containment.py",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "execucao externa isolada"
+    },
+    {
+      "id": "13.4",
+      "feature": "**Windows broker** — serviço Windows fora do sandbox do agente; named pipe (não TCP)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "13.1",
+      "status": "PENDENTE",
+      "assessment": "Serviço Windows/named pipe não implementado. Aceite: ACL, identidade cliente, separação de processo/chaves, protocolo com bindings e testes de bypass.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "kernel/arkhe-kernel/src/broker.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "scripts/runtime_containment.py",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [
+        "13.1"
+      ],
+      "priority": "P1",
+      "scope": "execucao externa isolada"
+    },
+    {
+      "id": "13.5",
+      "feature": "**WSL2 + gVisor** com `--network none` como sandbox do agente",
+      "original_priority": "P0",
+      "original_status": "`THEOREM` (documentado)",
+      "original_dependencies": "—",
+      "status": "PARCIAL",
+      "assessment": "Há harnesses de containment/VM no checkout; WSL2+gVisor não é default comprovado por documentação. P0 da ativação de execução não confiável: medir configuração real e tentativas de escape.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "kernel/arkhe-kernel/src/broker.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "scripts/runtime_containment.py",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "execucao externa isolada"
+    },
+    {
+      "id": "13.6",
+      "feature": "**AppContainer** para agente nativo Windows",
+      "original_priority": "P1",
+      "original_status": "`THEOREM` (documentado)",
+      "original_dependencies": "—",
+      "status": "PENDENTE",
+      "assessment": "AppContainer não qualificado pelo pipeline atual. Documentação não é THEOREM; exigir broker fora do container, ACL e testes Windows reais.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "kernel/arkhe-kernel/src/broker.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "scripts/runtime_containment.py",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "execucao externa isolada"
+    },
+    {
+      "id": "13.7",
+      "feature": "**VBS Enclave** para o gate (24H2+; Home não confirmado) — **opcional**",
+      "original_priority": "P3",
+      "original_status": "`CONJECTURE`",
+      "original_dependencies": "13.4",
+      "status": "ADIADO",
+      "assessment": "VBS Enclave opcional sem implantação qualificada; escolher plataforma e suporte antes de designar garantia ao gate.",
+      "evidence": [
+        "docs/ACTION-BROKER.md",
+        "kernel/arkhe-kernel/src/broker.rs",
+        "kernel/arkhe-kernel/tests/action_broker.rs",
+        "scripts/runtime_containment.py",
+        "kernel/arkhe-kernel/src/broker_sqlite.rs",
+        "kernel/arkhe-kernel/tests/broker_durable.rs"
+      ],
+      "depends_on": [],
+      "priority": "P3",
+      "scope": "execucao externa isolada"
+    },
+    {
+      "id": "14.1",
+      "feature": "MMR (já em `arkhe-wormgraph`; `arkhe-dsa` referencia)",
+      "original_priority": "P0",
+      "original_status": "`LEMMA`",
+      "original_dependencies": "5.1",
+      "status": "ALTERNATIVA",
+      "assessment": "Reusar perfil MMR principal ou AGI explicitamente; criar arkhe-dsa duplicando algoritmo/autoridade não é requisito adotado.",
+      "evidence": [
+        "docs/MMR-PROFILE.md",
+        "docs/adr/ADR-018-journal-persistence.md",
+        "agi-coder/crates/agi-coder-memory/src/working.rs"
+      ],
+      "depends_on": [
+        "5.1"
+      ],
+      "priority": "P0",
+      "scope": "otimizacoes de dados"
+    },
+    {
+      "id": "14.2",
+      "feature": "**Journal durável** (já em §7; `arkhe-dsa` referencia)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "7.2",
+      "status": "ALTERNATIVA",
+      "assessment": "Referência ao journal de 7.2; não é dependência de PCO formal. Persistência não produz certificado matemático.",
+      "evidence": [
+        "docs/MMR-PROFILE.md",
+        "docs/adr/ADR-018-journal-persistence.md",
+        "agi-coder/crates/agi-coder-memory/src/working.rs"
+      ],
+      "depends_on": [
+        "7.2"
+      ],
+      "priority": "P1",
+      "scope": "otimizacoes de dados"
+    },
+    {
+      "id": "14.3",
+      "feature": "Persistent vector (`pvec`, RRB-Tree) para `arkhe-memory::working`",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "9.3",
+      "status": "ADIADO",
+      "assessment": "Working memory atual usa BTreeMap. Persistent vector/pvec exige benchmark e semântica de snapshots; não bloqueia memória de referência.",
+      "evidence": [
+        "docs/MMR-PROFILE.md",
+        "docs/adr/ADR-018-journal-persistence.md",
+        "agi-coder/crates/agi-coder-memory/src/working.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "otimizacoes de dados"
+    },
+    {
+      "id": "14.4",
+      "feature": "LRU cache (`intrusive_lru_cache`) para o gate",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1",
+      "status": "ADIADO",
+      "assessment": "Cache de autorização não adotado. Exigir binding de política/revogação/freshness e invalidação; cache não pode prolongar permissão revogada.",
+      "evidence": [
+        "docs/MMR-PROFILE.md",
+        "docs/adr/ADR-018-journal-persistence.md",
+        "agi-coder/crates/agi-coder-memory/src/working.rs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "otimizacoes de dados"
+    },
+    {
+      "id": "14.5",
+      "feature": "Deteção de equivocação (`HashMap`, não union-find) — §6",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "6.1",
+      "status": "PENDENTE",
+      "assessment": "Referência a 6.1–6.3; não criar outro detector divergente nem converter conflito operacional em slashing.",
+      "evidence": [
+        "docs/MMR-PROFILE.md",
+        "docs/adr/ADR-018-journal-persistence.md",
+        "agi-coder/crates/agi-coder-memory/src/working.rs"
+      ],
+      "depends_on": [
+        "6.3"
+      ],
+      "priority": "P1",
+      "scope": "otimizacoes de dados"
+    },
+    {
+      "id": "14.6",
+      "feature": "Bloom filter — **adiado** (YAGNI até MMR justificar)",
+      "original_priority": "P3",
+      "original_status": "—",
+      "original_dependencies": "5.10",
+      "status": "ADIADO",
+      "assessment": "Bloom filter continua adiado; provar necessidade e nunca usá-lo como autoridade de inclusão ou deduplicação financeira.",
+      "evidence": [
+        "docs/MMR-PROFILE.md",
+        "docs/adr/ADR-018-journal-persistence.md",
+        "agi-coder/crates/agi-coder-memory/src/working.rs"
+      ],
+      "depends_on": [],
+      "priority": "P3",
+      "scope": "otimizacoes de dados"
+    },
+    {
+      "id": "14.7",
+      "feature": "Consistent hashing — **movido para `arkhe-depin`** (§10.6)",
+      "original_priority": "P3",
+      "original_status": "—",
+      "original_dependencies": "10.6",
+      "status": "ADIADO",
+      "assessment": "Referência a 10.6; nenhum scheduler DSA paralelo será criado.",
+      "evidence": [
+        "docs/MMR-PROFILE.md",
+        "docs/adr/ADR-018-journal-persistence.md",
+        "agi-coder/crates/agi-coder-memory/src/working.rs"
+      ],
+      "depends_on": [
+        "10.6"
+      ],
+      "priority": "P3",
+      "scope": "otimizacoes de dados"
+    },
+    {
+      "id": "15.1",
+      "feature": "`CostTracker::measure` — custo real de Rekor, MMR, NRAS, storage",
+      "original_priority": "P1",
+      "original_status": "`CONJECTURE` (valores fixos no POC)",
+      "original_dependencies": "10.2, 5.1",
+      "status": "PARCIAL",
+      "assessment": "CostTracker registra inteiros e overflow; measured é fornecido por entrada, não medição real de Rekor/NRAS/storage. Aceite: meter/provider autenticado e unidades/correlação.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-cost/src/lib.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "custo/economia"
+    },
+    {
+      "id": "15.2",
+      "feature": "`min_price_per_verification` — preço ≥ custo medido",
+      "original_priority": "P1",
+      "original_status": "`CONJECTURE`",
+      "original_dependencies": "15.1",
+      "status": "PENDENTE",
+      "assessment": "Preço mínimo baseado em custo medido não implementado. Aceite: custo qualificado, moeda/unidade e política de margem aprovada.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-cost/src/lib.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md"
+      ],
+      "depends_on": [
+        "15.1"
+      ],
+      "priority": "P1",
+      "scope": "custo/economia"
+    },
+    {
+      "id": "15.3",
+      "feature": "`Treasury` + `DeveloperGuild` — distribuição 8%+2%",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "NÃO ADOTADO",
+      "assessment": "Split 8%+2% e Treasury/DeveloperGuild não aprovados como política comercial. Não introduzir taxas/licença por herança do anexo.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-cost/src/lib.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "custo/economia"
+    },
+    {
+      "id": "15.4",
+      "feature": "`SlashingEngine` on-chain",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "6.4",
+      "status": "NÃO ADOTADO",
+      "assessment": "Slashing on-chain depende de adjudicação e política econômica explícitas. Sem submissão automática nem movimentação de fundos nesta reconciliação.",
+      "evidence": [
+        "agi-coder/crates/agi-coder-cost/src/lib.rs",
+        "docs/planning/2026-10-21-consolidated/CLAIMS-AND-DECISIONS.md"
+      ],
+      "depends_on": [
+        "6.4"
+      ],
+      "priority": "P2",
+      "scope": "custo/economia"
+    },
+    {
+      "id": "16.1",
+      "feature": "**MCP server** — tool contracts (8 tools: `verify_artifact`, `verify_mmr_inclusion`, `attest_gpu`, `get_cost`, `submit_slashing`, `query_evidence`, `evaluate_policy`, `anchor_hash`)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1, 5.2, 10.2",
+      "status": "PARCIAL",
+      "assessment": "MCP principal oferece verificação; AGI tem ferramentas próprias e respostas unsupported para hardware. As oito ferramentas propostas não estão integralmente implementadas.",
+      "evidence": [
+        "integrations/verify-mcp/src/index.ts",
+        "verification/crates/arkhe-verify-cli/src/main.rs",
+        "agi-coder/crates/agi-coder-cli/src/main.rs",
+        "agi-coder/packages"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "interfaces de cada capacidade"
+    },
+    {
+      "id": "16.2",
+      "feature": "**CLI** — 12 comandos (`init`, `verify`, `anchor`, `mmr prove/verify`, `journal status/reconcile`, `cost report`, `depin attest`, `agent run`, `trace replay`, `slashing submit`)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "4.1, 5.2, 7.2, 10.2",
+      "status": "PARCIAL",
+      "assessment": "CLIs verify/preview principal e AGI plan/run/verify/anchor/mmr/cost/infer/verify-spec existem. Doze comandos universais e canais de efeitos permanecem incompletos.",
+      "evidence": [
+        "integrations/verify-mcp/src/index.ts",
+        "verification/crates/arkhe-verify-cli/src/main.rs",
+        "agi-coder/crates/agi-coder-cli/src/main.rs",
+        "agi-coder/packages"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "interfaces de cada capacidade"
+    },
+    {
+      "id": "16.3",
+      "feature": "SDK TypeScript",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "16.1",
+      "status": "PARCIAL",
+      "assessment": "SDK TypeScript AGI com testes e provas existe; SDK universal do principal não foi demonstrado. Não expor autoridade de execução como efeito de verify.",
+      "evidence": [
+        "integrations/verify-mcp/src/index.ts",
+        "verification/crates/arkhe-verify-cli/src/main.rs",
+        "agi-coder/crates/agi-coder-cli/src/main.rs",
+        "agi-coder/packages"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "interfaces de cada capacidade"
+    },
+    {
+      "id": "16.4",
+      "feature": "Dashboard (observabilidade)",
+      "original_priority": "P3",
+      "original_status": "`PENDING`",
+      "original_dependencies": "16.1",
+      "status": "PARCIAL",
+      "assessment": "Intra e dashboards locais existentes; observabilidade completa de todos os canais não implementada. Qualificar cada fluxo, sem concluir cobertura pela tela.",
+      "evidence": [
+        "integrations/verify-mcp/src/index.ts",
+        "verification/crates/arkhe-verify-cli/src/main.rs",
+        "agi-coder/crates/agi-coder-cli/src/main.rs",
+        "agi-coder/packages"
+      ],
+      "depends_on": [],
+      "priority": "P3",
+      "scope": "interfaces de cada capacidade"
+    },
+    {
+      "id": "17.1",
+      "feature": "**`MATURITY-CRITERIA.md`** com 4 níveis (`THEOREM` = CI, `LEMMA` = `cargo test` local, `INSPECTED` = fonte primária verificada, `CONJECTURE` = inferido)",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "IMPLEMENTADO",
+      "assessment": "MATURITY-CRITERIA.md criado com escopo, fonte/teste/CI e limites. THEOREM não é prova matemática nem status agregado do projeto.",
+      "evidence": [
+        "docs/MATURITY-CRITERIA.md",
+        ".github/workflows/ci.yml",
+        "agi-coder/.github/workflows/ci.yml",
+        "specs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "qualificacao de build/release"
+    },
+    {
+      "id": "17.2",
+      "feature": "CI: `cargo build --locked --workspace && cargo nextest run && cargo clippy -D warnings && cargo fmt --check`",
+      "original_priority": "P0",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "IMPLEMENTADO",
+      "assessment": "CI existente build/check/test/nextest/fmt; acrescentado clippy estrito e validação de backlog. Execução remota deste patch não é alegada; resultados locais ficam separados.",
+      "evidence": [
+        "docs/MATURITY-CRITERIA.md",
+        ".github/workflows/ci.yml",
+        "agi-coder/.github/workflows/ci.yml",
+        "specs"
+      ],
+      "depends_on": [],
+      "priority": "P0",
+      "scope": "qualificacao de build/release"
+    },
+    {
+      "id": "17.3",
+      "feature": "`cargo audit` + `cargo-deny` + SBOM (CycloneDX) + SLSA L3 + Sigstore",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "17.2",
+      "status": "PARCIAL",
+      "assessment": "Security workflows, scans e adapter Sigstore existem; cargo-audit/deny/SBOM e SLSA L3 completos não demonstrados. SLSA é qualificação do builder, não instalação de ferramenta.",
+      "evidence": [
+        "docs/MATURITY-CRITERIA.md",
+        ".github/workflows/ci.yml",
+        "agi-coder/.github/workflows/ci.yml",
+        "specs"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "qualificacao de build/release"
+    },
+    {
+      "id": "17.4",
+      "feature": "Golden vectors independentes (MMR, GGUF, WER, CBOR, slashing) gerados por script separado",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "5.3, 2.5",
+      "status": "PARCIAL",
+      "assessment": "Vetores Python independentes MMR/CBOR/WER/GGUF restrito existentes. Slashing não possui contrato; não gerar fixtures que finjam validar política ainda inexistente.",
+      "evidence": [
+        "docs/MATURITY-CRITERIA.md",
+        ".github/workflows/ci.yml",
+        "agi-coder/.github/workflows/ci.yml",
+        "specs"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "qualificacao de build/release"
+    },
+    {
+      "id": "17.5",
+      "feature": "Fuzz targets (`gguf_parse`, `cbor_decode`, `mmr_proof`)",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "17.2",
+      "status": "PENDENTE",
+      "assessment": "Sem conjunto ativo qualificado dos três fuzz targets propostos; aceite: harness limitado, corpus/regressões e campanha reproduzível sem panic/OOM.",
+      "evidence": [
+        "docs/MATURITY-CRITERIA.md",
+        ".github/workflows/ci.yml",
+        "agi-coder/.github/workflows/ci.yml",
+        "specs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "qualificacao de build/release"
+    },
+    {
+      "id": "17.6",
+      "feature": "Paridade WASM ↔ nativo no CI",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "3.3",
+      "status": "IMPLEMENTADO",
+      "assessment": "Workflow surfaces-and-wasm constrói o WASM e executa adapters com vetores; rodar localmente após mudança de verificador. Resultado remoto exige run identificado.",
+      "evidence": [
+        "docs/MATURITY-CRITERIA.md",
+        ".github/workflows/ci.yml",
+        "agi-coder/.github/workflows/ci.yml",
+        "specs"
+      ],
+      "depends_on": [
+        "3.3"
+      ],
+      "priority": "P1",
+      "scope": "qualificacao de build/release"
+    },
+    {
+      "id": "17.7",
+      "feature": "17 ADRs (001–017) + ADR-018 (journal)",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "PARCIAL",
+      "assessment": "Há ADRs reais de core/cognição/AGI e novo ADR-018; não existem dezessete decisões aprovadas só porque o anexo numera 001–017. Registrar decisões necessárias, não placeholders.",
+      "evidence": [
+        "docs/MATURITY-CRITERIA.md",
+        ".github/workflows/ci.yml",
+        "agi-coder/.github/workflows/ci.yml",
+        "specs"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "qualificacao de build/release"
+    },
+    {
+      "id": "17.8",
+      "feature": "Especificações (`specs/`): kernel, verify, adapters, economy",
+      "original_priority": "P1",
+      "original_status": "`PENDING`",
+      "original_dependencies": "—",
+      "status": "PARCIAL",
+      "assessment": "specs AKG/MMR, AGI e docs de adapters existem; AKG continua candidato e economia não adotada. Freeze requer gates próprios, não presença de diretório.",
+      "evidence": [
+        "docs/MATURITY-CRITERIA.md",
+        ".github/workflows/ci.yml",
+        "agi-coder/.github/workflows/ci.yml",
+        "specs"
+      ],
+      "depends_on": [],
+      "priority": "P1",
+      "scope": "qualificacao de build/release"
+    },
+    {
+      "id": "17.9",
+      "feature": "Release: `cargo-dist` + Homebrew + npm platform-specific + Docker distroless + Helm",
+      "original_priority": "P2",
+      "original_status": "`PENDING`",
+      "original_dependencies": "17.2",
+      "status": "PARCIAL",
+      "assessment": "Distribuição Windows, Docker e workflows de release existem. cargo-dist/Homebrew/npm por plataforma/Helm completos não qualificados nesta auditoria.",
+      "evidence": [
+        "docs/MATURITY-CRITERIA.md",
+        ".github/workflows/ci.yml",
+        "agi-coder/.github/workflows/ci.yml",
+        "specs"
+      ],
+      "depends_on": [],
+      "priority": "P2",
+      "scope": "qualificacao de build/release"
+    }
+  ],
+  "execution_order": [
+    "Preservar identidades e perfis: 1.x, 5.3, 17.1, 7.3; executar arquitetura, vetores e testes existentes.",
+    "Fechar lacunas verificáveis do núcleo: MMR shape/index/count, negativos GGUF, admissão, replay e CI estrito. Sem alteração dos golden vectors.",
+    "Qualificar host live AGI: persistência de sessão/pipeline e origem independente dos testes. Conversor de conclusão e callback imediato implementados; execução Jules real permanece separada.",
+    "Definir e qualificar a fronteira de efeito: executor fixo, credenciais fora do agente, broker com journal persistente, revisão e isolamento real antes de execução não confiável.",
+    "SPDX e AP2 v0.2 Payment Mandate leg adotados pelo usuário. Checker de obrigações e ponte de roles implementados; qualificar tabela real, role externo e executor antes de pagamentos reais.",
+    "Negativos de licença transparente implementados; expansão de schema, cumprimento real de obrigações e ZK exigem gates próprios. Hash isolado não substitui prova.",
+    "Hardware DePIN, equivocação sancionável e integrações financeiras adicionais exigem contratos, ambiente e evidências próprios; não dependem de placeholders de structs.",
+    "Otimizações pvec/LRU/Bloom/ketama e canais de distribuição adicionais vêm após necessidade medida e gates de qualificação; não há estimativa de semanas validada."
+  ],
+  "activation_blockers": [
+    "Operação unattended: qualificar persistência de sessão AGI, resultados/testes independentes e credenciais. Nenhuma sessão Jules remota foi criada.",
+    "AP2: ponte, modos e consumo único SQLite implementados; role real, emissão/revogação da atestação e executor Payment Mandate leg não qualificados. Tokens/roles dos testes são sintéticos.",
+    "Licença: aprovar tabela de obrigações real e origem autenticada/completude do SBOM. Checker prova compatibilidade com o documento fornecido; require_zk falha fechado.",
+    "Isolamento: broker é biblioteca opt-in; serviço com credenciais fora do agente e configuração real de sandbox/OS ainda exigem qualificação.",
+    "PostgreSQL e perfis congelados preservados. Taxas 8%+2% e slashing não introduzidos.",
+    "Testes locais não substituem CI remoto, PostgreSQL real, APIs live, hardware, interoperabilidade AP2 externa ou qualificação de isolamento."
+  ],
+  "decisions": [
+    "SPDX-2.3 JSON como primeiro subconjunto de licenciamento; semântica de obrigações na governança; ZK indisponível rejeitado.",
+    "AP2 v0.2 Payment Mandate leg, Direct/Autonomous; assinaturas/constraints verificadas pelo role autenticado externo.",
+    "Consumo único por closed mandate; open recorrente pode gerar outros closed sob controle do role."
+  ]
+}

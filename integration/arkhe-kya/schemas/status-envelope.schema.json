@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "const": "arkhe-kya-status-local@1"
+        },
+        "label": {
+          "const": "synthetic-poc"
+        },
+        "issuer": {
+          "type": "string"
+        },
+        "passport_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "status_list_credential": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "status_list_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "status_purpose": {
+          "enum": [
+            "revocation",
+            "suspension"
+          ]
+        }
+      },
+      "required": [
+        "profile",
+        "label",
+        "issuer",
+        "passport_digest",
+        "status_list_credential",
+        "status_list_index",
+        "status_purpose"
+      ]
+    },
+    "binding_signature": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "status_list": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "list": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile": {
+                  "const": "arkhe-kya-status-local@1"
+                },
+                "label": {
+                  "const": "synthetic-poc"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "issuer": {
+                  "type": "string"
+                },
+                "status_purpose": {
+                  "enum": [
+                    "revocation",
+                    "suspension"
+                  ]
+                },
+                "sequence": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "valid_from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "valid_until": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "encoded_list": {
+                  "type": "string",
+                  "maxLength": 87383,
+                  "pattern": "^u[A-Za-z0-9_-]*$"
+                }
+              },
+              "required": [
+                "profile",
+                "label",
+                "id",
+                "issuer",
+                "status_purpose",
+                "sequence",
+                "valid_from",
+                "valid_until",
+                "encoded_list"
+              ]
+            },
+            "signature": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{128}$"
+            }
+          },
+          "required": [
+            "list",
+            "signature"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "binding",
+    "binding_signature"
+  ]
+}

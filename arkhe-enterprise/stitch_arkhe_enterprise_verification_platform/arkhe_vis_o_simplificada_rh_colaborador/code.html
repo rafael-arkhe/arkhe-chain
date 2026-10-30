@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Enterprise - Central de Certidão &amp; Validação</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-container": "#1bbd85",
+            "on-surface-variant": "#bcc9cd",
+            "on-error-container": "#ffdad6",
+            "on-primary": "#003640",
+            "surface-variant": "#31353e",
+            "primary-fixed-dim": "#4cd7f6",
+            "inverse-primary": "#00687a",
+            "surface-tint": "#4cd7f6",
+            "on-secondary-fixed-variant": "#003ea8",
+            "secondary-fixed": "#dbe1ff",
+            "surface": "#0f131c",
+            "on-surface": "#dfe2ee",
+            "inverse-surface": "#dfe2ee",
+            "surface-container-low": "#181c24",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-secondary-container": "#cdd7ff",
+            "secondary": "#b4c5ff",
+            "on-primary-fixed": "#001f26",
+            "primary-container": "#06b6d4",
+            "on-background": "#dfe2ee",
+            "outline-variant": "#3d494c",
+            "background": "#0f131c",
+            "tertiary-fixed-dim": "#4edea3",
+            "surface-dim": "#0f131c",
+            "on-secondary-fixed": "#00174b",
+            "primary": "#4cd7f6",
+            "outline": "#869397",
+            "on-secondary": "#002a78",
+            "secondary-container": "#0053db",
+            "on-error": "#690005",
+            "error-container": "#93000a",
+            "on-primary-container": "#00424f",
+            "inverse-on-surface": "#2c3039",
+            "tertiary": "#4edea3",
+            "primary-fixed": "#acedff",
+            "surface-container": "#1c2028",
+            "on-tertiary-container": "#00452e",
+            "surface-container-high": "#262a33",
+            "on-tertiary-fixed": "#002113",
+            "surface-container-lowest": "#0a0e16",
+            "on-tertiary": "#003824",
+            "surface-bright": "#353942",
+            "on-primary-fixed-variant": "#004e5c",
+            "secondary-fixed-dim": "#b4c5ff",
+            "surface-container-highest": "#31353e",
+            "tertiary-fixed": "#6ffbbe",
+            "error": "#ffb4ab"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "2rem",
+            "space-xs": "0.25rem",
+            "gutter": "1rem",
+            "margin-mobile": "1rem",
+            "space-sm": "0.5rem",
+            "gutter-mobile": "0.75rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2rem",
+            "space-md": "1rem"
+          },
+          "fontFamily": {
+            "display-lg-mobile": ["Inter"],
+            "body-md": ["Inter"],
+            "mono-sm": ["JetBrains Mono"],
+            "headline-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "mono-md": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "label-badge": ["JetBrains Mono"],
+            "display-lg": ["Inter"]
+          },
+          "fontSize": {
+            "display-lg-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "mono-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400"}],
+            "headline-sm": ["18px", {"lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400"}],
+            "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+            "mono-md": ["12px", {"lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+            "mono-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+            "label-badge": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+            "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-glow-emerald {
+      box-shadow: 0 0 20px rgba(78, 222, 163, 0.12);
+    }
+    .custom-glow-cyan {
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.15);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen selection:bg-primary-container selection:text-on-primary-container pb-28">
+<!-- Shared TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-md py-space-xs bg-surface-container-lowest/85 backdrop-blur-md border-b border-outline-variant/40">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="shield">shield</span>
+<div>
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight block leading-tight">Arkhe Enterprise</span>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant block">Colaborador / RH &amp; Operações</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-container border border-outline-variant/40">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="text-label-badge font-label-badge text-tertiary uppercase">BACEN Tier 1</span>
+</div>
+<div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-surface-container border border-outline-variant/60 text-primary">
+<span class="material-symbols-outlined text-lg" data-icon="person">person</span>
+<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-tertiary border-2 border-surface-container-lowest"></span>
+</div>
+</div>
+</header>
+<!-- Main Container Mobile First -->
+<main class="pt-16 px-gutter-mobile space-y-space-md">
+<!-- Sub-header persona HUD & Connection Status -->
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-2">
+<span class="text-label-badge font-label-badge uppercase px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded">
+          Soberania Jurídica
+        </span>
+<span class="text-label-badge font-label-badge uppercase px-1.5 py-0.5 bg-tertiary/10 border border-tertiary/30 text-tertiary rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Conexão Segura Ativa
+        </span>
+</div>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant">ICP-Brasil • RBB</span>
+</div>
+<!-- Friendly Welcome Banner -->
+<section class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md relative overflow-hidden">
+<div class="absolute -right-6 -bottom-6 w-28 h-28 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="relative z-10 space-y-1">
+<div class="flex items-center gap-1.5">
+<span class="text-body-sm font-body-sm text-primary font-medium">Arkhe Simples</span>
+<span class="text-on-surface-variant text-body-sm">•</span>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant">Validação Instantânea</span>
+</div>
+<h1 class="text-headline-sm font-headline-sm font-bold text-on-surface text-balance">
+          Olá, Mariana!
+        </h1>
+<p class="text-body-md font-body-md text-on-surface-variant pt-0.5 leading-relaxed">
+          Os seus documentos e assinaturas estão protegidos com validade legal plena no Brasil (ICP-Brasil &amp; RBB).
+        </p>
+</div>
+<!-- Mode Switcher (Simplified vs Technical) -->
+<div class="mt-4 pt-3 border-t border-outline-variant/30 flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Visualização:</span>
+<div class="inline-flex p-0.5 bg-surface-container-lowest border border-outline-variant/40 rounded-lg">
+<button class="px-2.5 py-1 text-label-badge font-label-badge rounded bg-primary text-on-primary font-semibold transition-all" type="button">
+            Modo Simplificado (Ativo)
+          </button>
+<button class="px-2.5 py-1 text-label-badge font-label-badge rounded text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+            Modo Detalhado
+          </button>
+</div>
+</div>
+</section>
+<!-- Visual Authenticity Trust Seal Card -->
+<section class="bg-surface-container-low border border-tertiary/40 rounded-xl p-space-md custom-glow-emerald relative overflow-hidden">
+<div class="flex items-start gap-3">
+<div class="w-12 h-12 rounded-xl bg-tertiary/15 border border-tertiary/40 flex items-center justify-center text-tertiary shrink-0">
+<span class="material-symbols-outlined text-3xl" data-icon="verified_user">verified_user</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">100% Autêntico e Protegido</span>
+<span class="text-label-badge font-label-badge uppercase px-1.5 py-0.5 bg-tertiary/20 text-tertiary border border-tertiary/50 rounded">VERIFICADO</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+<strong class="text-on-surface font-medium">O que isto significa?</strong> O documento não foi alterado desde a assinatura e possui validade jurídica idêntica a um cartório.
+          </p>
+</div>
+</div>
+<!-- Quick Trust Indicators Strip -->
+<div class="mt-3.5 pt-3 border-t border-outline-variant/30 grid grid-cols-3 gap-2 text-center">
+<div class="p-1.5 rounded bg-surface-container-lowest/60 border border-outline-variant/20">
+<span class="text-label-badge font-label-badge text-on-surface-variant block uppercase">Fé Pública</span>
+<span class="text-mono-sm font-mono-sm text-tertiary font-semibold">Garantida</span>
+</div>
+<div class="p-1.5 rounded bg-surface-container-lowest/60 border border-outline-variant/20">
+<span class="text-label-badge font-label-badge text-on-surface-variant block uppercase">Integridade</span>
+<span class="text-mono-sm font-mono-sm text-primary font-semibold">Imutável</span>
+</div>
+<div class="p-1.5 rounded bg-surface-container-lowest/60 border border-outline-variant/20">
+<span class="text-label-badge font-label-badge text-on-surface-variant block uppercase">ICP-Brasil</span>
+<span class="text-mono-sm font-mono-sm text-tertiary font-semibold">Tier 1</span>
+</div>
+</div>
+</section>
+<!-- Quick Check & Search Card -->
+<section class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="search_check">search_check</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface font-semibold">Conferir Autenticidade</h2>
+</div>
+<span class="text-label-badge font-label-badge uppercase px-2 py-0.5 bg-surface-container text-on-surface-variant rounded border border-outline-variant/40">Instantâneo</span>
+</div>
+<!-- Drag & Drop Friendly Target -->
+<div class="border border-dashed border-outline-variant hover:border-primary/60 bg-surface-container-lowest/80 rounded-xl p-4 text-center transition-colors">
+<div class="w-10 h-10 rounded-full bg-surface-container mx-auto flex items-center justify-center text-primary mb-2">
+<span class="material-symbols-outlined text-2xl" data-icon="upload_file">upload_file</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface font-medium">
+          Arrastar ou escolher arquivo
+        </p>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+          PDF, recibo ou contrato para conferir autenticidade instantânea
+        </p>
+<button class="mt-3 px-3 py-1.5 rounded bg-surface-container border border-outline-variant/60 hover:border-primary text-body-sm font-body-sm text-on-surface transition-colors" type="button">
+          Selecionar no Dispositivo
+        </button>
+</div>
+<!-- Scan QR or Code Button -->
+<button class="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-primary text-on-primary font-body-md font-semibold hover:bg-primary-fixed-dim transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-2xl" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span>Escanear QR Code ou Código do Documento</span>
+</button>
+</section>
+<!-- Quick Action Cards Grid -->
+<section class="space-y-2">
+<div class="flex items-center justify-between px-1">
+<h2 class="text-headline-sm font-headline-sm text-on-surface font-semibold">Ações Frequentes</h2>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant">Sem burocracia</span>
+</div>
+<div class="grid grid-cols-1 gap-2.5">
+<!-- Action 1 -->
+<div class="bg-surface-container-low border border-outline-variant/40 hover:border-primary/50 rounded-xl p-3.5 flex items-center justify-between transition-all group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl" data-icon="draw">draw</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-on-surface">Assinar Novo Documento</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Com e-CPF ou reconhecimento facial gov.br</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Action 2 -->
+<div class="bg-surface-container-low border border-outline-variant/40 hover:border-primary/50 rounded-xl p-3.5 flex items-center justify-between transition-all group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/20 border border-secondary/30 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl" data-icon="forward_to_inbox">forward_to_inbox</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-on-surface">Solicitar Assinatura de Colega</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Envio simples por e-mail ou link direto</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Action 3 -->
+<div class="bg-surface-container-low border border-outline-variant/40 hover:border-primary/50 rounded-xl p-3.5 flex items-center justify-between transition-all group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 border border-tertiary/30 flex items-center justify-center text-tertiary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl" data-icon="receipt_long">receipt_long</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-on-surface">Baixar Certidão de Autenticidade</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">PDF simples para imprimir ou anexar</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- My Recent Documents Section -->
+<section class="space-y-3 pt-1">
+<div class="flex items-center justify-between px-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="folder_managed">folder_managed</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface font-semibold">Meus Documentos Recentes</h2>
+</div>
+<button class="text-body-sm font-body-sm text-primary hover:underline" type="button">Ver todos (18)</button>
+</div>
+<!-- Document Item 1 -->
+<article class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-3.5 space-y-3">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container border border-outline-variant/60 flex items-center justify-center text-primary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="description">description</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-on-surface">Holerite / Recibo Salarial - Outubro/2026</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Assinado com e-CNPJ da Empresa</p>
+</div>
+</div>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant shrink-0">Hoje, 14:30</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-badge font-label-badge uppercase px-2 py-0.5 bg-tertiary/15 border border-tertiary/40 text-tertiary rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="check_circle">check_circle</span>
+            Válido perante a Receita Federal
+          </span>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant">Hash: e4f9...21a</span>
+</div>
+<div class="flex items-center gap-2 pt-1 border-t border-outline-variant/20">
+<button class="flex-1 py-1.5 px-2 rounded bg-surface-container border border-outline-variant/60 hover:border-primary text-body-sm font-body-sm text-on-surface flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="visibility">visibility</span>
+<span>Ver Certificado Fácil</span>
+</button>
+<button class="flex-1 py-1.5 px-2 rounded bg-surface-container border border-outline-variant/60 hover:border-primary text-body-sm font-body-sm text-on-surface flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="share">share</span>
+<span>Compartilhar Link</span>
+</button>
+</div>
+</article>
+<!-- Document Item 2 -->
+<article class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-3.5 space-y-3">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container border border-outline-variant/60 flex items-center justify-center text-primary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="contract">contract</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-on-surface">Contrato de Trabalho &amp; Aditivo de Teletrabalho</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Você e Dra. Beatriz (RH)</p>
+</div>
+</div>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant shrink-0">12 Out, 10:15</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-badge font-label-badge uppercase px-2 py-0.5 bg-tertiary/15 border border-tertiary/40 text-tertiary rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="gavel">gavel</span>
+            Válido perante a Justiça do Trabalho
+          </span>
+<span class="text-label-badge font-label-badge uppercase px-1.5 py-0.5 bg-surface-container text-on-surface-variant rounded">RBB ANCHORED</span>
+</div>
+<div class="flex items-center gap-2 pt-1 border-t border-outline-variant/20">
+<button class="flex-1 py-1.5 px-2 rounded bg-surface-container border border-outline-variant/60 hover:border-primary text-body-sm font-body-sm text-on-surface flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="download">download</span>
+<span>Baixar Via Completa</span>
+</button>
+<button class="flex-1 py-1.5 px-2 rounded bg-surface-container border border-outline-variant/60 hover:border-primary text-body-sm font-body-sm text-on-surface flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="qr_code">qr_code</span>
+<span>Exibir Selo</span>
+</button>
+</div>
+</article>
+<!-- Document Item 3 -->
+<article class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-3.5 space-y-3">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container border border-outline-variant/60 flex items-center justify-center text-primary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="beach_access">beach_access</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-on-surface">Comprovante de Férias &amp; Recibo</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Aprovado pelo Gestor Operacional</p>
+</div>
+</div>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant shrink-0">05 Set, 09:00</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-badge font-label-badge uppercase px-2 py-0.5 bg-primary/15 border border-primary/40 text-primary rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="lock_clock">lock_clock</span>
+            Protegido por 10 anos
+          </span>
+<span class="text-label-badge font-label-badge uppercase px-1.5 py-0.5 bg-surface-container text-tertiary rounded">ICP-BRASIL A1</span>
+</div>
+<div class="flex items-center gap-2 pt-1 border-t border-outline-variant/20">
+<button class="w-full py-1.5 px-2 rounded bg-surface-container border border-outline-variant/60 hover:border-primary text-body-sm font-body-sm text-on-surface flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="open_in_new">open_in_new</span>
+<span>Ver Certidão de Fé Pública</span>
+</button>
+</div>
+</article>
+</section>
+<!-- Friendly Legal / Security Guidance Note -->
+<aside class="bg-surface-container/60 border border-outline-variant/30 rounded-xl p-space-md flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-2xl shrink-0 mt-0.5" data-icon="help_outline">help_outline</span>
+<div class="space-y-1">
+<h4 class="text-body-md font-body-md font-semibold text-on-surface">Dúvidas sobre validade jurídica?</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+          Todos os documentos do Arkhe possuem fé pública e podem ser validados por qualquer pessoa ou advogado sem necessidade de cadastro.
+        </p>
+</div>
+</aside>
+</main>
+<!-- Shared BottomNavBar Component -->
+<!-- Context Match: Primary mobile intent is document validation & citizen verification ("Verificar" is active) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant/40">
+<!-- Item 1: Evidências -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-150" href="#evidencias">
+<span class="material-symbols-outlined text-xl" data-icon="fingerprint">fingerprint</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Evidências</span>
+</a>
+<!-- Item 2: Perfis -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-150" href="#perfis">
+<span class="material-symbols-outlined text-xl" data-icon="domain">domain</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Perfis</span>
+</a>
+<!-- Item 3: Verificar (ACTIVE INTENT) -->
+<a class="flex flex-col items-center justify-center text-primary bg-primary/10 rounded-lg px-space-sm py-space-xs hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-150 font-semibold" href="#verificar">
+<span class="material-symbols-outlined text-xl" data-icon="verified" data-weight="fill" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Verificar</span>
+</a>
+<!-- Item 4: Custódia -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-150" href="#custodia">
+<span class="material-symbols-outlined text-xl" data-icon="account_tree">account_tree</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Custódia</span>
+</a>
+</nav>
+</body></html>

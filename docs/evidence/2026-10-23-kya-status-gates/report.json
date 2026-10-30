@@ -1,0 +1,81 @@
+{
+  "profile": "arkhe-kya-status-local@1",
+  "label": "synthetic-poc",
+  "recorded_at": "2026-10-23T23:29:40.895634+00:00",
+  "gates": [
+    {
+      "gate": "bit_zero",
+      "test": "isolated_bit_zero_returns_a_scoped_observation",
+      "expected": "Scoped non-revocation observation",
+      "result": "PASS"
+    },
+    {
+      "gate": "bit_one",
+      "test": "isolated_bit_one_returns_credential_revoked",
+      "expected": "CredentialRevoked",
+      "result": "PASS"
+    },
+    {
+      "gate": "unavailable",
+      "test": "isolated_missing_list_cannot_be_accepted",
+      "expected": "STATUS_UNAVAILABLE; composition maps to NOT_CHECKED + NOT_VERIFIABLE",
+      "result": "PASS"
+    },
+    {
+      "gate": "stale",
+      "test": "independent_freshness_policy_can_reject_still_valid_snapshot",
+      "expected": "STATUS_STALE; age from signed valid_from",
+      "result": "PASS"
+    }
+  ],
+  "runs": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "integration/arkhe-kya/Cargo.toml",
+        "--locked",
+        "--test",
+        "status_standalone"
+      ],
+      "exit_code": 0,
+      "output": "check-1.txt"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "integration/arkhe-kya/Cargo.toml",
+        "--locked",
+        "--test",
+        "status",
+        "unavailable_snapshot_is_not_checked_and_never_positive",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 0,
+      "output": "check-2.txt"
+    },
+    {
+      "command": [
+        "node",
+        "specs/e02/verify_manifest.mjs"
+      ],
+      "exit_code": 0,
+      "output": "check-3.txt"
+    }
+  ],
+  "file_sha256": {
+    "integration/arkhe-kya/src/status.rs": "fc34123d5bf7138c5cd8f46d559387e9eda1804f6636f26db533b0f1ca61d3ad",
+    "integration/arkhe-kya/src/status_composition.rs": "24f277e06edded8f84d0be97a91a162102ceb39ea06e28960b50cdbd2f83dd07",
+    "integration/arkhe-kya/tests/status_standalone.rs": "a006f08a1448906c983895ba5d1e449c405f0eda82a1ff95d1e338a5a3b6a644",
+    "integration/arkhe-kya/tests/status.rs": "bea79fac62860193ccc5203f0614f2ebcdf880d4ee9b840be8bb5d11a4605df9",
+    "integration/arkhe-kya/Cargo.lock": "b04f2a34fd94c0d499ef5768ff78135d92a8a27eb3f6d9f39afd0c971a3a70ea"
+  },
+  "scope": "Local signed snapshot codec. Not a W3C VC interoperability test or live revocation proof.",
+  "freshness": "Age policy is independent of issuer. Age starts at signed valid_from; evaluated_at is caller time, not external source checked_at.",
+  "independent_audit": false,
+  "signed_report": false
+}

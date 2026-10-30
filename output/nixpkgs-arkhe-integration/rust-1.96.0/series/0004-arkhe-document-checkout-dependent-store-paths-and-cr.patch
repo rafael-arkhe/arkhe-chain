@@ -1,0 +1,43 @@
+From 5cf45f52f3c7f422329fe555491067dbc6559a88 Mon Sep 17 00:00:00 2001
+From: ARKHE Developer <developer@arkhe.os>
+Date: Thu, 29 Oct 2026 17:03:08 -0300
+Subject: [PATCH 4/5] arkhe: document checkout-dependent store paths and
+ cross-checkout narHash
+
+A clean ext4 clone of 8554b8a84 rebuilds arkhe-verify, arkhe-sdd-parser
+and arkhe-verify-wasm with the same narHash as the /mnt/d build, although
+the WSL drvfs mode bits (rwxrwxrwx) give different source and store paths.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arkhe/README.md | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/arkhe/README.md b/arkhe/README.md
+index 253dc34a3..4299e4bc3 100644
+--- a/arkhe/README.md
++++ b/arkhe/README.md
+@@ -21,8 +21,19 @@ builds reprodutíveis e suporte opt-in a derivações endereçadas por conteúdo
+ | `arkhe-verify-wasm` | `sha256-UQi2HohdpttuenoFcZ22EZVw8FW+GaN3aYFNRngIgn4=` |
+ | `arkhe-sdd-parser` | `sha256-MG84KZNsiV1eEVbbwiit4dWBlrM2EO7e3R5xwzyvChU=` |
+ 
++Os mesmos três `narHash` saíram de um clone limpo do commit em ext4,
++construído do zero: conteúdo idêntico entre checkouts diferentes.
++
++**Caminho de store depende do sistema de arquivos do checkout.** No WSL,
++arquivos em `/mnt/<drive>` aparecem como `rwxrwxrwx`; o bit executável entra
++no hash da fonte, então o `.drv` e o caminho de saída diferem de um checkout
++em ext4, embora o `narHash` da saída seja o mesmo (observado acima). Para
++caminhos comparáveis entre máquinas, construa a partir de um checkout em
++sistema de arquivos Linux, ou compare `narHash`/use as variantes CA.
++
+ Num checkout git, arquivos novos só entram no flake depois de `git add`;
+-para testar antes disso use `nix flake check path:$PWD`.
++para testar antes disso use `nix flake check path:$PWD`. O `.gitignore`
++global desta máquina ignora `lib/`: adicione `arkhe/lib` com `git add -f`.
+ | `arkhe-mmrd`, `arkhe-journald`, `arkhe-gate`, `arkhe-anchor`, `arkhe-prove` | **não existem como crates** neste monorepo; não há pacote para eles |
+ 
+ O workflow em `../.github/workflows/arkhe-nix.yml` repete os checks de build. As execuções locais no host e na VM, com seus hashes e logs, estão registradas em [docs/INTEGRATION-REVIEW.md](docs/INTEGRATION-REVIEW.md).
+-- 
+2.53.0.windows.2
+

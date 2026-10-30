@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Enterprise - Dashboard Mobile</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary": "#003640",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-surface": "#dfe2ee",
+            "on-error": "#690005",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-tertiary-container": "#00452e",
+            "outline": "#869397",
+            "surface-tint": "#4cd7f6",
+            "outline-variant": "#3d494c",
+            "on-secondary": "#002a78",
+            "secondary-fixed-dim": "#b4c5ff",
+            "inverse-surface": "#dfe2ee",
+            "surface-container-lowest": "#0a0e16",
+            "surface-container-highest": "#31353e",
+            "surface-container-high": "#262a33",
+            "secondary": "#b4c5ff",
+            "on-error-container": "#ffdad6",
+            "tertiary-container": "#1bbd85",
+            "on-background": "#dfe2ee",
+            "primary-fixed": "#acedff",
+            "primary-fixed-dim": "#4cd7f6",
+            "secondary-fixed": "#dbe1ff",
+            "on-tertiary-fixed": "#002113",
+            "surface-container": "#1c2028",
+            "on-primary-container": "#00424f",
+            "on-secondary-container": "#cdd7ff",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-variant": "#31353e",
+            "surface-bright": "#353942",
+            "on-tertiary": "#003824",
+            "surface-dim": "#0f131c",
+            "on-primary-fixed-variant": "#004e5c",
+            "surface": "#0f131c",
+            "inverse-primary": "#00687a",
+            "primary-container": "#06b6d4",
+            "surface-container-low": "#181c24",
+            "on-secondary-fixed": "#00174b",
+            "error-container": "#93000a",
+            "on-surface-variant": "#bcc9cd",
+            "primary": "#4cd7f6",
+            "background": "#0f131c",
+            "on-primary-fixed": "#001f26",
+            "tertiary": "#4edea3",
+            "secondary-container": "#0053db",
+            "on-secondary-fixed-variant": "#003ea8",
+            "error": "#ffb4ab",
+            "inverse-on-surface": "#2c3039"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "gutter-mobile": "0.75rem",
+            "space-xs": "0.25rem",
+            "margin": "2rem",
+            "space-md": "1rem",
+            "margin-mobile": "1rem"
+          },
+          "fontFamily": {
+            "body-md": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "label-badge": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "mono-md": ["JetBrains Mono"],
+            "display-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-sm": ["Inter"],
+            "mono-sm": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-badge": ["10px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .hairline-b {
+      box-shadow: inset 0 -1px 0 0 rgba(61, 73, 76, 0.4);
+    }
+    .hairline-t {
+      box-shadow: inset 0 1px 0 0 rgba(61, 73, 76, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen pb-24 selection:bg-primary-container selection:text-on-primary">
+<!-- 1. TopAppBar (Shared Component Specification) -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-md py-space-xs border-b border-outline-variant/30 bg-surface-container-lowest/85 backdrop-blur-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="shield">shield</span>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight">Arkhe Enterprise</span>
+<span class="font-mono-sm text-mono-sm text-primary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+          Besu #4.891.204
+        </span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<div class="hidden xs:flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container border border-outline-variant/40">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="font-label-badge text-label-badge text-on-surface-variant uppercase">HSM ATIVO</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-secondary-container/30 border border-secondary text-secondary font-label-badge text-label-badge uppercase tracking-wider">
+        BACEN Tier 1
+      </span>
+</div>
+</header>
+<!-- Main Canvas Container -->
+<main class="pt-16 px-gutter-mobile space-y-space-md max-w-lg mx-auto">
+<!-- Sub-header Cryptographic Status strip -->
+<div class="flex items-center justify-between py-1 px-2.5 rounded bg-surface-container-lowest border border-outline-variant/30 font-mono-sm text-mono-sm text-on-surface-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[14px]" data-icon="lock">lock</span>
+<span>Sovereign Ledger Node #03</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-tertiary">ICP-Brasil A3</span>
+<span class="text-outline-variant">•</span>
+<span class="text-primary font-mono-sm">QBFT 100%</span>
+</div>
+</div>
+<!-- 2. Persona Switcher Banner (ADR-008 Protocol) -->
+<section class="space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="switch_account">switch_account</span>
+<span class="font-headline-sm text-[13px] font-semibold text-on-surface">Projeção de Persona</span>
+</div>
+<span class="font-label-badge text-label-badge uppercase px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant border border-outline-variant/30">
+          ADR-008
+        </span>
+</div>
+<!-- Horizontal Pills Switcher -->
+<div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5" id="persona-pills">
+<button class="persona-tab px-3 py-1.5 rounded font-mono-md text-mono-md border border-outline-variant text-on-surface-variant bg-surface-container-low transition-all shrink-0" id="btn-juridico" onclick="setPersona('juridico')">
+          Jurídico
+        </button>
+<button class="persona-tab px-3 py-1.5 rounded font-mono-md text-mono-md border border-primary text-primary bg-primary/10 transition-all shrink-0 font-medium shadow-[0_0_8px_rgba(6,182,212,0.15)]" id="btn-financeiro" onclick="setPersona('financeiro')">
+          Financeiro
+        </button>
+<button class="persona-tab px-3 py-1.5 rounded font-mono-md text-mono-md border border-outline-variant text-on-surface-variant bg-surface-container-low transition-all shrink-0" id="btn-compliance" onclick="setPersona('compliance')">
+          Compliance
+        </button>
+<button class="persona-tab px-3 py-1.5 rounded font-mono-md text-mono-md border border-outline-variant text-on-surface-variant bg-surface-container-low transition-all shrink-0" id="btn-engenharia" onclick="setPersona('engenharia')">
+          Engenharia
+        </button>
+</div>
+<!-- Institutional ADR Axiom Quote Banner -->
+<div class="p-2 rounded bg-surface-container-lowest border-l-2 border-primary border-t border-r border-b border-outline-variant/20 flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[16px] mt-0.5 shrink-0" data-icon="gavel">gavel</span>
+<p class="font-mono-sm text-[11px] leading-tight text-on-surface-variant italic">
+          "A persona é apresentação, não autorização. O RBAC reside na API."
+        </p>
+</div>
+</section>
+<!-- 3. Sector Context Card -->
+<section class="rounded-xl bg-surface-container border border-outline-variant/40 p-space-md space-y-space-sm relative overflow-hidden">
+<div class="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-badge text-label-badge text-primary uppercase tracking-wider block">Setor Regulado Ativo</span>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface mt-0.5">Financeiro / Bancário</h2>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant">CNAE 64.10-7 (Instituições de Moeda Eletrônica)</span>
+</div>
+<div class="w-8 h-8 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="account_balance">account_balance</span>
+</div>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2 py-0.5 rounded font-label-badge text-label-badge uppercase bg-surface-container-lowest border border-primary/40 text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]" data-icon="verified_user">verified_user</span>
+          BACEN Tier 1
+        </span>
+<span class="px-2 py-0.5 rounded font-label-badge text-label-badge uppercase bg-surface-container-lowest border border-outline-variant text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]" data-icon="history_toggle_off">history_toggle_off</span>
+          Retenção: 10 Anos (Legal Hold)
+        </span>
+<span class="px-2 py-0.5 rounded font-label-badge text-label-badge uppercase bg-surface-container-lowest border border-tertiary/40 text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]" data-icon="anchor">anchor</span>
+          Âncora: RBB + Rekor (5m)
+        </span>
+</div>
+</section>
+<!-- 4. DDD Context Mapping: Departmental Translation Engine -->
+<section class="rounded-xl bg-surface-container-low border border-outline-variant/40 p-space-md space-y-space-sm">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="translate">translate</span>
+<h3 class="font-headline-sm text-[14px] font-semibold text-on-surface">DDD Context Mapping</h3>
+</div>
+<span class="font-label-badge text-label-badge text-on-surface-variant uppercase">Tempo Real</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Projeção semântica adaptada para o léxico da persona selecionada:
+      </p>
+<div class="grid grid-cols-1 gap-2 pt-1">
+<!-- Translation Card 1: MMR Root -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant/30 space-y-1">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-mono-sm text-[10px] uppercase tracking-wider text-outline">Chave Canônica (Infra)</span>
+<span class="font-mono-sm text-mono-sm text-primary font-semibold">mmr.root</span>
+</div>
+<div class="flex items-center gap-2 pt-1">
+<span class="material-symbols-outlined text-tertiary text-[16px] shrink-0" data-icon="subdirectory_arrow_right">subdirectory_arrow_right</span>
+<div class="flex flex-col">
+<span class="font-label-badge text-[9px] uppercase text-tertiary font-bold" id="trans-label-1">Projeção Financeira</span>
+<span class="font-body-md text-[13px] font-medium text-on-surface" id="trans-val-1">Raiz de Reconciliação Contábil Diária</span>
+</div>
+</div>
+</div>
+<!-- Translation Card 2: Anchor RBB -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant/30 space-y-1">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-mono-sm text-[10px] uppercase tracking-wider text-outline">Chave Canônica (Infra)</span>
+<span class="font-mono-sm text-mono-sm text-primary font-semibold">anchor.rbb</span>
+</div>
+<div class="flex items-center gap-2 pt-1">
+<span class="material-symbols-outlined text-tertiary text-[16px] shrink-0" data-icon="subdirectory_arrow_right">subdirectory_arrow_right</span>
+<div class="flex flex-col">
+<span class="font-label-badge text-[9px] uppercase text-tertiary font-bold" id="trans-label-2">Projeção Financeira</span>
+<span class="font-body-md text-[13px] font-medium text-on-surface" id="trans-val-2">Fecho Contabilístico Imutável (BACEN)</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Metrics & Proof Quotas (Bento Cards) -->
+<section class="grid grid-cols-2 gap-2">
+<!-- Card 1: Cota de Documentos -->
+<div class="p-3 rounded-lg bg-surface-container border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-mono-sm text-[11px]">Cota Mensal</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="pie_chart">pie_chart</span>
+</div>
+<div class="mt-2">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md font-bold text-on-surface">428</span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant">/500</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full mt-1.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 85.6%;"></div>
+</div>
+</div>
+<span class="font-mono-sm text-[10px] text-primary mt-2">85.6% Ancorados</span>
+</div>
+<!-- Card 2: Compliance Zero Exceptions -->
+<div class="p-3 rounded-lg bg-surface-container border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-mono-sm text-[11px]">Auditoria / Exceções</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="check_circle">check_circle</span>
+</div>
+<div class="mt-2">
+<span class="font-headline-md text-headline-md font-bold text-tertiary">0</span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant block">Irregularidades</span>
+</div>
+<span class="font-label-badge text-label-badge uppercase text-tertiary mt-2">ICP-Brasil Conforme</span>
+</div>
+<!-- Card 3: Anchoring Latency -->
+<div class="p-3 rounded-lg bg-surface-container border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-mono-sm text-[11px]">Latência RBB</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="speed">speed</span>
+</div>
+<div class="mt-1">
+<span class="font-headline-md text-headline-md font-bold text-on-surface">1.8m</span>
+<span class="font-mono-sm text-[10px] text-on-surface-variant block">Média janela 24h</span>
+</div>
+<span class="font-label-badge text-label-badge uppercase text-primary mt-1">SLA &lt; 5m (Tier 1)</span>
+</div>
+<!-- Card 4: Lemma Status -->
+<div class="p-3 rounded-lg bg-surface-container border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-mono-sm text-[11px]">Consistência τ</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="token">token</span>
+</div>
+<div class="mt-1">
+<span class="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/50 text-primary font-label-badge text-label-badge uppercase tracking-wider inline-block">
+            LEMMA
+          </span>
+<span class="font-mono-sm text-[10px] text-on-surface-variant block mt-1">Formal Proof Lock</span>
+</div>
+<span class="font-mono-sm text-[10px] text-tertiary mt-1">WASM Engine Verificado</span>
+</div>
+</section>
+<!-- 6. Feed de Operações Recentes (PortableInclusionProof) -->
+<section class="space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="receipt_long">receipt_long</span>
+<h3 class="font-headline-sm text-[14px] font-semibold text-on-surface">Operações Recentes</h3>
+</div>
+<span class="font-mono-sm text-mono-sm text-primary">feed ativo</span>
+</div>
+<!-- Item 1: BACEN Payment Order -->
+<div class="p-3 rounded-lg bg-surface-container border border-outline-variant/40 space-y-2">
+<div class="flex items-center justify-between border-b border-outline-variant/20 pb-2">
+<div class="flex items-center gap-1.5">
+<span class="font-mono-sm text-mono-sm font-semibold text-on-surface">#BR-8921</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-[120px]">Ordem Pagamento</span>
+</div>
+<span class="px-1.5 py-0.2 rounded bg-tertiary/10 border border-tertiary/50 text-tertiary font-label-badge text-label-badge uppercase">
+            ANCHORED RBB
+          </span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center justify-between font-mono-sm text-[11px] text-on-surface-variant">
+<span>BLAKE3 Digest:</span>
+<span class="text-primary font-mono-sm">e3b0c442...98f12a</span>
+</div>
+<div class="flex items-center justify-between font-mono-sm text-[11px] text-on-surface-variant">
+<span>ICP-Brasil e-CNPJ:</span>
+<span class="text-on-surface font-mono-sm">00.360.305/0001-04</span>
+</div>
+</div>
+<div class="pt-1 flex items-center justify-between">
+<span class="font-mono-sm text-[10px] text-outline">Há 2 minutos • Bloco #4.891.203</span>
+<button class="px-2.5 py-1 rounded bg-primary/10 border border-primary text-primary hover:bg-primary hover:text-on-primary transition-all font-mono-sm text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="verified">verified</span>
+            Ver Prova
+          </button>
+</div>
+</div>
+<!-- Item 2: Co-signed Contract PI -->
+<div class="p-3 rounded-lg bg-surface-container border border-outline-variant/40 space-y-2">
+<div class="flex items-center justify-between border-b border-outline-variant/20 pb-2">
+<div class="flex items-center gap-1.5">
+<span class="font-mono-sm text-mono-sm font-semibold text-on-surface">#DOC-7742</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-[140px]">Contrato PI Co-assinado</span>
+</div>
+<span class="px-1.5 py-0.2 rounded bg-secondary-container/20 border border-secondary text-secondary font-label-badge text-label-badge uppercase">
+            REVISÃO CONCLUÍDA
+          </span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center justify-between font-mono-sm text-[11px] text-on-surface-variant">
+<span>Signatários:</span>
+<span class="text-on-surface font-mono-sm">2/2 ICP-Brasil A3</span>
+</div>
+<div class="flex items-center justify-between font-mono-sm text-[11px] text-on-surface-variant">
+<span>Validade Legal:</span>
+<span class="text-tertiary font-mono-sm">MP 2.200-2/2001</span>
+</div>
+</div>
+<div class="pt-1 flex items-center justify-between">
+<span class="font-mono-sm text-[10px] text-outline">Há 14 minutos • HSM Cluster-02</span>
+<button class="px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant text-on-surface hover:border-primary transition-all font-mono-sm text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="visibility">visibility</span>
+            Dossiê
+          </button>
+</div>
+</div>
+</section>
+<!-- 7. Fast Sovereign Actions -->
+<section class="space-y-space-xs pt-1">
+<span class="font-label-badge text-label-badge uppercase text-outline block">Ações Rápidas do Operador</span>
+<div class="grid grid-cols-3 gap-2">
+<button class="p-2.5 rounded-lg bg-surface-container border border-outline-variant/40 hover:border-primary text-center flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all">
+<div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="assignment">assignment</span>
+</div>
+<span class="font-body-sm text-[11px] font-medium text-on-surface">Solicitar Parecer</span>
+</button>
+<button class="p-2.5 rounded-lg bg-surface-container border border-outline-variant/40 hover:border-primary text-center flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all">
+<div class="w-8 h-8 rounded bg-primary-container text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="post_add">post_add</span>
+</div>
+<span class="font-body-sm text-[11px] font-medium text-on-surface">Ancorar Lote</span>
+</button>
+<button class="p-2.5 rounded-lg bg-surface-container border border-outline-variant/40 hover:border-primary text-center flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all">
+<div class="w-8 h-8 rounded bg-tertiary/10 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+</div>
+<span class="font-body-sm text-[11px] font-medium text-on-surface">Validar WASM</span>
+</button>
+</div>
+</section>
+</main>
+<!-- 8. BottomNavBar (Shared Component Specification - Mobile Anchor) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs border-t border-outline-variant/30 bg-surface-container-lowest/90 backdrop-blur-md">
+<!-- Item 1: Evidências (Active Destination) -->
+<a class="flex flex-col items-center justify-center text-primary bg-primary/10 rounded-lg px-space-sm py-space-xs transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="fingerprint">fingerprint</span>
+<span class="font-mono-sm text-mono-sm mt-0.5">Evidências</span>
+</a>
+<!-- Item 2: Perfis -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="domain">domain</span>
+<span class="font-mono-sm text-mono-sm mt-0.5">Perfis</span>
+</a>
+<!-- Item 3: Verificar -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="verified">verified</span>
+<span class="font-mono-sm text-mono-sm mt-0.5">Verificar</span>
+</a>
+<!-- Item 4: Custódia -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_tree">account_tree</span>
+<span class="font-mono-sm text-mono-sm mt-0.5">Custódia</span>
+</a>
+</nav>
+<!-- Real-time Persona Switching Logic (Interactive Micro-script) -->
+<script>
+    const personaVocab = {
+      juridico: {
+        tag: 'Projeção Jurídica (Legal Tech)',
+        mmr: 'Selo de Integridade e Temporalidade Criptográfica',
+        anchor: 'Registo Notarial na RBB (Fé Pública Digital)'
+      },
+      financeiro: {
+        tag: 'Projeção Financeira',
+        mmr: 'Raiz de Reconciliação Contábil Diária',
+        anchor: 'Fecho Contabilístico Imutável (BACEN)'
+      },
+      compliance: {
+        tag: 'Projeção Regulatória (Compliance)',
+        mmr: 'Trilha de Auditoria Contínua Não Repudiável',
+        anchor: 'Depósito em Log de Transparência Soberano'
+      },
+      engenharia: {
+        tag: 'Projeção de Engenharia (Cripto)',
+        mmr: 'Rollup MMR Root Merkle Proof Digest',
+        anchor: 'Besu QBFT Contract Commitment Tx'
+      }
+    };
+
+    function setPersona(personaKey) {
+      // Update pills styling
+      document.querySelectorAll('.persona-tab').forEach(tab => {
+        tab.className = 'persona-tab px-3 py-1.5 rounded font-mono-md text-mono-md border border-outline-variant text-on-surface-variant bg-surface-container-low transition-all shrink-0';
+      });
+
+      const activeBtn = document.getElementById('btn-' + personaKey);
+      if (activeBtn) {
+        activeBtn.className = 'persona-tab px-3 py-1.5 rounded font-mono-md text-mono-md border border-primary text-primary bg-primary/10 transition-all shrink-0 font-medium shadow-[0_0_8px_rgba(6,182,212,0.15)]';
+      }
+
+      // Update translated terminology in real time
+      const config = personaVocab[personaKey];
+      if (config) {
+        document.getElementById('trans-label-1').innerText = config.tag;
+        document.getElementById('trans-val-1').innerText = config.mmr;
+        document.getElementById('trans-label-2').innerText = config.tag;
+        document.getElementById('trans-val-2').innerText = config.anchor;
+      }
+    }
+  </script>
+</body></html>

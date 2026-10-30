@@ -1,0 +1,19 @@
+{
+  "name": "@arkhe/sigstore-verifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
+  "scripts": {
+    "test": "cargo build -p arkhe-verify-cli --locked && cargo build -p arkhe-wormgraph --example memo_persistence --locked && node --import ./test/deny-network.mjs --test test/*.test.mjs",
+    "verify": "node cli.mjs"
+  },
+  "dependencies": {
+    "@sigstore/bundle": "5.0.0",
+    "@sigstore/protobuf-specs": "0.5.0",
+    "@sigstore/tuf": "4.0.2",
+    "@sigstore/verify": "4.1.2"
+  }
+}

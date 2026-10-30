@@ -1,0 +1,29 @@
+{
+  "id": "ai-output-panel",
+  "version": "0.1.0",
+  "implementation_status": "IMPLEMENTED_STANDALONE",
+  "strategy": "ordered_precedence_then_composite",
+  "score_domain": { "minimum": 0, "maximum": 1, "finite_only": true },
+  "precedence": ["invalid_configuration", "rule_judge_failed", "unavailable_or_invalid_judge", "composite_zone"],
+  "invalid_configuration": { "decision": "DENY" },
+  "rule_judge": { "must_pass": true, "on_fail": "DENY", "on_unavailable": "REQUIRE_APPROVAL" },
+  "judges": {
+    "grounding": { "normalize": "identity", "weight": 0.4, "diagnostic_threshold": 0.8, "diagnostic_pass": ">=" },
+    "hallucination": { "normalize": "complement", "weight": 0.3, "diagnostic_threshold": 0.4, "diagnostic_pass": "<" },
+    "model_judge": { "normalize": "identity", "weight": 0.3, "diagnostic_threshold": 0.7, "diagnostic_pass": ">=" }
+  },
+  "normalization": { "identity": "x", "complement": "1 - x" },
+  "unavailable_or_invalid_judge": { "decision": "REQUIRE_APPROVAL", "composite": null, "renormalize_weights": false },
+  "composite": { "formula": "0.4 * grounding + 0.3 * (1 - hallucination) + 0.3 * model_judge", "weight_sum": 1, "weight_sum_tolerance": 1e-12 },
+  "zones": [
+    { "minimum_inclusive": 0.85, "maximum_inclusive": 1, "decision": "ALLOW" },
+    { "minimum_inclusive": 0.70, "maximum_exclusive": 0.85, "decision": "ALLOW_WITH_LOGGING" },
+    { "minimum_inclusive": 0.50, "maximum_exclusive": 0.70, "decision": "REQUIRE_APPROVAL" },
+    { "minimum_inclusive": 0, "maximum_exclusive": 0.50, "decision": "DENY" }
+  ],
+  "threshold_semantics": "Per-judge thresholds are diagnostics only; they do not add hard vetoes. Zones use the unrounded composite.",
+  "approval_semantics": "REQUIRE_APPROVAL authorizes no effect. Human approval is a separate bound and revalidated operation; it cannot bypass hard authorization gates.",
+  "calibration": { "status": "PENDING", "golden_set": null, "target_precision": 0.95, "measured_precision": null },
+  "authority": "Advisory evaluation only; no publication or tool-execution authority.",
+  "evidence": ["spec_id", "spec_version", "spec_hash", "judge_versions", "raw_scores", "normalized_scores", "weights", "composite", "rule_judge_status", "unavailable_or_invalid_judges", "decision", "calibration_status"]
+}

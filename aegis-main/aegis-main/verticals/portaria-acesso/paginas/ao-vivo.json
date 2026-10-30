@@ -1,0 +1,19 @@
+{
+  "slug": "ao-vivo",
+  "titulo": "Ao vivo",
+  "refresh_segundos": 15,
+  "refresh_porque": "A leitura de placa é o tempo real da guarita: 15 s é o poll do turno. Sem este campo a tela deixa de ser ao vivo — e a diferença entre ver a entrada que acabou de acontecer e ver a de há um minuto é o produto inteiro.",
+  "icone_nav": "activity",
+  "variaveis": [
+    { "id": "acessos",   "tipo": "object_set", "objeto": "acesso" },
+    { "id": "veiculos",  "tipo": "object_set", "objeto": "veiculo" },
+    { "id": "cameras",   "tipo": "object_set", "objeto": "camera" },
+    { "id": "total_hoje", "tipo": "agregacao", "de": "acessos", "op": "count" }
+  ],
+  "blocos": [
+    { "tipo": "kpi", "rotulo": "Acessos hoje", "variavel": "total_hoje" },
+    { "tipo": "tabela", "objeto": "acesso", "colunas": ["placa", "confianca", "detectado_em", "camera"] },
+    { "tipo": "tabela", "objeto": "veiculo", "colunas": ["placa", "marca", "visto_em"] },
+    { "tipo": "tabela", "objeto": "camera", "colunas": ["nome", "local", "fonte"] }
+  ]
+}

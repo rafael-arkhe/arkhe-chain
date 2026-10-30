@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-PT"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Consola de Paragem de Emergência &amp; Contenção Fail-Closed | Arkhe Protocol Engine</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#dcd9db",
+            "text-primary": "#111827",
+            "surface-container-high": "#eae7e9",
+            "on-tertiary-container": "#98805d",
+            "on-surface-variant": "#45464d",
+            "tertiary-fixed": "#fcdeb5",
+            "on-tertiary-fixed": "#271901",
+            "canvas-subtle": "#F9FAFB",
+            "primary-fixed": "#dae2fd",
+            "secondary-container": "#316bf3",
+            "text-secondary": "#4B5563",
+            "surface-container-highest": "#e4e2e4",
+            "primary-fixed-dim": "#bec6e0",
+            "status-warning-bg": "#FFFBEB",
+            "error-container": "#ffdad6",
+            "status-pass-border": "#A7F3D0",
+            "tertiary-fixed-dim": "#dec29a",
+            "on-tertiary": "#ffffff",
+            "status-fail-text": "#BE123C",
+            "on-primary-container": "#7c839b",
+            "on-tertiary-fixed-variant": "#574425",
+            "primary": "#000000",
+            "surface-bright": "#fcf8fa",
+            "status-pass-bg": "#ECFDF5",
+            "background": "#fcf8fa",
+            "on-error": "#ffffff",
+            "secondary-fixed": "#dbe1ff",
+            "status-pending-border": "#CBD5E1",
+            "primary-container": "#131b2e",
+            "tertiary": "#000000",
+            "status-pass-text": "#047857",
+            "surface": "#fcf8fa",
+            "outline-variant": "#c6c6cd",
+            "inverse-surface": "#303032",
+            "secondary-fixed-dim": "#b4c5ff",
+            "on-secondary-fixed": "#00174b",
+            "tertiary-container": "#271901",
+            "on-primary-fixed-variant": "#3f465c",
+            "on-primary-fixed": "#131b2e",
+            "on-secondary-fixed-variant": "#003ea8",
+            "on-primary": "#ffffff",
+            "border-muted": "#E2E8F0",
+            "on-secondary": "#ffffff",
+            "inverse-primary": "#bec6e0",
+            "secondary": "#0051d5",
+            "text-tertiary": "#6B7280",
+            "surface-container-low": "#f6f3f5",
+            "status-pending-text": "#334155",
+            "border-subtle": "#E5E7EB",
+            "surface-tint": "#565e74",
+            "on-surface": "#1b1b1d",
+            "on-secondary-container": "#fefcff",
+            "status-fail-border": "#FECDD3",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "status-fail-bg": "#FFF1F2",
+            "on-error-container": "#93000a",
+            "status-warning-text": "#B45309",
+            "surface-variant": "#e4e2e4",
+            "outline": "#76777d",
+            "canvas-base": "#FFFFFF",
+            "status-warning-border": "#FDE68A",
+            "surface-container": "#f0edef",
+            "inverse-on-surface": "#f3f0f2",
+            "on-background": "#1b1b1d",
+            "status-pending-bg": "#F1F5F9"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "0.75rem",
+            "margin-compact": "1rem",
+            "space-xl": "1.5rem",
+            "space-sm": "0.5rem",
+            "margin": "1.5rem",
+            "space-lg": "1rem",
+            "space-xs": "0.25rem",
+            "gutter-dense": "0.5rem",
+            "gutter": "1rem",
+            "space-2xl": "2rem"
+          },
+          "fontFamily": {
+            "body-md": ["Inter"],
+            "label-md": ["JetBrains Mono"],
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "code-inline": ["JetBrains Mono"],
+            "headline-lg": ["Inter"],
+            "headline-xl": ["Inter"],
+            "label-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "code-inline": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-text-primary antialiased font-body-md min-h-screen selection:bg-border-muted">
+<!-- TopNavBar (Shared Component from JSON) -->
+<header class="w-full px-6 h-14 flex items-center justify-between border-b border-border-subtle bg-canvas-base max-w-full fixed top-0 left-0 right-0 z-50">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-xl">shield_locked</span>
+<span class="text-headline-sm font-headline-sm font-semibold tracking-tight text-primary">Arkhe Protocol Engine</span>
+</div>
+<!-- Search on left -->
+<div class="relative hidden lg:block w-72">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-text-secondary text-sm">search</span>
+<input class="w-full pl-8 pr-3 py-1 bg-canvas-subtle border border-border-subtle rounded text-body-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Pesquisar Invariante, Ed25519 ou Raiz WAL..." type="text"/>
+</div>
+<!-- Navigation Links from JSON -->
+<nav class="hidden xl:flex items-center gap-5 text-label-md font-label-md">
+<a class="text-text-primary font-semibold border-b-2 border-primary pb-1" href="#">Audit Trail</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150" href="#">Inclusion Proofs</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150" href="#">WormGraph</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150" href="#">Hardware Enclaves</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150" href="#">Revocation Registry</a>
+</nav>
+</div>
+<!-- Trailing Actions & Credentials Profile -->
+<div class="flex items-center gap-3">
+<div class="hidden sm:flex items-center gap-1 border border-border-subtle rounded bg-canvas-subtle p-0.5">
+<button class="p-1 text-text-secondary hover:text-text-primary hover:bg-canvas-base rounded transition-colors duration-150" title="content_copy">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+<button class="p-1 text-text-secondary hover:text-text-primary hover:bg-canvas-base rounded transition-colors duration-150" title="download">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+<button class="p-1 text-text-secondary hover:text-text-primary hover:bg-canvas-base rounded transition-colors duration-150" title="terminal">
+<span class="material-symbols-outlined text-sm">terminal</span>
+</button>
+</div>
+<button class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 border border-border-subtle bg-canvas-base text-text-primary hover:bg-canvas-subtle rounded text-label-sm font-label-sm transition-colors duration-150">
+<span>Exportar JCS</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-on-primary hover:bg-inverse-surface rounded text-label-sm font-label-sm transition-colors duration-150">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span>Verificar Offline WASM</span>
+</button>
+<div class="h-5 w-px bg-border-subtle mx-1"></div>
+<!-- Credentialed Operator Profile Anchor -->
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded border border-border-subtle bg-canvas-subtle flex items-center justify-center text-text-primary font-label-sm font-semibold">
+          OC
+        </div>
+<div class="hidden 2xl:flex flex-col text-left">
+<span class="text-label-sm font-label-sm font-semibold text-text-primary leading-tight">Operador Criptográfico Credenciado</span>
+<span class="text-label-sm font-label-sm text-text-tertiary text-[10px]">ID: 0x9B...E021 (Tier 1)</span>
+</div>
+</div>
+</div>
+</header>
+<div class="flex pt-14">
+<!-- SideNavBar (Shared Component from JSON) -->
+<aside class="fixed top-14 left-0 bottom-0 w-64 flex flex-col justify-between p-3 border-r border-border-subtle bg-canvas-subtle z-40">
+<div class="space-y-4">
+<!-- Kernel Header -->
+<div class="px-3 py-2 border-b border-border-subtle bg-canvas-base rounded">
+<div class="flex items-center justify-between">
+<span class="text-headline-sm font-headline-sm font-bold text-text-primary">ARKHE KERNEL v4.2</span>
+<span class="w-2 h-2 rounded-full bg-status-pass-text"></span>
+</div>
+<div class="text-label-sm font-label-sm text-text-secondary mt-0.5">MMR Checkpoint #849,204</div>
+<div class="mt-2 pt-2 border-t border-border-subtle flex items-center justify-between">
+<span class="text-[10px] font-label-sm text-text-tertiary uppercase">Invariante Causal</span>
+<span class="px-1.5 py-0.2 bg-status-pass-bg border border-status-pass-border text-status-pass-text text-[10px] font-label-sm rounded">CONFORME</span>
+</div>
+</div>
+<!-- Primary Navigation Links from JSON -->
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-text-primary bg-canvas-base border-l-2 border-primary font-medium text-body-sm rounded-r" href="#">
+<span class="material-symbols-outlined text-base">verified_user</span>
+<span>Proof Explorer</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-base">memory</span>
+<span>Enclave Attestation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-base">hub</span>
+<span>Rekor Anchor</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-base">fact_check</span>
+<span>Status List v1.0</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-base">key</span>
+<span>Ed25519 Keys</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-base">history</span>
+<span>Epoch Root Log</span>
+</a>
+</nav>
+</div>
+<!-- Footer & Action CTA -->
+<div class="space-y-2 pt-3 border-t border-border-subtle">
+<button class="w-full py-2 px-3 bg-canvas-base border border-border-muted hover:border-text-primary text-text-primary text-label-sm font-label-sm font-semibold rounded flex items-center justify-center gap-2 transition-colors duration-150">
+<span class="material-symbols-outlined text-sm">anchor</span>
+<span>Anchor State</span>
+</button>
+<nav class="space-y-0.5">
+<a class="flex items-center gap-3 px-3 py-1.5 text-text-secondary hover:text-text-primary text-body-sm rounded transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span class="text-body-sm font-body-sm">System Diagnostics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-1.5 text-text-secondary hover:text-text-primary text-body-sm rounded transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-sm">menu_book</span>
+<span class="text-body-sm font-body-sm">API Documentation</span>
+</a>
+</nav>
+<div class="text-[10px] font-label-sm text-text-tertiary px-3 pt-1">
+          Arkhe Enclave #T-4091 | TLS 1.3 Strict
+        </div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 p-6 space-y-6 max-w-[1440px]">
+<!-- Alert & Status Header -->
+<section class="bg-canvas-base border border-border-muted rounded p-5">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border-subtle">
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 text-label-sm font-label-sm rounded bg-status-fail-bg text-status-fail-text border border-status-fail-border uppercase font-semibold">
+                Controlo Crítico
+              </span>
+<span class="text-label-sm font-label-sm text-text-tertiary">Módulo de Auditoria Forense #SEC-036</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-text-primary tracking-tight">
+              Consola de Paragem de Emergência &amp; Contenção Fail-Closed (Ecrã 36)
+            </h1>
+<p class="text-body-md font-body-md text-text-secondary max-w-4xl">
+              Mecanismo de corte determinístico multi-assinatura conforme Invariante E02-13 e MP 2.200-2/2001. A transição para estado de paragem suspende liquidações e congela checkpoints no WormGraph.
+            </p>
+</div>
+<!-- Status Indicator Pill -->
+<div class="flex flex-col items-start lg:items-end justify-center bg-canvas-subtle p-3 rounded border border-border-subtle shrink-0">
+<div class="flex items-center gap-2">
+<span class="inline-block w-2.5 h-2.5 rounded-full bg-status-pass-text"></span>
+<span class="text-label-sm font-label-sm font-semibold text-text-primary">
+                ESTADO ATUAL: OPERAÇÃO NOMINAL (FAIL-CLOSED INATIVO)
+              </span>
+</div>
+<div class="text-[11px] font-label-sm text-text-tertiary mt-1">
+              Último Checkpoint Causal: <span class="text-text-primary font-mono">0x4f12...bc90</span> (Há 38s)
+            </div>
+</div>
+</div>
+<!-- Quick Summary Bar -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 text-body-sm font-body-sm">
+<div>
+<div class="text-text-tertiary text-[11px] font-label-sm">POLÍTICA DE REJEIÇÃO</div>
+<div class="font-semibold text-text-primary mt-0.5">RECUSA_INVARIANTE (Strict)</div>
+</div>
+<div>
+<div class="text-text-tertiary text-[11px] font-label-sm">CONSENSO WAL</div>
+<div class="font-semibold text-text-primary mt-0.5">Sincronização Bit-a-Bit</div>
+</div>
+<div>
+<div class="text-text-tertiary text-[11px] font-label-sm">CHAVES DE QUÓRUM REGISTADAS</div>
+<div class="font-semibold text-text-primary mt-0.5">3 Enclaves Ed25519 Ativos</div>
+</div>
+<div>
+<div class="text-text-tertiary text-[11px] font-label-sm">CONFORMIDADE REGULATÓRIA</div>
+<div class="font-semibold text-text-primary mt-0.5">Bacen Resolução BCB nº 1/2020</div>
+</div>
+</div>
+</section>
+<!-- Painel de 3 Níveis de Paragem de Emergência (Kill-Switches Granulares) -->
+<section class="space-y-3">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Níveis de Interrupção &amp; Kill-Switches Granulares</h2>
+<p class="text-body-sm font-body-sm text-text-secondary">Selecione o escopo operacional de mitigação conforme o vetor de anomalia identificado.</p>
+</div>
+<span class="text-label-sm font-label-sm text-text-tertiary">Padrão de Execução: Invariante ISO 27001-A12</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- Nível 1 -->
+<div class="bg-canvas-base border border-border-muted rounded p-4 flex flex-col justify-between relative hover:border-outline-variant transition-colors">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="px-2 py-0.5 text-[11px] font-label-sm font-semibold rounded bg-status-warning-bg border border-status-warning-border text-status-warning-text">
+                  NÍVEL 1: SUSPENSÃO LÓGICA
+                </span>
+<span class="material-symbols-outlined text-text-tertiary text-lg">smart_toy</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary font-semibold mb-1">
+                Interrupção de Agentes Autónomos
+              </h3>
+<p class="text-body-sm font-body-sm text-text-secondary mb-4">
+                Suspende imediatamente as rotinas do <span class="font-code-inline text-code-inline text-text-primary">Liquidator Auto-Settler v1.4</span> e outros orquestradores de arbitragem sintética sem cessar a produção e validação local de blocos no nó.
+              </p>
+<div class="bg-canvas-subtle p-2.5 rounded border border-border-subtle space-y-1 text-label-sm font-label-sm mb-4">
+<div class="flex justify-between text-text-secondary">
+<span>Quórum Mínimo:</span>
+<span class="font-semibold text-text-primary">1 de 2 Operadores</span>
+</div>
+<div class="flex justify-between text-text-secondary">
+<span>Impacto na Rede:</span>
+<span class="text-text-primary">Sub-módulos off-chain</span>
+</div>
+<div class="flex justify-between text-text-secondary">
+<span>Tempo de Propagação:</span>
+<span class="text-status-pass-text font-semibold">&lt; 150 ms</span>
+</div>
+</div>
+</div>
+<div class="pt-3 border-t border-border-subtle flex items-center justify-between">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="w-4 h-4 text-primary focus:ring-primary border-border-subtle" name="kill_switch_level" type="radio"/>
+<span class="text-label-sm font-label-sm font-medium text-text-primary">Selecionar Nível 1</span>
+</label>
+<span class="text-label-sm font-label-sm text-text-tertiary">STANDBY</span>
+</div>
+</div>
+<!-- Nível 2 -->
+<div class="bg-canvas-base border border-border-muted rounded p-4 flex flex-col justify-between relative hover:border-outline-variant transition-colors">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="px-2 py-0.5 text-[11px] font-label-sm font-semibold rounded bg-status-warning-bg border border-status-warning-border text-status-warning-text">
+                  NÍVEL 2: ISOLAMENTO PERIMETRAL
+                </span>
+<span class="material-symbols-outlined text-text-tertiary text-lg">lan</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary font-semibold mb-1">
+                Isolamento de Gateways Externos
+              </h3>
+<p class="text-body-sm font-body-sm text-text-secondary mb-4">
+                Corta ativamente pontes MCP, webhooks de liquidação PIX e canais Open Finance. O kernel Arkhe permanece a auditar e validar assinaturas internamente, isolando o nó do tráfego perimetral.
+              </p>
+<div class="bg-canvas-subtle p-2.5 rounded border border-border-subtle space-y-1 text-label-sm font-label-sm mb-4">
+<div class="flex justify-between text-text-secondary">
+<span>Quórum Mínimo:</span>
+<span class="font-semibold text-text-primary">2 de 3 Operadores</span>
+</div>
+<div class="flex justify-between text-text-secondary">
+<span>Impacto na Rede:</span>
+<span class="text-text-primary">I/O Externo Interrompido</span>
+</div>
+<div class="flex justify-between text-text-secondary">
+<span>Tempo de Propagação:</span>
+<span class="text-status-pass-text font-semibold">&lt; 300 ms</span>
+</div>
+</div>
+</div>
+<div class="pt-3 border-t border-border-subtle flex items-center justify-between">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="w-4 h-4 text-primary focus:ring-primary border-border-subtle" name="kill_switch_level" type="radio"/>
+<span class="text-label-sm font-label-sm font-medium text-text-primary">Selecionar Nível 2</span>
+</label>
+<span class="text-label-sm font-label-sm text-text-tertiary">STANDBY</span>
+</div>
+</div>
+<!-- Nível 3 (Fail-Closed Absoluto) -->
+<div class="bg-canvas-base border-2 border-status-fail-border rounded p-4 flex flex-col justify-between relative bg-status-fail-bg/10">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="px-2 py-0.5 text-[11px] font-label-sm font-semibold rounded bg-status-fail-bg border border-status-fail-border text-status-fail-text">
+                  NÍVEL 3: CRÍTICO ABSOLUTO
+                </span>
+<span class="material-symbols-outlined text-status-fail-text text-lg">dangerous</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-status-fail-text font-bold mb-1">
+                Paragem Total do Nó (Fail-Closed)
+              </h3>
+<p class="text-body-sm font-body-sm text-text-secondary mb-4">
+                Trava determinística do nó Arkhe. Persiste o Write-Ahead Log (WAL) bit-a-bit em meio frio e rejeita sumariamente todas as intenções subsequentes com o código irrevogável <span class="font-code-inline text-code-inline text-status-fail-text font-semibold">RECUSA_INVARIANTE</span>.
+              </p>
+<div class="bg-canvas-base p-2.5 rounded border border-status-fail-border/50 space-y-1 text-label-sm font-label-sm mb-4">
+<div class="flex justify-between text-text-secondary">
+<span>Quórum Qualificado:</span>
+<span class="font-semibold text-status-fail-text">3 de 3 Assinaturas</span>
+</div>
+<div class="flex justify-between text-text-secondary">
+<span>Auditor Externo:</span>
+<span class="font-semibold text-text-primary">Obrigatório (HackenProof)</span>
+</div>
+<div class="flex justify-between text-text-secondary">
+<span>Efeito em Memória:</span>
+<span class="text-text-primary">Flush &amp; Enclave Halt</span>
+</div>
+</div>
+</div>
+<div class="pt-3 border-t border-status-fail-border flex items-center justify-between">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="w-4 h-4 text-status-fail-text focus:ring-status-fail-text border-status-fail-border" name="kill_switch_level" type="radio"/>
+<span class="text-label-sm font-label-sm font-bold text-status-fail-text">Selecionar Fail-Closed</span>
+</label>
+<span class="text-label-sm font-label-sm text-status-fail-text font-semibold">ARMADO</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Seção de Procedimento de Acionamento e Quórum de Assinatura -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Painel de Quórum dos Signatários (7 colunas) -->
+<div class="lg:col-span-7 bg-canvas-base border border-border-muted rounded p-5 space-y-4">
+<div class="flex items-center justify-between pb-3 border-b border-border-subtle">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary font-semibold">
+                Quórum de Assinatura Criptográfica Ed25519
+              </h2>
+<p class="text-body-sm font-body-sm text-text-secondary">
+                O cancelamento e paragem de Nível 3 exige validação canónica tripartida independente.
+              </p>
+</div>
+<div class="px-2 py-1 bg-canvas-subtle border border-border-subtle rounded text-label-sm font-label-sm text-text-primary font-mono">
+              Quórum Atual: <span class="font-bold text-text-primary">1 / 3</span>
+</div>
+</div>
+<!-- Tabela de Signatários -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-border-subtle text-[11px] font-label-sm text-text-tertiary uppercase">
+<th class="py-2 px-3">Autoridade / Entidade</th>
+<th class="py-2 px-3">Chave Ed25519 &amp; Hash</th>
+<th class="py-2 px-3">Estado da Assinatura</th>
+<th class="py-2 px-3 text-right">Ação</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle text-body-sm font-body-sm">
+<!-- Signatário 1 -->
+<tr class="hover:bg-canvas-subtle/50 transition-colors">
+<td class="py-3 px-3">
+<div class="font-medium text-text-primary">Operador Santander Primário</div>
+<div class="text-[11px] font-label-sm text-text-tertiary">Chave Local do Nó #ARK-01</div>
+</td>
+<td class="py-3 px-3">
+<div class="font-code-inline text-code-inline text-text-primary flex items-center gap-1">
+<span>0x73a1fe...89bc</span>
+<button class="text-text-tertiary hover:text-text-primary" title="Copiar">
+<span class="material-symbols-outlined text-xs">content_copy</span>
+</button>
+</div>
+<div class="text-[10px] font-label-sm text-text-tertiary">Assinado em: 2025-05-18 14:02:11 UTC</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-pass-bg border border-status-pass-border text-status-pass-text font-semibold">
+<span class="material-symbols-outlined text-xs">check_circle</span>
+                      ASSINADO
+                    </span>
+</td>
+<td class="py-3 px-3 text-right">
+<button class="px-2 py-1 text-label-sm font-label-sm border border-border-subtle rounded hover:bg-canvas-subtle text-text-secondary">
+                      Ver Prova
+                    </button>
+</td>
+</tr>
+<!-- Signatário 2 -->
+<tr class="hover:bg-canvas-subtle/50 transition-colors">
+<td class="py-3 px-3">
+<div class="font-medium text-text-primary">Auditor HackenProof Externo</div>
+<div class="text-[11px] font-label-sm text-text-tertiary">Credencial TEE Externa #HKP-88</div>
+</td>
+<td class="py-3 px-3">
+<div class="font-code-inline text-code-inline text-text-tertiary flex items-center gap-1">
+<span>0xe41b8a...c031</span>
+<button class="text-text-tertiary hover:text-text-primary" title="Copiar">
+<span class="material-symbols-outlined text-xs">content_copy</span>
+</button>
+</div>
+<div class="text-[10px] font-label-sm text-text-tertiary">Desafio de nonce emitido</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-pending-bg border border-status-pending-border text-status-pending-text font-medium">
+<span class="material-symbols-outlined text-xs">schedule</span>
+                      PENDENTE
+                    </span>
+</td>
+<td class="py-3 px-3 text-right">
+<button class="px-2 py-1 text-label-sm font-label-sm bg-primary text-on-primary rounded hover:bg-inverse-surface">
+                      Assinar HSM
+                    </button>
+</td>
+</tr>
+<!-- Signatário 3 -->
+<tr class="hover:bg-canvas-subtle/50 transition-colors">
+<td class="py-3 px-3">
+<div class="font-medium text-text-primary">Oficial de Compliance BACEN</div>
+<div class="text-[11px] font-label-sm text-text-tertiary">ICP-Brasil / MP 2.200-2/2001</div>
+</td>
+<td class="py-3 px-3">
+<div class="font-code-inline text-code-inline text-text-tertiary flex items-center gap-1">
+<span>0x90ca5f...3319</span>
+<button class="text-text-tertiary hover:text-text-primary" title="Copiar">
+<span class="material-symbols-outlined text-xs">content_copy</span>
+</button>
+</div>
+<div class="text-[10px] font-label-sm text-text-tertiary">Canal regulatório ativo</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-pending-bg border border-status-pending-border text-status-pending-text font-medium">
+<span class="material-symbols-outlined text-xs">schedule</span>
+                      PENDENTE
+                    </span>
+</td>
+<td class="py-3 px-3 text-right">
+<button class="px-2 py-1 text-label-sm font-label-sm border border-border-subtle rounded hover:bg-canvas-subtle text-text-secondary">
+                      Solicitar OTP
+                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 bg-canvas-subtle border border-border-subtle rounded flex items-center justify-between text-body-sm font-body-sm">
+<div class="flex items-center gap-2 text-text-secondary">
+<span class="material-symbols-outlined text-sm text-text-tertiary">info</span>
+<span>Para acionar o Nível 3, o nó aguarda a validação de mais 2 assinaturas digitais.</span>
+</div>
+<button class="text-label-sm font-label-sm text-secondary hover:underline font-semibold">
+              Reenviar Desafios
+            </button>
+</div>
+</div>
+<!-- Justificação Pericial e Digest do Protocolo (5 colunas) -->
+<div class="lg:col-span-5 bg-canvas-base border border-border-muted rounded p-5 flex flex-col justify-between space-y-4">
+<div class="space-y-4">
+<div class="pb-3 border-b border-border-subtle">
+<h2 class="text-headline-sm font-headline-sm text-text-primary font-semibold">
+                Justificação Pericial &amp; Evidência
+              </h2>
+<p class="text-body-sm font-body-sm text-text-secondary">
+                Registo compulsório no WormGraph para auditoria judicial e regulatória.
+              </p>
+</div>
+<!-- Campo de Motivo Formal -->
+<div class="space-y-1.5">
+<label class="block text-label-sm font-label-sm font-semibold text-text-primary">
+                Motivo Formal do Acionamento (Gravado no Ledger WAL)
+              </label>
+<textarea class="w-full p-2.5 bg-canvas-subtle border border-border-subtle rounded text-body-sm font-body-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono text-xs leading-relaxed" placeholder="ex: Anomalia de drift em inferência TEE ou incidente em webhook" rows="3">Anomalia de drift temporal detectada no enclave TEE Nitro #03: divergência causal de 420ms em relação à ordem global do WormGraph. Suspeita de bifurcação de estado em rotinas de liquidação PIX.</textarea>
+<span class="text-[11px] font-label-sm text-text-tertiary block text-right">
+                198 / 500 caracteres • Assinado canonicamente
+              </span>
+</div>
+<!-- Digest Canónico -->
+<div class="p-3 bg-canvas-subtle border border-border-subtle rounded space-y-2">
+<div class="flex items-center justify-between text-label-sm font-label-sm">
+<span class="text-text-tertiary uppercase">Digest Canónico do Protocolo de Aborto</span>
+<span class="text-text-primary font-semibold">Blake3-256</span>
+</div>
+<div class="flex items-center justify-between bg-canvas-base p-2 border border-border-subtle rounded">
+<span class="font-code-inline text-code-inline text-text-primary truncate">b3:89a1c028e33fbc761a2988d400192eab5581c</span>
+<button class="ml-2 text-text-secondary hover:text-text-primary" title="Copiar Hash">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+</div>
+<div class="text-[11px] font-label-sm text-text-tertiary">
+                Certificação: Registrado sob o Invariante Formal E02-13.
+              </div>
+</div>
+</div>
+<!-- Confirmação de Segurança -->
+<div class="pt-3 border-t border-border-subtle space-y-2">
+<label class="flex items-start gap-2 cursor-pointer">
+<input class="mt-0.5 rounded border-border-subtle text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-body-sm font-body-sm text-text-secondary leading-snug">
+                Declaro perante o Banco Central do Brasil e reguladores que este acionamento tem caráter estritamente preventivo e lastro na integridade criptográfica.
+              </span>
+</label>
+</div>
+</div>
+</div>
+<!-- Histórico de Acionamentos e Testes de Fail-Closed -->
+<section class="bg-canvas-base border border-border-muted rounded p-5 space-y-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border-subtle">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary font-semibold">
+              Histórico de Acionamentos, Simulações &amp; Testes de Fail-Closed
+            </h2>
+<p class="text-body-sm font-body-sm text-text-secondary">
+              Registo permanente e imutável de testes de contingência conforme resolução CVM/BACEN.
+            </p>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-2.5 py-1.5 border border-border-subtle bg-canvas-subtle hover:bg-canvas-base rounded text-label-sm font-label-sm text-text-primary flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+<span>Filtrar Registos</span>
+</button>
+<button class="px-2.5 py-1.5 border border-border-subtle bg-canvas-subtle hover:bg-canvas-base rounded text-label-sm font-label-sm text-text-primary flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm">file_download</span>
+<span>Exportar CSV</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-border-subtle text-[11px] font-label-sm text-text-tertiary uppercase">
+<th class="py-2.5 px-3">Data &amp; Hora (UTC)</th>
+<th class="py-2.5 px-3">Nível de Paragem</th>
+<th class="py-2.5 px-3">Motivo / Tipo de Intervenção</th>
+<th class="py-2.5 px-3">Tempo até Restauração</th>
+<th class="py-2.5 px-3">Quórum Utilizado</th>
+<th class="py-2.5 px-3 text-right">Recibo WAL Criptográfico</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle text-body-sm font-body-sm">
+<!-- Registro 1 -->
+<tr class="hover:bg-canvas-subtle/50 transition-colors">
+<td class="py-3 px-3 font-code-inline text-code-inline text-text-primary">
+                  2025-04-12 03:14:08
+                </td>
+<td class="py-3 px-3">
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-warning-bg border border-status-warning-border text-status-warning-text font-semibold">
+                    Nível 1 (Simulado)
+                  </span>
+</td>
+<td class="py-3 px-3 text-text-secondary">
+                  Teste de resiliência semestral: desativação programada do Auto-Settler.
+                </td>
+<td class="py-3 px-3 font-mono text-xs text-text-primary">
+                  00h 14m 22s
+                </td>
+<td class="py-3 px-3 text-label-sm font-label-sm text-text-primary">
+                  1 / 2 (Operador Primário)
+                </td>
+<td class="py-3 px-3 text-right">
+<span class="font-code-inline text-code-inline text-text-secondary hover:text-text-primary cursor-pointer underline">
+                    0x8a99...f102
+                  </span>
+</td>
+</tr>
+<!-- Registro 2 -->
+<tr class="hover:bg-canvas-subtle/50 transition-colors">
+<td class="py-3 px-3 font-code-inline text-code-inline text-text-primary">
+                  2025-01-20 18:45:33
+                </td>
+<td class="py-3 px-3">
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-warning-bg border border-status-warning-border text-status-warning-text font-semibold">
+                    Nível 2 (Isolamento)
+                  </span>
+</td>
+<td class="py-3 px-3 text-text-secondary">
+                  Degradação de latência em webhook do Open Finance &gt; 3500ms.
+                </td>
+<td class="py-3 px-3 font-mono text-xs text-text-primary">
+                  01h 02m 19s
+                </td>
+<td class="py-3 px-3 text-label-sm font-label-sm text-text-primary">
+                  2 / 3 (Santander + Hacken)
+                </td>
+<td class="py-3 px-3 text-right">
+<span class="font-code-inline text-code-inline text-text-secondary hover:text-text-primary cursor-pointer underline">
+                    0xbc21...009a
+                  </span>
+</td>
+</tr>
+<!-- Registro 3 -->
+<tr class="hover:bg-canvas-subtle/50 transition-colors">
+<td class="py-3 px-3 font-code-inline text-code-inline text-text-primary">
+                  2024-11-04 09:12:00
+                </td>
+<td class="py-3 px-3">
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-fail-bg border border-status-fail-border text-status-fail-text font-bold">
+                    Nível 3 (Fail-Closed)
+                  </span>
+</td>
+<td class="py-3 px-3 text-text-secondary">
+                  Auditoria Regulatória BACEN: Teste de parada completa e reconstituição de estado via WAL.
+                </td>
+<td class="py-3 px-3 font-mono text-xs text-text-primary">
+                  03h 45m 00s
+                </td>
+<td class="py-3 px-3 text-label-sm font-label-sm text-text-primary">
+                  3 / 3 (Quórum Pleno Tripartite)
+                </td>
+<td class="py-3 px-3 text-right">
+<span class="font-code-inline text-code-inline text-text-secondary hover:text-text-primary cursor-pointer underline">
+                    0xde44...77bc
+                  </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Rodapé de Ações Institucionais e Execução Crítica -->
+<footer class="bg-canvas-base border border-border-muted rounded p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-text-secondary">
+<span class="material-symbols-outlined text-status-fail-text text-xl">gavel</span>
+<span>
+            Ações de Nível 3 são registradas irrevogavelmente no WormGraph com carimbo de tempo ICP-Brasil.
+          </span>
+</div>
+<div class="flex items-center gap-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none px-4 py-2 border border-border-subtle bg-canvas-base hover:bg-canvas-subtle text-text-primary rounded text-label-md font-label-md font-semibold transition-colors duration-150 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-base">account_balance</span>
+<span>Exportar Relatório de Auditoria para BACEN / CVM</span>
+</button>
+<button class="flex-1 sm:flex-none px-5 py-2 bg-status-fail-text hover:bg-error text-on-error rounded text-label-md font-label-md font-bold transition-colors duration-150 flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-base">emergency_home</span>
+<span>Acionar Paragem de Emergência (Quórum Requerido)</span>
+</button>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

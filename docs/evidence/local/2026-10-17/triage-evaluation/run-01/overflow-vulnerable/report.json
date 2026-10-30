@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "report_id": "overflow-vulnerable",
+  "severity": "Medium",
+  "title": "Unchecked credit addition wraps",
+  "report_body": "Solidity 0.8.20. All relevant code: mapping(address=>uint8) credit; function add(uint8 amount) external {unchecked {credit[msg.sender]+=amount;}} The intended invariant is that adding positive credit never reduces it. No other constraint exists. An account with credit 250 calls add(10); local execution succeeds and stores 4. Credit is a nonfinancial game counter; no asset loss or privilege escalation claimed. Proposal is Medium/Triaged for this proven wraparound, not financial theft.",
+  "submitted_at": 1,
+  "affected_assets": []
+}

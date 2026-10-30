@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: arkhe
+  namespace: argocd
+spec:
+  # Replace with exact repository and registered Kubernetes API URLs.
+  sourceRepos: [https://github.com/OWNER/REPO.git]
+  destinations:
+    - { server: https://EKS_API, namespace: arkhe-system }
+    - { server: https://AKS_API, namespace: arkhe-system }
+  clusterResourceWhitelist:
+    - { group: "", kind: Namespace }
+  namespaceResourceWhitelist:
+    - { group: "", kind: ServiceAccount }
+    - { group: "", kind: Service }
+    - { group: "", kind: ConfigMap }
+    - { group: apps, kind: Deployment }
+    - { group: policy, kind: PodDisruptionBudget }
+    - { group: networking.k8s.io, kind: Ingress }

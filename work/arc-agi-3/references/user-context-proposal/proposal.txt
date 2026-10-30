@@ -1,0 +1,156 @@
+A auditoria está correta nas cinco correções e o ponto local é o mais importante: o probe já foi executado, com 8.687 consultas de pares não vistos e zero previsões do modelo candidato. Isto é um resultado negativo para a hipótese de translação sem contexto, não para modelação objeto-cêntrica em geral. Abaixo está o que aceito, a correção factual sobre o Tycho, e a especificação da próxima hipótese com os controlos que faltam.
+
+---
+
+## 1. O que a auditoria acerta
+
+| Correção | Veredito | τ |
+|---|---|---|
+| 1. A comparação do Tycho mistura modelos-base | Correto. O 88,49 é com Opus 4.8; o 100,00 é com GPT-5.6 Sol e Opus 5. O 83,07 sustenta "melhor reprodução histórica ≠ melhor desempenho", mas não isola generalização preditiva | LEMMA |
+| 2. Erro condicional não mede calibração | Correto. Mede erros entre previsões emitidas. Calibração exige comparar probabilidades declaradas com frequências de acerto | LEMMA |
+| 3. O lookup não tem erro futuro necessariamente zero | Correto. Uma chave observada uma vez pode produzir outro resultado por estado oculto ou informação removida. Em pares estritamente ausentes, a cobertura é zero e o erro condicional é indefinido | LEMMA |
+| 4. A tabela não pode fixar cobertura dos pares vistos em 1,00 | Correto. Conflitos podem provocar abstenção. Os valores devem ser medidos para ambos os modelos | LEMMA |
+| 5. Separar frames acionáveis não valida estado lógico | Correto. Remove variação temporal, mas não demonstra que inventário, temporizadores e outras variáveis estejam representadas | LEMMA |
+
+### 1.1 A correção factual sobre o Tycho
+
+Eu tinha dito que o Tycho "demonstra que o replay match não é generalização". A auditoria corrige: o 83,07 RHAE do reparo automático vs. 100,00 da política que decide quando usar o modelo é uma comparação entre **duas políticas no mesmo modelo-base** (GPT-5.6 Sol e Opus 5), não uma isolação da generalização preditiva. A conclusão correta é mais estreita:
+
+> Melhor reprodução histórica não garante melhor desempenho **naquela comparação**. Não prova que a generalização preditiva é impossível, nem que o replay gate é inútil.
+
+Isto não invalida a distinção replay vs. bissimulação. Invalida a inferência de que o Tycho prova a insuficiência do replay em geral.
+
+---
+
+## 2. O resultado empírico já executado (LEMMA)
+
+| Resultado | Número | O que limita |
+|---|---|---|
+| Transições de treino (ls20) | 2.481 por trace | O modelo tem dados suficientes para aprender translações |
+| Transições de treino (vc33) | 2.452 por trace | Idem |
+| Consultas de teste | 9.864 no total | Amostra grande o suficiente para detectar sinal |
+| Pares não vistos | 8.687 | 88% das consultas são pares não vistos |
+| Previsões emitidas pelo modelo | 0 | O modelo abstém-se em todas as consultas |
+| ls20 frontier: chaves estacionárias | 134 | O sprite não se move em 134 chaves |
+| ls20 frontier: chaves com conflito | 12 | 12 chaves têm deslocamentos contraditórios |
+| vc33 | Todas as ações são cliques | O modelo não suporta cliques por design |
+| Testes Python | 26 passam | A implementação está correta; o resultado é negativo |
+
+O resultado é específico: **a hipótese de translação rígida independente de contexto não produz previsões úteis nestes traces**. Não é "modelação objeto-cêntrica falha". É "esta instanciação conservadora não emite previsões".
+
+A abstinção é o comportamento correto do modelo: quando não há suporte consistente, abstém-se. Mas a cobertura zero significa que o modelo não é útil como preditor. O resultado rejeita o modelo, não a abordagem.
+
+---
+
+## 3. A próxima hipótese: deslocamento condicionado ao contexto
+
+A auditoria propõe "deslocamento condicionado à ocupação e a obstáculos". Isto é a hipótese correta, e é mais forte do que a translação sem contexto. A especificação:
+
+### 3.1 Definição
+
+```text
+Para cada transição (frame_t, ação_t, frame_{t+1}):
+  - Extrair a região do sprite (cor + forma) no frame_t.
+  - Extrair a assinatura de ocupação local: as 8 células vizinhas do sprite
+    (ocupadas / vazias / cor de obstáculo).
+  - A chave é (ação, assinatura_cor_forma, assinatura_ocupacao_local).
+  - O valor é o deslocamento observado (dx, dy).
+```
+
+A diferença para o modelo anterior: a chave inclui a **ocupação local**. Se o sprite se move para a direita até encontrar um obstáculo, o deslocamento é (1, 0) quando a célula à direita está vazia, e (0, 0) quando está ocupada. O modelo anterior não distinguia os dois casos.
+
+### 3.2 Controlo positivo
+
+Um tabuleiro sintético com:
+- Um sprite que se move para a direita.
+- Um obstáculo na coluna 40.
+- O sprite move-se até à coluna 39, depois pára.
+
+O modelo **deve** aprender:
+- `(direita, sprite, vazio) → (1, 0)`
+- `(direita, sprite, obstáculo) → (0, 0)`
+
+Se não aprender, a hipótese falha no controlo positivo e o resultado em ls20 é irrelevante.
+
+### 3.3 Controlo negativo
+
+Um tabuleiro sintético com:
+- Um sprite que se move para a direita independentemente da ocupação.
+- Nenhum obstáculo.
+
+O modelo **não deve** distinguir `vazio` de `obstáculo` (porque não há obstáculo). Se distinguir, está a overfittar à assinatura de ocupação.
+
+### 3.4 O que o resultado em ls20 significaria
+
+Se o modelo condicionado ao contexto tiver cobertura > 0 em pares não vistos:
+- **E** erro condicional baixo → generaliza para estados não vistos.
+- **E** erro condicional alto → está a adivinhar com base na ocupação, mas a ocupação não determina o deslocamento.
+
+Se continuar com cobertura zero:
+- A ocupação local não é suficiente; a dinâmica depende de variáveis globais (inventário, temporizador, objetivo).
+
+---
+
+## 4. O replay gate corrigido
+
+A auditoria está correta: zero erros com abstenção total não é aprovação. O gate deve registar:
+
+| Métrica | Definição | Aprovação exige |
+|---|---|---|
+| `coverage_train` | `issued / train_queries` | > limiar (ex: 0.5) |
+| `hit_rate_train` | `correct / issued` | > limiar (ex: 0.9) |
+| `abstention_rate_train` | `abstained / train_queries` | < limiar (ex: 0.5) |
+
+Um modelo que se abstém em 100% das consultas tem `coverage_train = 0`, `hit_rate_train` indefinido, e **não passa** no gate. O gate não é "zero erros"; é "cobertura suficiente **e** acerto suficiente".
+
+Isto é o que o probe anterior não fez explicitamente: o modelo abstém-se em tudo, o que é seguro, mas não é aprovação. O gate corrigido rejeita-o por cobertura insuficiente.
+
+---
+
+## 5. A tabela corrigida
+
+| Métrica | Lookup | Modelo (contexto) |
+|---|---|---|
+| Cobertura (pares vistos) | **medida** (pode ser < 1.00 por conflitos) | **medida** |
+| Cobertura (pares não vistos) | 0.00 (por construção) | **medida** |
+| Cobertura correta (não vistos) | 0.00 | **medida** |
+| Erro condicional (não vistos) | **indefinido** (sem previsões) | **medido** |
+| Erro condicional (vistos) | **medido** (pode ser > 0 por estado oculto) | **medido** |
+| Calibração | N/A (sem probabilidades) | N/A (sem probabilidades) |
+| Replay gate | N/A | **PASS/FAIL** com cobertura e hit rate |
+
+As células em negrito são as que o v5 anterior fixava incorretamente. A correção é medir, não assumir.
+
+---
+
+## 6. Nota de honestidade (τ)
+
+| Afirmação | τ | Nota |
+|---|---|---|
+| O Tycho compara 88,49 (Opus 4.8) com 100,00 (GPT-5.6 Sol, Opus 5) | CONFIRMADO | arXiv 2607.28287 |
+| O 83,07 sustenta "melhor reprodução ≠ melhor desempenho" naquela comparação | LEMMA | Não isola generalização preditiva |
+| O erro condicional não mede calibração | LEMMA | Deriva da definição |
+| O lookup pode ter erro futuro > 0 em pares vistos | LEMMA | Estado oculto |
+| A cobertura dos pares vistos não é necessariamente 1,00 | LEMMA | Conflitos causam abstenção |
+| Separar frames acionáveis não valida estado lógico | LEMMA | Remove variação temporal, não valida variáveis |
+| O probe já executou 8.687 consultas não vistas com zero previsões | THEOREM | Executado |
+| O resultado rejeita a translação sem contexto | LEMMA | Cobertura zero |
+| O resultado rejeita modelação objeto-cêntrica em geral | REFUTED | Só esta instanciação |
+| A hipótese condicionada ao contexto é a próxima | CONJECTURE | Requer controlo positivo e negativo |
+| O replay gate corrigido rejeita abstenção total | THEOREM | Deriva da definição de cobertura |
+
+---
+
+## 7. Próximo passo concreto
+
+1. **Corrigir o replay gate** no `object_transition_probe.py` para registar `coverage_train`, `hit_rate_train` e `abstention_rate_train` separadamente. O probe anterior não passa no gate corrigido (cobertura zero).
+
+2. **Implementar a assinatura de ocupação local** como parte da chave: `(ação, cor_forma, vizinhança_8)`.
+
+3. **Correr o controlo positivo** (sprite + obstáculo) e verificar que o modelo aprende `(direita, vazio) → (1,0)` e `(direita, obstáculo) → (0,0)`.
+
+4. **Correr o controlo negativo** (sprite sem obstáculo) e verificar que o modelo não distingue ocupação.
+
+5. **Só depois**, correr nos traces reais. Se a cobertura continuar zero, a ocupação local não é suficiente; a próxima hipótese seria variáveis globais (inventário, temporizador).
+
+A frase que fica: **o probe anterior provou que a translação sem contexto não produz previsões. O gate corrigido prova que a abstenção total não é aprovação. A próxima hipótese — deslocamento condicionado à ocupação — só é testável depois dos controlos positivo e negativo. Sem eles, o resultado em ls20 seria ambíguo: não se saberia se a ocupação não é suficiente ou se o modelo não a aprende.**

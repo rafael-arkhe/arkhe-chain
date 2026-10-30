@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "profile": "arkhe-preview/v1",
+  "state": "DISPATCH_AND_COCKPIT_IMPLEMENTED_QUALIFICATION_PENDING",
+  "execution_enabled": false,
+  "production_release": false,
+  "entrypoint": "cargo run --locked -p arkhe-runtime --bin arkhe-preview --",
+  "trusted_configuration": "PreviewTrust supplied by the operator; no default keys",
+  "policy_digest": "BLAKE3 AKG:PREVIEW:POLICY:v1 over deterministic CBOR of PreviewTrust excluding policy_digest and emergency_stop",
+  "intent": "ReleaseSoftware with baseline target and PreviewSpec parameters digest",
+  "mandatory_evidence": [
+    "tenant-scoped admitted baseline",
+    "successful supervisor Ed25519 receipt bound to preview spec and WER",
+    "separate reviewer Ed25519 signature over HumanReviewRecord",
+    "freshness, identity, module, image, runtime and policy bindings",
+    "ContainmentGate routed admitted authorization"
+  ],
+  "persistence": {
+    "migration": "20261022000015_preview_admission.sql",
+    "role": "arkhe_preview_enqueue",
+    "tables": [
+      "preview_admissions",
+      "preview_jobs"
+    ],
+    "transactional_enqueue": true,
+    "failure_savepoint": true,
+    "tenant_rls": "FORCE",
+    "job_scope": "append-only outbox plus fenced operational dispatch journal, max 3 pre-dispatch attempts, RUNNING expiry becomes UNKNOWN",
+    "wormgraph_inclusion_receipt": false,
+    "dispatch_migration": "20261022000016_preview_dispatch.sql"
+  },
+  "remaining_before_dispatch": [
+    "independently qualify exact 1536 MiB profile with all 22 real vectors and signed evidence",
+    "configure operator-owned qualification key, active trust, sealed artifact store and supervisor receipts"
+  ],
+  "consumer_implemented": true,
+  "dispatch": {
+    "lease_seconds": 30,
+    "heartbeat_seconds": 5,
+    "max_attempts": 3,
+    "automatic_retry_after_dispatch": false,
+    "qualification_required": true,
+    "qualified_runtime_demonstrated": false
+  },
+  "cockpit": {
+    "implemented": true,
+    "private_key_location": "browser only",
+    "operator_configuration_required": true
+  },
+  "external_authority": {
+    "required": true,
+    "admission": "signed external bridge verdict, authenticated before ContainmentGate authority admission",
+    "private_signing_keys_in_native_core": false,
+    "provider_native_verifiers_implemented": false,
+    "supported_receipt_signature": "Ed25519",
+    "configured_real_authority": false
+  },
+  "qualification_contract": "config/runtime-preview1536-contract.json"
+}

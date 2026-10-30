@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "report_id": "reentry-corrected",
+  "severity": "High",
+  "title": "Alleged repeated withdrawal",
+  "report_body": "Complete relevant function: mapping(address=>uint) balances; function withdraw() external { uint amount=balances[msg.sender]; require(amount>0); balances[msg.sender]=0; (bool ok,)=msg.sender.call{value:amount}(\"\"); require(ok); } All balance writes are shown. The report claims a callback withdraws the same deposit twice. Local callback trace: second withdraw reads zero and reverts; no second transfer occurs. No other flaw or loss demonstrated. Is the claimed High repeated-withdrawal proposal supported?",
+  "submitted_at": 1,
+  "affected_assets": []
+}

@@ -1,0 +1,209 @@
+{
+  "scope": "GitHub Actions execution; no protocol freeze or production attestation",
+  "context": {
+    "GITHUB_REPOSITORY": "rafael-arkhe/arkhe-os",
+    "GITHUB_SHA": "241c96e9e915572367ab83143e2aecdd905b6816",
+    "GITHUB_RUN_ID": "39054969626",
+    "GITHUB_RUN_ATTEMPT": "1",
+    "GITHUB_JOB": "kernel-and-contracts",
+    "RUNNER_OS": "Linux",
+    "RUNNER_ARCH": "X64"
+  },
+  "attempts": [
+    {
+      "gate": "readiness-tests",
+      "command": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts/tests",
+        "-v"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:43:18.392758+00:00",
+      "duration_seconds": 0.708,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "01-readiness-tests.log",
+      "log_sha256": "cda962d9a024b01c3947ada6c99dcbe5c2b573b3e11485f31b5b41ebae2f02e1",
+      "inputs": "01-readiness-tests.inputs.json"
+    },
+    {
+      "gate": "architecture",
+      "command": [
+        "python",
+        "scripts/check_architecture.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:43:19.210056+00:00",
+      "duration_seconds": 0.113,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "02-architecture.log",
+      "log_sha256": "d565d4abe8b43577ff06f47e75e8a515229525ebdf74bc6954be7f0f301a276f",
+      "inputs": "02-architecture.inputs.json"
+    },
+    {
+      "gate": "static",
+      "command": [
+        "make",
+        "verify-static"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:43:19.438694+00:00",
+      "duration_seconds": 0.26,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "03-static.log",
+      "log_sha256": "8fcda69a213b94905376c797fcb947cb70bafffcf22ac01c7acc15d69e2d7abb",
+      "inputs": "03-static.inputs.json"
+    },
+    {
+      "gate": "artifact-vectors",
+      "command": [
+        "python",
+        "verification/scripts/verify-vectors.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:43:19.807125+00:00",
+      "duration_seconds": 0.075,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "04-artifact-vectors.log",
+      "log_sha256": "63b3159f6a6bdc95602dd83ac80c4abb9cd7616243aa29f7fb62c336d75af4a8",
+      "inputs": "04-artifact-vectors.inputs.json"
+    },
+    {
+      "gate": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:43:19.989822+00:00",
+      "duration_seconds": 0.192,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "05-format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "inputs": "05-format.inputs.json"
+    },
+    {
+      "gate": "cargo-check",
+      "command": [
+        "cargo",
+        "check",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:43:20.329936+00:00",
+      "duration_seconds": 83.544,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "06-cargo-check.log",
+      "log_sha256": "151fddaad5d080b1c7c48d8625036335fdad03298e47099954605d44b84e4076",
+      "inputs": "06-cargo-check.inputs.json"
+    },
+    {
+      "gate": "cargo-test",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:44:43.989573+00:00",
+      "duration_seconds": 78.346,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "07-cargo-test.log",
+      "log_sha256": "f378f635f4414e7debaf23fa821f97292e20298cefada69aac94deed8801d945",
+      "inputs": "07-cargo-test.inputs.json"
+    },
+    {
+      "gate": "work-vectors",
+      "command": [
+        "python",
+        "scripts/generate_work_vectors.py",
+        "--check"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:46:02.454197+00:00",
+      "duration_seconds": 0.09,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "08-work-vectors.log",
+      "log_sha256": "c7921f350e872cd0c1c4c0cb0a8b6b0febfb9874c83ff685bc1b06b905aadaf0",
+      "inputs": "08-work-vectors.inputs.json"
+    },
+    {
+      "gate": "nextest",
+      "command": [
+        "cargo",
+        "nextest",
+        "run",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:46:02.666805+00:00",
+      "duration_seconds": 0.62,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "09-nextest.log",
+      "log_sha256": "e8583f6a6084edbc2a1498b71395b90283ba15cc2089e95d35c1a99218b25d9c",
+      "inputs": "09-nextest.inputs.json"
+    },
+    {
+      "gate": "cognition",
+      "command": [
+        "python",
+        "scripts/cognition_conformance.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T17:46:03.446516+00:00",
+      "duration_seconds": 30.534,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_after_sha256": "ef3de92c9c6245aadaa19eee6a091a6addaa512582652e19b10bf403a4668439",
+      "source_changed_during_execution": false,
+      "log": "10-cognition.log",
+      "log_sha256": "e72616daa2db380f7bda99153f33495552a32bd38de9d07c2c812979643758b8",
+      "inputs": "10-cognition.inputs.json"
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gravit Verifier API</title>
+<meta name="description" content="API reference and quickstart for the hosted Gravit Verifier: signed, hash-chained receipts you can check offline.">
+<link rel="icon" type="image/png" sizes="512x512" href="https://gravit.space/android-chrome-512x512.png">
+<link rel="stylesheet" href="../css/site.css">
+<link rel="stylesheet" href="../css/theme.css">
+<script src="../css/theme.js"></script>
+<style>
+.dc{width:100%;max-width:980px;color:var(--text);font-size:16.5px;line-height:1.6;
+  --card:rgba(4,16,38,.78);--line:rgba(100,180,255,.18);--muted:rgba(200,225,255,.7);--glow:#00aaff;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.dc a{color:var(--glow)} .dc h1{font-size:clamp(28px,4vw,40px);margin:0 0 8px} .dc h2{font-size:24px;margin:36px 0 10px}
+.dc p,.dc li{color:var(--muted)} .dc b{color:var(--text)}
+.dc pre{background:#000a18;border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;font:13px/1.55 var(--mono);color:#cfe9ff}
+.dc code{font-family:var(--mono);font-size:.92em}
+.dc table{width:100%;border-collapse:collapse;font-size:14.5px} .dc th,.dc td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.dc th{color:var(--muted);font-weight:600;font-size:13px}
+.dc .note{border-left:3px solid #fcd34d;background:rgba(252,211,77,.07);padding:12px 16px;border-radius:8px;margin:16px 0}
+
+nav li{white-space:nowrap}
+
+/* ─── GRAVIT FAMILY (same strip on every Gravit site) ─── */
+.family { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 20px; margin: 0 0 18px;
+  font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+.family a { color: var(--muted); text-decoration: none; }
+.family a:hover, .family a[aria-current] { color: #fff; }
+.family-label { color: #4fc3f7; }
+</style>
+</head>
+<body>
+<div class="orbital-bg" aria-hidden="true"></div>
+<div class="page">
+  <header>
+    <a class="logo" href="../" aria-label="Gravit Verifier">
+    <img class="astra" src="../img/logo-gon-162.webp" srcset="../img/logo-gon-162.webp 1x, ../img/logo-gon-324.webp 2x, ../img/logo-gon-486.webp 3x" width="108" height="162" alt="" decoding="async" fetchpriority="high" />
+    <span class="logo-word">Gravit Verifier</span>
+    </a>
+    <nav aria-label="Main"><ul>
+      <li><a href="../#how">How it works</a></li>
+      <li><a href="../sandbox/">Sandbox</a></li>
+      <li><a href="./" aria-current="page">API</a></li>
+      <li><a href="../#plans">Plans</a></li>
+      <li><a href="../#start">Free key</a></li>
+        <li><a href="https://agoranet.work">Agoranet.work</a></li>
+    </ul></nav>
+  </header>
+
+    <main><div class="dc">
+    <h1>Gravit Verifier API</h1>
+    <p>The same verifier as the open source code and the <a href="../sandbox/">sandbox</a>, hosted for you. Every decision comes with a
+      <b>receipt signed by the service</b> and chained to your previous receipts, so your auditor can check the whole history offline,
+      without trusting us.</p>
+    <div class="note" id="key"><b>Free API key.</b> <a href="../#start">Enter your email</a> and confirm it with one click: the key
+      (free plan, 1,000 calls per month) arrives by email at once. Confirmed earlier but no key? Request it here; it goes only to your confirmed inbox.
+      <form action="/key.php" method="post" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <input type="email" name="email" required placeholder="you@example.com" style="flex:1;min-width:220px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:#000a18;color:var(--text)">
+        <button type="submit" style="padding:9px 16px;border-radius:8px;border:0;background:var(--glow);color:#00111f;font-weight:600;cursor:pointer">Send my key</button>
+      </form>
+      <p id="key-sent" style="display:none;margin:8px 0 0">If this address is confirmed and has no key yet, the key is on its way.</p>
+      <p style="margin:10px 0 0">Paid plans: <a href="#buy">see below</a>. The built in registry uses <b>test keys</b>; bring your own registry for real use.</p></div>
+    <script>if (location.search.indexOf('key=sent') > -1) document.getElementById('key-sent').style.display = 'block';</script>
+
+    <h2 id="buy">Plans</h2>
+    <table>
+      <tr><th>Plan</th><th>Calls per month</th><th>Price per 30 days</th><th>One year in advance (launch price)</th></tr>
+      <tr><td>Free</td><td>1,000</td><td>CHF 0</td><td>CHF 0</td></tr>
+      <tr><td>Pro</td><td>100,000</td><td>CHF 7 <span class="muted">(about USD 8.50 / EUR 7.55)</span></td><td><b>CHF 60</b> (CHF 5 a month) <span class="muted">(about USD 73 / EUR 65)</span></td></tr>
+      <tr><td>Enterprise</td><td>10,000,000</td><td>CHF 150 <span class="muted">(about USD 182 / EUR 162)</span></td><td><b>CHF 1,440</b> (CHF 120 a month) <span class="muted">(about USD 1,748 / EUR 1,553)</span></td></tr>
+      <tr><td>Custom</td><td>as agreed</td><td colspan="2">Your own servers, a second operator, custom rules and service levels: <a href="../contact/">our contact form</a></td></tr>
+    </table>
+    <p>Paid in Bitcoin through BTCPay Server, straight to the Foundation's own wallet. Prices are in Swiss francs; USD and EUR amounts are approximate (ECB rate of 16 October 2026). No VAT is charged: the Foundation, a Swiss association, is not VAT registered.
+      Paying extends your plan by 30 days per month bought, or by 365 days for a year; your key stays the same. A confirmation comes from
+      <a href="../contact/">our contact form</a>; write there with any question about payment.</p>
+    <p><b>Money-back guarantee:</b> not satisfied? Write to us through <a href="../contact/">our contact form</a> within 30 days of payment and we refund the full amount in Bitcoin. No questions asked.</p>
+    <form id="buyform" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+      <input id="buykey" required placeholder="your API key gv_..." style="flex:2;min-width:240px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:#000a18;color:var(--text)">
+      <select id="buyplan" style="padding:9px;border-radius:8px;background:#000a18;color:var(--text);border:1px solid var(--line)"><option value="pro">Pro</option><option value="enterprise">Enterprise</option></select>
+      <select id="buymonths" style="padding:9px;border-radius:8px;background:#000a18;color:var(--text);border:1px solid var(--line)"><option value="12">1 year, launch price</option><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option></select>
+      <button type="submit" style="padding:9px 16px;border-radius:8px;border:0;background:var(--glow);color:#00111f;font-weight:600;cursor:pointer">Pay with Bitcoin</button>
+    </form>
+    <p id="buymsg"></p>
+    <p id="paid" style="display:none"><b>Thank you.</b> As soon as the payment is confirmed on the Bitcoin network, your plan is extended; check it with <code>GET /api/v1/usage</code>.</p>
+    <script>
+    if (location.search.indexOf('paid=1') > -1) document.getElementById('paid').style.display = 'block';
+    document.getElementById('buyform').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var m = document.getElementById('buymsg'); m.textContent = 'Creating your invoice...';
+      try {
+        var r = await fetch('/api/v1/billing/checkout', {method: 'POST', headers: {'Authorization': 'Bearer ' + document.getElementById('buykey').value.trim(), 'Content-Type': 'application/json'},
+          body: JSON.stringify({plan: document.getElementById('buyplan').value, months: parseInt(document.getElementById('buymonths').value, 10)})});
+        var d = await r.json();
+        if (r.ok && d.checkout_url) { location.href = d.checkout_url; } else { m.textContent = d.error || 'Something went wrong; please try again.'; }
+      } catch (err) { m.textContent = 'The service did not answer; please try again.'; }
+    });
+    </script>
+
+    <h2>1. Decide an artifact</h2>
+<pre><code>curl https://gravitverifier.space/api/v1/verify \
+  -H "Authorization: Bearer $GRAVIT_API_KEY" -H "Content-Type: application/json" \
+  -d '{"artifact": {"artifact_id": "payment-4711", "claimed_state": "Verified Fact",
+       "context": {"evaluation_time": "2026-10-13T12:00:00Z", "freshness_max_age_seconds": 300},
+       "evidence": [ ...signed evidence records... ]}}'</code></pre>
+    <p>The response contains <code>result.decision</code> (state, status, reason, <code>decision_id</code>), <code>result.explanation</code>
+      (rules and revisions applied, what independence rests on), <code>result.graviteron</code>, and the <code>receipt</code> with its <code>signature</code>.</p>
+    <p><b>Graviteron</b> next to the decision says how strongly the counted evidence supports the claim (<code>expected</code>, from 0 to 1)
+      and how much evidence stands behind it (<code>uncertainty</code>; 1 means none). Keys of one operator count as one source.
+      For now every operator is trusted equally, so the calibration of this number is not yet established; the decision itself does
+      not depend on it. Method: <a href="https://github.com/gravit-open-network-foundation/graviteron/blob/main/docs/evidence-measure.md">evidence-measure.md</a>.</p>
+
+    <h2>2. Python</h2>
+<pre><code>pip install "git+https://github.com/gravit-open-network-foundation/gravit-verifier-service#subdirectory=sdk/python"
+
+from gravit_verifier_client import Client, verify_response, verify_export
+gv = Client("gv_...")
+res = gv.verify(artifact)
+print(res["result"]["decision"]["final_epistemic_state"])
+
+key = gv.service_key()                       # pin it once
+print(verify_response(res, key, artifact))   # signature, result hash, request hash
+print(verify_export(gv.export(), key))       # every receipt signed, chain unbroken</code></pre>
+
+    <h2>3. TypeScript</h2>
+<pre><code>import { Client } from "gravit-verifier-client";   // source: sdk/typescript in the repository
+const gv = new Client(process.env.GRAVIT_API_KEY);
+const res = await gv.verify(artifact);
+console.log(res.result.decision.final_epistemic_state, res.result.decision.status);</code></pre>
+
+    <h2>Endpoints</h2>
+    <table>
+      <tr><th>Endpoint</th><th>What it does</th></tr>
+      <tr><td><code>POST /api/v1/verify</code></td><td>Decide an artifact. Optional <code>registry</code>: your own verifier registry, its root signatures and trust root.</td></tr>
+      <tr><td><code>GET /api/v1/decisions</code></td><td>Your decision history (<code>limit</code>, <code>before_seq</code>).</td></tr>
+      <tr><td><code>GET /api/v1/decisions/{decision_id}</code></td><td>One decision with its receipt.</td></tr>
+      <tr><td><code>GET /api/v1/export</code></td><td>All your receipts, signed and hash chained: hand this to your auditor.</td></tr>
+      <tr><td><code>GET /api/v1/usage</code></td><td>Plan and use in the current month.</td></tr>
+      <tr><td><code>GET /api/v1/service-key</code></td><td>The service's Ed25519 public key. No API key needed.</td></tr>
+      <tr><td><code>POST /api/v1/gate</code></td><td>Capability Gate: may this capability be used for this exact action? Fail closed, with a receipt.</td></tr>
+      <tr><td><code>GET /api/v1/status</code></td><td>Health and component versions. No API key needed.</td></tr>
+      <tr><td><code>GET /api/v1/openapi.json</code></td><td>OpenAPI 3.1 description of the API. No API key needed.</td></tr>
+    </table>
+
+    <h2 id="gate">Capability Gate</h2>
+    <p>For AI agents: list what is <b>allowed</b>, what is on the <b>frontier</b> and needs proof, and what is <b>forbidden</b>. Anything not
+      listed is <b>unknown and blocked</b>. A frontier capability is permitted for one action only, when you pass the <code>decision_id</code>
+      of a Verified Fact from <code>/verify</code> whose <code>artifact_id</code> is that action's hash.</p>
+<pre><code>g = gv.gate("pay", {"revision": "r1", "allowed": ["read"], "frontier": ["pay"], "forbidden": ["wipe"]},
+            action={"to": "acct_42", "amount": 250})
+h = g["result"]["gate"]["action_hash"]      # use as artifact_id when you verify the evidence
+res = gv.verify({"artifact_id": h, "claimed_state": "Verified Fact", "evidence": [...]})
+g = gv.gate("pay", policy, action={"to": "acct_42", "amount": 250}, decision_id=res["receipt"]["decision_id"])
+print(g["result"]["gate"]["permitted"])     # True only for a Verified Fact about this exact action</code></pre>
+    <p>Specification and tests: <a href="https://github.com/gravit-open-network-foundation/capability-gate">capability-gate</a>.</p>
+
+    <h2>Receipts you can check yourself</h2>
+    <ul>
+      <li>The service passes your request to the verifier byte for byte, so signed numbers keep their exact form; <code>request_sha256</code> records what was decided.</li>
+      <li><code>result_sha256</code> covers the exact result you received. The service signs the receipt with Ed25519.</li>
+      <li>Each receipt names the hash of the one before it. Removing or changing any entry later breaks the chain, and <code>verify_export</code> reports it.</li>
+      <li>The decision itself is reproducible: run the same artifact through the open source verifier at the same version and you get the same <code>decision_id</code>.</li>
+    </ul>
+
+    <h2>Source</h2>
+    <p>Service and clients: <a href="https://github.com/gravit-open-network-foundation/gravit-verifier-service">gravit-verifier-service</a>.
+      Verifier: <a href="https://github.com/gravit-open-network-foundation/verifier">verifier</a>. Licence Apache-2.0.</p>
+  </div></main>
+
+  <footer>
+    <div class="family" aria-label="Gravit family">
+      <span class="family-label">Gravit family</span>
+      <a href="https://gravit.world">Foundation</a>
+      <a href="https://gravit.space">Network</a>
+      <a href="https://gravitverifier.space" aria-current="true">Verifier</a>
+      <a href="https://gravitpath.world">Path</a>
+      <a href="https://github.com/gravit-open-network-foundation">Code</a>
+      <a href="https://datatracker.ietf.org/doc/draft-gravit-gevp/">Standard</a>
+    </div>
+<p class="footer-copy">Gravit Verifier · © 2026 Gravit Open Network Foundation, Zurich · Apache-2.0 · No tracking on this page</p></footer>
+</div>
+</body>
+</html>
+

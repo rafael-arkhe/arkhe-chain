@@ -1,0 +1,30 @@
+{
+  "classification": "LIMITED_BROWSER_INPUT_CHECKS_NOT_SECURITY_AUDIT",
+  "checked_at_utc": "2026-10-18T16:51:38.219536+00:00",
+  "url": "https://starkgate.starknet.io/ethereum/bridge?mode=deposit&token=eth",
+  "wallet_connected": false,
+  "tests": [
+    {
+      "case": "manual_destination_toggle",
+      "observation": "destination input displayed; no transfer submitted"
+    },
+    {
+      "case": "amount_minus_one_and_destination_zero",
+      "observation": "negative amount and negative estimate displayed; Continue transfer disabled; no transaction built or signed",
+      "reportable": false,
+      "reason": "No exploit or loss demonstrated; UI behavior alone below program impact threshold"
+    },
+    {
+      "case": "malformed_destination_text",
+      "input": "invalid-address",
+      "observation": "input text cleared after focus change; Continue transfer remained disabled",
+      "reportable": false
+    }
+  ],
+  "confirmed_vulnerabilities": 0,
+  "limitations": [
+    "No wallet-bound validation or transaction calldata tested",
+    "No persistent content modification demonstrated",
+    "No financial operations, signing, private data or account creation"
+  ]
+}

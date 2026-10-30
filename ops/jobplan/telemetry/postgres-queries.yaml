@@ -1,0 +1,6 @@
+arkhe_pg:
+  query: "SELECT count(*) FILTER (WHERE NOT granted)::double precision AS waiting_locks FROM pg_locks"
+  metrics:
+    - waiting_locks:
+        usage: GAUGE
+        description: "Database lock requests currently waiting (all databases)"

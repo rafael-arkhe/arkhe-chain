@@ -1,0 +1,4 @@
+import os,subprocess,json,pathlib
+root='/mnt/d/arkhe/work/nixpkgs-arkhe-integration/arkhe';env=os.environ.copy();env['PATH']='/home/arkhen/.nix-profile/bin:/usr/bin:/bin';env['NIX_CONFIG']='experimental-features = nix-command flakes'
+expr=f'let f=builtins.getFlake "path:{root}"; p=import f.inputs.nixpkgs {{system="x86_64-linux";overlays=[ f.overlays.default ];}}; in builtins.listToAttrs (map (n: {{name=n;value={{overlay=p.arkhe.${{n}}.drvPath;flake=f.packages.x86_64-linux.${{n}}.drvPath;}};}}) ["arkhe-verify-cli" "arkhe-verify-wasm" "arkhe-sdd-parser"])'
+data=json.loads(subprocess.check_output(['nix','eval','--impure','--json','--expr',expr],env=env));assert all(v['overlay']==v['flake'] for v in data.values());pathlib.Path('/mnt/d/arkhe/work/arkhe-196-overlay.json').write_text(json.dumps({'status':'PASS','packages':data},indent=2)+'\n');print('Consumer overlay matches the pinned flake package set')

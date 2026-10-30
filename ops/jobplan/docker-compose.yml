@@ -1,0 +1,175 @@
+# Job-plan stack (weeks 1-3):
+#   postgres (pgvector)  -> vector store for the /v1/ask pipeline (week 2)
+#   keycloak             -> OAuth2/OIDC identity provider (week 3)
+#   ask                  -> arkhe-ask service, the verified-RAG endpoint
+#
+# Usage:  docker compose -f ops/jobplan/docker-compose.yml up --build
+#
+# This is deliberately separate from the root live stack (postgres + runtime
+# + redis + mcp + prometheus), which keeps its own ports and lifecycle.
+
+name: arkhe-jobplan
+
+services:
+  postgres:
+    image: docker.io/pgvector/pgvector:pg16
+    container_name: arkhe-jobplan-postgres
+    environment:
+      POSTGRES_DB: arkhe
+      POSTGRES_USER: arkhe
+      POSTGRES_PASSWORD: ${ARKHE_JOBPLAN_POSTGRES_PASSWORD:-arkhe-dev}
+    ports:
+      - "127.0.0.1:${ARKHE_JOBPLAN_POSTGRES_PORT:-55433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "arkhe", "-d", "arkhe"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: arkhe-jobplan-keycloak
+    # start-dev: no TLS, bootstrap admin from env; health on management :9000
+    command: ["start-dev", "--health-enabled=true", "--import-realm"]
+    environment:
+      KC_HOSTNAME: http://keycloak:8080
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${ARKHE_JOBPLAN_KC_ADMIN_PASSWORD:-admin-dev}
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    ports:
+      - "127.0.0.1:${ARKHE_JOBPLAN_KEYCLOAK_PORT:-8180}:8080"
+    healthcheck:
+      # The Keycloak image has no curl/wget; probe the management port with
+      # bash's /dev/tcp and check for an HTTP 200 on /health/ready.
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '200 OK' <&3
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  kafka:
+    image: docker.io/apache/kafka:3.9.1
+    container_name: arkhe-jobplan-kafka
+    ports:
+      - "127.0.0.1:${ARKHE_JOBPLAN_KAFKA_PORT:-59092}:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://127.0.0.1:${ARKHE_JOBPLAN_KAFKA_PORT:-59092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists --topic arkhe.ask.verified.v1 --partitions 1 --replication-factor 1 >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.17.1
+    container_name: arkhe-jobplan-pg-exporter
+    environment:
+      DATA_SOURCE_NAME: postgres://arkhe:${ARKHE_JOBPLAN_POSTGRES_PASSWORD:-arkhe-dev}@postgres:5432/arkhe?sslmode=disable
+      PG_EXPORTER_EXTEND_QUERY_PATH: /etc/postgres-exporter/queries.yaml
+    volumes:
+      - ./telemetry/postgres-queries.yaml:/etc/postgres-exporter/queries.yaml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  grafana:
+    image: docker.io/grafana/grafana:11.6.0
+    container_name: arkhe-jobplan-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_SECURITY_ADMIN_PASSWORD: ${ARKHE_JOBPLAN_GRAFANA_PASSWORD:-local-dev-only}
+    volumes:
+      - ./telemetry/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./telemetry/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:${ARKHE_JOBPLAN_GRAFANA_PORT:-59096}:3000"
+    depends_on:
+      prometheus:
+        condition: service_started
+
+  otel-collector:
+    image: docker.io/otel/opentelemetry-collector:0.135.0
+    container_name: arkhe-jobplan-otel
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./telemetry/collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:${ARKHE_JOBPLAN_OTLP_PORT:-54318}:4318"
+
+  prometheus:
+    image: docker.io/prom/prometheus:v3.5.0
+    container_name: arkhe-jobplan-prometheus
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./telemetry/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:${ARKHE_JOBPLAN_PROMETHEUS_PORT:-59095}:9090"
+    depends_on:
+      ask:
+        condition: service_started
+
+  ask:
+    image: localhost/arkhe-ask:dev
+    build:
+      context: ../..
+      dockerfile: apps/arkhe-ask/Dockerfile
+    container_name: arkhe-jobplan-ask
+    environment:
+      ARKHE_LISTEN: 0.0.0.0:3000
+      ARKHE_AUTH_MODE: keycloak
+      OTEL_SERVICE_NAME: arkhe-ask
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_TOPIC: arkhe.ask.verified.v1
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: arkhe
+      KEYCLOAK_AUDIENCE: arkhe-ask
+      # Azure OpenAI + pgvector; credentials select the real providers.
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT:-}
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: ${AZURE_OPENAI_EMBEDDING_DEPLOYMENT:-}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-10-21}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      DATABASE_URL: postgres://arkhe:${ARKHE_JOBPLAN_POSTGRES_PASSWORD:-arkhe-dev}@postgres:5432/arkhe
+    ports:
+      - "127.0.0.1:${ARKHE_JOBPLAN_ASK_PORT:-3000}:3000"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+volumes:
+  kafkadata:
+  pgdata:

@@ -1,0 +1,60 @@
+{
+  "status": "DRAFT_NOT_EXECUTION_READY",
+  "external_preregistration": false,
+  "new_evaluation_executed": false,
+  "purpose": "prospective development ablation, not a universal statistical protocol",
+  "fixed_development_games": [
+    "ls20",
+    "vc33"
+  ],
+  "proposed_policy_seeds": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119
+  ],
+  "proposed_action_cap_including_reset": 200,
+  "proposed_episodes_per_arm": 40,
+  "primary_metric": "paired completed-level difference at the same action cap",
+  "resampling_unit": "policy-seed vector over fixed games and paired arms",
+  "game_population_generalization": "NOT_SUPPORTED_BY_TWO_GAMES",
+  "required_arms": [
+    "raw frontier",
+    "border-2 frontier",
+    "raw bounded verification-priority",
+    "border-2 bounded verification-priority"
+  ],
+  "source_pins_available": {
+    "arkhe_agent.py": "646db4fbe465a0a7f25d7ac0846ee93637a57b246ce82624a186b40038bdba3b",
+    "evaluate_arkhe.py": "a7d97b433263093a16abd5a6451f99404847552caedf0ea3ee8a9ee834775d38"
+  },
+  "candidate_source_pins": null,
+  "blocking_design_items": [
+    "implement experimental arms without changing baseline behavior",
+    "define verification as frozen prediction followed by a new observed environment outcome; do not count fitted model replay as replication",
+    "define bounded verification-attempt budget and handling of conflicting or unreachable transitions",
+    "preserve access to resource and goal information removed from the memory key",
+    "justify sample size for the chosen development effect; twenty seeds is a proposed screen, not a power guarantee",
+    "freeze executable arm hashes and full analysis before any new outcomes are observed"
+  ],
+  "failure_policy": "retain every assigned episode and operational failure; terminal native rejection; no silent retries or best-run selection",
+  "replay_cost_policy": "every reset/navigation/probe dispatch counts; offline model replay is not a new environment transition",
+  "minimum_hits_rule": "NOT_USED_AS_PROOF",
+  "promotion_scope": "candidate development evidence only; no AGI or hidden-game claim"
+}

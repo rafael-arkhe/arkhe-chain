@@ -1,0 +1,1054 @@
+
+=== PAGINA 1 ===
+From the Master Document to the Software: a tutorial on
+using the ARKHE OS & AGI specification as a prompt for the
+ complete construction of arkhe-agi
+ Methodological tutorial for the DMCP pipeline (Master-Document-as-Prompt): seven phases,
+ executable gates, and block-to-code traceability
+  Rafael Oliveira
+ORCID 0009-0005-2697-4668 · Safe Core — Psychology Behavioral Analysis, São Paulo, Brazil
+  Jameson Bednarski
+ORCID 0009-0002-5963-6196 · Arkhe Research Group
+ Correspondence: lemestua@hotmail.com
+ September 22, 2026
+ Abstract
+Large-scale software specifications challenge direct use by coding agents: the Arkhe OS & AGI —
+Integrated Master Document (2nd edition) spans 68,262 lines and 2,287,868 characters — an estimated
+570–650 thousand tokens —, exceeding standard 200 thousand-token context windows. This paper turns
+that document into an operating manual: the DMCP pipeline (Master-Document-as-Prompt), which slices
+the corpus into 50 addressable blocks with stable identifiers, prefixes every prompt with a six-principle
+constitution (fail-closed, honest status, block traceability, one phase at a time, executable evidence, and
+declared reconciliation of divergent versions), and orders the construction of the arkhe-agi software into
+seven phases (F0–F6), from the 15-crate monorepo bootstrap to the MCP server, using executable gates
+— cargo check/test/clippy/fmt/deny, the eight gates of the v5 audit, and the governed write-audit-publish
+protocol of the aia repository — as acceptance criteria, with logs attached to every commit as evidence.
+Universal prompt and audit templates are provided, along with an analysis of limitations (context
+saturation, package and API hallucination, internal corpus divergences) and their mitigations. We
+conclude that verification, not prompting, is the architecture: block-to-code fidelity is only sustainable
+when every specification claim becomes an executable test.
+Keywords: prompt engineering; coding agents; spec-driven development; context engineering; fail-closed
+verification; ARKHE AGI.
+
+
+=== PAGINA 2 ===
+Resumo
+Especificações de software de grande escala desafiam o uso direto por agentes de código: o Arkhe OS &
+AGI — Documento Mestre Integrado (Edição 2) reúne 68.262 linhas e 2.287.868 caracteres —
+estimativamente 570 a 650 mil tokens —, acima das janelas de contexto padrão de 200 mil tokens. Este
+artigo transforma esse documento em um manual operacional: o pipeline DMCP
+(Documento-Mestre-como-Prompt), que fatia o corpus em 50 blocos endereçáveis com identificadores
+estáveis, prefixa todo prompt com uma constituição de seis princípios (fail-closed, status honesto,
+rastreabilidade de bloco, uma fase por vez, evidência executável e reconciliação declarada de versões
+divergentes) e ordena a construção do software arkhe-agi em sete fases (F0–F6), do bootstrap do
+monorepo de 15 crates ao servidor MCP, com gates executáveis — cargo check/test/clippy/fmt/deny, os
+oito gates da auditoria v5 e o protocolo WAP governado do repositório aia — como critérios de aceite e
+logs como evidência anexada a cada commit. Apresentam-se templates universais de prompt e de
+auditoria, a análise de limitações (saturação de contexto, alucinação de pacotes e APIs, divergências
+internas do corpus) e as respectivas mitigações. Conclui-se que a verificação, e não o prompt, é a
+arquitetura: a fidelidade bloco-código só é sustentável quando cada afirmação da especificação se
+converte em teste executável.
+Palavras-chave: engenharia de prompt; agentes de código; desenvolvimento dirigido por especificação;
+engenharia de contexto; verificação fail-closed; ARKHE AGI.
+Scope and integrity note. This tutorial is a methodological document derived from the Arkhe OS & AGI —
+Integrated Master Document (2nd edition, OLIVEIRA, 2026), an internal project source cited by stable
+block identifiers (e.g., Block 2.6). The corpus adopts an honest-status policy (VERIFIED, PARTIAL,
+FAILED, NONEXISTENT); the tutorial inherits that policy and declares as its own limitations everything
+that depends on execution not yet performed. External sources were accessed on 22/09/2026 and are
+listed in the References.
+
+
+=== PAGINA 3 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 3
+Table of Contents
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 5
+1. Introduction
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2. Fundamentals and related work
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2.1 From prompt engineering to flow engineering
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2.2 Coding agents: raw capability is not enough
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+2.3 Specification as contract: spec-driven development
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+2.4 Long context and retrieval: why pasting everything is not enough
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+2.5 Known risks: API and package hallucination
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+3. Anatomy of the Master Document as a prompt corpus
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+3.1 Corpus metrics
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+3.2 The six parts and their constructive roles
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 9
+3.3 Blocks as prompt units
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 10
+3.4 Honest status and gates as acceptance criteria
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 10
+4. Methodology: the Master-Document-as-Prompt pipeline (DMCP)
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 10
+4.1 Cycle overview
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 11
+4.2 Constitutional principles of the prompt
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 12
+4.3 Slicing and the context budget
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 13
+4.4 The seven phases F0–F6
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+4.5 The verification loop as the progress criterion
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+5. Step-by-step tutorial
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+5.1 Step 0A — Environment setup and the repository constitution
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 15
+5.2 Step 0B — Slicing the corpus into addressable prompts
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 15
+5.3 Step 1 (F0) — Workspace bootstrap: 15 crates, honest stubs
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 16
+5.4 Step 2 (F1) — The arkhe-core kernel and the gate pipeline
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 16
+5.5 Step 3 (F2) — WormGraph, ConstitutionStore, and invariant ratification
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 16
+5.6 Step 4 (F3) — Governed data: aia v2 + AEGIS with the 21 fixes
+ .  .  .  .  .  .  .  .  .  .  .  .  . 16
+5.7 Step 5 (F4) — AGI crates: cognition, memory, deliberation, and verifiable training
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 17
+5.8 Step 6 (F5/F6) — Formal verification, packaging, MCP, and applications
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 17
+5.9 Universal prompt templates and the phase audit
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 18
+6. Counterarguments and limitations
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 18
+6.1 One-million-token windows do not solve the problem
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 18
+6.2 The specification is not truth: unverified claims inside the corpus
+
+
+=== PAGINA 4 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 4
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 18
+6.3 Implementation hallucination: the empirical case of ghost APIs
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+6.4 Internal divergences of the corpus and the cost of reconciliation
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+6.5 Wishful scope: what the tutorial deliberately does not promise
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+6.6 Risk and mitigation synthesis
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 20
+7. Conclusion and implications
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 20
+References
+
+
+=== PAGINA 5 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 5
+1. Introduction
+There is a paradox at the center of every ambitious AI-assisted software project: the most complete
+specifications are precisely the ones no language model can read in a single pass. The Arkhe OS & AGI —
+Integrated Master Document (2nd edition) is a concrete instance of this paradox. Produced by the auditable
+integration of four sources (AGI1, AGI2, AGI3, and AIA), the document packs 68,262 lines and 2,287,868
+characters of executable specification — complete monorepos, cryptographic verification pipelines,
+ratifiable invariants, training methodologies, and entire Rust repositories (OLIVEIRA, 2026). Converted
+into tokens, the corpus occupies, by conservative estimate, between 570 and 650 thousand tokens — a
+figure that exceeds the default context window of Claude models (200 thousand tokens) and strains even the
+extended one-million-token windows (ANTHROPIC, 2025b; AMAZON WEB SERVICES, 2025). The
+question that motivates this tutorial is direct: how can a document of this magnitude be turned into an
+operational prompt capable of guiding the complete construction of the arkhe-agi software?
+The answer this paper develops and demonstrates is that the Master Document should not be treated as a
+monolithic block to be pasted into a conversation field, but rather as a corpus of prompts already structured
+for that purpose. The integration that produced the 2nd edition left, as a by-product, a natural slicing
+infrastructure: 50 content blocks with stable identifiers (p1-b01 through p6-b06), source line ranges, hashes
+of normalized content, a consolidated index of 298 invariant identifiers INV-*, and verification status
+markings (VERIFIED, PARTIAL, FAILED, NONEXISTENT) distributed throughout the text
+(OLIVEIRA, 2026). Each block is, in essence, an addressable prompt unit — small enough to fit in context,
+large enough to describe an entire subsystem. What is missing is not material but method: a flow
+architecture that says which block to use, in which order, with which acceptance criterion, and with which
+executable evidence.
+The literature on code generation with large language models supports this reading. The transition from
+prompt engineering to flow engineering, formalized by AlphaCodium, showed that multi-stage pipelines
+substantially outperform a single prompt on code problems (RIDNIK et al., 2024). Reference software
+agents, such as SWE-agent, demonstrate that the agent–computer interface — not just the model —
+determines performance (YANG et al., 2024), while the SWE-bench benchmark shows that frontier models
+still fail on most real issues from popular repositories when operating without structure (JIMENEZ et al.,
+2024). In parallel, studies on long-context use show that the position of information matters: models tend to
+retrieve better what sits at the edges of the window, degrading attention over the middle (LIU et al., 2024).
+These three findings converge on the same methodological prescription adopted here: slice, order, and
+verify.
+This paper thus proposes DMCP — Master-Document-as-Prompt, a seven-phase protocol (F0 through
+F6) that transforms the integrated specification into a constructive sequence for the arkhe-agi software, with
+four distinctive properties: (i) slicing into stable blocks, inherited from the document's structure; (ii)
+constitutional prompting, which fixes the project's fail-closed philosophy as an invariant rule of every
+prompt; (iii) verifiable gates, which convert each claim of the specification into an executable test
+criterion; and (iv) bidirectional traceability, which ties every generated line of code to the block that
+specifies it. The tutorial is written for operators using any contemporary coding agent — the examples
+employ Claude Code terminology, but the principles are tool-agnostic (ANTHROPIC, 2025a).
+The paper is organized as follows. Section 2 reviews the fundamentals and related work that support the
+proposal. Section 3 dissects the anatomy of the Master Document as a corpus of prompts, with metrics and a
+mapping of constructive roles. Section 4 formalizes the DMCP pipeline — principles, slicing, context
+budget, and phases F0–F6. Section 5 is the tutorial proper, step by step, with reusable prompt templates.
+Section 6 confronts counterarguments and limitations, including those documented in the corpus itself.
+Section 7 concludes with implications and a future agenda. We adopt the project's own honest-status
+
+
+=== PAGINA 6 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 6
+principle: where evidence is partial or nonexistent, the text says so.
+2. Fundamentals and related work
+2.1 From prompt engineering to flow engineering
+The first generation of techniques for steering language models focused on the content of a single prompt:
+carefully crafted examples, roles, and instructions. The chain-of-thought technique showed that inducing the
+model to produce intermediate reasoning improves performance on complex tasks (WEI et al., 2022), but it
+remained confined to a single inference pass. AlphaCodium marked the conceptual turn relevant to this
+tutorial: by replacing the single prompt with a test-oriented flow — reflection on the problem,
+natural-language reasoning, generation, execution, and iterative correction against public tests —, the
+authors substantially raised the hit rate of frontier models on code problems, showing that the process around
+the model is the dominant lever (RIDNIK et al., 2024). In operational terms, a 650-thousand-token
+specification document was never a prompt: it is a flow-engineering program waiting to be executed.
+Two complementary lines consolidate feedback iteration as a quality mechanism. Self-Refine shows that
+models can refine their own outputs when given structured feedback — including self-generated feedback
+— across multiple iterations (MADAAN et al., 2023). Reflexion adds verbal memory of failures: the agent
+summarizes why the previous attempt failed and condenses that learning into the next attempt, without
+weight updates (SHINN et al., 2023). Both mechanisms are incorporated into DMCP in two concrete forms:
+the executable-gate loop (which returns error logs as objective feedback) and the phase-audit prompt
+(Section 5.9), which produces verbal failure syntheses to feed the next phase.
+2.2 Coding agents: raw capability is not enough
+The evaluation of agents in software engineering tempers optimism with evidence. SWE-bench proposes the
+task most faithful to reality — resolving real issues from popular repositories — and concluded, in its
+original formulation, that both frontier proprietary models and fine-tuned variants resolved only the simplest
+issues (JIMENEZ et al., 2024). SWE-agent attributes a relevant share of performance to the agent–computer
+interface: terminals, editors, and commands designed for the agent yield efficacy jumps comparable to
+model changes (YANG et al., 2024). The lesson for this tutorial is twofold: first, the structure of the target
+repository and of the input materials must be designed for the agent; second, each construction phase needs
+executable acceptance criteria, since self-confidence is not a reliable attribute of these systems.
+The Claude Code practice documentation adds the context-budget dimension. The official guide
+recommends planning before implementing, verifying every change with tests, and — crucially — treating
+the context window as a resource that degrades: as it fills up, performance drops, and long debugging
+sessions consume tens of thousands of tokens (ANTHROPIC, 2025a). Context engineering formalizes this
+concern: the right artifact in the right context, with history compaction, on-demand retrieval, and delegation
+to subagents, instead of indiscriminate accumulation of material (ANTHROPIC, 2025b). These precepts of
+industrial practice coincide point by point with the academic findings on context position and saturation and
+justify the strict per-prompt budget adopted in Section 4.3.
+
+
+=== PAGINA 7 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 7
+2.3 Specification as contract: spec-driven development
+In September 2025, GitHub institutionalized spec-driven development with Spec Kit, a set of tools and
+standardized phases — constitution, specification, clarify, plan, tasks, analyze, and implement — in which
+the specification precedes and constrains code generation by agents (GITHUB, 2025). The thesis of the
+movement is that the specification is the program: code becomes derived, and fidelity to the specification
+becomes the primary metric. The Arkhe Master Document occupies an extreme position on this spectrum:
+instead of a synthetic specification drafted to guide an agent, it is an organic specification, accumulated
+through the integration of four sources, which already contains complete code, audit corrections, and
+acceptance criteria. DMCP can be read as the adaptation of the Spec Kit cycle to a pre-existing large-scale
+corpus: the constitution and specification phases have already been fulfilled by the document; what remains
+is slicing, planning, tasks, and implementation — which is exactly the structure of Sections 4 and 5.
+2.4 Long context and retrieval: why pasting everything is not enough
+Retrieval-augmented generation (RAG) established that retrieving relevant passages on demand
+outperforms parametric memorization for knowledge-intensive tasks (LEWIS et al., 2020). For code,
+RepoCoder refined the idea to the repository level: iterative retrieval, in which the generated sketch guides
+the next search for relevant context, improves multi-file code completeness (ZHANG et al., 2023). Position
+evidence completes the picture: Liu et al. show that multi-document models exhibit U-shaped performance
+— high at the edges of the context, degraded in the middle — and that performance degrades as the number
+of relevant documents grows, even when the window is sufficient (LIU et al., 2024). Even though
+one-million-token windows numerically accommodate the Master Document (AMAZON WEB
+SERVICES, 2025; GOOGLE, 2026), the model's cognitive economy does not keep pace with storage
+economy: pasting 650 thousand tokens is, in light of these results, a worst-case strategy. The methodological
+consequence is the slicing-and-retrieval hierarchy detailed in Section 4.3.
+2.5 Known risks: API and package hallucination
+The risk specific to model-generated code is well documented. Spracklen et al. systematically analyze
+package hallucination — models recommending libraries that do not exist — and show that the
+phenomenon is widespread, persists in commercial models, and opens a supply-chain attack surface,
+slopsquatting, in which third parties register the hallucinated packages (SPRACKLEN et al., 2025). The
+notable detail, for the purposes of this tutorial, is that the Master Document itself records the API-level
+analogue: the missing-contract analysis of the aia repository (Block 6.5) documents calls to functions that
+do not exist in the v1 implementation — ghost APIs — and the static analyses of arkhe-aegis (Block 6.4)
+catalog 21 fixes (C1–C7, A1–A8, R1–R5), including length-prefixed hashing for the INV-AEGIS-04
+invariant and timeouts to eliminate a fail-hang (OLIVEIRA, 2026). The corpus, in other words, already
+contains its own case study of code-generation failure — and the tutorial will appropriate it as evidence that
+executable gates are not an accessory but a requirement.
+
+
+=== PAGINA 8 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 8
+3. Anatomy of the Master Document as a prompt corpus
+3.1 Corpus metrics
+Before slicing, one must measure. Table 1 consolidates the objective metrics of the source corpus,
+computed over the canonical 2nd-edition file with its registered SHA-256 hash. The document is large —
+roughly 255 thousand words and an estimated 570 to 650 thousand tokens, assuming the usual ratio of 3.5 to
+4 characters per token for technical Portuguese mixed with code — but it is large in a structured way: the
+integration kept the full-preservation policy (zero deletion of unique content), kept divergent versions in
+parallel with explanatory notes, and merged only exact duplicates, flagged with ♻ warnings that point to the
+preserved copy (OLIVEIRA, 2026). This editorial discipline is what makes slicing safe: every block has
+verifiable identity, origin, and integrity.
+Table 1 – Metrics of the source corpus (Master Document, 2nd edition, canonical file)
+Metric
+Value
+Relevance for use as a prompt
+Lines / characters
+68,262 / 2,287,868
+Total scale to slice; basis of the token estimate
+Words
+≈ 255 thousand
+Volume of human reading; justifies delegation to agents
+Tokens (estimate)
+570–650k (3.5–4 chars/token)
+Exceeds standard 200k windows; strains 1M windows
+Addressable blocks
+50 (p1-b01…p6-b06: 2+14+28+6)
+Prompt units with stable anchor, origin, and hash
+Invariant identifiers
+298 unique (INV-*)
+Index of reusable acceptance criteria (Part V.2)
+Status markings
+✔ 15 · ⚠ 8 · ✗ 13 · □ 7
+Honest status: flags evidence per component
+Merged duplicates (♻)
+3 identical pairs
+A single read suffices for preserved content
+Divergent versions (⇄)
+v0.1.0 × v0.2.0; aia v1 × v2
+Require a declared reconciliation rule (Section 4.2, P6)
+Integrity
+SHA-256: 5a77d9c3…4ec44
+Traceability anchor for citations to the corpus
+3.2 The six parts and their constructive roles
+The thematic map of the document (Section 0.3) organizes content by subject, but software construction
+requires a cut by constructive role: what each part supplies to the generation pipeline. Table 2 presents this
+mapping. Two observations deserve emphasis. First: Part IV — complementary research for a balance of
+evidence — plays the role of prompt falsifier: by marking what is real (CVE-2026-22696, FIPS 204/205,
+ALF-LB as the state of the art) and what could not be located (did:cid, the wrong DeepMind arXiv
+reference), it prevents the operator from drafting prompts that inherit unverified claims. Second: Part VI
+explicitly declares its logical reading order — 6.5 before 6.1/6.2 (the missing-contract analysis explains the
+defects fixed in v2) and 6.4 before 6.3 (the findings C1–C7/A1–A8/R1–R5 are implemented by the
+corrected repository) —, which DMCP adopts as the prompt reading order in phase F3 (OLIVEIRA, 2026).
+
+
+=== PAGINA 9 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 9
+Table 2 – Parts of the Master Document and their constructive roles in the DMCP pipeline
+Part
+Core content
+Constructive role
+Phases
+I
+Definitive monorepo (SSMDP v8, Lean 4, CI/CD,
+trust model, 2026–2032 roadmap, hardware);
+Arkhe IP with 5 gates
+Technical constitution; architecture target;
+formal verification criteria
+F1, F5
+II
+v5 audit fixes; GGUF-100T; packaging; Arkhe AGI
+monorepo (2 versions, 15 crates); verification stack;
+Web3 invariants; OS Layer v0.1.0
+Primary source of bootstrap and core;
+Cargo.toml/lib.rs templates; executable gates
+F0, F1, F2
+III
+BRICS package; verifiable 6-phase training;
+RustFS; economic governance; Dream-RSI; quality
+gates (11 families); orca-arkhe-mcp; ESP32; UI;
+OS Layer v0.2.0
+Extensions and applications; gate families; MCP
+layer; post-fix reference for the OS Layer
+F4, F6
+IV
+Validation tracks A–D and balance table of key
+claims
+Prompt falsifier; separates the real from the
+not-located
+All
+V
+Glossary; consolidated invariant index; source map;
+integration report
+Retrieval index of criteria (INV-*); traceability
+All
+VI
+aia repository (v1/v2), corrected arkhe-aegis,
+static analyses (21 fixes), remaining 10 crates of
+Arkhe AGI
+Governed data (WAP, AEGIS); monorepo
+completion; correction case study
+F3, F0
+3.3 Blocks as prompt units
+The stable identifier of each block — p<part>-b<no> — is the protocol's fundamental address. Each anchor
+corresponds to an independent document from the original sources, with a source line range (for instance,
+block 2.6, Arkhe AGI — Complete, Corrected, and Verified Monorepo, spans lines 9,073–14,895 of
+AGI1.txt) and a hash of normalized content registered in the traceability map of Part V.3 (OLIVEIRA,
+2026). The largest content block, 2.6, has 5,823 lines — somewhere between 25 and 35 thousand tokens,
+comfortably inside a context budget of 60 thousand tokens per prompt when combined only with the
+constitution and a repository summary. This fit property is not accidental: it enables DMCP's most
+important operating rule — one block per prompt, one goal per block —, which keeps the middle of the
+context free for the material that really matters and circumvents the documented positional degradation
+(LIU et al., 2024).
+The blocks also solve, by construction, the problem of verifiable citation in prompts. Instead of instructing
+the agent with loose paraphrases — fertile ground for hallucination —, each prompt cites the source block
+and, where pertinent, the identifier of the invariant (INV-*) whose violation must be prevented. The
+consolidated index of Part V.2, with its 298 identifiers grouped by domain (INV-CORE, INV-CLAIM,
+INV-TRAIN, INV-AEGIS, among 45 other groups), works as the index of acceptance criteria (OLIVEIRA,
+2026). The result is a chain of custody: block → prompt → generated code → gate → evidence → commit,
+with every link pointing to the previous one.
+
+
+=== PAGINA 10 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 10
+3.4 Honest status and gates as acceptance criteria
+The most valuable methodological feature of the corpus is not technical but epistemic: the honest-status
+policy. Components and claims carry explicit markings — VERIFIED, PARTIAL, FAILED,
+NONEXISTENT —, and the corpus itself acknowledges that the material is, mostly, executable
+specification and skeletons, and that Arkhe OS is not an AGI but the verification infrastructure on which a
+verifiable AGI could be built and audited (OLIVEIRA, 2026). For a generation pipeline, this means every
+prompt inherits an honesty contract: the agent must not promise what it has not executed. The project's
+fail-closed philosophy — when in doubt, reject; capabilities are machine-checkable declarations —
+becomes the pipeline's progress rule: a phase completes only when its gates execute and pass, and the first
+piece of evidence of any phase is the log of the verification command.
+Three gate families in the corpus structure that rule. The core family, consolidated by the v5 audit, runs
+eight gates in run-all-gates.sh: corrected bimodality, Invariant deserialization, Claim round-trip,
+regenerated trybuild, cargo test --workspace, cargo clippy, cargo fmt, and cargo deny (with the
+CVE-2026-22696 advisory) (OLIVEIRA, 2026, Block 2.1). The artifact verification pipeline family defines
+the path Gate 0 (sanitization) → Gate 0.5 ("Jev" classification) → Gate 1 (BLAKE3 hash) → Gate 2 (hybrid
+Ed25519 + ML-DSA signature) → Gate 3 (MMR inclusion), extended to a Gate 4 for intellectual property
+in Arkhe IP. The governed-data family, in the aia repository, enforces the governed WAP protocol
+(write-audit-publish): no operation touches the main branch without AEGIS authorization, verification, and
+audit, with record_hash per operation and 14 ratifiable invariants (OLIVEIRA, 2026, Part VI). In DMCP,
+these families become the acceptance criteria of phases F1, F2, and F3, respectively.
+4. Methodology: the Master-Document-as-Prompt pipeline (DMCP)
+4.1 Cycle overview
+DMCP organizes the construction of arkhe-agi into seven sequential phases (F0–F6), each fed by specific
+blocks of the Master Document and closed by an executable verification gate. The elementary cycle of each
+phase has five moments: (1) extraction of the source block from the canonical corpus, by stable identifier;
+(2) contextualization, through injection of the constitutional prompt and a summary of the repository's
+current state; (3) generation of the phase's code or artifacts by the coding agent; (4) verification, through
+gate execution with log collection as evidence; and (5) integration, through a commit atomically associated
+with the evidence and with the block that specifies the change. Figure 1 shows the sequence and the
+feedback mechanism: when a gate fails, the audit prompt (Section 5.9) synthesizes the failure in verbal
+language — in the spirit of Reflexion (SHINN et al., 2023) — and the phase is re-executed with the new
+material, without abandoning the disciplined context budget.
+
+
+=== PAGINA 11 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 11
+ Figure 1 – DMCP constructive sequence: seven phases (F0–F6) and the audit cycle with verbal feedback of gate failures.
+This architecture is deliberately flow engineering in the AlphaCodium sense (RIDNIK et al., 2024), not
+prompt engineering: the value lies in the sequence, in the pass criteria between stages, and in the
+accumulated evidence, not in the perfect wording of a single instruction. It is also compatible with the Spec
+Kit specification cycle (GITHUB, 2025), with one founding inversion: instead of writing the specification
+and then implementing it, DMCP starts from a specification that already exists — inherited, large, partially
+inconsistent — and concentrates all methodological effort on slicing it, reconciling it, and verifying it.
+4.2 Constitutional principles of the prompt
+Every prompt emitted by DMCP carries a fixed constitutional prefix — an invariant block of rules that
+encodes the project's philosophy. This technique is current practice in coding agents, where files such as
+CLAUDE.md or AGENTS.md serve as the repository's persistent rule memory (ANTHROPIC, 2025a). Six
+principles form the core: P1 — fail-closed: when in doubt, reject; no attempt to "make it work" at the
+expense of verification. P2 — honest status: the agent declares what it executed and what it did not;
+skeletons remain marked as skeletons. P3 — block traceability: every code change cites the source block
+(p*-b**) and, when applicable, the invariant (INV-*). P4 — one phase at a time: no prompt advances
+phases; scope creep is a violation, not initiative. P5 — executable evidence: claims of working behavior
+require a log; "prove, do not promise". P6 — declared reconciliation: when facing divergent versions of
+the corpus, the agent does not choose silently; it applies the precedence rule declared in the prompt (v0.2.0
+over v0.1.0; aia v2 over v1; merged ♻ duplicates read once) and records the decision.
+Principles P2 and P6 deserve additional justification, because they derive from internal findings of the
+corpus rather than from generic good practice. P2 inherits the document's honest-status policy — which
+marks components as PARTIAL or FAILED and acknowledges the skeleton nature of a substantial part of
+the monorepo (OLIVEIRA, 2026) — and turns it into agent discipline: without it, generation tends to
+"complete" stubs with plausible, unverified implementations — exactly the class of error the aia audit
+documented as ghost APIs (Block 6.5). P6 exists because the corpus deliberately keeps divergent versions in
+parallel: OS Layer v0.1.0 (Block 2.14) and the post-fix v0.2.0 (Block 3.28); the aia repository v1 (Block
+6.1) and v2 (Block 6.2), with structural similarity of about 26.9%. Without an explicit precedence rule, the
+agent mixes interfaces from the two versions — a failure mode that the missing-contract analysis
+demonstrates to be real, not hypothetical (OLIVEIRA, 2026).
+
+
+=== PAGINA 12 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 12
+4.3 Slicing and the context budget
+DMCP's context strategy combines three complementary mechanisms from the literature: on-demand
+retrieval in the RAG style (LEWIS et al., 2020), iterative retrieval guided by the generated sketch, as in
+RepoCoder (ZHANG et al., 2023), and the budget discipline of industrial agent practice (ANTHROPIC,
+2025b). The retrieval unit is the block; the recommended budget per prompt is roughly 60 thousand tokens,
+distributed as follows: constitution and rules (up to 2k), summary of the repository and phase state (up to
+6k), the full source block (up to 40k — sufficient for every block in the corpus, the largest of which has
+5,823 lines), auxiliary material cited by the block — for example, excerpts from the invariant index of Part
+V.2 (up to 6k) — and working headroom for file reading and editing by the agent (at least 6k). Figure 2
+places these numbers against current context windows. Table 3 summarizes the slicing strategies and when
+each is preferable.
+ Figure 2 – Context budget: the full Master Document exceeds standard windows, and the DMCP recommendation is
+ block-level slicing with a strict per-prompt budget.
+Table 3 – Corpus slicing strategies and when to employ them
+Strategy
+Description
+Context cost
+When to employ
+Full block
+Prompt contains the complete p*-b** block, with
+constitution and phase summary
+25–40k tokens
+Subsystem implementation
+(DMCP default rule)
+Target section with
+neighborhood
+Extract of the block: the relevant section ± 150
+lines of context
+8–15k tokens
+Point fix, signature adjustment,
+review
+Index-based retrieval
+Query to Part V.2 (the INV-* index) and the
+thematic map (Section 0.3), bringing in only the
+cited criteria
+2–6k tokens
+Assembling acceptance criteria;
+checking invariant coverage
+Subagent per crate
+Specialized subagents with a summarized
+constitution and one crate each; the orchestrator
+consolidates (orchestrator-worker pattern)
+≈ 30k per subagent
+Phases with many parallel
+modules (F0, F4)
+Full document
+Entire corpus in the window (1-million-token
+models only, beta)
+570–650k tokens
+Discouraged: positional
+degradation, cost, and latency
+(LIU et al., 2024)
+Iterative retrieval closes the circuit: after the first sketch of the phase, the agent — or the orchestrator —
+queries the invariant index to check whether any applicable criterion was left out of the prompt (for
+instance, INV-AEGIS-04 for record hashing in aia) and only then injects the corresponding excerpt. This
+move, economically opposite to the full-document strategy, is what keeps every prompt within budget
+without losing criterion coverage: the context does not carry what can be fetched (ANTHROPIC, 2025b).
+
+
+=== PAGINA 13 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 13
+4.4 The seven phases F0–F6
+Table 4 formalizes the phases: primary prompt source, main deliverable, and acceptance gate. The order
+follows the real construction dependency — the core precedes governance, which precedes governed data,
+which precedes cognition — and not the physical order of the document's parts. Two deliberate inversions
+of reading order deserve note: phase F0 consumes blocks 2.5–2.6 (the monorepo) before the rest of Part II,
+because the 10 stub crates template and the workspace structure are prerequisites of everything else; and
+phase F3 reads Part VI in the logical order declared by the document itself (6.5 → 6.1 → 6.2; 6.4 → 6.3), so
+that the agent knows the documented defects before touching the implementations (OLIVEIRA, 2026).
+Phase F6 is declared optional and research-grade: ecosystem and embedded-hardware adaptations are not
+prerequisites of the verifiable core.
+Table 4 – DMCP phases: prompt sources, deliverables, and acceptance gates
+Phase
+Source blocks (OLIVEIRA, 2026)
+Main deliverable
+Acceptance gate (evidence)
+F0 · Bootstrap
+2.5–2.6 (15-crate structure;
+Cargo.toml/lib.rs template); 6.6
+(remaining 10 crates)
+Compilable Rust workspace: arkhe-os
++ arkhe-agi with all crates and honest
+stubs
+cargo check
+--workspace green; crate tree
+identical to the specified one
+F1 · Core and
+gates
+2.1–2.2 (v5 audit; arkhe-core; Gates
+0–3 pipeline); 2.11 (verification
+stack)
+arkhe-core with sanitization,
+BLAKE3 hash, Ed25519 signature (+
+ML-DSA skeleton), MMR inclusion
+run-all-gates.sh: the 8
+gates of the v5 audit green
+F2 · Governance
+2.5–2.6 (WormGraph,
+ConstitutionStore, ClaimRegistry);
+2.13 (Web3 invariants)
+Append-only causal log with MMR;
+invariant ratification with 4/7 or 5/7
+quorum and 7/14-day timelock
+Ratification tests and MMR
+inclusion proof; rejection on
+insufficient quorum
+F3 · Governed
+data
+Part VI in the order 6.5 → 6.1 → 6.2
+→ 6.4 → 6.3
+aia v2 repository + AEGIS client
+with the 21 fixes (C1–C7, A1–A8,
+R1–R5)
+WAP: 4-gate pipeline +
+record_hash per operation;
+the 14 invariants
+(INV-AEGIS/BRANCH/AIA)
+green
+F4 · AGI crates
+2.6 (cognition, memory, learning,
+51-agent deliberation); 3.1–3.2
+(BRICS; 6-phase training); 3.3
+(RustFS); 3.5 (Dream-RSI)
+Cognition crates implemented on the
+foundation; attested training-data
+pipeline (no actual training)
+cargo test per crate;
+applicable
+INV-CORE/NEURO/TRAIN
+invariants
+F5 · Formal
+verification and
+packaging
+1.1 (Lean 4, TLA+, Kani/Verus); 3.19
+(quality gates); 2.4
+(BLAKE3/SHA-256 packaging)
+Formal specs of the critical
+properties; verifiable packaging
+manifest
+Gates of the 11 families (build,
+lint, tests, Kani, WASM, MCP,
+security, GGUF, birthmark,
+hardware); manifest verification
+F6 ·
+Applications
+(optional)
+3.26 (orca-arkhe-mcp); 3.22 (UI +
+frontend verification flow); 3.21
+(ESP32); 3.13–3.18 (adaptations)
+MCP server; verification interface;
+ecosystem adaptations
+Frontend/MCP gates of Block
+3.19; honest status per adapter
+
+
+=== PAGINA 14 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 14
+4.5 The verification loop as the progress criterion
+Progress in DMCP is defined operationally: a phase advances when its gates pass and the evidence is
+attached to the commit; a phase does not advance because it looks plausible. This criterion is the direct
+transposition of the corpus's machine-checkable principle — capabilities are proven, not promised
+(OLIVEIRA, 2026) — and of the agent-evaluation findings, in which external verification, not model
+confidence, is the reliable predictor of correctness (JIMENEZ et al., 2024). In practice, the loop has three
+possible outcomes per iteration: (i) green: gates pass; evidence attached; next phase; (ii) red with known
+cause: the log points to a specific failure; correction prompt with the log excerpt + the target section of the
+relevant block (8–15k tokens); (iii) red with obscure cause: the audit prompt synthesizes the failure
+verbally (Reflexion), and the phase re-runs with the synthesis included (SHINN et al., 2023). The
+recommended limit is three feedback iterations per gate; if the failure persists, the phase must be split — a
+sign that the prompt carried too much scope, violating P4.
+5. Step-by-step tutorial
+This section is the operational manual of DMCP. We assume an empty arkhe-agi repository, the canonical
+file of the 2nd-edition Master Document at docs/master-integrated-ed2.md (with the SHA-256
+registered in Table 1 for verification), and a coding agent with access to the repository — the examples use
+Claude Code nomenclature, in which CLAUDE.md carries persistent rules and sessions can be driven by
+written prompts (ANTHROPIC, 2025a). The numbering of the steps corresponds to phases F0–F6,
+preceded by two preparation steps (0A and 0B).
+5.1 Step 0A — Environment setup and the repository constitution
+Prepare the host environment: a stable Rust toolchain (rustup), cargo-deny and cargo-audit (for the
+dependency and CVE gates), Python 3.11+ (SSMDP testbed and utilities), Node.js 20+ (frontend and
+MCP), and, for phase F5, the Lean 4 and TLA+ executables corresponding to the Part I blocks. Next, write
+the repository constitution — the CLAUDE.md/AGENTS.md file that every prompt will inherit. Listing 1
+presents a minimal template, derived from the principles of Section 4.2 and from the document's own text
+(OLIVEIRA, 2026). The practical effect of this constitution is to turn the fail-closed philosophy into a local
+constraint of the agent: it cannot mark as complete what it has not executed, nor import wrong corpus
+versions without declaring the precedence.
+Listing 1 – Repository constitution (CLAUDE.md / AGENTS.md), derived from principles P1–P6.
+# arkhe-agi constitution (permanent prompt prefix)
+## Source of truth
+- Specification: docs/master-integrated-ed2.md (SHA-256 5a77d9c3...4ec44).
+- Cite EVERY changed block by stable id (e.g., p2-b06) and the invariant (INV-*).
+## Precedence among divergent versions (P6)
+- OS Layer: v0.2.0 (Block 3.28) prevails over v0.1.0 (Block 2.14).
+- `aia` repository: v2 (Block 6.2) prevails over v1 (Block 6.1).
+- Blocks marked ♻ are duplicates: read only the indicated preserved copy.
+## Conduct rules (P1, P2, P4, P5)
+1. Fail-closed: doubt = reject. Never disable a gate to "make it pass".
+2. Honest status: declare what you executed; skeletons remain skeletons.
+3. One phase per prompt (F0..F6); do not exceed scope without explicit instruction.
+4. "It works" requires a log: attach the verification command output to the commit.
+5. Dependencies: introducing a crate/PackageName without verifying existence is
+   forbidden (cargo search + cargo add). Package hallucination = gate failure (SPRACKLEN et al., 2025).
+## Per-phase acceptance criteria: see docs/dmcp/phases.md (Table 4 of the tutorial).
+
+
+=== PAGINA 15 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 15
+5.2 Step 0B — Slicing the corpus into addressable prompts
+Generate, once and for all, the prompt index: a docs/dmcp/blocks/ directory with one Markdown file per
+corpus block, named by the stable identifier (p1-b01.md … p6-b06.md), plus two derived indexes —
+invariants.md (extraction of the 298 INV-* with their first occurrence, mirroring Part V.2) and phases.md
+(Table 4 of the tutorial). Listing 2 provides the slicing script, which exploits the document's HTML anchors
+(<a id='p2-b05'></a>) as block boundaries. The cost of the procedure is minimal and the benefit is
+structural: from here on, every prompt is issued by address (p2-b06), never by manual navigation of the full
+document.
+Listing 2 – Slicing the Master Document into addressable blocks (Python).
+#!/usr/bin/env python3
+# Slice the master document into stable prompt-addressable blocks.
+import re, pathlib, hashlib
+SRC = pathlib.Path("docs/master-integrated-ed2.md")
+DST = pathlib.Path("docs/dmcp/blocks"); DST.mkdir(parents=True, exist_ok=True)
+text = SRC.read_text(encoding="utf-8")
+# block anchors: <a id="p1-b01"></a> ... <a id="p6-b06"></a>
+pat = re.compile(r'^<a id="(p\d-b\d+)"></a>\s*$', re.M)
+marks = [(m.group(1), m.start()) for m in pat.finditer(text)]
+marks.append(("EOF", len(text)))
+manifest = []
+for (bid, start), (_, end) in zip(marks, marks[1:]):
+    chunk = text[start:end]
+    out = DST / f"{bid}.md"
+    out.write_text(chunk, encoding="utf-8")
+    sha16 = hashlib.sha256(chunk.encode()).hexdigest()[:16]
+    manifest.append(f"{bid},{out.name},{chunk.count(chr(10))},{sha16}")
+pathlib.Path("docs/dmcp/manifest.csv").write_text("\n".join(manifest), encoding="utf-8")
+print(f"{len(manifest)} blocks extracted -> {DST}")
+5.3 Step 1 (F0) — Workspace bootstrap: 15 crates, honest stubs
+Issue the bootstrap prompt with block p2-b05 (specified monorepo) and p2-b06 (corrected monorepo) as
+sources, in the declared precedence, plus the 10 stub crates template contained in the corpus itself — the
+document provides the minimal Cargo.toml and src/lib.rs model required for cargo build
+--workspace to pass (OLIVEIRA, 2026, Blocks 2.5–2.6). The phase goal is strict: a compilable workspace
+with the 15 crates of the Arkhe AGI monorepo, each with its structure declared and stubs marked as stubs
+— no invented logic. The acceptance gate is the green of cargo check --workspace with the crate tree
+identical to the specified one; the evidence is the full log attached to the commit. Block 6.6, which
+completes the remaining 10 crates and carries the ARKHE-AGI-COMPLETE-2026-09-22 seal, is the reference
+for closing the phase (OLIVEIRA, 2026, Part VI).
+The orchestrator-worker pattern is recommended for this phase — the orchestrator issues one subagent per
+crate, each with the summarized constitution and only the block extract referring to its crate —, an
+architecture documented by Anthropic's agent practice as orchestrator-worker (ANTHROPIC, 2024). This
+keeps each sub-context small and parallelizable, and the orchestrator consolidates the result by running the
+global gate. In models with large windows, the temptation to "pass both blocks 2.5 and 2.6 whole at once"
+exists, but it does not pay off: the two blocks total more than 10 thousand lines and the middle of the context
+would be wasted, with proven attention degradation (LIU et al., 2024).
+
+
+=== PAGINA 16 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 16
+5.4 Step 2 (F1) — The arkhe-core kernel and the gate pipeline
+Phase F1 implements the containment kernel and its verification pipeline. Issue the prompt with block
+p2-b02 (package of concrete fixes) and the corresponding extract of p2-b01 (v5 audit with
+run-all-gates.sh), requesting the implementation, in order, of the stages: Gate 0 of input sanitization,
+Gate 1 of BLAKE3 hashing, Gate 2 of Ed25519 hybrid signature with an ML-DSA skeleton declared as
+skeleton (P2), and Gate 3 of Merkle Mountain Range inclusion (OLIVEIRA, 2026). The phase's acceptance
+gate is objective: run-all-gates.sh green — the eight gates of the v5 audit, including cargo test
+--workspace, clippy, fmt, and cargo deny with the CVE-2026-22696 advisory in deny.toml. If any gate
+fails, the verification cycle of Section 4.5 applies without exception: the log is the correction prompt.
+5.5 Step 3 (F2) — WormGraph, ConstitutionStore, and invariant ratification
+Phase F2 raises the governance layer on top of the core. The sources are p2-b06 (WormGraph and
+ClaimRegistry with hashes) and p2-b13 (consolidated Web3 invariants), with index-based retrieval from
+Part V.2 for the INV-CORE, INV-CLAIM, and INV-OS groups. Implement the append-only causal log with
+MMR (the WormGraph) and the ConstitutionStore with the exact ratification semantics specified: each
+invariant with id, statement, and falsifier; 4/7 quorum for the default tier or 5/7 for the critical tier; 7- or
+14-day timelock according to criticality (OLIVEIRA, 2026). The acceptance tests must cover, at minimum:
+MMR inclusion and proof over the log; rejection of ratification with insufficient quorum; and blocking of
+mutation during the timelock. The failure rule is fail-closed by construction — a malformed ratification
+rejects, it never "concludes".
+5.6 Step 4 (F3) — Governed data: aia v2 + AEGIS with the 21 fixes
+Phase F3 is the maturity test of the pipeline, because it builds on the part of the corpus that already
+documents its own generation failures. Issue the Part VI prompts in the logical order declared by the
+document — 6.5 (missing-contract analysis) before 6.1/6.2 (the aia repository v1 and v2) and 6.4 (static
+analysis) before 6.3 (the corrected repository) — so that the agent knows the ghost APIs of v1 and the
+findings C1–C7, A1–A8, and R1–R5 before implementing (OLIVEIRA, 2026). The target is the aia v2
+repository + AEGIS client: Apache Iceberg-style branching, execution governance (IAM, ontology, budgets,
+audit), and the governed WAP protocol. The 21 documented fixes are named acceptance criteria —
+including length-prefixed hashing for INV-AEGIS-04, the timeout that eliminates the fail-hang, the end of
+IAM wildcards, and the per-call FFI runtime with OnceLock (OLIVEIRA, 2026). The phase gate is the full
+WAP: no write to main without the 4-gate pipeline, AEGIS authorization, and record_hash, with the 14
+invariants (INV-AEGIS-01..06, INV-BRANCH-01..06, INV-AIA-01..02) green in test.
+5.7 Step 5 (F4) — AGI crates: cognition, memory, deliberation, and verifiable training
+With the foundation verified, phase F4 implements the upper crates of the Arkhe AGI monorepo: the
+cognition core, multi-layer memory, learning, and multi-agent deliberation — the corpus specification
+describes deliberation by 51 agents with consensus protocols —, plus the data connectors (RustFS, Block
+3.3) and the Dream-RSI discovery cycle with fixed invariants (Block 3.5) (OLIVEIRA, 2026). For the
+verifiable training of the BRICS Package (Block 3.2), the tutorial's recommendation is to implement the
+data and attestation pipeline — the six phases of data attested per country, sparse upcycling, federated MoE
+training with ALF-LB, evaluation across 10 domains, specialization with Proof-of-Loss, and anchoring in
+WormGraph/Rekor via the Model Provenance Certificate — as orchestration code with the INV-TRAIN-*
+and INV-BRICS-* invariants, without running actual training, which requires accelerator infrastructure
+beyond the scope of any individual workstation. This cut is consistent with the honest status of the corpus
+(P2): the pipeline is verifiable as code; foundation training is a material operation that the repository must
+be able to attest, not to run by itself.
+
+
+=== PAGINA 17 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 17
+5.8 Step 6 (F5/F6) — Formal verification, packaging, MCP, and applications
+Phase F5 closes the verifiability promise: critical properties as formal proofs on the three specified tracks
+— Lean 4 for the mathematical properties of the core, TLA+ for the WormGraph and the ClaimRegistry
+(concurrent protocols), Kani/Verus for Rust contracts —, the quality gates of the 11 families of Block 3.19
+(build, lint, tests, Kani, WASM, frontend, MCP, security, GGUF, birthmark, hardware), and the verifiable
+packaging with the BLAKE3/SHA-256 manifest of Block 2.4 (OLIVEIRA, 2026). Phase F6, optional and
+declared research-grade, adds the orca-arkhe-mcp MCP server (Block 3.26), the frontend verification flow
+(Block 3.22), and, if desired, the ecosystem adaptations (Blocks 3.13–3.18) and the Arkhe-ESP
+microcontroller core (Block 3.21). In all phases, the corpus reminder applies: ecosystem adaptations and
+hardware are extensions; the verifiable core compiling with all gates green is the project's minimum
+product.
+5.9 Universal prompt templates and the phase audit
+The following two templates standardize communication with the agent and close the set of tutorial artifacts.
+Listing 3 is the universal phase-prompt template — fill one out per iteration, with one source block at a
+time. Listing 4 is the audit prompt that triggers verbal feedback (Reflexion) when a gate fails or when a
+phase ends in an obscure red (SHINN et al., 2023). Both assume the Listing 1 constitution already in the
+agent's context.
+Listing 3 – Universal phase-prompt template (one source block per iteration).
+[PHASE F<n> | iteration <k> | source block: p<part>-b<no>]
+GOAL (one sentence, closed scope):
+  <e.g.: implement Gate 1 (BLAKE3 hash) in arkhe-core per p2-b02>
+ATTACHED CONTEXT (budget <= 60k tokens):
+  - docs/dmcp/blocks/<block>.md (full)
+  - cited extracts: docs/dmcp/invariants.md#<INV-*> (only the cited ones)
+  - state: repository summary + last iteration log (<= 6k tokens)
+TASK:
+  1. Implement/change ONLY the goal's scope (P4).
+  2. Any decision conflicting with the block must be declared, never hidden (P6).
+  3. Mark as stub everything not implemented in this iteration (P2).
+ACCEPTANCE (this iteration's executable gate):
+  <e.g.: cargo test -p arkhe-core gate1 && ./scripts/run-all-gates.sh>
+EVIDENCE (P5):
+  Attach to the commit: full gate log + diff + cited blocks.
+FORBIDDEN: new dependencies without verification; disabling gates; promising without a log.
+Listing 4 – Phase-audit prompt (verbal feedback, Reflexion style).
+[AUDIT | phase F<n> | iteration <k> | outcome: RED]
+INPUTS:
+  - gate failure log (attached, full)
+  - source block: docs/dmcp/blocks/<block>.md (only the relevant section)
+TASK (no code writing):
+  1. Diagnosis: which invariant/criterion of the block was violated (cite INV-*)?
+  2. Causal hypothesis: why did the generated implementation fail (1 paragraph)?
+  3. Verbal lesson for the next iteration (<= 5 lines, imperative):
+     "On the next attempt, <action>, because <cause>. Do not <observed error>."
+  4. Decision: FIX (same scope) | SPLIT (scope was too large, P4)
+     | ESCALATE (specification doubt -> open p*-b** for human review).
+OUTPUT: sections 1-4 as text. The next iteration will receive this output as context.
+
+
+=== PAGINA 18 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 18
+6. Counterarguments and limitations
+6.1 One-million-token windows do not solve the problem
+The first counterargument is the most obvious: if one-million-token context windows exist (AMAZON
+WEB SERVICES, 2025; GOOGLE, 2026), why not simply paste the whole Master Document? The
+empirical answer comes from the position and saturation evidence: the U-shaped performance documented
+by Liu et al. indicates that the middle of long contexts is where information gets lost, and performance
+degrades as distractor material grows, even when the window numerically fits (LIU et al., 2024). The
+engineering answer reinforces the first: expensive context is slow, costly context, and industrial agent
+practice recommends precisely the opposite — load what is necessary and retrieve the rest on demand
+(ANTHROPIC, 2025b). There is also a practical limit the tutorial cannot abstract away: long iterations
+consume additional context with every file read and command execution, so even the disciplined strategy
+needs history compaction in long sessions. DMCP mitigates — it does not eliminate — this limitation, and it
+is honest about it: large phases still require multiple sessions with state persisted in the repository (commits,
+logs, manifests), not in the conversation.
+6.2 The specification is not truth: unverified claims inside the corpus
+The second counterargument comes from inside the corpus itself. Part IV of the document — the
+complementary research track — records that not everything the specification claims could be verified: the
+did:cid identity method was not located in the W3C/DIF registries; the reference "arXiv:2605.28405" does
+not exist — the real DeepMind framework is "Levels of AGI", arXiv:2311.02462, as Part IV itself records;
+and "Cluster-Aware Upcycling (CVPR 2026)" remains not located (OLIVEIRA, 2026). For the DMCP
+operator, the consequence is a hygiene rule: prompts cite blocks and executable criteria, never isolated
+out-of-context claims; and every corpus claim marked as unverified must be treated as a hypothesis to test,
+not as a requirement. The tutorial inherits the Part IV balance table as an initial "suspect list" — the
+alternative, filtering or "fixing" the corpus, would violate the full-preservation policy that gives the
+document its auditable utility.
+6.3 Implementation hallucination: the empirical case of ghost APIs
+The third counterargument is the most technical: even with a perfect specification and disciplined context,
+the agent hallucinates — APIs that do not exist, nonexistent packages, incompatible contracts. The literature
+confirms the generality of the phenomenon (SPRACKLEN et al., 2025), and the corpus offers the API-level
+analogue: the analysis of the aia repository documents calls to functions that do not exist in the v1
+implementation — ghost APIs —, fixed only in v2 after the static analyses (OLIVEIRA, 2026, Blocks
+6.4–6.5). DMCP's mitigations are three, and none suffices alone: executable gates (the log rejects code that
+does not run), dependency verification before introduction (cargo search/cargo add;
+cargo-deny/cargo-vet in the gates), and the block-citation rule (P3), which reduces — but does not
+eliminate — the space of free paraphrases in which hallucination flourishes. The residual risk is accepted
+and declared: the tutorial does not guarantee the absence of hallucination; it guarantees that hallucination
+does not cross a gate without being recorded as failure evidence.
+
+
+=== PAGINA 19 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 19
+6.4 Internal divergences of the corpus and the cost of reconciliation
+A skeptic would point out, rightly, that the corpus keeps divergent versions in parallel — OS Layer v0.1.0
+versus v0.2.0, aia v1 versus v2, plus three merged duplicates — and that this transfers the reconciliation
+burden to the operator. It is a real burden, and P6 exists to make it manageable: declared precedence,
+recorded decision, no silent choices. But it is fair to acknowledge the mechanism's limit: version-based
+precedence resolves conflicts between versions, not conflicts within the same version — for instance,
+between the crate template of Block 2.6 and the completeness seal of Block 6.6, which belong to distinct
+iterations of the monorepo. In those cases, DMCP prescribes human escalation (the ESCALATE outcome
+of the audit prompt, Listing 4), because the decision involves editorial judgment about the specification that
+no executable gate captures. The total cost of reconciliation is therefore non-zero and heterogeneous,
+concentrated in phases F0 and F3.
+6.5 Wishful scope: what the tutorial deliberately does not promise
+The fifth counterargument is the most fundamental: the specification describes, among other things, a
+Global South AGI with federated training on distributed accelerators, and no prompt protocol builds an
+AGI. The tutorial does not dispute that point — it disputes the scope. The product of DMCP is the
+verifiable arkhe-agi monorepo: a compilable foundation with green gates, ratifiable governance, governed
+data with WAP, cognition crates implemented on that foundation, and the training pipeline as attestation
+code — not the training of a foundation model, which is a material operation dependent on external
+infrastructure. This restriction is not evasive; it is the same as the corpus's, which acknowledges being
+mostly executable specification and skeletons and that Arkhe OS is not an AGI but the verification
+infrastructure on which a verifiable AGI could be built and audited (OLIVEIRA, 2026). The tutorial applies
+to its own outcome the honest-status discipline it asks of the agent.
+6.6 Risk and mitigation synthesis
+Table 5 consolidates the risks discussed in this section and their mitigations, as a quick reference for the
+operator. No row of the table is optional: the experience documented in the corpus itself — ghost APIs
+fixed, gates added, versions reconciled — is the proof that the verification regime is not ceremony but the
+mechanism that turns a wishful specification into a built system. The reader may note that all mitigations are
+procedural or executable; none depends on trust in the model, and that is, in our assessment, the tutorial's
+central lesson.
+Table 5 – Risks of using the Master Document as a prompt and DMCP mitigations
+Risk
+Evidence
+Mitigation in DMCP
+Context saturation and
+degradation
+LIU et al., 2024; ANTHROPIC, 2025b
+Block-level slicing; budget ≤ 60k tokens/prompt;
+index-based retrieval
+Package/API hallucination
+SPRACKLEN et al., 2025; corpus Block
+6.5
+Executable gates; cargo-deny/vet; pre-introduction
+dependency verification; P3 citation rule
+Inheritance of unverified
+claims
+Part IV of the corpus (did:cid;
+nonexistent arXiv)
+Prompts cite blocks/criteria, not claims; balance table as
+a suspect list
+Conflict between divergent
+versions
+v0.1.0 × v0.2.0; aia v1 × v2
+Declared precedence (P6); ♻ duplicates read once;
+human escalation for intra-version conflicts
+Scope creep by the agent
+Agent practice; v5 audit of the corpus
+One phase per prompt (P4); gate-based acceptance;
+phase split after 3 failed iterations
+Pseudo-completeness (stubs
+'completed')
+Honest status of the corpus
+P2: stubs remain stubs; phase seal only with evidence
+attached to the commit
+Incorrect cryptographic code
+21 fixes of arkhe-aegis (Block 6.4)
+Implement on top of documented fixes (F3);
+known-answer tests; mandatory human review in crypto
+
+
+=== PAGINA 20 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 20
+7. Conclusion and implications
+This tutorial started from a practical question — how to use a 68,262-line specification document as a
+prompt for the complete construction of a software system — and answered with an operational protocol,
+DMCP, which slices the ARKHE OS & AGI Master Document into 50 addressable blocks, prefixes every
+prompt with a six-principle constitution derived from the project's fail-closed philosophy, orders
+construction into seven phases (F0–F6) with executable gates as acceptance criteria, and closes every cycle
+with evidence attached to the commit. The methodological defense of the protocol does not rest on
+optimism about language models but on the opposite set of evidence: attention degradation in long contexts
+(LIU et al., 2024), package and API hallucination (SPRACKLEN et al., 2025), the modest performance of
+structureless agents (JIMENEZ et al., 2024) — and, decisively, the corpus's own internal case study, whose
+audit of the aia repository documented and fixed 21 generated-implementation defects. DMCP is the
+formalization of a lesson the corpus already contained: in fail-closed systems, verification is the
+architecture.
+The implications go beyond the project treated here. For projects with inherited large-scale specifications
+— corporate legacy, technical standards, accumulated design documents —, the tutorial shows that the
+slicing infrastructure (stable anchors, hashes, criteria indexes) is the asset that turns documentation into a
+constructive program; without it, the document is merely big. For spec-driven development practice with
+agents (GITHUB, 2025), DMCP adds the declared-precedence pattern for divergent versions of the
+specification, a problem that emerges naturally when the specification is organic and versioned in parallel.
+And for research on coding agents, the Arkhe case suggests an evaluation metric complementary to
+SWE-bench: construction fidelity to an adversarial specification — large, divergent, and partially
+unverifiable — measured by executable gates and block-to-code traceability.
+Future work follows three fronts. The first is execution: running the F0–F3 pipeline end to end with
+contemporary agents, publishing the gate logs as a public replication artifact — the same evidence standard
+the corpus demands of its own components. The second is orchestrator automation: converting Table 4 and
+the templates of Listings 3–4 into a runner that issues prompts, executes gates, and maintains the
+block-commit traceability manifest without manual intervention per iteration. The third is the formal
+verification of the governance properties (quorum, timelock, WAP) in TLA+, closing the loop between the
+written specification and the executable guarantee. Until then, the operator has the essentials: a map, a
+constitution, and a progress rule — prove, do not promise.
+References
+External sources accessed on 22/09/2026; the internal source is grey literature from the project archive
+(Safe Core archive), cited by block with its registered SHA-256 hash.
+ANTHROPIC. Best practices for Claude Code. Claude Code Documentation, 2025a. Available at:
+ https://code.claude.com/docs/en/best-practices. Accessed on: 22 Sep. 2026.
+https://code.claude.com/docs/en/best-practices
+ANTHROPIC. Building effective agents. Anthropic Research, Dec. 2024. Available at:
+ https://www.anthropic.com/research/building-effective-agents. Accessed on: 22 Sep. 2026.
+https://www.anthropic.com/research/building-effective-agents
+ANTHROPIC. Effective context engineering for AI agents. Anthropic Engineering, Sep. 2025b. Available at:
+ https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents. Accessed on: 22 Sep.
+2026. https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
+AMAZON WEB SERVICES. Claude Sonnet 4's 1M context window on Amazon Bedrock. AWS Builder
+ Library, Aug. 2025. Available at:
+
+
+=== PAGINA 21 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 21
+https://builder.aws.com/content/6-/claude-sonnet-4-s-1m-context-window-on-amazon-bedrock. Accessed
+on: 22 Sep. 2026.
+https://builder.aws.com/content/6-/claude-sonnet-4-s-1m-context-window-on-amazon-bedrock
+GITHUB. Spec-driven development with AI: get started with a new way of working. GitHub Blog, 2 Sep. 2025.
+ Available at: https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with
+-a-new-way-of-working/. Accessed on: 22 Sep. 2026. https://github.blog/ai-and-ml/generative-ai/spec-driv
+en-development-with-ai-get-started-with-a-new-way-of-working/
+GOOGLE. Long context. Gemini API Documentation, 2026. Available at:
+ https://ai.google.dev/gemini-api/docs/long-context. Accessed on: 22 Sep. 2026.
+https://ai.google.dev/gemini-api/docs/long-context
+JIMENEZ, C. E. et al. SWE-bench: can language models resolve real-world GitHub issues? In:
+ INTERNATIONAL CONFERENCE ON LEARNING REPRESENTATIONS (ICLR), 12th, 2024,
+Vienna. Proceedings... arXiv:2310.06770. Available at: https://arxiv.org/abs/2310.06770. Accessed on: 22
+Sep. 2026. https://arxiv.org/abs/2310.06770
+LEWIS, P. et al. Retrieval-augmented generation for knowledge-intensive NLP tasks. In: CONFERENCE ON
+ NEURAL INFORMATION PROCESSING SYSTEMS (NEURIPS), 34th, 2020. Proceedings...
+arXiv:2005.11401. Available at: https://arxiv.org/abs/2005.11401. Accessed on: 22 Sep. 2026.
+https://arxiv.org/abs/2005.11401
+LIU, N. F. et al. Lost in the middle: how language models use long contexts. Transactions of the Association for
+ Computational Linguistics, v. 12, p. 157-173, 2024. arXiv:2307.03172. Available at:
+https://arxiv.org/abs/2307.03172. Accessed on: 22 Sep. 2026. https://arxiv.org/abs/2307.03172
+MADAAN, A. et al. Self-Refine: iterative refinement with self-feedback. In: CONFERENCE ON NEURAL
+ INFORMATION PROCESSING SYSTEMS (NEURIPS), 36th, 2023. Proceedings... arXiv:2303.17651.
+Available at: https://arxiv.org/abs/2303.17651. Accessed on: 22 Sep. 2026.
+https://arxiv.org/abs/2303.17651
+OLIVEIRA, R. Arkhe OS & AGI — Documento Mestre Integrado [Arkhe OS & AGI — Integrated Master
+ Document]. 2nd ed., 22 Sep. 2026. Internal project document of arkhe-agi (68,262 lines; 2,287,868
+characters; SHA-256: 5a77d9c3f1094dadca72edf3326bea594e9dd73b23ed563054a6059bd8d4ec44).
+Grey literature from the project archive (Safe Core archive).
+RIDNIK, T. et al. Code generation with AlphaCodium: from prompt engineering to flow engineering. arXiv,
+ 2024. arXiv:2401.08500. Available at: https://arxiv.org/abs/2401.08500. Accessed on: 22 Sep. 2026.
+https://arxiv.org/abs/2401.08500
+SHINN, N. et al. Reflexion: language agents with verbal reinforcement learning. In: CONFERENCE ON
+ NEURAL INFORMATION PROCESSING SYSTEMS (NEURIPS), 36th, 2023. Proceedings...
+arXiv:2303.11366. Available at: https://arxiv.org/abs/2303.11366. Accessed on: 22 Sep. 2026.
+https://arxiv.org/abs/2303.11366
+SPRACKLEN, J. et al. We have a package for you! A comprehensive analysis of package hallucinations by code
+ generating LLMs. In: USENIX SECURITY SYMPOSIUM, 34th, 2025, Chicago. Proceedings... Available
+at: https://www.usenix.org/conference/usenixsecurity25/presentation/spracklen. Accessed on: 22 Sep.
+2026. https://www.usenix.org/conference/usenixsecurity25/presentation/spracklen
+WEI, J. et al. Chain-of-thought prompting elicits reasoning in large language models. In: CONFERENCE ON
+ NEURAL INFORMATION PROCESSING SYSTEMS (NEURIPS), 35th, 2022. Proceedings...
+arXiv:2201.11903. Available at: https://arxiv.org/abs/2201.11903. Accessed on: 22 Sep. 2026.
+https://arxiv.org/abs/2201.11903
+YANG, J. et al. SWE-agent: agent-computer interfaces enable automated software engineering. In:
+ CONFERENCE ON NEURAL INFORMATION PROCESSING SYSTEMS (NEURIPS), 37th, 2024.
+Proceedings... arXiv:2405.15793. Available at: https://arxiv.org/abs/2405.15793. Accessed on: 22 Sep.
+2026. https://arxiv.org/abs/2405.15793
+
+
+=== PAGINA 22 ===
+Master Document as Prompt — DMCP Tutorial · arkhe-agi
+Page 22
+ZHANG, F. et al. RepoCoder: repository-level code completion through iterative retrieval and generation. In:
+ CONFERENCE ON EMPIRICAL METHODS IN NATURAL LANGUAGE PROCESSING (EMNLP),
+2023, Singapore. Proceedings... arXiv:2303.12570. Available at: https://arxiv.org/abs/2303.12570.
+Accessed on: 22 Sep. 2026. https://arxiv.org/abs/2303.12570

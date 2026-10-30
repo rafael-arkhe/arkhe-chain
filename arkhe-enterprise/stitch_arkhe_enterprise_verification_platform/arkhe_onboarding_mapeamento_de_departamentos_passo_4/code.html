@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Enterprise - Onboarding Passo 4: Departamentos &amp; Personas</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#3d494c",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-error": "#690005",
+            "on-secondary": "#002a78",
+            "surface": "#0f131c",
+            "inverse-primary": "#00687a",
+            "inverse-on-surface": "#2c3039",
+            "on-secondary-fixed": "#00174b",
+            "primary-container": "#06b6d4",
+            "on-surface": "#dfe2ee",
+            "secondary": "#b4c5ff",
+            "secondary-container": "#0053db",
+            "surface-container-highest": "#31353e",
+            "on-primary-fixed": "#001f26",
+            "on-primary-container": "#00424f",
+            "secondary-fixed-dim": "#b4c5ff",
+            "surface-container-low": "#181c24",
+            "tertiary-container": "#1bbd85",
+            "surface-container-lowest": "#0a0e16",
+            "surface-tint": "#4cd7f6",
+            "surface-container": "#1c2028",
+            "on-tertiary-container": "#00452e",
+            "secondary-fixed": "#dbe1ff",
+            "surface-dim": "#0f131c",
+            "outline": "#869397",
+            "tertiary": "#4edea3",
+            "on-tertiary-fixed": "#002113",
+            "primary-fixed": "#acedff",
+            "on-secondary-container": "#cdd7ff",
+            "on-primary": "#003640",
+            "background": "#0f131c",
+            "error": "#ffb4ab",
+            "on-secondary-fixed-variant": "#003ea8",
+            "on-error-container": "#ffdad6",
+            "on-tertiary": "#003824",
+            "on-primary-fixed-variant": "#004e5c",
+            "inverse-surface": "#dfe2ee",
+            "on-surface-variant": "#bcc9cd",
+            "surface-container-high": "#262a33",
+            "tertiary-fixed": "#6ffbbe",
+            "primary-fixed-dim": "#4cd7f6",
+            "surface-variant": "#31353e",
+            "tertiary-fixed-dim": "#4edea3",
+            "surface-bright": "#353942",
+            "error-container": "#93000a",
+            "on-background": "#dfe2ee",
+            "primary": "#4cd7f6"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "gutter": "1rem",
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem"
+          },
+          "fontFamily": {
+            "label-badge": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "mono-sm": ["JetBrains Mono"],
+            "body-md": ["Inter"],
+            "mono-md": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "display-lg": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-badge": ["10px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar Anchor Component (Exact matching strings from JSON) -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-md py-space-xs border-b border-outline-variant/30 bg-surface-container-lowest/85 backdrop-blur-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="shield">shield</span>
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight">Arkhe Enterprise</span>
+<span class="h-3 w-[1px] bg-outline-variant/60 mx-1"></span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span>
+        Acme Pagamentos S.A.
+      </span>
+</div>
+<!-- Institutional Anchors & Badges -->
+<div class="flex items-center gap-space-sm">
+<div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded border border-outline-variant/50 bg-surface-container-low font-mono-sm text-mono-sm text-on-surface-variant">
+<span class="text-secondary font-semibold">ADR-008</span>
+<span>•</span>
+<span class="text-primary font-semibold">ADR-011</span>
+</div>
+<div class="flex items-center gap-1 px-2.5 py-0.5 rounded border border-secondary-container bg-surface-container-high text-secondary text-label-badge font-label-badge uppercase tracking-wider">
+<span class="material-symbols-outlined text-[13px] text-secondary" data-icon="verified_user">verified_user</span>
+        BACEN Tier 1
+      </div>
+</div>
+</header>
+<!-- Main Content Canvas (Wizard Multi-Step Flow) -->
+<main class="flex-1 w-full max-w-[1400px] mx-auto pt-20 pb-28 px-4 sm:px-6 lg:px-8 flex flex-col gap-space-lg">
+<!-- Progress Pipeline Stepper -->
+<section class="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-space-md shadow-2xl">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-space-md border-b border-outline-variant/30 gap-2">
+<div class="flex items-center gap-2">
+<span class="text-label-badge font-label-badge text-primary uppercase bg-primary-container/10 border border-primary-container/30 px-2 py-0.5 rounded">
+            Passo 4 de 6: Departamentos
+          </span>
+<span class="text-outline-variant">•</span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant">ADR-011 Multi-Persona Engine</span>
+</div>
+<div class="font-mono-sm text-mono-sm text-outline">
+          Tenant ID: <span class="text-on-surface font-mono-md">acme-pgto-br-01</span>
+</div>
+</div>
+<!-- Steps Ribbon -->
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-space-md">
+<!-- 1. Empresa (Checked) -->
+<div class="flex items-center gap-2.5 p-2 rounded bg-surface-container-low/60 border border-tertiary/30">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="check_circle">check_circle</span>
+<div class="min-w-0 flex-1">
+<p class="font-mono-sm text-mono-sm text-outline">01. Organização</p>
+<p class="font-body-sm text-body-sm text-on-surface font-medium truncate">Empresa</p>
+</div>
+</div>
+<!-- 2. Setor (Checked) -->
+<div class="flex items-center gap-2.5 p-2 rounded bg-surface-container-low/60 border border-tertiary/30">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="check_circle">check_circle</span>
+<div class="min-w-0 flex-1">
+<p class="font-mono-sm text-mono-sm text-outline">02. Jurisdição</p>
+<p class="font-body-sm text-body-sm text-on-surface font-medium truncate">Setor Bacen</p>
+</div>
+</div>
+<!-- 3. Preview (Checked) -->
+<div class="flex items-center gap-2.5 p-2 rounded bg-surface-container-low/60 border border-tertiary/30">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="check_circle">check_circle</span>
+<div class="min-w-0 flex-1">
+<p class="font-mono-sm text-mono-sm text-outline">03. Parâmetros</p>
+<p class="font-body-sm text-body-sm text-on-surface font-medium truncate">Preview</p>
+</div>
+</div>
+<!-- 4. Deptos (Ativo Ciano) -->
+<div class="flex items-center gap-2.5 p-2 rounded bg-surface-container-high border-2 border-primary-container shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+<span class="w-4 h-4 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-mono-sm text-[10px] font-bold">4</span>
+<div class="min-w-0 flex-1">
+<p class="font-mono-sm text-mono-sm text-primary font-semibold">04. Escopo Ativo</p>
+<p class="font-body-sm text-body-sm text-on-surface font-bold truncate">Deptos</p>
+</div>
+</div>
+<!-- 5. Integr. (Pending) -->
+<div class="flex items-center gap-2.5 p-2 rounded bg-surface-container-low/30 border border-outline-variant/30 opacity-70">
+<span class="w-4 h-4 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-mono-sm text-[10px]">5</span>
+<div class="min-w-0 flex-1">
+<p class="font-mono-sm text-mono-sm text-outline">05. HSM &amp; RBB</p>
+<p class="font-body-sm text-body-sm text-outline font-medium truncate">Integr.</p>
+</div>
+</div>
+<!-- 6. 1º Doc (Pending) -->
+<div class="flex items-center gap-2.5 p-2 rounded bg-surface-container-low/30 border border-outline-variant/30 opacity-70">
+<span class="w-4 h-4 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-mono-sm text-[10px]">6</span>
+<div class="min-w-0 flex-1">
+<p class="font-mono-sm text-mono-sm text-outline">06. Genesis Leaf</p>
+<p class="font-body-sm text-body-sm text-outline font-medium truncate">1º Doc</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Header Section with DDD Context Notice -->
+<section class="space-y-space-xs">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded border border-primary/40 bg-primary/10 text-primary font-label-badge text-label-badge uppercase tracking-wider">
+          ADR-011 Multi-Persona
+        </span>
+<span class="px-2 py-0.5 rounded border border-tertiary/40 bg-tertiary/10 text-tertiary font-label-badge text-label-badge uppercase tracking-wider">
+          Dominial Segmentation
+        </span>
+</div>
+<h1 class="text-display-lg-mobile md:text-display-lg font-display-lg font-bold text-on-surface tracking-tight">
+        Configurar Departamentos &amp; Personas
+      </h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-4xl">
+        Selecione os departamentos habilitados para o tenant <span class="text-primary font-semibold">Acme Pagamentos S.A.</span> Cada departamento terá seu léxico DDD, dashboard sob medida e formatos de exportação sem alterar permissões de API.
+      </p>
+</section>
+<!-- Department Grid: Bento Cards for ADR-008 / ADR-011 -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Card 1: Jurídico -->
+<article class="bg-surface-container-low border border-outline-variant/60 hover:border-primary/50 transition-colors duration-150 rounded-xl p-space-md flex flex-col justify-between relative group">
+<div>
+<!-- Card Header & Toggle -->
+<div class="flex items-start justify-between pb-space-sm border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="gavel">gavel</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Jurídico</h3>
+<span class="px-1.5 py-0.2 rounded border border-tertiary/40 bg-tertiary/10 text-tertiary font-label-badge text-label-badge">HABILITADO</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Contratos, Litígios, M&amp;A</p>
+</div>
+</div>
+<!-- Custom Checkbox input -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-container-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<!-- Personas Section -->
+<div class="mt-space-sm space-y-space-xs">
+<p class="font-mono-sm text-mono-sm text-outline uppercase tracking-wider">Personas associadas (Léxico DDD):</p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant/40 font-body-sm text-body-sm text-on-surface font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+                Consultor Jurídico
+              </span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant/40 font-body-sm text-body-sm text-on-surface font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>
+                Oficial de Custódia
+              </span>
+</div>
+</div>
+<!-- Configuration Matrix -->
+<div class="mt-space-md grid grid-cols-1 sm:grid-cols-2 gap-space-xs pt-space-sm border-t border-outline-variant/20">
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="font-mono-sm text-mono-sm text-outline block">Export Padrão:</span>
+<span class="font-mono-sm text-mono-sm text-on-surface font-semibold flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="picture_as_pdf">picture_as_pdf</span>
+                PDF/A-1b Assinado (PAdES)
+              </span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="font-mono-sm text-mono-sm text-outline block">Requisito de Chave:</span>
+<span class="font-mono-sm text-mono-sm text-tertiary font-semibold flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="key">key</span>
+                e-CPF A3 obrigatório
+              </span>
+</div>
+</div>
+</div>
+<!-- Telemetry anchor -->
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-outline font-mono-sm text-mono-sm">
+<span>Schema: <code class="text-on-surface-variant font-mono-sm">arkhe://legal.v2.pades</code></span>
+<span class="text-tertiary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> ICP-Brasil
+          </span>
+</div>
+</article>
+<!-- Card 2: Financeiro -->
+<article class="bg-surface-container-low border border-outline-variant/60 hover:border-primary/50 transition-colors duration-150 rounded-xl p-space-md flex flex-col justify-between relative group">
+<div>
+<!-- Card Header & Toggle -->
+<div class="flex items-start justify-between pb-space-sm border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Financeiro</h3>
+<span class="px-1.5 py-0.2 rounded border border-tertiary/40 bg-tertiary/10 text-tertiary font-label-badge text-label-badge">HABILITADO</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Tesouraria, Contabilidade, BACEN</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-container-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<!-- Personas Section -->
+<div class="mt-space-sm space-y-space-xs">
+<p class="font-mono-sm text-mono-sm text-outline uppercase tracking-wider">Personas associadas (Léxico DDD):</p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant/40 font-body-sm text-body-sm text-on-surface font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+                CFO / Controller
+              </span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant/40 font-body-sm text-body-sm text-on-surface font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>
+                Analista de Reconciliação
+              </span>
+</div>
+</div>
+<!-- Configuration Matrix -->
+<div class="mt-space-md grid grid-cols-1 sm:grid-cols-2 gap-space-xs pt-space-sm border-t border-outline-variant/20">
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="font-mono-sm text-mono-sm text-outline block">Export Padrão:</span>
+<span class="font-mono-sm text-mono-sm text-on-surface font-semibold flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="table_chart">table_chart</span>
+                CSV / XLSX / Relatório Bacen
+              </span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="font-mono-sm text-mono-sm text-outline block">Requisito de Chave:</span>
+<span class="font-mono-sm text-mono-sm text-tertiary font-semibold flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="memory">memory</span>
+                e-CNPJ + Token HSM
+              </span>
+</div>
+</div>
+</div>
+<!-- Telemetry anchor -->
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-outline font-mono-sm text-mono-sm">
+<span>Schema: <code class="text-on-surface-variant font-mono-sm">arkhe://bacen.4327.rt</code></span>
+<span class="text-tertiary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> HSM FIPS 140-2 L3
+          </span>
+</div>
+</article>
+<!-- Card 3: Compliance & Auditoria -->
+<article class="bg-surface-container-low border border-outline-variant/60 hover:border-primary/50 transition-colors duration-150 rounded-xl p-space-md flex flex-col justify-between relative group">
+<div>
+<!-- Card Header & Toggle -->
+<div class="flex items-start justify-between pb-space-sm border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="policy">policy</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Compliance &amp; Auditoria</h3>
+<span class="px-1.5 py-0.2 rounded border border-tertiary/40 bg-tertiary/10 text-tertiary font-label-badge text-label-badge">HABILITADO</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Conformidade Regulatória, LGPD, Prevenção a Fraude</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-container-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<!-- Personas Section -->
+<div class="mt-space-sm space-y-space-xs">
+<p class="font-mono-sm text-mono-sm text-outline uppercase tracking-wider">Personas associadas (Léxico DDD):</p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant/40 font-body-sm text-body-sm text-on-surface font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+                Compliance Officer
+              </span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant/40 font-body-sm text-body-sm text-on-surface font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>
+                Auditor Regulatório
+              </span>
+</div>
+</div>
+<!-- Configuration Matrix -->
+<div class="mt-space-md grid grid-cols-1 sm:grid-cols-2 gap-space-xs pt-space-sm border-t border-outline-variant/20">
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="font-mono-sm text-mono-sm text-outline block">Formato de Export:</span>
+<span class="font-mono-sm text-mono-sm text-on-surface font-semibold flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="data_object">data_object</span>
+                JSON Prova + PDF Regulador
+              </span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="font-mono-sm text-mono-sm text-outline block">Requisito de Chave:</span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant font-semibold flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-outline" data-icon="shield_lock">shield_lock</span>
+                Chave Efêmera MPC / Auditor
+              </span>
+</div>
+</div>
+</div>
+<!-- Telemetry anchor -->
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-outline font-mono-sm text-mono-sm">
+<span>Schema: <code class="text-on-surface-variant font-mono-sm">arkhe://audit.proof.v1</code></span>
+<span class="text-primary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> RBB Consensus
+          </span>
+</div>
+</article>
+<!-- Card 4: Engenharia & DevOps -->
+<article class="bg-surface-container-low border border-outline-variant/60 hover:border-primary/50 transition-colors duration-150 rounded-xl p-space-md flex flex-col justify-between relative group">
+<div>
+<!-- Card Header & Toggle -->
+<div class="flex items-start justify-between pb-space-sm border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="terminal">terminal</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Engenharia &amp; DevOps</h3>
+<span class="px-1.5 py-0.2 rounded border border-tertiary/40 bg-tertiary/10 text-tertiary font-label-badge text-label-badge">HABILITADO</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Infraestrutura Soberana, CI/CD, Observabilidade</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-container-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<!-- Personas Section -->
+<div class="mt-space-sm space-y-space-xs">
+<p class="font-mono-sm text-mono-sm text-outline uppercase tracking-wider">Personas associadas (Léxico DDD):</p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant/40 font-body-sm text-body-sm text-on-surface font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+                AI Pipeline Lead
+              </span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-outline-variant/40 font-body-sm text-body-sm text-on-surface font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>
+                DevSecOps
+              </span>
+</div>
+</div>
+<!-- Configuration Matrix -->
+<div class="mt-space-md grid grid-cols-1 sm:grid-cols-2 gap-space-xs pt-space-sm border-t border-outline-variant/20">
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="font-mono-sm text-mono-sm text-outline block">Formato de Export:</span>
+<span class="font-mono-sm text-mono-sm text-on-surface font-semibold flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="code">code</span>
+                SARIF, JSON Prova, Traces OTel
+              </span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="font-mono-sm text-mono-sm text-outline block">Requisito de Chave:</span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant font-semibold flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px] text-outline" data-icon="fingerprint">fingerprint</span>
+                mTLS + Sigstore Cosign
+              </span>
+</div>
+</div>
+</div>
+<!-- Telemetry anchor -->
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-outline font-mono-sm text-mono-sm">
+<span>Schema: <code class="text-on-surface-variant font-mono-sm">arkhe://otel.ledger.v1</code></span>
+<span class="text-tertiary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Rekor Transparency Log
+          </span>
+</div>
+</article>
+</section>
+<!-- Technical Architecture Advisory (ADR-008 Note) -->
+<aside class="p-space-md rounded-xl bg-surface-container-low border border-outline-variant/40 flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-container text-[22px] flex-shrink-0 mt-0.5" data-icon="info">info</span>
+<div class="space-y-1">
+<h4 class="font-label-badge text-label-badge text-primary uppercase tracking-wider">Nota Técnica de Arquitetura (ADR-008)</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          ADR-008: Trocar de persona altera o vocabulário e a organização visual, mas todas as chamadas de API são validadas de forma estrita contra o RBAC central.
+        </p>
+</div>
+</aside>
+</main>
+<!-- Sticky Bottom Institutional Action Bar (No border lines, tonal contrast) -->
+<footer class="fixed bottom-0 left-0 w-full z-40 bg-surface-container-lowest/90 backdrop-blur-md px-4 sm:px-8 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.5)]">
+<div class="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+<!-- Quick status indicator -->
+<div class="flex items-center gap-3 text-outline font-mono-sm text-mono-sm">
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+<span>4 Departamentos configurados</span>
+<span class="hidden sm:inline">•</span>
+<span class="hidden sm:inline text-on-surface-variant">8 Personas ativas em sincronia</span>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+<!-- Botão Secundário: [Voltar ao Preview] -->
+<button class="px-4 py-2 rounded font-body-md text-body-md text-on-surface bg-surface-container border border-outline-variant hover:border-primary transition-colors duration-150 flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_back">arrow_back</span>
+          Voltar ao Preview
+        </button>
+<!-- Botão Primário Ciano: [Salvar Departamentos e Prosseguir (Passo 5: Integrações)] -->
+<button class="px-5 py-2 rounded font-body-md text-body-md font-semibold text-on-primary-container bg-primary-container hover:bg-primary hover:text-surface-container-lowest transition-colors duration-150 flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(6,182,212,0.3)] active:scale-95" type="button">
+<span>Salvar Departamentos e Prosseguir (Passo 5: Integrações)</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</footer>
+</body></html>

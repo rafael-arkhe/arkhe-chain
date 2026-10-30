@@ -1,0 +1,103 @@
+[
+  {
+    "check": "versions-rust",
+    "command": [
+      "rustc",
+      "--version"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "versions-python",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "--version"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--check"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "rust-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--",
+      "--nocapture"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "build-release",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "--bins"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "export",
+    "command": [
+      "D:\\arkhe\\integrations\\superapp-pilot\\target\\release\\export-package.exe",
+      "D:\\arkhe\\integrations\\superapp-pilot\\evidence\\run-20261029T220503302391Z\\demo"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "verify-independent",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "verify_package.py",
+      "D:\\arkhe\\integrations\\superapp-pilot\\evidence\\run-20261029T220503302391Z\\demo\\package.json",
+      "--trust",
+      "D:\\arkhe\\integrations\\superapp-pilot\\evidence\\run-20261029T220503302391Z\\demo\\DEMO-TRUST-NOT-PRODUCTION.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "python-tests",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-m",
+      "unittest",
+      "-v",
+      "test_verifier"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "client-cli",
+    "command": [
+      "D:\\arkhe\\integrations\\superapp-pilot\\target\\release\\run-client.exe",
+      "D:\\arkhe\\integrations\\superapp-pilot\\evidence\\run-20261029T220503302391Z\\demo\\artifact.json",
+      "D:\\arkhe\\integrations\\superapp-pilot\\evidence\\run-20261029T220503302391Z\\demo\\DEMO-TRUST-NOT-PRODUCTION.json",
+      "D:\\arkhe\\integrations\\superapp-pilot\\evidence\\run-20261029T220503302391Z\\client-audit.jsonl",
+      "camera"
+    ],
+    "exit_code": 0
+  }
+]

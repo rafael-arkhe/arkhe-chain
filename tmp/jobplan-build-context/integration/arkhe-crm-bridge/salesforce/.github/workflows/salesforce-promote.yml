@@ -1,0 +1,54 @@
+name: Salesforce promotion
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Protected target environment
+        type: choice
+        options: [integration-qa, production]
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main'
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    concurrency:
+      group: salesforce-${{ inputs.environment == 'integration-qa' && 'qa-org' || 'production-org' }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Require protected environment and successful QA validation of this commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TARGET_ENVIRONMENT: ${{ inputs.environment }}
+        run: python scripts/check_promotion.py
+      - run: npm install --global @salesforce/cli@2.155.7
+      - name: Authenticate target principal
+        env:
+          SF_JWT_KEY: ${{ secrets.SF_JWT_KEY }}
+          SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_INSTANCE_URL: ${{ vars.SF_INSTANCE_URL }}
+        run: python scripts/login_jwt.py --alias promotion-target
+      - name: Backup metadata, validate and deploy exact local source
+        env:
+          TARGET_ENVIRONMENT: ${{ inputs.environment }}
+          SF_PRODUCTION_ACCEPTED_COMMIT: ${{ vars.SF_PRODUCTION_ACCEPTED_COMMIT }}
+        run: python scripts/promote.py --org promotion-target --environment "$TARGET_ENVIRONMENT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: promotion-${{ inputs.environment }}-${{ github.sha }}-${{ github.run_id }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 30
+      - if: always()
+        run: sf org logout --target-org promotion-target --no-prompt

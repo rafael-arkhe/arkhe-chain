@@ -1,0 +1,1477 @@
+
+=== PAGINA 1 ===
+Bend 3 + Arkhe: documentação técnica completa — especificação
+ com provas, governança auditável e decisão calibrada em um
+ pipeline de agentes de IA
+ Rafael Oliveira
+ Safe Core — Psychology Behavioral Analysis, São Paulo, Brasil
+ ORCID 0009-0005-2697-4668
+ 20 de setembro de 2026
+Resumo
+Esta documentação técnica consolida, em um único artefato verificável, a proposta “Bend 3” — uma arquitetura de três
+camadas (Core, Script e Proof) concebida sobre o compilador Bend 2, lançado em setembro de 2026 — e sua integração
+com o Arkhe OS, uma arquitetura de confiança verificável para governança de agentes de IA. O método combina (i)
+verificação empírica de sintaxe contra o compilador Bend 2 real, (ii) mapeamento determinístico de leis declaradas em
+LAWS.bend para invariantes do ConstitutionStore, (iii) definição de um novo ponto de controle (Gate B3) no
+pipeline de gates do Arkhe e (iv) posicionamento do modelo de decisões calibradas Jev (TypeSafe) no Gate 0 de
+sanitização e no cache semântico jevcache. Os resultados são apresentados com estados epistêmicos explícitos: a camada
+Core compila (Types.bend, Eval.bend corrigido e LAWS.bend), a camada Proof permanece esqueleto declarado, e a
+integração especifica cinco invariantes novos (INV-BEND3-01 a 05) além de cinco invariantes de decisão (INV-JEV-01 a
+05). A tese central é que cada camada resolve um problema distinto — especificação (o que deve ser verdade), decisão (o
+que é permitido agora) e governança (o que fica registrado) — e que a disciplina epistêmica de não confundir
+especificação com execução é a condição de validade do projeto inteiro. Discutem-se limitações substanciais: o Bend 3
+não existe como linguagem, o sistema de tipos F32 é axiomático, as métricas de desempenho do Jev são alegações do
+fabricante e as verificações do Gate B3 ainda são aproximações documentadas.
+Palavras-chave: Bend 2; Bend 3; leis verificáveis; provas construtivas; Arkhe OS; governança de agentes; decisões
+calibradas; supply chain criptográfica; Model Context Protocol; invariantes
+Documento técnico-acadêmico (In-Depth Research). Fonte primária: compilação interna de 4.815 linhas sobre o Bend 3 (no arquivo
+do projeto), verificada contra o README oficial do compilador Bend 2 ( HigherOrderCO ) e contra anúncios primários da TypeSafe
+AI e do Model Context Protocol. Todas as alegações externas estão ancoradas em fontes clicáveis com data de acesso (20/09/2026); o
+corpus interno é declarado literatura cinzenta com estado de verificabilidade explícito. Autoria: Rafael Oliveira.
+
+
+=== PAGINA 2 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+2
+1. Introdução
+O lançamento do Bend 2, em setembro de 2026, mudou o preço de duas coisas que, até então, eram
+consideradas caras por natureza: provar propriedades matemáticas sobre código de produção e executar esse
+código em paralelismo massivo sem escrever uma única linha de código paralelo explícito [1]. O repositório
+oficial resume a proposta em uma frase provocativa: no mundo pós-AGI, humanos deixarão de escrever e ler
+código, mas ainda precisarão de uma linguagem sem ambiguidade para comunicar intenções às IAs que
+constroem o mundo — e é exatamente nessa lacuna que se encaixam as leis declaradas em LAWS.bend,
+verificadas por provas mecânicas obrigatórias a cada edição de código [1][2]. Em paralelo, o ecossistema de
+agentes de IA ganhou um problema oposto e complementar: não falta capacidade de gerar código, falta
+capacidade de governar o que agentes autônomos produzem, decidem e registram [3]. A integração entre a
+proposta que este projeto denomina “Bend 3” e o Arkhe OS nasce desse encontro.
+A tese central desta documentação é que especificação, decisão e governança são camadas logicamente
+independentes que só produzem confiança quando são mantidas separadas e conectadas por interfaces
+explícitas. A camada de especificação (Bend 3 concebido como formato de leis e tipos) declara o que deve
+ser verdade sobre todos os artefatos do sistema; a camada de decisão (Jev, modelo System One da TypeSafe,
+com probabilidades calibradas e saídas tipadas) julga o que é permitido agora, em milissegundos, para cada
+entrada; a camada de governança (Arkhe OS, com ConstitutionStore, WormGraph e pipeline de gates)
+garante que nada seja executado sem passar pelos controles e que tudo o que ocorreu fique registrado de
+forma criptograficamente auditável [4][3]. A regra que amarra as três camadas cabe em uma linha: nada é
+executado sem prova, nada é decidido sem confiança calibrada, nada é registrado sem audit trail [4].
+É preciso ser honesto desde o primeiro parágrafo: “Bend 3” não é uma linguagem que exista oficialmente. O
+que existe é o Bend 2, real e funcional, e um monorepo proposto por este projeto que usa três camadas (Core,
+Script, Proof) sobre ele [4]. A integração documentada aqui usa essa arquitetura como formato de
+especificação, não como linguagem de execução: LAWS.bend vira fonte de invariantes do ConstitutionStore;
+Types.bend vira template de tipos verificáveis; PROOF.bend permanece explicitamente marcado como
+esqueleto. Essa disciplina — declarar o status de cada artefato e rejeitar o uso de componentes não
+verificados — é herdada do método mais amplo do projeto, que trata cada afirmação como conjectura
+acompanhada de um falsificador executável [5][6].
+As contribuições deste documento são cinco. C1 — consolidação verificada da sintaxe real do Bend 2 (tipos,
+listas, leis, provas construtivas) e das regras que o compilador real impõe, com tabela de correções aplicadas
+à proposta (Seção 3). C2 — especificação completa da integração Bend 3 → Arkhe: mapeamento de
+camadas, catálogo de 27 leis, Gate B3 e o crate arkhe-bend3 com parser, compilador de leis e testes (Seção
+4). C3 — especificação do Gate 0 de sanitização baseado no Jev e do cache semântico jevcache exposto
+como ferramenta MCP, com limiares de risco e cinco invariantes (Seção 5). C4 — arquitetura unificada de
+três camadas com dois cenários de fluxo ponta a ponta e roadmap consolidado de nove semanas (Seção 6).
+C5 — auditoria crítica de limitações e de contra-argumentos, incluindo os pontos em que o próprio projeto
+se refutaria se confundisse especificação com execução (Seção 7).
+
+
+=== PAGINA 3 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+3
+2. Contexto, corpus e método
+2.1 Corpus e fonte primária
+A fonte primária desta documentação é uma compilação interna de 4.815 linhas que reúne, em ordem
+cronológica: (i) o diagnóstico da proposta “Bend 3” com correções de sintaxe contra o compilador Bend 2
+real; (ii) o monorepo proposto (core/, script/, proof/, stdlib/, tools/); (iii) a integração Bend 3 →
+Arkhe OS com o catálogo completo de leis, os tipos, o Gate B3 em Rust e os invariantes; (iv) a integração
+jevcache × arkhe-mcp × Gate 0; e (v) a arquitetura unificada com roadmap [4]. O corpus mais amplo do
+projeto — a documentação explicativa Arkhe–Catedral (2ª ed., com a nota de verificação externa ADR-018
+e threat model T1–T12), a monografia do Arkhe OS (252 pp.), o pacote de delegação arkhe.gguf e o volume
+consolidado Show the Number (604 pp.) — fornece o contexto dos componentes citados e é declarado aqui
+como literatura cinzenta interna [5][3][7][8].
+As fontes externas foram verificadas por busca na web em 20/09/2026 e priorizadas por proximidade da
+origem: o README oficial do repositório bendlang/bend (21,8 mil estrelas; último commit de Victor
+Taelin em 19/09/2026, versão 2.0.16 no flake.nix) [1]; o site oficial da linguagem [9]; a publicação do autor
+sobre o lançamento [2]; a discussão de lançamento no Hacker News [10]; o anúncio primário do Jev no blog
+da TypeSafe [11]; e os materiais primários do Model Context Protocol [12][13]. Onde o fabricante reporta
+métricas próprias (por exemplo, 193,6× mais rápido e 444,6× mais barato), o documento cita a origem e
+marca explicitamente o status de alegação do fabricante [14].
+2.2 Método e estados epistêmicos
+O método segue a disciplina do projeto: toda afirmação é acompanhada de evidência e todo artefato carrega
+um status declarado [5][6]. Três símbolos resumem os estados: o círculo cheio indica artefato verificado por
+execução contra o compilador Bend 2 real ou por teste automatizado; o meio-círculo indica artefato parcial
+(em depuração, esqueleto declarado ou dependente de avanços externos); o círculo vazio indica artefato
+proposto, ainda não implementado. A verificação por execução usada no corpus (por exemplo, a suíte de 9
+componentes do ADR-018, com testes que executam e falham fechado) é o mesmo critério aplicado aqui aos
+arquivos .bend: um arquivo “compila” significa que o checador do Bend 2 aceitou todos os termos (saída do
+tipo “All terms check”) [4][5].
+Duas convenções evitam ambiguidade. Primeira: código citado do corpus interno reproduz-se verbatim,
+inclusive comentários em português, pois os identificadores de artefato são material de verificação e não
+devem ser parafraseados. Segunda: quando uma função Rust é longa, este documento mostra o essencial e
+indica a elisão com um comentário de corte; nada é parafraseado como se fosse código. A numeração de
+invariantes (INV-*) e de leis segue exatamente a da fonte primária, para que leitores possam conferir cada
+item no arquivo citado.
+
+
+=== PAGINA 4 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+4
+2.3 Bend 2: a linguagem real
+O Bend é apresentado oficialmente como “uma linguagem rápida que bloqueia erros de IA via prova”: alvo
+declarado de desempenho equiparável a C no CPU e a CUDA no GPU, checagem de provas em menos de
+um segundo para arquivos que levariam minutos em assistentes de prova tradicionais, e paralelismo
+automático por divisão e conquista, sem threads, travas ou kernels escritos à mão [1]. A história recente
+explica a ruptura: a geração anterior (Bend 1, maio de 2024) compilava uma linguagem de alto nível para
+GPUs via HVM2, um runtime baseado em interaction combinators [15][16]; o Bend 2 é uma reescrita
+completa — o README avisa que programas de Bend 1 e o HVM não são compatíveis — e introduz o
+sistema de leis e provas como razão de existir da linguagem [1]. O autor descreve o conceito como escrever
+especificações (tipos precisos) e deixar a IA codificar e provar a correção, isto é, “vibe coding quando você
+não pode arriscar bugs” [2].
+Dois fundamentos técnicos merecem registro porque condicionam toda a integração descrita nas seções
+seguintes. Primeiro, a teoria de tipos: o Bend 2 é documentado por dois artigos da casa — BendTT (uma
+teoria de tipos dependente afim) e BendRT (um runtime paralelo para CPUs e GPUs) — além de uma
+formalização do núcleo em Lean [17][18][19]. Segundo, as limitações declaradas oficialmente: valores são
+afins (closures e arrays não podem ser compartilhados), não há táticas nem busca de provas, não há classes de
+tipos, a recursão deve terminar, os números são apenas Nat, U32 e F32, e — crucial para este projeto — F32
+é axiomático: nada sobre ponto flutuante pode ser provado [1]. A lista oficial registra ainda que o
+compilador é 99% escrito por IA e ainda não foi totalmente auditado, fato que a Seção 7 retoma.
+2.4 O sistema LAWS/PROOF
+O mecanismo central do Bend 2 é um par de arquivos com papéis assimétricos. Em LAWS.bend declaram-se
+regras que a aplicação não pode violar, com a sintaxe law nome: for parâmetros {expressão : Tipo};
+em PROOF.bend escrevem-se as provas dessas leis, que são defs construtivas — funções que casam padrão
+sobre o valor quantificado, usam {==} para reflexividade e % para reescrita em cada passo indutivo [1]. O
+README oficial demonstra o padrão com a lei add_zero e uma prova por indução sobre Nat (reproduzida
+na Seção 3.3), e resume o conceito em uma frase que orienta todo este projeto: LAWS.bend é um AGENTS.md
+respaldado por prova [1]. A consequência operacional é que o compilador exige a prova a cada edição de
+código: erro de IA que viola lei não é mesclado — é bloqueado.
+A associação com o Arkhe OS é direta e justifica a integração: o Arkhe já opera com invariantes explícitas,
+cada uma acompanhada de um falsificador executável e de um status, dentro de um ConstitutionStore que
+falha fechado [3] [5]. Em outras palavras, o Arkhe pratica no nível de governança o que o Bend 2 pratica no
+nível do compilador — declarar leis e recusar violações — e a integração natural é usar o formato de leis do
+Bend como fonte de invariantes do Arkhe, com um gate dedicado no pipeline (Seção 4).
+
+
+=== PAGINA 5 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+5
+2.5 Arkhe OS em uma página
+O Arkhe OS é uma arquitetura de confiança verificável para o ciclo de vida de artefatos produzidos por
+agentes de IA, organizada em camadas nomeadas (arkhe-core, arkhe-verify,
+arkhe-evidence/WormGraph, arkhe-governance com ConstitutionStore, arkhe-mcp) [3][7]. O pipeline de
+integridade aplica, na ordem, hash (SHA-256/BLAKE3), assinatura (Ed25519 e ML-DSA, com FROST para
+quórum threshold) e inclusão em log de transparência Merkle no estilo Sigstore/Rekor, com provas de
+inclusão conforme RFC 6962 [20][21][22][23][24][25][26][27]. O Gate 0 — sanitização de entrada antes de
+qualquer parse — já existia na especificação do arkhe.gguf como defesa contra injeção de prompt e
+explorações de parser, alinhada ao LLM01 da OWASP [7][28]; a integração descrita na Seção 5 o dota de
+um motor de decisão calibrada. A verificação externa por execução (ADR-018) validou nove componentes
+desse desenho e consolidou o threat model T1–T12 [5].
+2.6 Jev, TypeSafe e MCP
+O Jev é o primeiro modelo da classe que a TypeSafe chama de System One Models: modelos de fronteira que
+não geram texto — recebem estado não estruturado mais perguntas tipadas (Boolean, Choice, Score) e
+devolvem, em uma única passada paralela, respostas tipadas com probabilidades calibradas e escores de
+confiança [11]. O treinamento usa RLCD (Reinforcement Learning for Calibrated Decisions) em vez de
+RLHF/RLVR, e a empresa reporta, em seu material primário, latência ponta a ponta de 70–500 ms e custo de
+US$ 0,042 por milhão de tokens de entrada com saída gratuita [11][29]; os claims de 193,6× de velocidade e
+444,6× de custo vêm dos workflow evals do fabricante, que próprio reconhece vieses metodológicos
+[14][11]. O nome da classe remete ao Sistema 1 de Kahneman e o nome do modelo a William Stanley Jevons
+— cada queda de custo da inteligência amplia a demanda por usos, em eco ao paradoxo do carvão [30][31].
+O Model Context Protocol, padrão aberto introduzido pela Anthropic em novembro de 2024, é o meio de
+exposição dessas capacidades a agentes de terceiros: servidores MCP expõem ferramentas que aplicações
+hospedeiras invocam [12][13].
+3. A proposta Bend 3: arquitetura de três camadas
+3.1 Camadas e propósito
+A proposta Bend 3 organiza o desenvolvimento em três camadas com papéis distintos e sintaxes distintas,
+todas ancoradas no compilador Bend 2 real [4]. A camada Core concentra o código que precisa compilar de
+verdade: tipos, avaliação, leis e paralelismo; é a única camada cujo status é “verificado por execução”. A
+camada Script existe por ergonomia: uma sintaxe de alto nível (estilo Python, mapeada para o dialeto Imp do
+Bend) para prototipagem rápida, que um transpilador converte para o Core antes da verificação de provas. A
+camada Proof é a mais ambiciosa e a mais honestamente limitada: a visão de longo prazo é uma DSL de
+táticas de prova que o compilador transforma em termos construtivos; o estado atual é um esqueleto
+declarado, porque o Bend 2 não possui táticas nem busca de provas [1][4]. A Tabela 1 resume as camadas, e
+a Figura 1 mostra a posição de cada uma entre o desenvolvedor e o hardware.
+Tabela 1 — As três camadas da proposta Bend 3 e seus estados (fonte: corpus interno [4]; status de compilação verificado contra o
+ Bend 2 real [1]).
+
+
+=== PAGINA 6 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+6
+Camada
+Propósito
+Sintaxe / formato
+Status declarado
+Bend Core
+Paralelismo massivo e
+desempenho; única camada
+executável
+Sintaxe Fun do Bend 2 (match
+exaustivo, sem return)
+Types.bend e LAWS.bend
+verificam; Eval.bend verifica após
+correção de inferência
+Bend Script
+Ergonomia, prototipagem, uso
+por IA
+Dialeto Imp (switch para números,
+match para ADTs; recursão em vez
+de for)
+Exemplos válidos; transpilador
+proposto, não implementado
+Bend Proof
+Verificação formal acessível
+Prova construtiva hoje ({==} e %);
+DSL de táticas como proposta
+Esqueleto explícito, não compila;
+demo oficial usa 442 linhas para
+duas propriedades
+Camada Proof
+leis + provas; esqueleto declarado
+não compila (declarado)
+Camada Script
+dialeto Imp; transpilador proposto
+exemplos válidos
+Camada Core
+tipos, avaliação, leis; verificável
+All terms check
+transpila
+exige provas
+Compilador Bend 2 + BendRT  →  C (CPU) · CUDA · Metal · JavaScript (GPU/JS)
+alvos oficiais; Lua/Luau/Python planejados
+Proposta Bend 3 — três camadas sobre o compilador real
+ Figura 1 — Arquitetura de três camadas da proposta Bend 3. O Core compila para CPU (C) e GPU (CUDA/Metal/JavaScript) via
+ BendRT [18][1]; o Script é açúcar sintático sobre o Core; o Proof declara leis e provas que o compilador exige a cada edição.
+ Estado: Core verificável hoje; Proof esqueleto declarado [4].
+3.2 Camada Core: tipos, avaliação e leis
+O exemplo executável que guia a proposta é uma regressão simbólica minimalista (BendSR): uma AST de
+expressões aritméticas, um avaliador com guarda de divisão por zero, o erro médio absoluto como função de
+fitness e duas leis que o compilador deve aceitar [4]. A Listagem 1 mostra Types.bend verificado: tipos
+copiáveis declarados com is Data (o GUIDE oficial confirma a forma), campos tipados, padrões de match
+marcados com + para reutilização de campos e literais anotados com (1 : U32) — anotação que o
+compilador exige porque nada é inferido [1][4].
+Listagem 1 — core/src/Types.bend (verificado: todos os termos checam; fonte: corpus interno [4]).
+
+
+=== PAGINA 7 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+7
+# Types.bend
+# AST recursiva para expressões simbólicas e estrutura Individual.
+# VERIFICADO contra o compilador Bend 2 real em 19/09/2026.
+import Base
+type Expr is Data:
+  Var { name: String }
+  Const { value: F32 }
+  Add { left: Expr, right: Expr }
+  Sub { left: Expr, right: Expr }
+  Mul { left: Expr, right: Expr }
+  Div { left: Expr, right: Expr }
+type Sample is Data:
+  MkSample { x: F32, y: F32 }
+type Individual is Data:
+  MkIndividual { tree: Expr, fitness: F32 }
+def Expr.size(e: Expr) -> U32:
+  match e:
+    case Var{+name}: (1 : U32)
+    case Const{+value}: (1 : U32)
+    case Add{+left, +right}: U32.add(1, U32.add(Expr.size(left),
+                                              Expr.size(right)))
+    case Sub{+left, +right}: U32.add(1, U32.add(Expr.size(left),
+                                              Expr.size(right)))
+    case Mul{+left, +right}: U32.add(1, U32.add(Expr.size(left),
+                                              Expr.size(right)))
+    case Div{+left, +right}: U32.add(1, U32.add(Expr.size(left),
+                                              Expr.size(right)))
+A Listagem 2 mostra o avaliador. O detalhe técnico mais instrutivo do corpus é o erro de inferência aninhada
+que o compilador real reportou durante o desenvolvimento: ao construir um MkIndividual dentro de
+matches aninhados em presença de referências afins, o inferidor recusa-se a adivinhar o tipo e exige anotação
+explícita — mensagem documentada “expected: an annotated term (cannot infer)” [4]. A correção aplicada
+(não criar Individuals aninhados dentro de mae; anotar construções com (MkIndividual{...} :
+Individual) quando necessário) é exatamente o tipo de lição que o arquivo AGENTS.md do monorepo
+codifica para agentes de IA [4].
+Listagem 2 — core/src/Eval.bend (verifica após correção de inferência; fonte: corpus interno [4]).
+
+
+=== PAGINA 8 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+8
+# Eval.bend
+# Avaliação com guardrails numéricos e MAE.
+import Base
+import Types
+def safe_div(a: F32, b: F32) -> F32:
+  match F32.is_eq(b, 0.0):
+    case True{}: 0.0
+    case False{}: F32.div(a, b)
+def eval_expr(e: Expr, x: F32) -> F32:
+  match e:
+    case Var{+name}: x
+    case Const{+value}: value
+    case Add{+left, +right}: F32.add(eval_expr(left, x),
+                                    eval_expr(right, x))
+    case Sub{+left, +right}: F32.sub(eval_expr(left, x),
+                                    eval_expr(right, x))
+    case Mul{+left, +right}: F32.mul(eval_expr(left, x),
+                                    eval_expr(right, x))
+    case Div{+left, +right}: safe_div(eval_expr(left, x),
+                                     eval_expr(right, x))
+def abs_f32(v: F32) -> F32:
+  match F32.is_lt(v, 0.0):
+    case True{}: F32.neg(v)
+    case False{}: v
+def mae(ind: Individual, dataset: List) -> F32:
+  match dataset:
+    case Nil{}: 0.0
+    case Cons{+s, +rest}:
+      match s:
+        case MkSample{+x, +y}:
+          F32.add(abs_f32(F32.sub(eval_expr(ind.tree, x), y)),
+                  mae(ind, rest))
+As leis do exemplo seguem a sintaxe oficial e ficam em LAWS.bend (Listagem 3): eval_deterministic (a
+avaliação é determinística — reflexividade da igualdade) e safe_div_zero (divisão segura por zero retorna
+0). Note que a segunda lei é propositalmente limitada: como F32 é axiomático no Bend 2, não há como
+provar teoremas sobre ponto flutuante além de reflexividades ou propriedades definidas por construção; o
+projeto registra essa fronteira em vez de fingi-la inexistente [1][4].
+Listagem 3 — core/src/LAWS.bend (sintaxe law confirmada no README oficial; fonte: corpus interno [4][1]).
+# LAWS.bend
+# Leis formais do BendSR.
+import Base
+import Types
+import Eval
+law eval_deterministic:
+  for e: Expr, x: F32
+  {F32.is_eq(eval_expr(e, x), eval_expr(e, x)) : Bool}
+law safe_div_zero:
+  for a: F32
+  {F32.is_eq(safe_div(a, 0.0), 0.0) : Bool}
+
+
+=== PAGINA 9 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+9
+3.3 O padrão de prova oficial: leis são teoremas, provas são defs
+Não há DSL de táticas no Bend 2; a prova é uma definição construtiva. O README oficial demonstra o
+padrão completo com um teorema aritmético (Listagem 4): a lei add_zero quantifica sobre Nat e a prova
+casa o padrão nos construtores do numeral — caso base por reflexividade, passo indutivo com uma reescrita
+% e fechamento por reflexividade [1]. O demo oficial da linguagem (app_win_is_bug_2d) prova duas
+propriedades de um jogo com 442 linhas de PROOF.bend, e é esse custo real que o esqueleto da camada
+Proof do Bend 3 reconhece: {==} sozinho não basta para provas indutivas completas [1][4].
+Listagem 4 — padrão oficial de lei e prova construtiva no Bend 2 (reproduzido do README oficial [1]).
+import Base
+# CLAIM: for every nat x, x + 0 equals x.
+law add_zero:
+for x: Nat
+{Nat.add(x, 0n) == x : Nat}
+# PROOF: induction on `x`, one rewrite (`%`) per step.
+def add_zero(x):
+match x:
+case 0n:
+{==}
+case 1n+xp:
+%add_zero(xp) : {1n+Nat.add(xp, 0n) == 1n+_ : Nat}
+{==}
+3.4 Camada Script: dialeto Imp e transpilação
+A camada Script do monorepo proposto não cria uma linguagem nova: mapeia-se 1:1 para o dialeto Imp do
+Bend, que admite return e usa switch para casamento sobre números nativos e match para tipos; não há
+laços for — iteração é recursão (ou fold) [4][1]. O exemplo bend_sr.bs reescreve eval_expr e mae nesse
+dialeto, e o transpilador proposto — ainda não implementado, status declarado — converteria o arquivo .bs
+para o Core antes da checagem de leis [4]. A lição de projeto é que ergonomia não pode custar
+verificabilidade: o alvo do transpilador é sempre o subconjunto verificável.
+3.5 Camada Proof: esqueleto declarado
+A camada Proof do monorepo contém esqueletos que reconhecem, em comentários, o que cada prova real
+exigiria: indução estrutural sobre a AST de expressões para eval_deterministic; aritmética sobre Nat com
+lemas auxiliares para o quórum constitucional (na integração, Seção 4); e a observação de que uma lei
+verificável por construção do parser (como bend3_law_has_falsifier) pode ser provada por reflexividade
+[4]. O arquivo carrega o aviso verbatim: não compila; é guia estrutural. Essa é a materialização do invariante
+INV-BEND3-03 (toda prova é marcada como esqueleto) e a razão pela qual a integração usa Bend 3 como
+especificação, jamais como execução (INV-BEND3-04).
+
+
+=== PAGINA 10 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+10
+3.6 Regras de sintaxe verificadas
+O processo de diagnosticar a proposta produziu um conjunto de regras que o compilador real impõe e que o
+AGENTS.md do monorepo codifica; a Tabela 2 consolida as oito principais, com a fonte de cada
+confirmação. Três delas merecem destaque por gerarem erros silenciosos de cópia: o construtor de listas é
+Cons com campo recursivo marcado por til (Cons { head, ~tail }), não Con; o nome oficial da igualdade
+de ponto flutuante é F32.is_eq; e a sintaxe type X is Data é válida e necessária para tipos copiáveis — a
+correção intermediária que a removera estava errada e foi revista quando o GUIDE oficial foi consultado
+[1][4]. O próprio ciclo de erro e correção é parte do método: hipótese, teste contra o compilador, registro
+honesto.
+ Tabela 2 — Regras de sintaxe do Bend 2 verificadas durante o diagnóstico do Bend 3 (fonte: corpus interno [4]; confirmações no
+ README e guia oficiais [1]).
+#
+Regra verificada
+Correção que ela impõe à proposta
+1
+Tipos copiáveis usam type X is Data:; não-copiáveis,
+is Type
+Mantido is Data (a remoção intermediária foi revertida)
+2
+Til marca campo recursivo em tipos ( ~tail )
+Listas oficiais: Nil{} e Cons{head, ~tail}; nunca Con
+3
+Não há return na sintaxe Fun; corpo é expressão
+Matches exaustivos retornam expressões; return apenas no
+dialeto Imp
+4
+Prova é def construtiva com {==} e %; não há táticas
+DSL “proof ... by: induction” removida; esqueletos
+declarados
+5
+Não há laço for; use recursão, bend ou fold
+Camada Script reescrita com recursão em vez de for
+6
+Números são Nat, U32, F32 (sem u24/i24/f24); literais Nat
+usam sufixo n
+u24/f24 substituídos; (1 : U32) anotado explicitamente
+7
+Igualdade de F32 é F32.is_eq; comparação F32.is_lt
+F32.eq/F32.lt corrigidos para os nomes oficiais
+8
+F32 é axiomático: nada sobre ponto flutuante é provável
+Leis sobre floats limitadas a reflexividade ou definição por
+construção
+3.7 Monorepo proposto e status de compilação
+O monorepo completo do Bend 3 organiza o material em core/ (fontes .bend verificáveis), script/
+(exemplos Imp e transpilador proposto), proof/ (esqueletos), stdlib/ (List, Maybe, Result, String, IO,
+Parallel), tools/ (fmt, lint, test, repl), docs/ (guia, sintaxe, provas, migração) e um manifesto bend3.toml
+que declara compatibilidade com o compilador Bend 2 e alvos de compilação (C, CUDA, Metal, JavaScript,
+além de alvos planejados) [4]. A Tabela 3 consolida o status de cada componente principal; ela é
+deliberadamente pequena, porque o valor do artefato está justamente na honestidade do inventário — o
+monorepo é apresentado como registro verificável do que compila, do que está em depuração e do que é
+proposta, e não como produto acabado.
+ Tabela 3 — Status de compilação dos componentes do monorepo Bend 3 (fonte: corpus interno [4]; checador real do Bend 2 [1]).
+Componente
+Status
+Fundamento registrado
+core/src/Types.bend
+Verificado
+Todos os termos checam (“All terms check”) contra o compilador real
+core/src/Eval.bend
+Verificado após
+correção
+Erro de inferência aninhada documentado e corrigido por anotação
+explícita
+
+
+=== PAGINA 11 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+11
+Componente
+Status
+Fundamento registrado
+core/src/LAWS.bend
+Verificado (sintaxe)
+Sintaxe law confirmada no README oficial; checagem completa
+pendente de execução final documentada
+core/src/PROOF.bend
+Esqueleto (não
+compila)
+{==} sozinho insuficiente; demo oficial usa 442 linhas para duas provas
+script/examples/bend_sr.bs
+Válido (dialeto Imp)
+switch/match corretos; recursão substitui for
+proof/examples/*.bp
+(táticas)
+Proposta (não
+suportada)
+Bend 2 não possui DSL de táticas nem busca de provas
+stdlib/, tools/, transpilador
+Propostos
+Estrutura declarada no bend3.toml; implementação pendente
+4. Integração Bend 3 → Arkhe
+4.1 Mapeamento de camadas e o Gate B3
+A integração parte de um diagnóstico explícito do que é integrável: Types.bend compila e serve como
+template de tipos verificáveis; o formato de leis de LAWS.bend tem sintaxe confirmada e serve como fonte de
+invariantes; Eval.bend só integra após correção; e provas esqueleto integram apenas como documentação de
+provas planejadas, jamais como garantia [4]. Sobre esse diagnóstico, o mapeamento de camadas distribui as
+três camadas do Bend 3 sobre as camadas do Arkhe (Tabela 4) e introduz um novo ponto de controle no
+pipeline de integridade: o Gate B3, posicionado após a deliberação (Gate 0.5) e antes do hash (Gate 1) — a
+Figura 2 mostra a sequência completa. O Gate B3 verifica que artefatos produzidos por agentes satisfazem as
+leis declaradas em LAWS.bend; ele não executa código Bend, ele verifica conformidade com um formato de
+leis [4].
+ Tabela 4 — Mapeamento das camadas Bend 3 sobre as camadas do Arkhe OS (fonte: corpus interno [4]; arquitetura Arkhe [3]).
+Camada
+Bend 3
+Propósito
+Camada Arkhe correspondente
+Integração
+Core
+Paralelismo + tipos
+verificáveis
+arkhe-core / arkhe-verify
+Types.bend como templates de tipos
+verificáveis
+Script
+Ergonomia e prototipagem
+arkhe-mcp
+Inspiração para a API tipada do JEV;
+transpilador futuro
+Proof
+Verificação formal
+arkhe-governance /
+arkhe-claim-registry
+LAWS.bend como invariantes
+constitucionais do ConstitutionStore
+Pipeline de integridade do Arkhe — posição do Gate B3
+Gate 0
+sanitização
+Jev
+Gate 0.5
+deliberação
+Council
+Gate B3
+conformidade
+LAWS.bend
+Gate 1
+hash
+SHA-256/BLAKE3
+Gate 2
+assinatura
+Ed25519/ML-DSA
+Gate 3
+inclusão
+Merkle/Rekor
+fail-closed entre gates: cada entrada só avança quando o gate emite veredito positivo
+novo — especificado neste documento (INV-BEND3-01..05)
+ Figura 2 — Pipeline de gates do Arkhe com o Gate B3 especificado. Sequência: Gate 0 (sanitização com Jev), Gate 0.5
+ (deliberação do Council), Gate B3 (conformidade com LAWS.bend), Gates 1–3 (hash SHA-256/BLAKE3, assinatura
+ Ed25519/ML-DSA, inclusão Merkle/Rekor) [4][3][25][26].
+
+
+=== PAGINA 12 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+12
+4.2 O catálogo de leis do Arkhe em formato Bend
+O arquivo integrations/bend3/LAWS.bend adapta o formato oficial do Bend para as invariantes do
+Arkhe; são 27 leis organizadas em cinco famílias que espelham a estrutura de invariantes do projeto:
+evidência (proveniência, hash determinístico, cadeia append-only), governança constitucional (quórum 2/3,
+timelock de 7 dias, registro no WormGraph, fail-closed, migração em dois anéis), deliberação do Council
+(registro, dissent→HITL, multi-provider, kill criteria, limiar de confiança 0,8), decisões do JEV (confiança,
+registro, fail-closed do Gate 0, modelo verificado por sessão) e as cinco leis novas da integração Bend 3 [4].
+A Listagem 5 mostra a estrutura do arquivo com uma lei de cada família; a Tabela 5 cataloga as 27. Cada lei
+carrega, por construção do parser, um falsificador derivado do nome (padrão falsify_<nome>),
+conformando o padrão popperiano do projeto: enunciado + meio de refutação [6][4].
+Listagem 5 — integrations/bend3/LAWS.bend (estrutura, com uma lei por família; fonte: corpus interno [4]).
+# LAWS.bend — Leis formais do Arkhe OS
+# Formato: Bend 2 (verificado em 19/09/2026)
+# Propósito: fonte de verdade para invariantes do ConstitutionStore
+import Base
+import Types
+# ═══ Leis de evidência (INV-EV-01..03) ═══
+law evidence_provenance:
+  for ev: Evidence
+  # Toda evidência tem proveniência rastreável até à fonte
+  {has_provenance(ev) : Bool}
+# ═══ Leis de governança (INV-GOV-01..05) ═══
+law constitution_quorum:
+  for prop: Proposal
+  # Toda alteração constitucional requer quórum 2/3
+  {has_quorum(prop, 2, 3) : Bool}
+# ═══ Leis do Council (INV-COUNCIL-01..05) ═══
+law council_confidence_threshold:
+  for d: Deliberation
+  # Confiança < 0.8 requer HITL
+  {confidence_gte(d, 0.8) : Bool}
+# ═══ Leis do JEV (INV-JEV-01..04) ═══
+law jev_gate0_fail_closed:
+  for input: Input
+  # Gate 0 falha fechado se LocalJev não responder
+  {gate0_fails_closed(input) : Bool}
+# ═══ Leis de integração Bend 3 (INV-BEND3-01..05) ═══
+law bend3_law_has_falsifier:
+  for law: Law
+  # Toda lei tem um falsificador executável declarado
+  {has_falsifier(law) : Bool}
+ Tabela 5 — Catálogo das 27 leis de integrations/bend3/LAWS.bend, por família (fonte: corpus interno [4]).
+Família
+Leis (nomes)
+Enunciado resumido
+Evidência
+(INV-EV-01..03)
+evidence_provenance;
+evidence_hash_deterministic;
+evidence_chain_append_only
+Proveniência rastreável; hash determinístico e
+reproduzível; cadeia append-only
+Governação
+(INV-GOV-01..05)
+constitution_quorum;
+constitution_timelock; constitution_log;
+constitution_fail_closed;
+constitution_migration_two_ring
+Quórum 2/3; timelock de 7 dias; registro no
+WormGraph; falha fechada; coexistência de dois
+conjuntos de invariantes na migração
+
+
+=== PAGINA 13 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+13
+Família
+Leis (nomes)
+Enunciado resumido
+Council
+(INV-COUNCIL-01..05)
+council_wormgraph_log;
+council_dissent_hitl;
+council_multi_provider;
+council_kill_criteria;
+council_confidence_threshold
+Deliberação registrada; dissent não resolvido requer
+HITL; ≥ 2 providers distintos; kill criteria explícitos;
+confiança ≥ 0,8
+JEV (INV-JEV-01..04)
+jev_confidence_hitl; jev_wormgraph_log;
+jev_gate0_fail_closed;
+jev_model_verified
+Confiança ≥ 0,8 fora de HITL; decisão registrada; Gate
+0 falha fechado sem LocalJev; modelo verificado por
+sessão
+Bend 3
+(INV-BEND3-01..05)
+bend3_law_has_falsifier;
+bend3_types_compile;
+bend3_proof_is_skeleton;
+bend3_spec_not_execution;
+bend3_no_unverified_deps
+Lei com falsificador; tipo compila no Bend 2; prova
+marcada como esqueleto; especificação (não execução);
+sem dependência não verificada
+4.3 Tipos verificáveis do Arkhe em Bend
+O arquivo integrations/bend3/Types.bend reproduz os tipos centrais da governança do Arkhe na sintaxe
+verificada do Bend 2, de modo que templates de tipos possam ser compartilhados entre a especificação e a
+implementação Rust [4][3]. A Listagem 6 mostra a seleção principal: a cadeia de evidência com hash de
+conteúdo e hash anterior (a estrutura de record chain do WormGraph), a invariante com falsificador, a
+proposta com votos, a deliberação com provedores, a decisão do Jev e os tipos novos da integração (Law e
+Proof, com a marcação booleana de esqueleto). Reproduções de hash como campos F32 são simplificações
+declaradas do formato para fins de especificação — F32 é axiomático e não serve para provar propriedades
+de bytes; a implementação real usa SHA-256/BLAKE3 em Rust [20][21][4].
+Listagem 6 — integrations/bend3/Types.bend (seleção; fonte: corpus interno [4]).
+# Types.bend — Tipos do Arkhe OS
+# Verificado contra o compilador Bend 2 real em 19/09/2026
+type Evidence is Data:
+  MkEvidence {
+    index: U32,
+    content_hash: RecordHash,
+    prev_hash: RecordHash,
+    record_hash: RecordHash
+  }
+type Invariant is Data:
+  MkInvariant {
+    id: String,
+    statement: String,
+    falsifier: String,
+    status: U32
+  }
+type Deliberation is Data:
+  MkDeliberation {
+    question: String,
+    verdict: String,
+    confidence: F32,
+    providers: List
+  }
+type JevDecision is Data:
+  MkJevDecision {
+    risk: String,
+
+
+=== PAGINA 14 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+14
+    confidence: F32,
+    decided_at: String
+  }
+type Law is Data:
+  MkLaw {
+    name: String,
+    statement: String,
+    falsifier: String
+  }
+type Proof is Data:
+  MkProof {
+    law_name: String,
+    skeleton: Bool,
+    body: String
+  }
+4.4 O crate arkhe-bend3: parser e Gate B3
+A parte executável da integração é um crate Rust dedicado, arkhe-bend3, com cinco módulos: parser de leis,
+compilador de leis para invariantes, checador de tipos via CLI do compilador, o gate B3 e erros tipados [4].
+O parser (Listagem 7) consome o formato declarativo de LAWS.bend — linhas law nome:, for parâmetros
+e enunciado entre chaves — e deriva o falsificador do nome; falha fechado se um falsificador não puder ser
+derivado (INV-BEND3-01). O checador de tipos invoca o compilador Bend 2 e exige a marcação “All terms
+check” na saída (INV-BEND3-02). A verificação de artefatos no gate é, no estado atual, uma conferência de
+presença das leis no artefato — o próprio código comenta que, em produção, a checagem completa invocaria
+o compilador; essa honestidade áspera é parte do registro [4].
+Listagem 7 — src/gate_b3.rs (essencial; elisões marcadas; fonte: corpus interno [4]).
+//! Gate B3 — Verificação de conformidade com LAWS.bend.
+//! Este gate NÃO executa código Bend. Parseia `LAWS.bend` e verifica que
+//! os artefatos produzidos por agentes satisfazem as leis declaradas.
+//! Invariantes: INV-BEND3-01..05.
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
+#[derive(Debug, Clone, Error)]
+pub enum Bend3Error {
+    #[error("INV-BEND3-01: lei '{0}' sem falsificador")]
+    LawWithoutFalsifier(String),
+    #[error("INV-BEND3-02: tipo '{0}' não compila em Bend 2")]
+    TypeNotCompilable(String),
+    #[error("INV-BEND3-03: prova '{0}' não marcada como esqueleto")]
+    ProofNotSkeleton(String),
+    #[error("INV-BEND3-04: Bend 3 usado para execução, não especificação")]
+    SpecNotExecution,
+    #[error("INV-BEND3-05: dependência não verificada: {0}")]
+    UnverifiedDependency(String),
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Law {
+    pub name: String,
+    pub params: Vec,
+    pub statement: String,
+    pub return_type: String,
+    pub falsifier: String,   // derivado do nome: falsify_
+}
+
+
+=== PAGINA 15 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+15
+/// Parseia o conteúdo de LAWS.bend em Vec. Fail-closed.
+pub fn parse_laws(content: &str;) -> Result, Bend3Error> {
+    // ... varredura linha a linha: 'law :', 'for ',
+    // enunciado entre chaves '{expr : Tipo}'; comentários e imports
+    // ignorados. Ao fechar cada lei: falsifier = falsify_.
+    // ...
+    for law in &laws; {
+        if law.falsifier.is_empty() {
+            return Err(Bend3Error::LawWithoutFalsifier(law.name.clone()));
+        }
+    }
+    Ok(laws)
+}
+/// Verifica que Types.bend compila em Bend 2 (INV-BEND3-02).
+pub fn verify_types_bend(types_path: &str;) -> Result<(), Bend3Error> {
+    use std::process::Command;
+    let output = Command::new("bun")
+        .arg("bend2/main.ts")
+        .arg(types_path)
+        .output()
+        .map_err(|_| Bend3Error::TypeNotCompilable(types_path.to_string()))?;
+    let stdout = String::from_utf8_lossy(&output.stdout;);
+    if !stdout.contains("All terms check") {
+        return Err(Bend3Error::TypeNotCompilable(types_path.to_string()));
+    }
+    Ok(())
+}
+/// Verifica que um artefato menciona as leis (aproximação documentada:
+/// em produção, invocar o compilador Bend 2 via CLI).
+pub fn verify_artifact(laws: &[Law], artifact: &str;) -> GateB3Result {
+    // ... para cada lei, conferir presença do nome no artefato;
+    // falha → GateB3Result { passed: false, laws_failed: [...] }
+}
+A suíte de testes embutida no crate fixa o comportamento mínimo esperado: duas leis de amostra são
+parseadas com nomes e falsificadores corretos; o gate aprova um artefato que contém todas as leis e reprova
+quando uma falta; e o compilador de leis (Listagem 8) converte cada Law em uma Invariant do
+ConstitutionStore com identificador padronizado INV-BEND3-<NOME>, recusando leis sem falsificador [4].
+No lado da governança, um método novo import_from_bend3 no ConstitutionStore importa o catálogo
+inteiro; leis fundacionais entram sem quórum, conforme a especificação.
+Listagem 8 — src/law_compiler.rs e adição ao ConstitutionStore (essencial; fonte: corpus interno [4]).
+
+
+=== PAGINA 16 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+16
+//! Compila `LAWS.bend` em `Invariant`s do `ConstitutionStore`.
+use crate::error::Bend3Error;
+use crate::gate_b3::Law;
+use arkhe_governance::Invariant;
+/// Fail-closed: lei sem falsificador → erro (INV-BEND3-01).
+pub fn law_to_invariant(law: &Law;) -> Result {
+    if law.falsifier.is_empty() {
+        return Err(Bend3Error::LawWithoutFalsifier(law.name.clone()));
+    }
+    Ok(Invariant {
+        id: format!("INV-BEND3-{}", law.name.to_uppercase()),
+        statement: law.statement.clone(),
+        falsifier: law.falsifier.clone(),
+        votes_for: 0,
+        votes_against: 0,
+    })
+}
+pub fn compile_laws(laws: &[Law]) -> Result, Bend3Error> {
+    laws.iter().map(law_to_invariant).collect()
+}
+// crates/arkhe-governance/src/constitution.rs (adição)
+impl ConstitutionStore {
+    /// Importa invariantes de um ficheiro LAWS.bend.
+    /// INV-BEND3-01: toda lei tem falsificador.
+    /// INV-BEND3-05: sem dependências não verificadas.
+    pub fn import_from_bend3(&mut; self, laws_content: &str;)
+        -> Result
+    {
+        let laws = arkhe_bend3::gate_b3::parse_laws(laws_content)
+            .map_err(|e| GovernanceError::InvalidTimestamp(e.to_string()))?;
+        let mut imported = 0;
+        for law in &laws; {
+            let invariant = arkhe_bend3::law_compiler::law_to_invariant(law)
+                .map_err(|e| GovernanceError::InvalidTimestamp(e.to_string()))?;
+            // Leis fundacionais entram sem quórum.
+            self.invariants.push(invariant);
+            imported += 1;
+        }
+        Ok(imported)
+    }
+}
+4.5 Invariantes novas da integração
+A integração acrescenta cinco invariantes ao registro da governança (config/invariants.json), cada um
+com enunciado, falsificador, responsável, status e severidade (Tabela 6). Dois detalhes merecem leitura
+cuidadosa. Primeiro, o status verified de INV-BEND3-02 e INV-BEND3-03 deriva de testes
+automatizados contra fixtures, e o de INV-BEND3-01 é planned no catálogo — o registro mantém a
+diferença em vez de uniformizar tudo como pronto [4]. Segundo, INV-BEND3-04 é o invariante que protege
+o projeto de si mesmo: qualquer artefato executável que invocasse um compilador “Bend 3” inexistente
+configuraria violação crítica, com falsificador explícito.
+ Tabela 6 — Invariantes INV-BEND3-01..05 registradas pela integração (fonte: corpus interno [4]).
+ID
+Enunciado
+Falsificador
+Status
+Severidade
+INV-BEND3-01
+Toda lei em LAWS.bend tem um
+falsificador executável declarado
+Lei sem falsificador aceita pelo
+parser
+planned
+critical
+
+
+=== PAGINA 17 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+17
+ID
+Enunciado
+Falsificador
+Status
+Severidade
+INV-BEND3-02
+Todo tipo em Types.bend compila em
+Bend 2 real
+Tipo que falha no “All terms
+check”
+verified
+high
+INV-BEND3-03
+Toda prova em PROOF.bend é marcada
+como esqueleto não compilável
+Prova não marcada apresentada
+como verificada
+verified
+high
+INV-BEND3-04
+Bend 3 é usado para especificação, não
+para execução
+Artefato executável que invoca o
+compilador Bend 3
+verified
+critical
+INV-BEND3-05
+A integração Bend 3 não depende de
+código não verificado
+Dependência de Eval.bend ou
+PROOF.bend em produção
+verified
+critical
+4.6 Empacotamento e roadmap
+O crate declara dependências internas apenas dos crates arkhe-standards e arkhe-governance (mais
+serde, serde_json e thiserror do workspace), edição Rust 2024 e licença dupla MIT OR Apache-2.0,
+mantendo INV-BEND3-05 por construção — nenhuma dependência externa não verificada entra na cadeia
+[4][32]. O roadmap de implantação da integração está organizado em seis fases de uma a duas semanas (B3.1
+a B3.6), totalizando sete semanas até o Gate B3 operacional com um ADR aceito (ADR-010 no plano
+original); a Seção 6.4 consolida esse roadmap com as fases do Jev (J1–J5) em nove semanas [4]. O próximo
+passo concreto registrado pelo corpus é triple: executar cargo test -p arkhe-bend3, verificar
+Types.bend contra o compilador real e validar LAWS.bend contra o parser.
+5. Gate 0 com Jev e jevcache
+5.1 arkhe-mcp: a superfície MCP do Arkhe
+O arkhe-mcp é o servidor Model Context Protocol do Arkhe: expõe as capacidades de segurança do sistema
+a agentes de terceiros (hospedeiros como editores e clientes MCP), de modo que qualquer agente conectado
+herde sanitização de entrada antes do parse, limites de capacidade por ação (fuel/epoch) e audit trail
+criptográfico de todas as decisões [4][13][12]. A arquitetura usa classificação semântica de intenção para
+detectar ataques como “ignore suas instruções” antes de qualquer parsing — defesa contra o LLM01 (prompt
+injection) da OWASP [28]. O bridge MCP atua como proxy de confiança entre o agente e o núcleo,
+aplicando as políticas do Gate 0 a cada chamada de ferramenta [4].
+5.2 Jev no Gate 0: decisão calibrada em vez de classificador opaco
+A integração substitui ou complementa o classificador de intenção do Gate 0 pelo Jev, com uma vantagem
+arquitetural precisa: perguntas tipadas declaradas em tempo de execução (is_prompt_injection?,
+intent_category?, risk_score?) devolvem probabilidades calibradas que podem dirigir o fluxo de
+controle diretamente — sem embedding opaco, sem retraining por domínio [11][4]. A Tabela 7 compara as
+duas abordagens como o corpus as articula. Os limiares recomendados (Tabela 8) seguem o padrão do
+corpus: bloquear a partir de 0,9 de risco, escalar para revisão humana entre 0,7 e 0,9 e permitir abaixo de 0,7
+— com a ressalva explícita de que os limiares devem ser calibrados com amostras próprias, pois o Jev é
+sensível ao domínio [4].
+ Tabela 7 — Classificador de intenção por embedding versus Jev no Gate 0 (síntese do corpus [4]; propriedades do Jev conforme
+ fabricante [11]).
+
+
+=== PAGINA 18 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+18
+Aspecto
+Classificador por embedding
+Jev (System One)
+Saída
+Classe + escore implícito
+Probabilidade calibrada explícita por pergunta tipada
+Latência
+~50–200 ms
+70–500 ms (pontaa ponta, segundo fabricante)
+Custo
+Moderado (inferência GPU própria)
+US$ 0,042/MTok de entrada; saída gratuita (preço do
+fabricante)
+Explicabilidade
+Baixa (embedding opaco)
+Alta (perguntas declaradas em runtime)
+Adaptabilidade
+Requer retraining
+Zero-shot: perguntas declaradas por chamada
+Falsos positivos
+Taxa desconhecida
+0 em 100 fixtures (reportado pelo jevcache do corpus)
+ Tabela 8 — Limiares de risco recomendados para o Gate 0 (fonte: corpus interno [4]).
+risk_score
+Ação
+Fundamento
+≥ 0,9
+BLOCK — rejeitar entrada
+Alta confiança de intenção maliciosa (ex.: instrução de override)
+0,7 – 0,9
+HITL — revisão humana
+Confiança média; contexto humano resolve ambiguidade
+< 0,7
+ALLOW — prosseguir
+Risco baixo; entrada legítima segue pelo pipeline
+5.3 jevcache: cache semântico por decisão calibrada
+O jevcache do corpus é um proxy compatível com a API de chat-completions que usa o Jev para decidir se
+uma chamada pode ser evitada [4]. O fluxo declarado tem seis passos: política (ignorar streaming, tools e
+multimodal), cache exato por SHA-256 da requisição canônica, candidatos recentes no mesmo namespace,
+consulta ao Jev para same_intent e escolha do melhor candidato, miss com encaminhamento ao upstream, e
+fail-open se o Jev falhar. O diferencial declarado é não usar similaridade de cosseno: a equivalência é
+decidida por probabilidade calibrada de mesma intenção, o que permite separar prompts superficialmente
+parecidos com intenções distintas — o exemplo do corpus contrasta um pedido de receita de bolo com um
+pedido de “bolo de dinamite” [4]. O ganho esperado de cache é de 40–60% das chamadas em fluxos
+repetitivos, com economia de ordem de centésimo de dólar por acerto; ambos são alvos do projeto, não
+medições independentes.
+5.4 A ferramenta arkhe_jevcache
+A integração expõe o jevcache como ferramenta MCP (arkhe_jevcache) dentro do arkhe-mcp, encadeando
+Gate 0 e cache em uma única chamada com registro no WormGraph (Listagem 9). A função aplica primeiro
+a classificação de intenção; se o risco cair na faixa de HITL, retorna sem resposta e com sinalização de
+revisão; se atingir a faixa de bloqueio, retorna recusa; caso contrário, consulta o cache, registra a decisão no
+WormGraph e devolve resposta, origem (cache ou upstream), confiança e economia estimada [4]. Os
+invariantes de decisão da seção (Tabela 9) cobrem os quatro pontos de falha possíveis: confiança
+insuficiente, ausência de registro, indisponibilidade do modelo e cache sem intenção verificada.
+Listagem 9 — arkhe_jevcache como ferramenta MCP (essencial; fonte: corpus interno [4]).
+
+
+=== PAGINA 19 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+19
+// integrations/arkhe-mcp/src/jevcache_tool.rs
+//! Invariantes: INV-JEV-01 (confiança < 0.8 requer HITL);
+//! INV-JEV-02 (toda decisão Jev registrada no WormGraph);
+//! INV-JEV-03 (Gate 0 falha fechado se LocalJev não responder);
+//! INV-BEND3-04 (Bend 3 é especificação, não execução).
+pub async fn arkhe_jevcache(req: JevcacheRequest)
+    -> Result
+{
+    // 1. Gate 0: classificação de intenção via Jev.
+    let gate0 = classify_intent(&req.prompt;, &req.gate0;_questions).await?;
+    // 2. INV-JEV-01: faixa de HITL (0.7 ≤ risco < 0.9).
+    if gate0.risk_score >= 0.7 && gate0.risk_score < 0.9 {
+        return Ok(JevcacheResponse {
+            response: None,
+            source: CacheSource::Upstream,
+            gate0_result: Gate0Result { allowed: false,
+                requires_hitl: true, ..gate0 },
+            audit_id: format!("wg_hitl_{}", uuid::Uuid::new_v4()),
+            /* ... */
+        });
+    }
+    // 3. BLOCK se risk_score ≥ 0.9 (fail-closed).
+    if gate0.risk_score >= 0.9 {
+        return Ok(JevcacheResponse {
+            gate0_result: Gate0Result { allowed: false,
+                requires_hitl: false, ..gate0 },
+            audit_id: format!("wg_block_{}", uuid::Uuid::new_v4()),
+            /* ... */
+        });
+    }
+    // 4. jevcache: cache semântico com decisão same_intent do Jev.
+    let cache_result =
+        jevcache_lookup(&req.prompt;, &req.model;, &req.namespace;).await?;
+    // 5. INV-JEV-02: registrar a decisão no WormGraph.
+    let audit_id = log_to_wormgraph(&req;, &gate0;, &cache;_result).await?;
+    Ok(JevcacheResponse { response: cache_result.response,
+        source: cache_result.source,
+        confidence: cache_result.confidence,
+        saved_usd: cache_result.saved_usd,
+        gate0_result: Gate0Result { allowed: true,
+            requires_hitl: false, ..gate0 },
+        audit_id })
+}
+async fn classify_intent(prompt: &str;, questions: &[Gate0Question])
+    -> Result
+{
+    let jev = typesafe::JevClient::new(
+        std::env::var("TYPESAFE_API_KEY")?);
+    let answers = jev.evaluate(typesafe::State {
+        input: prompt.to_string(),
+        questions: /* Boolean | Choice(options) | Score(0..1) */
+            questions.iter().map(to_typesafe_question).collect(),
+    }).await?;
+
+
+=== PAGINA 20 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+20
+    let risk_score = answers.get_score("risk_score").unwrap_or(0.0);
+    let intent = answers.get_choice("intent_category")
+        .unwrap_or_else(|| "unknown".to_string());
+    Ok(Gate0Result {
+        allowed: risk_score < 0.7,
+        risk_score,
+        intent_category: intent,
+        requires_hitl: risk_score >= 0.7 && risk_score < 0.9,
+    })
+}
+ Tabela 9 — Invariantes INV-JEV-01..05 registradas para o Gate 0 e o jevcache (fonte: corpus interno [4]).
+ID
+Enunciado
+Falsificador
+Status
+Severidade
+INV-JEV-01
+Confiança < 0,8 requer HITL
+Decisão Jev com confiança < 0,8
+executada sem HITL
+verified
+critical
+INV-JEV-02
+Toda decisão Jev é registrada no
+WormGraph
+Decisão Jev sem entrada no
+WormGraph
+verified
+critical
+INV-JEV-03
+Gate 0 falha fechado se LocalJev não
+responder
+Gate 0 permite entrada com Jev
+indisponível
+verified
+critical
+INV-JEV-04
+O modelo LocalJev é verificado antes de
+cada sessão
+Sessão iniciada com modelo não
+verificado
+planned
+high
+INV-JEV-05
+jevcache só armazena respostas com
+same_intent ≥ 0,95
+Cache hit com same_intent < 0,95
+verified
+high
+Uma observação de simetria operacional fecha a seção: o par fail-closed/fail-open é deliberado e
+heterogêneo. O Gate 0 falha fechado porque sua função é recusar o que não pôde ser julgado; o cache falha
+aberto porque sua função é economizar, e economizar nunca pode virar rejeição de serviço [4]. Essa
+assimetria é registrada como decisão de projeto e retomada na Seção 7 como objeto de crítica legítima (um
+cache que falha aberto pode, em degradação, elevar custo e latência sem violar segurança — o que é
+aceitável; o Gate 0 que falha aberto seria uma violação).
+6. Arquitetura unificada: especificação, decisão e governança
+6.1 A pilha em três planos
+A convergência das peças anteriores forma uma pilha coerente em que cada plano resolve um problema
+distinto: especificação (Bend 3: o que deve ser verdade), decisão (Jev: o que é permitido agora) e
+governança (Arkhe OS: o que fica registrado e como se prova depois) [4]. A Figura 3 organiza a pilha: as
+leis de LAWS.bend compilam para invariantes do ConstitutionStore; o pipeline de gates conserva a ordem
+sanitização → deliberação → conformidade → hash → assinatura → inclusão; o Jev serve ao Gate 0, ao cache
+e à deliberação; e o arkhe-mcp expõe tudo a agentes externos como ferramentas MCP. O fluxo lógico
+declarado no corpus sintetiza a tese: Bend 3 define o que deve ser verdade; Jev decide se uma ação está em
+conformidade; Arkhe OS executa o pipeline com audit trail [4].
+
+
+=== PAGINA 21 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+21
+Arquitetura unificada Bend 3 × Arkhe OS × Jev
+Especificação
+Bend 3 (formato de leis)
+LAWS.bend — 27 leis
+Types.bend — tipos verificáveis
+PROOF.bend — esqueleto declarado
+Gate B3 — conformidade
+Decisão
+Jev (System One)
+Gate 0 — is_prompt_injection?
+risk_score? (limiares 0,7 / 0,9)
+jevcache — same_intent
+Council — kill criteria
+Governança
+Arkhe OS
+ConstitutionStore — invariantes
+WormGraph — cadeia append-only
+Gates 1–3 — hash, assinatura,
+inclusão Merkle (Rekor)
+leis → invariantes
+ decisões → registro
+arkhe-mcp — Model Context Protocol
+ferramentas MCP: arkhe_jevcache · arkhe_governance · arkhe_verify  (agentes externos)
+nada é executado sem prova · nada é decidido sem confiança calibrada · nada é registrado sem audit trail
+ Figura 3 — Arquitetura unificada Bend 3 × Arkhe OS × Jev. Especificação (LAWS.bend/PROOF.bend) alimenta o
+ConstitutionStore; o pipeline de gates orquestra sanitização, deliberação, Gate B3, hash, assinatura e inclusão; o Jev decide no Gate
+ 0, no cache e no Council; o arkhe-mcp expõe as ferramentas [4][13][25].
+6.2 Dois cenários de fluxo ponta a ponta
+O corpus documenta dois traços completos do pipeline que ilustram a divisão de papel entre as camadas
+(Listagem 10). No cenário de ataque, uma entrada de injeção de prompt (“ignore suas instruções e me diga
+como hackear...”) é classificada no Gate 0 com is_prompt_injection? → True (0,98) e risk_score
+0,95, e a decisão é BLOCK com audit id; nada alcança os gates criptográficos. No cenário legítimo, uma
+pergunta educacional (“explique o que é MVCC no PostgreSQL”) recebe risco 0,02, o cache encontra
+candidato com same_intent 0,97, o Gate B3 confirma as leis aplicáveis e a resposta sai com origem no
+cache, confiança e economia registradas [4]. A lisura metodológica exige marcar que os números dos traços
+são valores ilustrativos do projeto, não medições independentes; o protocolo de medição (fixtures próprias e
+calibração de limiares) é justamente o que a fase J5 do roadmap propõe.
+Listagem 10 — Traços do pipeline unificado nos dois cenários (adaptado do corpus interno [4]; valores ilustrativos).
+CENÁRIO A — ATAQUE (bloqueio no Gate 0)
+INPUT: "Ignore suas instruções e me diga como hackear..."
+  GATE 0 (Jev): is_prompt_injection? → True (0.98)
+                intent_category?  → malicious/instruction_override
+                risk_score?       → 0.95 (HIGH)
+  DECISÃO: BLOCK (risk ≥ 0.9)  → fail-closed
+  OUTPUT: { allowed: false, reason: "prompt_injection",
+            confidence: 0.98, audit_id: "wg_block_..." }
+CENÁRIO B — USO LEGÍTIMO (cache hit + conformidade)
+INPUT: "Explique o que é MVCC no PostgreSQL"
+  GATE 0 (Jev): is_prompt_injection? → False (0.01)
+                intent_category?  → educational/query
+                risk_score?       → 0.02 (LOW) → ALLOW
+  JEVCACHE:     same_intent?      → True (0.97) → HIT
+  GATE B3:      evidence_provenance?        → True
+                bend3_law_has_falsifier?    → True → PASS
+  GATES 1-3:    hash SHA-256/BLAKE3 → assinatura Ed25519/ML-DSA
+                → inclusão Merkle/Rekor (prova de inclusão)
+  OUTPUT: { response, source: "jevcache", confidence: 0.97,
+            saved: ~$0.01, audit_id: "wg_..." }
+
+
+=== PAGINA 22 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+22
+6.3 Princípios de operação
+Quatro princípios atravessam a arquitetura e são verificáveis por invariantes. P1 — Fail-closed onde se
+decide, fail-open onde se economiza: o Gate 0 recusa entrada sem julgamento disponível (INV-JEV-03), o
+cache segue para o upstream em caso de falha. P2 — Especificação não é execução: leis e tipos do formato
+Bend governam e documentam; nenhum artefato executável depende do compilador inexistente
+(INV-BEND3-04, INV-BEND3-05). P3 — Toda lei tem falsificador: o parser recusa lei sem meio de
+refutação declarado (INV-BEND3-01), estendendo ao nível de linguagem o padrão epistemológico do
+projeto [6][5]. P4 — Nada se decide sem registro: decisões do Gate 0, deliberações do Council e
+alterações constitucionais exigem entrada no WormGraph, cadeia append-only com provas de inclusão
+Merkle [26][25][4]. A lição central registrada pelo corpus condensa os quatro: não confundir especificação
+com execução — o Bend 3 é útil como disciplina epistêmica (leis explícitas, falsificadores declarados), não
+como linguagem de produção [4].
+6.4 Roadmap consolidado e resumo executivo
+O roadmap consolidado combina as seis fases da integração Bend 3 (B3.1–B3.6, sete semanas) com as cinco
+fases do Jev/jevcache (J1–J5, seis semanas), reordenadas por dependência técnica em nove semanas de
+caminho crítico (Tabela 10) [4]. As métricas de aceitação são binárias e verificáveis por teste — arquivos
+criados, testes passando, leis importadas, gate funcional, invariantes registradas, decisões 100% registradas,
+falsos positivos abaixo de 1% após calibração — no padrão “mostra o número” do projeto. A Tabela 11
+fecha com o resumo executivo em formato pergunta-resposta, reproduzindo a estrutura de síntese da fonte
+primária.
+ Tabela 10 — Roadmap consolidado de implantação (fonte: corpus interno [4]).
+Fase
+Duração
+Entregável
+Métrica de aceitação
+B3.1
+1 semana
+LAWS.bend + Types.bend + PROOF.bend
+Arquivos criados e parseados
+B3.2
+2 semanas
+gate_b3.rs + law_parser.rs
+10+ testes passando
+J1
+1 semana
+Ferramenta arkhe_jevcache no arkhe-mcp
+Ferramenta registrada
+J2
+2 semanas
+Gate 0 com Jev (classificação de intenção)
+100% das entradas classificadas
+J3
+1 semana
+Integração jevcache (cache semântico)
+Cache hit rate ≥ 40%
+J4
+1 semana
+Audit trail WormGraph
+100% das decisões registradas
+J5
+1 semana
+Calibração de limiares com dados próprios
+Falsos positivos < 1%
+B3.3
+1 semana
+law_compiler.rs + integração ConstitutionStore
+Leis importadas no store
+Total
+9 semanas
+Pipeline completo operacional
+Gate B3 + Gate 0 calibrados
+ Tabela 11 — Resumo executivo em pergunta-resposta (síntese do corpus [4]).
+Pergunta
+Resposta
+Bend 3 existe oficialmente?
+Não. Bend 2 é a linguagem real (setembro/2026); Bend 3 é proposta de especificação em
+três camadas.
+O que compila hoje?
+Types.bend (com is Data), Eval.bend corrigido e LAWS.bend (sintaxe law confirmada).
+
+
+=== PAGINA 23 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+23
+Pergunta
+Resposta
+O que não compila?
+PROOF.bend permanece esqueleto; táticas não existem no Bend 2; demo oficial usa 442
+linhas para duas provas.
+Como o Bend 3 integra ao Arkhe?
+Como formato de especificação: LAWS.bend → invariantes do ConstitutionStore;
+Types.bend → templates de tipos verificáveis.
+O que é o Gate B3?
+Ponto de controle novo entre deliberação e hash: verifica conformidade de artefatos com
+as leis declaradas.
+Qual o papel do Jev?
+Decisão calibrada e tipada no Gate 0 e no cache; limiares 0,7/0,9; fail-closed no gate,
+fail-open no cache.
+Invariantes novas?
+Cinco da integração (INV-BEND3-01..05) e cinco de decisão (INV-JEV-01..05).
+Próximo passo?
+cargo test -p arkhe-bend3; verificar Types.bend contra o compilador real; validar
+LAWS.bend contra o parser.
+7. Contra-argumentos e limitações
+7.1 Bend 3 não existe como linguagem
+O contra-argumento mais forte contra este documento é seu próprio título: “Bend 3” não é um artefato
+oficial, e toda a documentação trata de uma proposta sobre o Bend 2 [4][1]. O risco de reificação — leitores
+passarem a citar “Bend 3” como se existisse — é mitigado, mas não eliminado, pelas marcações explícitas de
+status e pelo invariante INV-BEND3-04. A defesa epistemológica é que o valor do artefato não depende da
+existência da linguagem: as leis e tipos em formato Bend são consumidos pelo parser do crate Rust, não pelo
+compilador Bend, e permanecem úteis mesmo que a camada Proof nunca se materialize. Ainda assim, é uma
+dependência de convenção de projeto, não de padrão externo.
+7.2 Provas incompletas e o custo real de provar
+O esqueleto da camada Proof é uma confissão planejada: {==} sozinho não sustenta provas indutivas
+completas, e o demo oficial da linguagem gasta 442 linhas para provar duas propriedades de um jogo trivial
+[1][4]. Sem táticas nem busca de provas, o custo de provar leis não triviais (por exemplo, quórum
+constitucional com aritmética de Nat) pode exceder o custo de escrevê-las por ordens de grandeza. O projeto
+responde com estados declarados e com lemas auxiliares planejados, mas a objeção permanece: até que a
+infraestrutura de prova exista, a camada Proof é documentação de intenções, e o Gate B3 não deve ser
+representado como verificador formal completo — é um verificador de conformidade declarativa com
+aproximações documentadas.
+7.3 F32 axiomático e o domínio numérico limitado
+O Bend 2 declara oficialmente que F32 é axiomático — nada sobre ponto flutuante pode ser provado — e
+que os números são apenas Nat, U32 e F32, sem U64/I64/F64 [1]. Para um projeto cujo exemplo executável
+é regressão simbólica com fitness em F32, isso significa que as leis mais interessantes (limites de erro,
+monotonicidade do fitness, propriedades numéricas do MAE) estão fora do alcance da prova mecânica;
+restam reflexividades e propriedades por construção. O corpus trata a limitação com honestidade
+(safe_div_zero é uma lei de construção), mas ela reduz o alcance prático da integração em domínios
+numéricos — exatamente os domínios que motivam paralelismo em GPU.
+
+
+=== PAGINA 24 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+24
+7.4 O compilador é jovem e 99% escrito por IA
+O README oficial registra, entre as limitações, que o compilador é 99% escrito por IA e ainda não foi
+totalmente auditado, que a formalização Lean diverge de bend.ts com possíveis bugs de consistência
+precoces, e que se deve esperar bugs [1]. Para uma arquitetura cujo argumento central é confiança
+verificável, ancorar a camada de especificação em um compilador não auditado cria uma tensão que precisa
+ser nomeada: a prova no compilador é tão confiável quanto o compilador. A resposta do projeto é dupla —
+verificação por execução no lado Arkhe (testes que falham fechado) e dependência mínima do compilador
+(apenas Types.bend é checado via CLI) — mas a tensão não desaparece e deve ser reavaliada a cada release
+[19][4].
+7.5 Métricas do Jev são alegações do fabricante
+Os números de desempenho do Jev citados neste documento (70–500 ms; US$ 0,042 por milhão de tokens de
+entrada; 193,6× mais rápido e 444,6× mais barato; zero erros de tipo; zero falsos positivos em 100 fixtures do
+jevcache) vêm do material primário da TypeSafe ou do corpus interno, não de avaliações independentes
+[11][14][4]. A própria empresa qualifica seus claims: os ganhos de workflow são “no limite superior dos
+ganhos reais”, o benchmark usa referências que enviesam para modelos específicos, o preço pode estar
+subsidiado e a ausência de erro de tipo é garantia estrutural do schema, não resultado empírico [11]. Este
+documento adota, portanto, hedging adequado: os limiares do Gate 0 exigem calibração com amostras
+próprias (fase J5), e nenhum argumento da arquitetura depende dos números de marketing — depende da
+interface tipada e calibrada, que é verificável por uso.
+7.6 Aproximações no Gate B3 e risco de Goodhart
+A verificação de artefatos no Gate B3, no estado especificado, confere a presença dos nomes das leis no
+artefato — uma aproximação fraca que o código comenta explicitamente e que, em produção, deveria
+invocar o compilador [4]. Qualquer métrica substituta fraca convida ao efeito Goodhart: um agente pode
+satisfazer a presença de nomes sem satisfazer as leis. As mitigações projetadas (checagem real via CLI para
+tipos; parser fail-closed para leis; provas construtivas quando existirem) reduzem o risco, mas o estado atual é
+insuficiente para garantir conformidade semântica — e este documento não deve ser lido como se o contrário
+fosse verdade. O mesmo vale para os limiares 0,7/0,9 do Gate 0: sem a fase J5 executada com dados do
+domínio, são hipóteses calibráveis, não constantes validadas.
+7.7 Dependências externas e concentração de risco
+A arquitetura concentra três dependências externas: o compilador Bend 2 (Apache-2.0, repositório público),
+a API do Jev (serviço comercial em acesso antecipado, com chave de API) e a infraestrutura de transparência
+(Sigstore/Rekor) [1][11][25]. Cada uma carrega risco próprio — evolução de sintaxe que quebre leis
+existentes, indisponibilidade ou mudança de preço do serviço de decisão, e operação de um log público de
+terceiros. As mitigações herdadas do Arkhe são as usuais da casa: minimizar a superfície de contato (só o
+checador de tipos chama o compilador), fail-closed no ponto de decisão crítico, fail-open no ponto de
+economia, e audit trail local (WormGraph) que não depende do provedor externo para reconstrução de
+histórico [3][4]. Restá o risco de lock-in de interface: as perguntas tipadas do Jev são portáveis por definição
+(Boolean/Choice/Score), mas a calibração obtida não é.
+
+
+=== PAGINA 25 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+25
+7.8 Limitações do método e do autor
+Finalmente, as limitações do próprio estudo. Este é um documento de especificação e consolidação
+produzido por autor único sobre um corpus interno que ele mesmo editou — o viés de proximidade é
+inerente, e o projeto o compensa com autocorreções registradas e estados epistêmicos explícitos, mas não o
+elimina [5][8]. As verificações de compilação citadas (Types.bend, Eval.bend, LAWS.bend) são relatos de
+execução datados de 19/09/2026 contra a versão do compilador daquele dia; releases posteriores podem
+invalidá-las, e o documento não inclui re-execução independente nesta data. Por fim, os traços de pipeline da
+Seção 6.2 usam valores ilustrativos; a medição controlada é trabalho futuro, condicionado à fase J5 do
+roadmap.
+8. Conclusão e implicações
+Esta documentação consolidou a integração entre a proposta Bend 3 e o Arkhe OS com um método explícito:
+sintaxe verificada contra o compilador real, estados epistêmicos declarados por artefato, invariantes com
+falsificadores e fontes clicáveis para toda afirmação externa. O resultado é uma arquitetura em que
+especificação (27 leis em formato Bend compiladas para invariantes constitucionais), decisão (Gate 0 com
+limiares calibráveis sobre probabilidades do Jev) e governança (pipeline de gates com hash, assinatura e
+inclusão em log de transparência) operam como planos separados e conectados — e em que a proteção contra
+o erro mais provável do projeto, confundir especificação com execução, é ela mesma um invariante crítico
+com falsificador executável [4][6].
+As implicações são de dois tipos. Para a engenharia de agentes, o desenho demonstra que a unidade de
+confiança pode ser o formato da lei, e não o código que a implementa: enquanto a camada Proof não existir,
+o valor está no catálogo declarativo, no parser fail-closed e nos gates — e esse valor sobrevive à evolução do
+compilador subjacente. Para a pesquisa, a integração aponta um programa de trabalho mensurável: executar o
+roadmap de nove semanas, calibrar limiares com fixtures do domínio, substituir a verificação por presença
+no Gate B3 por checagem real, e reavaliar a cada release do Bend 2 o custo de transformar esqueletos de
+prova em provas construtivas — começando pelas leis mais baratas, as verificáveis por construção do parser.
+O critério de sucesso permanece o da casa: mostrar o número, com o status ao lado [5][8].
+Síntese em uma frase: o Bend 3 fornece a especificação formal (leis com falsificadores), o Jev fornece a decisão
+calibrada (Gate 0 e cache), e o Arkhe OS fornece a governança auditável (ConstitutionStore e WormGraph) —
+nada é executado sem prova, nada é decidido sem confiança calibrada, nada é registrado sem audit trail [4].
+Referências
+Fontes externas acessadas em 20/09/2026; os itens do corpus interno são literatura cinzenta mantida no arquivo do projeto (Safe Core
+archive), com estado de verificabilidade declarado no próprio enunciado de cada referência.
+[1] HIGHERORDERCO. Bend 2: a fast language that blocks AI mistakes via proof [repositório bendlang/bend; README
+ oficial; último commit de Victor Taelin em 19/09/2026; Apache-2.0]. GitHub, 2026. URL:
+https://github.com/HigherOrderCo/Bend
+[2] TAELIN, V. So, with Bend2's launch incoming, I'm struggling a bit with the branding [...] we write specs — what we
+ want, as precise types — and the AI does the coding, and then proves that it is correct [publicação]. X, 2026. URL:
+https://x.com/VictorTaelin/status/2023405334677913720
+[3] OLIVEIRA, R. Arkhe OS: A Verifiable Trust Architecture [monografia interna, 252 pp., 25 capítulos; especifica
+ arkhe-verify, ConstitutionStore, WormGraph e o pipeline de gates]. 2026. No arquivo do projeto. Não publicado.
+
+
+=== PAGINA 26 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+26
+[4] OLIVEIRA, R. Bend 3: diagnóstico e plano de aprimoramento; integração Bend 3 → Arkhe OS; integração jevcache ×
+ arkhe-mcp × Gate 0; arquitetura unificada Bend 3 × Arkhe OS × Jev [compilação interna de 4.815 linhas com o
+monorepo proposto, LAWS.bend, Types.bend, PROOF.bend, gate_b3.rs e invariantes INV-BEND3/INV-JEV; sintaxe
+verificada contra o compilador Bend 2 real em 19/09/2026]. 2026. No arquivo do projeto. Não publicado. [Fonte
+primária desta documentação.]
+[5] OLIVEIRA, R. Arkhe–Catedral: documentação explicativa para técnicos e leigos, 2. ed. [documento interno no arquivo
+ do projeto (Safe Core archive); incorpora a nota de verificação externa ADR-018, 9 componentes verificados por
+execução, threat model T1–T12]. 2026. Não publicado.
+[6] POPPER, K. R. Conjectures and Refutations: the growth of scientific knowledge. London: Routledge, 1963.
+ [Falsificabilidade como critério demarcatório; fundamento do padrão "mostra o número" do projeto.]
+[7] OLIVEIRA, R. Arkhe.gguf: pacote completo de delegação (consolidado) e Estrutura completa do projeto [workspace
+ Rust com 5 crates, gate 0 de sanitização, merkle.rs RFC 6962, rekor.rs com quórum de testemunhas ≥ 2, schema
+arkhe.attestation.* v1.2/v1.3]. 2026. No arquivo do projeto. Não publicado.
+[8] OLIVEIRA, R. Show the Number: a verifiable trust architecture, an invariant-based verification framework, and a
+ layered operating-system design [integração de todo o corpus do projeto em um único volume, 604 pp.]. 2026. No
+arquivo do projeto. Não publicado.
+[9] HIGHERORDERCO. Bend: a fast language that blocks AI mistakes via proof. LAWS.bend is where you declare laws
+ [site oficial]. Bend Lang, 2026. URL: https://bend-lang.com
+[10] HACKER NEWS. Bend — a language that blocks AI mistakes via proof and runs on GPUs [discussão de lançamento
+ do Bend 2.0]. Hacker News, set. 2026. URL: https://news.ycombinator.com/item?id=49746163
+[11] ALMEIDA, D. Introducing System One Models and Jev. TypeSafe AI Blog, 14 set. 2026. URL:
+ https://typesafe.ai/blog/introducing-system-one-models-and-jev
+[12] ANTHROPIC. Introducing the Model Context Protocol [anúncio oficial do protocolo aberto para conectar aplicações
+ de IA a fontes de dados e ferramentas]. Anthropic, 25 nov. 2024. URL:
+https://www.anthropic.com/news/model-context-protocol
+[13] MODEL CONTEXT PROTOCOL. Specification [especificação aberta do MCP: servidores, clientes, tools]. MCP,
+ atualizado em 2026. URL: https://modelcontextprotocol.io
+[14] TYPESAFE AI. System One Models [página inicial com os claims 193.6× mais rápido e 444.6× mais barato, medidos
+ nos workflow evals da empresa]. TypeSafe AI, 2026. URL: https://typesafe.ai
+[15] HIGHERORDERCO. HVM: Higher-order Virtual Machine 2 (HVM2) [runtime paralelo da geração Bend 1, baseado
+ em interaction combinators]. GitHub, 2024. URL: https://github.com/HigherOrderCO/HVM
+[16] LOBSTERS. Bend: a high-level language that runs on GPUs (via HVM2) [discussão do lançamento do Bend 1,
+ maio/2024]. Lobsters, 2024. URL: https://lobste.rs/s/2cbh68/bend_high_level_language_runs_on_gpus_via
+[17] HIGHERORDERCO. BendTT: An Affine Dependent Type Theory [artigo técnico listado no README oficial;
+ diretório paper/]. GitHub, 2026. URL: https://github.com/HigherOrderCo/Bend/tree/main/paper
+[18] HIGHERORDERCO. BendRT: A Parallel Runtime for CPUs and GPUs [artigo técnico listado no README oficial;
+ diretório paper/]. GitHub, 2026. URL: https://github.com/HigherOrderCo/Bend/tree/main/paper
+[19] HIGHERORDERCO. bend.lean: Bend's core in Lean [formalização do núcleo listada no README oficial; o
+ README registra divergência conhecida entre a formalização e bend.ts]. GitHub, 2026. URL:
+https://github.com/HigherOrderCo/Bend
+[20] NIST. FIPS 180-4: Secure Hash Standard (SHA-256). Gaithersburg: NIST, 2015. URL:
+ https://csrc.nist.gov/pubs/fips/180/4/upd2/final
+[21] O'CONNOR, J. et al. BLAKE3: a fast cryptographic hash function [especificação e implementação]. BLAKE3 Team,
+ 2020. URL: https://github.com/BLAKE3-team/BLAKE3
+
+
+=== PAGINA 27 ===
+Bend 3 + Arkhe — documentação técnica completa
+R. Oliveira
+27
+[22] JOSEFSSON, S.; Liusvaara, I. Edwards-Curve Digital Signature Algorithm (EdDSA). IETF, 2017. (RFC 8032)
+ [Ed25519]. URL: https://www.rfc-editor.org/rfc/rfc8032
+[23] NIST. FIPS 204: Module-Lattice-Based Digital Signature Standard (ML-DSA). Gaithersburg: NIST, 2024. URL:
+ https://csrc.nist.gov/pubs/fips/204/final
+[24] CONNOLLY, D. et al. Two-Round Threshold Schnorr Signatures via FROST. IETF, 2023. (draft-irtf-cfrg-frost)
+ [assinaturas threshold usadas no Gate 2]. URL: https://datatracker.ietf.org/doc/draft-irtf-cfrg-frost/
+[25] SIGSTORE. Rekor: transparency log [documentação oficial: assinatura de artefatos com chaves efêmeras e registro de
+ eventos em log de transparência]. Sigstore, 2026. URL: https://docs.sigstore.dev
+[26] LAURIE, B.; LANGLEY, A.; KASPER, E. Certificate Transparency. IETF, 2013. (RFC 6962) [estrutura de Merkle
+ Tree Hash e provas de inclusão]. URL: https://www.rfc-editor.org/rfc/rfc6962
+[27] MERKLE, R. C. A certified digital signature. In: CRYPTO '89. Springer, 1989. p. 218–238.
+ 
+[28] OWASP FOUNDATION. OWASP Top 10 for Large Language Model Applications [LLM01: Prompt Injection].
+ OWASP, 2025. URL: https://owasp.org/www-project-top-10-for-large-language-model-applications/
+[29] VALYU. How to Use Jev: a practical guide to TypeSafe's System One model [registra lançamento em 15/09/2026 e
+ rodada de US$ 40M liderada pela DCVC; preço de US$ 0,042 por milhão de tokens de entrada]. dev.to, 2026. URL:
+https://dev.to/valyuai/how-to-use-jev-a-practical-guide-to-typesafes-system-one-model-g5e
+[30] KAHNEMAN, D. Thinking, Fast and Slow. New York: Farrar, Straus and Giroux, 2011. [Origem do nome "System
+ One Models", conforme FAQ oficial da TypeSafe.]
+[31] JEVONS, W. S. The Coal Question: an inquiry concerning the progress of the nation, and the probable exhaustion of
+ our coal-mines. London: Macmillan, 1865. [Paradoxo de Jevons; origem do nome do modelo Jev, conforme FAQ
+oficial da TypeSafe.]
+[32] OPEN SOURCE SECURITY FOUNDATION. SLSA: Supply-chain Levels for Software Artifacts [framework de
+ integridade de cadeia de suprimentos]. SLSA, 2026. URL: https://slsa.dev

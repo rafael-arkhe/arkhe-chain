@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // OS - Master Verification Matrix &amp; Global Monorepo System Inspector</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-background": "#dfe2ed",
+            "on-tertiary-fixed": "#002113",
+            "tertiary-fixed": "#6ffbbe",
+            "on-surface": "#dfe2ed",
+            "on-error": "#690005",
+            "on-tertiary": "#003824",
+            "outline-variant": "#3b494b",
+            "primary-container": "#00f0ff",
+            "surface-dim": "#0f131b",
+            "on-primary-fixed": "#002022",
+            "primary-fixed": "#7df4ff",
+            "inverse-primary": "#006970",
+            "surface-container": "#1c2027",
+            "on-primary-fixed-variant": "#004f54",
+            "surface-variant": "#31353d",
+            "secondary-container": "#00a6e0",
+            "surface-container-highest": "#31353d",
+            "on-primary": "#00363a",
+            "primary-fixed-dim": "#00dbe9",
+            "surface-bright": "#353941",
+            "surface-container-high": "#262a32",
+            "surface": "#0f131b",
+            "tertiary": "#d8ffe7",
+            "error": "#ffb4ab",
+            "secondary-fixed-dim": "#7bd0ff",
+            "on-primary-container": "#006970",
+            "tertiary-container": "#65f2b5",
+            "outline": "#849495",
+            "surface-container-lowest": "#0a0e15",
+            "on-surface-variant": "#b9cacb",
+            "inverse-surface": "#dfe2ed",
+            "on-secondary-container": "#00374d",
+            "secondary": "#7bd0ff",
+            "on-tertiary-container": "#006d4a",
+            "on-error-container": "#ffdad6",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-tertiary-fixed-variant": "#005236",
+            "inverse-on-surface": "#2d3038",
+            "on-secondary": "#00354a",
+            "on-secondary-fixed-variant": "#004c69",
+            "secondary-fixed": "#c4e7ff",
+            "surface-container-low": "#181c23",
+            "background": "#0f131b",
+            "primary": "#dbfcff",
+            "on-secondary-fixed": "#001e2c",
+            "surface-tint": "#00dbe9"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin-desktop": "1.5rem",
+            "gutter-desktop": "1rem",
+            "gutter": "0.75rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "margin": "1rem",
+            "space-lg": "1.25rem"
+          },
+          "fontFamily": {
+            "mono-lg": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "body-lg": ["Geist"],
+            "mono-md": ["JetBrains Mono"],
+            "headline-lg": ["Space Grotesk"],
+            "body-sm": ["Geist"],
+            "mono-sm": ["JetBrains Mono"],
+            "label-caps": ["JetBrains Mono"],
+            "display-lg-mobile": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "display-lg": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "mono-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom Scrollbar for Mission Critical Console */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0e15;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3b494b;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00f0ff;
+    }
+    .active-cyan-glow {
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.22);
+    }
+    .active-dot-pulse {
+      animation: pulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased font-body-md selection:bg-primary-container selection:text-on-primary-fixed overflow-hidden flex flex-col h-screen">
+<!-- TOP APP BAR -->
+<header class="flex justify-between items-center w-full px-space-md h-12 bg-surface border-b border-outline-variant z-50 shrink-0">
+<!-- Left: Brand + Search / Root Scope -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="terminal">terminal</span>
+<span class="text-headline-md font-headline-md font-bold tracking-tight text-primary">ARKHE // OS</span>
+</div>
+<!-- Quick Command Input -->
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-2 text-outline text-[16px]" data-icon="search">search</span>
+<input class="bg-surface-container-lowest border border-outline-variant text-primary font-mono-sm text-mono-sm pl-7 pr-3 py-1 rounded w-80 focus:border-primary-container focus:ring-0 focus:outline-none select-all" readonly="" type="text" value="inspect --all --roots=0x8f2a...c01d --strict"/>
+</div>
+<!-- System Status Badges -->
+<div class="hidden lg:flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-tertiary-container/10 border border-tertiary-container/30 text-tertiary-fixed-dim font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim active-dot-pulse"></span>
+          ALL 11 SUBSYSTEMS VERIFIED
+        </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant text-on-surface-variant font-mono-sm text-mono-sm">
+<span class="text-primary-container">ROOT::0x8f2a...c01d</span> // MMR PROVED
+        </span>
+</div>
+</div>
+<!-- Center Navigation Links -->
+<nav class="hidden 2xl:flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150">Monorepo Explorer</button>
+<button class="border-b-2 border-primary-container text-primary pb-1 font-mono-sm text-mono-sm font-semibold">GGUF 4-Gate Pipeline</button>
+<button class="text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150">Formal Verification</button>
+<button class="text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150">ADR Matrix</button>
+</nav>
+<!-- Trailing Action Cluster -->
+<div class="flex items-center gap-2">
+<div class="hidden md:flex items-center gap-1 border-r border-outline-variant pr-2 mr-1">
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="Audit Terminal">
+<span class="material-symbols-outlined text-[18px]" data-icon="terminal">terminal</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="Cryptographic Shield">
+<span class="material-symbols-outlined text-[18px]" data-icon="shield">shield</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="Monorepo AST Hub">
+<span class="material-symbols-outlined text-[18px]" data-icon="hub">hub</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="Tune Constraints">
+<span class="material-symbols-outlined text-[18px]" data-icon="tune">tune</span>
+</button>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container border border-outline-variant font-mono-sm text-mono-sm text-on-surface-variant">v0.1.0</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-error-container/20 border border-error/50 text-error font-label-caps text-label-caps tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-error active-dot-pulse"></span>
+        Fail-Closed [ARMED]
+      </span>
+<button class="px-3 py-1 rounded bg-primary-container text-on-primary-fixed font-mono-sm text-mono-sm font-semibold active-cyan-glow hover:bg-primary-fixed hover:text-on-primary-fixed transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]" data-icon="play_arrow">play_arrow</span>
+        EXEC FULL PIPELINE
+      </button>
+</div>
+</header>
+<!-- WORKBENCH BODY: 3 PANE WORKSPACE -->
+<div class="flex flex-1 overflow-hidden relative">
+<!-- LEFT SIDEBAR: MONOREPO TOPOLOGY TREE -->
+<aside class="w-64 bg-surface-container-lowest border-r border-outline-variant flex flex-col justify-between shrink-0 z-20">
+<!-- Operator Identification Header -->
+<div class="p-space-sm border-b border-outline-variant bg-surface-container-low/40">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]" data-icon="verified_user">verified_user</span>
+<div>
+<div class="text-label-caps font-label-caps text-primary tracking-wider">ROOT::0x8f2a...c01d</div>
+<div class="text-[9px] font-mono-sm text-on-surface-variant/80">MMR VERIFIED // ZERO-DRIFT</div>
+</div>
+</div>
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
+</div>
+</div>
+<!-- Navigation Tabs & Subsystem Topology -->
+<div class="flex-1 overflow-y-auto py-2">
+<!-- Primary Modules Navigation -->
+<div class="px-2 mb-3">
+<div class="text-label-caps font-label-caps text-outline px-2 py-1">NAVIGATION PANES</div>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm rounded" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="account_tree">account_tree</span>
+<span>AST WormGraph</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 border-l-2 border-primary-container bg-surface-container-low text-primary font-mono-sm text-mono-sm rounded-r" href="#">
+<span class="material-symbols-outlined text-primary-container text-[16px]" data-icon="verified_user">verified_user</span>
+<span class="font-semibold">GGUF Gates (Inspect All)</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm rounded" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="rule">rule</span>
+<span>Prover Lemmata</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm rounded" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="monitoring">monitoring</span>
+<span>Telemetry Log</span>
+</a>
+<a class="flex items-center gap-2 px-space-sm py-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm rounded" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="lock_clock">lock_clock</span>
+<span>Audit Chain</span>
+</a>
+</div>
+<!-- 11 Subsystems Monorepo Tree -->
+<div class="px-2">
+<div class="flex items-center justify-between text-label-caps font-label-caps text-outline px-2 py-1 border-t border-outline-variant/40 pt-2">
+<span>MONOREPO TOPOLOGY (11)</span>
+<span class="text-tertiary-fixed-dim">11/11 PASS</span>
+</div>
+<div class="mt-1 space-y-0.5 text-mono-sm font-mono-sm">
+<!-- 1. src/gguf.rs -->
+<div class="flex items-center justify-between px-2 py-1 bg-surface-container/60 border-l border-primary-container text-primary rounded-r">
+<span class="truncate">1. src/gguf.rs <span class="text-outline text-[9px]">(G1)</span></span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 2. src/canon.rs -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">2. src/canon.rs <span class="text-outline text-[9px]">(CBOR)</span></span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 3. src/gate3.rs -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">3. src/gate3.rs <span class="text-outline text-[9px]">(In-toto)</span></span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 4. src/gate4.rs -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">4. src/gate4.rs <span class="text-outline text-[9px]">(Combinator)</span></span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 5. tests/pipeline.rs -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">5. tests/pipeline.rs <span class="text-outline text-[9px]">(20/20)</span></span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 6. scripts/generate-gguf-vectors.py -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">6. scripts/gen_vectors.py</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 7. src/ffi.rs -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">7. src/ffi.rs <span class="text-outline text-[9px]">(Panic Guard)</span></span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 8. include/arkhe_verify.h -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">8. include/arkhe_verify.h</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 9. python/arkhe_ffi.py -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">9. python/arkhe_ffi.py</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 10. python/arkhe_ffi.pyi & py.typed -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">10. python/py.typed (PEP561)</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+<!-- 11. docs/adr/ -->
+<div class="flex items-center justify-between px-2 py-1 hover:bg-surface-container text-on-surface-variant rounded">
+<span class="truncate">11. docs/adr/ (Decisions)</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px]" data-icon="check">check</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer CTA & Links -->
+<div class="p-space-sm border-t border-outline-variant bg-surface-container-lowest">
+<button class="w-full py-1.5 mb-2 bg-surface-container-high hover:bg-surface-variant border border-outline-variant hover:border-primary-container text-primary font-mono-sm text-mono-sm rounded transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[15px]" data-icon="speed">speed</span>
+          EXEC PROVER
+        </button>
+<div class="flex justify-between items-center text-outline font-mono-sm text-mono-sm px-1">
+<a class="hover:text-primary flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[14px]" data-icon="settings">settings</span> Settings</a>
+<a class="hover:text-primary flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[14px]" data-icon="menu_book">menu_book</span> Docs</a>
+</div>
+</div>
+</aside>
+<!-- CENTER CANVAS: WORKBENCH INSPECTOR -->
+<main class="flex-1 overflow-y-auto flex flex-col bg-surface-dim">
+<!-- SUB-HEADER TITLE BAR -->
+<div class="px-space-md py-2 border-b border-outline-variant bg-surface-container-lowest/80 flex items-center justify-between shrink-0">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 font-label-caps text-label-caps text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary-container" data-icon="grid_view">grid_view</span>
+<span>MONOREPO</span>
+<span class="text-outline">/</span>
+<span>VERIFICATION MATRIX</span>
+<span class="text-outline">/</span>
+<span class="text-primary font-semibold">INSPECT ALL (11 MODULES)</span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant text-[9px] font-mono-sm text-primary">DETERMINISTIC COCKPIT</span>
+</div>
+<div class="flex items-center gap-2 font-mono-sm text-mono-sm">
+<span class="text-outline">Epoch: <span class="text-on-surface">#98421.3</span></span>
+<span class="text-outline">|</span>
+<span class="text-outline">Sanitizers: <span class="text-tertiary-fixed-dim">ASAN+MSAN 0 VIOLATIONS</span></span>
+<button class="px-2 py-0.5 bg-surface-container-low hover:bg-surface-container border border-outline-variant rounded text-on-surface-variant hover:text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="download">download</span> Export Proof Matrix (.sarif)
+          </button>
+</div>
+</div>
+<!-- SCROLLABLE INTERACTIVE CANVAS -->
+<div class="p-space-md space-y-space-md flex-1">
+<!-- TOP 4 METRIC CARDS -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+<!-- Metric 1: Invariant Soundness -->
+<div class="bg-surface-container-low border border-outline-variant p-3 rounded relative hover:border-primary-container/60 transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-caps text-label-caps text-outline tracking-wider">GLOBAL INVARIANT STATUS</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" data-icon="verified">verified</span>
+</div>
+<div class="text-headline-lg font-headline-lg font-bold text-primary">100% SOUND</div>
+<div class="flex items-center justify-between mt-1 text-mono-sm font-mono-sm text-outline">
+<span>Drift Margin: <span class="text-tertiary-fixed-dim">0.000 ppm</span></span>
+<span>MMR Height: 24</span>
+</div>
+<div class="w-full bg-surface-container h-1 mt-2 rounded overflow-hidden">
+<div class="bg-primary-container h-full w-full"></div>
+</div>
+</div>
+<!-- Metric 2: Gate Pipeline Verification -->
+<div class="bg-surface-container-low border border-outline-variant p-3 rounded relative hover:border-primary-container/60 transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-caps text-label-caps text-outline tracking-wider">GATE 1-4 VERIFICATION</span>
+<span class="material-symbols-outlined text-primary-container text-[16px]" data-icon="hourglass_empty">hourglass_empty</span>
+</div>
+<div class="text-headline-lg font-headline-lg font-bold text-primary">4/4 CLEARED</div>
+<div class="flex items-center justify-between mt-1 text-mono-sm font-mono-sm text-outline">
+<span>Combined Latency: <span class="text-primary-container">0.04 ms</span></span>
+<span>Zero-Copy: YES</span>
+</div>
+<div class="w-full bg-surface-container h-1 mt-2 rounded overflow-hidden">
+<div class="bg-primary-container h-full w-full"></div>
+</div>
+</div>
+<!-- Metric 3: Cross-Language ABI Boundaries -->
+<div class="bg-surface-container-low border border-outline-variant p-3 rounded relative hover:border-primary-container/60 transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-caps text-label-caps text-outline tracking-wider">CROSS-LANG ABI BOUNDARIES</span>
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="memory">memory</span>
+</div>
+<div class="text-headline-lg font-headline-lg font-bold text-primary">C99 / RUST / PY</div>
+<div class="flex items-center justify-between mt-1 text-mono-sm font-mono-sm text-outline">
+<span>Memory Leaks: <span class="text-tertiary-fixed-dim">0 bytes</span></span>
+<span>Alignment: 16B</span>
+</div>
+<div class="w-full bg-surface-container h-1 mt-2 rounded overflow-hidden">
+<div class="bg-secondary-container h-full w-full"></div>
+</div>
+</div>
+<!-- Metric 4: Attack Vector Defenses -->
+<div class="bg-surface-container-low border border-outline-variant p-3 rounded relative hover:border-primary-container/60 transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-caps text-label-caps text-outline tracking-wider">ATTACK VECTOR DEFENSES</span>
+<span class="material-symbols-outlined text-error text-[16px]" data-icon="gvisor">fitbit_jumping_jacks</span>
+</div>
+<div class="text-headline-lg font-headline-lg font-bold text-primary">20/20 TRAPPED</div>
+<div class="flex items-center justify-between mt-1 text-mono-sm font-mono-sm text-outline">
+<span>Tamper Resistance: <span class="text-tertiary-fixed-dim">Fail-Closed</span></span>
+<span>Mutation: 100%</span>
+</div>
+<div class="w-full bg-surface-container h-1 mt-2 rounded overflow-hidden">
+<div class="bg-tertiary-fixed-dim h-full w-full"></div>
+</div>
+</div>
+</div>
+<!-- PIPELINE FLOW VISUALIZER (GATE 1 TO 4) -->
+<div class="bg-surface-container-low border border-outline-variant p-3 rounded">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]" data-icon="schema">schema</span>
+<span class="font-headline-md text-headline-md text-primary font-semibold">Deterministic Execution Flow: Ingress to Combinator</span>
+</div>
+<span class="font-label-caps text-label-caps text-tertiary-fixed-dim px-2 py-0.5 rounded bg-tertiary-fixed-dim/10 border border-tertiary-fixed-dim/30">L1-L4 FORMALLY LINKED</span>
+</div>
+<!-- Gates Sequence -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-2 relative">
+<!-- Node 1 -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant hover:border-primary-container transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-caps text-label-caps text-primary-container">GATE 01 // PARSER</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" data-icon="check_circle">check_circle</span>
+</div>
+<div class="font-headline-md text-[13px] font-semibold text-primary truncate">src/gguf.rs</div>
+<div class="text-[11px] font-mono-sm text-outline mt-1">Header Magic 0x46554747 + Bounds Check</div>
+<div class="mt-2 text-mono-sm text-on-surface-variant flex justify-between border-t border-outline-variant/40 pt-1 text-[10px]">
+<span>Latency: 0.008ms</span>
+<span class="text-tertiary-fixed-dim">NO_PANIC</span>
+</div>
+</div>
+<!-- Node 2 -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant hover:border-primary-container transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-caps text-label-caps text-primary-container">GATE 02 // RFC 8949</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" data-icon="check_circle">check_circle</span>
+</div>
+<div class="font-headline-md text-[13px] font-semibold text-primary truncate">src/canon.rs</div>
+<div class="text-[11px] font-mono-sm text-outline mt-1">Canonical Deterministic CBOR Key Order</div>
+<div class="mt-2 text-mono-sm text-on-surface-variant flex justify-between border-t border-outline-variant/40 pt-1 text-[10px]">
+<span>Latency: 0.012ms</span>
+<span class="text-tertiary-fixed-dim">ZERO_DRIFT</span>
+</div>
+</div>
+<!-- Node 3 -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant hover:border-primary-container transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-caps text-label-caps text-primary-container">GATE 03 // CRYPTO</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" data-icon="check_circle">check_circle</span>
+</div>
+<div class="font-headline-md text-[13px] font-semibold text-primary truncate">src/gate3.rs</div>
+<div class="text-[11px] font-mono-sm text-outline mt-1">In-toto Statement + Ed25519 Envelope</div>
+<div class="mt-2 text-mono-sm text-on-surface-variant flex justify-between border-t border-outline-variant/40 pt-1 text-[10px]">
+<span>Latency: 0.015ms</span>
+<span class="text-tertiary-fixed-dim">PROVED_256</span>
+</div>
+</div>
+<!-- Node 4 -->
+<div class="p-2.5 rounded bg-surface-container border border-primary-container/80 active-cyan-glow transition-all">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-caps text-label-caps text-primary-container">GATE 04 // COMBINATOR</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" data-icon="verified">verified</span>
+</div>
+<div class="font-headline-md text-[13px] font-semibold text-primary truncate">src/gate4.rs</div>
+<div class="text-[11px] font-mono-sm text-outline mt-1">Fail-Closed Atomic Verdict Emission</div>
+<div class="mt-2 text-mono-sm text-on-surface-variant flex justify-between border-t border-outline-variant/40 pt-1 text-[10px]">
+<span>Latency: 0.005ms</span>
+<span class="text-primary-container">ATOMIC_OK</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 4 CORE MODULE INSPECTION BENTO GRID -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-md">
+<!-- MODULE 1: Rust Core Engine Pipeline -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-3 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]" data-icon="code">code</span>
+<span class="font-headline-md text-[14px] text-primary font-bold">MODULE 01: Core Verification Engine (Rust)</span>
+</div>
+<span class="font-label-caps text-label-caps px-2 py-0.5 rounded bg-tertiary-container/10 border border-tertiary-container/30 text-tertiary-fixed-dim">INVARIANT VALIDATED</span>
+</div>
+<div class="text-mono-sm font-mono-sm text-outline mb-2">
+                Files: <code class="text-primary">src/gguf.rs</code>, <code class="text-primary">src/canon.rs</code>, <code class="text-primary">src/gate3.rs</code>, <code class="text-primary">src/gate4.rs</code>
+</div>
+<!-- Code Preview Window -->
+<div class="bg-surface-container-lowest p-2.5 rounded border border-outline-variant font-mono-sm text-mono-sm text-[11px] leading-relaxed overflow-x-auto text-on-surface">
+<span class="text-outline">// Gate 4: Zero-compromise atomic verdict combinator</span><br/>
+<span class="text-secondary">pub fn</span> <span class="text-primary">verify_quad_gates</span>(raw: <span class="text-tertiary-fixed">&amp;[u8]</span>) -&gt; <span class="text-secondary">Result</span>&lt;<span class="text-tertiary-fixed">ArkheVerdict</span>, <span class="text-error">GateFailure</span>&gt; {<br/>
+                  <span class="text-secondary">let</span> g1 = gguf::parse_header_bounds(raw)?;    <span class="text-outline">// L1: OOB bounded</span><br/>
+                  <span class="text-secondary">let</span> g2 = canon::cbor_canonical_digest(raw)?; <span class="text-outline">// L2: RFC 8949 invariant</span><br/>
+                  <span class="text-secondary">let</span> g3 = gate3::verify_intoto_claims(&amp;g2)?;  <span class="text-outline">// L3: Ed25519 validated</span><br/>
+                  <span class="text-secondary">let</span> v4 = gate4::combine_fail_closed(g1, g2, g3)?; <span class="text-outline">// L4: Atomic consensus</span><br/>
+                  <span class="text-primary-container">Ok</span>(v4)<br/>
+                }
+              </div>
+</div>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-outline">Prover Proof: <span class="text-primary font-mono-sm">Z3-v4.12.2 Proved (0.01s)</span></span>
+<button class="text-primary-container hover:underline text-[11px] flex items-center gap-1">
+                Inspect src/gate4.rs <span class="material-symbols-outlined text-[12px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- MODULE 2: Cross-Language Boundary & ABI -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-3 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="integration_instructions">integration_instructions</span>
+<span class="font-headline-md text-[14px] text-primary font-bold">MODULE 02: C99 / Rust FFI Boundary Contract</span>
+</div>
+<span class="font-label-caps text-label-caps px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant text-secondary">16B/24B PACKED</span>
+</div>
+<div class="text-mono-sm font-mono-sm text-outline mb-2">
+                Files: <code class="text-primary">src/ffi.rs</code>, <code class="text-primary">include/arkhe_verify.h</code>
+</div>
+<!-- Code Preview Window -->
+<div class="bg-surface-container-lowest p-2.5 rounded border border-outline-variant font-mono-sm text-mono-sm text-[11px] leading-relaxed overflow-x-auto text-on-surface">
+<span class="text-outline">/* include/arkhe_verify.h - ISO C99/C11 ABI Contract */</span><br/>
+<span class="text-secondary">typedef struct</span> __attribute__((aligned(16))) {<br/>
+                  <span class="text-tertiary-fixed">uint8_t</span>  root_digest[32];  <span class="text-outline">/* BLAKE3/SHA256 interleaved */</span><br/>
+                  <span class="text-tertiary-fixed">uint64_t</span> total_bytes;      <span class="text-outline">/* Strictly checked */</span><br/>
+                  <span class="text-tertiary-fixed">uint32_t</span> gate_mask;        <span class="text-outline">/* 0x0F = All 4 Gates Pass */</span><br/>
+                  <span class="text-tertiary-fixed">uint32_t</span> _reserved;        <span class="text-outline">/* Deterministic zero-pad */</span><br/>
+                } <span class="text-primary-container">arkhe_verdict_t</span>;<br/>
+<span class="text-secondary">int32_t</span> <span class="text-primary">arkhe_verify_raw_buffer</span>(<span class="text-secondary">const uint8_t</span>* buf, <span class="text-secondary">size_t</span> len, <span class="text-primary-container">arkhe_verdict_t</span>* out);
+              </div>
+</div>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-outline">Valgrind Diagnostic: <span class="text-tertiary-fixed-dim font-mono-sm">0 leaks / catch_unwind safe</span></span>
+<button class="text-primary-container hover:underline text-[11px] flex items-center gap-1">
+                Inspect Header &amp; FFI <span class="material-symbols-outlined text-[12px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- MODULE 3: Python Runtime & Type System -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-3 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]" data-icon="data_object">data_object</span>
+<span class="font-headline-md text-[14px] text-primary font-bold">MODULE 03: Python Zero-Copy &amp; Strict Typing</span>
+</div>
+<span class="font-label-caps text-label-caps px-2 py-0.5 rounded bg-tertiary-container/10 border border-tertiary-container/30 text-tertiary-fixed-dim">PEP 561 / 688 STRICT</span>
+</div>
+<div class="text-mono-sm font-mono-sm text-outline mb-2">
+                Files: <code class="text-primary">python/arkhe_ffi.py</code>, <code class="text-primary">python/arkhe_ffi.pyi</code>, <code class="text-primary">py.typed</code>
+</div>
+<!-- Code Preview Window -->
+<div class="bg-surface-container-lowest p-2.5 rounded border border-outline-variant font-mono-sm text-mono-sm text-[11px] leading-relaxed overflow-x-auto text-on-surface">
+<span class="text-outline"># python/arkhe_ffi.py: Zero-copy CTypes protocol without GIL copy</span><br/>
+<span class="text-secondary">def</span> <span class="text-primary">verify_buffer_zerocopy</span>(buf: <span class="text-tertiary-fixed">AnyBuffer</span>) -&gt; <span class="text-primary-container">ArkheVerdict</span>:<br/>
+                    c_buf = (<span class="text-secondary">ctypes.c_uint8</span> * len(buf)).from_buffer(buf)<br/>
+                    out_verdict = ArkheVerdictStruct()<br/>
+                    res = _LIB.arkhe_verify_raw_buffer(c_buf, len(buf), <span class="text-secondary">ctypes.byref</span>(out_verdict))<br/>
+                    <span class="text-secondary">if</span> res != 0:<br/>
+                        <span class="text-secondary">raise</span> <span class="text-error">ArkheVerificationError</span>(f<span class="text-tertiary">"Trap Gate Mask: {out_verdict.gate_mask}"</span>)<br/>
+                    <span class="text-secondary">return</span> ArkheVerdict.from_c(out_verdict)
+              </div>
+</div>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-outline">Mypy Strict Analysis: <span class="text-tertiary-fixed-dim font-mono-sm">0 Errors across 1,840 lines</span></span>
+<button class="text-primary-container hover:underline text-[11px] flex items-center gap-1">
+                Inspect Type Stubs <span class="material-symbols-outlined text-[12px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- MODULE 4: Test Vectors & Adversarial Harness -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-3 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[18px]" data-icon="bug_report">bug_report</span>
+<span class="font-headline-md text-[14px] text-primary font-bold">MODULE 04: Test Vectors &amp; Negative Tamper Suite</span>
+</div>
+<span class="font-label-caps text-label-caps px-2 py-0.5 rounded bg-error-container/20 border border-error/50 text-error">20/20 TRAPPED</span>
+</div>
+<div class="text-mono-sm font-mono-sm text-outline mb-2">
+                Files: <code class="text-primary">tests/pipeline.rs</code>, <code class="text-primary">scripts/generate-gguf-vectors.py</code>
+</div>
+<!-- Code Preview Window -->
+<div class="bg-surface-container-lowest p-2.5 rounded border border-outline-variant font-mono-sm text-mono-sm text-[11px] leading-relaxed overflow-x-auto text-on-surface">
+<span class="text-outline">// tests/pipeline.rs: Golden vector bit-for-bit + mutation traps</span><br/>
+<span class="text-secondary">#[test]</span><br/>
+<span class="text-secondary">fn</span> <span class="text-primary">test_adversarial_mutation_byte18_trapped</span>() {<br/>
+                  <span class="text-secondary">let mut</span> vector = generate_reference_golden_gguf_v3();<br/>
+                  vector[18] ^= 0xAA; <span class="text-outline">// Inject bitflip into tensor count offset</span><br/>
+                  <span class="text-secondary">let</span> result = verify_quad_gates(&amp;vector);<br/>
+                  <span class="text-primary-container">assert_eq!</span>(result.unwrap_err(), <span class="text-error">GateFailure::Gate1BoundsCorrupted</span>);<br/>
+                }
+              </div>
+</div>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-outline">Differential Parity: <span class="text-tertiary-fixed-dim font-mono-sm">Bit-for-bit Identical</span></span>
+<button class="text-primary-container hover:underline text-[11px] flex items-center gap-1">
+                Inspect 20 Tamper Tests <span class="material-symbols-outlined text-[12px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- LIVE TERMINAL CONSOLE EXECUTION -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded overflow-hidden">
+<div class="px-3 py-1.5 bg-surface-container border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-error inline-block"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-surface-bright inline-block"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim inline-block"></span>
+<span class="text-mono-sm font-mono-sm text-on-surface ml-2">Integrated Pipeline Execution Engine (Rust + Python + Clang)</span>
+</div>
+<div class="flex items-center gap-3 text-mono-sm font-mono-sm text-outline">
+<span>Exit Code: <span class="text-tertiary-fixed-dim">0 (SUCCESS)</span></span>
+<span>Duration: 1.42s</span>
+</div>
+</div>
+<div class="p-3 font-mono-sm text-mono-sm text-[11px] leading-relaxed text-on-surface bg-surface-container-lowest overflow-x-auto space-y-1">
+<div class="text-outline">
+<span class="text-primary-container font-semibold">$</span> cargo test --all --release &amp;&amp; pytest tests/ -v &amp;&amp; mypy --strict python/ &amp;&amp; clang -fsyntax-only include/arkhe_verify.h
+            </div>
+<div class="text-on-surface-variant">   Compiling arkhe-core v0.1.0 (/workspace/arkhe-os)</div>
+<div class="text-on-surface-variant">    Finished release [optimized] target(s) in 0.88s</div>
+<div>
+<span class="text-outline">running 38 tests</span><br/>
+              test gguf::tests::test_valid_v3_header ... <span class="text-tertiary-fixed-dim font-bold">ok</span><br/>
+              test gguf::tests::test_bounds_overflow_rejected ... <span class="text-tertiary-fixed-dim font-bold">ok</span><br/>
+              test canon::tests::test_cbor_rfc8949_strict_ordering ... <span class="text-tertiary-fixed-dim font-bold">ok</span><br/>
+              test gate3::tests::test_intoto_ed25519_valid_signature ... <span class="text-tertiary-fixed-dim font-bold">ok</span><br/>
+              test gate4::tests::test_fail_closed_on_any_gate_dropout ... <span class="text-tertiary-fixed-dim font-bold">ok</span><br/>
+              test pipeline::tests::test_20_adversarial_tamper_vectors_trapped ... <span class="text-tertiary-fixed-dim font-bold">ok</span><br/>
+              test ffi::tests::test_catch_unwind_panic_safe_isolation ... <span class="text-tertiary-fixed-dim font-bold">ok</span>
+</div>
+<div class="text-tertiary-fixed-dim">test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s</div>
+<div class="pt-1 text-on-surface-variant">
+              ============================= test session starts ==============================<br/>
+              platform linux -- Python 3.11.8, pytest-8.0.2, pluggy-1.4.0<br/>
+              tests/test_arkhe_ffi.py::test_zerocopy_buffer_protocol <span class="text-tertiary-fixed-dim font-bold">PASSED [ 25%]</span><br/>
+              tests/test_arkhe_ffi.py::test_mutation_vector_byte18_fail_closed <span class="text-tertiary-fixed-dim font-bold">PASSED [ 50%]</span><br/>
+              tests/test_arkhe_ffi.py::test_memory_alignment_16byte <span class="text-tertiary-fixed-dim font-bold">PASSED [ 75%]</span><br/>
+              tests/test_golden_parity.py::test_python_rust_hash_equivalence <span class="text-tertiary-fixed-dim font-bold">PASSED [100%]</span><br/>
+<span class="text-tertiary-fixed-dim">============================== 4 passed in 0.21s ===============================</span>
+</div>
+<div class="pt-1">
+<span class="text-outline">Running mypy on python/ package:</span><br/>
+<span class="text-tertiary-fixed-dim font-semibold">Success: no issues found in 4 source files (mypy --strict passed)</span><br/>
+<span class="text-outline">Running clang C11 contract check on include/arkhe_verify.h:</span><br/>
+<span class="text-tertiary-fixed-dim font-semibold">clang: 0 warnings, 0 syntax errors, 16-byte alignment validated</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- RIGHT INSPECTOR DRAWER / SYSTEM INVARIANT SUMMARY -->
+<aside class="w-80 bg-surface-container-lowest border-l border-outline-variant flex flex-col justify-between shrink-0 z-20">
+<!-- Drawer Header -->
+<div class="p-space-sm border-b border-outline-variant bg-surface-container-low/40 flex items-center justify-between">
+<div class="flex items-center gap-1.5 font-label-caps text-label-caps text-primary">
+<span class="material-symbols-outlined text-[16px] text-primary-container" data-icon="policy">policy</span>
+<span>INVARIANT SUMMARY &amp; ROOTS</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+</div>
+<!-- Drawer Content -->
+<div class="flex-1 overflow-y-auto p-space-sm space-y-3">
+<!-- Cryptographic Roots Block -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant">
+<div class="text-label-caps font-label-caps text-outline mb-1.5">CRYPTOGRAPHIC STATE ROOTS</div>
+<div class="space-y-2 text-mono-sm font-mono-sm">
+<div>
+<div class="text-[10px] text-on-surface-variant flex justify-between">
+<span>BLAKE3 (Merkle Node)</span>
+<span class="text-tertiary-fixed-dim">VERIFIED</span>
+</div>
+<div class="p-1 rounded bg-surface-container-lowest border border-outline-variant/60 text-[10px] text-primary break-all">
+                0x8f2ac91054b1f4e0c3d9a187b5a0e3f2
+              </div>
+</div>
+<div>
+<div class="text-[10px] text-on-surface-variant flex justify-between">
+<span>SHA-256 (In-toto Digest)</span>
+<span class="text-tertiary-fixed-dim">VERIFIED</span>
+</div>
+<div class="p-1 rounded bg-surface-container-lowest border border-outline-variant/60 text-[10px] text-primary break-all">
+                0xd4735e3a265e16eee03f59718b9b5d03
+              </div>
+</div>
+<div>
+<div class="text-[10px] text-on-surface-variant flex justify-between">
+<span>Ed25519 Authority Key</span>
+<span class="text-primary-container">TRUSTED</span>
+</div>
+<div class="p-1 rounded bg-surface-container-lowest border border-outline-variant/60 text-[10px] text-on-surface-variant break-all">
+                ed25519::pub_4c99a81f3e09d17a
+              </div>
+</div>
+</div>
+</div>
+<!-- Formally Proven Lemmata List (L1 - L5) -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant">
+<div class="text-label-caps font-label-caps text-outline mb-1.5 flex items-center justify-between">
+<span>PROVEN LEMMATA</span>
+<span class="text-tertiary-fixed-dim">5/5 FORMAL</span>
+</div>
+<div class="space-y-1.5 font-mono-sm text-mono-sm text-[11px]">
+<div class="p-1.5 rounded bg-surface-container-low border border-outline-variant/40 flex items-start gap-1.5">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px] shrink-0 mt-0.5" data-icon="done_all">done_all</span>
+<div>
+<span class="text-primary font-semibold">L1: Bounded Array Safety</span>
+<p class="text-[10px] text-outline">Header bounds cannot overflow usize.</p>
+</div>
+</div>
+<div class="p-1.5 rounded bg-surface-container-low border border-outline-variant/40 flex items-start gap-1.5">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px] shrink-0 mt-0.5" data-icon="done_all">done_all</span>
+<div>
+<span class="text-primary font-semibold">L2: Canonical Determinism</span>
+<p class="text-[10px] text-outline">RFC 8949 key ordering injective bijection.</p>
+</div>
+</div>
+<div class="p-1.5 rounded bg-surface-container-low border border-outline-variant/40 flex items-start gap-1.5">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px] shrink-0 mt-0.5" data-icon="done_all">done_all</span>
+<div>
+<span class="text-primary font-semibold">L3: Signature Nonce Freshness</span>
+<p class="text-[10px] text-outline">Strict replay protection on statement root.</p>
+</div>
+</div>
+<div class="p-1.5 rounded bg-surface-container-low border border-outline-variant/40 flex items-start gap-1.5">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px] shrink-0 mt-0.5" data-icon="done_all">done_all</span>
+<div>
+<span class="text-primary font-semibold">L4: Fail-Closed Completeness</span>
+<p class="text-[10px] text-outline">Undefined gate states map to hard error.</p>
+</div>
+</div>
+<div class="p-1.5 rounded bg-surface-container-low border border-outline-variant/40 flex items-start gap-1.5">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[14px] shrink-0 mt-0.5" data-icon="done_all">done_all</span>
+<div>
+<span class="text-primary font-semibold">L5: Memory Safety Isolation</span>
+<p class="text-[10px] text-outline">Rust panic boundary catches unwind in C ABI.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Memory Safety & Contract Checks -->
+<div class="p-2.5 rounded bg-surface-container border border-outline-variant">
+<div class="text-label-caps font-label-caps text-outline mb-1.5">ABI MEMORY GUARANTEES</div>
+<div class="space-y-1 text-mono-sm font-mono-sm text-[10px]">
+<div class="flex justify-between text-on-surface-variant">
+<span>Panic Isolation:</span>
+<span class="text-tertiary-fixed-dim">std::panic::catch_unwind</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Zero-Copy Slices:</span>
+<span class="text-tertiary-fixed-dim">Lifetime bounded ('a)</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Struct Alignment:</span>
+<span class="text-primary-container">16 Bytes</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Valgrind Leak Status:</span>
+<span class="text-tertiary-fixed-dim">0 bytes definitively lost</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Jump Button Cluster -->
+<div class="p-space-sm border-t border-outline-variant bg-surface-container-lowest space-y-1">
+<div class="text-label-caps font-label-caps text-outline mb-1">QUICK JUMP INSPECTORS</div>
+<button class="w-full text-left px-2 py-1 bg-surface-container hover:bg-surface-container-high rounded text-mono-sm font-mono-sm text-on-surface flex items-center justify-between border border-outline-variant/60">
+<span>Jump to Gate 1 (GGUF)</span>
+<span class="material-symbols-outlined text-[13px]" data-icon="open_in_new">open_in_new</span>
+</button>
+<button class="w-full text-left px-2 py-1 bg-surface-container hover:bg-surface-container-high rounded text-mono-sm font-mono-sm text-on-surface flex items-center justify-between border border-outline-variant/60">
+<span>Jump to ADR Decisions</span>
+<span class="material-symbols-outlined text-[13px]" data-icon="open_in_new">open_in_new</span>
+</button>
+<button class="w-full text-left px-2 py-1 bg-surface-container hover:bg-surface-container-high rounded text-mono-sm font-mono-sm text-on-surface flex items-center justify-between border border-outline-variant/60">
+<span>Jump to Tamper Vectors</span>
+<span class="material-symbols-outlined text-[13px]" data-icon="open_in_new">open_in_new</span>
+</button>
+</div>
+</aside>
+</div>
+<!-- INTERACTIVE MICRO-SCRIPTS -->
+<script>
+    // Lightweight atmospheric reactivity and interactive state toggles
+    document.addEventListener('DOMContentLoaded', () => {
+      const execBtn = document.querySelector('button.active-cyan-glow');
+      if (execBtn) {
+        execBtn.addEventListener('click', () => {
+          const originalText = execBtn.innerHTML;
+          execBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin" data-icon="sync">sync</span> VERIFYING...`;
+          execBtn.classList.add('opacity-90');
+          setTimeout(() => {
+            execBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] text-on-primary-fixed" data-icon="done_all">done_all</span> ALL 11 SOUND`;
+            setTimeout(() => {
+              execBtn.innerHTML = originalText;
+              execBtn.classList.remove('opacity-90');
+            }, 1800);
+          }, 600);
+        });
+      }
+    });
+  </script>
+</body></html>

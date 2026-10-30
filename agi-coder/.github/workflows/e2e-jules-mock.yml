@@ -1,0 +1,11 @@
+name: Jules mock end to end
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  mock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - run: cargo test --locked -p agi-coder-tests --test e2e_mock_jules --test journal_pipeline

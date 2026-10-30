@@ -1,0 +1,276 @@
+name: unified-environment
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  kernel-and-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      preview-postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      ARKHE_EVIDENCE_DIR: docs/evidence/ci/${{ github.run_id }}/${{ github.job }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+        with:
+          components: rustfmt, clippy
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install pinned nextest binary
+        run: |
+          curl --fail --location --silent --show-error --retry 3 https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.148/cargo-nextest-0.9.148-x86_64-unknown-linux-gnu.tar.gz -o /tmp/arkhe-nextest.tar.gz
+          echo "223ba936714cc861a9cdedad5a8eb664dfdd69d6fbdf6cea6aa8184f523290dc  /tmp/arkhe-nextest.tar.gz" | sha256sum --check
+          tar -xzf /tmp/arkhe-nextest.tar.gz -C "$HOME/.cargo/bin" cargo-nextest
+          cargo nextest --version
+      - run: python scripts/record_gate.py readiness-tests -- python -m unittest discover -s scripts/tests -v
+      - run: python scripts/record_gate.py architecture -- python scripts/check_architecture.py
+      - run: python scripts/record_gate.py feature-backlog -- python scripts/check_feature_backlog.py
+      - run: python scripts/record_gate.py static -- make verify-static
+      - run: python scripts/record_gate.py artifact-vectors -- python verification/scripts/verify-vectors.py
+      - run: python scripts/record_gate.py format -- cargo fmt --all --check
+      - run: python scripts/record_gate.py cargo-check -- cargo check --workspace --locked
+      - run: python scripts/record_gate.py clippy -- cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: python scripts/record_gate.py broker-predicates -- cargo test --locked -p arkhe-kernel --features sqlite-broker --test formal_predicates --test broker_durable --test action_broker
+      - run: python scripts/record_gate.py cargo-test -- cargo test --workspace --locked
+      - name: Preview admission and transactional outbox on disposable PostgreSQL
+        env:
+          ARKHE_TEST_PREVIEW_ADMIN_DATABASE_URL: postgres://postgres@127.0.0.1:5432/postgres
+        run: python scripts/record_gate.py preview-postgres -- cargo test --locked -p arkhe-runtime --test preview_postgres -- --ignored --nocapture
+      - run: python scripts/record_gate.py work-vectors -- python scripts/generate_work_vectors.py --check
+      - run: python scripts/record_gate.py release-vectors -- python scripts/generate_release_manifest_vectors.py --check
+      - run: python scripts/record_gate.py idbind-vectors -- python scripts/generate_identity_binding_vectors.py --check
+      - run: python scripts/record_gate.py idbind-fixtures -- cargo run --locked -p arkhe-wormgraph --example idbind-vectors -- --check
+      - run: python scripts/record_gate.py domain-registry -- python scripts/check_domains.py
+      - run: python scripts/record_gate.py nextest -- cargo nextest run --workspace --locked
+      - run: python scripts/record_gate.py cognition -- python scripts/cognition_conformance.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: execution-${{ github.job }}-${{ github.run_attempt }}
+          path: docs/evidence/ci/${{ github.run_id }}/${{ github.job }}/
+          if-no-files-found: warn
+          retention-days: 30
+  surfaces-and-wasm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ARKHE_EVIDENCE_DIR: docs/evidence/ci/${{ github.run_id }}/${{ github.job }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+        with: { targets: wasm32-unknown-unknown }
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.25.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "24", cache: pnpm }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: cargo install wasm-pack --locked
+      - run: python scripts/record_gate.py node-install -- pnpm install --frozen-lockfile
+      - run: python scripts/record_gate.py wasm -- pnpm verify:wasm
+      - run: python scripts/record_gate.py representation-engine -- cargo build --locked -p arkhe-wormgraph --bin arkhe-representation-anchor
+      - run: python scripts/record_gate.py adapters -- pnpm build:adapters
+      - run: python scripts/record_gate.py node-tests -- pnpm -r test
+      - run: python scripts/record_gate.py apps -- pnpm build:apps
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: execution-${{ github.job }}-${{ github.run_attempt }}
+          path: docs/evidence/ci/${{ github.run_id }}/${{ github.job }}/
+          if-no-files-found: warn
+          retention-days: 30
+  p2p-acquisition:
+    # integration/arkhe-p2p is an independent workspace (config/architecture.json):
+    # Hashtree tree verification, Bao, bounded Blossom/Nostr transport and the
+    # IDBIND Nostr cross-check. Offline: fixtures only, no public relays/servers.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ARKHE_EVIDENCE_DIR: docs/evidence/ci/${{ github.run_id }}/${{ github.job }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+        with:
+          components: rustfmt, clippy
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python scripts/record_gate.py p2p-format -- cargo fmt --manifest-path integration/arkhe-p2p/Cargo.toml --check
+      - run: python scripts/record_gate.py p2p-clippy -- cargo clippy --manifest-path integration/arkhe-p2p/Cargo.toml --locked --all-targets -- -D warnings
+      - run: python scripts/record_gate.py p2p-tests -- cargo test --manifest-path integration/arkhe-p2p/Cargo.toml --locked
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: execution-${{ github.job }}-${{ github.run_attempt }}
+          path: docs/evidence/ci/${{ github.run_id }}/${{ github.job }}/
+          if-no-files-found: warn
+          retention-days: 30
+  persistent-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [kernel-and-contracts, surfaces-and-wasm, ai-security]
+    env:
+      ARKHE_EVIDENCE_DIR: docs/evidence/ci/${{ github.run_id }}/${{ github.job }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install pinned nextest binary
+        run: |
+          curl --fail --location --silent --show-error --retry 3 https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.148/cargo-nextest-0.9.148-x86_64-unknown-linux-gnu.tar.gz -o /tmp/arkhe-nextest.tar.gz
+          echo "223ba936714cc861a9cdedad5a8eb664dfdd69d6fbdf6cea6aa8184f523290dc  /tmp/arkhe-nextest.tar.gz" | sha256sum --check
+          tar -xzf /tmp/arkhe-nextest.tar.gz -C "$HOME/.cargo/bin" cargo-nextest
+          cargo nextest --version
+      - run: python scripts/record_gate.py live-kernel-sql -- python scripts/live_runtime.py up --engine docker
+      - run: python scripts/record_gate.py full-compose -- python scripts/full_stack.py --engine docker
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: execution-${{ github.job }}-${{ github.run_attempt }}
+          path: docs/evidence/ci/${{ github.run_id }}/${{ github.job }}/
+          if-no-files-found: warn
+          retention-days: 30
+
+  cognition-gates:
+    name: cognition-${{ matrix.gate }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        gate: [conformance, dependencies, architecture]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@d86e0fa8f147d6539442c26a61ebba8becc19489 # 1.96.0
+        if: matrix.gate != 'architecture'
+      - name: Execute gate and capture evidence
+        env:
+          ARKHE_GATE: ${{ matrix.gate }}
+          ARKHE_EVIDENCE_OUTPUT: docs/evidence/ci/${{ github.run_id }}/${{ matrix.gate }}
+        run: python scripts/cognition_ci.py gate "$ARKHE_GATE" --output "$ARKHE_EVIDENCE_OUTPUT"
+      - name: Preserve gate evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cognition-gate-${{ matrix.gate }}-${{ github.run_attempt }}
+          path: docs/evidence/ci/${{ github.run_id }}/${{ matrix.gate }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  cognition-evidence:
+    name: cognition-evidence
+    needs: [cognition-gates]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: cognition-gate-*-${{ github.run_attempt }}
+          path: docs/evidence/ci-inputs
+          merge-multiple: false
+      - name: Verify evidence and generate manifest
+        if: always()
+        env:
+          ARKHE_JOB_RESULTS: ${{ toJSON(needs) }}
+        run: >-
+          python scripts/cognition_ci.py bundle
+          --inputs docs/evidence/ci-inputs
+          --output docs/evidence/ci-bundle
+      - name: Publish report and SHA-256 manifest
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cognition-evidence-${{ github.run_attempt }}
+          path: docs/evidence/ci-bundle/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Explain signature eligibility
+        if: always()
+        run: |
+          echo 'Reports and SHA256SUMS are published separately from signatures.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'OIDC attestation runs only for successful default-branch pushes or dispatches.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Private repositories must enable ARKHE_ATTESTATIONS_ENABLED=true and support GitHub attestations.' >> "$GITHUB_STEP_SUMMARY"
+
+  cognition-attestation:
+    name: cognition-attestation
+    needs: [cognition-evidence]
+    # Never grant OIDC/signing authority to pull request execution.
+    if: >-
+      needs.cognition-evidence.result == 'success' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      (github.event.repository.private == false || vars.ARKHE_ATTESTATIONS_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    steps:
+      # No checkout and no execution of repository scripts in this job.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: cognition-evidence-${{ github.run_attempt }}
+          path: evidence
+      - name: Verify downloaded checksums
+        working-directory: evidence
+        run: sha256sum --check --strict SHA256SUMS
+      - name: Attest evidence manifest and primary documents
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            evidence/SHA256SUMS
+            evidence/results.json
+            evidence/COGNITION-SDK.md
+            evidence/REPORT.md
+          create-storage-record: false
+      - name: Publish signature bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cognition-attestation-${{ github.run_attempt }}
+          path: ${{ steps.attest.outputs.bundle-path }}
+          if-no-files-found: error
+          retention-days: 30
+
+  ai-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - uses: dtolnay/rust-toolchain@d86e0fa8f147d6539442c26a61ebba8becc19489
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: python scripts/check_ai_release.py
+      - run: cargo test -p arkhe-rag --test adversarial --locked
+      - run: cargo test -p arkhe-ollama --test client --locked

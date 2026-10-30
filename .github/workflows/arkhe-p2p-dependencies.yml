@@ -1,0 +1,29 @@
+name: arkhe-p2p dependency policy
+on:
+  push:
+    paths:
+      - 'integration/arkhe-p2p/**'
+      - '.github/workflows/arkhe-p2p-dependencies.yml'
+  pull_request:
+    paths:
+      - 'integration/arkhe-p2p/**'
+      - '.github/workflows/arkhe-p2p-dependencies.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dependency-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install workspace Rust toolchain
+        run: rustup show active-toolchain
+      - name: Install pinned dependency policy tool
+        run: cargo install cargo-deny --version 0.20.2 --locked
+      - name: Check advisories, licenses, bans and sources
+        # Maintenance advisories remain visible warnings; vulnerabilities,
+        # unsoundness, license and source violations still fail the job.
+        run: cargo deny --manifest-path integration/arkhe-p2p/Cargo.toml --config integration/arkhe-p2p/deny.toml --locked check --warn unmaintained

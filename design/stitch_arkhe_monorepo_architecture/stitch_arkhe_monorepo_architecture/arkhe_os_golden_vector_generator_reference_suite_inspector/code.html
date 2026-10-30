@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe OS // Golden Vector Generator &amp; Reference Suite Inspector</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-background": "#dfe2ed",
+            "on-error": "#690005",
+            "secondary-fixed-dim": "#7bd0ff",
+            "on-secondary-fixed-variant": "#004c69",
+            "primary": "#dbfcff",
+            "outline-variant": "#3b494b",
+            "secondary": "#7bd0ff",
+            "primary-fixed": "#7df4ff",
+            "surface-container-high": "#262a32",
+            "background": "#0f131b",
+            "on-primary-container": "#006970",
+            "on-secondary": "#00354a",
+            "outline": "#849495",
+            "surface-tint": "#00dbe9",
+            "primary-fixed-dim": "#00dbe9",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-variant": "#31353d",
+            "on-secondary-container": "#00374d",
+            "surface": "#0f131b",
+            "surface-container-highest": "#31353d",
+            "on-primary-fixed-variant": "#004f54",
+            "inverse-primary": "#006970",
+            "tertiary": "#d8ffe7",
+            "inverse-surface": "#dfe2ed",
+            "surface-container-lowest": "#0a0e15",
+            "tertiary-container": "#65f2b5",
+            "on-surface-variant": "#b9cacb",
+            "surface-container": "#1c2027",
+            "on-surface": "#dfe2ed",
+            "inverse-on-surface": "#2d3038",
+            "surface-dim": "#0f131b",
+            "on-tertiary-fixed-variant": "#005236",
+            "secondary-container": "#00a6e0",
+            "primary-container": "#00f0ff",
+            "surface-container-low": "#181c23",
+            "on-secondary-fixed": "#001e2c",
+            "on-primary": "#00363a",
+            "secondary-fixed": "#c4e7ff",
+            "surface-bright": "#353941",
+            "on-error-container": "#ffdad6",
+            "on-tertiary-container": "#006d4a",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-tertiary-fixed": "#002113",
+            "error": "#ffb4ab",
+            "on-tertiary": "#003824",
+            "on-primary-fixed": "#002022",
+            "error-container": "#93000a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-lg": "1.25rem",
+            "margin": "1rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "space-md": "0.75rem",
+            "gutter": "0.75rem",
+            "space-xs": "0.25rem",
+            "gutter-desktop": "1rem",
+            "margin-desktop": "1.5rem"
+          },
+          "fontFamily": {
+            "label-caps": ["JetBrains Mono"],
+            "body-sm": ["Geist"],
+            "mono-sm": ["JetBrains Mono"],
+            "display-lg": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "mono-lg": ["JetBrains Mono"],
+            "headline-lg": ["Space Grotesk"],
+            "mono-md": ["JetBrains Mono"],
+            "body-lg": ["Geist"],
+            "display-lg-mobile": ["Space Grotesk"],
+            "body-md": ["Geist"]
+          },
+          "fontSize": {
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0a0e15;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #3b494b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #00f0ff;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+    }
+    .code-line:hover {
+      background: rgba(0, 240, 255, 0.04);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased font-mono-sm text-mono-sm selection:bg-primary-container selection:text-surface-container-lowest overflow-hidden flex flex-col h-screen">
+<!-- TOP NAV BAR (Shared Component JSON Execution) -->
+<header class="flex justify-between items-center w-full px-space-md h-12 bg-surface border-b border-outline-variant z-50 shrink-0">
+<!-- Left: Brand + Search Bar -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="text-headline-md font-headline-md font-bold tracking-tight text-primary">ARKHE // OS</span>
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 bg-surface-container-low border border-outline-variant text-on-surface-variant">v0.1.0</span>
+</div>
+<!-- Search Bar on Left -->
+<div class="relative hidden lg:flex items-center ml-2">
+<span class="material-symbols-outlined absolute left-2 text-outline text-[16px]">terminal</span>
+<input class="bg-surface-container-lowest border border-outline-variant rounded px-2 pl-7 py-1 text-mono-sm font-mono-sm text-primary w-64 focus:outline-none focus:border-primary-container" readonly="" type="text" value="scripts/generate-gguf-vectors.py"/>
+<span class="absolute right-2 text-label-caps font-label-caps text-outline">REF_HASH</span>
+</div>
+</div>
+<!-- Center: Navigation Links -->
+<nav class="hidden md:flex items-center gap-space-lg">
+<a class="text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150" href="#">Monorepo Explorer</a>
+<a class="border-b-2 border-primary-container text-primary pb-1 font-mono-sm text-mono-sm font-bold flex items-center gap-1.5" href="#">
+<span>GGUF 4-Gate Pipeline</span>
+<span class="inline-block w-1.5 h-1.5 bg-primary-container rounded-full animate-pulse"></span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150" href="#">Formal Verification</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors duration-150" href="#">ADR Matrix</a>
+</nav>
+<!-- Right: Telemetry & Actions -->
+<div class="flex items-center gap-space-sm">
+<!-- Operator Identity -->
+<div class="hidden xl:flex flex-col text-right pr-2 border-r border-outline-variant">
+<span class="text-label-caps font-label-caps text-secondary font-semibold tracking-wide">ROOT::0x8f2a...c01d</span>
+<span class="text-[9px] font-mono-sm text-tertiary-fixed-dim">MMR VERIFIED // ZERO-DRIFT</span>
+</div>
+<!-- Fail-Closed Indicator -->
+<div class="flex items-center gap-1.5 px-2 py-1 bg-error-container/20 border border-error text-error text-label-caps font-label-caps rounded">
+<span class="material-symbols-outlined text-[14px] text-error" style="font-variation-settings: 'FILL' 1;">shield</span>
+<span>Fail-Closed [ARMED]</span>
+</div>
+<!-- Action Buttons -->
+<button class="bg-primary-container text-surface-container-lowest font-mono-sm text-mono-sm font-semibold px-space-sm py-1 rounded flex items-center gap-1 hover:bg-secondary transition-all glow-cyan active:scale-[0.98]">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+<span class="hidden sm:inline">Execute Vector Gen</span>
+</button>
+<button class="border border-outline-variant text-on-surface font-mono-sm text-mono-sm px-space-sm py-1 rounded flex items-center gap-1 hover:border-primary-container hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span class="hidden sm:inline">Copy Hex Fixtures</span>
+</button>
+<!-- Trailing Icon Actions -->
+<div class="flex items-center border-l border-outline-variant pl-space-xs text-outline">
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">hub</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">tune</span></button>
+</div>
+</div>
+</header>
+<!-- WORKBENCH BODY -->
+<div class="flex flex-1 overflow-hidden">
+<!-- LEFT SIDEBAR: Monorepo & Vector Matrix -->
+<aside class="w-64 bg-surface-container-lowest border-r border-outline-variant flex flex-col justify-between shrink-0 select-none">
+<!-- Upper Section: File Tree & Targets -->
+<div class="flex flex-col flex-1 overflow-y-auto custom-scrollbar">
+<!-- Workspace Header Banner -->
+<div class="p-space-sm border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[16px]">folder_special</span>
+<span class="text-label-caps font-label-caps text-on-surface">ARKHE-WORKSPACE</span>
+</div>
+<span class="text-[9px] font-mono-sm text-tertiary-fixed-dim bg-tertiary-container/10 border border-tertiary-fixed-dim/30 px-1 py-0.2">SYNCED</span>
+</div>
+<!-- Monorepo Navigation Tree -->
+<div class="py-2">
+<div class="px-space-sm pb-1 flex items-center justify-between text-label-caps font-label-caps text-outline">
+<span>FILE REPOSITORY TREE</span>
+<span class="text-[9px]">GGUF v3.0</span>
+</div>
+<!-- Tree Items -->
+<div class="flex flex-col">
+<div class="flex items-center gap-2 px-space-sm py-1 text-on-surface-variant hover:bg-surface-container cursor-pointer font-mono-sm text-mono-sm">
+<span class="material-symbols-outlined text-outline text-[16px]">folder_open</span>
+<span>scripts/</span>
+</div>
+<!-- Active Target File -->
+<div class="flex items-center justify-between px-space-sm py-1.5 border-l-2 border-primary-container bg-surface-container-low text-primary font-mono-sm text-mono-sm pl-6 cursor-pointer">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-primary-container text-[14px]">code</span>
+<span class="truncate">generate-gguf-vectors.py</span>
+</div>
+<span class="text-label-caps font-label-caps bg-primary-container/20 text-primary-container px-1 py-0.2 rounded border border-primary-container/30">128L</span>
+</div>
+<div class="flex items-center gap-2 px-space-sm py-1 text-on-surface-variant hover:bg-surface-container cursor-pointer font-mono-sm text-mono-sm">
+<span class="material-symbols-outlined text-outline text-[16px]">folder</span>
+<span>src/</span>
+</div>
+<div class="flex items-center gap-2 px-space-sm py-1 text-on-surface-variant/80 hover:bg-surface-container cursor-pointer font-mono-sm text-mono-sm pl-6">
+<span class="text-outline">├─</span>
+<span>lib.rs</span>
+<span class="text-[9px] text-outline ml-auto">core</span>
+</div>
+<div class="flex items-center gap-2 px-space-sm py-1 text-on-surface-variant/80 hover:bg-surface-container cursor-pointer font-mono-sm text-mono-sm pl-6">
+<span class="text-outline">├─</span>
+<span>gguf.rs</span>
+<span class="text-[9px] text-tertiary-fixed-dim ml-auto">Gate1</span>
+</div>
+<div class="flex items-center gap-2 px-space-sm py-1 text-on-surface-variant/80 hover:bg-surface-container cursor-pointer font-mono-sm text-mono-sm pl-6">
+<span class="text-outline">├─</span>
+<span>canon.rs</span>
+<span class="text-[9px] text-tertiary-fixed-dim ml-auto">Gate2</span>
+</div>
+<div class="flex items-center gap-2 px-space-sm py-1 text-on-surface-variant/80 hover:bg-surface-container cursor-pointer font-mono-sm text-mono-sm pl-6">
+<span class="text-outline">├─</span>
+<span>gate3.rs</span>
+<span class="text-[9px] text-tertiary-fixed-dim ml-auto">Gate3</span>
+</div>
+<div class="flex items-center gap-2 px-space-sm py-1 text-on-surface-variant/80 hover:bg-surface-container cursor-pointer font-mono-sm text-mono-sm pl-6">
+<span class="text-outline">├─</span>
+<span>gate4.rs</span>
+<span class="text-[9px] text-tertiary-fixed-dim ml-auto">Gate4</span>
+</div>
+<div class="flex items-center gap-2 px-space-sm py-1 text-on-surface-variant hover:bg-surface-container cursor-pointer font-mono-sm text-mono-sm">
+<span class="material-symbols-outlined text-outline text-[16px]">folder</span>
+<span>tests/pipeline.rs</span>
+</div>
+</div>
+</div>
+<!-- Vector Target Matrix -->
+<div class="border-t border-outline-variant pt-2 mt-2">
+<div class="px-space-sm pb-1.5 flex items-center justify-between text-label-caps font-label-caps text-outline">
+<span>VECTOR TARGET MATRIX</span>
+<span class="text-tertiary-fixed-dim font-bold">5/5 Q.E.D.</span>
+</div>
+<div class="space-y-1 px-space-xs">
+<!-- V1 -->
+<div class="p-1.5 bg-surface-container-low border border-outline-variant hover:border-primary-container/40 transition-colors flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-primary">V1: Minimal 24B Fixture</span>
+<span class="text-[9px] text-on-surface-variant">0 tensors · Magic 0x46554747</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- V2 -->
+<div class="p-1.5 bg-surface-container-low border border-outline-variant hover:border-primary-container/40 transition-colors flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface">V2: GGML Quantization</span>
+<span class="text-[9px] text-on-surface-variant">Q4_K_M · Q8_0 align table</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- V3 -->
+<div class="p-1.5 bg-surface-container-low border border-outline-variant hover:border-primary-container/40 transition-colors flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface">V3: Canonical CBOR Map</span>
+<span class="text-[9px] text-on-surface-variant">RFC 8949 §4.2.1 deterministic</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- V4 -->
+<div class="p-1.5 bg-surface-container-low border border-outline-variant hover:border-primary-container/40 transition-colors flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface">V4: RFC 6962 Tree Root</span>
+<span class="text-[9px] text-on-surface-variant">0x00 leaf / 0x01 interior node</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- V5 -->
+<div class="p-1.5 bg-surface-container-low border border-outline-variant hover:border-primary-container/40 transition-colors flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface">V5: In-toto v1 Dual-Hash</span>
+<span class="text-[9px] text-on-surface-variant">Ed25519 · sha256 + blake3</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Sidebar CTA: Python Runner -->
+<div class="p-space-sm border-t border-outline-variant bg-surface-container">
+<div class="flex items-center justify-between mb-1.5 text-label-caps font-label-caps">
+<span class="text-on-surface-variant">RUNTIME HARNESS</span>
+<span class="text-secondary">CPython 3.11.8</span>
+</div>
+<button class="w-full bg-surface-container-low border border-outline-variant hover:border-primary-container text-primary hover:bg-surface-container-high py-1.5 px-2 rounded text-label-caps font-label-caps font-semibold flex items-center justify-center gap-1.5 transition-all">
+<span class="material-symbols-outlined text-[16px] text-primary-container">terminal</span>
+<span>GENERATE ALL VECTORS</span>
+</button>
+<div class="mt-2 flex items-center justify-between text-[9px] text-outline">
+<span>Determinism: 100%</span>
+<span class="text-tertiary-fixed-dim">SEED: 0xDEADBEEF</span>
+</div>
+</div>
+</aside>
+<!-- CENTER PANE: Code Viewer & Terminal Output -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface-container-lowest">
+<!-- File Header Bar / Tab Row -->
+<div class="flex items-center justify-between border-b border-outline-variant bg-surface px-space-md h-10 shrink-0">
+<div class="flex items-center gap-2 overflow-x-auto">
+<div class="flex items-center gap-2 border-b-2 border-primary-container bg-surface-container-low text-primary px-3 py-1 font-mono-sm text-mono-sm">
+<span class="material-symbols-outlined text-[15px] text-primary-container">data_object</span>
+<span class="font-bold">scripts/generate-gguf-vectors.py</span>
+<span class="text-label-caps font-label-caps bg-primary-container/20 text-primary-container px-1 rounded">PY 3.11</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant hover:text-on-surface px-2 py-1 font-mono-sm text-mono-sm cursor-pointer">
+<span class="text-outline">fixtures/vector_01_minimal.bin</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant hover:text-on-surface px-2 py-1 font-mono-sm text-mono-sm cursor-pointer">
+<span class="text-outline">fixtures/manifest.json</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-caps font-label-caps bg-surface-container-high text-tertiary-fixed-dim border border-tertiary-fixed-dim/30 px-2 py-0.5 rounded">
+            ZERO-DRIFT REFERENCE
+          </span>
+<span class="text-label-caps font-label-caps bg-surface-container-high text-secondary border border-secondary/30 px-2 py-0.5 rounded">
+            SYNTHESIS HARNESS
+          </span>
+</div>
+</div>
+<!-- Invariant Callout Banner -->
+<div class="bg-surface-container-low/70 border-b border-outline-variant px-space-md py-2 flex items-start gap-3 shrink-0">
+<span class="material-symbols-outlined text-primary-container text-[20px] shrink-0 mt-0.5">verified</span>
+<div class="flex-1 text-mono-sm text-mono-sm">
+<div class="flex items-center gap-2">
+<span class="text-label-caps font-label-caps font-bold text-primary">INVARIANT GENERATOR // PYTHON REFERENCE IMPLEMENTATION</span>
+<span class="text-[10px] text-outline">| RFC 8949 + RFC 6962 + GGUF v3 Protocol Specification</span>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-0.5">
+            Deterministic synthesis of canonical GGUF v3 test fixtures, cross-verified against Rust <span class="text-primary font-mono-sm">arkhe-verify-core</span>. Guarantees bit-for-bit parity across SHA-256 and BLAKE3 dual-hash roots with zero cross-runtime deviation.
+          </p>
+</div>
+<div class="flex items-center gap-1 text-label-caps font-label-caps text-secondary-fixed bg-surface-container border border-outline-variant px-2 py-1 shrink-0">
+<span class="material-symbols-outlined text-[14px]">sync_alt</span>
+<span>RUST HARNESS PARITY</span>
+</div>
+</div>
+<!-- Code Workspace Area (Scrollable) -->
+<div class="flex-1 overflow-y-auto custom-scrollbar bg-surface-container-lowest font-mono-sm text-mono-sm select-text">
+<div class="flex">
+<!-- Line Numbers -->
+<div class="w-12 py-3 bg-surface-container-lowest text-right pr-3 select-none text-outline border-r border-outline-variant text-[11px] leading-6 font-mono-sm">
+            1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18<br/>19<br/>20<br/>21<br/>22<br/>23<br/>24<br/>25<br/>26<br/>27<br/>28<br/>29<br/>30<br/>31<br/>32<br/>33<br/>34<br/>35<br/>36<br/>37<br/>38<br/>39<br/>40<br/>41<br/>42<br/>43<br/>44
+          </div>
+<!-- Code Content with Syntax Highlights -->
+<div class="py-3 px-4 flex-1 leading-6 overflow-x-auto text-[11px]">
+<div class="code-line"><span class="text-outline">#!/usr/bin/env python3</span></div>
+<div class="code-line"><span class="text-outline">"""Arkhe OS GGUF v3 Golden Vector Synthesizer - Formal Reference Suite"""</span></div>
+<div class="code-line"><span class="text-primary-container font-semibold">import</span> <span class="text-on-surface">struct</span>, <span class="text-on-surface">hashlib</span>, <span class="text-on-surface">cbor2</span>, <span class="text-on-surface">json</span>, <span class="text-on-surface">pathlib</span></div>
+<div class="code-line"><span class="text-primary-container font-semibold">import</span> <span class="text-on-surface">blake3</span>, <span class="text-on-surface">cryptography.hazmat.primitives.asymmetric.ed25519</span> <span class="text-primary-container font-semibold">as</span> <span class="text-on-surface">ed25519</span></div>
+<div class="code-line"> </div>
+<div class="code-line"><span class="text-secondary font-bold">GGUF_MAGIC_LE</span> = <span class="text-tertiary-fixed-dim">0x46554747</span> <span class="text-outline"># 'GGUF' ASCII little-endian</span></div>
+<div class="code-line"><span class="text-secondary font-bold">GGUF_VERSION</span>  = <span class="text-tertiary-fixed-dim">3</span> <span class="text-outline"># Arkhe Gate-1 Invariant Target</span></div>
+<div class="code-line"> </div>
+<div class="code-line"><span class="text-primary-container font-semibold">def</span> <span class="text-secondary font-bold">build_minimal_header</span>(tensor_count: <span class="text-secondary-fixed">int</span> = <span class="text-tertiary-fixed-dim">0</span>, kv_count: <span class="text-secondary-fixed">int</span> = <span class="text-tertiary-fixed-dim">0</span>) -&gt; <span class="text-secondary-fixed">bytes</span>:</div>
+<div class="code-line pl-4"><span class="text-outline">"""Vector 01: Canonical minimal 24-byte header fixture."""</span></div>
+<div class="code-line pl-4"><span class="text-outline"># struct: uint32 magic, uint32 version, uint64 tensor_count, uint64 metadata_kv_count</span></div>
+<div class="code-line pl-4"><span class="text-primary-container font-semibold">return</span> struct.pack(<span class="text-tertiary-fixed">"&lt;IIQQ"</span>, GGUF_MAGIC_LE, GGUF_VERSION, tensor_count, kv_count)</div>
+<div class="code-line"> </div>
+<div class="code-line"><span class="text-primary-container font-semibold">def</span> <span class="text-secondary font-bold">canonical_cbor_encode</span>(obj: <span class="text-secondary-fixed">dict</span>) -&gt; <span class="text-secondary-fixed">bytes</span>:</div>
+<div class="code-line pl-4"><span class="text-outline">"""Vector 03: RFC 8949 §4.2.1 Deterministic Key Ordering by byte length then value."""</span></div>
+<div class="code-line pl-4"><span class="text-primary-container font-semibold">def</span> <span class="text-secondary">_sort_key</span>(kv_pair):</div>
+<div class="code-line pl-8">k_bytes = cbor2.dumps(kv_pair[<span class="text-tertiary-fixed-dim">0</span>])</div>
+<div class="code-line pl-8"><span class="text-primary-container font-semibold">return</span> (len(k_bytes), k_bytes)</div>
+<div class="code-line pl-4">sorted_items = sorted(obj.items(), key=_sort_key)</div>
+<div class="code-line pl-4"><span class="text-primary-container font-semibold">return</span> cbor2.dumps(dict(sorted_items), canonical=<span class="text-primary-fixed">True</span>)</div>
+<div class="code-line"> </div>
+<div class="code-line"><span class="text-primary-container font-semibold">def</span> <span class="text-secondary font-bold">compute_rfc6962_merkle</span>(tensors: <span class="text-secondary-fixed">list</span>[<span class="text-secondary-fixed">bytes</span>]) -&gt; <span class="text-secondary-fixed">bytes</span>:</div>
+<div class="code-line pl-4"><span class="text-outline">"""Vector 04: Domain-separated Merkle Tree (0x00 leaf, 0x01 interior)."""</span></div>
+<div class="code-line pl-4">current_level = [hashlib.sha256(<span class="text-tertiary-fixed">b"\x00"</span> + t).digest() <span class="text-primary-container font-semibold">for</span> t <span class="text-primary-container font-semibold">in</span> tensors]</div>
+<div class="code-line pl-4"><span class="text-primary-container font-semibold">while</span> len(current_level) &gt; <span class="text-tertiary-fixed-dim">1</span>:</div>
+<div class="code-line pl-8">next_level = []</div>
+<div class="code-line pl-8"><span class="text-primary-container font-semibold">for</span> i <span class="text-primary-container font-semibold">in</span> range(<span class="text-tertiary-fixed-dim">0</span>, len(current_level), <span class="text-tertiary-fixed-dim">2</span>):</div>
+<div class="code-line pl-12">left = current_level[i]</div>
+<div class="code-line pl-12">right = current_level[i+<span class="text-tertiary-fixed-dim">1</span>] <span class="text-primary-container font-semibold">if</span> i+<span class="text-tertiary-fixed-dim">1</span> &lt; len(current_level) <span class="text-primary-container font-semibold">else</span> left</div>
+<div class="code-line pl-12">next_level.append(hashlib.sha256(<span class="text-tertiary-fixed">b"\x01"</span> + left + right).digest())</div>
+<div class="code-line pl-8">current_level = next_level</div>
+<div class="code-line pl-4"><span class="text-primary-container font-semibold">return</span> current_level[<span class="text-tertiary-fixed-dim">0</span>]</div>
+<div class="code-line"> </div>
+<div class="code-line"><span class="text-primary-container font-semibold">def</span> <span class="text-secondary font-bold">generate_intoto_statement</span>(payload: <span class="text-secondary-fixed">bytes</span>, priv_key: <span class="text-on-surface">ed25519.Ed25519PrivateKey</span>) -&gt; <span class="text-secondary-fixed">dict</span>:</div>
+<div class="code-line pl-4"><span class="text-outline">"""Vector 05: In-toto v1 attestation with Dual-Hash (sha256 + blake3) digest bindings."""</span></div>
+<div class="code-line pl-4">sha_digest = hashlib.sha256(payload).hexdigest()</div>
+<div class="code-line pl-4">b3_digest  = blake3.blake3(payload).hexdigest()</div>
+<div class="code-line pl-4">statement = {</div>
+<div class="code-line pl-8"><span class="text-tertiary-fixed">"_type"</span>: <span class="text-tertiary-fixed">"https://in-toto.io/Statement/v1"</span>,</div>
+<div class="code-line pl-8"><span class="text-tertiary-fixed">"subject"</span>: [{<span class="text-tertiary-fixed">"name"</span>: <span class="text-tertiary-fixed">"model.gguf"</span>, <span class="text-tertiary-fixed">"digest"</span>: {<span class="text-tertiary-fixed">"sha256"</span>: sha_digest, <span class="text-tertiary-fixed">"blake3"</span>: b3_digest}}],</div>
+<div class="code-line pl-8"><span class="text-tertiary-fixed">"predicateType"</span>: <span class="text-tertiary-fixed">"https://arkhe.os/attestations/gguf-gate/v1"</span></div>
+<div class="code-line pl-4">}</div>
+<div class="code-line pl-4"><span class="text-primary-container font-semibold">return</span> statement</div>
+<div class="code-line"> </div>
+<div class="code-line"><span class="text-primary-container font-semibold">if</span> __name__ == <span class="text-tertiary-fixed">"__main__"</span>:</div>
+<div class="code-line pl-4">manifest = synthesize_suite(out_dir=pathlib.Path(<span class="text-tertiary-fixed">"tests/fixtures"</span>))</div>
+<div class="code-line pl-4">print(f<span class="text-tertiary-fixed">"[+] Synthesized 5 golden vectors. Parity verified with Rust engine."</span>)</div>
+</div>
+</div>
+</div>
+<!-- Bottom Terminal Panel (Execution Output) -->
+<div class="h-36 border-t border-outline-variant bg-surface-container-lowest flex flex-col shrink-0">
+<!-- Terminal Header -->
+<div class="px-space-md py-1 bg-surface-container border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[14px]">terminal</span>
+<span class="text-label-caps font-label-caps text-on-surface">HARNESS TERMINAL // RUST GATE CROSS-VERIFICATION</span>
+</div>
+<div class="flex items-center gap-2 text-[10px]">
+<span class="text-tertiary-fixed-dim flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-ping"></span>
+              CROSS-CHECK ACTIVE
+            </span>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-[14px]">clear_all</span></button>
+</div>
+</div>
+<!-- Terminal Body -->
+<div class="p-space-sm font-mono-sm text-[11px] leading-5 text-on-surface-variant overflow-y-auto custom-scrollbar">
+<div class="text-outline">$ python3 scripts/generate-gguf-vectors.py --verify-rust --target=arkhe-verify-core</div>
+<div class="text-primary">[SYNTH] Generating Vector 01..05 to ./tests/fixtures/... <span class="text-tertiary-fixed-dim">DONE (2.41ms)</span></div>
+<div class="text-secondary">[EXEC] FFI Invocation: target/release/libarkhe_verify_core.so::verify_golden_set()</div>
+<div class="text-on-surface">
+            [RESULT] V1: 24B header match <span class="text-tertiary-fixed-dim">OK</span> | V2: Q-table byte-parity <span class="text-tertiary-fixed-dim">OK</span> | V3: RFC8949 sort <span class="text-tertiary-fixed-dim">OK</span> | V4: RFC6962 tree <span class="text-tertiary-fixed-dim">OK</span> | V5: In-toto v1 dual-hash <span class="text-tertiary-fixed-dim">OK</span>
+</div>
+<div class="text-tertiary font-semibold flex items-center gap-2">
+<span>[PARITY PASS] Synthesized 5 golden vectors. Cross-checking with arkhe-verify-core v0.2.0... PARITY VERIFIED (0.000 ppm drift, SHA-256 match 100%)</span>
+</div>
+</div>
+</div>
+</main>
+<!-- RIGHT INSPECTOR PANEL: Vector Specs & Hex Dump Ledger -->
+<aside class="w-80 bg-surface-container-low border-l border-outline-variant flex flex-col justify-between shrink-0 select-none overflow-y-auto custom-scrollbar">
+<div class="p-space-sm space-y-space-md">
+<!-- Header -->
+<div class="border-b border-outline-variant pb-2">
+<div class="flex items-center justify-between">
+<span class="text-label-caps font-label-caps text-primary">CROSS-VERIFICATION MATRIX</span>
+<span class="material-symbols-outlined text-primary-container text-[16px]">verified</span>
+</div>
+<span class="text-[10px] text-outline">GGUF v3 Protocol Specification Invariants</span>
+</div>
+<!-- Vector Manifest Ledger Cards -->
+<div class="space-y-2">
+<!-- Vector 01 Item -->
+<div class="bg-surface-container-lowest border border-primary-container/60 p-2 rounded relative">
+<div class="flex items-center justify-between">
+<span class="text-label-caps font-label-caps text-primary font-bold">VECTOR 01: minimal-24b.gguf</span>
+<span class="text-label-caps font-label-caps bg-tertiary-container/20 text-tertiary-fixed-dim border border-tertiary-container/30 px-1 py-0.2 rounded">VERIFIED</span>
+</div>
+<div class="mt-1 text-[10px] space-y-0.5 text-on-surface-variant">
+<div class="flex justify-between"><span>Payload:</span><span class="text-primary">24 bytes</span></div>
+<div class="flex justify-between"><span>Hash:</span><span class="text-outline truncate w-36 text-right">e3b0c442...7852b855</span></div>
+<div class="flex justify-between"><span>Rust Parser:</span><span class="text-tertiary-fixed-dim">Zero Alloc / Bit Parity</span></div>
+</div>
+</div>
+<!-- Vector 02 Item -->
+<div class="bg-surface-container-lowest border border-outline-variant p-2 rounded hover:border-outline transition-colors">
+<div class="flex items-center justify-between">
+<span class="text-label-caps font-label-caps text-on-surface font-semibold">VECTOR 02: cbor-map-ordering.gguf</span>
+<span class="text-label-caps font-label-caps bg-tertiary-container/20 text-tertiary-fixed-dim border border-tertiary-container/30 px-1 py-0.2 rounded">PASS</span>
+</div>
+<div class="mt-1 text-[10px] space-y-0.5 text-on-surface-variant">
+<div class="flex justify-between"><span>Payload:</span><span class="text-primary">142 bytes</span></div>
+<div class="flex justify-between"><span>Rule:</span><span class="text-on-surface">RFC 8949 §4.2.1 Determinism</span></div>
+<div class="flex justify-between"><span>Ordering:</span><span class="text-tertiary-fixed-dim">Lexicographic Byte Sort</span></div>
+</div>
+</div>
+<!-- Vector 03 Item -->
+<div class="bg-surface-container-lowest border border-outline-variant p-2 rounded hover:border-outline transition-colors">
+<div class="flex items-center justify-between">
+<span class="text-label-caps font-label-caps text-on-surface font-semibold">VECTOR 03: merkle-tree-rfc6962.gguf</span>
+<span class="text-label-caps font-label-caps bg-secondary/10 text-secondary border border-secondary/30 px-1 py-0.2 rounded">MATCHED</span>
+</div>
+<div class="mt-1 text-[10px] space-y-0.5 text-on-surface-variant">
+<div class="flex justify-between"><span>Size:</span><span class="text-primary">1,048,576 B (4 Tensors)</span></div>
+<div class="flex justify-between"><span>Separation:</span><span class="text-on-surface">0x00 Leaf / 0x01 Interior</span></div>
+<div class="flex justify-between"><span>Dual-Hash:</span><span class="text-tertiary-fixed-dim">BLAKE3 + SHA-256</span></div>
+</div>
+</div>
+<!-- Vector 04 Item -->
+<div class="bg-surface-container-lowest border border-outline-variant p-2 rounded hover:border-outline transition-colors">
+<div class="flex items-center justify-between">
+<span class="text-label-caps font-label-caps text-on-surface font-semibold">VECTOR 04: in-toto-attestation.json</span>
+<span class="text-label-caps font-label-caps bg-secondary/10 text-secondary border border-secondary/30 px-1 py-0.2 rounded">MATCHED</span>
+</div>
+<div class="mt-1 text-[10px] space-y-0.5 text-on-surface-variant">
+<div class="flex justify-between"><span>Spec:</span><span class="text-primary">In-toto v1 Statement</span></div>
+<div class="flex justify-between"><span>Signature:</span><span class="text-tertiary-fixed-dim">Ed25519 Validated</span></div>
+</div>
+</div>
+<!-- Vector 05 Item (Adversarial) -->
+<div class="bg-surface-container-lowest border border-error/50 p-2 rounded">
+<div class="flex items-center justify-between">
+<span class="text-label-caps font-label-caps text-error font-semibold">VECTOR 05: adversarial-mutated.gguf</span>
+<span class="text-label-caps font-label-caps bg-error-container/20 text-error border border-error/30 px-1 py-0.2 rounded">DEFEATED</span>
+</div>
+<div class="mt-1 text-[10px] space-y-0.5 text-on-surface-variant">
+<div class="flex justify-between"><span>Mutation:</span><span class="text-error">Byte #18 Flipped (0x00-&gt;0x01)</span></div>
+<div class="flex justify-between"><span>Rust Gate 3:</span><span class="text-error">Tampering Trapped</span></div>
+</div>
+</div>
+</div>
+<!-- Binary Hex Dump Preview for Minimal Fixture -->
+<div class="border border-outline-variant bg-surface-container-lowest p-2 rounded">
+<div class="flex items-center justify-between pb-1.5 border-b border-outline-variant mb-1.5">
+<span class="text-label-caps font-label-caps text-secondary font-bold">HEX PREVIEW: vector_01_minimal.bin</span>
+<span class="text-[9px] text-outline">24 BYTES</span>
+</div>
+<div class="font-mono-sm text-[10px] leading-4 text-on-surface-variant space-y-0.5">
+<div class="flex justify-between text-outline">
+<span>OFFSET</span><span>HEX DATA (LITTLE ENDIAN)</span><span>ASCII</span>
+</div>
+<div class="flex justify-between">
+<span class="text-primary-container">0000:</span>
+<span class="text-primary font-bold">47 47 55 46</span>
+<span class="text-secondary">03 00 00 00</span>
+<span class="text-on-surface">GGUF....</span>
+</div>
+<div class="flex justify-between">
+<span class="text-primary-container">0008:</span>
+<span class="text-outline">00 00 00 00 00 00 00 00</span>
+<span class="text-on-surface">........</span>
+</div>
+<div class="flex justify-between">
+<span class="text-primary-container">0010:</span>
+<span class="text-outline">00 00 00 00 00 00 00 00</span>
+<span class="text-on-surface">........</span>
+</div>
+</div>
+</div>
+<!-- Parity Telemetry Readouts -->
+<div class="border-t border-outline-variant pt-2 space-y-1.5">
+<span class="text-label-caps font-label-caps text-outline block">PARITY TELEMETRY</span>
+<div class="grid grid-cols-2 gap-2 text-label-caps font-label-caps">
+<div class="p-1.5 bg-surface-container rounded border border-outline-variant">
+<span class="text-[9px] text-outline block">CROSS-LANG DRIFT</span>
+<span class="text-tertiary-fixed-dim text-mono-md font-bold">0.000 ppm</span>
+</div>
+<div class="p-1.5 bg-surface-container rounded border border-outline-variant">
+<span class="text-[9px] text-outline block">EXECUTION TIME</span>
+<span class="text-primary-container text-mono-md font-bold">14.2 ms</span>
+</div>
+</div>
+<div class="p-1.5 bg-surface-container rounded border border-outline-variant">
+<div class="flex justify-between text-label-caps font-label-caps text-[9px] text-outline mb-0.5">
+<span>DUAL-HASH ENGINE</span>
+<span class="text-secondary">BLAKE3 + SHA-256</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1.5 rounded overflow-hidden">
+<div class="bg-primary-container h-full w-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Inspector Actions -->
+<div class="p-space-sm border-t border-outline-variant bg-surface-container flex flex-col gap-1.5">
+<button class="w-full bg-primary-container text-surface-container-lowest font-mono-sm text-mono-sm font-semibold py-1.5 rounded flex items-center justify-center gap-1.5 hover:bg-secondary transition-all">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+<span>EXPORT REFERENCE SUITE (.TAR.GZ)</span>
+</button>
+<div class="flex items-center justify-between text-[9px] text-outline">
+<span>MMR ACCUMULATOR: ACTIVE</span>
+<span class="text-primary">SHA-256 MATCH 100%</span>
+</div>
+</div>
+</aside>
+</div>
+</body></html>

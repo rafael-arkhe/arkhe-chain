@@ -1,0 +1,32 @@
+[package]
+name = "arkhe-provenance-mcp"
+version = "0.2.1"
+edition = "2021"
+publish = false
+
+[dependencies]
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.12", default-features = true, features = ["json"] }
+rust_decimal = { version = "1", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+sqlx = { version = "0.8", default-features = false, features = [
+  "runtime-tokio-native-tls",
+  "postgres",
+  "uuid",
+  "chrono",
+  "rust_decimal",
+] }
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+uuid = { version = "1", features = ["serde", "v4"] }
+
+[dev-dependencies]
+anyhow = "1"
+mockall = "0.13"
+postgresql_embedded = { version = "0.21", features = ["tokio"] }
+
+[lints.rust]
+unsafe_code = "forbid"

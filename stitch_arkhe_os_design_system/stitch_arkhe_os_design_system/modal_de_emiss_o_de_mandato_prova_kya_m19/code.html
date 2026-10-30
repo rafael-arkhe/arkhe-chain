@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Protocol Engine - Emissão &amp; Assinatura de Mandato Criptográfico KYA (M19)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-container": "#131b2e",
+            "surface-container-high": "#eae7e9",
+            "primary-fixed": "#dae2fd",
+            "tertiary-fixed": "#fcdeb5",
+            "status-pending-text": "#334155",
+            "on-tertiary": "#ffffff",
+            "on-error": "#ffffff",
+            "tertiary-fixed-dim": "#dec29a",
+            "status-fail-border": "#FECDD3",
+            "border-subtle": "#E5E7EB",
+            "status-pass-border": "#A7F3D0",
+            "inverse-surface": "#303032",
+            "on-surface": "#1b1b1d",
+            "on-error-container": "#93000a",
+            "surface-tint": "#565e74",
+            "surface-container-low": "#f6f3f5",
+            "on-primary-container": "#7c839b",
+            "status-warning-bg": "#FFFBEB",
+            "text-tertiary": "#6B7280",
+            "status-fail-text": "#BE123C",
+            "on-secondary-fixed": "#00174b",
+            "on-secondary-fixed-variant": "#003ea8",
+            "status-pending-bg": "#F1F5F9",
+            "status-fail-bg": "#FFF1F2",
+            "on-secondary-container": "#fefcff",
+            "secondary": "#0051d5",
+            "outline": "#76777d",
+            "error": "#ba1a1a",
+            "on-primary": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "background": "#fcf8fa",
+            "on-secondary": "#ffffff",
+            "surface-variant": "#e4e2e4",
+            "surface": "#fcf8fa",
+            "primary-fixed-dim": "#bec6e0",
+            "surface-dim": "#dcd9db",
+            "secondary-container": "#316bf3",
+            "tertiary-container": "#271901",
+            "on-tertiary-container": "#98805d",
+            "on-surface-variant": "#45464d",
+            "inverse-on-surface": "#f3f0f2",
+            "text-primary": "#111827",
+            "inverse-primary": "#bec6e0",
+            "surface-container-highest": "#e4e2e4",
+            "border-muted": "#E2E8F0",
+            "tertiary": "#000000",
+            "surface-container": "#f0edef",
+            "error-container": "#ffdad6",
+            "canvas-base": "#FFFFFF",
+            "on-background": "#1b1b1d",
+            "status-warning-border": "#FDE68A",
+            "primary": "#000000",
+            "secondary-fixed": "#dbe1ff",
+            "status-pass-bg": "#ECFDF5",
+            "on-tertiary-fixed-variant": "#574425",
+            "surface-bright": "#fcf8fa",
+            "status-warning-text": "#B45309",
+            "on-tertiary-fixed": "#271901",
+            "status-pending-border": "#CBD5E1",
+            "text-secondary": "#4B5563",
+            "secondary-fixed-dim": "#b4c5ff",
+            "canvas-subtle": "#F9FAFB",
+            "outline-variant": "#c6c6cd",
+            "status-pass-text": "#047857",
+            "on-primary-fixed-variant": "#3f465c",
+            "on-primary-fixed": "#131b2e"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "fontFamily": {
+            "label-sm": ["JetBrains Mono"],
+            "label-md": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "code-inline": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "headline-xl": ["Inter"],
+            "headline-sm": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "code-inline": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-text-primary font-body-md antialiased overflow-hidden min-h-screen">
+<!-- Underlying Operational Canvas (TopNav & SideNav persistent backdrop) -->
+<div class="relative w-full h-screen flex flex-col pointer-events-none select-none filter blur-[1.5px] opacity-40">
+<!-- Institutional TopNavBar -->
+<header class="w-full px-6 h-14 flex items-center justify-between border-b border-border-subtle bg-canvas-base max-w-full">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="text-headline-sm font-headline-sm font-semibold tracking-tight text-primary">Arkhe Protocol Engine</span>
+<span class="font-label-sm text-label-sm text-text-secondary bg-surface-container-high px-1.5 py-0.5 rounded">MAINNET-NODE-01</span>
+</div>
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-text-tertiary text-[18px]">search</span>
+<input class="w-full pl-8 pr-3 py-1 text-body-sm bg-canvas-subtle border border-border-subtle rounded text-text-primary" disabled="" placeholder="Buscar Root Hash, Digest..." type="text"/>
+</div>
+<nav class="hidden lg:flex items-center gap-5">
+<a class="text-text-secondary font-body-sm hover:text-text-primary">Audit Trail</a>
+<a class="text-text-primary font-semibold border-b-2 border-primary pb-1 font-body-sm">Inclusion Proofs</a>
+<a class="text-text-secondary font-body-sm">WormGraph</a>
+<a class="text-text-secondary font-body-sm">Hardware Enclaves</a>
+<a class="text-text-secondary font-body-sm">Revocation Registry</a>
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-2.5 py-1 text-body-sm border border-border-subtle rounded font-body-sm bg-canvas-base text-text-primary">Exportar JCS</button>
+<button class="px-2.5 py-1 text-body-sm bg-primary text-on-primary rounded font-body-sm">Verificar Offline WASM</button>
+</div>
+</header>
+<!-- Operational Split -->
+<div class="flex-1 flex overflow-hidden">
+<aside class="w-64 border-r border-border-subtle bg-canvas-subtle p-3 flex flex-col justify-between">
+<div class="space-y-4">
+<div class="border-b border-border-subtle pb-3">
+<div class="font-headline-sm text-headline-sm font-bold text-text-primary">ARKHE KERNEL v4.2</div>
+<div class="font-label-sm text-label-sm text-text-tertiary">MMR Checkpoint #849,204</div>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-3 px-3 py-2 text-text-primary bg-canvas-base border-l-2 border-primary font-medium font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">verified_user</span> Proof Explorer
+            </div>
+<div class="flex items-center gap-3 px-3 py-2 text-text-secondary font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">memory</span> Enclave Attestation
+            </div>
+<div class="flex items-center gap-3 px-3 py-2 text-text-secondary font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">hub</span> Rekor Anchor
+            </div>
+<div class="flex items-center gap-3 px-3 py-2 text-text-secondary font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px]">fact_check</span> Status List v1.0
+            </div>
+</div>
+</div>
+</aside>
+<main class="flex-1 bg-background p-6">
+<div class="h-full border border-border-subtle rounded bg-canvas-base p-6">
+<div class="h-6 w-48 bg-surface-container-high rounded mb-4"></div>
+<div class="h-96 w-full bg-canvas-subtle border border-dashed border-border-subtle rounded"></div>
+</div>
+</main>
+</div>
+</div>
+<!-- Institutional Modal Backdrop (Light, Sober Institutional Overlay) -->
+<div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 bg-primary/20 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-4 overflow-y-auto" role="dialog">
+<!-- Modal Window Container (Rigid, Flat 1px Border Architecture) -->
+<div class="bg-canvas-base border border-border-subtle rounded shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_2px_4px_-2px_rgba(0,0,0,0.05)] w-full max-w-6xl my-auto flex flex-col max-h-[942px] overflow-hidden">
+<!-- Modal Header -->
+<div class="px-5 py-4 border-b border-border-subtle bg-canvas-subtle flex items-start justify-between relative">
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-label-sm font-label-sm bg-surface-container-high text-status-pending-text border border-status-pending-border">
+              GOVERNANÇA DE AGENTES // KYA v1.0
+            </span>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-label-sm font-label-sm bg-status-pass-bg text-status-pass-text border border-status-pass-border">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pass-text"></span> CANONICAL FORM RFC 8785
+            </span>
+</div>
+<h1 class="text-headline-md font-headline-md text-text-primary tracking-tight" id="modal-title">
+            Emissão &amp; Assinatura de Mandato Criptográfico KYA (Modal M19)
+          </h1>
+<p class="text-body-sm font-body-sm text-text-secondary max-w-3xl">
+            Configuração formal de limites financeiros, whitelist de ferramentas MCP e vínculo estrito a certificado ICP-Brasil (e-CNPJ).
+          </p>
+</div>
+<!-- Close Affordance -->
+<button aria-label="Fechar Modal" class="text-text-secondary hover:text-text-primary p-1.5 rounded hover:bg-surface-container-high transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Modal Body (Two-Column Tabular Density Layout) -->
+<div class="p-5 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-5 bg-canvas-base">
+<!-- COLUMN 1: Configuração do Mandato & Limites de Operação (7 cols) -->
+<div class="lg:col-span-7 space-y-4">
+<!-- Seção de Entidades & Identidade Soberana -->
+<div class="border border-border-subtle rounded p-3.5 bg-canvas-subtle space-y-3">
+<div class="flex items-center justify-between border-b border-border-subtle pb-2">
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">fingerprint</span> Sujeitos do Mandato Criptográfico
+              </span>
+<span class="text-label-sm font-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-1.5 py-0.2 rounded">DID:ARKHE VALIDADO</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div>
+<label class="block text-label-sm font-label-sm text-text-secondary mb-1">Agente Alvo (Sujeto Operacional)</label>
+<div class="bg-canvas-base border border-border-subtle rounded px-2.5 py-1.5">
+<div class="font-headline-sm text-[13px] text-text-primary font-semibold">Liquidator Auto-Settler v1.4</div>
+<div class="font-code-inline text-label-sm text-text-tertiary truncate">did:arkhe:ag-9941</div>
+</div>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-text-secondary mb-1">Operador Responsável (Titular Jurídico)</label>
+<div class="bg-canvas-base border border-border-subtle rounded px-2.5 py-1.5">
+<div class="font-headline-sm text-[13px] text-text-primary font-semibold truncate">Banco Santander (Brasil) S.A.</div>
+<div class="font-code-inline text-label-sm text-text-tertiary">e-CNPJ 00.360.305/0001-04</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Limites Financeiros & Alçadas -->
+<div class="border border-border-subtle rounded p-3.5 bg-canvas-base space-y-3">
+<div class="flex items-center justify-between border-b border-border-subtle pb-2">
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">account_balance</span> Parâmetros de Liquidez e Risco
+              </span>
+<span class="text-label-sm font-label-sm text-text-tertiary font-code-inline">ISO-4217: BRL</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div>
+<label class="block text-label-sm font-label-sm text-text-primary mb-1">
+                  Limite de Operação Singular (R$)
+                </label>
+<div class="relative">
+<input class="w-full bg-canvas-subtle border border-border-subtle rounded px-2.5 py-1.5 text-body-sm font-code-inline text-text-primary focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="R$ 50.000,00"/>
+</div>
+<p class="text-label-sm font-label-sm text-text-tertiary mt-1">Teto unitário sem intervenção humana.</p>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-text-primary mb-1">
+                  Teto Diário Agregado (R$)
+                </label>
+<div class="relative">
+<input class="w-full bg-canvas-subtle border border-border-subtle rounded px-2.5 py-1.5 text-body-sm font-code-inline text-text-primary focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="R$ 100.000,00"/>
+</div>
+<p class="text-label-sm font-label-sm text-text-tertiary mt-1">Janela contínua UTC 00:00 - 23:59:59.</p>
+</div>
+</div>
+<div class="pt-1">
+<label class="block text-label-sm font-label-sm text-text-primary mb-1">
+                Quórum para Transgressão de Alçada
+              </label>
+<div class="relative">
+<select class="w-full bg-canvas-subtle border border-border-subtle rounded px-2.5 py-1.5 text-body-sm text-text-primary focus:border-primary focus:ring-1 focus:ring-primary pr-8 appearance-none">
+<option selected="">2 de 3 Chaves (Obrigatório 1 Assinante Humano com Hardware FIPS)</option>
+<option>3 de 3 Chaves (Quórum Pleno com Diretoria de Riscos)</option>
+<option>1 de 1 Chave (Apenas modo Sandbox / Testnet)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2 text-text-secondary pointer-events-none text-[18px]">expand_more</span>
+</div>
+<p class="text-label-sm font-label-sm text-text-secondary mt-1">Exige assinatura secundária via Hardware Token em tempo real para excedentes.</p>
+</div>
+</div>
+<!-- Whitelist MCP Autorizadas -->
+<div class="border border-border-subtle rounded p-3.5 bg-canvas-subtle space-y-2.5">
+<div class="flex items-center justify-between border-b border-border-subtle pb-2">
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">security</span> Whitelist de Ferramentas MCP Autorizadas
+              </span>
+<span class="text-label-sm font-label-sm text-text-secondary font-code-inline">3 / 5 Habilitadas</span>
+</div>
+<div class="space-y-1.5">
+<!-- MCP 1 -->
+<label class="flex items-start gap-2.5 p-2 rounded bg-canvas-base border border-border-subtle cursor-pointer hover:bg-canvas-subtle transition-colors">
+<input checked="" class="mt-0.5 rounded-sm border-border-subtle text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-code-inline text-label-md text-text-primary font-semibold">pix_settlement_execute</span>
+<span class="text-label-sm font-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-1 rounded">ATIVO</span>
+</div>
+<div class="text-body-sm font-body-sm text-text-secondary">API Banco Central SPI (Liquidação imediata de ordens de margem)</div>
+</div>
+</label>
+<!-- MCP 2 -->
+<label class="flex items-start gap-2.5 p-2 rounded bg-canvas-base border border-border-subtle cursor-pointer hover:bg-canvas-subtle transition-colors">
+<input checked="" class="mt-0.5 rounded-sm border-border-subtle text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-code-inline text-label-md text-text-primary font-semibold">wormgraph_anchor_leaf</span>
+<span class="text-label-sm font-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-1 rounded">ATIVO</span>
+</div>
+<div class="text-body-sm font-body-sm text-text-secondary">Inserção de nós no DAG canónico (Commit irreversível de estado MMR)</div>
+</div>
+</label>
+<!-- MCP 3 -->
+<label class="flex items-start gap-2.5 p-2 rounded bg-canvas-base border border-border-subtle cursor-pointer hover:bg-canvas-subtle transition-colors">
+<input checked="" class="mt-0.5 rounded-sm border-border-subtle text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-code-inline text-label-md text-text-primary font-semibold">rekor_submit_receipt</span>
+<span class="text-label-sm font-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-1 rounded">ATIVO</span>
+</div>
+<div class="text-body-sm font-body-sm text-text-secondary">Registo de transparência pública (Transparência criptográfica Sigstore Rekor)</div>
+</div>
+</label>
+<!-- MCP 4 - Bloqueado -->
+<label class="flex items-start gap-2.5 p-2 rounded bg-canvas-subtle border border-border-subtle opacity-60 cursor-not-allowed">
+<input class="mt-0.5 rounded-sm border-border-subtle text-outline h-4 w-4" disabled="" type="checkbox"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-code-inline text-label-md text-text-secondary line-through">emergency_halt_trigger</span>
+<span class="text-label-sm font-label-sm text-status-fail-text bg-status-fail-bg border border-status-fail-border px-1 rounded">RESTRITO</span>
+</div>
+<div class="text-body-sm font-body-sm text-text-tertiary">Desabilitado - reservado a Admin e Oficial de Compliance</div>
+</div>
+</label>
+<!-- MCP 5 - Bloqueado E02-13 -->
+<label class="flex items-start gap-2.5 p-2 rounded bg-canvas-subtle border border-border-subtle opacity-60 cursor-not-allowed">
+<input class="mt-0.5 rounded-sm border-border-subtle text-outline h-4 w-4" disabled="" type="checkbox"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-code-inline text-label-md text-text-secondary line-through">mcp_hot_reload</span>
+<span class="text-label-sm font-label-sm text-status-fail-text bg-status-fail-bg border border-status-fail-border px-1 rounded">VIOLAÇÃO E02-13</span>
+</div>
+<div class="text-body-sm font-body-sm text-text-tertiary">Desabilitado - viola E02-13 (Imutabilidade de pipeline em execução)</div>
+</div>
+</label>
+</div>
+</div>
+</div>
+<!-- COLUMN 2: Vínculo Criptográfico, Modelo & Assinatura (5 cols) -->
+<div class="lg:col-span-5 space-y-4">
+<!-- Eixos de Ancoragem Criptográfica -->
+<div class="border border-border-subtle rounded p-3.5 bg-canvas-subtle space-y-3">
+<div class="flex items-center justify-between border-b border-border-subtle pb-2">
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">lock</span> Vínculos Criptográficos Verificáveis
+              </span>
+<span class="text-label-sm font-label-sm text-text-secondary font-code-inline">SIG: ED25519</span>
+</div>
+<!-- Eixo 1 -->
+<div class="bg-canvas-base border border-border-subtle rounded p-2.5 space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-text-secondary font-semibold">Eixo 1: Atestação de Binário/Modelo de IA</span>
+<span class="text-label-sm font-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-1 rounded">AMD SEV-SNP</span>
+</div>
+<div class="text-body-sm font-body-sm text-text-primary">
+                Modelo GGUF: <span class="font-code-inline text-label-sm font-medium">qwen2.5-coder-7b-instruct-q4_k_m.gguf</span>
+</div>
+<div class="flex items-center justify-between pt-0.5">
+<span class="text-label-sm font-label-sm text-text-tertiary">SHA-256 Digest:</span>
+<div class="flex items-center gap-1">
+<span class="font-code-inline text-label-sm bg-surface-container-high px-1 py-0.5 rounded text-text-primary">0x7a4192bce...89a</span>
+<button aria-label="Copiar Hash" class="text-text-secondary hover:text-text-primary p-0.5 rounded hover:bg-surface-container-high" type="button">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Eixo 2 -->
+<div class="bg-canvas-base border border-border-subtle rounded p-2.5 space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-text-secondary font-semibold">Eixo 2: Bitstring Status List Allocation</span>
+<span class="text-label-sm font-label-sm text-status-pass-text bg-status-pass-bg border border-status-pass-border px-1 rounded">LIST v1.0</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-secondary text-label-sm font-label-sm">Posição Alocada no Vetor:</span>
+<span class="font-code-inline text-label-sm font-semibold text-text-primary">Índice #4,912</span>
+</div>
+<div class="text-label-sm font-label-sm text-text-tertiary truncate">
+                URI: <span class="font-code-inline text-text-secondary">https://arkhe.santander.com.br/status/v1/revocation.bin</span>
+</div>
+</div>
+<!-- Eixo 3 -->
+<div class="bg-canvas-base border border-border-subtle rounded p-2.5 space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-text-secondary font-semibold">Eixo 3: Identificador da Chave Ed25519</span>
+<span class="text-label-sm font-label-sm text-text-tertiary font-code-inline">CURVE25519</span>
+</div>
+<div class="flex items-center justify-between gap-1 pt-0.5">
+<span class="font-code-inline text-label-sm bg-surface-container-high px-1.5 py-0.5 rounded text-text-primary truncate max-w-[280px]">
+                  ed25519:pub_73a1fe0c8901be339d481f90a233b821449012c4...
+                </span>
+<button aria-label="Copiar Chave Pública" class="text-text-secondary hover:text-text-primary p-0.5 rounded hover:bg-surface-container-high" type="button">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Pré-visualização do JCS Canónico (RFC 8785) -->
+<div class="border border-border-subtle rounded p-3 bg-canvas-base space-y-2">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">data_object</span> Pré-visualização JCS Canónico (RFC 8785)
+              </span>
+<button class="text-label-sm font-label-sm text-text-secondary hover:text-text-primary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-[14px]">terminal</span> Validar Parser
+              </button>
+</div>
+<div class="bg-primary-container text-surface-container-high p-2.5 rounded font-code-inline text-[11px] leading-relaxed overflow-x-auto max-h-40 border border-primary-container">
+<pre><code>{
+  "@context": ["https://w3id.org/security/v2", "https://arkhe.io/kya/v1"],
+  "id": "urn:uuid:68fb8d02-e24c-4c74-88aa-327ce43eb492",
+  "issuer": "did:arkhe:santander-corp-001",
+  "subject": "did:arkhe:ag-9941",
+  "limits": {
+    "currency": "BRL",
+    "dailyAggregateCeiling": 100000.00,
+    "singleTxCeiling": 50000.00,
+    "transgressionQuorum": "2_of_3_fips"
+  },
+  "mcpWhitelist": [
+    "pix_settlement_execute",
+    "wormgraph_anchor_leaf",
+    "rekor_submit_receipt"
+  ],
+  "runtimeBinding": {
+    "binarySha256": "0x7a4192bce904b7f94c1a5d0124fce3289a",
+    "enclave": "amd_sev_snp",
+    "statusListIndex": 4912
+  }
+}</code></pre>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm text-text-tertiary pt-0.5">
+<span>Digest SHA-256 do JCS: <code class="text-text-secondary">0x48e1...bf20</code></span>
+<span class="text-status-pass-text">✓ Canónico</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer (High-Density Governance Actions) -->
+<div class="px-5 py-3.5 border-t border-border-subtle bg-canvas-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
+<!-- Hardware Token Status Indicator -->
+<div class="flex items-center gap-2 self-start sm:self-center">
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-pass-text opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-status-pass-text"></span>
+</span>
+<div class="flex items-center gap-1.5 text-body-sm font-body-sm text-text-primary">
+<span class="material-symbols-outlined text-[16px] text-text-secondary">usb</span>
+<span class="font-medium">YubiKey 5 FIPS (Slot 9A) Detetado &amp; Pronto</span>
+</div>
+<span class="text-label-sm font-label-sm text-text-tertiary">PKCS#11 v2.40</span>
+</div>
+<!-- Action Cluster -->
+<div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+<button class="px-3 py-1.5 border border-border-subtle rounded text-body-sm font-body-sm text-text-secondary hover:text-text-primary hover:bg-canvas-base transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary" type="button">
+            Cancelar e Descartar Rascunho
+          </button>
+<button class="px-3 py-1.5 border border-border-subtle rounded text-body-sm font-body-sm text-text-primary bg-canvas-base hover:bg-canvas-subtle transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-secondary">download</span>
+            Exportar Rascunho JCS Sem Assinatura
+          </button>
+<button class="px-4 py-1.5 bg-primary text-on-primary rounded text-body-sm font-body-sm font-medium hover:bg-primary-container transition-colors flex items-center gap-2 shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1" type="button">
+<span class="material-symbols-outlined text-[16px]">key</span>
+            Assinar Mandato com Chave Institucional (Ed25519)
+          </button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

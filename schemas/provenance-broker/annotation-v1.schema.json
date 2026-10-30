@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:arkhe:annotation:v1",
+  "title": "Candidate manual annotation; does not authorize broker admission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol_id", "annotation_id", "task_id", "annotator_id", "round_id", "phase", "status", "model_output_exposure", "spans", "events", "relations", "support", "ambiguities"],
+  "properties": {
+    "protocol_id": {"const": "arkhe-annotation-v1"},
+    "annotation_id": {"$ref": "#/$defs/id"},
+    "task_id": {"$ref": "#/$defs/id"},
+    "annotator_id": {"$ref": "#/$defs/id"},
+    "round_id": {"$ref": "#/$defs/id"},
+    "phase": {"enum": ["Calibration", "Independent", "Adjudication"]},
+    "status": {"enum": ["Draft", "Submitted"]},
+    "submitted_at": {"type": "string", "format": "date-time"},
+    "model_output_exposure": {"enum": ["NotProvided", "Exposed", "Unknown"]},
+    "parent_annotation_refs": {"type": "array", "items": {"$ref": "#/$defs/hash"}, "uniqueItems": true, "maxItems": 16},
+    "adjudication_note": {"$ref": "#/$defs/note"},
+    "spans": {"type": "array", "items": {"$ref": "#/$defs/span"}, "maxItems": 512},
+    "events": {"type": "array", "items": {"$ref": "#/$defs/event"}, "maxItems": 128},
+    "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}, "maxItems": 128},
+    "support": {"$ref": "#/$defs/support"},
+    "ambiguities": {"type": "array", "items": {"$ref": "#/$defs/note"}, "maxItems": 64}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "Submitted"}}}, "then": {"required": ["submitted_at"]}},
+    {"if": {"properties": {"phase": {"const": "Adjudication"}}}, "then": {
+      "required": ["parent_annotation_refs", "adjudication_note"],
+      "properties": {"parent_annotation_refs": {"minItems": 2}}
+    }}
+  ],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"},
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "u64": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "note": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "refs": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true, "maxItems": 128},
+    "span": {
+      "type": "object", "additionalProperties": false,
+      "required": ["span_id", "source_id", "byte_offset", "byte_length", "text", "kind", "label", "scope_event_refs"],
+      "properties": {
+        "span_id": {"$ref": "#/$defs/id"}, "source_id": {"$ref": "#/$defs/hash"},
+        "byte_offset": {"$ref": "#/$defs/u64"}, "byte_length": {"$ref": "#/$defs/u64"},
+        "text": {"type": "string", "minLength": 1, "maxLength": 32768},
+        "kind": {"enum": ["Entity", "EventTrigger", "NegationCue", "ModalCue", "CorrectionCue", "OtherQualifier"]},
+        "label": {"$ref": "#/$defs/id"}, "scope_event_refs": {"$ref": "#/$defs/refs"}
+      }
+    },
+    "event": {
+      "type": "object", "additionalProperties": false,
+      "required": ["event_id", "trigger_span_refs", "argument_span_refs", "speaker", "polarity", "certainty", "time", "modality_labels"],
+      "properties": {
+        "event_id": {"$ref": "#/$defs/id"},
+        "trigger_span_refs": {"allOf": [{"$ref": "#/$defs/refs"}], "minItems": 1},
+        "argument_span_refs": {"$ref": "#/$defs/refs"},
+        "speaker": {"type": "object", "additionalProperties": false, "required": ["kind", "span_refs"],
+          "properties": {"kind": {"enum": ["Narrator", "Explicit", "Unresolved"]}, "span_refs": {"$ref": "#/$defs/refs"}}},
+        "polarity": {"enum": ["Positive", "Negative", "Underspecified"]},
+        "certainty": {"enum": ["Certain", "Probable", "Possible", "Underspecified"]},
+        "time": {"enum": ["Past", "Present", "Future", "Underspecified"]},
+        "modality_labels": {"type": "array", "minItems": 1, "maxItems": 7, "uniqueItems": true,
+          "items": {"enum": ["Unmarked", "Possibility", "Necessity", "Obligation", "Desire", "Conditional", "Underspecified"]}}
+      }
+    },
+    "relation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["relation_id", "predicate", "subject_span_refs", "object_span_refs", "event_refs", "qualifier_span_refs", "mechanism"],
+      "properties": {
+        "relation_id": {"$ref": "#/$defs/id"}, "predicate": {"enum": ["migrated_to", "operates", "works_for", "other"]},
+        "predicate_note": {"$ref": "#/$defs/note"},
+        "subject_span_refs": {"allOf": [{"$ref": "#/$defs/refs"}], "minItems": 1},
+        "object_span_refs": {"allOf": [{"$ref": "#/$defs/refs"}], "minItems": 1},
+        "event_refs": {"$ref": "#/$defs/refs"}, "qualifier_span_refs": {"$ref": "#/$defs/refs"},
+        "mechanism": {"enum": ["Direct", "Derived", "Underspecified"]}, "derivation_note": {"$ref": "#/$defs/note"}
+      },
+      "allOf": [
+        {"if": {"properties": {"predicate": {"const": "other"}}}, "then": {"required": ["predicate_note"]}},
+        {"if": {"properties": {"mechanism": {"const": "Derived"}}}, "then": {"required": ["derivation_note"]}}
+      ]
+    },
+    "support": {
+      "type": "object", "additionalProperties": false,
+      "required": ["claim_digest", "outcome", "evidence_span_refs", "event_refs", "relation_refs", "rationale"],
+      "properties": {
+        "claim_digest": {"$ref": "#/$defs/hash"},
+        "outcome": {"enum": ["Supported", "Partial", "Contradicted", "Indeterminate", "NotEvaluated"]},
+        "evidence_span_refs": {"$ref": "#/$defs/refs"}, "event_refs": {"$ref": "#/$defs/refs"},
+        "relation_refs": {"$ref": "#/$defs/refs"}, "rationale": {"$ref": "#/$defs/note"},
+        "abstention_reason": {"$ref": "#/$defs/note"}
+      },
+      "allOf": [{"if": {"properties": {"outcome": {"const": "NotEvaluated"}}}, "then": {"required": ["abstention_reason"]}}]
+    }
+  }
+}

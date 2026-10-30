@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Enterprise - Dashboard da Persona Engenharia</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#3d494c",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-error": "#690005",
+            "on-secondary": "#002a78",
+            "surface": "#0f131c",
+            "inverse-primary": "#00687a",
+            "inverse-on-surface": "#2c3039",
+            "on-secondary-fixed": "#00174b",
+            "primary-container": "#06b6d4",
+            "on-surface": "#dfe2ee",
+            "secondary": "#b4c5ff",
+            "secondary-container": "#0053db",
+            "surface-container-highest": "#31353e",
+            "on-primary-fixed": "#001f26",
+            "on-primary-container": "#00424f",
+            "secondary-fixed-dim": "#b4c5ff",
+            "surface-container-low": "#181c24",
+            "tertiary-container": "#1bbd85",
+            "surface-container-lowest": "#0a0e16",
+            "surface-tint": "#4cd7f6",
+            "surface-container": "#1c2028",
+            "on-tertiary-container": "#00452e",
+            "secondary-fixed": "#dbe1ff",
+            "surface-dim": "#0f131c",
+            "outline": "#869397",
+            "tertiary": "#4edea3",
+            "on-tertiary-fixed": "#002113",
+            "primary-fixed": "#acedff",
+            "on-secondary-container": "#cdd7ff",
+            "on-primary": "#003640",
+            "background": "#0f131c",
+            "error": "#ffb4ab",
+            "on-secondary-fixed-variant": "#003ea8",
+            "on-error-container": "#ffdad6",
+            "on-tertiary": "#003824",
+            "on-primary-fixed-variant": "#004e5c",
+            "inverse-surface": "#dfe2ee",
+            "on-surface-variant": "#bcc9cd",
+            "surface-container-high": "#262a33",
+            "tertiary-fixed": "#6ffbbe",
+            "primary-fixed-dim": "#4cd7f6",
+            "surface-variant": "#31353e",
+            "tertiary-fixed-dim": "#4edea3",
+            "surface-bright": "#353942",
+            "error-container": "#93000a",
+            "on-background": "#dfe2ee",
+            "primary": "#4cd7f6"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "gutter": "1rem",
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem"
+          },
+          "fontFamily": {
+            "label-badge": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "mono-sm": ["JetBrains Mono"],
+            "body-md": ["Inter"],
+            "mono-md": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "display-lg": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-badge": ["10px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 18px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Subtle grid line accents */
+    .ledger-grid {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(61, 73, 76, 0.15) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(61, 73, 76, 0.15) 1px, transparent 1px);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-24 md:pb-12 ledger-grid selection:bg-primary selection:text-surface-container-lowest">
+<!-- TOP APP BAR (Shared Component JSON anchor) -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-md py-space-xs bg-surface-container-lowest/85 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary" data-icon="shield">shield</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight">Arkhe Enterprise</span>
+<span class="hidden sm:inline-block font-mono-sm text-mono-sm text-outline px-1.5 py-0.5 rounded bg-surface-container-low border border-outline-variant/30">v2.14.0-SIMD</span>
+</div>
+</div>
+<!-- Desktop Global Persona Switcher & Badges -->
+<div class="flex items-center gap-space-md">
+<!-- Sovereign Compliance Guarantee Badges -->
+<div class="hidden lg:flex items-center gap-space-xs">
+<div class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-secondary/40 text-secondary font-label-badge text-label-badge uppercase">
+<span class="material-symbols-outlined text-[13px]" data-icon="lock">lock</span>
+          ICP-Brasil
+        </div>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-tertiary-container/40 text-tertiary font-label-badge text-label-badge uppercase">
+<span class="material-symbols-outlined text-[13px]" data-icon="verified_user">verified_user</span>
+          LGPD Validated
+        </div>
+</div>
+<!-- Action Trailing Anchor -->
+<div class="flex items-center gap-space-xs bg-surface-container-high px-space-sm py-1 rounded border border-outline-variant/50">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="text-label-badge font-label-badge text-primary uppercase tracking-wide">BACEN Tier 1</span>
+<span class="text-outline font-mono-sm text-mono-sm">/</span>
+<span class="text-label-badge font-label-badge text-tertiary uppercase">SEC-ENG</span>
+</div>
+</div>
+</header>
+<!-- MAIN CANVAS WRAPPER -->
+<main class="pt-16 max-w-[1600px] mx-auto px-margin-mobile md:px-margin space-y-space-md">
+<!-- PERSONA SELECTOR BAR (ADR-008 / ADR-011) -->
+<section class="mt-space-sm bg-surface-container-low rounded-xl border border-outline-variant/40 p-space-sm">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+<span class="font-mono-sm text-mono-sm text-outline mr-2 hidden sm:inline uppercase">Persona:</span>
+<button class="px-space-md py-1.5 rounded text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150">
+            Jurídico
+          </button>
+<button class="px-space-md py-1.5 rounded text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150">
+            Financeiro
+          </button>
+<button class="px-space-md py-1.5 rounded text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-150">
+            Compliance
+          </button>
+<!-- Active Persona 'Engenharia' in Cyan -->
+<button class="relative px-space-md py-1.5 rounded bg-primary-container/15 text-primary border border-primary/50 text-body-sm font-body-sm font-semibold flex items-center gap-1.5 shadow-[0_0_12px_rgba(6,182,212,0.18)]">
+<span class="material-symbols-outlined text-[15px]" data-icon="terminal">terminal</span>
+<span>Engenharia</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</button>
+</div>
+<!-- Canonical ADR architectural axiom -->
+<div class="flex items-center gap-2 text-outline font-mono-sm text-mono-sm bg-surface-container-lowest px-space-sm py-1 rounded border border-outline-variant/30">
+<span class="material-symbols-outlined text-primary text-[14px]" data-icon="info">info</span>
+<span class="truncate">A persona é apresentação, não autorização. O RBAC reside na API.</span>
+</div>
+</div>
+</section>
+<!-- OPERATIONAL ENGINEERING METRICS BAR -->
+<section class="grid grid-cols-2 lg:grid-cols-4 gap-space-sm">
+<!-- Metric 1: Pipeline Runs -->
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md flex flex-col justify-between hover:border-outline-variant transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="text-label-badge font-label-badge uppercase">Pipeline Integrity</span>
+<span class="material-symbols-outlined text-tertiary" data-icon="verified">verified</span>
+</div>
+<div class="mt-2">
+<div class="text-headline-md font-headline-md font-semibold text-on-surface tracking-tight">842 / 842</div>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-mono-sm text-mono-sm text-tertiary">100% ancorados em consensus</span>
+</div>
+</div>
+</div>
+<!-- Metric 2: RBB Latency -->
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md flex flex-col justify-between hover:border-outline-variant transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="text-label-badge font-label-badge uppercase">Latência de Ancoragem RBB</span>
+<span class="material-symbols-outlined text-primary" data-icon="timer">timer</span>
+</div>
+<div class="mt-2">
+<div class="text-headline-md font-headline-md font-semibold text-on-surface tracking-tight">2.1 min</div>
+<div class="flex items-center gap-1.5 mt-1 font-mono-sm text-mono-sm text-on-surface-variant">
+<span>SLA Institucional: &lt; 5m</span>
+<span class="text-primary font-bold">(Pass)</span>
+</div>
+</div>
+</div>
+<!-- Metric 3: AI Checkpoints -->
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md flex flex-col justify-between hover:border-outline-variant transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="text-label-badge font-label-badge uppercase">LangGraph Checkpoints</span>
+<span class="material-symbols-outlined text-secondary" data-icon="account_tree">account_tree</span>
+</div>
+<div class="mt-2">
+<div class="text-headline-md font-headline-md font-semibold text-on-surface tracking-tight">1.290</div>
+<div class="flex items-center gap-1.5 mt-1 font-mono-sm text-mono-sm text-secondary">
+<span class="material-symbols-outlined text-[12px]" data-icon="hub">hub</span>
+<span>Grafo Causal com Hash Audit</span>
+</div>
+</div>
+</div>
+<!-- Metric 4: SIMD Engine -->
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md flex flex-col justify-between hover:border-outline-variant transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="text-label-badge font-label-badge uppercase">WASM SIMD Verifier</span>
+<span class="material-symbols-outlined text-primary" data-icon="memory">memory</span>
+</div>
+<div class="mt-2">
+<div class="text-headline-md font-headline-md font-semibold text-primary tracking-tight">v2.14.0</div>
+<div class="flex items-center gap-1.5 mt-1 font-mono-sm text-mono-sm text-tertiary">
+<span class="material-symbols-outlined text-[13px]" data-icon="security">security</span>
+<span>Zero-Egress Sandbox Ativa</span>
+</div>
+</div>
+</div>
+</section>
+<!-- DDD VOCABULARY ACCELERATOR & ACTION TOOLBAR (Bento Grid Style) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+<!-- DDD Technical Engineering Vocabulary Card (8 Cols) -->
+<div class="lg:col-span-8 bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md">
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant/30 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="code">code</span>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Vocabulário Criptográfico DDD (Domain-Driven Design)</h2>
+</div>
+<span class="font-mono-sm text-mono-sm text-outline">Namespace: arkhe.sec.v1alpha</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<!-- Term 1 -->
+<div class="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/30 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<code class="text-primary font-mono-sm text-mono-sm font-semibold">mmr.root</code>
+<span class="text-label-badge font-label-badge uppercase text-primary bg-primary/10 px-1 rounded">LEMMA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-1 font-medium">Commit Checkpoint Root (MMR)</p>
+</div>
+<p class="font-mono-sm text-mono-sm text-outline mt-2 truncate">Merkle Mountain Range topo imutável da árvore de execução.</p>
+</div>
+<!-- Term 2 -->
+<div class="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/30 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<code class="text-tertiary font-mono-sm text-mono-sm font-semibold">mmr.proof</code>
+<span class="text-label-badge font-label-badge uppercase text-tertiary bg-tertiary/10 px-1 rounded">VERIFIED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-1 font-medium">Inclusion Proof Path (O(log n))</p>
+</div>
+<p class="font-mono-sm text-mono-sm text-outline mt-2 truncate">Caminho logarítmico para validação sem egress de dados de telemetria.</p>
+</div>
+<!-- Term 3 -->
+<div class="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/30 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<code class="text-secondary font-mono-sm text-mono-sm font-semibold">anchor.rbb</code>
+<span class="text-label-badge font-label-badge uppercase text-secondary bg-secondary-container/20 px-1 rounded">ANCHORED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-1 font-medium">RBB Besu Smart Contract Anchor</p>
+</div>
+<p class="font-mono-sm text-mono-sm text-outline mt-2 truncate">Recibo de transação Ethereum-compatível na Rede Blockchain Brasil.</p>
+</div>
+<!-- Term 4 -->
+<div class="p-2.5 rounded bg-surface-container-lowest border border-outline-variant/30 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<code class="text-primary font-mono-sm text-mono-sm font-semibold">evidence.hash</code>
+<span class="text-label-badge font-label-badge uppercase text-on-surface-variant bg-surface-container-high px-1 rounded">ARTIFACT</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-1 font-medium">SHA-256 / BLAKE3 Artifact Digest</p>
+</div>
+<p class="font-mono-sm text-mono-sm text-outline mt-2 truncate">Assinatura determinística de snapshots e memória volátil de agentes.</p>
+</div>
+</div>
+</div>
+<!-- Quick Engineering Actions Panel (4 Cols) -->
+<div class="lg:col-span-4 bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30 mb-space-sm">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="bolt">bolt</span>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Ações Rápidas de Engenharia</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">
+            Gatilhos diretos com chaves efêmeras atestadas por hardware HSM:
+          </p>
+</div>
+<div class="space-y-space-xs">
+<!-- Action 1: Sovereign Action (Cyan) -->
+<button class="w-full py-2 px-space-sm rounded bg-primary-container text-surface-container-lowest font-body-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary transition-colors shadow-[0_0_12px_rgba(6,182,212,0.25)]">
+<span class="material-symbols-outlined text-[16px]" data-icon="play_circle">play_circle</span>
+<span>Re-executar Pipeline &amp; Ancorar</span>
+</button>
+<!-- Action 2: Secondary Institutional Action -->
+<button class="w-full py-2 px-space-sm rounded bg-surface-container border border-outline-variant/60 text-on-surface font-body-sm hover:border-primary transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+<span>Exportar SARIF / JSON Audit</span>
+</button>
+<!-- Action 3: WASM Local Test -->
+<button class="w-full py-2 px-space-sm rounded bg-surface-container border border-outline-variant/60 text-on-surface font-body-sm hover:border-primary transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="terminal">terminal</span>
+<span>Testar Verificador WASM Local</span>
+</button>
+</div>
+<div class="mt-space-sm pt-space-xs border-t border-outline-variant/20 flex items-center justify-between text-outline font-mono-sm text-mono-sm">
+<span>HSM Slot: #01-A</span>
+<span class="text-tertiary">FIPS 140-3 Active</span>
+</div>
+</div>
+</section>
+<!-- FEED DE PIPELINES & AGENTES IA (Fluxo 5.2 da Arquitetura) -->
+<section class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-space-sm border-b border-outline-variant/30 mb-space-md">
+<div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="sync_alt">sync_alt</span>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Feed de Execuções CI/CD &amp; Agentes IA</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Fluxo 5.2: Ingestão de artefatos de agentes com ancoragem causal e log de transparência.</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container-lowest border border-outline-variant/40 text-outline font-mono-sm text-mono-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-ping"></span>
+            Streaming RBB Live
+          </span>
+</div>
+</div>
+<!-- Execution Cards List -->
+<div class="space-y-space-sm">
+<!-- CARD 1: #RUN-8842 - LangGraph Autonomous Payment Agent -->
+<article class="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-space-md hover:border-outline-variant transition-colors">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-xs pb-space-xs border-b border-outline-variant/20">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-mono-md text-mono-md font-bold text-primary">#RUN-8842</span>
+<span class="text-outline">/</span>
+<span class="font-body-md text-body-md font-semibold text-on-surface">LangGraph Autonomous Payment Agent</span>
+<!-- State Badge -->
+<span class="px-2 py-0.5 rounded border border-secondary/60 bg-secondary/10 text-secondary font-label-badge text-label-badge uppercase">
+                ANCHORED RBB
+              </span>
+</div>
+<div class="font-mono-sm text-mono-sm text-outline flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span>
+<span>2025-02-23 18:42:10 BRT</span>
+</div>
+</div>
+<div class="py-space-sm grid grid-cols-1 md:grid-cols-12 gap-space-sm text-body-sm">
+<div class="md:col-span-8 space-y-1">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="font-mono-sm text-mono-sm text-outline">Stage:</span>
+<span class="text-on-surface">Browser-use Evidence + LangFuse Trace anchored</span>
+</div>
+<div class="flex items-center gap-2 font-mono-sm text-mono-sm">
+<span class="text-outline">Consensus Target:</span>
+<span class="text-tertiary">Besu Block #19.842.105</span>
+<span class="text-outline">Tx:</span>
+<span class="text-on-surface truncate max-w-[200px] sm:max-w-none">0x9f182c47ab1e0489c77ef1299da6f230...</span>
+</div>
+<div class="flex items-center gap-2 font-mono-sm text-mono-sm">
+<span class="text-outline">Trace Anchor:</span>
+<span class="text-[#a78bfa] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="insights">insights</span>
+                  langfuse.trace_id: trc_8842_pay_auton
+                </span>
+</div>
+</div>
+<!-- Action Buttons for Run 8842 -->
+<div class="md:col-span-4 flex md:flex-col lg:flex-row items-center justify-end gap-space-xs self-center">
+<button class="w-full sm:w-auto px-space-sm py-1.5 rounded bg-surface-container border border-outline-variant text-on-surface font-body-sm hover:border-primary flex items-center justify-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[15px] text-[#a78bfa]" data-icon="receipt_long">receipt_long</span>
+<span>Ver Trace JSON</span>
+</button>
+<button class="w-full sm:w-auto px-space-sm py-1.5 rounded bg-primary/10 border border-primary text-primary font-body-sm font-medium hover:bg-primary/20 flex items-center justify-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[15px]" data-icon="verified">verified</span>
+<span>Ver Prova</span>
+</button>
+</div>
+</div>
+<!-- Micro cryptographic proof ribbon -->
+<div class="pt-space-xs border-t border-outline-variant/10 flex flex-wrap items-center justify-between text-outline font-mono-sm text-mono-sm gap-2">
+<span class="truncate">MMR Root: 0x48b2..ea91 (Pos 16.482)</span>
+<span class="text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="check_circle">check_circle</span>
+              ICP-Brasil Signature Validated
+            </span>
+</div>
+</article>
+<!-- CARD 2: #PR-4109 - C2PA Supply Chain Model Release -->
+<article class="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-space-md hover:border-outline-variant transition-colors">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-xs pb-space-xs border-b border-outline-variant/20">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-mono-md text-mono-md font-bold text-primary">#PR-4109</span>
+<span class="text-outline">/</span>
+<span class="font-body-md text-body-md font-semibold text-on-surface">C2PA Supply Chain Model Release</span>
+<!-- State Badge -->
+<span class="px-2 py-0.5 rounded border border-primary/60 bg-primary/10 text-primary font-label-badge text-label-badge uppercase">
+                INCLUÍDO NO ROLLUP
+              </span>
+</div>
+<div class="font-mono-sm text-mono-sm text-outline flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span>
+<span>2025-02-23 18:31:02 BRT</span>
+</div>
+</div>
+<div class="py-space-sm grid grid-cols-1 md:grid-cols-12 gap-space-sm text-body-sm">
+<div class="md:col-span-8 space-y-1">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="font-mono-sm text-mono-sm text-outline">Target Node:</span>
+<span class="text-on-surface">WormGraph Leaf #1.422 (Commit sha: b59e7a2)</span>
+</div>
+<div class="flex items-center gap-2 font-mono-sm text-mono-sm">
+<span class="text-outline">Attestation:</span>
+<span class="text-on-surface-variant">Model Weights Hash (BLAKE3) &amp; Sigstore Rekor Log #492811</span>
+</div>
+</div>
+<!-- Action Button for PR 4109 -->
+<div class="md:col-span-4 flex items-center justify-end gap-space-xs self-center">
+<button class="w-full sm:w-auto px-space-sm py-1.5 rounded bg-surface-container border border-outline-variant text-on-surface font-body-sm hover:border-primary flex items-center justify-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[15px] text-tertiary" data-icon="security">security</span>
+<span>SARIF Report</span>
+</button>
+</div>
+</div>
+<div class="pt-space-xs border-t border-outline-variant/10 flex flex-wrap items-center justify-between text-outline font-mono-sm text-mono-sm gap-2">
+<span>Rollup Queue ID: 0x98bb..3100</span>
+<span class="text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="done_all">done_all</span>
+              C2PA Manifest Verified
+            </span>
+</div>
+</article>
+<!-- CARD 3: #A2A-104 - CrewAI Specialist Verification Handshake -->
+<article class="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-space-md hover:border-outline-variant transition-colors">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-xs pb-space-xs border-b border-outline-variant/20">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-mono-md text-mono-md font-bold text-primary">#A2A-104</span>
+<span class="text-outline">/</span>
+<span class="font-body-md text-body-md font-semibold text-on-surface">CrewAI Specialist Verification Handshake</span>
+<!-- State Badge -->
+<span class="px-2 py-0.5 rounded border border-tertiary/60 bg-tertiary/10 text-tertiary font-label-badge text-label-badge uppercase">
+                PASS
+              </span>
+</div>
+<div class="font-mono-sm text-mono-sm text-outline flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span>
+<span>2025-02-23 18:14:45 BRT</span>
+</div>
+</div>
+<div class="py-space-sm grid grid-cols-1 md:grid-cols-12 gap-space-sm text-body-sm">
+<div class="md:col-span-8 space-y-1">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="font-mono-sm text-mono-sm text-outline">TEE Enclave:</span>
+<span class="text-tertiary font-mono-sm text-mono-sm">Acurast Confidential Hardware Environment</span>
+</div>
+<div class="flex items-center gap-2 font-mono-sm text-mono-sm">
+<span class="text-outline">Outcome:</span>
+<span class="text-on-surface">Output assinado e validado deterministicamente via Zero-Knowledge proof</span>
+</div>
+</div>
+<!-- Action Button for A2A-104 -->
+<div class="md:col-span-4 flex items-center justify-end gap-space-xs self-center">
+<button class="w-full sm:w-auto px-space-sm py-1.5 rounded bg-surface-container border border-outline-variant text-on-surface font-body-sm hover:border-primary flex items-center justify-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[15px] text-primary" data-icon="vpn_key">vpn_key</span>
+<span>Atestado Enclave</span>
+</button>
+</div>
+</div>
+<div class="pt-space-xs border-t border-outline-variant/10 flex flex-wrap items-center justify-between text-outline font-mono-sm text-mono-sm gap-2">
+<span>Enclave PCR0: ea48c..bf92</span>
+<span class="text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="fingerprint">fingerprint</span>
+              Hardware Signature Sovereign Match
+            </span>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Shared Component JSON anchor) -->
+<!-- On desktop: Hidden. On mobile: Bottom pinned shell. Active intent = 'Custódia' (Infrastructure/CI-CD/Enclaves/Trees) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant/30">
+<!-- Item 1: Evidências -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-primary transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="fingerprint">fingerprint</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Evidências</span>
+</a>
+<!-- Item 2: Perfis -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-primary transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="domain">domain</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Perfis</span>
+</a>
+<!-- Item 3: Verificar -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-primary transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+<span class="text-mono-sm font-mono-sm mt-0.5">Verificar</span>
+</a>
+<!-- Item 4: Custódia (Active tab: Engineering Pipelines & MMR Tree Anchor Checkpoints) -->
+<a class="flex flex-col items-center justify-center text-primary bg-primary/10 rounded-lg px-space-sm py-space-xs transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="text-mono-sm font-mono-sm font-semibold mt-0.5">Custódia</span>
+</a>
+</nav>
+</body></html>

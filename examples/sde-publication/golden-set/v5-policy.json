@@ -1,0 +1,18 @@
+{
+  "id": "support-semantic-triage",
+  "version": "0.1.0",
+  "calibration_status": "PENDING",
+  "base_panel": "ai-output-panel@0.1.0 (unchanged)",
+  "nli_model": { "repository": "cross-encoder/nli-deberta-v3-base", "revision": "6c749ce3425cd33b46d187e45b92bbf96ee12ec7", "labels": ["contradiction", "entailment", "neutral"] },
+  "contradiction_threshold": 0.8,
+  "entailment_threshold": 0.8,
+  "precedence": ["structural_rule_failure", "verifier_unavailable_or_invalid", "nli_contradiction", "acceptance_without_entailment", "base_panel"],
+  "on_nli_contradiction": "REQUIRE_APPROVAL",
+  "on_acceptance_without_entailment": "REQUIRE_APPROVAL",
+  "on_verifier_unavailable_or_invalid": "REQUIRE_APPROVAL",
+  "claims": "Deterministic sentence spans, not a verified complete atomic-claim decomposition",
+  "premises": { "sources": "Only model-selected cited articles from retrieved context", "window_words": 150, "stride_words": 100, "maximum_pair_tokens": 512, "on_truncation": "REQUIRE_APPROVAL" },
+  "authority": "Advisory only; no external effects or bypass of authorization",
+  "error_independence_established": false,
+  "limits": "NLI softmax scores and thresholds are uncalibrated. Conditional scope, coreference, compound sentences and missing evidence can cause false results. Escalation is not proof of contradiction or a human label. Different architecture does not guarantee independent errors."
+}

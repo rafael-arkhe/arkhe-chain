@@ -1,0 +1,19 @@
+name: migration-checksum
+on: [pull_request]
+jobs:
+  immutable-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Fail if an existing migration changed
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          changed="$(git diff --name-only "$base"...HEAD -- 'migrations/*.sql' || true)"
+          for f in $changed; do
+            if git cat-file -e "$base:$f" 2>/dev/null; then
+              echo "Published migration modified: $f"
+              exit 1
+            fi
+          done

@@ -1,0 +1,75 @@
+{
+  "commands": [
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "network",
+        "create",
+        "--internal",
+        "--disable-dns",
+        "--label",
+        "io.arkhe.containment.run=0bd0d42f-8f01-4a6d-b8ff-72a43fb14eba",
+        "arkhe-containment-0bd0d42f-8f01-4a6d-b8ff-72a43fb14eba"
+      ],
+      "duration_seconds": 1.3397,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "0de8d71f3f952325d30788ba3a5fbe54caf3be11f487667cd6cf6d772995e368"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "network",
+        "inspect",
+        "arkhe-containment-0bd0d42f-8f01-4a6d-b8ff-72a43fb14eba"
+      ],
+      "duration_seconds": 1.233,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "d9f538ad71e499ffef43e5ba2bc96e979602b7f669434ceba971b2f13757cc59"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "network",
+        "rm",
+        "3e209af6f5daf36333914cbe2ce48a6c22273dc6537c62a3ac3ea52187db8bb6"
+      ],
+      "duration_seconds": 1.259,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "1db9ed2019919f23201282def1751d8941c552d68bb7d1d545f2773e49c6af6f"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "-c",
+        "from pathlib import Path\nimport json,time\nneedle='/home/user/.local/state/arkhe-containment/runtime-traces/0bd0d42f-8f01-4a6d-b8ff-72a43fb14eba/'.encode();active=[]\nfor attempt in range(20):\n active=[]\n for p in Path('/proc').iterdir():\n  if not p.name.isdigit():continue\n  try:\n   args=(p/'cmdline').read_bytes().split(b'\\0')\n   if args and b'strace' in args[0] and any(needle in a for a in args):active.append(int(p.name))\n  except (FileNotFoundError,PermissionError,ProcessLookupError):pass\n if not active:break\n time.sleep(0.1)\nprint(json.dumps(active))\n"
+      ],
+      "duration_seconds": 0.2658,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    }
+  ],
+  "network_cleanup": {
+    "absent": true,
+    "network_id": "3e209af6f5daf36333914cbe2ce48a6c22273dc6537c62a3ac3ea52187db8bb6"
+  },
+  "runtime_verified": false,
+  "state": "NETWORK_CLEANUP_PASS",
+  "target_containers_started": 0,
+  "tracers_stopped": true
+}

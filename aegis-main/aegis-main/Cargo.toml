@@ -1,0 +1,69 @@
+[workspace]
+resolver = "3"
+members = [
+    # 🔴 As duas folhas primeiro, e por uma razao que ja custou uma prova
+    # inteira: um crate que e dependencia de outros mas NAO e membro nao tem
+    # as suas provas corridas no `--workspace`. O `aegis-ambiente` ficou
+    # assim durante horas e as provas dele nunca correram uma unica vez.
+    "crates/aegis-ambiente",
+    "crates/aegis-ponte",
+    "crates/aegis-vertical",
+    "crates/aegis-ontology",
+    "crates/aegis-store",
+    "crates/aegis-island",
+    "crates/aegis-identity",
+    "crates/aegis-license",
+    "crates/aegis-pagina",
+    "crates/aegis-produto",
+    "apps/bin",
+    "apps/gui/src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+license = "Apache-2.0"
+repository = "https://github.com/Safe-Core/aegis"
+
+[workspace.dependencies]
+aegis-ambiente = { path = "crates/aegis-ambiente" }
+aegis-ponte = { path = "crates/aegis-ponte" }
+aegis-vertical = { path = "crates/aegis-vertical" }
+aegis-ontology = { path = "crates/aegis-ontology" }
+aegis-store = { path = "crates/aegis-store" }
+aegis-island = { path = "crates/aegis-island" }
+aegis-license = { path = "crates/aegis-license" }
+aegis-pagina = { path = "crates/aegis-pagina" }
+aegis-identity = { path = "crates/aegis-identity" }
+aegis-produto = { path = "crates/aegis-produto" }
+chrono = { version = "0.4", features = ["serde"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "process", "signal", "time"] }
+axum = "0.8"
+sqlx = { version = "0.8", default-features = false, features = [
+    "runtime-tokio",
+    "postgres",
+    "macros",
+    "json",
+    "migrate",
+    "uuid",
+    "chrono",
+] }
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+# 🔴 O cliente HTTP da face agêntica. `rustls-tls` e não `native-tls`: o
+# `aegis-desktop` já escolheu o mesmo, e duas escolhas de TLS no mesmo produto
+# são duas superfícies de erro para o mesmo sintoma.
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = "debuginfo"

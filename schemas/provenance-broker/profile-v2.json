@@ -1,0 +1,148 @@
+{
+  "profile_id": "arkhe-broker-local-v2",
+  "status": "candidate",
+  "scope": "offline synthetic fixtures; not runtime admission or production trust",
+  "serialization": {
+    "format": "JSON",
+    "charset": "UTF-8",
+    "bom": false,
+    "canonical": "sorted keys, no whitespace, ensure_ascii=false, integer-only numbers; reject duplicate keys, floats, nonfinite, surrogates",
+    "bytes": "lowercase hex, no prefix",
+    "integer": "unsigned u64; implementations must preserve exact values",
+    "unicode_normalization": "none; retain source bytes",
+    "unknown_properties": "reject"
+  },
+  "limits": {
+    "fixture_bytes": 2097152,
+    "source_bytes": 1048576,
+    "representation_bytes": 1048576,
+    "chunk_bytes": 32768,
+    "chunks": 32,
+    "premises": 32,
+    "proof_steps": 64,
+    "leaf_count": 1000000,
+    "released_bytes": 65536,
+    "id_ascii_bytes": 128,
+    "qualifiers": 16,
+    "max_clock_skew_ms": 0,
+    "max_decision_ttl_ms": 1000
+  },
+  "sha256_domains": {
+    "SOURCE": "ARKHE:BROKER:SOURCE:v1",
+    "REPRESENTATION": "ARKHE:BROKER:REPRESENTATION:v1",
+    "CHUNK": "ARKHE:BROKER:CHUNK:v1",
+    "CLAIM": "ARKHE:BROKER:CLAIM:v1",
+    "SUPPORT": "ARKHE:BROKER:SUPPORT:v1",
+    "POLICY": "ARKHE:BROKER:POLICY:v1",
+    "ANCHORS": "ARKHE:BROKER:ANCHORS:v1",
+    "OBSERVATIONS": "ARKHE:BROKER:OBSERVATIONS:v1",
+    "DERIVATION": "ARKHE:BROKER:DERIVATION:v1"
+  },
+  "sha256_preimage": "ASCII(domain) || 0x00 || payload; raw bytes for SOURCE/REPRESENTATION/CHUNK; canonical JSON otherwise",
+  "record_hash": {
+    "algorithm": "BLAKE3-256",
+    "preimage": "ASCII(AKG:BROKER:RECORD:v1) || 0x00 || canonical JSON(record)"
+  },
+  "state_record_hash": {
+    "algorithm": "BLAKE3-256",
+    "preimage": "ASCII(AKG:BROKER:STATE:v1) || 0x00 || canonical JSON(bundle.body)"
+  },
+  "mmr": {
+    "profile_id": "arkhe-mmr@1",
+    "profile_digest": "bcd07a275061ef385fccdd184030c2358fdd0937477cb0ef30cf8148342f2450",
+    "leaf_bytes": "32 raw bytes of broker record_hash",
+    "fixture_tree": "two leaves; leaf=BLAKE3(0x00||leaf_bytes), node=BLAKE3(0x01||left||right)",
+    "native_reference": "verification/crates/arkhe-verify-core/src/mmr/inclusion.rs"
+  },
+  "signatures": {
+    "algorithm": "Ed25519",
+    "preimage": "ASCII(ARKHE:BROKER:SIGN:<kind>:v1) || 0x00 || canonical JSON(body)",
+    "kinds": [
+      "BUNDLE",
+      "SEMANTIC",
+      "GRANT"
+    ],
+    "authority": "fixture-authority-1",
+    "public_key_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8",
+    "public_test_seed_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "production_use": "forbidden"
+  },
+  "consistency": {
+    "mode": "BestEffort",
+    "profile_id": "frozen-observations-v1",
+    "property": "authenticity and exact binding of retained observations; no claim of cross-source atomicity",
+    "guaranteed_profiles": [],
+    "policy_must_accept_revision_vector": true
+  },
+  "fixture_rules": {
+    "fixture-identity@1": "conclusion must equal retained premise_claim; tests binding and identity rule only, not linguistic premise extraction"
+  },
+  "temporal": {
+    "kind": "ValidatedAt",
+    "accepted_interval_ms": 250,
+    "delivery_interval": "validated_at <= attempted_at < min(valid_until, validated_at + accepted_interval_ms)",
+    "valid_until": "min(each observation expires_at, evaluated_at + max_decision_ttl_ms)",
+    "grant_contract": "fixture-lease-v1; only access_check; accepted subject/resources/purpose; signed; stable until expiry; no revocation check during lease; fixture-only assumption"
+  },
+  "canonical_collections": {
+    "transform_items": "transformation_ref unique, ASCII lexicographic",
+    "failures": "(code,ref) sorted unique",
+    "reasons": "(rule_id,code) sorted unique",
+    "flags": "sorted unique",
+    "agg_sources": "(tenant,scope) sorted unique",
+    "chunks": "chunk_id sorted unique",
+    "support_refs": "record_hash sorted unique",
+    "source_authorizations": "chunk_id sorted unique",
+    "aggregate_authorizations": "aggregate_id sorted unique"
+  },
+  "diagnostics": {
+    "reason_codes": [
+      "RULE_MATCH"
+    ],
+    "flag_codes": [
+      "RELATION_OMITTED"
+    ],
+    "rule_ids": [
+      "REQUEST_INVALID",
+      "POLICY_UNRESOLVED",
+      "ACCESS_DENIED",
+      "ACCESS_UNKNOWN",
+      "INTEGRITY_INVALID",
+      "INTEGRITY_UNKNOWN",
+      "TRANSFORM_REJECTED",
+      "TRANSFORM_UNKNOWN",
+      "HISTORICAL_DENIED",
+      "STATE_UNAVAILABLE",
+      "STATE_DISALLOWED",
+      "DOCUMENT_INVALID",
+      "ANALYSIS_CHUNKS_ONLY",
+      "DOCUMENT_INCOMPLETE",
+      "ASSERTION_UNSUPPORTED",
+      "RELEASE_HISTORICAL",
+      "RELEASE_CURRENT",
+      "DEFAULT_EXCLUDE"
+    ],
+    "failure_codes": [
+      "CHUNK_DIGEST_MISMATCH",
+      "PROOF_INVALID"
+    ],
+    "material_error_codes": [
+      "CHUNK_DIGEST_MISMATCH",
+      "GRANT_SIGNATURE_INVALID",
+      "PROOF_INVALID"
+    ]
+  },
+  "schema": "schemas/provenance-broker/fixture-v2.schema.json",
+  "extends": "arkhe-broker-local-v1",
+  "extension": {
+    "signed_authorization": "bundle.body source_authorizations per chunk and aggregate_authorizations per aggregate, all required for aggregated input",
+    "aggregate_default": "deny unless exact constituent binding, source decisions and aggregate decision permit; cross-tenant also requires explicit policy",
+    "checkpoint_freshness": "current query requires anchors.leaf_count >= host-owned minimum_leaf_count for stream_id; historical requests retain v1 rules",
+    "projection": "indexed_state and state_revision are index observations only; authoritative signed state always takes precedence",
+    "mmr_shapes": [
+      1,
+      2
+    ],
+    "extension_status": "synthetic pilot; not a live cross-tenant authorization service"
+  }
+}

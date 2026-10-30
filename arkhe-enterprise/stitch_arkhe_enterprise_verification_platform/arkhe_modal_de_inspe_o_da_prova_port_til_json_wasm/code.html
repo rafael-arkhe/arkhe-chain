@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Enterprise - Recibo Forense &amp; Prova Portátil</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Inter & JetBrains Mono Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with custom configuration -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#3d494c",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-error": "#690005",
+            "on-secondary": "#002a78",
+            "surface": "#0f131c",
+            "inverse-primary": "#00687a",
+            "inverse-on-surface": "#2c3039",
+            "on-secondary-fixed": "#00174b",
+            "primary-container": "#06b6d4",
+            "on-surface": "#dfe2ee",
+            "secondary": "#b4c5ff",
+            "secondary-container": "#0053db",
+            "surface-container-highest": "#31353e",
+            "on-primary-fixed": "#001f26",
+            "on-primary-container": "#00424f",
+            "secondary-fixed-dim": "#b4c5ff",
+            "surface-container-low": "#181c24",
+            "tertiary-container": "#1bbd85",
+            "surface-container-lowest": "#0a0e16",
+            "surface-tint": "#4cd7f6",
+            "surface-container": "#1c2028",
+            "on-tertiary-container": "#00452e",
+            "secondary-fixed": "#dbe1ff",
+            "surface-dim": "#0f131c",
+            "outline": "#869397",
+            "tertiary": "#4edea3",
+            "on-tertiary-fixed": "#002113",
+            "primary-fixed": "#acedff",
+            "on-secondary-container": "#cdd7ff",
+            "on-primary": "#003640",
+            "background": "#0f131c",
+            "error": "#ffb4ab",
+            "on-secondary-fixed-variant": "#003ea8",
+            "on-error-container": "#ffdad6",
+            "on-tertiary": "#003824",
+            "on-primary-fixed-variant": "#004e5c",
+            "inverse-surface": "#dfe2ee",
+            "on-surface-variant": "#bcc9cd",
+            "surface-container-high": "#262a33",
+            "tertiary-fixed": "#6ffbbe",
+            "primary-fixed-dim": "#4cd7f6",
+            "surface-variant": "#31353e",
+            "tertiary-fixed-dim": "#4edea3",
+            "surface-bright": "#353942",
+            "error-container": "#93000a",
+            "on-background": "#dfe2ee",
+            "primary": "#4cd7f6"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "gutter": "1rem",
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem"
+          },
+          "fontFamily": {
+            "label-badge": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "mono-sm": ["JetBrains Mono"],
+            "body-md": ["Inter"],
+            "mono-md": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "display-lg": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-badge": ["10px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-x-hidden min-h-screen relative font-body-md text-body-md select-none">
+<!-- TOP APP BAR (Shared Component Anchor) -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-md py-space-xs border-b border-outline-variant/30 bg-surface-container-lowest/85 backdrop-blur-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="shield">shield</span>
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">Arkhe Enterprise</span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="hidden sm:flex items-center gap-space-xs px-2 py-0.5 rounded border border-secondary/20 bg-secondary/10">
+<span class="font-mono-sm text-mono-sm text-secondary">ICP-Brasil ACT</span>
+</div>
+<div class="flex items-center gap-space-xs px-2 py-0.5 rounded border border-outline-variant bg-surface-container-high">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span class="font-label-badge text-label-badge text-primary uppercase">BACEN Tier 1</span>
+</div>
+</div>
+</header>
+<!-- BACKGROUND DASHBOARD (De-focused, blurred backdrop simulating active ledger feed) -->
+<main class="pt-16 pb-24 px-space-md max-w-[1600px] mx-auto filter blur-[5px] opacity-40 pointer-events-none transition-all duration-300">
+<div class="grid grid-cols-12 gap-gutter my-space-lg">
+<div class="col-span-12 lg:col-span-8 bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-lg">
+<div class="flex justify-between items-center mb-space-md">
+<span class="font-headline-sm text-headline-sm text-on-surface">Canal de Evidências Criptográficas</span>
+<span class="font-label-badge text-label-badge text-tertiary border border-tertiary/30 px-2 py-1 rounded bg-tertiary/10">ANCHORED</span>
+</div>
+<div class="h-48 bg-surface-container-lowest rounded border border-outline-variant/20 p-space-md font-mono-sm text-mono-sm text-outline">
+          Streaming block consensus from RBB (Besu) :: MMR Epoch #1284 synced with Rekor Transparency Tree...
+        </div>
+</div>
+<div class="col-span-12 lg:col-span-4 bg-surface-container-low border border-outline-variant/40 rounded-xl p-space-lg">
+<span class="font-headline-sm text-headline-sm text-on-surface block mb-space-sm">HSM Telemetria</span>
+<div class="space-y-space-xs font-mono-sm text-mono-sm text-on-surface-variant">
+<div>Status: ONLINE (air-gapped partition 0)</div>
+<div>FIPS 140-3 Level 4: Ativo</div>
+<div>Slots Utilizados: 18 / 64</div>
+</div>
+</div>
+</div>
+</main>
+<!-- MODAL / BOTTOM SHEET OVERLAY (Fundo Escurecido com Blur do Dashboard) -->
+<div class="fixed inset-0 z-50 bg-surface-container-lowest/80 backdrop-blur-md flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-space-lg transition-opacity duration-300">
+<!-- MODAL BOTTOM SHEET CONTAINER -->
+<div class="w-full max-w-4xl bg-surface-container-low border-t sm:border border-outline-variant/60 rounded-t-xl sm:rounded-xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom duration-300">
+<!-- Drag Handle (Superior) -->
+<div class="w-full pt-space-xs pb-1 flex justify-center items-center cursor-grab active:cursor-grabbing border-b border-outline-variant/20 bg-surface-container-lowest/40">
+<div class="w-12 h-1 rounded-full bg-outline-variant/80"></div>
+</div>
+<!-- Modal Header -->
+<div class="px-space-md sm:px-space-lg py-space-sm flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm border-b border-outline-variant/40 bg-surface-container-lowest/60">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg" data-icon="verified">verified</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Recibo Forense &amp; Prova Portátil (PortableInclusionProof)</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Inspeção direta e validação via motor WebAssembly local</p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs self-start sm:self-auto">
+<span class="font-label-badge text-label-badge px-2 py-0.5 rounded border border-tertiary text-tertiary bg-tertiary/10 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+            WASM VERIFIED / OFFLINE PASS
+          </span>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors" id="close-modal-x">
+<span class="material-symbols-outlined text-xl" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<!-- Scrollable Body Content -->
+<div class="px-space-md sm:px-space-lg py-space-md overflow-y-auto space-y-space-md custom-scrollbar">
+<!-- 1. Identificação da Operação (Bento Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<div class="bg-surface-container border border-outline-variant/40 rounded p-space-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-badge text-label-badge text-outline uppercase">Operation ID</span>
+<span class="material-symbols-outlined text-xs text-outline" data-icon="fingerprint">fingerprint</span>
+</div>
+<div class="font-mono-md text-mono-md text-primary font-medium truncate select-text" title="op_8921_ma_2026_ces_ativos">
+              op_8921_ma_2026_ces_ativos
+            </div>
+</div>
+<div class="bg-surface-container border border-outline-variant/40 rounded p-space-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-badge text-label-badge text-outline uppercase">Timestamp Canónico</span>
+<span class="material-symbols-outlined text-xs text-outline" data-icon="schedule">schedule</span>
+</div>
+<div class="font-mono-md text-mono-md text-on-surface select-text">
+              2026-10-24T14:32:08.412-03:00
+            </div>
+</div>
+<div class="bg-surface-container border border-outline-variant/40 rounded p-space-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-badge text-label-badge text-outline uppercase">Ancoragem Soberana</span>
+<span class="material-symbols-outlined text-xs text-tertiary" data-icon="lock">lock</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-badge text-label-badge bg-secondary-container/20 border border-secondary-container/40 text-secondary px-1.5 py-0.5 rounded">RBB Besu #19842102</span>
+<span class="font-label-badge text-label-badge bg-tertiary/10 border border-tertiary/30 text-tertiary px-1.5 py-0.5 rounded">Rekor Verified</span>
+</div>
+</div>
+<!-- Folha MMR Leaf Hash (Full width within section) -->
+<div class="md:col-span-3 bg-surface-container border border-outline-variant/40 rounded p-space-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-badge text-label-badge text-outline uppercase">Folha MMR (Leaf Hash BLAKE3)</span>
+<span class="font-mono-sm text-mono-sm text-primary flex items-center gap-1 cursor-pointer hover:underline" id="copy-leaf-btn">
+<span class="material-symbols-outlined text-xs" data-icon="content_copy">content_copy</span> Copiar Hash
+              </span>
+</div>
+<div class="font-mono-sm text-mono-sm text-primary-fixed bg-surface-container-lowest/80 p-2 rounded border border-outline-variant/30 select-text break-all">
+              e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+            </div>
+</div>
+</div>
+<!-- 2. Bloco de Código JSON Sintetizado e Formatado da Prova Portátil -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg overflow-hidden">
+<div class="bg-surface-container-high/60 px-space-md py-space-xs border-b border-outline-variant/40 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-error/60"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-amber-500/60"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary/60"></span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant ml-2">PortableInclusionProof.json</span>
+</div>
+<span class="font-label-badge text-label-badge text-outline uppercase">MIME: application/vnd.arkhe.proof+json</span>
+</div>
+<div class="p-space-md overflow-x-auto font-mono-sm text-mono-sm leading-relaxed max-h-56 select-text">
+<pre class="text-on-surface"><span class="text-outline">{</span>
+  <span class="text-primary font-medium">"version"</span>: <span class="text-tertiary">"arkhe:proof:v1.0"</span>,
+  <span class="text-primary font-medium">"leaf_index"</span>: <span class="text-secondary">1420</span>,
+  <span class="text-primary font-medium">"leaf_digest"</span>: <span class="text-tertiary">"e3b0c442...855"</span>,
+  <span class="text-primary font-medium">"tenant_id"</span>: <span class="text-tertiary">"tenant_acme_fin_001"</span>,
+  <span class="text-primary font-medium">"mmr_siblings"</span>: <span class="text-outline">[</span>
+    <span class="text-tertiary">"0x8f4343...7063d"</span>,
+    <span class="text-tertiary">"0x4f2a89...c102"</span>
+  <span class="text-outline">]</span>,
+  <span class="text-primary font-medium">"tenant_root"</span>: <span class="text-tertiary">"0x489fbb3c70129a00b8e7275811094df8344e823b120cdafe"</span>,
+  <span class="text-primary font-medium">"rollup_epoch"</span>: <span class="text-secondary">1284</span>,
+  <span class="text-primary font-medium">"rbb_anchor"</span>: <span class="text-outline">{</span>
+    <span class="text-primary font-medium">"chain"</span>: <span class="text-tertiary">"Rede Blockchain Brasil (Besu)"</span>,
+    <span class="text-primary font-medium">"block_number"</span>: <span class="text-secondary">19842102</span>,
+    <span class="text-primary font-medium">"tx_hash"</span>: <span class="text-tertiary">"0x9f182c0b58e70a41d99e03c94f5723bba12048cf6903dfc82310f8457d19e07a"</span>,
+    <span class="text-primary font-medium">"consensus"</span>: <span class="text-tertiary">"QBFT Finality 100%"</span>
+  <span class="text-outline">}</span>,
+  <span class="text-primary font-medium">"rekor_log_id"</span>: <span class="text-tertiary">"198041229"</span>,
+  <span class="text-primary font-medium">"authority_signature"</span>: <span class="text-tertiary">"ICP-Brasil ACT SERPRO v4"</span>
+<span class="text-outline">}</span></pre>
+</div>
+</div>
+<!-- 3. Seção de Validação Criptográfica Matemática -->
+<div class="bg-surface-container border border-outline-variant/40 rounded-lg p-space-md relative overflow-hidden">
+<div class="flex items-center justify-between mb-space-sm border-b border-outline-variant/30 pb-2">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="terminal">terminal</span>
+<span class="font-label-badge text-label-badge text-on-surface uppercase">Aferição Local WASM (Sem Dependência de Rede)</span>
+</div>
+<span class="font-label-badge text-label-badge text-tertiary">LEMMA PROVED</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md text-on-surface-variant">
+<div>
+<div class="font-label-badge text-label-badge text-outline uppercase mb-0.5">Custo Computacional</div>
+<div class="font-mono-sm text-mono-sm text-on-surface font-medium">
+                14 operações SHA-256 + 1 folding MMR em 0.08ms
+              </div>
+</div>
+<div>
+<div class="font-label-badge text-label-badge text-outline uppercase mb-0.5">Motor de Execução</div>
+<div class="font-mono-sm text-mono-sm text-primary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="memory">memory</span>
+                arkhe-verify-wasm (v2.14.0)
+              </div>
+<div class="font-mono-sm text-mono-sm text-outline text-[10px]">Ambiente Air-Gapped Certificado</div>
+</div>
+<div>
+<div class="font-label-badge text-label-badge text-outline uppercase mb-0.5">Veredito Forense</div>
+<div class="font-mono-sm text-mono-sm text-tertiary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="check_circle">check_circle</span>
+                Consistência Probatória 100% Inconteste
+              </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons Footer -->
+<div class="px-space-md sm:px-space-lg py-space-sm border-t border-outline-variant/40 bg-surface-container-lowest/80 flex flex-col sm:flex-row items-center justify-end gap-space-sm">
+<button class="w-full sm:w-auto px-space-md py-2 rounded border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors font-body-md text-body-md" id="close-btn">
+          Fechar
+        </button>
+<button class="w-full sm:w-auto px-space-md py-2 rounded border border-outline-variant bg-surface-container hover:border-primary transition-colors text-on-surface flex items-center justify-center gap-space-xs font-body-md text-body-md" id="download-btn">
+<span class="material-symbols-outlined text-base" data-icon="download">download</span>
+<span>Baixar Arquivo .proof.json</span>
+</button>
+<button class="w-full sm:w-auto px-space-md py-2 rounded bg-primary-container hover:bg-primary text-on-primary font-medium flex items-center justify-center gap-space-xs transition-colors shadow-sm font-body-md text-body-md" id="copy-json-btn">
+<span class="material-symbols-outlined text-base" data-icon="content_copy">content_copy</span>
+<span>Copiar JSON Portátil</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro-interaction feedback Toast (Hidden by default) -->
+<div class="fixed top-20 right-6 z-[60] bg-surface-container-highest border border-tertiary/40 text-on-surface px-space-md py-2 rounded shadow-lg flex items-center gap-space-xs transform translate-y-[-20px] opacity-0 pointer-events-none transition-all duration-200" id="toast">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="check">check</span>
+<span class="font-mono-sm text-mono-sm" id="toast-message">Conteúdo copiado com sucesso.</span>
+</div>
+<!-- Inline Script for Interactions -->
+<script>
+    const sampleProofJSON = JSON.stringify({
+      "version": "arkhe:proof:v1.0",
+      "leaf_index": 1420,
+      "leaf_digest": "e3b0c442...855",
+      "tenant_id": "tenant_acme_fin_001",
+      "mmr_siblings": [
+        "0x8f4343...7063d",
+        "0x4f2a89...c102"
+      ],
+      "tenant_root": "0x489fbb3c70129a00b8e7275811094df8344e823b120cdafe",
+      "rollup_epoch": 1284,
+      "rbb_anchor": {
+        "chain": "Rede Blockchain Brasil (Besu)",
+        "block_number": 19842102,
+        "tx_hash": "0x9f182c0b58e70a41d99e03c94f5723bba12048cf6903dfc82310f8457d19e07a",
+        "consensus": "QBFT Finality 100%"
+      },
+      "rekor_log_id": "198041229",
+      "authority_signature": "ICP-Brasil ACT SERPRO v4"
+    }, null, 2);
+
+    function triggerToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-message');
+      text.innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+      }, 2500);
+    }
+
+    document.getElementById('copy-json-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(sampleProofJSON).then(() => {
+        triggerToast("JSON da Prova Portátil copiado!");
+      });
+    });
+
+    document.getElementById('copy-leaf-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855").then(() => {
+        triggerToast("Hash BLAKE3 copiado!");
+      });
+    });
+
+    document.getElementById('download-btn').addEventListener('click', () => {
+      const blob = new Blob([sampleProofJSON], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'op_8921_ma_2026.proof.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      triggerToast("Arquivo .proof.json baixado!");
+    });
+
+    const closeModal = () => {
+      triggerToast("Retornando ao Console...");
+    };
+
+    document.getElementById('close-btn').addEventListener('click', closeModal);
+    document.getElementById('close-modal-x').addEventListener('click', closeModal);
+  </script>
+</body></html>

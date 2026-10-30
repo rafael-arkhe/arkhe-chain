@@ -1,0 +1,90 @@
+{
+  "scope": "Local execution only; no remote CI, protocol freeze or production attestation",
+  "context": {},
+  "attempts": [
+    {
+      "gate": "workspace-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T11:05:43.986552+00:00",
+      "duration_seconds": 43.913,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_after_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_changed_during_execution": false,
+      "log": "01-workspace-tests.log",
+      "log_sha256": "6823422aafdd59b114289df4f387061c0a57739985d6efed1369b16fe1b53576",
+      "inputs": "01-workspace-tests.inputs.json"
+    },
+    {
+      "gate": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T11:06:27.945784+00:00",
+      "duration_seconds": 1.216,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_after_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_changed_during_execution": false,
+      "log": "02-format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "inputs": "02-format.inputs.json"
+    },
+    {
+      "gate": "architecture",
+      "command": [
+        "python",
+        "scripts/check_architecture.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T11:06:29.859261+00:00",
+      "duration_seconds": 0.783,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_after_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_changed_during_execution": false,
+      "log": "03-architecture.log",
+      "log_sha256": "e9b8003c8db1621ac0be6d61077c1b89e7592af20b9fc41d763528b48732a19f",
+      "inputs": "03-architecture.inputs.json"
+    },
+    {
+      "gate": "durable-journal",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "postgres-integration",
+        "--test",
+        "triage",
+        "durable_journal_reconnect_replays_response_and_rejects_mismatch",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T11:06:31.155937+00:00",
+      "duration_seconds": 23.804,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_after_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_changed_during_execution": false,
+      "log": "04-durable-journal.log",
+      "log_sha256": "20a21ff307f9bacc720d5ed02272a6d61ce1f1b4184c9a74c60f2cce052d8dad",
+      "inputs": "04-durable-journal.inputs.json"
+    }
+  ]
+}

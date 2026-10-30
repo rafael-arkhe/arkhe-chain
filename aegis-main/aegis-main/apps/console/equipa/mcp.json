@@ -1,0 +1,54 @@
+{
+  "_registo": "O registo do `aegis mcp`. É o ÚNICO servidor de ferramentas de produto: a island, a licença, as câmaras e as páginas do vertical chegam por aqui, e nada mais entra no bot.",
+
+  "mcpServers": {
+    "aegis": {
+      "_porque": "🔴 O servidor é o binário de produto a correr, não um plugin: sem licença válida o processo não arranca, e isso é o portão do produto, não uma configuração do console. Se este comando mudar, muda a autoridade — e por isso a casa guarda o comando numa constante e não num ficheiro de texto de cliente.",
+      "command": "aegis",
+      "args": [
+        "mcp",
+        "--vertical",
+        "${AEGIS_VERTICAL}",
+        "--licenca",
+        "${AEGIS_LICENCA}"
+      ],
+      "env": {
+        "_registo": "🔴 A chave OEM NÃO entra no comando: viaja no cabeçalho de todo o pedido MCP por variável de ambiente, e o `aegis-ambiente` é o único que a lê. Uma chave num `args` aparece no `ps` de qualquer processo da máquina.",
+        "AEGIS_CHAVE_OEM": "${AEGIS_CHAVE_OEM}",
+        "AEGIS_ILHA_URL": "${AEGIS_ILHA_URL}",
+        "AEGIS_ILHA_TOKEN": "${AEGIS_ILHA_TOKEN}"
+      }
+    }
+  },
+
+  "_ferramentas": {
+    "_registo": "🔴 Isto NÃO é a lista de ferramentas. A lista vive em `aegis mcp --lista` e sai da MESMA tabela que despacha — duas listas divergem, e a divergência de um `tools/list` só se descobre em produção, com um modelo a chamar uma ferramenta que não existe. O que está aqui é o que cada grupo de ferramentas TEM DIREITO de fazer, e isso é política, e política é nossa.",
+
+    "vertical_manifesto": {
+      "le": "o vertical.yaml do produto",
+      "nao_faz": "nada que mude. Um vertical é DADO: se falta um tipo, o que falta é o vertical, não o código."
+    },
+    "camera_listar / camera_add / camera_remove": {
+      "le": "as câmaras da ilha",
+      "nao_faz": "🔴 não toca no go2rtc, nem no RTSP, nem no NVR. A ponte é do produto, e o produto decide o que a ponte pode fazer."
+    },
+    "licenca_fingerprint / licenca_conferir": {
+      "le": "a licença desta máquina e a cadeia que a prova",
+      "nao_faz": "🔴 não emite, não renova, não reinstala. A renovação é um pedido que o operador entrega, e o botão é do operador."
+    },
+    "ilha_vertical / ilha_tipos / ilha_pagina / ilha_saude": {
+      "le": "o que a ilha diz sobre si mesma",
+      "nao_faz": "🔴 não escreve nada na ilha. São as quatro ferramentas de LEITURA que o agente tem, e são de leitura porque o grafo ainda não existe."
+    },
+
+    "_o_que_falta_de_proposito": "🔴 `diagnostico` e `produto_ilha_estado` não estão nesta lista porque ainda não estão em `aegis mcp`. O D5 do plano-prometeu-os e a caixa ficou marcada por minha conta — a lista acima é a que o binário serve, e ela é a fonte. Fechar o D5 é ligar as duas, não reescrever esta frase."
+  },
+
+  "_permissao": {
+    "_registo": "🔴 São DUAS portas, e a casa mediu que uma só não chega. A política é do `aegis mcp`: ele é que recusa (código fechado, `codigo` + frase + `gesto`), e não o console. O consentimento é do opencode: `session/request_permission` vira um cartão de aprovação no chat, e quem decide se um gesto passa é a pessoa que está a ver. Se o motor pedir e ninguém estiver a ver, não passa — o que é o que se quer numa máquina de integrador.",
+    "camadas": [
+      "1. aegis mcp — pode? (a política, em Rust, com o vocabulário fechado)",
+      "2. opencode — deve? (o consentimento humano, em ACP)"
+    ]
+  }
+}

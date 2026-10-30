@@ -1,0 +1,1093 @@
+=== PAGE 1 ===
+P R O G R A M A  D E  F O R M A Ç Ã O  G O V T E C H
+H U B  G O I Á S  2 0 2 6 – 2 0 2 7
+Arkhe
+GovTech
+D o s s iê  T é c n ic o  d o  K e rn e l —  V o lu m e  3
+E s pe c ific a ç ã o  c o n s o lid a d a  d o  k e rn e l e m  s e is  c a m a d a s  —
+c o g n iç ã o , g o v e rn a n ç a , a u to riz a ç ã o , e v id ê n c ia , v e rific a ç ã o  e
+e x e c u ç ã o  —  c o m  c o n e c tiv id a d e  g o v .b r /  IC P - B ra s il /  e - P IN G ,
+m a triz  d e  c o n fo rm id a d e  L G P D  e  E U  A I A c t, pa d rõ e s  IE T F
+S C IT T  e  W IM S E , c ripto g ra fia  pó s - q u â n tic a  F IP S  2 0 4 / 2 0 5  e
+ro a d m a p d e  1 2  m e s e s  a té  a  e s c a la  e s ta d u a l e m  G o iá s .
+Arkhe Research & Project Team — GovTech Division
+SECTI-GO · Hub Goiás · Innovc · Sebrae Startups
+Outubro de 2026 · Documentação Técnica Pública
+A R K H E . C O M P U T E R  ·  P R O V A  S O B R E  P R O M E S S A
+=== PAGE 2 ===
+Arkhe Research & Project Team
+i
+Sumário
+1
+1. Ficha Técnica Executiva e Diagnóstico do Risco Agêntico
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 2
+1.1 A Invariante Nula (fail-closed)
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 2
+1.2 OWASP Agentic AI — LLM06, Agência Excessiva
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 3
+1.3 Nota de Honestidade (τ) e Convenção do Documento
+4
+2. Arquitetura em Seis Camadas do Kernel Arkhe
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2.1 Cognição — isolamento do LLM
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2.2 Governança — PolicyResolver e PolicyBinding
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2.3 Autorização — ContainmentGate como Reference Monitor
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2.4 Evidência — WormGraph e WER em Merkle Mountain Range
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+2.5 Verificação — verify-core em WASM e a PCO em O(n)
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+2.6 Execução — broker, Journal e OperationId
+7
+3. Conectividade com a Infraestrutura Estatal Brasileira
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+3.1 Identidade Estatal — gov.br, ICP-Brasil e o Passaporte KYA
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 9
+3.2 Interoperabilidade — e-PING, X-Road/X-Via e o Despacho aos Sistemas
+ .  .  .  .  .  .  .  .  .  .  .  .  .  . 9
+3.3 Nuvem Soberana — Serpro, Dataprev e Nuvens Estaduais com TEE e HSM
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 9
+3.4 Infraestrutura Nacional de Dados — Governança de Catálogos e Bases
+10
+4. Modelo de Operação Estatal: Multi-Tenant, Federação e Soberania
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 11
+4.1 Isolamento Multi-Tenant — Row-Level Security e Escopos por Órgão
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 11
+4.2 Federação de Auditoria — o Módulo WASM nos Tribunais de Contas
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 11
+4.3 Soberania e Não-Egress — Sigilo e Localização Nacional sob a LGPD
+12
+5. Matriz Completa de Conformidade Regulatória
+ .  .  .  .  .  .  .  .  .  .  .  .  . 12
+5.1 LGPD — Art. 20 (Lei nº 13.709/2018) e Revisão de Decisões Automatizadas
+ .  .  .  .  .  .  .  .  .  .  .  .  .  . 13
+5.2 EU AI Act — Regulamento (UE) 2024/1689, Artigos 12, 13, 14, 26(6) e 50
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 13
+5.3 Marcos B2G Nacionais — CPSI e Lei de Inovação
+14
+6. Padrões Internacionais e Agilidade Criptográfica Pós-Quântica
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 15
+6.1 IETF SCITT e WIMSE — Recibos Assinados e Vinculação de Evidência
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 15
+6.2 Provas de Trajetória — PoE e PC2 (logical proof gate)
+ .  .  .  .  .  .  .  . 15
+6.3 Criptografia Pós-Quântica — NIST FIPS 204/205 e o Envelope Híbrido OVERT v1.1
+16
+7. Casos de Uso Práticos no Setor Público (B2G)
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 16
+7.1 Triagem Automatizada de Licitações — Lei nº 14.133/2021 no e-GP
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 17
+7.2 Liquidação e Autorização de Despesas — Verificação O(n) no SIAFE
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 17
+7.3 Atendimento e-Gov — Esclarecimentos ao Cidadão via gov.br
+18
+8. Roadmap de Implementação Estatal (12 Meses) e Auditoria
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+8.1 Checklist para Tribunais de Contas (TCE-GO e TCU)
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 20
+8.2 Análise de Riscos e Contingências
+21
+9. Referências Bibliográficas e Normativas
+
+=== PAGE 3 ===
+Arkhe Research & Project Team
+1
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+1. Ficha Técnica Executiva e Diagnóstico do Risco
+Agêntico
+Este dossiê consolida, em um único volume avaliável, a especificação técnica do kernel Arkhe: o
+ciclo de seis camadas que transforma a saída não-determinística de agentes de IA em atos
+administrativos verificáveis. Ele funciona como peça de referência para o comitê avaliador do
+programa de formação GovTech do Hub Goiás, reunindo o que antes estava disperso entre o Volume
+1 — a especificação do ContainmentGate e da governança de políticas — e o Volume 2 — a malha
+de infraestrutura estatal que dá às provas criptográficas seu contexto institucional. As nove seções
+que se seguem percorrem o diagnóstico do risco agêntico, a arquitetura em camadas, a conectividade
+com os sistemas do Estado brasileiro, o modelo de operação multi-tenant, a matriz de conformidade
+regulatória, os padrões internacionais e a criptografia pós-quântica, os casos de uso B2G e o
+roadmap de doze meses com o checklist de auditoria dos Tribunais de Contas.
+Campo
+Registro
+Autoridade emissora
+Arkhe Research & Project Team — GovTech Division
+Destinação
+SECTI-GO, Hub Goiás, Innovc, Sebrae Startups, gestores públicos e Tribunais de
+Contas (TCE-GO / TCU)
+Programa
+Programa de Formação GovTech Hub Goiás 2026–2027 — aulas ao vivo de
+8/dez/2026 a 18/fev/2027, banca em mar/2027 e Demo Day em abr/2027
+Documentos correlatos
+Vol. 1 — Manual Técnico de Governança e Autorização; Vol. 2 — Manual de
+Infraestrutura e Integração Estatal; Pitch Deck Enterprise (VaaS)
+Escopo técnico
+Kernel em seis camadas (cognição a execução), passaporte KYA, e-PING/X-Via,
+nuvem soberana TEE/HSM, LGPD Art. 20, EU AI Act, IETF SCITT/WIMSE, FIPS
+204/205
+Data de emissão
+Outubro de 2026 — Versão 1.0
+Classificação
+Documentação técnica pública
+ Tabela 1 — Ficha técnica e cadastro institucional do Volume 3.
+
+=== PAGE 4 ===
+Arkhe Research & Project Team
+2
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+1.1 A Invariante Nula (fail-closed)
+O fundamento de toda a arquitetura é uma única proposição, tratada como invariante e verificada a cada
+operação: nenhum agente de IA possui autoridade intrínseca para alterar o estado da TI pública.
+Autoridade, no Arkhe, não é um atributo do modelo — é um privilégio concedido por um principal
+humano, expresso em um mandato assinado, delimitado por política e consumido sob mediação
+obrigatória. A consequência operacional é o modo de falha fechado: diante de qualquer condição não
+comprovada — identidade inválida, política ausente, prova faltante, evidência inconsistente — o sistema
+rejeita a ação e registra a rejeição. O erro admissível é sempre parar, nunca prosseguir.
+A atestação prévia é o que separa o Arkhe de qualquer arranjo em que o agente simplesmente "peça
+permissão" a um serviço. Antes de um estado ser alterado — um empenho lançado, um processo
+movimentado, uma certidão avaliada — o kernel exige um encadeamento completo de comprovações:
+quem propôs (chave do agente), em nome de quem (mandato do principal), sob qual norma (política
+resolvida e versionada), com qual resultado esperado (WorkIntent estruturado) e com qual prova
+determinística de saída (PCO). Cada elo é independente: a falha de um deles não contamina os demais, e
+a ausência de qualquer um deles suspende a operação em vez de degradá-la.
+1.2 OWASP Agentic AI — LLM06, Agência Excessiva
+O OWASP classifica a Agência Excessiva (LLM06) entre os riscos centrais de sistemas agênticos: ocorre
+quando a aplicação concede ao modelo funcionalidade com impacto real — execução de comandos,
+escrita em sistemas, movimentação de recursos — maior do que a necessária, ou quando o modelo decide
+quando e como usá-la sem mediação proporcional. Em governo, o sintoma assume contornos graves:
+modelos não-determinísticos avaliando certidões com efeitos jurídicos, alucinações convertidas em
+lançamentos contábeis, injeções de prompt transformando assistentes de atendimento em operadores de
+sistemas financeiros. O problema não é a capacidade do modelo — é a ausência de uma fronteira
+estrutural entre cognição e autoridade.
+Sintoma do LLM06
+Manifestação no setor público
+Resposta do kernel Arkhe
+Não-determinismo da saída
+A mesma certidão pode gerar decisões
+diferentes em execuções distintas
+Decisão nunca fica com o modelo: a PCO
+é verificada deterministicamente em
+O(n) antes de qualquer efeito
+Injeção de prompt
+Conteúdo hostil em documentos públicos
+desvia o agente de sua tarefa
+A proposta é tratada como dado não
+confiável; o ContainmentGate valida
+política e escopo independentemente do
+texto gerado
+Escopo de permissões inflado
+Um assistente de atendimento obtém
+acesso de escrita ao financeiro
+Cognição isolada de credenciais; alçada
+resolvida por PolicyBinding, não por
+prompt
+
+=== PAGE 5 ===
+Arkhe Research & Project Team
+3
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+Sintoma do LLM06
+Manifestação no setor público
+Resposta do kernel Arkhe
+Ausência de rastreabilidade
+Impossível reconstruir por que o sistema
+agiu como agiu
+WER append-only registra insumos,
+política, saída e versão do módulo de
+cada operação
+ Tabela 2 — Diagnóstico do risco LLM06 e correspondência com os controles do kernel.
+ O agente propõe, mas o kernel autoriza.
+ Máxima arquitetural do Arkhe — separação estrutural entre cognição e autoridade
+1.3 Nota de Honestidade (τ) e Convenção do Documento
+Para que o comitê avaliador distinga fatos verificados de decisões de projeto, o dossiê mantém a
+convenção τ adotada nos volumes anteriores. A marca τ-CONFIRMADO indica norma, padrão ou dado
+público verificável na fonte citada; τ-ARQUITETURA indica componente projetado pelo Arkhe, ainda
+sem implementação em produção; τ-PENDENTE indica dependência externa com status a confirmar. A
+classificação aparece nas tabelas e nos pontos de maior risco de leitura, e o TCE-GO ou o TCU podem
+reexecutar cada verificação sem confiar nos autores deste documento — que é, afinal, a própria tese da
+arquitetura.
+Categoria τ
+Significado
+Exemplos neste volume
+τ-CONFIRMADO
+Verificável em fonte oficial citada
+LGPD Art. 20 e §§; EU AI Act arts. 12, 13, 14,
+26(6) e 50; e-PING (Portaria 92/2014); Decreto
+11.529/2024 (IND); NIST FIPS 204/205
+τ-ARQUITETURA
+Decisão de projeto do Arkhe, especificada
+e testável, sem produção em escala
+WormGraph em MMR; verify-core WASM em
+O(n); OperationId e Journal; envelope híbrido
+OVERT v1.1
+τ-PENDENTE
+Dependência externa em consolidação
+Drafts IETF SCITT/WIMSE (work in progress,
+out/2026); perfil de HSM do órgão-piloto;
+credenciamento e-PING por órgão
+ Tabela 3 — Convenção de honestidade τ aplicada em todo o dossiê.
+
+=== PAGE 6 ===
+Arkhe Research & Project Team
+4
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+ 2. Arquitetura em Seis Camadas do Kernel Arkhe
+O kernel organiza o ciclo de vida de uma ação agêntica em seis camadas com responsabilidades
+exclusivas: cognição, governança, autorização, evidência, verificação e execução. Nenhuma camada
+executa o trabalho de outra, e cada uma elimina uma classe específica de falha — a cognição elimina
+credenciais expostas ao modelo, a governança elimina a interpretação improvisada de normas, a
+autorização elimina a mediação opcional, a evidência elimina a reescrita de histórico, a verificação
+elimina a dependência de confiança no operador e a execução elimina a duplicidade de efeitos sob
+falhas de rede. A Figura 1 apresenta o fluxo completo com seus conectores e a Tabela 4 resume o
+papel de cada camada.
+Camada
+Módulo
+Responsabilidade exclusiva
+Classe de falha que elimina
+1. Cognição
+cognition
+Propor ações estruturadas
+(WorkIntent) sem acesso a chaves,
+rede interna ou credenciais
+Exfiltração de segredos e decisão
+autônoma do modelo
+2. Governança
+PolicyResolver
+Resolver dinamicamente a política
+vigente e a alçada orçamentária
+aplicável via PolicyBinding
+Interpretação ad hoc de normas e
+alçadas por prompt
+3. Autorização
+ContainmentGate
+Mediar toda transição de estado como
+Reference Monitor, com Emergency
+Stop e Human-in-the-Loop
+Mediação opcional e ações sem
+chancela
+4. Evidência
+WormGraph / WER
+Registrar cada operação em log
+append-only estruturado como Merkle
+Mountain Range
+Reescrita de histórico e perda de
+rastreabilidade
+5. Verificação
+verify-core / WASM
+Validar Provas de Saída (PCO) em
+O(n) no cliente ou em enclaves, offline
+Dependência de confiança no
+operador do serviço
+6. Execução
+broker / Executor
+Despachar com Journal de transações e
+OperationId, garantindo idempotência
+Duplicidade de efeitos sob retries
+e falhas de rede
+ Tabela 4 — Síntese das seis camadas: módulo, responsabilidade e falha eliminada.
+
+=== PAGE 7 ===
+Arkhe Research & Project Team
+5
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+ Figura 1 — Arquitetura em seis camadas do kernel Arkhe: o fluxo de proposição a despacho, com conectores rotulados, o
+ContainmentGate em destaque como Reference Monitor obrigatório e o despacho final aos sistemas de produção do Estado (SIAFE,
+ SEI, e-GP e gov.br).
+
+=== PAGE 8 ===
+Arkhe Research & Project Team
+6
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+2.1 Cognição — isolamento do LLM
+A camada de cognição hospeda o modelo de linguagem em um ambiente isolado de tudo o que tenha
+valor de produção: sem chaves, sem credenciais de serviço, sem rota para sistemas internos. O modelo
+recebe contexto e retorna uma proposta estruturada — o WorkIntent — que descreve a ação pretendida,
+seus parâmetros e sua finalidade. Essa proposta é assinada pela chave do agente e passa a circular como
+dado não confiável: pode ser rejeitada, revisada ou exigir chancela humana, mas nunca é executada por
+quem a produziu. O isolamento é deliberadamente assimétrico — o agente enxerga apenas o necessário
+para propor, enquanto o kernel enxerga tudo o que é necessário para autorizar.
+2.2 Governança — PolicyResolver e PolicyBinding
+A governança é a camada que traduz norma em política executável. O PolicyResolver recebe o
+WorkIntent e resolve, contra o registro de PolicyBindings, quais regras se aplicam: alçadas orçamentárias
+do órgão, exigências da Lei nº 14.133/2021 para o objeto em questão, restrições do sigilo fiscal ou do art.
+20 da LGPD quando há decisão automatizada sobre titulares. Cada resolução é determinística e
+versionada — o digest exato da política aplicada acompanha a operação até a evidência. Quando a norma
+muda, muda o binding, não o comportamento do código; a prova de que a regra antiga foi aplicada na
+data antiga permanece verificável, porque o digest da versão está registrado no recibo.
+2.3 Autorização — ContainmentGate como Reference Monitor
+O ContainmentGate é o ponto único de mediação entre proposta e efeito — a materialização do
+Reference Monitor clássico: medição completa (nenhuma transição de estado escapa ao gate), à prova de
+adulteração (roda em enclave, sem dependência do agente) e verificavelmente pequena (auditável em sua
+totalidade). O gate valida a cadeia de identidade do passaporte KYA, a política resolvida, a alçada e a
+integridade da proposta; em operações de maior severidade, aciona o Human-in-the-Loop, suspender a
+ação até a chancela assinada por e-CPF do servidor responsável. O Emergency Stop é global e imediato:
+um único comando suspende o processamento de novas autorizações sem corromper as evidências já
+registradas — o estado para, o histórico permanece.
+2.4 Evidência — WormGraph e WER em Merkle Mountain Range
+Toda operação que atravessa o gate gera um Web Evidence Record (WER): um documento assinado que
+registra os insumos relevantes, o digest da política aplicada, a saída proposta, a decisão do gate e a versão
+do módulo verificador. Os WERs são encadeados em um WormGraph — grafo de evidência
+write-once-read-many — cuja espinha dorsal é uma Merkle Mountain Range (MMR): estrutura
+append-only que permite provar a inclusão de qualquer registro no conjunto, a qualquer tempo, sem
+reescrever a árvore e sem depender de um terceiro selador. Para o auditor, isso significa que o órgão não
+precisa "confiar" no log do fornecedor: a prova de inclusão Merkle é verificável offline, e qualquer
+remoção ou alteração retroativa quebra a cadeia de forma detectável.
+
+=== PAGE 9 ===
+Arkhe Research & Project Team
+7
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+2.5 Verificação — verify-core em WASM e a PCO em O(n)
+A Prova de Saída (PCO) é o objeto que torna a verificação independente: uma atestação de que a política
+P, aplicada aos insumos I, produz o resultado R — verificável em tempo linear O(n) no tamanho da
+operação. O verify-core é compilado para WebAssembly e distribuído como módulo autônomo: o auditor
+abre o recibo no próprio browser, reexecuta a verificação localmente e compara os digests — sem rede,
+sem SDK proprietário, sem confiança no operador. A mesma função roda em enclaves TEE para
+verificação em linha, com o mesmo binário auditável. A consequência institucional é direta: a verificação
+deixa de ser promessa do fornecedor e passa a ser capacidade do fiscal.
+2.6 Execução — broker, Journal e OperationId
+Autorizado o ato, o broker converte o WorkIntent no formato do serviço de destino e o despacha pelo
+barramento do Estado. O Journal de transações registra cada passo de entrega, e o OperationId atua como
+chave de idempotência: se a rede cai no meio do envio, se o barramento reentrega a mensagem, se o
+sistema de destino responde com timeout depois de aplicar o ato — o mesmo OperationId produz um
+único efeito. A execução também é o ponto onde a fail-closed se mantém sob falha: sem recibo de
+entrega, a operação permanece pendente e visível, nunca "presumidamente concluída". É o fechamento
+do ciclo: a mesma disciplina que autoriza o ato garante que ele acontecerá exatamente uma vez.
+3. Conectividade com a Infraestrutura Estatal
+Brasileira
+O kernel não substitui nenhum sistema do Estado — ele consome os padrões do Estado como fonte
+de identidade, transporte, processamento e dados, acrescentando a camada que faltava: a prova
+criptográfica de que a política foi aplicada. A Figura 2 mostra o encaixe: a identidade estatal
+alimenta o passaporte KYA, o fluxo de autorização traduz WorkIntents em serviços do catálogo
+e-PING, e o processamento e os dados permanecem sob custódia soberana. Cada subseção a seguir
+detalha uma das quatro conexões.
+
+=== PAGE 10 ===
+Arkhe Research & Project Team
+8
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+ Figura 2 — Conectividade do kernel com a infraestrutura estatal: identidade (gov.br, ICP-Brasil e passaporte KYA), fluxo de
+ autorização até os sistemas de produção e base soberana de processamento e dados.
+3.1 Identidade Estatal — gov.br, ICP-Brasil e o Passaporte KYA
+A identidade do cidadão e do servidor já tem base estatal consolidada: o gov.br usa o CPF como
+identificador único, com autenticação multifator nos níveis Prata e Ouro; a ICP-Brasil emite e-CPF e
+e-CNPJ com presunção de veracidade jurídica e listas de revogação públicas. O que faltava era o elo
+agêntico — provar que um agente de IA age em nome de uma empresa ou órgão brasileiro. O passaporte
+KYA (Know Your Agent) fecha essa lacuna: o did:key do agente é vinculado ao e-CNPJ ou e-CPF do
+principal por um mandato assinado, e o ContainmentGate valida, a cada operação, a assinatura do agente,
+a assinatura do mandato e a cadeia ICP-Brasil até a raiz oficial, com checagem de CRL/OCSP. Sem esse
+encadeamento, nada despacha — a identidade é a primeira pré-condição da autorização.
+
+=== PAGE 11 ===
+Arkhe Research & Project Team
+9
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+3.2 Interoperabilidade — e-PING, X-Road/X-Via e o Despacho aos Sistemas
+A e-PING, instituída como padrão obrigatório pela Portaria SLTI/MP nº 92/2014 e organizada em sua
+versão 2018 em cinco segmentos de interoperabilidade, é a gramática que permite ao Arkhe falar com os
+sistemas legados sem integrações ad hoc por órgão. A regra de integração é de tradução, nunca de
+substituição: o broker converte o WorkIntent autorizado no formato do serviço do catálogo e o entrega
+via barramento X-Via — a implantação brasileira do X-Road — com autenticação mútua mTLS. É assim
+que uma triagem de licitações chega ao e-GP, um empenho ao SIAFE e uma movimentação documental
+ao SEI: cada despacho carrega o OperationId que garante idempotência e o digest da política que o
+autorizou. O mapeamento completo dos tipos de WorkIntent para os serviços disponíveis em um
+órgão-piloto é entregável da Fase 2 do roadmap (τ-ARQUITETURA para os conectores; e-PING e X-Via
+τ-CONFIRMADOS como padrões).
+3.3 Nuvem Soberana — Serpro, Dataprev e Nuvens Estaduais com TEE e
+HSM
+O processamento soberano é a camada onde a residência de dados se torna física. O Serpro e a Dataprev
+expandiram a computação nacional com investimentos superiores a R$ 1,8 bilhão em equipamentos —
+incluindo GPUs para treinamento e inferência — e a política federal prevê a Nuvem Brasileira em
+infraestrutura pública localizada no país e operada por estatal, com serviços obrigatórios de IA. O Arkhe
+encaixa-se nesse desenho com distribuição de confiança: o kernel Rust corre em enclaves TEE, onde o
+isolamento de memória protege a política em execução; as chaves mestras de assinatura são custodiadas
+em HSM militar-grade, em território nacional, fora do alcance de clouds estrangeiras; e o verificador
+WASM corre no cliente, reduzindo a dependência da própria nuvem para conferir provas. O piloto de
+fev/2027 roda em infraestrutura existente do órgão e migra para a nuvem soberana quando operacional
+(τ-PENDENTE para o perfil de HSM certificado do órgão-piloto).
+3.4 Infraestrutura Nacional de Dados — Governança de Catálogos e Bases
+A IND, instituída pelo Decreto nº 11.529/2024 no âmbito da Estratégia Federal de Governo Digital,
+unificou catálogo e compartilhamento de bases estatais: o Catálogo Nacional de Dados reúne mais de
+2.000 conjuntos e a plataforma Conecta já processou bilhões de operações de consulta e troca. Para
+agentes de IA, a regra do Arkhe é consumir dados oficiais por escopos restritos de leitura registrados na
+IND — nunca por conexões diretas a bancos de órgãos. O WorkIntent declara o conjunto de dados que
+fundamenta a proposta; o gate verifica se o escopo do mandato cobre aquele acesso; o WER registra o
+digest dos insumos consumidos. O resultado é um traço de dados auditável: o auditor sabe não apenas o
+que o agente decidiu, mas sobre quais dados oficiais, de qual versão do catálogo, a decisão foi construída.
+
+=== PAGE 12 ===
+Arkhe Research & Project Team
+10
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+Padrão / sistema
+estatal
+Função na
+arquitetura
+Integração com o kernel
+Status τ
+gov.br (CPF + MFA)
+Identidade operacional
+de servidor e cidadão
+Login operacional; recebimento de recibos
+legíveis pelo titular
+τ-CONFIRMA
+DO
+ICP-Brasil
+(e-CNPJ/e-CPF, CRL)
+Identidade jurídica e
+assinatura de atos
+Cadeia do mandato KYA; chancela humana
+por e-CPF no HITL
+τ-CONFIRMA
+DO
+e-PING (Portaria 92/2014)
+Padrões de
+interoperabilidade do
+Executivo federal
+Gramática dos serviços do catálogo para
+despacho do broker
+τ-CONFIRMA
+DO
+X-Via (X-Road)
+Barramento de
+intercâmbio com mTLS
+Transporte da ação autorizada; chave de
+idempotência
+τ-CONFIRMA
+DO
+Nuvem soberana
+(Serpro/Dataprev)
+Processamento sob
+jurisdição nacional
+Enclaves TEE para o kernel; GPUs para
+modelos do órgão
+τ-PENDENTE
+(perfil HSM)
+IND / Conecta (Decreto
+11.529/2024)
+Catálogo e
+compartilhamento de
+bases
+Escopos de leitura restritos; digest dos
+insumos no WER
+τ-CONFIRMA
+DO
+ Tabela 5 — Matriz de conectividade: cada padrão estatal, sua função e o ponto de integração com o kernel.
+4. Modelo de Operação Estatal: Multi-Tenant,
+Federação e Soberania
+Um kernel que serve a múltiplos órgãos precisa provar três propriedades simultaneamente: que os
+dados de uma secretaria jamais cruzam para outra (isolamento), que o controle externo pode
+verificar sem depender do fornecedor (federação de auditoria) e que nenhum passo do ciclo
+autorizar-verificar-registrar exige saída de dados do território nacional (soberania). As três
+propriedades foram desenhadas juntas, porque se reforçam: o isolamento reduz a superfície que
+precisa ser auditada, a federação dispensa cópias que enfraqueceriam a soberania, e a soberania
+limita jurisdições que complicariam o isolamento.
+
+=== PAGE 13 ===
+Arkhe Research & Project Team
+11
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+4.1 Isolamento Multi-Tenant — Row-Level Security e Escopos por Órgão
+Cada secretaria ou órgão é um tenant com escopo próprio de políticas, mandatos, WorkIntents e
+evidências. No plano de dados, Row-Level Security (RLS) garante que toda consulta — inclusive as do
+próprio operador da plataforma — é filtrada pelo identificador de tenant derivado do contexto
+autenticado; não existe consulta "sem escopo". No plano de execução, os WorkIntents de um tenant
+resolvem apenas PolicyBindings daquele tenant, e as alçadas orçamentárias são as do órgão proponente.
+No plano de evidência, cada tenant tem sua cadeia MMR, e a prova de inclusão só é válida dentro da
+cadeia a que pertence. O resultado prático: um vazamento hipotético de credenciais de um tenant não
+amplia acesso a outro, e o administrador de plataforma não é superusuário dos dados — é também um
+sujeito à mediação do gate.
+4.2 Federação de Auditoria — o Módulo WASM nos Tribunais de Contas
+A federação de auditoria é a inversão deliberada do modelo tradicional de "acesso ao sistema do
+fornecedor". Em vez de o TCE-GO ou o TCU pedir acesso a logs, o tribunal recebe o módulo verify-core
+em WASM — o mesmo binário executado em produção — e o roda em seu próprio ambiente,
+reexecutando a verificação de qualquer recibo: a PCO em O(n), a prova de inclusão Merkle na cadeia do
+tenant e o digest da política versionada. A prova viaja, o dado não: o tribunal verifica sem receber cópias
+de bases, e o órgão auditado não precisa abrir seu perímetro. O mesmo mecanismo serve à auditoria da
+ANPD exigida pelo § 2º do art. 20 da LGPD, e é entregável da Fase 4 do roadmap com piloto junto ao
+controle externo (τ-ARQUITETURA).
+4.3 Soberania e Não-Egress — Sigilo e Localização Nacional sob a LGPD
+O ciclo autorizar-verificar-registrar foi desenhado para não produzir egresso: a verificação é local
+(WASM no cliente), a assinatura usa chaves em HSM nacional, o processamento ocorre em nuvem
+soberana ou datacenter do órgão e as evidências permanecem sob custódia do tenant. Nenhuma chamada
+a serviço estrangeiro é necessária para autorizar, verificar ou registrar — e a arquitetura trata qualquer
+dependência dessa natureza como desvio a justificar, não como padrão. Para dados sob sigilo fiscal ou
+protegidos pelo art. 20 da LGPD, o não-egress é requisito de conformidade e não preferência técnica: o §
+1º do art. 20 exige transparência sobre critérios, e o § 2º admite auditoria pelo órgão regulador — ambos
+satisfeitos sem transferir dados para fora da jurisdição do titular e do Estado.
+Propriedade
+Mecanismo no Arkhe
+Como o auditor verifica
+Isolamento de tenant
+RLS com filtro obrigatório por tenant; políticas
+e alçadas por órgão; cadeia MMR própria
+Consulta com contexto de outro tenant não
+retorna registros; prova de inclusão válida
+apenas na cadeia do tenant
+Mediação completa
+ContainmentGate como único caminho entre
+proposta e efeito
+Nenhum registro de despacho no Journal sem
+autorização correspondente no WER
+
+=== PAGE 14 ===
+Arkhe Research & Project Team
+12
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+Propriedade
+Mecanismo no Arkhe
+Como o auditor verifica
+Auditoria federada
+verify-core WASM distribuído ao
+TCE-GO/TCU
+Reexecução offline da PCO e da prova
+Merkle no ambiente do tribunal
+Não-egress
+Verificação local; HSM nacional; nuvem
+soberana
+Inventário de dependências de rede do ciclo;
+ausência de chamadas externas nos traços
+Revogação e
+emergência
+CRL/OCSP ICP-Brasil; Emergency Stop global
+Teste de revogação de certificado; teste de
+parada sem perda de evidência
+ Tabela 6 — Garantias operacionais do modelo multi-tenant e sua verificação independente.
+5. Matriz Completa de Conformidade Regulatória
+A conformidade no Arkhe não é uma declaração sobre a arquitetura — é um efeito colateral dela.
+Como cada operação registra a política exata aplicada, a chancela humana quando exigida e a prova
+verificável da decisão, os dispositivos regulatórios deixam de exigir "confiança no processo" e
+passam a ser atendidos por evidências reexecutáveis. Esta seção mapeia os três blocos normativos
+que estruturam a avaliação: a LGPD em seu art. 20, o Regulamento (UE) 2024/1689 — o AI Act
+europeu — em seus artigos de registro, transparência, supervisão e proveniência, e os marcos
+nacionais de compras governamentais para startups e inovação.
+5.1 LGPD — Art. 20 (Lei nº 13.709/2018) e Revisão de Decisões
+Automatizadas
+O art. 20 da LGPD dá ao titular o direito de solicitar revisão de decisões produzidas de maneira
+unicamente automatizada que afetem seus interesses — o caput garante o direito à revisão humana. O
+Arkhe materializa esse direito como rota de primeira classe no ContainmentGate: operações que afetam
+titulares são marcadas como revisáveis, e a solicitação do cidadão, recebida pelo canal gov.br, suspende o
+efeito consumado e encaminha o caso a revisão humana assinada por e-CPF, com o recebido registrado
+como novo elo da cadeia de evidência. O § 1º exige que o controlador forneça informações claras e
+adequadas sobre os critérios e procedimentos utilizados — exigência atendida pelo PolicyBinding (o
+digest exato da política aplicada) e pelo WER (insumos, versão do módulo e saída), que permitem expor
+em linguagem normativa por que a decisão foi tomada. O § 2º prevê verificação pelo órgão regulador —
+a ANPD pode auditá-lo; no desenho do Arkhe, o regulador reexecuta os recibos no WASM em auditoria
+offline, sem depender da cooperação do operador.
+
+=== PAGE 15 ===
+Arkhe Research & Project Team
+13
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+5.2 EU AI Act — Regulamento (UE) 2024/1689, Artigos 12, 13, 14, 26(6) e 50
+Embora o AI Act seja norma europeia, ele é o referencial mais exigente já consolidado para IA de alto
+risco e, por isso, parâmetro de desenho adotado pelo projeto: sistemas que atendem ao AI Act ficam à
+frente de qualquer exigência nacional equivalente. O art. 12 impõe registro de eventos (logging)
+automaticamente gerado durante a operação — no Arkhe, o WER append-only em MMR cumpre a
+função com integridade verificável. O art. 13 exige transparência e fornecimento de instruções que
+permitam aos operadores interpretar a saída do sistema — as PCO e os digests de política são exatamente
+essa interpretabilidade, em forma de prova. O art. 14 exige supervisão humana eficaz: o
+Human-in-the-Loop com chancela por e-CPF e o Emergency Stop global são os controles
+correspondentes. O art. 26(6) trata da retenção de logs pelos implantadores por período adequado — o
+WormGraph preserva os registros sob custódia do tenant com prova de não-alteração. O art. 50, por fim,
+exige marcação de conteúdo sintético e divulgação de proveniência: o padrão OVERT, alinhado à
+especificação C2PA, assina a proveniência de cada artefato produzido pelo agente.
+5.3 Marcos B2G Nacionais — CPSI e Lei de Inovação
+No plano das contratações públicas, o Marco Legal das Startups (LC nº 182/2021) estabelece a
+modalidade Compra com Empenho, Fornecimento Imediato e Pagamento Futuro de Ativos e Soluções
+Inovadoras (CPSI), com teto legal de R$ 1,6 milhão por contrato (art. 13, § 2º — τ-CONFIRMADO),
+mecanismo que permite ao órgão contratar a solução com empenho e pagamento condicionado à
+comprovação dos resultados previstos no edital. A Lei de Inovação (Lei nº 10.973/2004), por sua vez,
+estrutura as parcerias para desenvolvimento de soluções entre a administração e entidades inovadoras,
+com risco tecnológico compartilhado. O Arkhe foi desenhado para encaixar nas duas rotas: o piloto de
+fev/2027 cabe no formato de desafio/parceria do programa do Hub, e a escala via CPSI encontra na
+evidência verificável a própria métrica de resultado que o mecanismo exige — o empenho se converte em
+pagamento futuro contra provas reexecutáveis, não contra relatórios autorreferidos.
+Marco
+Dispositiv
+o
+Exigência normativa
+Mecanismo Arkhe
+Evidência
+correspondente
+LGPD
+Art. 20,
+caput
+Revisão humana de decisão
+unicamente automatizada
+Rota de revisão no
+ContainmentGate + HITL
+com chancela por e-CPF
+WER da revisão
+encadeado ao recibo
+original
+LGPD
+Art. 20, § 1º
+Informações claras sobre
+critérios e procedimentos
+PolicyBinding com digest
+versionado da política
+Recibo legível ao titular
+com critérios exatos
+LGPD
+Art. 20, § 2º
+Verificação pelo órgão
+regulador
+Auditoria offline da
+ANPD reexecutando
+recibos
+PCO verificada em
+WASM no ambiente do
+regulador
+EU AI Act
+Art. 12
+Logging automático durante a
+operação
+WER append-only em
+Merkle Mountain Range
+Prova de inclusão Merkle
+por registro
+
+=== PAGE 16 ===
+Arkhe Research & Project Team
+14
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+ Marco
+Dispositiv
+o
+Exigência normativa
+Mecanismo Arkhe
+Evidência
+correspondente
+EU AI Act
+Art. 13
+Transparência e instruções de
+interpretação
+PCO + digest da política
+aplicada
+Relatório verificável por
+operador e auditor
+EU AI Act
+Art. 14
+Supervisão humana eficaz
+HITL por severidade +
+Emergency Stop global
+Chancela e-CPF
+registrada; log de parada
+EU AI Act
+Art. 26(6)
+Retenção de logs pelo
+implantador
+WormGraph sob custódia
+do tenant
+Persistência com prova de
+não-alteração
+EU AI Act
+Art. 50
+Marcação de proveniência de
+conteúdo sintético
+OVERT v1.1 alinhado à
+C2PA
+Assinatura de proveniência
+por artefato
+LC
+182/2021
+Art. 13, § 2º
+CPSI com teto de R$ 1,6 mi
+por contrato
+Métricas de resultado
+embutidas na evidência
+Pagamento futuro contra
+provas reexecutáveis
+Lei
+10.973/2004
+Arts. 19–27
+Parceria com risco
+tecnológico compartilhado
+Pilotos com marcos
+verificáveis (F0–F5)
+Critério de saída por fase
+com prova
+ Tabela 7 — Matriz de conformidade regulatória: dispositivo, exigência, mecanismo e evidência.
+6. Padrões Internacionais e Agilidade Criptográfica
+Pós-Quântica
+A evidência produzida pelo kernel só tem valor duradouro se seguir padrões internacionais em
+formação e se sobreviver à transição criptográfica pós-quântica. O projeto acompanha e contribui
+com dois grupos de trabalho da IETF — SCITT e WIMSE — para que os recibos de execução do
+Arkhe sejam interoperáveis com qualquer verificador, e adota os novos padrões NIST de assinatura
+pós-quântica em envelopes híbridos, de modo que a validade das provas de hoje permaneça em 2035
+e além.
+
+=== PAGE 17 ===
+Arkhe Research & Project Team
+15
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+6.1 IETF SCITT e WIMSE — Recibos Assinados e Vinculação de Evidência
+O Supply Chain Integrity, Transparency and Trust (SCITT) é o grupo da IETF que padroniza recibos
+assinados sobre artefatos e afirmações; o Workload Identity in a Multi System Environment (WIMSE)
+padroniza a identidade de cargas de trabalho e a vinculação de evidências a essa identidade. O projeto
+acompanha dois drafts diretamente aplicáveis: o draft-thaha-scitt-agent-execution-evidence-00, que
+define a estrutura de recibos de execução de agentes (com campos como aee_evidence,
+policy_pack_digest e logical_agent_id), e o draft-thaha-wimse-agent-evidence-binding-00, que vincula
+essas evidências à identidade da carga de trabalho executora. O modelo de recibo do Arkhe — digest de
+política, insumos, saída e assinaturas — é mapeado sobre esses perfis (τ-PENDENTE: ambos os drafts
+são work in progress em out/2026 e podem mudar antes de RFC). A aposta estratégica é clara: quando os
+padrões consolidarem, os recibos do Arkhe migram sem quebra, porque a estrutura interna já foi
+desenhada em conformidade.
+6.2 Provas de Trajetória — PoE e PC2 (logical proof gate)
+Além da prova de saída, o Arkhe especifica provas de trajetória: a Proof of Execution (PoE) atesta que a
+computação declarada realmente ocorreu no ambiente autorizado, e a PC2 estende a atestação à árvore de
+raciocínio do agente — o caminho lógico que conecta insumos a proposta. O logical proof gate é o
+componente que rejeita trajetórias inconsistentes antes mesmo da verificação de saída: se a árvore de
+raciocínio registrada não justifica a proposta, a operação falha sem chegar ao gate de autorização. Essa
+camada extra reduz o ataque em que um agente comprometido produz uma saída aparentemente válida
+por um caminho não autorizado (τ-ARQUITETURA).
+6.3 Criptografia Pós-Quântica — NIST FIPS 204/205 e o Envelope Híbrido
+OVERT v1.1
+As provas produzidas hoje permanecerão verificáveis por décadas — e o adversário com capacidade de
+"colher agora, decifrar depois" torna a assinatura e o encapsulamento clássicos uma dívida futura. O
+NIST padronizou em 2024 os novos algoritmos: o FIPS 204 (ML-DSA, baseado em retículos) e o FIPS
+205 (SLH-DSA, baseado em funções hash e sem estado). O OVERT v1.1 adota envelopes híbridos
+Ed25519 + SLH-DSA: a assinatura clássica preserva compatibilidade com a ICP-Brasil e a infraestrutura
+atual; a assinatura hash-based garante resistência pós-quântica com análise de segurança bem
+compreendida. A verificação híbrida exige ambas as assinaturas válidas — a quebra de qualquer uma
+delas não compromete a prova. A agilidade criptográfica do verify-core permite adicionar novos
+algoritmos por perfil de verificação, sem reescrever o kernel (τ-ARQUITETURA; FIPS 204/205
+τ-CONFIRMADOS).
+
+=== PAGE 18 ===
+Arkhe Research & Project Team
+16
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+Algoritmo / perfil
+Papel na arquitetura
+Justificativa
+Status τ
+Ed25519
+Assinatura de propostas,
+mandatos e recibos (curva
+clássica)
+Compatibilidade imediata com
+ferramental e ICP-Brasil
+τ-CONFIRMA
+DO
+SLH-DSA (FIPS 205)
+Segunda assinatura em envelope
+híbrido
+Resistência pós-quântica baseada
+em hash, sem estado
+τ-CONFIRMA
+DO
+ML-DSA (FIPS 204)
+Alternativa de perfil para
+performance
+Assinatura lattice mais rápida em
+verificação
+τ-CONFIRMA
+DO
+OVERT v1.1 (híbrido)
+Envelope de proveniência e
+recibos
+Exige ambas as assinaturas válidas;
+degradação segura
+τ-ARQUITETU
+RA
+Merkle Mountain Range
+Estrutura append-only do
+WormGraph
+Prova de inclusão sem reescrita da
+árvore
+τ-ARQUITETU
+RA
+SCITT agent evidence (draft)
+Perfil de recibo de execução
+Interoperabilidade internacional
+dos recibos
+τ-PENDENTE
+(draft)
+WIMSE evidence binding
+(draft)
+Vinculação de evidência à
+identidade da carga
+Recibo atrelado à carga executora
+τ-PENDENTE
+(draft)
+ Tabela 8 — Agilidade criptográfica e perfis de padrões: papel, justificativa e status.
+7. Casos de Uso Práticos no Setor Público (B2G)
+A arquitetura só se sustenta se resolver processos reais do Estado. Três casos de uso foram
+selecionados por cobrirem três faces da operação pública — compras, finanças e atendimento — e
+por exigirem, cada um, o ciclo completo do kernel: proposta agêntica, autorização mediada, prova
+verificável e despacho idempotente a sistema de produção. Em todos, o papel do agente é preparar e
+propor; a decisão com efeito jurídico permanece em política, em servidor humano ou em ambos.
+7.1 Triagem Automatizada de Licitações — Lei nº 14.133/2021 no e-GP
+No portal e-GP, o agente analisa lotes de certidões e documentos de habilitação das propostas: valida
+prazos de validade, cruza exigências do edital com o conteúdo apresentado e produz uma triagem prévia
+com pendências sinalizadas. O WorkIntent declara o processo, o lote e os documentos consumidos; a
+política resolvida aplica as regras de habilitação da Lei nº 14.133/2021 e do edital vigente; e a trava PCO
+impede qualquer declaração de resultado sem prova verificável — o que o agente produz é um parecer
+preparatório assinado, anexado ao processo, e a decisão formal permanece com a comissão de licitação
+(com o Human-in-the-Loop registrando a chancela). O efeito prático é reduzir o tempo de habilitação de
+dias a horas sem transferir ao modelo autoridade de julgamento — e dar ao controle externo a
+possibilidade de reexecutar a triagem de qualquer proposta.
+
+=== PAGE 19 ===
+Arkhe Research & Project Team
+17
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+7.2 Liquidação e Autorização de Despesas — Verificação O(n) no SIAFE
+No ciclo da despesa, o agente prepara a liquidação: confere se o empenho corresponde ao entregue, se a
+soma dos itens líquidos respeita o saldo empenhado e se a alçada do servidor é suficiente para o valor
+proposto. A verificação SOMA ≤ SALDO é o exemplo didático da PCO: prova de complexidade linear
+no número de itens, executável pelo auditor no browser, que atesta que o valor liquidado não excede o
+disponível — com digest do empenho, dos itens e do saldo no momento da operação. O gate exige a
+alçada orçamentária resolvida pelo PolicyResolver (que considera limites por modalidade e por órgão) e,
+acima do limite, a chancela humana por e-CPF. O despacho ao SIAFE leva o OperationId como chave de
+idempotência: retries do barramento não geram segundo lançamento, e o recibo devolvido carrega o hash
+da evidência para conferência no canal oficial.
+7.3 Atendimento e-Gov — Esclarecimentos ao Cidadão via gov.br
+No atendimento, o agente responde dúvidas de cidadãos sobre serviços e andamentos, com duas
+fronteiras absolutas: ele não acessa dados protegidos além do escopo autorizado, e ele não decide nada —
+produz esclarecimentos com proveniência marcada (art. 50 do AI Act / C2PA), de modo que o cidadão
+saiba que está lendo um conteúdo gerado por IA, com a política e as fontes públicas que fundamentaram
+a resposta. Perguntas que exigem decisão administrativa viram solicitações registradas com recibo para o
+titular — o que ativa, quando aplicável, a rota de revisão do art. 20 da LGPD. Para o órgão, cada
+esclarecimento é evidência: a mesma resposta que o cidadão lê é o registro que o ouvidor e o tribunal
+podem reexaminar.
+Caso de uso
+Fluxo autorizado
+Trava de segurança
+Evidência gerada
+Triagem de licitações
+(e-GP)
+Agente tria certidões e produz
+parecer preparatório por lote
+PCO por proposta; decisão
+formal com comissão
+(HITL)
+WER com digest do edital,
+documentos e política
+aplicada
+Liquidação de
+despesas (SIAFE)
+Agente confere empenho × entrega
+e prepara liquidação
+PCO SOMA ≤ SALDO
+em O(n); alçada por
+PolicyBinding
+Recibo com hash;
+OperationId idempotente no
+Journal
+Atendimento (gov.br)
+Agente esclarece dúvidas com
+fontes públicas
+Escopo de leitura restrito;
+sem poder de decisão
+Resposta com proveniência
+C2PA/OVERT; rota de
+revisão
+ Tabela 9 — Síntese dos casos de uso B2G: fluxo, trava e evidência em cada processo.
+
+=== PAGE 20 ===
+Arkhe Research & Project Team
+18
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+ 8. Roadmap de Implementação Estatal (12 Meses) e
+Auditoria
+O roadmap organiza doze meses — de dezembro de 2026 a novembro de 2027 — em seis fases com
+escopo decrescente de risco: da fundação do kernel à escala estadual em Goiás. A lógica de
+sequenciamento é de dependências duras: F2 (identidade e conectores) não começa sem F1 (piloto
+com PCO) validada na banca de março; F5 (escala) não começa sem F4 (auditoria federada)
+concluída, porque nenhuma implantação multi-órgão é defensável sem que o controle externo
+consiga verificar independentemente. A Figura 3 apresenta o Gantt com os marcos do programa
+oficial.
+ Figura 3 — Roadmap de 12 meses em seis fases (F0–F5), com a faixa da formação GovTech do programa, os marcos da banca
+ (mar/2027) e do Demo Day (abr/2027) e os entregáveis de cada fase.
+
+=== PAGE 21 ===
+Arkhe Research & Project Team
+19
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+Fase
+Período
+Entregáveis principais
+Critério de saída
+F0
+dez/26 – jan/27
+Hardening do ciclo completo; suíte de testes
+da PCO e do MMR; revisão de segurança do
+ContainmentGate
+100% dos testes de propriedade
+passando; revisão independente
+aprovada
+F1
+jan/27 – mar/27
+Piloto controlado em órgão-piloto:
+WorkIntent a PCO em processo real;
+treinamento da equipe
+N casos reais processados com recibo
+verificável; apresentação na banca
+mar/2027
+F2
+mar/27 – mai/27
+Passaporte KYA em produção; conector
+e-PING/X-Via do órgão; mapeamento de
+WorkIntents
+Despacho autorizado e idempotente a
+1 sistema de produção; Demo Day
+abr/2027
+F3
+mai/27 – jul/27
+Deployment em enclaves TEE; custódia
+HSM; multi-tenant com RLS por secretaria
+Isolamento de tenant validado por
+testes de propriedade; chaves em
+HSM nacional
+F4
+jul/27 – set/27
+Módulo WASM distribuído ao controle
+externo; envelopes híbridos OVERT v1.1
+(Ed25519 + SLH-DSA)
+TCE reexecuta recibos offline;
+verificação híbrida obrigatória em
+produção
+F5
+set/27 – nov/27
+Rollout multi-órgão em Goiás; playbook de
+operação e de resposta a incidentes
+M órgãos em produção; runbook
+aprovado; posto de monitoração
+operante
+ Tabela 10 — Fases do roadmap: período, entregáveis e critérios de saída verificáveis.
+8.1 Checklist para Tribunais de Contas (TCE-GO e TCU)
+O checklist abaixo foi desenhado como instrumento direto de fiscalização: cada item é verificável com os
+artefatos que a própria arquitetura produz, sem dependência de declarações do fornecedor. O módulo
+WASM entregue na Fase 4 é o instrumento de execução dessas verificações no ambiente do tribunal.
+#
+Item de auditoria
+O que o tribunal verifica
+Artefato Arkhe
+1
+Legalidade da autorização
+Toda ação com efeito tem autorização
+de gate correspondente
+Journal × WER (conciliação 1:1)
+2
+Versão da norma aplicada
+O digest da política registrada
+corresponde à norma vigente na data
+PolicyBinding versionado no
+recibo
+3
+Integridade do histórico
+Nenhum registro foi alterado ou
+removido
+Prova de inclusão Merkle na
+cadeia MMR
+4
+Chancela humana quando exigida
+Operações acima da alçada têm
+assinatura e-CPF válida
+Registro HITL assinado
+5
+Idempotência da execução
+Nenhum ato foi duplicado por retry ou
+reentrega
+OperationId no Journal de
+transações
+6
+Reexecutabilidade da decisão
+A PCO de amostra aleatória é verificada
+offline em O(n)
+verify-core WASM no ambiente
+do tribunal
+
+=== PAGE 22 ===
+Arkhe Research & Project Team
+20
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+#
+Item de auditoria
+O que o tribunal verifica
+Artefato Arkhe
+7
+Identidade do agente e do principal
+Cadeia KYA e ICP-Brasil válida na data
+da operação
+Mandato assinado + CRL/OCSP
+8
+Proveniência de conteúdo sintético
+Artefatos gerados por IA estão
+marcados
+Assinatura OVERT/C2PA
+ Tabela 11 — Checklist de auditoria para TCE-GO e TCU: itens, verificações e artefatos.
+8.2 Análise de Riscos e Contingências
+O plano de riscos prioriza as falhas que mais afetam a continuidade e a conformidade, com a regra de que
+toda contingência preserva as duas propriedades não negociáveis: nada executa sem autorização e
+nenhuma evidência se perde. A indisponibilidade de rede é o caso mais frequente em órgãos — e é
+tratado como modo operacional, não como exceção.
+Risco
+Impacto
+Contingência prevista
+Indisponibilidade de rede /
+barramento
+Despachos suspensos; filas
+crescem
+Modo degradado: autorizações continuam registradas
+localmente com evidência; Journal reprocessa na
+reconexão com OperationId — nada executa duas vezes
+Atualização de norma ou alçada
+Política vigente muda no
+meio de operações
+Versionamento por digest: operações em curso
+concluem com a política da data; novas iniciam com a
+versão nova; histórico permanece provável
+Indisponibilidade de
+enclave/HSM
+Assinaturas e execução
+protegida paralisam
+Fail-closed: gate rejeita novas autorizações; fila
+persistente; nenhuma execução em ambiente não
+protegido — incluir talvez atraso, nunca risco
+Comprometimento de chave de
+agente
+Propostas forjadas em nome
+do principal
+Revogação via CRL/status list propagada ao gate;
+mandatos com escopo e validade curta; envelope
+híbrido limita reuso
+Drift ou degradação do modelo
+Qualidade das propostas cai
+PCO independe do modelo: propostas sem prova válida
+falham; avaliação contínua por amostragem; rollback de
+versão do agente com evidência
+ Tabela 12 — Riscos operacionais e contingências com propriedades fail-closed preservadas.
+
+=== PAGE 23 ===
+Arkhe Research & Project Team
+21
+Arkhe GovTech — Dossiê Técnico do Kernel — Vol. 3
+ 9. Referências Bibliográficas e Normativas
+[1] BRASIL. Lei nº 13.709, de 14 de agosto de 2018. Lei Geral de Proteção de Dados Pessoais (LGPD) — art. 20 e
+ parágrafos. Diário Oficial da União, Brasília, DF, 2018.
+[2] BRASIL. Lei nº 14.133, de 1º de abril de 2021. Lei de Licitações e Contratos Administrativos. Diário Oficial da
+ União, Brasília, DF, 2021.
+[3] BRASIL. Lei Complementar nº 182, de 1º de junho de 2021 (Marco Legal das Startups — CPSI, art. 13, § 2º);
+ Lei nº 10.973, de 2 de dezembro de 2004 (Lei de Inovação). Diário Oficial da União.
+[4] UNIÃO EUROPEIA. Regulamento (UE) 2024/1689 do Parlamento Europeu e do Conselho (Regulamento de
+ Inteligência Artificial — EU AI Act) — arts. 12, 13, 14, 26(6) e 50. Jornal Oficial da UE, 2024.
+[5] BRASIL. SLTI/MP. e-PING — Padrões de Interoperabilidade de Governo Eletrônico (Portaria SLTI/MP nº
+ 92/2014, versão 2018); Decreto nº 11.529, de 31 de julho de 2024 (Infraestrutura Nacional de Dados).
+Brasília, DF.
+[6] IETF — SCITT WG. Thaha, M. et al. draft-thaha-scitt-agent-execution-evidence-00: Signed Agent Execution
+ Evidence for SCITT. Internet-Draft, out. 2026 (work in progress).
+[7] IETF — WIMSE WG. Thaha, M. et al. draft-thaha-wimse-agent-evidence-binding-00: Binding Agent Evidence
+ to Workload Identity. Internet-Draft, out. 2026 (work in progress).
+[8] NIST. FIPS 204 — Module-Lattice-Based Digital Signature Standard (ML-DSA); FIPS 205 — Stateless
+ Hash-Based Digital Signature Standard (SLH-DSA). Gaithersburg: NIST, 2024.
+[9] OWASP Foundation. Agentic AI Initiative — Threats and Mitigations for Agentic AI (LLM06: Excessive
+ Agency). 2026.
+Referências complementares. ISO/IEC 42001:2023 — Sistemas de Gestão de Inteligência Artificial;
+C2PA Specification 2.x — Coalition for Content Provenance and Authenticity; MGI/Cadastro base do
+Governo Federal. GuIA Unificado de Diretrizes para Inteligência Artificial no Poder Executivo (jun.
+2026); ARKHE RESEARCH & PROJECT TEAM. Vol. 1 — Manual Técnico de Governança e
+Autorização; Vol. 2 — Manual de Infraestrutura e Integração Estatal; Especificação OVERT v1.1 (out.
+2026).

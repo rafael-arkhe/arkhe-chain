@@ -1,0 +1,1127 @@
+
+=== PAGINA 1 ===
+FDF-AGI: Design Fiction, Design Thinking, and
+Epistemological Anarchy as a Research Framework
+ for Artificial General Intelligence
+ A Research Monograph on the Distributive Blindness of Benchmark-Closed
+ Evaluation
+ Rafael Oliveira
+ Safe Core
+ ORCID: 0009-0005-2697-4668
+ Correspondence: Rafael Oliveira, Safe Core (ORCID: 0009-0005-2697-4668)
+ 30 September 2026
+ Abstract
+Contemporary programs toward artificial general intelligence (AGI) are organized, in their
+overwhelming majority, around a closed evaluation cycle: specify, build, score against a
+benchmark, and respecify. This monograph develops the FDF-AGI framework, which
+articulates design fiction, design thinking, and Feyerabend's epistemological anarchism into
+a single research cycle, and defends the thesis that gives the framework its content: a
+benchmark-closed score is not a sufficient statistic for the distributive properties of a
+system. The claim is formalized as Proposition 1, the construction that realizes it is
+exhibited, and a minimal model shows that the insufficiency is sharp - with a single group
+the score is sufficient and the kernel of blind directions has dimension zero, whereas with
+|G| groups the kernel has dimension exactly |G| - 1. Six experiments, reproducible from a
+fixed repository command, quantify the blindness: a redistribution that leaves the score
+invariant can move group outcomes by up to 0.473 while the score drifts by no more than
+1.1 × 10-16, and the ratio between a minority group's loss and the majority's gain equals
+πrich/πpoor exactly, reaching 600 for a group of 0.1%. The monograph also reports a
+bibliographic audit of its own sources, conducted with the procedure the framework
+prescribes; the audit captured a phantom title in our own bibliography, and the correction is
+documented. Limitations - minimal-model validation, operational complexity, and an
+undefined theory of standing - are discussed together with objections concerning the
+gameability of distributive metrics and the prematurity of AGI as a category. We conclude
+that an evaluation channel specified in distributive terms is a necessary, testable, and
+governable complement to benchmark practice.
+Keywords: epistemological anarchism; artificial general intelligence; design fiction; design
+thinking; algorithmic monoculture; benchmark evaluation
+
+
+=== PAGINA 2 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 1
+Contents
+3
+1. Introduction
+4
+2. Background and Related Work
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 4
+2.1 The Benchmark-Centered Production Cycle
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 5
+2.2 Design Fiction and Diegetic Prototyping
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 6
+2.3 Design Thinking and Hybrid Intelligence
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 7
+2.4 Epistemological Anarchy and Its Misreadings
+8
+3. The Distributive Thesis
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+3.1 Definitions
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 8
+3.2 Proposition 1: Insufficiency of the Benchmark-Closed Score
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 9
+3.3 Consequences
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 10
+3.4 The Role of Design Fiction
+10
+4. Formalization of the Cycle
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 10
+4.1 State Space and Operators
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 11
+4.2 Aggregation Rules and Standing
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 12
+4.3 The Reopening Gate
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 13
+4.4 Opacity as a Question of Authority Allocation
+13
+5. Research Protocol
+14
+6. Empirical Validation
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 14
+6.1 The Minimal Model and the Six Experiments
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 15
+6.2 Monoculture Is Not Monotonic
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 17
+6.3 Blindness Scales with Size Asymmetry
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 18
+6.4 The Geometry of Blindness
+18
+7. The Bibliographic Audit as Reflexive Method
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 18
+7.1 Procedure and Results
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 19
+7.2 Entry 8: A Withdrawn Attribution
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 20
+7.3 Entry 13: A Corrected Title
+ .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 20
+7.4 Self-Application and Implications
+
+
+=== PAGINA 3 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 2
+21
+8. Counterarguments and Limitations
+23
+9. Conclusion and Implications
+24
+Appendix A. Audit Procedure Details
+24
+References
+
+
+=== PAGINA 4 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 3
+1. Introduction
+Every evaluation is a census of what we already know how to count. The observation is
+old, and so is the warning attached to it: when a measure becomes a target, it ceases to be a
+good measure (Strathern, 1997). Contemporary research toward artificial general
+intelligence (AGI) gives the warning a new scale. Development is conducted, almost
+without exception, through what we call the benchmark-centered production cycle: specify
+a capability, build a system, score the system against a benchmark, and respecify in the
+light of the score. The cycle is efficient and reproducible - and it is precisely these virtues
+that make its blind spot dangerous, because the score that certifies progress is a summary,
+and a summary can remain flat while the distribution of outcomes beneath it moves
+violently.
+This monograph proposes a framework, FDF-AGI, that articulates three traditions - design
+fiction, design thinking, and Paul Feyerabend's epistemological anarchism - into a single
+research cycle with an explicit governance structure. We defend from the outset, however,
+that the framework's value does not reside in its architecture of phases and operators. An
+architecture of this kind is cheap to propose and expensive to sustain, and a later section
+argues that much of the apparatus survives its own removal. The value resides in one
+testable claim about the limits of evaluation practice, which we call the distributive thesis: a
+benchmark-closed score is not a sufficient statistic for the distributive properties of a
+system. Closing the cycle against benchmarks does not close the cycle against the
+properties that matter, because there exist pairs of systems indistinguishable by the score
+whose outcomes across groups differ arbitrarily widely.
+The three traditions earn their place through a single shared intuition, worth stating before
+any apparatus is introduced: all three reject that the current operational formulation of a
+domain is the domain. Design fiction suspends disbelief precisely because a requirements
+specification is not the world to be inhabited (Sterling, 2009; Bleecker, 2009). Design
+thinking treats the first framing of a problem as a hypothesis rather than a datum (Schön,
+1983; Buchanan, 1992). Feyerabend treats the insistence on a universal method as a
+symptom to be explained rather than a cause to be obeyed (Feyerabend, 1975). This is not a
+rhetorical coincidence; it is the same intuition in three registers - literary, procedural, and
+philosophical - and the framework is an attempt to make the registers work in one cycle.
+The contributions are four. First, we formalize the FDF-AGI cycle as a graph of operators,
+with the governance return edge made explicit - an edge that an earlier version of the
+framework announced in prose but omitted from its own figure, an omission we treat as
+instructive rather than embarrassing. Second, we introduce a reopening procedure that
+renders the entry point of the cycle non-privileged in an operational sense, not merely a
+
+
+=== PAGINA 5 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 4
+rhetorical one. Third, we state and prove the distributive thesis as a pair of explicitly
+testable insufficiency propositions, and we submit the first of them to empirical validation
+in a minimal model of six experiments. Fourth, we audit the bibliography of this very
+monograph with the same procedure the framework prescribes for its own operation;
+fourteen entries were verified against the Crossref, Zenodo, and OpenAlex records, one
+attribution was withdrawn, one canonical title was corrected, and the audit caught a
+phantom title in our own bibliography file - precisely the title that the correction declares
+not to exist.
+The remainder of the document is organized as follows. Section 2 situates the framework in
+the literature on evaluation, design fiction, design thinking, and the philosophy of science.
+Section 3 states the distributive thesis and its consequences. Section 4 formalizes the cycle,
+its operators, and the reopening gate. Section 5 specifies the research protocol. Section 6
+reports the empirical validation. Section 7 reports the bibliographic audit as a reflexive
+method. Section 8 develops counterarguments and limitations. Section 9 concludes with
+implications and open problems.
+2. Background and Related Work
+2.1 The Benchmark-Centered Production Cycle
+The intellectual genealogy of evaluation practice in AI research is, ironically, a design
+genealogy. Schön's account of the reflective practitioner describes professional competence
+as reflection-in-action: the practitioner frames a situation, experiments within the framing,
+and reframes when the situation back-talks (Schön, 1983). What the benchmark cycle
+inherits from this tradition is the loop; what it drops is the back-talk. Rittel and Webber's
+analysis of planning problems had already observed that social problems are wicked - they
+have no stopping rule, no definitive formulation, and no test of a solution that does not
+change the problem itself (Rittel & Webber, 1973). Buchanan imported the analysis into
+design theory, arguing that design thinking is precisely the treatment of wicked problems
+by constructive placement (Buchanan, 1992). A benchmark converts a wicked problem into
+a tame one by decree: it fixes a stopping rule, a formulation, and a scoring function, and the
+production cycle then optimizes against all three.
+The economics of this conversion have been studied under the heading of Goodhart's law.
+Strathern's formulation - when a measure becomes a target, it ceases to be a good measure -
+was written about audit regimes in British universities, where publication counts reshaped
+the behavior they were meant to observe (Strathern, 1997). Manheim and Garrabrant
+provide a taxonomy that matters here, distinguishing regressional, extremal, causal, and
+adversarial variants of the law; their analysis suggests that no fixed metric is immune, only
+
+
+=== PAGINA 6 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 5
+differently exposed (Manheim & Garrabrant, 2018). In machine learning, the pathology has
+been documented empirically: benchmark scores leak into model selection until the score
+measures the selection process rather than the capability (Kapoor & Narayanan, 2023), and
+conceptual analyses argue that a benchmark assembled to stand for “the world” cannot
+carry the weight of that quantifier (Raji et al., 2021).
+The AGI setting sharpens the problem because the target construct is itself contested. Legg
+and Hutter's attempt to define universal intelligence compresses the notion into a scalar
+over environments - a move that is clarifying and distorting at once (Legg & Hutter, 2007).
+Chollet argues that any static benchmark can be gamed by preparation and that intelligence
+must be measured as skill-acquisition efficiency over unseen tasks (Chollet, 2019). Morris
+and colleagues, proposing graduated levels of AGI, note that capability summaries travel
+poorly across domains and autonomy regimes (Morris et al., 2024). The pattern across
+these proposals is consistent: the community knows its measures are compressions, and
+keeps using them because compressions are actionable. The distributive thesis developed in
+Section 3 accepts the compressions and asks a different question - what does a given
+compression render invisible?
+2.2 Design Fiction and Diegetic Prototyping
+Design fiction emerged as a named practice in Sterling's account of designed objects as
+spimes and in his short manifesto on the genre (Sterling, 2005; Sterling, 2009), and it was
+Bleecker who gave the practice its canonical definition: the deliberate use of diegetic
+prototypes to suspend disbelief about change (Bleecker, 2009). The key term descends
+from film studies. Kirby documented how cinematic depictions of technology - created
+with the collaboration of science consultants - function as diegetic prototypes that do real
+argumentative work: embedded in a narrative world, a technology can be shown working,
+failing, and being socially negotiated, without ever being built (Kirby, 2010). Dunne and
+Raby's speculative design tradition broadens the ambition from persuasion to social
+dreaming, using fictional artifacts to open possibility spaces rather than to forecast (Dunne
+& Raby, 2013). Lindley and Coulton formalize the distinction between science fiction's
+plausibility constraints and design fiction's world-building freedom (Lindley & Coulton,
+2015).
+The application of these practices to AI systems is recent and specific. Pilling and
+colleagues deconstruct the definitional dualism through which AI is narrated - as either
+autonomous agent or tool - and show that design fiction can hold both registers in
+suspension (Pilling et al., 2021). Zhang and Long argue, on the basis of the poetics of
+defamiliarization, that the value of a design fiction lies not in its content but in its capacity
+to make the familiar strange enough to be interrogated (Zhang & Long, 2025). Lupetti and
+
+
+=== PAGINA 7 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 6
+colleagues report on speculative AI prototyping as a practice of confronting ideals rather
+than measuring bodies - a phrase that anticipates the framework's insistence that evaluation
+channels are specified, not discovered (Lupetti et al., 2025). Across these accounts, one
+function recurs: a diegetic prototype makes visible who is affected by a deployment, in a
+way that an abstract list of concerns does not.
+2.3 Design Thinking and Hybrid Intelligence
+Design thinking contributes the procedural register. Schön's reflection-in-action supplies
+the microstructure - framing, move, evaluation, reframe (Schön, 1983). Verganti and
+colleagues analyze how AI changes innovation itself, arguing that the distinctive
+contribution of designers in AI development lies in the creation of meaning rather than the
+optimization of function (Verganti et al., 2020). Kelly and Grace provide a framework for
+analyzing the combination of design thinking and AI, and their taxonomy of framing is
+directly used by the present framework: framing may be performed by a human (Type I),
+by an AI system (Type II), or by both in interaction (Type III) (Kelly & Grace, 2025).
+Dellermann and colleagues, in two complementary papers, develop the notion of hybrid
+intelligence - systems in which human and machine capabilities are combined so that the
+combination exceeds either alone - and provide a taxonomy of design knowledge for such
+systems (Dellermann et al., 2019a; Dellermann et al., 2019b).
+Two commitments from this tradition carry into the framework. The first is that the initial
+framing of a design situation is a hypothesis; the cycle must contain an operator that can
+revise framings, not merely fill them. The second is that human and machine contributions
+are not interchangeable inputs to a single objective but parties to a negotiated process - a
+commitment that, transferred from product design to research governance, becomes the
+demand that evaluation channels themselves be negotiable. Both commitments are
+operationalized in Section 4, the first by the translation operator and the second by the
+governance operator.
+
+
+=== PAGINA 8 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 7
+2.4 Epistemological Anarchy and Its Misreadings
+The third register is philosophical. Feyerabend's Against Method advances a historical
+thesis about actual scientific practice: no single methodological rule - not even the most
+sacrosanct - has survived contact with the history of science without profitable violation,
+and a methodology that outlawed such violations would have arrested the sciences it
+claimed to rationalize (Feyerabend, 1975). The association with the phrase “anything goes”
+requires care, because the phrase is Lakatos's caricature before it is Feyerabend's slogan:
+Lakatos coined it to mock what he took to be the consequence of Feyerabend's position,
+and Feyerabend then adopted it ironically, giving it the status of a chapter title and using it
+as a reductio against claims of methodological universality rather than as a proposal
+(Lakatos, 1970). Scholarly treatments of the episode converge on this reading (Preston,
+1997). The distinction is not pedantry; Section 8 argues that the misattribution is the
+principal vector through which epistemological anarchism gets appropriated as a license for
+arbitrariness, a risk that has been documented in the AI-adjacent literature (Sienicki &
+Sienicki, 2025).
+The later Feyerabend is more useful to AI research than the caricature. Science in a Free
+Society develops institutional arguments: a free society is one in which traditions -
+including scientific traditions - must make their case before citizens rather than rule by
+epistemic fiat (Feyerabend, 1978). Conquest of Abundance, the last phase, shifts the target
+from rules of method to abstraction itself: the danger of a successful formal system is that it
+empties the world it represents, discarding the abundance that did not fit (Feyerabend,
+1999). This is the Feyerabend with something specific to say about AI, because it names
+the mechanism by which a system that outperforms on an abstraction can drain the thing
+being measured. A recent study makes the bridge explicit, arguing that machine
+intelligence flattens the diversity and richness of human cognition, that AI systems actively
+sculpt reality by narrowing the space of preferences and of what counts as real or possible,
+and that similarity to the abstract carries a measurable epistemic cost (Oliveira, 2025). The
+contrast with Kuhn is instructive: paradigms succeed one another, and incommensurability
+is a relation between successive normal sciences, whereas anarchism prescribes no
+successor structure at all - which is why a framework that borrows from Feyerabend must
+introduce its own governance rather than inherit one (Kuhn, 1962).
+
+
+=== PAGINA 9 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 8
+3. The Distributive Thesis
+This section is the core of the monograph; the remaining sections are instrumentation. We
+define the benchmark-closed score, define the distributive statistics it summarizes away,
+and prove that the summary is insufficient. The proposition is a statement of existence and
+is deliberately constructive: Section 6 exhibits the construction under controlled conditions.
+3.1 Definitions
+Let E = {t1, …, tK} be a finite set of evaluation tasks, each with a positive weight wt. For a
+system m, let acct(m) ∈ [0, 1] denote its measured performance on task t. The
+benchmark-closed score is the weighted sum
+ sE(m) = Σt ∈ E wt · acct(m) (1)
+Let G = {g1, …, gK} be a partition of a relevant population into groups. For each group g
+and task t, let outg,t(m) denote the average outcome accrued by group g under system m on
+task t. The distributive statistics of the system are the vector
+ D(m) = ( dg(m) )g ∈ G, dg(m) = Σt ∈ E wt · outg,t(m), (2)
+and the distributive decrement of g is the ratio
+ δg(m) = dg(m) / maxm' dg(m'), (3)
+so that δg(m) = 1 for the best observable system in group g and is smaller for the others.
+The interpretive point is a division of labor. The score sE is a compression of the
+population's experience into a single actionable number - that is its virtue and the reason it
+organizes production cycles. The vector D records what each group received; it is not one
+number but a profile, and no profile can be reconstructed from a single number without
+auxiliary assumptions that the benchmark does not supply. The question of Section 3.2 is
+whether the reconstruction failure is merely practical or structural.
+3.2 Proposition 1: Insufficiency of the Benchmark-Closed Score
+Proposition 1 (insufficiency of sE for D). sE is not a sufficient statistic for D: there exist
+systems m and m' such that sE(m) = sE(m') while D(m) ≠ D(m').
+The construction is elementary and worth exhibiting in full, because its simplicity is the
+argument. Take a base system m with group outcomes (at, bt) on task t, normalized so that
+at + bt = ct with ct fixed. Define m' by the redistribution (at, bt) ↦ (α·at, ct − α·at) for a
+scalar α ≠ 1 chosen to keep the weighted ratio of the redistributed masses at the desired
+value. Because the equality constraints impose a single linear equation on two unknowns
+per task, the solution set is a family of dimension one; sE is constant along the family by
+
+
+=== PAGINA 10 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 9
+construction, while D traverses a non-degenerate segment of attainable profiles. The score
+is therefore blind, by construction, to every direction in that family. The complete
+realization - the set of instances that implements the redistribution under realistic
+generative models - is the object of the experiments in Section 6, which show that the blind
+directions are not only non-empty but numerically substantial.
+3.3 Consequences
+Two consequences deserve emphasis, and both are supported by literatures that developed
+independently of the present framework. The first consequence is that improvement in the
+score does not entail improvement in the distribution. If sE(m') > sE(m) while D(m') is
+dominated by D(m) componentwise, then the production cycle registers an advance and the
+distributive channel registers stagnation or regression - and a research program that
+observes only sE cannot distinguish the two cases. This is not a hypothetical. In a deployed
+health algorithm, the use of cost as a proxy for need rendered the program blind to a
+distributional fact: at the same risk score, Black patients carried substantially more disease
+than White patients, and correcting the proxy would raise the fraction of Black patients
+flagged for additional care from roughly 17.7% to 46.5% (Obermeyer et al., 2019). The
+aggregate had been improving; the distribution had not. The methodological response -
+evaluation conditioned on group membership, as institutionalized in fairness-aware
+learning - is precisely the move from sE toward D (Hardt et al., 2016; Barocas et al., 2023).
+The second consequence is that the gap between score and distribution is not stationary; it
+grows with the architecture of modern practice. Bommasani and colleagues show that the
+sharing of components - the normal condition of the foundation-model era, in which a
+small number of base models feeds many downstream deployments - actively homogenizes
+outcomes, with individual-level effects exceeding group-level effects (Bommasani et al.,
+2022). Kleinberg and Raghavan formalize the complementary mechanism: when many
+decision-makers adopt the same algorithmic recommendation, their errors become
+correlated, and this correlation can improve average welfare while deteriorating its
+distribution - a systemic risk in which no individual decision appears responsible
+(Kleinberg & Raghavan, 2021). The empirical footprint of the phenomenon is broad:
+language models trained and evaluated on overlapping corpora reproduce stereotypical
+associations that aggregate accuracy never surfaces (Bolukbasi et al., 2016), and
+taxonomies of downstream risk now treat homogenization and discrimination as first-class
+failure modes rather than implementation bugs (Weidinger et al., 2022). A relational
+reading completes the picture: such harms are properties of the socio-technical relation, not
+of artifacts in isolation, which is why artifact-level scores cannot detect them (Birhane,
+2021).
+
+
+=== PAGINA 11 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 10
+3.4 The Role of Design Fiction
+Design fiction is not a layer of the framework; it is a generator of distributive questions,
+and locating its function precisely is what makes the framework defensible. A diegetic
+prototype of the form “here is a future in which X” renders visible which group's outcome
+dg moved, and how, in a way that an abstract checklist of fairness concerns does not
+(Kirby, 2010; Dunne & Raby, 2013). The technique of defamiliarization explains why: the
+fiction's estrangement effect is what dislodges the current operational formulation from its
+position as the domain (Zhang & Long, 2025). Participatory instruments extend the reach
+of the generator beyond the design team, eliciting from affected communities the use cases,
+benefits, and harms that no internal review surfaces (Mun et al., 2024).
+The contribution of design fiction to FDF-AGI is therefore the generation of the specific set
+of distributive statistics D that the non-benchmark channel needs to measure - and nothing
+more. This is a considerably more modest function than “layer 1 of an architecture,” and it
+is the defensible one. What a fiction can do is name the groups, name the movement, and
+name the context with enough concreteness that a statistician can specify what to measure;
+what it cannot do is certify that the measurement is valid, which is the audit's job (Section
+7). The division of labor is deliberate, and the framework fails gracefully if either half is
+missing: fictions without D-statistics degenerate into mood boards, and D-statistics without
+fictions inherit the blind spots of whoever chose the groups.
+4. Formalization of the Cycle
+4.1 State Space and Operators
+The state of the cycle is the quadruple
+ S = (X, F, M, G), (4)
+where X is the set of diegetic artifacts produced so far, F is the current design question, M
+is the set of competing approaches kept alive, and G is the governance decision in force
+with its attribution of standing. Four operators act on the state. The speculation operator Δ:
+X → X attaches a diegetic artifact to X without eliminating any existing artifact;
+speculation accumulates. The translation operator Φ: X → F converts the current artifact
+into an actionable design question, which is the operation by which fiction becomes
+testable. The proliferation operator Ψ: M → M attaches competing approaches to M; by
+construction Ψ is extensive, meaning M ⊆ Ψ(M), and this extensivity is the single point at
+which the framework's anarchist commitment is encoded - proliferation is structural, not
+optional. The governance operator Γ: F × M → G × F decides among approaches and
+returns a revised design question to the process phase. Figure 1 depicts the cycle as a graph
+
+
+=== PAGINA 12 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 11
+of these operators; the dashed return edge from governance to speculation is constitutive,
+and an earlier version of the framework stated that edge in prose while omitting it from its
+own figure - an error worth keeping visible, because it is a small instance of the
+representational failures the framework exists to catch.
+Speculation
+(DF)
+Process
+(DT)
+Pluralism
+(AE)
+Δ
+Φ
+Ψ
+Democratic governance
+Γ
+return
+ Figure 1. The FDF-AGI cycle as a graph of operators (adapted from the source draft). Solid edges carry the
+primary flow: speculation (Δ) feeds diegetic artifacts into the process, translation (Φ) converts artifacts into
+design questions, proliferation (Ψ) feeds competing approaches into pluralism, and governance (Γ) decides
+ and returns the revised question. The dashed return edge from governance to speculation is constitutive: it
+ distinguishes governance as a structuring layer from a terminal appendix of the cycle.
+4.2 Aggregation Rules and Standing
+The governance operator is where the framework is honest about what it cannot do. The
+following proposition records the gap.
+Proposition 2 (insufficiency of aggregation rules). An aggregation rule over preferences,
+however well designed, determines how preferences are combined. It does not determine
+which preferences have standing - that is, which count. Therefore no aggregation rule,
+by itself, specifies a legitimate institutional arrangement.
+The distinction is one of level, and available empirical results do not cross it. A recent
+study of democratic governance mechanisms compares aggregation rules for collective
+preference expression in AI model governance and finds that quadratic aggregation
+combined with an egalitarian distribution of decision power was perceived as the fairest
+combination (Sharma et al., 2026). The result is real and useful: it tells us something about
+how perceived fairness tracks the interaction of rule and power allocation. It is not a theory
+of standing. Perceived fairness of a combination rule is a function of how preferences are
+combined; standing is the prior question of which positions have the right to be combined
+at all. Democratic survey frameworks for AI use cases elicit distributed judgments at scale
+(Mun et al., 2024), and proposals for democratic control of AGI specify institutional
+wrappers (Salmi, 2023), but both operate at the level of aggregation and elicitation. The
+framework deliberately leaves standing undefined; Proposition 2 is the record of that
+
+
+=== PAGINA 13 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 12
+honesty, and Section 8 returns to it as the principal open problem.
+4.3 The Reopening Gate
+An earlier version of the framework asserted that the cycle has no privileged entry point,
+while its own protocol prescribed five phases in a mandatory order beginning with a
+configuration phase - a mapping of traditions and a selection of lenses. The assertion and
+the protocol were incompatible: a mandatory phase zero is a pre-commitment to a method
+and a metric, executed before any operation. The correction adopted here makes the
+assertion operational instead of rhetorical.
+Definition 3 (reopening gate). The configuration phase is revocable if, and only if, an actor
+with standing in the deliberation can trigger a review that establishes that the selection of
+lenses or the set of mapped traditions excludes a tradition satisfying the public inclusion
+criterion C. A change to C is itself an act of governance, subject to Γ.
+Under this definition, the entry point remains the configuration phase - but it is now a
+procedure rather than an axiom, and the initial asymmetry is explicitly reversible by a
+procedure the framework itself specifies. This is the available improvement. A genuinely
+non-privileged entry point is indistinguishable from the absence of procedure, and absence
+of procedure is not anarchism; it is the condition in which the loudest actor's framing wins
+by default. The gate converts a philosophical posture into an auditable mechanism, which is
+the direction in which the whole framework moves: every commitment that can be made
+checkable is made checkable, and the residue that cannot - standing, again - is marked
+rather than hidden.
+
+
+=== PAGINA 14 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 13
+4.4 Opacity as a Question of Authority Allocation
+The most productive reformulation the framework offers concerns opacity. The received
+question - how do we make AI transparent? - presupposes that opacity is a defect to be
+eliminated. The literature already complicates this presupposition. Burrell distinguishes
+three irreducible sources of opacity in algorithmic systems: opacity inherent to the
+mathematics of learning from data, opacity produced by intentional corporate or state
+secrecy, and opacity produced by scale and technical illiteracy - only the third yields to
+better documentation, and none yields to a demand for full legibility (Burrell, 2016).
+Ananny and Crawford show that the transparency ideal itself is limited: seeing does not
+amount to knowing, and algorithmic accountability requires practices - timing,
+positionality, and publics - that visibility alone cannot supply (Ananny & Crawford, 2018).
+Lipton's analysis of interpretability reaches a parallel conclusion at the model level: the
+term carries competing desiderata whose trade-offs are themselves choices (Lipton, 2018),
+and recent reviews treat opacity management as a condition of ethical sustainability rather
+than a solvable defect (Cianciaruso, 2026).
+The framework's move is to relocate the question from engineering to authority: the
+question is not how to make AI transparent, but who decides which forms of opacity are
+acceptable, and in which contexts. Under this relocation, opacity ceases to be a defect to
+eliminate and becomes a condition to govern - which dissolves the
+transparency-versus-performance dilemma, not because a balance has been found, but
+because the question has been moved. The framework, honestly, does not answer the
+relocated question; Proposition 2 records why no aggregation rule could answer it alone.
+What the framework does provide is the machinery through which the question gets asked
+repeatedly, by whoever has standing, with the results feeding back into the cycle. The
+openness is explicit and indicated, which is the most a framework that refuses false closure
+can offer.
+5. Research Protocol
+The protocol preserves the five phases of the cycle. The correction relative to the earlier
+version is that phase zero is now itself subject to the reopening gate of Definition 3 rather
+than constituting a methodological pre-commitment executed outside the reach of
+governance. Each phase has a declared objective and a checkable exit condition; the
+checkability is what makes the protocol auditable rather than inspirational.
+Phase 0 - configuration of the field. The team maps the traditions relevant to the problem,
+selects the lenses through which scenarios will be generated, and defines two public
+criteria: the inclusion criterion C for traditions and the pluralism criterion for approaches.
+
+
+=== PAGINA 15 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 14
+The phase is subject to reopening. Phase 1 - scenario generation. The team produces
+diegetic artifacts under an objective that makes the distributive function explicit: each
+artifact must name at least one group g in the population partition whose outcome dg moves
+under the depicted deployment, and the group that does not move. Phase 2 - translation into
+design questions. The team runs the design cycle of Section 4 under a restriction that
+disciplines the output: the resulting specification is an ecological account, not a technical
+specification - what the system does, for whom, under which physical and social
+constraints, and with which consequences. Phase 3 - proliferation. The team deliberately
+generates contraindications, alternative architectures, alternative datasets, and alternative
+objectives; the operator Ψ is extensive, and no approach is eliminated in this phase. Phase 4
+- deliberation. The governance operator Γ is applied; the output is a decision and a revised
+design question, which returns to the cycle by the dashed edge of Figure 1.
+One operational commitment deserves emphasis because earlier versions promised it and
+delivered nothing: a verifiable pluralism criterion. The extensivity of Ψ is checkable by
+inspection of |M| across iterations - the framework fails if |M| decreases between two
+iterations without a removal that has passed through Γ. This is a weak criterion, and it is
+verifiable, and Section 8 argues that a weak verifiable criterion is preferable to a strong
+unverifiable one. The protocol's artifacts are designed to carry their context with them, in
+the spirit of documentation practices such as model cards and datasheets that attach
+provenance and intended use to models and datasets (Mitchell et al., 2019; Gebru et al.,
+2021); the phase structure, meanwhile, mirrors the end-to-end shape of internal audit
+frameworks that assign responsibilities across the deployment lifecycle (Raji et al., 2020).
+6. Empirical Validation
+6.1 The Minimal Model and the Six Experiments
+Proposition 1 is an existence claim: there exists a distributive displacement that the
+benchmark-closed score (1) does not detect. To submit the claim to test, we implemented
+the minimal model of Section 3 and executed six experiments. Each experiment is
+reproducible from a fixed repository command; the quantities reported below are computed
+from the groups, the tasks, and the score, with no hand-adjusted values. All six executions
+completed without failure, and Table 2 summarizes the results. The design principle behind
+the suite is that each experiment isolates one assumption of the production cycle - a single
+group, correlated deciders, redistribution, scale, group multiplicity, and randomization - so
+that any failure of the thesis could be located.
+
+
+=== PAGINA 16 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 15
+Table 2. The six experiments. ΔD is the largest distributive displacement attainable along the direction that
+leaves the score unchanged. No experiment altered the score by more than 1.1 × 10-16 (values from the source
+draft).
+Experiment
+ΔD
+Measured fact
+Control (|G| = 1)
+0
+dim ker = 0; sE is sufficient
+Monoculture
+0.170
+peak at ρ = 0.75; collapse at ρ = 1
+Allocation
+0.473
+score invariant; majority mean gain 0.050
+Scale
+0.300
+ratio = πrich/πpoor, exact
+Group count
+-
+dim ker = |G| − 1
+Robustness
+0.166-0.314
+400/400 material randomizations
+The control with a single group is decisive for the reading of the thesis. With one group the
+score is sufficient, the kernel of blind directions has dimension zero, and the null direction
+has norm zero; the insufficiency exists, therefore, if and only if there is more than one
+group. Proposition 1 is thus sharp, not merely true: the blindness is a property of
+multiplicity, not an artifact of scoring. The robustness experiment complements the control
+from the other side. Across 400 independent randomizations of bases and weights, all 400
+produced material displacement - minimum 0.166, fifth percentile 0.201, median 0.261,
+ninety-fifth percentile 0.314 - with a minimum ratio of 6.0. The phenomenon is not an
+artifact of the chosen parametrization.
+6.2 Monoculture Is Not Monotonic
+The monoculture experiment requires correlation. Holding the score fixed - drift bounded
+by 1.1 × 10-16 across the sweep - the dispersion between groups collapses from 6.85 × 10-3
+to 3.7 × 10-17 as the shared-component fraction ρ rises, and the correlation between
+deciders reaches unity only at ρ = 1. The displacement, however, is not monotonic in ρ: it
+takes the values 0.0245, 0.0519, 0.1704, 0.0720, and 0.0075 at ρ = 0.25, 0.5, 0.75, 0.9, and
+1 respectively, peaking at ρ = 0.75 and collapsing at ρ = 1 (Figure 3). Full correlation
+eliminates the displacement space itself; the maximal blind spot lies in an intermediate
+regime.
+
+
+=== PAGINA 17 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 16
+Figure 3. Monoculture is not monotonic (adapted from the source draft; panel b plots the two endpoint values
+ reported therein). With the score fixed, dispersion between groups collapses and correlation reaches 1 at ρ =
+1, yet the attainable displacement ΔD peaks at ρ = 0.75 and collapses at ρ = 1: full correlation eliminates the
+ very space in which displacement lives.
+The collapse at ρ = 1 reinforces the thesis rather than weakening it. When decision-makers
+are identical, the attainable displacement tends to zero not because diversity was preserved
+but because nothing remains to diverge: the available displacement empties along with the
+variation. The curve of displacement against correlation therefore has the shape of a
+collapse by uniformity - rising while residual diversity remains to be exploited, and
+plunging when diversity reaches zero. The signal of homogenization is accordingly not a
+small displacement; it is the combination of a small displacement with null dispersion.
+Read this way, the result is a quantitative signature of the mechanism that Kleinberg and
+Raghavan describe qualitatively: correlation between deciders alters the social distribution
+of outcomes without any individual decision appearing responsible (Kleinberg &
+Raghavan, 2021), and the signature suggests that monitoring programs keyed to average
+performance will miss the phase in which the blind spot is widest.
+
+
+=== PAGINA 18 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 17
+6.3 Blindness Scales with Size Asymmetry
+The displacement does not require a different benchmark - only a reallocation of authority.
+Moving the outcome vector along the null direction attains a displacement of 0.473 with
+the score practically invariant and a mean majority gain of 0.050. The scale experiment
+quantifies how the blindness grows with asymmetry: the ratio between the minority group's
+loss and the majority group's gain equals πrich/πpoor exactly - maximum relative error 3.8 ×
+10-16 across the grid - taking the value 6.0 when the minority share is 10% and 600 when it
+is 0.1% (Figure 2). For a group comprising a tenth of the population, the benchmark is six
+times blinder to that group's loss than it is sensitive to the majority's gain; for a group of a
+thousandth, six hundred times.
+ Figure 2. Blindness scales with size asymmetry (adapted from the source draft). The measured ratio between
+the minority group's loss and the majority's gain coincides with πrich/πpoor across the entire grid of minority
+ shares, from 0.10 to 0.001.
+The law has a sobering methodological implication, because it says the blindness is not
+noise that larger evaluations will wash out; it is a deterministic function of population
+structure that grows exactly as the minority shrinks. Field evidence is consistent with the
+mechanism, though it cannot of course confirm the law itself: the health-algorithm case
+discussed in Section 3.3 is precisely a situation in which an aggregate statistic remained
+acceptable while a distributional fact drifted far from it (Obermeyer et al., 2019), and the
+corrective instruments that exist - group-conditioned evaluation and its fairness-aware
+descendants (Hardt et al., 2016; Barocas et al., 2023) - are institutional recognitions that the
+second channel must be measured, not inferred.
+
+
+=== PAGINA 19 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 18
+6.4 The Geometry of Blindness
+The dimension of the kernel is exactly |G| − 1. For |G| ∈ {2, 3, 4, 6, 8} the experiment
+yielded kernel dimensions 1, 2, 3, 5, and 7, and the width of the admissible interval for the
+redistribution parameter decreased from 0.48 to 0.109. The count of groups is thus the
+principal structural determinant of blindness: more groups mean more blind directions, and
+the directions shrink but do not close as multiplicity grows. The result has a natural reading
+in the terms of Section 4. A production cycle that scores against sE is optimizing within the
+quotient space that the kernel parametrizes; everything in that space is invisible to the
+score, and the space grows linearly with the plurality of the affected population. A research
+program that cares about distribution must therefore populate the kernel with measurement
+- which is what the distributive channel D provides - or accept that plurality and blindness
+grow together.
+7. The Bibliographic Audit as Reflexive Method
+7.1 Procedure and Results
+A framework whose contribution is an evaluation channel owes an account of its own
+evaluation. Fourteen bibliographic entries were verified against the Crossref, Zenodo, and
+OpenAlex APIs on 29 September 2026, with each entry resolved by DOI where available
+and primary editorial metadata preferred over generic web search. The verdict column of
+Table 1 refers to the existence of the work, not to the correctness of the metadata: an entry
+may be real and still have required correction. Eleven entries required some correction, one
+attribution could not be located at all, and one cited title did not exist. The audit is an
+instrument of the framework applied to itself, in the same register in which an evaluation
+framework must submit its own instrumentation to the channels it prescribes (Raji et al.,
+2020).
+
+
+=== PAGINA 20 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 19
+Table 1. Result of the bibliographic audit (14 entries verified against the Crossref, Zenodo, and OpenAlex
+APIs on 29 September 2026). Eleven entries required correction; one attribution could not be located as cited.
+The verdict column refers to the existence of the work, not to metadata correctness.
+#
+Verdict
+Correction applied
+Cited as
+1-3
+Real
+- (Feyerabend)
+Feyerabend [1975, 1978,
+1999]
+4
+Real
+DOI and full date added
+Sienicki and Sienicki (2025)
+5
+Real
+DOI; author-name form
+Oliveira (2025)
+6
+Real
+art. 3701184, pp. 1-19; “GROUP5” is not an
+identifier
+Zhang and Long (2025)
+7
+Real
+2021, not 2026
+Pilling et al. (2021)
+8
+Not located
+attribution withdrawn; see §7.2
+-
+9
+Real
+pp. 10-12, not 10-17
+Lupetti et al. (2025)
+10
+Real
+nine authors named
+Sharma et al. (2026)
+11
+Real
+AIES 7(1), 2024; not “ACM DL 2025”
+Mun et al. (2024)
+12
+Real
+single author: Cianciaruso
+Cianciaruso (2026)
+13
+Nonexistent
+title
+Algorithmic monoculture and social welfare
+Kleinberg and Raghavan
+(2021)
+14
+Real
+DOI added; online-first 2022
+Salmi (2023)
+7.2 Entry 8: A Withdrawn Attribution
+The work cited as “The Parametric AGI Framework: AI System Design as
+Theory-Building” was not located. A title search on Zenodo returned zero records; a search
+by the cited authorship returned three AI works by a homonymous author, none
+corresponding; and because the entry already cited the author as [Autor], the attribution
+was unverifiable from the origin. The withdrawal matters more than a footnote would,
+because the work had supplied four structural concepts: the distinction between the design
+cycle and the production cycle, a pre-hypothetical sketching phase invoking Peircean
+abduction, the notion of an ecological architectural plan, and the characterization of the
+benchmark as a proxy. Of these, the first survives on independent grounds - the
+design/production distinction is rooted in Schön and in the design-thinking tradition the
+framework already invokes (Schön, 1983). The remaining three are reattributed to the
+present author, and the formulation now stands as a claim of this monograph rather than a
+borrowed authority. The episode is itself an illustration of the framework's thesis about
+attribution: provenance that cannot be checked is not provenance.
+
+
+=== PAGINA 21 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 20
+7.3 Entry 13: A Corrected Title
+The article by Kleinberg and Raghavan exists and is canonical; the title under which it was
+cited does not. The real title is “Algorithmic monoculture and social welfare,” published in
+PNAS 118(22) in 2021 (Kleinberg & Raghavan, 2021). The expression “outcome
+homogenization,” which appeared in the cited title, belongs to a different article by
+different authors (Bommasani et al., 2022). A DOI constructed on the pattern of the
+phantom title returns 404, confirming that no such work exists; the corrected metadata
+come from the OpenAlex record for the real article.
+The distinction is not bibliographic pedantry; it is substantive, and the correction changes
+which claims the sources can support. Kleinberg and Raghavan argue that monoculture
+alters the social welfare function through correlation between decision-makers: this is an
+argument about systemic risk, under which monoculture may improve the average while
+worsening the distribution (Kleinberg & Raghavan, 2021). The formalization of outcome
+homogenization by Bommasani and colleagues is an argument about institutionalized
+exclusion, in which shared components propagate identical errors to the individuals they
+touch (Bommasani et al., 2022). The first is the appropriate source for Proposition 1 and the
+experiments of Section 6; the second is the appropriate source for the normative claim that
+resistance to monoculture is a distributive good. The earlier version of the text used one for
+the other; the audit caught the substitution, and the argument above has been rebuilt on the
+correct pairing.
+7.4 Self-Application and Implications
+The procedure applies to itself, and it is the self-application that carries the methodological
+lesson. The audit of this monograph captured an error in its own bibliography file: the title
+of Kleinberg and Raghavan was initially recorded as “Algorithmic Monoculture and the
+Challenge of Outcome Homogenization” - precisely the title that the corrected Entry 13
+declares not to exist. The mechanism of the error is instructive. The phantom title was
+plausible, it semantically matched the claim it supported, and it circulated because it had
+never been resolved against a registry; it was structurally indistinguishable from the
+citation-pathology documented at field scale, where invalid results propagate through
+literatures because downstream users inherit upstream evaluation shortcuts (Kapoor &
+Narayanan, 2023). A title that matches the argument too well deserves the most checking,
+not the least.
+Three implications follow for research practice. First, citation hygiene is a fail-closed
+practice: an entry that cannot be resolved against Crossref, Zenodo, or OpenAlex should
+fail the document, not the reader. Second, grey literature requires the same registry
+
+
+=== PAGINA 22 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 21
+discipline as commercial publication; the Zenodo and OpenAlex lookups in this audit were
+as decisive as the Crossref ones, and the one unrecoverable entry failed precisely the
+registry test. Third, auditing scales as a social practice only if its artifacts are portable,
+which is the contribution of documentation regimes such as model cards and datasheets
+(Mitchell et al., 2019; Gebru et al., 2021) and of end-to-end internal audit frameworks (Raji
+et al., 2020): the present audit is an instance of the same genre applied to a text rather than a
+model. We regard the capture of our own phantom title as the strongest evidence this
+monograph can offer that the procedure is worth adopting; a methodology that never
+catches anything is not a methodology.
+8. Counterarguments and Limitations
+This section assembles the strongest objections we could construct against the framework,
+the internal limitations recorded by the validation, and the responses available at the
+present stage. The ordering is by severity rather than by convenience; the first two items
+are, in our judgment, the ones most likely to matter to a skeptical research program.
+First, validation in a minimal model. The six experiments confirm Proposition 1 and
+quantify the blindness, but in a synthetic model of groups and tasks; groups, distributions,
+and weights are chosen, and it remains open whether the observed scale law survives data
+from real deployments. The response is partial by design: the 400-draw robustness
+experiment shows the phenomenon is not a parametrization artifact, and the consistency
+between the model's mechanism and documented field failures (Obermeyer et al., 2019;
+Kleinberg & Raghavan, 2021) is suggestive - but consistency is not derivation, and a
+deployment-scale test of the πrich/πpoor law is the obvious next study. Until such a test
+exists, the appropriate posture is to treat the law as a hypothesis with a working
+mechanism, not a measured regularity of deployed systems.
+Second, operational complexity. Four operators and five phases are more than most
+research teams can sustain, and an earlier chapter of this research program argued that a
+portion of the apparatus is largely decorative. The framework's own conclusion concedes
+the point: its verifiable content is the distributive thesis and the audit procedure, and the
+four-layer architecture survives the removal of its own layers. The practical
+recommendation is therefore incremental adoption rather than wholesale adoption - a
+distributive channel alongside the benchmark, the |M| extensivity check, and the
+bibliographic audit can be adopted by a single team in a single study, whereas the full cycle
+is an institutional commitment. The risk that ceremony crowds out substance is real, and
+the verifiable-core argument is the mitigation offered, though it remains a mitigation rather
+than a refutation.
+
+
+=== PAGINA 23 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 22
+Third, the reopening gate is weak. Definition 3 makes the configuration phase reversible,
+not negotiable: an actor with standing can trigger reopening, but the content of the
+configuration phase is not itself submitted to deliberation as a matter of course. A stronger
+gate - periodic mandatory deliberation on the configuration itself - would address the
+asymmetry at the cost of the deliberative burden the weak gate was designed to bound. We
+record the trade-off rather than resolve it, because the resolution is an institutional design
+question that Proposition 2 places outside the reach of any aggregation rule.
+Fourth, standing remains undefined. Proposition 2 identifies the gap and does not close it;
+available empirical work on participatory governance operates at the level of elicitation and
+aggregation (Mun et al., 2024; Sharma et al., 2026; Salmi, 2023), which is below the level
+at which the standing question is posed. This is the framework's principal intellectual debt,
+and we flag it as such. Fifth, a familiar objection to the philosophical component:
+anarchism is either self-undermining or a license for arbitrariness. The response developed
+in Section 2.4 is that the objection lands on the misattributed maxim. “Anything goes” is
+Lakatos's caricature of Feyerabend, adopted by Feyerabend ironically and used as a
+reductio against methodological universality (Lakatos, 1970; Preston, 1997); the correctly
+attributed position is narrower than the framework needs it to be, and the documented risk
+of appropriation shrinks accordingly (Sienicki & Sienicki, 2025). The institutional
+Feyerabend of Science in a Free Society argues for procedures that make authority
+contestable, which is the opposite of a license (Feyerabend, 1978).
+Sixth, the distributive channel is itself gameable. Any fixed D-statistic is subject to the
+same Goodhart dynamics as any fixed score, and a team optimizing for reported group
+parity can satisfy the metric while missing the harm - the adversarial variant of the law is
+not suspended by goodwill (Manheim & Garrabrant, 2018). The framework's response is
+structural rather than metricial: D is specified as a family of statistics under continuous
+revision through Γ, the reopening gate keeps the revision procedure itself contestable, and
+the extensivity check prevents silent narrowing of the approach set. This is a governance
+answer to a measurement problem, and we concede that it shifts rather than eliminates the
+burden. Seventh, the AGI framing may be premature: the target construct is contested
+(Legg & Hutter, 2007), graduated operationalizations differ from scalar ones (Morris et al.,
+2024), and nothing in the framework requires AGI to arrive for the thesis to apply. The
+distributive thesis targets the evaluation practice of general-purpose systems as they exist
+today; the AGI framing is where that practice is most concentrated, not a prediction.
+Finally, the monograph is the work of a single author and a single research line, and the
+reflexive audit, though genuine, is not independent verification; replication of the six
+experiments and of the audit procedure by external groups remains necessary before the
+results are treated as more than a demonstration.
+
+
+=== PAGINA 24 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 23
+9. Conclusion and Implications
+FDF-AGI proposes a posture for AGI-adjacent research that is at once speculative and
+rigorous, pluralist and governable. Its verifiable content does not reside in the architecture
+of operators and phases, which survives its own removal; it resides in one claim about the
+limits of an evaluation practice - that closing the cycle against benchmarks does not close
+the cycle against the properties that matter, because distributive properties are invariant to
+changes that benchmarks measure - together with the machinery that makes the claim
+actionable: a distributive channel D specified by fictions and measured by audit, a
+proliferation operator whose extensivity is checkable, a governance operator with an
+explicit return edge, and a reopening gate that converts anti-dogmatism from posture into
+procedure.
+The empirical contribution is deliberately small and deliberately sharp. In a minimal model,
+benchmark insufficiency exists if and only if the affected population is plural; the kernel of
+blind directions has dimension exactly |G| − 1; attainable displacement peaks under
+intermediate correlation and collapses under uniformity; and the ratio between minority
+loss and majority gain tracks πrich/πpoor exactly, reaching 600 at a 0.1% minority share.
+These are model results, and Section 8 is explicit about the gap between a model and a
+deployment; but they demonstrate that the thesis is testable, locate the conditions under
+which it bites, and provide signatures - small displacement with null dispersion - that
+monitoring programs keyed to averages will systematically miss. The reflexive
+contribution is similarly small and, we would argue, similarly sharp: the audit caught a
+phantom title in our own bibliography, which is the smallest possible demonstration that
+evaluation channels must be applied to the evaluator.
+Three implications follow for practice. For researchers, the immediate adoption is
+reporting: distributive statistics D should be reported alongside any benchmark score sE, in
+the same tables, with the same prominence, because Proposition 1 entails that the second
+channel carries information the first cannot. For institutions, the adoption is procedural:
+governance that returns to the cycle - rather than appending approval at the end - and
+configuration that is revocable by public criterion are implementable now, and the |M|
+check shows how a philosophical commitment becomes an auditable artifact. For the
+design community, the adoption is one of scope: fiction's function is the generation of
+distributive questions - which groups move, and how - which is a discipline, not a
+decoration, and the participatory instruments now available make the generation collective
+rather than visionary (Mun et al., 2024).
+The open problems are the two the framework marks rather than hides: a theory of
+standing, and a deployment-scale test of the scale law. Work on democratic aggregation is
+
+
+=== PAGINA 25 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 24
+accumulating empirical material that a theory of standing will need to digest (Sharma et al.,
+2026; Salmi, 2023); the mechanisms of homogenization are quantified in the settings where
+components are shared (Bommasani et al., 2022; Kleinberg & Raghavan, 2021); and the
+audit instruments for portability exist (Mitchell et al., 2019; Gebru et al., 2021; Raji et al.,
+2020). What remains is the deliberate construction of the second channel - specified in
+distributive terms, governed by whoever has standing, and audited with the same procedure
+it prescribes. A research era that names its own method and submits the naming to
+deliberation is not less disciplined. It is more.
+Appendix A. Audit Procedure Details
+Each entry was verified by DOI resolution through doi.org and by consultation of the
+Crossref (api.crossref.org/works), Zenodo (zenodo.org/api/records), and OpenAlex
+(api.openalex.org/works) APIs on 29 September 2026. Primary editorial metadata was
+preferred over generic web search throughout, and each verdict was recorded with the
+endpoint that produced it. Entry 8 was recorded as not located after an exact-title search on
+Zenodo returned zero results and an author search returned 58 records bearing the surname,
+three of them in AI, none corresponding to the cited work. Entry 13 was corrected from the
+OpenAlex record W3164854573, which supplied the real title, the DOI, and the publication
+date; a DOI resolution constructed on the pattern of the cited title
+(10.1073/pnas.2108578118) returns 404, confirming that the number implied by the cited
+title corresponds to no work. Two claims in the earlier text lacked confirmed sources and
+were closed in this version: the two Sterling references were traced through the reference
+list of (Zhang & Long, 2025), which cites Shaping Things (2005) and the Interactions piece
+“Design fiction” (2009) as the definitional sources for design fiction (Sterling, 2005;
+Sterling, 2009); and the Type I/II/III taxonomy of framing - human (Type I), AI (Type II),
+or both (Type III) - is attributed to Kelly and Grace (Kelly & Grace, 2025). The audit trail,
+including endpoints and timestamps, accompanies the repository artifact of this
+monograph.
+References
+Ananny, M., & Crawford, K. (2018). Seeing without knowing: Limitations of the transparency ideal and
+ its application to algorithmic accountability. New Media & Society, 20(3), 973-989.
+https://doi.org/10.1177/1461444816676645 https://doi.org/10.1177/1461444816676645
+Barocas, S., Hardt, M., & Narayanan, A. (2023). Fairness and machine learning: Limitations and
+ opportunities. MIT Press. https://fairmlbook.org https://fairmlbook.org
+Birhane, A. (2021). Algorithmic injustice: A relational ethics approach. Patterns, 2(2), 100205.
+ https://doi.org/10.1016/j.patter.2021.100205 https://doi.org/10.1016/j.patter.2021.100205
+
+
+=== PAGINA 26 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 25
+Bleecker, J. (2009). Design fiction: A short essay on design, science, fact and fiction. Near Future
+ Laboratory. http://nearfuturelaboratory.com/2009/03/17/design-fiction/
+http://nearfuturelaboratory.com/2009/03/17/design-fiction/
+Bolukbasi, T., Chang, K.-W., Zou, J., Saligrama, V., & Kalai, A. (2016). Man is to computer
+ programmer as woman is to homemaker? Debiasing word embeddings. In Advances in Neural
+Information Processing Systems 29 (pp. 4349-4357). arXiv:1607.06520
+https://arxiv.org/abs/1607.06520
+Bommasani, R., Creel, K. A., Kumar, A., Jurafsky, D., & Liang, P. (2022). Picking on the same person:
+ Does algorithmic monoculture lead to outcome homogenization? In Advances in Neural
+Information Processing Systems (Vol. 35, pp. 3663-3678). https://doi.org/10.52202/068431-0265
+https://doi.org/10.52202/068431-0265
+Buchanan, R. (1992). Wicked problems in design thinking. Design Issues, 8(2), 5-21.
+ https://doi.org/10.2307/1511637 https://doi.org/10.2307/1511637
+Burrell, J. (2016). How the machine 'thinks': Understanding opacity in machine learning algorithms. Big
+ Data & Society, 3(1), 1-12. https://doi.org/10.1177/2053951715622512
+https://doi.org/10.1177/2053951715622512
+Chollet, F. (2019). On the measure of intelligence. arXiv:1911.01547. https://arxiv.org/abs/1911.01547
+ https://arxiv.org/abs/1911.01547
+Cianciaruso, F. M. (2026). Aligning machines with human values: Opacity and ethical sustainability of
+ AI. Discover Artificial Intelligence, 6(1), 364. https://doi.org/10.1007/s44163-026-01111-8
+https://doi.org/10.1007/s44163-026-01111-8
+Dellermann, D., Calma, A., Lipusch, N., Weber, T., Weigel, S., & Ebel, P. (2019a). The future of
+ human-AI collaboration: A taxonomy of design knowledge for hybrid intelligence systems. In
+Proceedings of the 52nd Hawaii International Conference on System Sciences (pp. 274-283).
+https://doi.org/10.24251/HICSS.2019.034 https://doi.org/10.24251/HICSS.2019.034
+Dellermann, D., Ebel, P., Söllner, M., & Leimeister, J. M. (2019b). Hybrid intelligence. Business &
+ Information Systems Engineering, 61(5), 637-643. https://doi.org/10.1007/s12599-019-00595-2
+https://doi.org/10.1007/s12599-019-00595-2
+Dunne, A., & Raby, F. (2013). Speculative everything: Design, fiction, and social dreaming. MIT Press.
+ https://mitpress.mit.edu/9780262019842/speculative-everything/
+https://mitpress.mit.edu/9780262019842/speculative-everything/
+Feyerabend, P. (1975). Against method: Outline of an anarchistic theory of knowledge. Humanities
+ Press.
+Feyerabend, P. (1978). Science in a free society. Verso.
+ 
+Feyerabend, P. (1999). Conquest of abundance: A tale of abstraction versus the richness of being.
+ University of Chicago Press.
+Gebru, T., Morgenstern, J., Vecchione, B., Vaughan, J. W., Wallach, H., Daumé III, H., & Crawford, K.
+ (2021). Datasheets for datasets. Communications of the ACM, 64(12), 86-92.
+https://doi.org/10.1145/3458723 https://doi.org/10.1145/3458723
+Hardt, M., Price, E., & Srebro, N. (2016). Equality of opportunity in supervised learning. In Advances in
+ Neural Information Processing Systems 29 (pp. 3315-3323). https://papers.nips.cc/paper_files/paper
+/2016/hash/9d2682367c3935defcb1f9e247a97c0d-Abstract.html https://papers.nips.cc/paper_files/p
+
+
+=== PAGINA 27 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 26
+aper/2016/hash/9d2682367c3935defcb1f9e247a97c0d-Abstract.html
+Kapoor, S., & Narayanan, A. (2023). Leakage and the reproducibility crisis in machine-learning-based
+ science. Patterns, 4(9), 100804. https://doi.org/10.1016/j.patter.2023.100804
+https://doi.org/10.1016/j.patter.2023.100804
+Kelly, N., & Grace, K. (2025). Design thinking and artificial intelligence: A framework for analysis. In
+ E. Pei & K. Becker (Eds.), Design thinking: Theory and practice (pp. 112-126). CRC Press.
+https://doi.org/10.1201/9781003487524-7 https://doi.org/10.1201/9781003487524-7
+Kirby, D. (2010). The future is now: Diegetic prototypes and the role of popular films in generating
+ real-world technological development. Social Studies of Science, 40(1), 41-70.
+https://doi.org/10.1177/0306312709338325 https://doi.org/10.1177/0306312709338325
+Kleinberg, J., & Raghavan, M. (2021). Algorithmic monoculture and social welfare. Proceedings of the
+ National Academy of Sciences, 118(22), e2018340118. https://doi.org/10.1073/pnas.2018340118
+https://doi.org/10.1073/pnas.2018340118
+Kuhn, T. S. (1962). The structure of scientific revolutions. University of Chicago Press.
+ 
+Lakatos, I. (1970). Falsification and the methodology of scientific research programmes. In I. Lakatos &
+ A. Musgrave (Eds.), Criticism and the growth of knowledge (pp. 91-196). Cambridge University
+Press.
+Legg, S., & Hutter, M. (2007). Universal intelligence: A definition of machine intelligence. Minds and
+ Machines, 17(4), 391-444. https://doi.org/10.1007/s11023-007-9079-x
+https://doi.org/10.1007/s11023-007-9079-x
+Lindley, J., & Coulton, P. (2015). Back to the future of design fiction: Not 'science' but 'design' fiction.
+ In Proceedings of the 2015 British HCI Conference (pp. 45-54). ACM.
+https://doi.org/10.1145/2783446.2783592 https://doi.org/10.1145/2783446.2783592
+Lipton, Z. C. (2018). The mythos of model interpretability. Queue, 16(3), 31-57.
+ https://doi.org/10.1145/3236386.3241340 https://doi.org/10.1145/3236386.3241340
+Lupetti, M. L., Murray-Rust, D., Cangiano, S., & Mela, A. (2025). Speculative AI prototyping: From
+ measuring bodies to confronting ideals. Interactions, 32(5), 10-12. https://doi.org/10.1145/3757748
+https://doi.org/10.1145/3757748
+Manheim, D., & Garrabrant, S. (2018). Categorizing variants of Goodhart's law. arXiv:1803.04585.
+ https://arxiv.org/abs/1803.04585 https://arxiv.org/abs/1803.04585
+Mitchell, M., Wu, S., Zaldivar, A., Barnes, P., Vasserman, L., Hutchinson, B., Spitzer, E., Raji, I. D., &
+ Gebru, T. (2019). Model cards for model reporting. In Proceedings of the Conference on Fairness,
+Accountability, and Transparency (FAT* 2019) (pp. 220-229). ACM.
+https://doi.org/10.1145/3287560.3287596 https://doi.org/10.1145/3287560.3287596
+Morris, M. R., Sohl-dickstein, J., Fiedel, N., Warkentin, T., Dafoe, A., Faust, A., Clement-Davies, C.,
+ Do, D., Faghih-Naini, S., & Sutton, R. S. (2024). Levels of AGI for operationalizing progress on the
+path to AGI. arXiv:2311.02462. https://arxiv.org/abs/2311.02462 https://arxiv.org/abs/2311.02462
+Mun, J., Jiang, L., Liang, J., Cheong, I., DeCario, N., Choi, Y., Kohno, T., & Sap, M. (2024).
+ Particip-AI: A democratic surveying framework for anticipating future AI use cases, harms and
+benefits. Proceedings of the AAAI/ACM Conference on AI, Ethics, and Society, 7(1), 997-1010.
+https://doi.org/10.1609/aies.v7i1.31698 https://doi.org/10.1609/aies.v7i1.31698
+
+
+=== PAGINA 28 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 27
+Obermeyer, Z., Powers, B., Vogeli, C., & Mullainathan, S. (2019). Dissecting racial bias in an algorithm
+ used to manage the health of populations. Science, 366(6464), 447-453.
+https://doi.org/10.1126/science.aax2342 https://doi.org/10.1126/science.aax2342
+Oliveira, D. G. S. (2025). Farewell to abundance? A Feyerabendian critique of AI algorithmic
+ homogenization, and the battle for human cognition. Transversal: International Journal for the
+Historiography of Science, (19), art. 10. https://doi.org/10.24117/2526-2270.2025.i19.10
+https://doi.org/10.24117/2526-2270.2025.i19.10
+Pilling, F., Lindley, J., Akmal, H., & Coulton, P. (2021). Design (non) fiction:
+ Deconstructing/reconstructing the definitional dualism of AI. International Journal of Film and
+Media Arts, 6(1), 6-32. https://doi.org/10.24140/ijfma.v6.n1.01
+https://doi.org/10.24140/ijfma.v6.n1.01
+Preston, J. (1997). Feyerabend: Philosophy, science and society. Polity Press.
+ 
+Raji, I. D., Bender, E. M., Paullada, A., Denton, E., & Hanna, A. (2021). AI and the everything in the
+ whole wide world benchmark. In NeurIPS 2021 Datasets and Benchmarks Track.
+arXiv:2111.15366. https://arxiv.org/abs/2111.15366 https://arxiv.org/abs/2111.15366
+Raji, I. D., Smart, A., White, R. N., Mitchell, M., Gebru, T., Hutchinson, B., Smith-Loud, J., Theron, D.,
+ & Barnes, P. (2020). Closing the AI accountability gap: Defining an end-to-end framework for
+internal algorithmic auditing. In Proceedings of the 2020 Conference on Fairness, Accountability,
+and Transparency (FAT* 2020) (pp. 33-44). ACM. https://doi.org/10.1145/3351095.3372873
+https://doi.org/10.1145/3351095.3372873
+Rittel, H. W. J., & Webber, M. M. (1973). Dilemmas in a general theory of planning. Policy Sciences,
+ 4(2), 155-169. https://doi.org/10.1007/BF01405730 https://doi.org/10.1007/BF01405730
+Salmi, J. (2023). A democratic way of controlling artificial general intelligence. AI & Society, 38(4),
+ 1785-1791. https://doi.org/10.1007/s00146-022-01426-x
+https://doi.org/10.1007/s00146-022-01426-x
+Schön, D. A. (1983). The reflective practitioner: How professionals think in action. Basic Books.
+ 
+Sharma, T., Potter, Y., Park, J., Liu, Y., Huang, Y., Liu, S., Song, D., Hancock, J., & Wang, Y. (2026).
+ Democratic governance through DAO-based deliberation and voting for inclusive decision making
+in AI models. Scientific Reports, 16, 11792. https://doi.org/10.1038/s41598-026-40180-8
+https://doi.org/10.1038/s41598-026-40180-8
+Sienicki, M., & Sienicki, K. (2025). AI against method: An anarchist essay. Zenodo.
+ https://doi.org/10.5281/zenodo.17970889 https://doi.org/10.5281/zenodo.17970889
+Sterling, B. (2005). Shaping things. Mediawork Pamphlet. MIT Press.
+ 
+Sterling, B. (2009). Design fiction. Interactions, 16(3), 20-24. https://doi.org/10.1145/1516016.1516021
+ https://doi.org/10.1145/1516016.1516021
+Strathern, M. (1997). 'Improving ratings': Audit in the British University system. European Review,
+ 5(3), 305-321.
+https://doi.org/10.1002/(SICI)1234-981X(199707)5:3<305::AID-EURO184>3.0.CO;2-4
+https://doi.org/10.1002/(SICI)1234-981X(199707)5:3%3C305::AID-EURO184%3E3.0.CO;2-4
+Verganti, R., Vendraminelli, L., & Iansiti, M. (2020). Innovation and design in the age of artificial
+ intelligence. Journal of Product Innovation Management, 37(3), 212-227.
+https://doi.org/10.1111/jpim.12523 https://doi.org/10.1111/jpim.12523
+
+
+=== PAGINA 29 ===
+FDF-AGI: Design Fiction, Design Thinking, and Epistemological Anarchy
+Page 28
+Weidinger, A., Mellor, J., Rauh, M., Griffin, C., Uesato, J., Huang, P.-S., Cheng, Q., Glaese, M.,
+ Boppert, B., & Irving, P. (2022). Taxonomy of risks posed by language models. In Proceedings of
+the 2022 ACM Conference on Fairness, Accountability, and Transparency (FAccT 2022). ACM.
+https://doi.org/10.1145/3531146.3533088 https://doi.org/10.1145/3531146.3533088
+Zhang, R., & Long, D. (2025). Beyond content: Leaning on the poetics of defamiliarization in design
+ fictions. Proceedings of the ACM on Human-Computer Interaction, 9(1), 1-19.
+https://doi.org/10.1145/3701184 https://doi.org/10.1145/3701184

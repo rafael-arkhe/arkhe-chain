@@ -1,0 +1,15 @@
+name: Arkhe Verify Artifact
+description: Verify an artifact with arkhe-verify CLI
+inputs:
+  artifact:
+    required: true
+    description: Path to artifact
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        test -f "${{ inputs.artifact }}"
+        echo "Artifact exists: ${{ inputs.artifact }}"
+        echo "Bind this action to an exact arkhe-verify release before production use."

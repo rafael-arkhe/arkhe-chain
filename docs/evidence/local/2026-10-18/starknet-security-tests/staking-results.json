@@ -1,0 +1,121 @@
+{
+  "classification": "TESTED_LOCAL_SUBSET",
+  "checked_at_utc": "2026-10-18T16:38:30.238Z",
+  "source_commit": "5c11a5689f2d2e08ffecebf30d3e49569accbfca",
+  "compiler": "0.8.24+commit.e11b9ed9.Emscripten.clang",
+  "chain": "in-memory Ganache; no upstream RPC",
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  },
+  "evm_version": "shanghai",
+  "import_sha256": {
+    "starkware/solidity/components/Roles.sol": "facb9e1ee243a052891f905ee9c0f3af95fcc6183ebd74aad4455b300d303c68",
+    "starkware/solidity/interfaces/Identity.sol": "10694932a2f0d015ff828e3ddaacb63087137f2bdb6c48a199f1fbf8f9300e3b",
+    "starkware/solidity/libraries/NamedStorage8.sol": "f695130acedcf08251ebf8e5206ad33b4e13becdbb229bf1735d493e70830cfe",
+    "starkware/solidity/libraries/RolesLib.sol": "0679f6665fbe1ee61b5c2e843daf49f36860e5a3111cd148c17460e6ac49371f",
+    "starkware/solidity/stake/IMintManager.sol": "0848459be734ea2ccc7ed7d665c5bf01065f5f92e6ee311fb7839e7acc6d22cf",
+    "starkware/solidity/stake/PeriodMintLimit.sol": "54c529df527a77e922510f976e64ba8c8180c975be92a351182a166575daaea9",
+    "starkware/solidity/upgrade/ProxySupportImpl.sol": "bef28262f4da7fc8d939915baf90a5fe7fec78a730cc84a7c23b04df05d22371",
+    "starkware/solidity/stake/RewardSupplierStorage.sol": "0c05d335102a4ca435f1e84e90f5a0626c5a71db0dd05dd673f79cb086e0610c",
+    "starkware/solidity/tokens/ERC20/IERC20.sol": "3456c38a5ded349347f320e1bf8e98dfa50819585b111f9e58bcbf9ea9694df1",
+    "third_party/open_zeppelin/utils/math/Math.sol": "929523c09910460ad708c75878d89b9fbed12b65cb5d8b670200c793131072f4",
+    "starkware/solidity/libraries/AccessControl.sol": "b21d13d2d38da1099ff1d2cdf7e7fc3a5bc4cb9a401b848d6276ef296946f906",
+    "starkware/solidity/components/GovernanceStub.sol": "8a312606052b8d937734845bcc2f6c5ac32a1df63cad56481d55ab0188a2de6d",
+    "starkware/solidity/interfaces/ProxySupport.sol": "6288403e09dd28af2b3a04241de295cb9e92830e3d36f9e43fac75a395fca328",
+    "starkware/solidity/stake/RewardSupplierExternalInterfaces.sol": "42883d39b2ddc9695a9564ca25b479cb1561692253476fa2521367da5395a190",
+    "third_party/open_zeppelin/utils/Strings.sol": "34127ad0054df5963b0fd694c1b313d17e9114a2f426b85526d6d976210298ab",
+    "starkware/solidity/interfaces/MGovernance.sol": "f45b9ee0bf58ead5926cc62f1fffddc0b9de31504e396259cfb7f442b3f63910",
+    "starkware/solidity/libraries/Addresses.sol": "c731353f24a5dc246361cfb79a83a440e931ba80ed16c130468973c2e1e5ccac",
+    "starkware/solidity/interfaces/BlockDirectCall.sol": "78481698c31ae500ba7ffb22f063f23e707809951730975eb23f5ed99ab9ae8d",
+    "starkware/solidity/interfaces/ContractInitializer.sol": "b7304807356dcddad1ad8d36851470269cb83b8df3cdc6811065c37eeb64f6f2",
+    "starkware/starknet/solidity/IStarknetMessaging.sol": "029a8debf7d1e7413dd015d2ff2c9faa06f2cbc8f888540b28554d0f505ee6fb",
+    "starkware/starknet/solidity/IStarknetMessagingEvents.sol": "378d05f16117ffa642efdfa0996e50a0d0a33c9038c5432a27a1470b230db213",
+    "starkware/solidity/stake/MintManager.sol": "4730f9b91137ffd12ed2c4d40386d336d996075ef69007ffe32bce3730c7f727",
+    "starkware/solidity/stake/RewardSupplier.sol": "94c680c216042d2dc0afeca572f84933bab5111941f499b8f41932f230d208b8",
+    "Fixtures.sol": "1f16156fdb45c91cecd9b2462648c7e92a0ac7a2089366121392aaea1673839e"
+  },
+  "tests": [
+    {
+      "name": "unregistered caller cannot mint",
+      "status": "PASS"
+    },
+    {
+      "name": "outsider cannot grant own governance, minting or token-admin privileges",
+      "status": "PASS"
+    },
+    {
+      "name": "outsider cannot register a minter",
+      "status": "PASS"
+    },
+    {
+      "name": "outsider cannot set allowance",
+      "status": "PASS"
+    },
+    {
+      "name": "allowance blocks overdraw and uint256 maximum",
+      "status": "PASS"
+    },
+    {
+      "name": "successful mint credits caller and debits exact allowance",
+      "status": "PASS"
+    },
+    {
+      "name": "weekly cap aggregates across two registered callers",
+      "status": "PASS"
+    },
+    {
+      "name": "32 deterministic quota boundary samples cannot exceed cap",
+      "status": "PASS"
+    },
+    {
+      "name": "reverting token mint rolls back allowance and quota",
+      "status": "PASS"
+    },
+    {
+      "name": "revoked minter loses access and allowance",
+      "status": "PASS"
+    },
+    {
+      "name": "quota resets only at next time period",
+      "status": "PASS"
+    },
+    {
+      "name": "direct implementation initialize rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "zero authenticated messages cannot produce mint",
+      "status": "PASS"
+    },
+    {
+      "name": "wrong L2 origin does not match a mint request",
+      "status": "PASS"
+    },
+    {
+      "name": "wrong message recipient or amount cannot trigger mint",
+      "status": "PASS"
+    },
+    {
+      "name": "valid messages limited to five; fixed L2 destinations and supply update",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge failure atomically restores message, mint, allowance and quota",
+      "status": "PASS"
+    },
+    {
+      "name": "messaging failure atomically restores message, mint, allowance and quota",
+      "status": "PASS"
+    }
+  ],
+  "confirmed_vulnerabilities": [],
+  "limitations": [
+    "Mock token, bridge, messaging and minimal proxy; not production deployments",
+    "No Cairo execution, no production-state fork, no complete program audit",
+    "Passing tests validate only exercised cases; mock controls are not reported as vulnerabilities"
+  ],
+  "status": "PASS",
+  "passed": 18,
+  "failed": 0
+}

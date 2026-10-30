@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ARKHE Chladni Cloud — Telegraph + Cathedral v27.0 Dashboard</title>
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+<header>
+  <button id="themeToggle" title="Toggle theme (T)">🌓</button>
+  <h1>⚡ ARKHE Chladni Cloud + Cathedral v27.0</h1>
+  <p>Telegraph ξM-field Dashboard | Parâmetros visuais: Ghost 0.577 / Convergence 0.800 | Identidade: não verificada | Observação de telemetria · UI sem autoridade</p>
+  <div id="connStatus">
+    <span class="status-dot inactive" id="connDot"></span>
+    <span id="connLabel">Disconnected</span>
+    <span id="connLatency"></span>
+  </div>
+</header>
+<div id="toast-container" aria-live="polite"></div>
+
+<div class="container"><div id="deploymentNote" class="preview-banner" role="status">Pré-visualização v27 · aplicação ao serviço 7473 pendente de Administrador</div>
+
+  <!-- ═══ ARKHE EVIDENCE LAYER ═══ -->
+  <h2 class="section-header arkhe">═══ Arkhe Evidence Layer ═══</h2><p class="scope-note">Dados reportados pelo Telegraph. Selos SHA3 e contadores não equivalem a provas MMR, ObjectDigest AKG-CBOR-v1 ou autorização do kernel.</p><div id="integrationStatus" class="scope-note" role="status">Kernel: a consultar · Prova criptográfica: não executada</div>
+  <div class="grid">
+    <div class="card">
+      <h3>🔐 Containment Gate</h3>
+      <div class="value evidence" id="gateStatus">—</div>
+      <div class="meta" id="gateReason">Estado reportado pelo barramento; não constitui autorização</div>
+      <div class="fail-closed-indicator fail-closed" id="failClosedIndicator">
+        <span class="dot"></span>
+        <span style="font-size:0.8em">Estado desconhecido — nenhuma autorização demonstrada</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🌳 MMR Checkpoint</h3>
+      <div class="value evidence" id="mmrRoot" style="font-size:1em;word-break:break-all">—</div>
+      <div class="meta">
+        Leaves: <span id="mmrLeaves">—</span> | Profile: <span id="mmrProfile">—</span>
+      </div>
+      <canvas id="mmr-canvas"></canvas>
+    </div>
+    <div class="card">
+      <h3>📜 Evidence Chain</h3>
+      <div class="evidence-row">
+        <span class="evidence-label">Records</span>
+        <span class="evidence-value" id="evidenceCount">—</span>
+      </div>
+      <div class="evidence-row">
+        <span class="evidence-label">Verified</span>
+        <span class="evidence-value" id="evidenceVerified">—</span>
+      </div>
+      <div class="evidence-row">
+        <span class="evidence-label">Pending</span>
+        <span class="evidence-value" id="evidencePending">—</span>
+      </div>
+      <div class="evidence-row">
+        <span class="evidence-label">Rejected</span>
+        <span class="evidence-value" id="evidenceRejected" style="color:var(--danger)">—</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🧬 WorkerExecutionRecord</h3>
+      <div class="value evidence" id="werCount">—</div>
+      <div class="meta">Registos reportados, não verificados</div>
+      <div class="evidence-row" style="margin-top:8px">
+        <span class="evidence-label">Hash reportado</span>
+        <span class="evidence-value" id="werLastHash" style="font-size:0.85em">—</span>
+      </div>
+      <div class="evidence-row">
+        <span class="evidence-label">Referências reportadas</span>
+        <span class="evidence-value" id="werLinked" style="color:var(--text-dim)">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ROW 1: Chladni + DSA + Chain + Topics ═══ -->
+  <div class="grid">
+    <div class="card">
+      <h3>Φ_interop</h3>
+      <div class="value blue" id="phiInterop">—</div>
+      <div class="meta">Métrica legada de referência <span id="phiUpdated">Sem timestamp</span> <span id="sceneFps" style="color:var(--text-dim)"></span></div>
+      <canvas class="chladni-canvas" id="chladniCanvas"></canvas>
+      <svg class="sparkline" id="phiSparkline" viewBox="0 0 100 32" preserveAspectRatio="none">
+        <path class="area" d=""/><path d=""/>
+      </svg>
+      <div id="conceptTip" style="position:absolute;pointer-events:none;display:none;background:rgba(5,5,16,0.92);border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:3px 8px;font-size:0.7em;white-space:nowrap;z-index:5;top:0;left:0"></div>
+    </div>
+    <div class="card">
+      <h3>r_DSA</h3>
+      <div class="value" id="rDSA">—</div>
+      <div class="meta">Parâmetro DSA da simulação legada</div>
+      <div id="topicDSA" class="signal-row" style="margin-top:10px">Waiting...</div>
+      <svg class="sparkline" id="dsaSparkline" viewBox="0 0 100 32" preserveAspectRatio="none">
+        <path class="area" d=""/><path d=""/>
+      </svg>
+    </div>
+    <div class="card">
+      <h3>TemporalChain</h3>
+      <div class="value blue" id="chainStatus">—</div>
+      <div class="meta">
+        <span id="chainBlocks">0</span> sinais retidos |
+        <span id="chainValid">—</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Topics</h3>
+      <div class="value blue" id="topicCount">0</div>
+      <div class="meta">Tópicos subscritos no barramento</div>
+      <div class="topics-list" id="topicsList"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ROW 2: Cathedral Core Metrics ═══ -->
+  <h2 class="section-header cathedral">═══ Cathedral v27.0 Core Metrics ═══</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>🔄 Ciclo</h3>
+      <div class="value green" id="cathCycle">—</div>
+      <div class="meta">Total de ciclos executados</div>
+    </div>
+    <div class="card">
+      <h3>🎯 Rota</h3>
+      <div class="value" id="cathRoute">—</div>
+      <div class="meta">Fast / Slow Brain</div>
+    </div>
+    <div class="card">
+      <h3>📊 Confiança</h3>
+      <div class="value blue" id="cathConfidence">—</div>
+      <div class="meta">Confiança da última ação</div>
+      <div class="bar-bg"><div class="bar-fill" id="confBar" style="width:0%;background:var(--accent)"></div></div>
+      <svg class="sparkline" id="confSparkline" viewBox="0 0 100 32" preserveAspectRatio="none">
+        <path class="area" d=""/><path d=""/>
+      </svg>
+    </div>
+    <div class="card">
+      <h3>⏱ Latência</h3>
+      <div class="value yellow" id="cathLatency">—</div>
+      <div class="meta">ms por ciclo</div>
+      <svg class="sparkline" id="latencySparkline" viewBox="0 0 100 32" preserveAspectRatio="none">
+        <path class="area" d=""/><path d=""/>
+      </svg>
+    </div>
+    <div class="card">
+      <h3>🛡 Segurança</h3>
+      <div class="value" id="cathSafety">—</div>
+      <div class="meta" id="cathSafetyReason">—</div>
+    </div>
+    <div class="card">
+      <h3>🧬 Prompt v</h3>
+      <div class="value purple" id="cathPromptVersion">—</div>
+      <div class="meta">Versão do prompt evoluído</div>
+    </div>
+    <div class="card">
+      <h3>🔬 R² Auditoria</h3>
+      <div class="value" id="cathR2">—</div>
+      <div class="meta" id="cathR2Verdict">—</div>
+    </div>
+    <div class="card">
+      <h3>🤖 Status</h3>
+      <div class="value" id="cathStatus">—</div>
+      <div class="meta">Orquestrador</div>
+    </div>
+  </div>
+
+  <!-- ═══ ROW 3: Identity & Multiplicity ═══ -->
+  <h2 class="section-header" style="color:var(--accent-2)">═══ Identity & Multiplicity Attestation ═══</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>🆔 Identity Attestation</h3>
+      <div class="value blue" id="identityConfidence">—</div>
+      <div class="meta">Confiança da identidade soberana</div>
+      <div class="bar-bg"><div class="bar-fill" id="identityBar" style="width:0%;background:var(--accent-2)"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:0.75em">
+        <span>Verificado: <span id="identityVerified" style="color:var(--text-dim)">—</span></span>
+        <span>TTL: <span id="identityTTL" style="color:var(--text-dim)">—</span></span>
+      </div>
+      <div style="font-size:0.72em;color:var(--text-dim);margin-top:6px">
+        Âncora TPM SRK: <span id="identityTpm" style="color:#8a6d3b">—</span>
+      </div>
+      <div style="margin-top:8px">
+        <span id="identityHwBadge" style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:0.7em;letter-spacing:0.5px;border:1px solid var(--text-dim);color:var(--text-dim);background:#111">⏳ AGUARDANDO ATESTAÇÃO…</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📜 Execution Attestation</h3>
+      <div class="value green" id="execCount">—</div>
+      <div class="meta">Atestados de execução emitidos</div>
+      <div style="font-size:0.75em;color:var(--text-dim);margin-top:8px">
+        Último ID: <span id="lastExecId">—</span>
+      </div>
+      <div style="font-size:0.75em;color:var(--text-dim);margin-top:4px">
+        Policy Compliance: <span id="lastExecCompliance" style="color:var(--success)">—</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🧩 Multiplicity (Rashomon)</h3>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.8em">
+        <span>Ambiguity:</span><span id="multAmbiguity" style="color:var(--warning)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.8em">
+        <span>Discrepancy:</span><span id="multDiscrepancy" style="color:var(--danger)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.8em">
+        <span>Rashomon Capacity:</span><span id="multRashomon" style="color:var(--accent-2)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.8em">
+        <span>Status:</span><span id="multStatus" style="color:var(--text-dim)">—</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔐 Security Module</h3>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.8em">
+        <span>Biometric:</span><span id="secBiometric" style="color:var(--success)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.8em">
+        <span>Dead Man Switch:</span><span id="secDeadman" style="color:var(--text-dim)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.8em">
+        <span>Threat Level:</span><span id="secThreat" style="color:var(--success)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.8em">
+        <span>Contingency:</span><span id="secContingency" style="color:var(--text-dim)">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ROW 4: Controls + Event Log ═══ -->
+  <div class="grid">
+    <div class="card" style="grid-column:span 2">
+      <h3>🎮 Painel de Controle — Cathedral v27.0</h3>
+      <div class="control-group">
+        <h4>Lifecycle</h4>
+        <button class="btn success" data-control="start_loop" data-value='{}'>▶ Iniciar Loop <kbd>Space</kbd></button>
+        <button class="btn danger" data-control="stop_loop" data-value='{}'>⏹ Parar Loop</button>
+        <button class="btn" data-control="cycle" data-value='{"count":1}'>⏭ 1 Ciclo <kbd>C</kbd></button>
+        <button class="btn" data-control="cycle" data-value='{"count":10}'>⏭ 10 Ciclos</button>
+        <button class="btn" data-control="reset" data-value='{}'>🔄 Reset <kbd>Shift+R</kbd></button>
+
+        <h4>Evolution & Audit</h4>
+        <button class="btn" data-control="evolve" data-value='{"trigger":"Z3_UNSAT","success":false}'>🧬 Evoluir (Z3)</button>
+        <button class="btn" data-control="evolve" data-value='{"trigger":"LOW_CONFIDENCE","success":false}'>🧬 Evoluir (Confiança)</button>
+        <button class="btn evidence" data-control="audit" data-value='{}'>🔬 Auditoria <kbd>A</kbd></button>
+        <button class="btn" data-control="train" data-value='{}'>🎓 DPO Train</button>
+
+        <h4>Attestation</h4>
+        <button class="btn evidence" data-control="attest_identity" data-value='{}'>🆔 Atestar Identidade <kbd>I</kbd></button>
+        <button class="btn evidence" data-control="multiplicity_check" data-value='{}'>🧩 Verificar Multiplicidade</button>
+        <button class="btn" data-control="status" data-value='{}'>📋 Status <kbd>S</kbd></button>
+        <button class="btn" data-ui="exportState">💾 Export State <kbd>E</kbd></button>
+      </div>
+      <div id="controlResponse">
+        <button id="copyResponse" data-ui="copyResponse" style="display:none">📋 Copy</button>
+        <span style="color:var(--text-dim)">—</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📡 Event Log</h3>
+      <div id="event-log"><i>Connecting to Telegraph...</i></div>
+    </div>
+  </div>
+</div>
+
+<script src="three.min.js"></script>
+<script type="module" src="dashboard.js"></script>
+</body>
+</html>

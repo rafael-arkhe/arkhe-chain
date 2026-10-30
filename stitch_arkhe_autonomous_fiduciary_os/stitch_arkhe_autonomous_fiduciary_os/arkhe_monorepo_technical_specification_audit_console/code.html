@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // COMPUTATIONAL FIDUCIARY RUNTIME</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-container": "#10b981",
+            "secondary-fixed-dim": "#7bd0ff",
+            "background": "#111319",
+            "on-error": "#690005",
+            "tertiary-fixed-dim": "#ffb95f",
+            "on-tertiary-fixed": "#2a1700",
+            "primary": "#4edea3",
+            "on-secondary": "#00354a",
+            "surface-dim": "#111319",
+            "on-error-container": "#ffdad6",
+            "primary-fixed-dim": "#4edea3",
+            "on-tertiary": "#472a00",
+            "error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-container-high": "#272a30",
+            "surface-variant": "#32353b",
+            "tertiary": "#ffb95f",
+            "secondary-container": "#00a6e0",
+            "on-secondary-fixed": "#001e2c",
+            "outline-variant": "#3c4a42",
+            "on-primary-fixed-variant": "#005236",
+            "surface-tint": "#4edea3",
+            "on-primary-container": "#00422b",
+            "on-secondary-fixed-variant": "#004c69",
+            "on-primary-fixed": "#002113",
+            "surface": "#111319",
+            "on-background": "#e1e2ea",
+            "error": "#ffb4ab",
+            "on-secondary-container": "#00374d",
+            "on-tertiary-container": "#523200",
+            "surface-container-highest": "#32353b",
+            "on-surface-variant": "#bbcabf",
+            "outline": "#86948a",
+            "on-surface": "#e1e2ea",
+            "surface-container": "#1d2025",
+            "on-primary": "#003824",
+            "secondary": "#7bd0ff",
+            "tertiary-fixed": "#ffddb8",
+            "primary-fixed": "#6ffbbe",
+            "surface-bright": "#36393f",
+            "inverse-surface": "#e1e2ea",
+            "inverse-on-surface": "#2e3036",
+            "inverse-primary": "#006c49",
+            "surface-container-lowest": "#0b0e13",
+            "tertiary-container": "#e29100",
+            "surface-container-low": "#191c21",
+            "secondary-fixed": "#c4e7ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "gutter-desktop": "1.5rem",
+            "gutter": "1rem",
+            "margin": "1rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem",
+            "margin-desktop": "2rem",
+            "space-md": "1rem",
+            "space-2xl": "3rem"
+          },
+          "fontFamily": {
+            "body-lg": ["Inter"],
+            "code-lg": ["JetBrains Mono"],
+            "label-caps": ["JetBrains Mono"],
+            "display-lg": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "body-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "code-sm": ["JetBrains Mono"],
+            "title-md": ["Inter"],
+            "headline-xl": ["Inter"],
+            "code-md": ["JetBrains Mono"],
+            "headline-xl-mobile": ["Inter"]
+          },
+          "fontSize": {
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "code-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "label-caps": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "code-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "title-md": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+            "code-md": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom deterministic scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0e13;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #272a30;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3c4a42;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased font-body-md select-none min-h-screen flex flex-col overflow-x-hidden">
+<!-- TOP APP BAR (Shared Component Anchor) -->
+<header class="flex justify-between items-center w-full px-space-lg h-12 bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-50">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="terminal">terminal</span>
+<span class="text-title-md font-title-md font-code-md tracking-wider text-primary">ARKHE // COMPUTATIONAL FIDUCIARY RUNTIME</span>
+</div>
+<div class="hidden lg:flex items-center gap-space-xs ml-space-sm pl-space-sm border-l border-outline-variant">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-error-container/30 border border-error/40 text-error font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span>
+          TCB STATUS: FAIL-CLOSED ARMED
+        </span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant text-on-surface-variant font-code-sm text-code-sm">
+          v0.9.4-PROD // BLAKE3-VERIFIED
+        </span>
+</div>
+</div>
+<!-- Center Quick Search Bar -->
+<div class="hidden md:flex items-center bg-surface-container-low border border-outline-variant rounded px-2 py-1 w-72 focus-within:border-secondary transition-all">
+<span class="material-symbols-outlined text-outline text-[16px] mr-1.5" data-icon="search">search</span>
+<input class="bg-transparent border-none p-0 text-on-surface placeholder:text-outline text-code-sm font-code-sm focus:ring-0 w-full outline-none" id="globalSearchInput" placeholder="Busca de crates, tabelas, gates..." type="text"/>
+<span class="text-outline font-label-caps text-label-caps bg-surface-container px-1 py-0.5 rounded border border-outline-variant">/</span>
+</div>
+<!-- Trailing Actions Cluster -->
+<div class="flex items-center gap-space-sm">
+<button class="px-2.5 py-1 bg-primary text-on-primary font-label-caps text-label-caps font-semibold rounded hover:bg-primary-container transition-colors flex items-center gap-1 shadow-none" onclick="triggerVerificationModal()">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified_user">verified_user</span>
+        VERIFY PROOFS
+      </button>
+<button class="px-2.5 py-1 bg-surface-container border border-outline-variant text-secondary font-label-caps text-label-caps hover:border-secondary transition-colors flex items-center gap-1" onclick="switchTab('section-causal')">
+<span class="material-symbols-outlined text-[14px]" data-icon="history">history</span>
+        AUDIT LOG
+      </button>
+<div class="hidden sm:flex items-center gap-1 border-l border-outline-variant pl-space-sm ml-space-xs text-on-surface-variant">
+<button class="p-1 hover:text-primary transition-colors" title="Kernel Console"><span class="material-symbols-outlined text-[18px]" data-icon="terminal">terminal</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="TCB Lock State"><span class="material-symbols-outlined text-[18px]" data-icon="lock">lock</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="Synchronize State"><span class="material-symbols-outlined text-[18px]" data-icon="sync">sync</span></button>
+</div>
+<div class="w-6 h-6 rounded bg-surface-container-high border border-outline flex items-center justify-center text-primary font-code-sm text-code-sm font-semibold ml-1" title="Security Architect Key Identity">
+        K0
+      </div>
+</div>
+</header>
+<!-- WORKBENCH BODY WRAPPER -->
+<div class="flex flex-1 relative">
+<!-- SIDE NAVIGATION BAR (Docked Left) -->
+<aside class="w-64 fixed left-0 top-12 bottom-0 z-40 bg-surface-container-low border-r border-outline-variant flex flex-col justify-between p-space-sm overflow-y-auto">
+<div>
+<!-- Monorepo Beacon Header -->
+<div class="p-space-xs mb-space-sm border-b border-outline-variant pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[22px]" data-icon="developer_board">developer_board</span>
+<div>
+<div class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight">ARKHE MONOREPO</div>
+<div class="text-code-sm font-code-sm text-outline">v0.9.4-PROD // BLAKE3-VERIFIED</div>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs (Primary 5 Sections + Synthesis) -->
+<nav class="space-y-1">
+<button class="nav-item w-full flex items-center gap-2 text-primary bg-surface-container border-l-2 border-primary px-space-md py-space-sm font-title-md text-title-md text-left transition-all" id="nav-btn-section-auth" onclick="switchTab('section-auth')">
+<span class="material-symbols-outlined text-[18px]" data-icon="shield_person">shield_person</span>
+<span class="truncate">1. Separação de Autoridades</span>
+</button>
+<button class="nav-item w-full flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface px-space-md py-space-sm font-title-md text-title-md text-left transition-all" id="nav-btn-section-crates" onclick="switchTab('section-crates')">
+<span class="material-symbols-outlined text-[18px]" data-icon="folder_data">folder_data</span>
+<span class="truncate">2. Mapeamento &amp; Crates</span>
+</button>
+<button class="nav-item w-full flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface px-space-md py-space-sm font-title-md text-title-md text-left transition-all" id="nav-btn-section-contracts" onclick="switchTab('section-contracts')">
+<span class="material-symbols-outlined text-[18px]" data-icon="terminal">terminal</span>
+<span class="truncate">3. Contratos AKG-CBOR-v1</span>
+</button>
+<button class="nav-item w-full flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface px-space-md py-space-sm font-title-md text-title-md text-left transition-all" id="nav-btn-section-causal" onclick="switchTab('section-causal')">
+<span class="material-symbols-outlined text-[18px]" data-icon="database">database</span>
+<span class="truncate">4. Persistência &amp; SQL Append</span>
+</button>
+<button class="nav-item w-full flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface px-space-md py-space-sm font-title-md text-title-md text-left transition-all" id="nav-btn-section-cicd" onclick="switchTab('section-cicd')">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified_user">verified_user</span>
+<span class="truncate">5. Gates &amp; Sandboxes</span>
+</button>
+<button class="nav-item w-full flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface px-space-md py-space-sm font-title-md text-title-md text-left transition-all" id="nav-btn-section-synthesis" onclick="switchTab('section-synthesis')">
+<span class="material-symbols-outlined text-[18px]" data-icon="security">security</span>
+<span class="truncate">Síntese &amp; Status TCB</span>
+</button>
+</nav>
+<!-- Dynamic Filter Status -->
+<div class="mt-4 p-2 bg-surface-container-lowest border border-outline-variant rounded">
+<div class="text-label-caps font-label-caps text-outline mb-1">AUDIT VERIFIABILITY</div>
+<div class="flex items-center justify-between text-code-sm font-code-sm text-on-surface">
+<span>Theorem Purity:</span>
+<span class="text-primary font-bold">100%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded mt-1 overflow-hidden">
+<div class="bg-primary h-full w-full"></div>
+</div>
+</div>
+</div>
+<!-- Action CTA & Sub-actions -->
+<div class="pt-space-sm border-t border-outline-variant space-y-2">
+<button class="w-full py-1.5 px-2 bg-surface-container hover:bg-surface-container-high text-primary border border-outline-variant hover:border-primary text-label-caps font-label-caps rounded text-center transition-colors flex items-center justify-center gap-1.5" onclick="runMmrSyncSimulation()">
+<span class="material-symbols-outlined text-[14px]" data-icon="sync">sync</span>
+          SYNC CANONICAL MMR
+        </button>
+<div class="flex justify-between text-on-surface-variant text-code-sm font-code-sm px-1">
+<span class="flex items-center gap-1 cursor-pointer hover:text-primary" onclick="alert('Diagnostic Terminal Ativado no TCB Monotonic Clock: tick_seq #841029')">
+<span class="material-symbols-outlined text-[14px]" data-icon="developer_board">developer_board</span> Terminal
+          </span>
+<span class="flex items-center gap-1 cursor-pointer hover:text-secondary" onclick="alert('Kernel Telemetry: CPU isolada core 0-3, Wasm JIT cache sincronizado.')">
+<span class="material-symbols-outlined text-[14px]" data-icon="query_stats">query_stats</span> Telemetria
+          </span>
+</div>
+</div>
+</aside>
+<!-- PRIMARY CONTENT CANVAS (Fluid Margin for Docked Sidebar) -->
+<main class="ml-64 flex-1 p-space-lg max-w-[1440px] space-y-space-xl">
+<!-- ========================================================================= -->
+<!-- SECTION 1: SEPARAÇÃO DE AUTORIDADES & 5 CAMADAS -->
+<!-- ========================================================================= -->
+<section class="tab-pane" id="section-auth">
+<!-- Section Header -->
+<div class="border-b border-outline-variant pb-space-sm mb-space-lg flex justify-between items-end flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/30">SEÇÃO 1 // ARQUITETURA</span>
+<span class="text-label-caps font-label-caps text-outline">TCB-SEC-01-REV3</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface mt-1">Divisão das Cinco Camadas Fundamentais &amp; Separação de Autoridades</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-3xl">
+              Garantia criptográfica e estrutural de que o Genoma Cognitivo (inteligência especulativa/LLMs) não possui autoridade de execução, nem custódia de chaves privadas do Fiduciário Computacional.
+            </p>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-code-sm font-code-sm px-2 py-1 bg-surface-container rounded border border-outline-variant text-secondary">
+              MECANISMO: FAIL-CLOSED GATEWAY
+            </span>
+</div>
+</div>
+<!-- Bento Grid Layer Cards -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-space-sm mb-space-lg">
+<div class="p-space-md bg-surface-container-lowest border border-outline-variant rounded">
+<div class="flex justify-between items-center mb-2">
+<span class="text-label-caps font-label-caps text-primary">CAMADA 1</span>
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="verified_user">verified_user</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface">kernel/</div>
+<div class="text-code-sm font-code-sm text-outline mt-0.5">Verificabilidade &amp; TCB</div>
+<div class="mt-3 text-body-sm font-body-sm text-on-surface-variant">
+              Árbitro final determinístico. Contém Raiz de Fideicomisso, verificadores BLAKE3 e MMR canônicos.
+            </div>
+<div class="mt-3 inline-block px-1.5 py-0.5 rounded text-label-caps font-label-caps bg-error-container/20 text-error border border-error/30">
+              FAIL-CLOSED
+            </div>
+</div>
+<div class="p-space-md bg-surface-container-lowest border border-outline-variant rounded">
+<div class="flex justify-between items-center mb-2">
+<span class="text-label-caps font-label-caps text-tertiary">CAMADA 2</span>
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="psychology">psychology</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface">cognition/</div>
+<div class="text-code-sm font-code-sm text-outline mt-0.5">Cognição &amp; Genoma</div>
+<div class="mt-3 text-body-sm font-body-sm text-on-surface-variant">
+              Raciocínio especulativo e geração de WorkIntent. Isolamento total sem acesso a chaves do sistema.
+            </div>
+<div class="mt-3 inline-block px-1.5 py-0.5 rounded text-label-caps font-label-caps bg-tertiary-container/20 text-tertiary border border-tertiary/30">
+              ZERO-CUSTODY
+            </div>
+</div>
+<div class="p-space-md bg-surface-container-lowest border border-outline-variant rounded">
+<div class="flex justify-between items-center mb-2">
+<span class="text-label-caps font-label-caps text-secondary">CAMADA 3</span>
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="account_tree">account_tree</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface">orchestration/</div>
+<div class="text-code-sm font-code-sm text-outline mt-0.5">Orquestração &amp; Fila</div>
+<div class="mt-3 text-body-sm font-body-sm text-on-surface-variant">
+              Agendamento causal e coordenação de nós. Aplicação de quotas e checagem de invariantes prévios.
+            </div>
+<div class="mt-3 inline-block px-1.5 py-0.5 rounded text-label-caps font-label-caps bg-secondary-container/20 text-secondary border border-secondary/30">
+              STATE-SYNCHRONIZED
+            </div>
+</div>
+<div class="p-space-md bg-surface-container-lowest border border-outline-variant rounded">
+<div class="flex justify-between items-center mb-2">
+<span class="text-label-caps font-label-caps text-outline">CAMADA 4</span>
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="memory">memory</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface">work/</div>
+<div class="text-code-sm font-code-sm text-outline mt-0.5">Substrato de Execução</div>
+<div class="mt-3 text-body-sm font-body-sm text-on-surface-variant">
+              Sandboxes Wasm/WASI e isolamento estrito de memória. Sem acesso à rede sem capability comprovada.
+            </div>
+<div class="mt-3 inline-block px-1.5 py-0.5 rounded text-label-caps font-label-caps bg-surface-container text-outline border border-outline-variant">
+              EPHEMERAL-SANDBOX
+            </div>
+</div>
+<div class="p-space-md bg-surface-container-lowest border border-outline-variant rounded">
+<div class="flex justify-between items-center mb-2">
+<span class="text-label-caps font-label-caps text-primary">CAMADA 5</span>
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="fingerprint">fingerprint</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface">evidence/</div>
+<div class="text-code-sm font-code-sm text-outline mt-0.5">Persistência Causal</div>
+<div class="mt-3 text-body-sm font-body-sm text-on-surface-variant">
+              Tabelas de auditoria imutáveis, árvores Merkle Mountain Range (MMR) e carimbos de prova.
+            </div>
+<div class="mt-3 inline-block px-1.5 py-0.5 rounded text-label-caps font-label-caps bg-primary-container/20 text-primary border border-primary/30">
+              APPEND-ONLY SQL
+            </div>
+</div>
+</div>
+<!-- Matriz Comparativa de Autoridades (Tabela) -->
+<div class="bg-surface-container-low border border-outline-variant rounded mb-space-lg overflow-hidden">
+<div class="p-space-sm bg-surface-container border-b border-outline-variant flex justify-between items-center">
+<div class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="policy">policy</span>
+              Matriz de Separação de Autoridade e Custódia de Segredos
+            </div>
+<span class="text-code-sm font-code-sm text-outline">BLAKE3 Invariant Check: 0x9f1a...c4b2 (OK)</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-outline-variant text-label-caps font-label-caps text-outline">
+<th class="p-space-sm">COMPONENTE / CAMADA</th>
+<th class="p-space-sm">AUTORIDADE DE EXECUÇÃO / DECISÃO</th>
+<th class="p-space-sm">CUSTÓDIA DE CHAVES / SEGREDOS</th>
+<th class="p-space-sm">POSTURA DE FALHA (DEFAULT)</th>
+<th class="p-space-sm">ISOLAMENTO MECÂNICO</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/40 font-code-sm text-code-sm">
+<tr class="hover:bg-surface-container transition-colors">
+<td class="p-space-sm font-semibold text-primary">kernel::verifier</td>
+<td class="p-space-sm text-on-surface">Validação Criptográfica de Provas &amp; MMR Root</td>
+<td class="p-space-sm text-primary">Chave Privada Mestre TCB (Ed25519-Dilithium)</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40 font-bold">FAIL-CLOSED</span></td>
+<td class="p-space-sm text-on-surface-variant">Memória de processo isolada, no-std</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="p-space-sm font-semibold text-tertiary">cognition::genome</td>
+<td class="p-space-sm text-on-surface">Proposição de WorkIntent (Especulativo)</td>
+<td class="p-space-sm text-error font-semibold">NENHUMA (Zero Custody por Teorema)</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40">FAIL-CLOSED</span></td>
+<td class="p-space-sm text-on-surface-variant">Sandbox não privilegiada sem IPC mestre</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="p-space-sm font-semibold text-secondary">orchestration::engine</td>
+<td class="p-space-sm text-on-surface">Roteamento de Fila &amp; Alocação de Nós</td>
+<td class="p-space-sm text-on-surface">Tokens de Sessão Epêmeros (TTL &lt; 30s)</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant border border-outline-variant">FAIL-ABORT</span></td>
+<td class="p-space-sm text-on-surface-variant">Node.js/Rust async actor barrier</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="p-space-sm font-semibold text-outline">work::sandbox_wasm</td>
+<td class="p-space-sm text-on-surface">Computação Útil (Wasmtime JIT)</td>
+<td class="p-space-sm text-outline">Nenhum segredo persistente (Memory Cleared)</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40">FAIL-TERMINATE</span></td>
+<td class="p-space-sm text-on-surface-variant">gVisor / runwasi / seccomp-bpf</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="p-space-sm font-semibold text-primary">evidence::wormgraph</td>
+<td class="p-space-sm text-on-surface">Auditoria e Append Sequencial</td>
+<td class="p-space-sm text-on-surface">Role PostgreSQL arkhe_append (sem DELETE/UPDATE)</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40">FAIL-REJECT</span></td>
+<td class="p-space-sm text-on-surface-variant">PostgreSQL RLS forçada + WORM disk</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Architectural Visual Flow Diagram -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-md">
+<div class="flex items-center justify-between mb-4">
+<span class="text-label-caps font-label-caps text-primary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]" data-icon="account_tree">account_tree</span>
+              DIAGRAMA DE FLUXO DE SEGURANÇA: POR QUE O GENOMA JAMAIS RECEBE CHAVES DO TCB
+            </span>
+<span class="text-code-sm font-code-sm text-outline">Protocol: AKG-SIG-ENFORCE-v1</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+<!-- Box 1 -->
+<div class="p-3 bg-surface-container-low border border-tertiary/40 rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-1 text-tertiary text-label-caps font-label-caps">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> PASSO 1: ESPECULAÇÃO
+                </div>
+<div class="text-headline-sm font-headline-sm text-on-surface mt-1">cognition::genome</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                  Agente produz intenção não-assinada:
+                  <code class="text-code-sm text-tertiary block mt-1 bg-surface-container-lowest p-1 rounded">WorkIntent { intent_hash, code_uri }</code>
+</div>
+</div>
+<div class="text-label-caps font-label-caps text-error mt-2">NENHUMA CHAVE DE ASSINATURA</div>
+</div>
+<!-- Box 2 -->
+<div class="p-3 bg-surface-container-low border border-secondary/40 rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-1 text-secondary text-label-caps font-label-caps">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> PASSO 2: CONTENÇÃO
+                </div>
+<div class="text-headline-sm font-headline-sm text-on-surface mt-1">ContainmentGate</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                  Verifica quotas, assinatura BLAKE3 de autorização do usuário e sanitiza inputs.
+                </div>
+</div>
+<div class="text-label-caps font-label-caps text-secondary mt-2">REJEIÇÃO DETERMINÍSTICA SE INVALIDO</div>
+</div>
+<!-- Box 3 -->
+<div class="p-3 bg-surface-container-low border border-outline-variant rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-1 text-outline text-label-caps font-label-caps">
+<span class="w-2 h-2 rounded-full bg-outline"></span> PASSO 3: ISOLAMENTO
+                </div>
+<div class="text-headline-sm font-headline-sm text-on-surface mt-1">work::sandbox</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                  Execução pura sem rede e sem acesso a I/O não delimitado. Retorna hash de estado.
+                </div>
+</div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mt-2">Wasmtime Epoch Interruption</div>
+</div>
+<!-- Box 4 -->
+<div class="p-3 bg-surface-container-low border border-primary/50 rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-1 text-primary text-label-caps font-label-caps">
+<span class="w-2 h-2 rounded-full bg-primary"></span> PASSO 4: CARIMBO FINAL
+                </div>
+<div class="text-headline-sm font-headline-sm text-on-surface mt-1">kernel::tcb_fiduciary</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                  Apenas o TCB possui o segredo criptográfico e anexa o resultado na MMR imutável do sistema.
+                </div>
+</div>
+<div class="text-label-caps font-label-caps text-primary mt-2">ROOT ED25519 ASSINADA</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 2: MAPEAMENTO DE DIRETÓRIOS & CRATES -->
+<!-- ========================================================================= -->
+<section class="tab-pane hidden" id="section-crates">
+<div class="border-b border-outline-variant pb-space-sm mb-space-lg flex justify-between items-end flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 rounded bg-secondary-container/20 text-secondary border border-secondary/30">SEÇÃO 2 // MONOREPO E CRATES</span>
+<span class="text-label-caps font-label-caps text-outline">WORKSPACE MANIFEST v0.9.4</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface mt-1">Estrutura do Monorepo &amp; Matriz de Distinção de Verificabilidade</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-3xl">
+              Divisão estrita entre Cargo Workspace (Rust nativo de alta precisão/TCB) e pnpm Workspace (Node.js/TypeScript orchestration). Matriz de pureza algorítmica: Theorem, Lemma e Conjecture.
+            </p>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg mb-space-lg">
+<!-- Monorepo File Tree Viewer -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-md font-code-sm text-code-sm">
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant mb-3">
+<span class="text-label-caps font-label-caps text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="folder_data">folder_data</span>
+                ÁRVORE DE ARQUIVOS (CANONICAL MAP)
+              </span>
+<span class="text-label-caps font-label-caps text-outline">ROOT: /arkhe</span>
+</div>
+<div class="space-y-1 font-code-sm text-on-surface-variant overflow-x-auto">
+<div class="text-on-surface flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-outline text-[16px]" data-icon="folder">folder</span> arkhe/
+              </div>
+<div class="pl-4 border-l border-outline-variant space-y-1 mt-1">
+<div class="flex items-center justify-between text-primary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="folder">folder</span> crates/kernel-tcb/</span>
+<span class="text-label-caps font-label-caps bg-primary/20 text-primary px-1 rounded">RUST CRATE</span>
+</div>
+<div class="flex items-center justify-between text-primary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="folder">folder</span> crates/cbor-contracts/</span>
+<span class="text-label-caps font-label-caps bg-primary/20 text-primary px-1 rounded">RUST CRATE</span>
+</div>
+<div class="flex items-center justify-between text-primary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="folder">folder</span> crates/mmr-accumulator/</span>
+<span class="text-label-caps font-label-caps bg-primary/20 text-primary px-1 rounded">RUST CRATE</span>
+</div>
+<div class="flex items-center justify-between text-secondary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="folder">folder</span> crates/work-sandbox/</span>
+<span class="text-label-caps font-label-caps bg-secondary/20 text-secondary px-1 rounded">WASM CRATE</span>
+</div>
+<div class="flex items-center justify-between text-tertiary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="folder">folder</span> packages/cognition-genome/</span>
+<span class="text-label-caps font-label-caps bg-tertiary/20 text-tertiary px-1 rounded">PNPM TS</span>
+</div>
+<div class="flex items-center justify-between text-tertiary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="folder">folder</span> packages/orchestrator-core/</span>
+<span class="text-label-caps font-label-caps bg-tertiary/20 text-tertiary px-1 rounded">PNPM TS</span>
+</div>
+<div class="flex items-center justify-between text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="folder">folder</span> migrations/wormgraph-sql/</span>
+<span class="text-label-caps font-label-caps bg-surface-container text-outline px-1 rounded">SQL DDL</span>
+</div>
+<div class="flex items-center justify-between text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="folder">folder</span> .github/workflows/</span>
+<span class="text-label-caps font-label-caps bg-surface-container text-outline px-1 rounded">CI GATES</span>
+</div>
+<div class="text-on-surface font-mono text-[12px] pt-1">
+                  ├── Cargo.toml (Workspace Root: 8 Crates)<br/>
+                  ├── pnpm-workspace.yaml (5 Packages)<br/>
+                  └── rust-toolchain.toml (1.81.0-nightly)
+                </div>
+</div>
+</div>
+</div>
+<!-- Matriz de Distinção: Componentes Reais vs Modelos de Pesquisa (2 cols span) -->
+<div class="lg:col-span-2 bg-surface-container-low border border-outline-variant rounded p-space-md">
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant mb-3">
+<span class="text-label-caps font-label-caps text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="table_chart">table_chart</span>
+                MATRIZ DE DISTINÇÃO: COMPONENTES REAIS VS MODELOS DE PESQUISA
+              </span>
+<span class="text-code-sm font-code-sm text-outline">Normativa: ISO/IEC 15408 EAL6+</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-code-sm font-code-sm">
+<thead>
+<tr class="text-label-caps font-label-caps text-outline border-b border-outline-variant">
+<th class="py-2 px-1">DIRETÓRIO / CRATE</th>
+<th class="py-2 px-1">WORKSPACE STATUS</th>
+<th class="py-2 px-1">VERIFICABILIDADE</th>
+<th class="py-2 px-1">JUSTIFICATIVA ARQUITETURAL</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/40">
+<tr class="hover:bg-surface-container">
+<td class="py-2.5 px-1 font-semibold text-on-surface">crates/kernel-tcb</td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/40 font-bold">FROZEN</span></td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-secondary-container/20 text-secondary border border-secondary/40">THEOREM</span></td>
+<td class="py-2.5 px-1 text-on-surface-variant">Lógica do árbitro provada matematicamente; nenhum estado mutável pós-boot.</td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="py-2.5 px-1 font-semibold text-on-surface">crates/mmr-accumulator</td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/40 font-bold">FROZEN</span></td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-secondary-container/20 text-secondary border border-secondary/40">THEOREM</span></td>
+<td class="py-2.5 px-1 text-on-surface-variant">Invariantes de inclusão e ordenação de picos MMR auditados via Kani Rust Verifier.</td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="py-2.5 px-1 font-semibold text-on-surface">crates/work-sandbox</td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/40 font-bold">FROZEN</span></td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-tertiary-container/20 text-tertiary border border-tertiary/40">LEMMA</span></td>
+<td class="py-2.5 px-1 text-on-surface-variant">Isolamento dependente do runtime Wasmtime (auditoria formal de bounds checking).</td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="py-2.5 px-1 font-semibold text-on-surface">packages/cognition-genome</td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-tertiary-container/20 text-tertiary border border-tertiary/40">PENDING</span></td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-error-container/20 text-error border border-error/40">CONJECTURE</span></td>
+<td class="py-2.5 px-1 text-on-surface-variant">Modelos heurísticos estocásticos; saídas obrigatoriamente filtradas pelo gate.</td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="py-2.5 px-1 font-semibold text-on-surface">packages/orchestrator-core</td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/40 font-bold">FROZEN</span></td>
+<td class="py-2.5 px-1"><span class="px-1.5 py-0.5 rounded bg-tertiary-container/20 text-tertiary border border-tertiary/40">LEMMA</span></td>
+<td class="py-2.5 px-1 text-on-surface-variant">Deadlock-freedom demonstrado via análise de grafo de dependência causal (DAG).</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 3: CONTRATOS CANÔNICOS (AKG-CBOR-v1) -->
+<!-- ========================================================================= -->
+<section class="tab-pane hidden" id="section-contracts">
+<div class="border-b border-outline-variant pb-space-sm mb-space-lg flex justify-between items-end flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/30">SEÇÃO 3 // PROTOCOLOS E TIPOS</span>
+<span class="text-label-caps font-label-caps text-outline">SPECIFICATION AKG-CBOR-v1</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface mt-1">Contratos Canônicos, Tipos Fundamentais &amp; Domain Separation</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-3xl">
+              Codificação canônica determinística sem ambiguidades de serialização. Prefixos rígidos de Domain Separation (0x00 para folhas de Merkle, 0x01 para nós internos).
+            </p>
+</div>
+</div>
+<!-- Formula and Domain Separation Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg mb-space-lg">
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-md">
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-caps font-label-caps text-primary">DOMAIN SEPARATION SPEC</span>
+<span class="text-code-sm font-code-sm text-outline">RFC 8949 + ARKHE-EXT-01</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-3">
+              Para mitigar ataques de colisão de extensão de Merkle de comprimento variável, toda derivação BLAKE3 injeta um byte de domínio canônico obrigatório:
+            </p>
+<div class="space-y-2 font-code-sm text-code-sm">
+<div class="p-2 bg-surface-container-low rounded border border-outline-variant flex items-center justify-between">
+<div>
+<span class="text-secondary font-bold">0x00</span> : <span class="text-on-surface">LEAF_PREFIX</span>
+</div>
+<span class="text-outline text-label-caps">H_leaf = BLAKE3(0x00 || CBOR(LeafData))</span>
+</div>
+<div class="p-2 bg-surface-container-low rounded border border-outline-variant flex items-center justify-between">
+<div>
+<span class="text-tertiary font-bold">0x01</span> : <span class="text-on-surface">INTERNAL_NODE_PREFIX</span>
+</div>
+<span class="text-outline text-label-caps">H_parent = BLAKE3(0x01 || LeftChild || RightChild)</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-md">
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-caps font-label-caps text-secondary">DERIVAÇÃO DE OPERATION ID</span>
+<span class="text-code-sm font-code-sm text-outline">FÓRMULA CANÔNICA</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-2">
+              O identificador único de operação (<code class="text-secondary font-code-sm">OperationId</code>) é imutavelmente computado sobre a tupla canônica:
+            </p>
+<div class="p-3 bg-surface-container-low rounded border border-secondary/30 font-code-md text-code-md text-primary overflow-x-auto">
+              OperationId = BLAKE3( 0x02 || tenant_id || client_nonce || timestamp_utc_nano || intent_digest )
+            </div>
+<div class="mt-2 text-label-caps font-label-caps text-outline">
+              Propriedade: Injetivo, resistente a segunda pré-imagem e monotonicamente indexado.
+            </div>
+</div>
+</div>
+<!-- Rust Contracts Code Inspector -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded overflow-hidden">
+<div class="p-space-sm bg-surface-container border-b border-outline-variant flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="data_object">data_object</span>
+<span class="font-code-md text-code-md text-on-surface font-semibold">crates/cbor-contracts/src/types.rs</span>
+<span class="text-label-caps font-label-caps px-1 rounded bg-surface-container-high text-outline">no_std // serde_cbor</span>
+</div>
+<button class="text-code-sm font-code-sm text-secondary hover:text-primary transition-colors flex items-center gap-1" onclick="copyCode('rust-contracts-snippet')">
+<span class="material-symbols-outlined text-[14px]" data-icon="content_copy">content_copy</span> COPIAR RUST
+            </button>
+</div>
+<div class="p-space-md font-code-sm text-code-sm overflow-x-auto bg-[#080A0E] text-[#F1F5F9] leading-relaxed">
+<pre id="rust-contracts-snippet"><code><span class="text-outline">// ARKHE KERNEL CANONICAL TYPES - AKG-CBOR-v1 SPECIFICATION</span>
+<span class="text-outline">#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]</span>
+<span class="text-secondary">pub struct</span> <span class="text-primary font-bold">ContentHash</span>(<span class="text-tertiary">pub</span> [<span class="text-secondary">u8</span>; <span class="text-primary">32</span>]); <span class="text-outline">// 256-bit BLAKE3 digest</span>
+
+<span class="text-outline">#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]</span>
+<span class="text-secondary">pub struct</span> <span class="text-primary font-bold">DID</span>(<span class="text-tertiary">pub</span> <span class="text-secondary">String</span>); <span class="text-outline">// "did:arkhe:tenant-fiduciary-v1:..."</span>
+
+<span class="text-outline">#[derive(Clone, Serialize, Deserialize)]</span>
+<span class="text-secondary">pub struct</span> <span class="text-primary font-bold">WorkIntent</span> {
+    <span class="text-tertiary">pub</span> <span class="text-on-surface-variant">operation_id</span>: <span class="text-primary">ContentHash</span>,
+    <span class="text-tertiary">pub</span> <span class="text-on-surface-variant">proposer_did</span>: <span class="text-primary">DID</span>,
+    <span class="text-tertiary">pub</span> <span class="text-on-surface-variant">payload_digest</span>: <span class="text-primary">ContentHash</span>,
+    <span class="text-tertiary">pub</span> <span class="text-on-surface-variant">max_gas_limit</span>: <span class="text-secondary">u64</span>,
+    <span class="text-tertiary">pub</span> <span class="text-on-surface-variant">created_epoch_ns</span>: <span class="text-secondary">u64</span>,
+}
+
+<span class="text-outline">#[derive(Clone, Serialize, Deserialize)]</span>
+<span class="text-secondary">pub enum</span> <span class="text-primary font-bold">AuthorizationDecision</span> {
+    <span class="text-primary font-bold">Allow</span> { capability_token: <span class="text-primary">ContentHash</span>, valid_until_epoch: <span class="text-secondary">u64</span> },
+    <span class="text-error font-bold">Reject</span> { reason_code: <span class="text-secondary">u16</span>, violation_invariant: <span class="text-secondary">&amp;'static str</span> },
+}
+
+<span class="text-outline">#[derive(Clone, Serialize, Deserialize)]</span>
+<span class="text-secondary">pub struct</span> <span class="text-primary font-bold">WorkerExecutionRecord</span> {
+    <span class="text-tertiary">pub</span> <span class="text-on-surface-variant">intent_ref</span>: <span class="text-primary">ContentHash</span>,
+    <span class="text-tertiary">pub</span> <span class="text-on-surface-variant">state_root_after</span>: <span class="text-primary">ContentHash</span>,
+    <span class="text-tertiary">pub</span> <span class="text-on-surface-variant">cycles_consumed</span>: <span class="text-secondary">u64</span>,
+    <span class="text-tertiary">pub</span> <span class="text-on-surface-variant">fiduciary_signature</span>: [<span class="text-secondary">u8</span>; <span class="text-primary">64</span>],
+}
+
+<span class="text-outline">/// MMR Profile com Domain Separation (0x00 para Folhas, 0x01 para Pais)</span>
+<span class="text-secondary">pub trait</span> <span class="text-primary font-bold">MMRProfile</span> {
+    <span class="text-secondary">fn</span> <span class="text-secondary-fixed-dim">hash_leaf</span>(leaf: &amp;<span class="text-primary">WorkerExecutionRecord</span>) -&gt; <span class="text-primary">ContentHash</span>;
+    <span class="text-secondary">fn</span> <span class="text-secondary-fixed-dim">hash_parent</span>(left: &amp;<span class="text-primary">ContentHash</span>, right: &amp;<span class="text-primary">ContentHash</span>) -&gt; <span class="text-primary">ContentHash</span>;
+    <span class="text-secondary">fn</span> <span class="text-secondary-fixed-dim">bag_peaks</span>(peaks: &amp;[<span class="text-primary">ContentHash</span>]) -&gt; <span class="text-primary">ContentHash</span>;
+}</code></pre>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 4: PERSISTÊNCIA CAUSAL & SQL APPEND-ONLY -->
+<!-- ========================================================================= -->
+<section class="tab-pane hidden" id="section-causal">
+<div class="border-b border-outline-variant pb-space-sm mb-space-lg flex justify-between items-end flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/30">SEÇÃO 4 // PERSISTÊNCIA &amp; AUDITORIA</span>
+<span class="text-label-caps font-label-caps text-outline">ENGINE: POSTGRESQL 16 + RLS + WORM</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface mt-1">Persistência Causal, Auditoria Append-Only &amp; Segurança SQL</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-3xl">
+              Defesa em profundidade contra mutabilidade. Bloqueio determinístico de comandos UPDATE e DELETE através de triggers irrevogáveis e segregação das roles <code class="text-secondary font-code-sm">arkhe_append</code>, <code class="text-outline font-code-sm">arkhe_read</code> e <code class="text-primary font-code-sm">arkhe_admin</code>.
+            </p>
+</div>
+</div>
+<!-- Database Tables Matrix -->
+<div class="bg-surface-container-low border border-outline-variant rounded mb-space-lg overflow-hidden">
+<div class="p-space-sm bg-surface-container border-b border-outline-variant flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="storage">storage</span>
+              Tabelas Canônicas do Banco de Dados Fiduciário
+            </span>
+<span class="text-code-sm font-code-sm text-primary">RLS: ENFORCED GLOBALLY</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-code-sm font-code-sm">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-outline-variant text-label-caps font-label-caps text-outline">
+<th class="p-space-sm">NOME DA TABELA</th>
+<th class="p-space-sm">TTL / RETENÇÃO</th>
+<th class="p-space-sm">MECANISMO DE IMUTABILIDADE</th>
+<th class="p-space-sm">IMPACTO NO WORMGRAPH</th>
+<th class="p-space-sm">POLÍTICA RLS</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/40">
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-primary">verification_records</td>
+<td class="p-space-sm text-on-surface">Permanente (Sem Expiração)</td>
+<td class="p-space-sm text-tertiary">Trigger BEFORE UPDATE/DELETE RAISE EXCEPTION</td>
+<td class="p-space-sm text-on-surface-variant">Nó Primário de Validação de Provas</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-surface-container text-primary border border-outline-variant">arkhe_assert_tenant()</span></td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-secondary">mmr_checkpoints</td>
+<td class="p-space-sm text-on-surface">Permanente (Raízes Históricas)</td>
+<td class="p-space-sm text-tertiary">Restrição Exclusiva de Append + Signature TCB</td>
+<td class="p-space-sm text-on-surface-variant">Picos de Árvore e Raiz de Compromisso</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-surface-container text-primary border border-outline-variant">arkhe_assert_tenant()</span></td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-on-surface">stamp_evidence</td>
+<td class="p-space-sm text-on-surface">7 Anos (Auditoria Regulatória)</td>
+<td class="p-space-sm text-tertiary">Assinatura de Timestamp Causal RFC 3161</td>
+<td class="p-space-sm text-on-surface-variant">Arestas de Confiança Causal</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-surface-container text-primary border border-outline-variant">arkhe_assert_tenant()</span></td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-outline">usage_events</td>
+<td class="p-space-sm text-on-surface">90 Dias (Particionamento Mensal)</td>
+<td class="p-space-sm text-outline">Drop Partition controlado apenas por Admin</td>
+<td class="p-space-sm text-on-surface-variant">Telemetria de Consumo de Gás</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-surface-container text-primary border border-outline-variant">arkhe_assert_tenant()</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- SQL Code Block with Row Level Security & Triggers -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded overflow-hidden">
+<div class="p-space-sm bg-surface-container border-b border-outline-variant flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="code">code</span>
+<span class="font-code-md text-code-md text-on-surface font-semibold">migrations/wormgraph-sql/0001_fiduciary_append_only.sql</span>
+</div>
+<button class="text-code-sm font-code-sm text-secondary hover:text-primary transition-colors flex items-center gap-1" onclick="copyCode('sql-snippet')">
+<span class="material-symbols-outlined text-[14px]" data-icon="content_copy">content_copy</span> COPIAR SQL
+            </button>
+</div>
+<div class="p-space-md font-code-sm text-code-sm overflow-x-auto bg-[#080A0E] text-[#F1F5F9] leading-relaxed">
+<pre id="sql-snippet"><code><span class="text-outline">-- =========================================================================</span>
+<span class="text-outline">-- ARKHE COMPUTATIONAL FIDUCIARY RUNTIME - HARDENED RLS &amp; IMMUTABLE TRIGGERS</span>
+<span class="text-outline">-- =========================================================================</span>
+
+<span class="text-secondary">CREATE OR REPLACE FUNCTION</span> <span class="text-primary font-bold">arkhe_prevent_mutation</span>()
+<span class="text-secondary">RETURNS TRIGGER AS</span> $$
+<span class="text-secondary">BEGIN</span>
+    <span class="text-error font-bold">RAISE EXCEPTION</span> <span class="text-tertiary">'FAIL-CLOSED VIOLATION: Tabela WORM append-only. UPDATE ou DELETE é estritamente proibido no TCB.'</span>;
+<span class="text-secondary">END</span>;
+$$ <span class="text-secondary">LANGUAGE</span> plpgsql;
+
+<span class="text-outline">-- Ativação compulsória em verification_records</span>
+<span class="text-secondary">ALTER TABLE</span> verification_records <span class="text-primary font-bold">ENABLE ROW LEVEL SECURITY</span>;
+<span class="text-secondary">ALTER TABLE</span> verification_records <span class="text-primary font-bold">FORCE ROW LEVEL SECURITY</span>;
+
+<span class="text-secondary">CREATE TRIGGER</span> trg_protect_verification_records
+<span class="text-secondary">BEFORE UPDATE OR DELETE ON</span> verification_records
+<span class="text-secondary">FOR EACH ROW EXECUTE FUNCTION</span> <span class="text-primary font-bold">arkhe_prevent_mutation</span>();
+
+<span class="text-outline">-- Política de Isolamento Multi-Tenant</span>
+<span class="text-secondary">CREATE POLICY</span> p_tenant_isolation_records <span class="text-secondary">ON</span> verification_records
+<span class="text-secondary">FOR ALL</span>
+<span class="text-secondary">TO</span> arkhe_append, arkhe_read
+<span class="text-secondary">USING</span> (tenant_id = <span class="text-primary font-bold">arkhe_assert_tenant</span>());
+
+<span class="text-outline">-- Segregação de Roles e Privilégios Mínimos</span>
+<span class="text-secondary">REVOKE ALL ON ALL TABLES IN SCHEMA</span> public <span class="text-secondary">FROM</span> PUBLIC;
+<span class="text-secondary">GRANT INSERT, SELECT ON</span> verification_records, mmr_checkpoints <span class="text-secondary">TO</span> arkhe_append;
+<span class="text-secondary">GRANT SELECT ON ALL TABLES IN SCHEMA</span> public <span class="text-secondary">TO</span> arkhe_read;
+<span class="text-outline">-- arkhe_admin possui privilégios de manutenção DDL, sem bypass de triggers de auditoria</span></code></pre>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 5: GATES DE CI/CD & SANDBOXES -->
+<!-- ========================================================================= -->
+<section class="tab-pane hidden" id="section-cicd">
+<div class="border-b border-outline-variant pb-space-sm mb-space-lg flex justify-between items-end flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 rounded bg-error-container/20 text-error border border-error/30">SEÇÃO 5 // INTEGRIDADE DE CI/CD</span>
+<span class="text-label-caps font-label-caps text-outline">FAIL-CLOSED PIPELINES</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface mt-1">Matriz de Integridade, Gates de CI/CD &amp; Execução em Sandboxes</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-3xl">
+              Garantias de conformidade pré-merge com bloqueio preventivo de CVEs históricas e isolamento em camadas (Wasmtime vs Wasmer vs WaSC).
+            </p>
+</div>
+</div>
+<!-- CI/CD Gates Table -->
+<div class="bg-surface-container-low border border-outline-variant rounded mb-space-lg overflow-hidden">
+<div class="p-space-sm bg-surface-container border-b border-outline-variant flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="task_alt">task_alt</span>
+              Pipeline de Gates Automatizados Obrigatórios
+            </span>
+<span class="text-code-sm font-code-sm text-on-surface-variant">Gate Status: 6/6 PASSING</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse text-code-sm font-code-sm">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-outline-variant text-label-caps font-label-caps text-outline">
+<th class="p-space-sm">WORKFLOW / GATE</th>
+<th class="p-space-sm">CONDIÇÃO DE APROVAÇÃO</th>
+<th class="p-space-sm">MITIGAÇÃO / CVE ASSOCIADA</th>
+<th class="p-space-sm">IMPACTO DE FALHA</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/40">
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-primary">golden-vectors.yml</td>
+<td class="p-space-sm text-on-surface">Conformidade 100% com vetores de teste CBOR/BLAKE3</td>
+<td class="p-space-sm text-outline">Derivação canônica sem regressão</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40 font-bold">HARD-BLOCK MERGE</span></td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-primary">wasm-parity.yml</td>
+<td class="p-space-sm text-on-surface">Execução idêntica entre Wasmtime e nó nativo</td>
+<td class="p-space-sm text-outline">Indeterminismo de floating-point / gas metering</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40 font-bold">HARD-BLOCK MERGE</span></td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-error">gvisor-version-gate.yml</td>
+<td class="p-space-sm text-on-surface">Versão mínima gVisor &gt;= 20260210.0</td>
+<td class="p-space-sm text-error font-semibold">CVE-2026-95702 (Sandbox Escape via ptrace)</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40 font-bold">FAIL-CLOSED ABORT</span></td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-error">runwasi-version-gate.yml</td>
+<td class="p-space-sm text-on-surface">Patch containerd-wasm v0.5.2 aplicado</td>
+<td class="p-space-sm text-error font-semibold">CVE-2026-47218 (Wasm File Descriptor Leak)</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40 font-bold">FAIL-CLOSED ABORT</span></td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-secondary">rls-audit.yml</td>
+<td class="p-space-sm text-on-surface">Testes de injeção direta sem tenant context</td>
+<td class="p-space-sm text-outline">Vazamento de isolamento multi-tenant</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40 font-bold">HARD-BLOCK MERGE</span></td>
+</tr>
+<tr class="hover:bg-surface-container">
+<td class="p-space-sm font-semibold text-secondary">mmr-checkpoint-test.yml</td>
+<td class="p-space-sm text-on-surface">Validação incremental de 100.000 nós em &lt; 200ms</td>
+<td class="p-space-sm text-outline">Corrupção de persistência do acumulador</td>
+<td class="p-space-sm"><span class="px-1.5 py-0.5 rounded bg-error-container/30 text-error border border-error/40 font-bold">HARD-BLOCK MERGE</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Sandboxes Comparison Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md mb-space-lg">
+<div class="p-space-md bg-surface-container-lowest border border-outline-variant rounded">
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-caps font-label-caps text-primary">TIER 1 // PERFORMANCE</span>
+<span class="text-code-sm font-code-sm text-primary font-bold">0.8 - 1.2 ms</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface">Wasmtime (Cranelift)</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-2">
+              Utilizado para intenções canônicas de alta frequência, verificação matemática e contratos internos pré-compilados.
+            </div>
+<div class="mt-4 pt-2 border-t border-outline-variant/50 text-code-sm font-code-sm text-outline">
+              Memory Overhead: ~1.4MB por sandbox instance.
+            </div>
+</div>
+<div class="p-space-md bg-surface-container-lowest border border-outline-variant rounded">
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-caps font-label-caps text-secondary">TIER 2 // PORTABLE</span>
+<span class="text-code-sm font-code-sm text-secondary font-bold">1.2 - 2.8 ms</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface">Wasmer (LLVM/Singlepass)</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-2">
+              Destinado à execução de workloads heterogêneos de parceiros e transição cross-platform entre nós de auditoria.
+            </div>
+<div class="mt-4 pt-2 border-t border-outline-variant/50 text-code-sm font-code-sm text-outline">
+              Compilação linear Singlepass imune a JIT bombs.
+            </div>
+</div>
+<div class="p-space-md bg-surface-container-lowest border border-error/40 rounded bg-error-container/5">
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-caps font-label-caps text-error">TIER 3 // UNTRUSTED WORKLOADS</span>
+<span class="text-code-sm font-code-sm text-error font-bold">P99 ~ 15 ms</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface">WaSC (gVisor Hardened)</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-2">
+              Isolamento de duplo estágio com interceptação de syscalls completas para código não-verificado ou de terceiros.
+            </div>
+<div class="mt-4 pt-2 border-t border-outline-variant/50 text-code-sm font-code-sm text-outline">
+              Defesa estrita contra zero-days de escape de memória.
+            </div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 6: SÍNTESE & STATUS TCB (Interactive Containment Gate Simulator) -->
+<!-- ========================================================================= -->
+<section class="tab-pane hidden" id="section-synthesis">
+<div class="border-b border-outline-variant pb-space-sm mb-space-lg flex justify-between items-end flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/30">SÍNTESE // PRONTIDÃO OPERACIONAL</span>
+<span class="text-label-caps font-label-caps text-outline">VERIFICAÇÃO ATIVA</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface mt-1">Síntese Técnica &amp; Simulador Interativo do ContainmentGate</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-3xl">
+              Teste interativo do pipeline fiduciário: simule uma proposta de intenção de trabalho, calcule seu digest BLAKE3 em tempo real e inspecione o veredito binário (Allow vs Reject) com política Fail-Closed.
+            </p>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg mb-space-lg">
+<!-- Simulator Card -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-space-md">
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant mb-4">
+<span class="text-label-caps font-label-caps text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="tune">tune</span>
+                SIMULADOR DE DECISÃO: CONTAINMENT GATE
+              </span>
+<span class="text-code-sm font-code-sm text-outline">TCB-ACTUATOR-v1</span>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block text-label-caps font-label-caps text-outline mb-1">PROPOSER DID (IDENTIDADE)</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2.5 py-1.5 text-code-sm font-code-sm text-on-surface focus:border-primary outline-none" id="simDid" type="text" value="did:arkhe:fiduciary:node-01"/>
+</div>
+<div>
+<label class="block text-label-caps font-label-caps text-outline mb-1">PAYLOAD INTENT (JSON / CBOR)</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-code-sm font-code-sm text-on-surface focus:border-primary outline-none" id="simPayload" rows="3">{"action": "VERIFY_STATE_LEAF", "params": {"nonce": 49102, "isolate": true}}</textarea>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="block text-label-caps font-label-caps text-outline mb-1">GAS LIMIT</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 text-code-sm font-code-sm text-on-surface focus:border-primary outline-none" id="simGas" type="number" value="100000"/>
+</div>
+<div>
+<label class="block text-label-caps font-label-caps text-outline mb-1">FORÇAR FALHA DE AUTORIZAÇÃO</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 text-code-sm font-code-sm text-on-surface focus:border-primary outline-none" id="simForceFail">
+<option value="false">Não (Estado Válido)</option>
+<option value="true">Sim (Violar Invariante TCB)</option>
+</select>
+</div>
+</div>
+<div class="pt-2 flex gap-2">
+<button class="flex-1 py-2 bg-primary hover:bg-primary-container text-on-primary font-label-caps text-label-caps font-bold rounded flex items-center justify-center gap-1.5 transition-colors" onclick="runGateEvaluation()">
+<span class="material-symbols-outlined text-[16px]" data-icon="play_arrow">play_arrow</span> AVALIAR NO GATEWAY
+                </button>
+<button class="px-3 py-2 bg-surface-container border border-outline-variant hover:border-outline text-outline font-label-caps text-label-caps rounded" onclick="resetSimulation()">
+                  RESET
+                </button>
+</div>
+</div>
+</div>
+<!-- Evaluation Result Console -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-md flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant mb-3">
+<span class="text-label-caps font-label-caps text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="terminal">terminal</span>
+                  PAINEL DE ATTESTAÇÃO EM TEMPO REAL
+                </span>
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/30" id="evalStatusBadge">
+                  IDLE / WAITING
+                </span>
+</div>
+<div class="space-y-3 font-code-sm text-code-sm">
+<div>
+<div class="text-outline text-label-caps font-label-caps">BLAKE3 OPERATION DIGEST DERIVADO:</div>
+<div class="p-2 bg-surface-container-low rounded border border-outline-variant text-primary break-all select-all mt-1" id="evalOpHash">
+                    0x7a3f81e09bc48d94318cf085b376b2da0182410f92b3c2a1e0b5f1a23894002b
+                  </div>
+</div>
+<div>
+<div class="text-outline text-label-caps font-label-caps">DECISÃO CRIPTOGRÁFICA DO TCB:</div>
+<div class="p-2.5 rounded border border-primary/30 bg-primary/10 text-primary font-semibold flex items-center justify-between mt-1" id="evalVerdict">
+<span>STATUS: Allow</span>
+<span class="text-label-caps font-label-caps text-outline">CAPABILITY_TOKEN_GRANTED</span>
+</div>
+</div>
+<div>
+<div class="text-outline text-label-caps font-label-caps">INVARIANTE DE PERSISTÊNCIA:</div>
+<div class="text-on-surface-variant text-body-sm font-body-sm mt-0.5" id="evalPersistence">
+                    Transação aprovada para anexação na tabela <code class="text-secondary font-code-sm">verification_records</code> via role <code class="text-primary font-code-sm">arkhe_append</code>.
+                  </div>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant text-code-sm font-code-sm text-outline flex items-center justify-between">
+<span>Epoch: 1774390192831ns</span>
+<span class="text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> BLAKE3 Canonical Pass
+              </span>
+</div>
+</div>
+</div>
+<!-- Synthesis Readiness Banner -->
+<div class="p-space-md bg-surface-container-low border border-primary/30 rounded flex items-center justify-between flex-wrap gap-4">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded bg-primary/20 border border-primary flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]" data-icon="verified">verified</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface">Prontidão Operacional: Especificação Canônica v0.9.4 Completa</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">
+                Todos os 5 subsistemas fundamentais possuem teoremas auditados, contratos AKG-CBOR congelados e restrições RLS em vigor.
+              </div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 bg-primary text-on-primary font-label-caps text-label-caps font-bold rounded hover:bg-primary-container transition-colors" onclick="triggerVerificationModal()">
+              GERAR RELATÓRIO TÉCNICO COMPLETO
+            </button>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- MODAL DE AUDITORIA & VERIFICAÇÃO DE PROVAS (Layer 3 Elevated) -->
+<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="verifyModal">
+<div class="bg-surface-container-low border border-secondary/40 rounded-lg max-w-2xl w-full p-space-lg shadow-2xl space-y-4">
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="verified">verified</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Auditoria e Verificação de Invariantes TCB</span>
+</div>
+<button class="text-outline hover:text-on-surface" onclick="closeVerificationModal()">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<div class="font-code-sm text-code-sm space-y-3 bg-[#080A0E] p-3 rounded border border-outline-variant text-on-surface">
+<div class="text-primary flex items-center justify-between">
+<span>[1/4] BLAKE3 Root MMR Checksum:</span>
+<span class="text-outline font-mono">0x4a12...99ee (PASS)</span>
+</div>
+<div class="text-primary flex items-center justify-between">
+<span>[2/4] Postgres RLS Enforcement Audit:</span>
+<span class="text-outline font-mono">FORCE RLS (PASS)</span>
+</div>
+<div class="text-primary flex items-center justify-between">
+<span>[3/4] CVE Mitigation Gates (gVisor/runwasi):</span>
+<span class="text-outline font-mono">0 VULNERABILITIES</span>
+</div>
+<div class="text-primary flex items-center justify-between">
+<span>[4/4] Cognition Genome Custody Isolation:</span>
+<span class="text-outline font-mono">ZERO KEYS ACCESSIBLE</span>
+</div>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">
+        O sistema opera sob o axioma fundamental: <strong class="text-primary">nenhum segredo é conferido à camada cognitiva</strong> e todo evento transacional é irreversivelmente ordenado na MMR canônica.
+      </div>
+<div class="flex justify-end gap-2 pt-2 border-t border-outline-variant">
+<button class="px-3 py-1.5 bg-surface-container border border-outline-variant text-on-surface font-label-caps text-label-caps rounded" onclick="closeVerificationModal()">
+          FECHAR PAINEL
+        </button>
+<button class="px-3 py-1.5 bg-primary text-on-primary font-label-caps text-label-caps font-bold rounded hover:bg-primary-container" onclick="alert('Relatório criptográfico assinado pelo TCB Root Key exportado com sucesso.'); closeVerificationModal();">
+          EXPORTAR ATESTADO ED25519
+        </button>
+</div>
+</div>
+</div>
+<!-- JAVASCRIPT MICRO-INTERACTIONS & RUNTIME LOGIC -->
+<script>
+    // Tab switching logic
+    function switchTab(sectionId) {
+      const panes = document.querySelectorAll('.tab-pane');
+      panes.forEach(pane => pane.classList.add('hidden'));
+
+      const activePane = document.getElementById(sectionId);
+      if (activePane) {
+        activePane.classList.remove('hidden');
+      }
+
+      // Update side navigation active styles
+      const navButtons = document.querySelectorAll('.nav-item');
+      navButtons.forEach(btn => {
+        btn.className = "nav-item w-full flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface px-space-md py-space-sm font-title-md text-title-md text-left transition-all";
+      });
+
+      const activeNavBtn = document.getElementById(`nav-btn-${sectionId}`);
+      if (activeNavBtn) {
+        activeNavBtn.className = "nav-item w-full flex items-center gap-2 text-primary bg-surface-container border-l-2 border-primary px-space-md py-space-sm font-title-md text-title-md text-left transition-all font-semibold";
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Quick search logic
+    document.getElementById('globalSearchInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const query = this.value.toLowerCase().trim();
+        if (!query) return;
+
+        if (query.includes('crate') || query.includes('diretorio') || query.includes('tree')) {
+          switchTab('section-crates');
+        } else if (query.includes('cbor') || query.includes('contrato') || query.includes('blake3') || query.includes('tipo')) {
+          switchTab('section-contracts');
+        } else if (query.includes('sql') || query.includes('rls') || query.includes('tabela') || query.includes('causal')) {
+          switchTab('section-causal');
+        } else if (query.includes('gate') || query.includes('cve') || query.includes('sandbox') || query.includes('wasm')) {
+          switchTab('section-cicd');
+        } else if (query.includes('status') || query.includes('simula') || query.includes('sintese')) {
+          switchTab('section-synthesis');
+        } else {
+          switchTab('section-auth');
+        }
+      }
+    });
+
+    // Code copying helper
+    function copyCode(elementId) {
+      const code = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        alert('Código copiado com integridade BLAKE3 para o clipboard!');
+      });
+    }
+
+    // Modal controls
+    function triggerVerificationModal() {
+      document.getElementById('verifyModal').classList.remove('hidden');
+    }
+
+    function closeVerificationModal() {
+      document.getElementById('verifyModal').classList.add('hidden');
+    }
+
+    // MMR Sync Action Simulation
+    function runMmrSyncSimulation() {
+      const now = new Date().toISOString();
+      alert(`[SYNC CANONICAL MMR]\nPico Merkle sincronizado na altura #902184.\nRoot Hash: 0x9c42ae77ff21ba40a12e84...b910\nTimestamp: ${now}\nStatus: IMMUTABLE CONSENSUS ACHIEVED.`);
+    }
+
+    // ContainmentGate evaluation simulation
+    function runGateEvaluation() {
+      const did = document.getElementById('simDid').value;
+      const payload = document.getElementById('simPayload').value;
+      const gas = parseInt(document.getElementById('simGas').value, 10);
+      const forceFail = document.getElementById('simForceFail').value === "true";
+
+      // Pseudo Blake3 digest generator based on content length and timestamp
+      const randomSeed = Math.random().toString(16).substring(2, 10);
+      const hashStr = `0x${randomSeed}e09bc48d94318cf085b376b2da0182410f92b3c2a1e0b5f1a23894${payload.length.toString(16)}`;
+
+      document.getElementById('evalOpHash').innerText = hashStr;
+
+      const badge = document.getElementById('evalStatusBadge');
+      const verdict = document.getElementById('evalVerdict');
+      const persistence = document.getElementById('evalPersistence');
+
+      if (forceFail || gas < 1000) {
+        badge.className = "text-label-caps font-label-caps px-1.5 py-0.5 rounded bg-error-container/40 text-error border border-error/50";
+        badge.innerText = "FAIL-CLOSED VIOLATION";
+
+        verdict.className = "p-2.5 rounded border border-error/40 bg-error-container/20 text-error font-semibold flex items-center justify-between mt-1";
+        verdict.innerHTML = `<span>STATUS: Reject</span><span class="text-label-caps font-label-caps">INVARIANT_BREACH (CODE: 0x4F12)</span>`;
+
+        persistence.innerHTML = `<span class="text-error">Operação abortada imediatamente.</span> Nenhuma entrada anexada ao <code class="text-outline font-code-sm">verification_records</code>. Log de auditoria de incidente gerado.`;
+      } else {
+        badge.className = "text-label-caps font-label-caps px-1.5 py-0.5 rounded bg-primary-container/20 text-primary border border-primary/30";
+        badge.innerText = "GATE EVALUATED: ALLOW";
+
+        verdict.className = "p-2.5 rounded border border-primary/30 bg-primary/10 text-primary font-semibold flex items-center justify-between mt-1";
+        verdict.innerHTML = `<span>STATUS: Allow</span><span class="text-label-caps font-label-caps text-outline">CAPABILITY_TOKEN_GRANTED</span>`;
+
+        persistence.innerHTML = `Transação aprovada para anexação na tabela <code class="text-secondary font-code-sm">verification_records</code> via role <code class="text-primary font-code-sm">arkhe_append</code> com nonce monotonicamente incrementado.`;
+      }
+    }
+
+    function resetSimulation() {
+      document.getElementById('simDid').value = "did:arkhe:fiduciary:node-01";
+      document.getElementById('simPayload').value = '{"action": "VERIFY_STATE_LEAF", "params": {"nonce": 49102, "isolate": true}}';
+      document.getElementById('simGas').value = "100000";
+      document.getElementById('simForceFail').value = "false";
+      runGateEvaluation();
+    }
+  </script>
+</body></html>

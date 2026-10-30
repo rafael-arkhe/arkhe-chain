@@ -1,0 +1,1494 @@
+
+=== PAGINA 1 ===
+Redox Biology as an Integrated
+ Network System
+ From the Vector of Ratios to Compartment-Resolved
+ Measurement and Redox-Aware Engineering
+ Rafael Oliveira
+ ORCID: 0009-0005-2697-4668
+ September 13, 2026
+ A scholarly synthesis of peer-reviewed primary literature
+
+
+=== PAGINA 2 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 2
+ Abstract
+The central thesis of this monograph is that cellular redox biology is
+most faithfully described as an integrated network system whose state
+variable is a vector of oxidized-to-reduced ratios—NAD⁺/NADH,
+NADP⁺/NADPH, GSH/GSSG, and TrxSS/TrxSH—resolved by
+compartment and gated by enzyme kinetics, rather than a scalar index
+derived from any single couple. Building on a curated synthesis of
+peer-reviewed primary literature, the work develops the
+electrochemical and thermodynamic foundations of this view
+(Nernstian compartmental potentials; non-equilibrium steady states),
+formalizes the network as a directed graph of enzymatically gated
+edges, and examines its central metabolic nodes, glutathione and
+NAD⁺, together with both pathological directions of stress—oxidative
+and reductive, the latter mediated by reverse electron transport.
+Signaling chemistries are treated as network computations:
+ultrasensitive peroxiredoxin/H₂O₂ kinetics, nuclear sulfenylation,
+sulfur-based persulfide signaling, and ferroptosis as a redox-dependent
+cell-fate decision executed by three compartment-mapped removal
+loops. Physiological integration is traced through circadian–redox
+feedback loops, immunometabolic reprogramming, and endoplasmic
+reticulum redox chemistry. Single-cell heterogeneity is shown to place
+decisive information in distributions rather than means, motivating the
+genetically encoded biosensor apparatus summarized in tabular form.
+Finally, the framework's operational requirements—ontology-based
+model interoperability and redox-aware metabolic engineering,
+exemplified by the Redox Imbalance Forces Drive strategy achieving
+117.65 g/L L-threonine in engineered Escherichia coli—are evaluated.
+The synthesis positions redox biology as a quantitative, systems-level
+discipline in which measurement, modeling, and design must jointly
+respect compartmental insulation, bidirectional stress, and
+out-of-equilibrium dynamics.
+Keywords: redox biology; vector of ratios; glutathione; NAD⁺ signaling;
+ferroptosis; genetically encoded biosensors
+
+
+=== PAGINA 3 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 3
+1. Introduction
+Oxidation–reduction (redox) reactions constitute the operational core of
+cellular life. The transfer of electrons between donors and
+acceptors—whether as single electrons, hydrogen atoms, or hydride
+ions—underlies the storage of energy in reduced cofactors, the
+generation of proton-motive force across biological membranes, and the
+reversible modification of protein thiols that regulates enzyme activity.
+Every redox potential reported in the literature, every enzymatic rate
+constant, and every stress-associated pathology ultimately represents a
+restricted accounting of the same physical quantity: the flow and
+distribution of electrons within biochemical networks (Jones & Sies,
+2015).
+The conceptual framework guiding the present monograph has evolved
+substantially over the past four decades. The classical notion of
+oxidative stress, introduced by Sies in the mid-1980s and subsequently
+consolidated (Sies, 2015), framed cellular pathology as an imbalance
+between oxidant production and antioxidant defenses. Later work
+substantially refined this view: reactive oxygen species (ROS) are now
+recognized as pleiotropic physiological signaling agents whose source,
+chemical species, subcellular localization, and temporal profile jointly
+determine biological outcome (Sies & Jones, 2020), acting largely
+through the reversible oxidation of reactive cysteine residues in target
+proteins (Holmström & Finkel, 2014). Jones and Sies (2015) formalized
+these regularities as the "redox code," a set of organizing principles
+that defines the positioning of the NAD, NADP, and thiol/disulfide
+systems within the architecture of biological control.
+Despite this progress, a persistent reductionist tendency remains in the
+experimental literature: the "cellular redox state" is frequently reported
+as a single scalar quantity, typically derived from one redox pair
+measured in one compartment. The central thesis developed
+throughout this work is that such representations are inadequate. The
+redox state of a cell is more faithfully described as a vector of
+oxidized-to-reduced ratios—NAD⁺/NADH, NADP⁺/NADPH, GSH/GSSG,
+TrxSS/TrxSH—that differ by tens to hundreds of millivolts across
+compartments, are only partially equilibrated with one another, and are
+coupled exclusively where enzymes permit electron flow. This thesis
+
+
+=== PAGINA 4 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 4
+implies that redox homeostasis is an active, kinetic property of a
+directed network rather than a static chemical equilibrium.
+A network perspective has become both feasible and necessary, owing
+to a series of recent methodological and conceptual advances.
+Measurements of the glutathione redox potential in membraneless
+organelles indicate that these structures faithfully mirror the cytosolic
+environment for the GSH/GSSG pair, redefining how
+compartmentalization should be understood (Rovira & Rivera-Fuentes,
+2025). The peroxiredoxin/hydrogen peroxide system has been shown to
+possess intrinsic sources of ultrasensitivity that convert graded oxidant
+inputs into digital signaling outputs (Liu et al., 2025), and nuclear
+sulfenylation has emerged as a direct link between metabolic state and
+epigenetic regulation (De Smet et al., 2025). In parallel, reductive
+stress has been established as a pathological entity in its own right
+through reverse electron transport at mitochondrial complex I
+(Mercola, 2025); ferroptosis has been characterized as a
+redox-dependent form of regulated cell death (Dixon et al., 2012;
+Stockwell et al., 2017); hydrogen sulfide and persulfides have been
+recognized as a third gaseous signaling layer (Filipovic et al., 2018);
+and NAD⁺ decline has been implicated as a hallmark of aging (Verdin,
+2015). Reciprocal regulation between redox state and the circadian
+clock (Stangherlin & Reddy, 2013), redox reprogramming in
+immunometabolism (O'Neill et al., 2016), coupling of the unfolded
+protein response to endoplasmic reticulum redox chemistry (Ron &
+Walter, 2007), genetically encoded biosensors for compartment-specific
+measurement (Gutscher et al., 2008; Meyer & Dick, 2010),
+ontology-based model interoperability through SBPAX (Ruebenacker et
+al., 2009), and redox-aware metabolic engineering strategies such as
+RIFD (Jin et al., 2025) collectively suggest that redox biology is
+consolidating into a quantitative, systems-level discipline.
+The aim of this monograph is to present an integrated account of this
+discipline. Five objectives are pursued: (i) to formalize the
+electrochemical and network foundations of redox biology; (ii) to
+characterize its central metabolic nodes—glutathione and NAD⁺—and
+both directions of redox stress; (iii) to analyze the principal signaling
+chemistries, including ROS patterns, peroxiredoxin ultrasensitivity,
+sulfur-based signaling, and ferroptosis; (iv) to integrate physiological
+
+
+=== PAGINA 5 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 5
+contexts, namely circadian regulation, immunometabolism,
+endoplasmic reticulum stress, and single-cell heterogeneity; and (v) to
+evaluate the methodological apparatus of measurement, data
+interoperability, and metabolic engineering. Sections 2 through 4
+establish the chemical, topological, and electrochemical fundamentals;
+Sections 5 through 7 address enzymatic kinetics and out-of-equilibrium
+modeling; Sections 8 through 12 examine central nodes, both stress
+directions, and signaling chemistries; Section 13 integrates
+physiological contexts; Sections 14 and 15 treat heterogeneity and
+measurement; and Section 16 synthesizes the framework with
+perspectives on interoperability and engineering. The section that
+follows establishes the chemical and thermodynamic foundations upon
+which the entire network formalism rests.
+2. Fundamental Principles of Redox Chemistry
+Oxidation–reduction chemistry is defined by the transfer of electrons
+between donor and acceptor species, always coupled such that the
+oxidation of one molecule is mechanistically and stoichiometrically
+linked to the reduction of another. This coupling imposes two invariants
+on any redox process: the conservation of charge and the conservation
+of mass across the paired half-reactions. The bookkeeping unit of
+electron transfer varies with chemical context—it may be a single
+electron, a hydrogen atom, or a hydride ion—but the invariant remains
+the same. Biological systems exploit this versatility across a spectrum
+of chemistries: hydride transfer to and from the nicotinamide ring of
+NAD⁺/NADH, single-electron transfers through iron–sulfur clusters and
+cytochromes of the respiratory chain, and flavin cofactors that bridge
+one- and two-electron chemistries within the same polypeptide scaffold
+(Jones & Sies, 2015).
+The directionality of electron flow is governed by thermodynamics and
+constrained by kinetics. The reduction potential of a couple expresses
+its electron affinity, and the Nernst relationship links this potential to
+the ratio of oxidized to reduced species; differences in potential
+between donor and acceptor couples, rather than absolute values,
+determine the direction of spontaneous electron flow. Enzymes,
+however, impose the decisive kinetic filter: a thermodynamically
+favorable transfer proceeds at physiological rates only where a catalyst
+
+
+=== PAGINA 6 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 6
+provides a path. This interplay reaches its archetypal expression in
+chemiosmotic coupling, in which the downhill transfer of electrons to
+molecular oxygen through the respiratory chain is coupled to the
+translocation of protons across the inner mitochondrial membrane,
+storing free energy as an electrochemical gradient that drives ATP
+synthesis (Mitchell, 1961). The quantitative Nernstian formalism
+underlying these statements is developed in Section 4.
+Within metabolism, coupled electron transfers subserve at least four
+distinct functions. First, they store metabolic energy in reduced
+cofactors—NADH, NADPH, FADH₂, and ubiquinol—that buffer and
+redistribute reducing power. Second, they generate the proton-motive
+force that powers oxidative phosphorylation. Third, they supply
+dedicated reducing equivalents for biosynthesis and antioxidant
+defense, most prominently through the NADPH pool. Fourth, they act in
+information transfer: the reversible oxidation of reactive cysteine
+residues functions as a post-translational modification that switches
+protein activity, positioning thiol chemistry as a signaling layer
+analogous to phosphorylation (Paulsen & Carroll, 2010; Holmström &
+Finkel, 2014). The same electron-transfer chemistry also carries an
+inherent cost: incomplete one-electron reduction of oxygen at the
+respiratory chain yields superoxide and, downstream, hydrogen
+peroxide, so that electron leak is a quantitative property of normal
+electron transfer rather than a pathological accident (Murphy, 2009).
+A single unifying consequence follows from these foundations and
+informs the remainder of this monograph: every operational concept
+introduced subsequently—redox potential (Section 4), enzyme-defined
+rate laws (Section 5), homeostatic control (Section 6), bidirectional
+stress (Sections 9 and 11), and signaling chemistry (Section
+10)—constitutes a restricted accounting of the same conserved
+electrons moving through the same network. Treating these concepts
+as separate domains obscures their common physical basis; the
+network perspective developed in the section that follows restores it.
+
+
+=== PAGINA 7 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 7
+3. The Redox Network: Directed Graph and
+Compartmentalization
+The redox network is the directed graph through which electrons move
+within and between cellular compartments. Its nodes comprise redox
+couples (GSSG/GSH, NAD⁺/NADH, NADP⁺/NADPH, TrxSS/TrxSH),
+soluble cofactors, iron–sulfur and flavin prosthetic groups, membrane
+transporters, and oxidant sinks; its edges are the electron transfers that
+are kinetically permitted at physiological rates. This last qualification is
+essential to the network concept. Thermodynamics alone licenses a far
+denser graph than biology actually implements, because a
+thermodynamically favorable edge is traversed only where a catalyzing
+enzyme is expressed and sufficiently active. The topology of the redox
+network is therefore enzymatically gated, and changes in enzyme
+expression or inhibition act as switches that rewire the graph rather
+than merely scaling fluxes upon it (Jones & Sies, 2015).
+The major thiol and pyridine nucleotide systems share traffic within this
+graph. Glutathione, thioredoxin, NADPH, iron–sulfur proteins, and the
+respiratory chain are coupled by enzymes such as glutathione
+reductase, thioredoxin reductase, and the peroxiredoxin family, so that
+a perturbation at one node propagates to ostensibly independent
+subsystems (Lu & Holmgren, 2014). The network is also robust by
+virtue of redundancy: experimental or pathological blockade of
+glutathione reductase, for example, redistributes peroxide-removal load
+toward NADPH-dependent and catalase-linked routes rather than
+abolishing it. Such rerouting illustrates why the network must be
+analyzed as a map of coupled but partially insulated subgraphs, in
+which insulation is the exception established by the absence of
+connecting enzymes, not the default.
+This graph-theoretic view directly displaces the notion of a single,
+unitary "cellular redox state." The conceptual predecessor of network
+thinking, the "redox environment," was defined from the glutathione
+couple and its Nernstian potential (Schafer & Buettner, 2001); the
+network formalism generalizes the same logic, treating each
+couple–compartment combination as a node with its own potential, pool
+size, and kinetic connectivities, partially equilibrated among themselves
+and driven out of equilibrium by continuous flux. It is precisely this
+
+
+=== PAGINA 8 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 8
+partial insulation that makes compartment-specific control possible,
+and its erasure—by saturating fluxes or lost enzymatic
+coupling—corresponds to the loss of regulatory capacity.
+3.1 Membraneless Organelles and the Redefinition of
+Compartmentalization
+Compartmentalization itself has recently been refined by direct
+measurement. Membraneless organelles (MLOs)—the nucleolus, stress
+granules, P bodies, paraspeckles, and Cajal bodies—concentrate
+proteins and RNA by liquid–liquid phase separation without a delimiting
+membrane, raising the question of whether they sustain distinct redox
+environments. Quantitative biosensor-based measurements of the
+glutathione potential indicate that, for the GSH/GSSG pair, these
+structures faithfully mirror the surrounding cytosol; the nuclear EGSH is
+indistinguishable from the cytosolic value and remains stable across
+phases of the cell cycle (Rovira & Rivera-Fuentes, 2025).
+These findings do not invalidate compartmentalization; they redefine its
+mechanism. Redox specificity in MLOs resides in local enzymatic
+regulation and in gradients of NAD(P)H rather than in passive
+partitioning of glutathione species, because a small,
+membrane-permeant thiol equilibrates rapidly across phase
+boundaries. Apparent exceptions reinforce the enzymatic principle:
+stress granules have been reported to develop transient oxidizing
+microenvironments in the context of protein aggregation, consistent
+with local oxidant generation rather than constitutive partitioning. For
+experimental practice, the implication is that assigning a "redox
+identity" to a membraneless compartment requires demonstrating local
+enzymatic activity or oxidant production, not merely reporting a
+measured potential within the structure (Rovira & Rivera-Fuentes,
+2025).
+The network concept thus resolves the tension between global
+integration and local control: integration is achieved by shared electron
+currencies, and control by enzymatically gated edges. The quantitative
+representation of each node—the redox state as a vector of ratios and
+the electrochemical measurement of potentials—is the subject of the
+section that follows.
+
+
+=== PAGINA 9 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 9
+4. Redox State and Redox Potential: A Vector, Not a
+Scalar
+The redox state of a cell is most rigorously defined as the set of
+oxidized-to-reduced ratios of the operative redox couples in each
+compartment at a given moment. Cytosolic NAD⁺/NADH, mitochondrial
+NAD⁺/NADH, NADP⁺/NADPH, and GSH/GSSG differ routinely by tens
+to hundreds of millivolts and are not equilibrated with one another,
+because the enzymes that would be required to interconvert them are
+absent, compartmentalized, or kinetically insufficient. This vector of
+ratios is not merely descriptive; it is causally selective. It determines
+which dehydrogenases operate in the forward direction, which cysteine
+residues are oxidized beyond their oxidation potentials, and whether
+locally generated hydrogen peroxide is buffered or amplified by
+downstream chemistry. A single dye reading, or a single redox pair
+measured without reference to the others, therefore cannot represent
+the state of the network (Jones & Sies, 2015).
+The electrochemical measure of any individual node is the redox
+potential E, the electron affinity of the couple, related to its standard
+potential and to the concentration ratio by the Nernst equation:
+ E = E°′ + (RT/nF) · ln([oxidized]/[reduced])
+For the glutathione couple, which exchanges two electrons and two
+protons (GSSG + 2 H⁺ + 2 e⁻ ↔ 2 GSH), the expression becomes EGSH
+= E°′ + (RT/2F) · ln([GSSG]/[GSH]²), with E°′ = −240 mV at pH 7.0
+(Schafer & Buettner, 2001). Two quantitative consequences follow.
+First, for a two-electron couple, a tenfold change in the
+oxidized-to-reduced ratio displaces E by approximately 30 mV at
+physiological temperatures, which defines the effective resolution of
+redox measurements. Second, because protons participate directly in
+the half-reaction, the standard potential varies with pH—by
+approximately −59 mV per pH unit at 25 °C for a fully proton-coupled
+two-electron exchange—so that apparent intracellular pH shifts
+propagate into measured potentials unless pH is monitored
+concurrently.
+A corollary, often neglected in experimental practice, is that published
+millivolt values are strictly incomparable unless pH, ionic strength,
+
+
+=== PAGINA 10 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 10
+temperature, and the identity of the named couple are fixed.
+Differences in potential, not absolute values of E taken out of context,
+define the direction of enzyme-catalyzed electron flow. Within these
+constraints, compilations from genetically encoded sensor
+measurements provide the current reference frame (Table 1); the
+striking spread across compartments—from approximately −380 mV in
+the mitochondrial matrix to approximately −157 mV in the Golgi
+lumen—quantifies the very insulation that the network formalism
+postulates (Gutscher et al., 2008; Meyer & Dick, 2010; Rovira &
+Rivera-Fuentes, 2025).
+ Table 1. Reference values of the glutathione redox potential (EGSH) and total
+glutathione concentration in major cellular compartments. Values are approximate,
+depend on probe, calibration, and cell type, and are reported at pH 7.0–7.4; absolute
+comparisons require fixed pH, ionic strength, and temperature (Schafer & Buettner,
+ 2001).
+Compartment
+EGSH (mV)
+GSH (mM)
+Key references
+Cytosol
+−315 to −325
+1–10
+Gutscher et al. (2008); Meyer & Dick
+(2010)
+Mitochondrial matrix
+−340 to −380
+5–10
+Gutscher et al. (2008); Meyer & Dick
+(2010)
+Endoplasmic reticulum
+−208 to −235
+1–5
+Birk et al. (2013); Rovira & Rivera-Fuentes
+(2025)
+Golgi apparatus
+≈ −157
+1–5
+Miró-Vinyals et al. (2025)
+Nucleus
+≈ cytosol
+≈ cytosol
+Rovira & Rivera-Fuentes (2025)
+Three implications follow from this quantitative framing. First, the
+oxidizing potentials of the secretory pathway are not failures of
+antioxidant control but functional prerequisites: disulfide bond
+formation in the endoplasmic reticulum and Golgi requires potentials
+far more oxidizing than the cytosol tolerates. Second, the near-identical
+nuclear and cytosolic potentials reported for the GSH/GSSG pair
+(Section 3.1) acquire quantitative meaning here—they reflect rapid
+equilibration of a small, permeant thiol, not the absence of nuclear
+redox regulation. Third, compartment-resolved, pH-corrected
+measurement becomes a methodological imperative rather than a
+refinement, a requirement that shapes the biosensor technologies
+discussed in Section 15. The vector, however, is only half of the
+network description; the rates at which its components interconvert are
+set by enzymes, to which the section that follows is devoted.
+
+
+=== PAGINA 11 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 11
+5. Redox Enzymes and Pair Coupling
+Enzymes furnish the rate laws of the redox network. Dehydrogenases,
+oxidases, oxygenases, peroxidases, reductases, and dismutases—each
+with defined substrates, cofactors, and compartmental
+address—determine where, how fast, and in what stoichiometry
+electrons move. The catalytic mechanism is itself consequential: a
+hydride transfer executed by a dehydrogenase is a clean, two-electron
+movement, whereas a single-electron step at a flavin or metal center
+carries an intrinsic probability of premature oxygen reduction and
+superoxide formation. Whether a given node of the network leaks
+electrons is therefore a property of enzyme mechanism, not merely of
+thermodynamic driving force (Murphy, 2009).
+The same enzymes are simultaneously the network's control elements.
+Expression level, allostery, and reversible cysteine modification jointly
+transform an enzyme into a valve that opens under stress and closes at
+rest. The archetype is the eukaryotic 2-Cys peroxiredoxin, whose
+sensitivity-based hyperoxidation under high peroxide flux—formalized
+as the floodgate hypothesis—keeps resting hydrogen peroxide low
+while permitting transient signal-amplituding excursions (Wood et al.,
+2003). The general lesson is that potential and flux are logically
+independent: without kinetic competence, thermodynamically favorable
+potentials produce no physiological flow, and conversely, modest
+potentials can drive large fluxes through highly efficient catalysts.
+A redox pair is an oxidized/reduced pair of chemical species whose ratio
+fixes a potential; the canonical intracellular set comprises GSSG/GSH,
+NAD⁺/NADH, NADP⁺/NADPH, TrxSS/TrxSH, and O₂/H₂O. Pairs are
+coupled only where an enzyme—or an explicitly identified
+non-enzymatic reaction—connects them; where no such edge exists,
+they drift independently and can sustain persistent potential
+differences. The NAD⁺/NADH and NADP⁺/NADPH pools, for instance,
+are kept chemically similar yet functionally distinct by the topology of
+transhydrogenase and dehydrogenase coupling, and the glutathione
+and thioredoxin systems intersect chiefly at shared peroxide substrates
+rather than by direct electron exchange (Lu & Holmgren, 2014). The
+"redox code" framing captures the same idea at the level of biological
+organization: the NAD, NADP, and thiol systems occupy fixed,
+
+
+=== PAGINA 12 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 12
+non-interchangeable positions in the architecture of control (Jones &
+Sies, 2015).
+Pool size completes the picture and is systematically underweighted in
+interpretation. Millimolar glutathione buffers many individual oxidant
+attacks that would measurably swing a micromolar NADP pool;
+identical electron loads thus produce potentials shifts of very different
+magnitudes in different nodes. The quantitative anchors are familiar:
+E°′(GSSG/2GSH) = −240 mV at pH 7.0, with healthy cytosolic
+GSH/GSSG ratios conventionally reported between 30:1 and 100:1
+(Schafer & Buettner, 2001). Treating all pairs as an interchangeable
+currency erases precisely the insulation—of pool, compartment, and
+enzyme—that makes compartmental control possible, and with it the
+vector formalism of Section 4. The regulatory machinery that actively
+maintains these insulated nodes within physiological bounds is the
+subject of the section that follows.
+6. Redox Homeostasis: Active Control Systems
+Redox homeostasis is not the absence of stress but the active control of
+potentials, ROS amplitudes, and thiol occupancy within a range
+compatible with signaling and protein folding. The distinction is
+substantive rather than semantic: a homeostatic system
+tolerates—indeed requires—transient excursions, provided they are
+sensed, bounded, and reversed. In control-engineering terms, the redox
+network implements a distributed feedback architecture comprising
+sensors that convert local oxidant load into regulatory signals,
+actuators that adjust supply and removal, and repair processes that
+restore damaged components. Homeostasis is therefore a dynamical
+property of the network defined in Section 3, not a static chemical
+end-state, and its analysis belongs naturally to the modeling framework
+developed in the section that follows.
+The sensor layer is molecularly well characterized. Peroxiredoxins, in
+addition to their catalytic role, act as peroxide sensors whose oxidation
+state reports local hydrogen peroxide fluxes (Wood et al., 2003). The
+Keap1/Nrf2 system constitutes a dedicated electrophile-and-oxidant
+sensor: under basal conditions Keap1 promotes constitutive Nrf2
+degradation, while reactive cysteines in Keap1, upon modification,
+
+
+=== PAGINA 13 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 13
+release Nrf2 to induce a coordinated transcriptional program of
+antioxidant and phase-II detoxification genes (Kensler et al., 2007). The
+prolyl hydroxylases that regulate hypoxia-inducible factors couple
+oxygen availability directly to transcription, so that hypoxic and
+oxidative inputs are integrated at the level of HIF stabilization
+(Semenza, 2012). Together these systems convert local chemical events
+into graded, genome-wide adjustments of enzymatic capacity.
+The actuator and repair layers close the loop. Reducing power is
+replenished by metabolism—principally through the pentose phosphate
+pathway, malic enzyme, and isocitrate dehydrogenases that maintain
+the NADPH pool—and oxidized glutathione is either reduced by
+glutathione reductase or exported, thereby unloading oxidizing
+equivalents from the cell. Damaged macromolecules are repaired, as in
+the reduction of protein disulfides by thioredoxin and glutaredoxin
+systems, or degraded and resynthesized. Crucially, these actions are
+compartment-specific: the vector formalism of Section 4 implies that a
+homeostatic response must be evaluated at the level of each couple and
+compartment, not by a global average (Jones & Sies, 2015).
+Certain proteins simultaneously occupy multiple layers of this
+architecture. Peroxiredoxin 6 is the exemplar of such moonlighting: a
+bifunctional enzyme combining glutathione peroxidase activity with
+calcium-independent phospholipase A2 activity, it both reduces
+peroxidized membrane phospholipids and participates in phospholipid
+homeostasis and signal transduction (Fisher, 2011). Its dual catalytic
+identities couple antioxidant defense directly to lipid metabolism,
+illustrating how a single polypeptide can bind oxidant sensing, oxidant
+removal, and metabolic regulation into one node.
+The analytical payoff of the control-system view is diagnostic
+specificity. Collapse of redox homeostasis is not "more oxidation" in the
+abstract; it is the failure of a specific loop—sensing, supply, or
+removal—and the therapeutic implication is to restore the failing loop
+rather than to flood the system with chemically unrelated reductants, a
+maneuver that risks importing the reductive stress analyzed in Section
+9. Formalizing these loops as kinetic systems, however, requires the
+out-of-equilibrium modeling apparatus introduced next.
+
+
+=== PAGINA 14 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 14
+7. Modeling Out-of-Equilibrium Redox Systems
+Living cells sustain persistent electron fluxes and stable differences of
+potential between compartments, which places them categorically
+outside thermodynamic equilibrium. It follows that equilibrium
+constants alone cannot predict intracellular concentrations or the rate
+of ROS production: at equilibrium, fluxes vanish and potentials
+equalize, whereas the physiological state is precisely one of maintained
+disequilibrium. Any modeling formalism that treats the cell as a closed,
+equilibrated system therefore mis-specifies its object from the outset.
+The appropriate description is that of an open, driven network held in a
+non-equilibrium steady state by continuous exchange with its
+environment.
+Useful kinetic models share a common construction. Reaction dynamics
+are represented by mass-action or Michaelis–Menten rate laws, the
+latter formalized in the classical analysis of enzyme-catalyzed reactions
+(Michaelis & Menten, 1913), with parameters for defined substrates,
+cofactors, and compartments. Compartmental volumes, membrane
+transporters, and the open exchange of oxygen, nutrients, and exported
+oxidized products must be represented explicitly, because the import
+and export terms are what sustain the steady state. The kinetic
+constants of oxidases, peroxidases, and reductases—rather than
+equilibrium constants—then determine flux distribution and oxidant
+load. Such models are necessarily parameter-rich, and their predictions
+are correspondingly sensitive to parameter uncertainty, a limitation
+that argues for bounding analyses rather than single-point simulations.
+The thermodynamic interpretation of the modeled state is equally
+consequential. A non-equilibrium steady state is dissipative: the cell
+exports entropy continuously while preserving local order—specifically,
+the ordered distributions of electrons in reduced cofactors that
+constitute the vector of Section 4. This is the general condition for
+biological organization articulated in the thermodynamics of dissipative
+structures (Prigogine, 1978). The practical corollary is that steady state
+must never be conflated with equilibrium in experimental design or
+interpretation: a cell at steady redox state is consuming, transforming,
+and exporting energy, and its measured potentials reflect kinetic
+balances between production and removal, not chemical affinities
+
+
+=== PAGINA 15 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 15
+alone.
+Finally, model validation imposes its own data requirement. Because
+the network comprises partially insulated nodes (Section 3), no
+single-pair time course can constrain a multi-compartment model;
+validation requires simultaneous measurements of more than one redox
+pair, ideally resolved by compartment. Genetically encoded biosensors
+(Section 15) supply precisely this class of data, and kinetic modeling of
+the peroxiredoxin/hydrogen peroxide system has already demonstrated
+the payoff, exposing multiple intrinsic sources of ultrasensitivity that
+equilibrium descriptions could not have revealed (Liu et al., 2025). The
+modeling framework thus closes the loop opened at the start of this
+monograph: thermodynamics defines what is possible, enzymes define
+what is actual, and out-of-equilibrium kinetics relates the two. The next
+sections examine the central nodes around which these fluxes are
+organized—glutathione and NAD⁺—before turning to the pathological
+regimes that arise when their control fails.
+8. Glutathione and NAD⁺: The Central Nodes
+Glutathione is a tripeptide thiol (γ-glutamyl–cysteinyl–glycine) present
+at millimolar concentrations in the reduced form (GSH), with only a
+small fraction as the disulfide (GSSG) in the healthy cytosol, yielding
+the strongly reducing GSH/GSSG potential quantified in Table 1.
+Functionally, the glutathione node concentrates four capacities in a
+single, compartmentally addressable pool. It donates electrons to
+glutathione peroxidases and glutaredoxins, thereby participating
+directly in peroxide and disulfide chemistry; it conjugates electrophiles
+through the glutathione S-transferases, central to phase-II
+detoxification; it can be exported as GSSG, discharging oxidizing
+equivalents from the cell; and it buffers, by sheer pool size, oxidant
+challenges that would swing micromolar pools (Section 5).
+Regeneration depends on glutathione reductase and NADPH, and de
+novo synthesis on cysteine availability and the activity of
+glutamate–cysteine ligase, the rate-limiting step subject to feedback
+inhibition by GSH and transcriptional induction via Nrf2 (Lu, 2009).
+The systems-level significance of this node follows from its connective
+position. Loss or saturation of glutathione handling forces other couples
+
+
+=== PAGINA 16 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 16
+and catalase-like sinks to carry peroxide-removal loads for which their
+kinetics and pool sizes were not dimensioned, redistributing traffic
+across the network exactly as the rerouting logic of Section 3 predicts.
+Conversely, because glutathione links peroxide removal, detoxification,
+and export in one node, its state is a sensitive—if incomplete—reporter
+of network load, which explains, without excusing, the historical
+reliance on GSH/GSSG as a global index. The vector formalism of
+Section 4 demarcates precisely what such an index can and cannot
+represent.
+8.1 NAD⁺ as Redox Cofactor and Longevity Signal
+NAD⁺ occupies a second central node, with a dual identity that the
+glutathione system lacks. As a redox cofactor it shuttles hydrides in
+catabolic and anabolic dehydrogenase reactions, positioning
+NAD⁺/NADH at the pivot of energy metabolism; as a signaling substrate
+it is consumed stoichiometrically by sirtuins (SIRT1–7),
+poly(ADP-ribose) polymerases (PARPs), and CD38 ectoenzymes, linking
+cellular redox status to epigenetic regulation, DNA repair, and calcium
+signaling (Verdin, 2015). This consumption is not free of
+thermodynamic constraint: every non-redox use of NAD⁺ competes with
+the redox uses of the same total pool, so that signaling demand, repair
+demand, and metabolic flux are coupled through one molecule.
+Quantitatively, NAD⁺ abundance declines with age—by roughly half
+between the second and sixth decades of life according to tissue
+surveys—and this decline is regarded as a hallmark of aging rather
+than an epiphenomenon (Verdin, 2015; Covarrubias et al., 2021). The
+consequences propagate through three coupled loops. Reduced sirtuin
+activity dysregulates epigenetic programming, including acetylation
+states of metabolic and stress-response regulators; diminished
+PARP-mediated repair allows oxidative DNA damage to accumulate;
+and mitochondrial dysfunction both follows from and further depresses
+NAD⁺ availability, since electron flux through the respiratory chain is
+itself tied to the NAD⁺/NADH ratio. The result is a positive feedback
+between oxidant load, signaling demand, and cofactor depletion that
+operates on the timescale of years.
+Interventional strategies target this loop at several points. Precursor
+supplementation with nicotinamide riboside or nicotinamide
+
+
+=== PAGINA 17 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 17
+mononucleotide elevates the biosynthetic flux toward NAD⁺; inhibition
+of CD38 removes a major consumption route; and exercise raises
+NAMPT expression, enhancing the salvage pathway endogenously
+(Verdin, 2015; Covarrubias et al., 2021). The general lesson exceeds
+any single intervention: redox state and NAD⁺ state are coupled
+variables, and redox-directed therapy that ignores the NAD⁺
+economy—or NAD⁺-directed therapy that ignores the redox
+network—addresses half of a coupled system. The two central nodes
+therefore reappear jointly in the pathological regimes examined next,
+beginning with the paradoxical pathology of excess reducing power.
+9. Reductive Stress and Reverse Electron Transport
+Reductive stress is the mirror image of oxidative stress and a
+pathological regime in its own right: an overload of reducing
+equivalents that creates an electronic traffic jam within the electron
+transport chain. When NADH and NADPH accumulate
+abnormally—through sustained substrate excess, inhibited oxidation, or
+overactive reductive biosynthesis—the NADH/NAD⁺ ratio at complex I
+rises and the upstream chain becomes partially reduced and inhibited.
+Paradoxically, this hyper-reduced environment does not protect the cell
+from oxidation; it promotes it, because a reduced chain increases the
+probability that electrons escape prematurely to molecular oxygen. The
+outcome is a vicious cycle characteristic of chronic metabolic disease:
+more reducing equivalents drive more electron leak, more leak drives
+more oxidative damage, and more damage deepens mitochondrial
+dysfunction (Mercola, 2025).
+The mechanistic core of this paradox is reverse electron transport
+(RET). RET occurs when a highly reduced coenzyme Q
+pool—ubiquinol—coincides with an elevated mitochondrial membrane
+potential: conditions created, for example, by oxidation of succinate or
+of excess fatty-acid-derived substrates. Under these conditions
+electrons reflux from the ubiquinol pool backwards into complex I,
+reducing its flavin site and generating superoxide at a rate that can
+exceed forward-path production by an order of magnitude. The
+controlling variables are precisely those the network formalism
+predicts: the redox state of the Q pool and the magnitude of the
+membrane potential, both of which are kinetic-dynamical quantities
+
+
+=== PAGINA 18 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 18
+rather than equilibrium constants (Murphy, 2009; Brand, 2016). RET is
+not an exotic curiosity; it is quantitatively one of the dominant
+mitochondrial sources of superoxide under substrate excess.
+The pathological repertoire of reductive stress follows directly. In type
+2 diabetes, hyperglycemia and excess fatty acid flux over-reduce both
+NADH pools and the Q cycle, favoring RET-driven oxidant generation;
+in non-alcoholic hepatic steatosis, lipid oversupply sustains the same
+configuration; and in neurodegenerative disease, chronic substrate and
+electron-handling dysfunction maintains hyper-reduced, leak-prone
+mitochondria (Mercola, 2025). In each case the reductive and oxidative
+facets are inseparable—the reductive regime is the cause of the
+oxidative phenotype—which is why the two stress directions must be
+modeled jointly rather than as alternatives.
+Oxidative stress, the mirror condition, is defined with equal precision:
+the production or import of oxidants that exceeds enzymatic removal,
+glutathione buffering, and repair, displacing operative potentials
+toward oxidation. Its consequences—lipid peroxidation, protein
+carbonylation, DNA oxidation, and persistent disulfide locking of
+enzymes—are the same chemistry that physiological signaling uses,
+differing only in amplitude, duration, or location relative to the
+network's containment capacity (Sies, 2015; Sies & Jones, 2020).
+Signaling-level hydrogen peroxide occupies a lower range; stress is that
+same chemistry where the network fails to contain it, a distinction
+made quantitative in the section that follows.
+The therapeutic symmetry is the section's closing lesson. Correction
+must target source, sink, and NADPH supply jointly, because
+re-equilibrating one node alone leaves the traffic jam intact. Flooding
+the system with chemically unrelated reductants—the reflexive
+"antioxidant" maneuver—adds reductive load without repairing the
+failing loop, and may thereby aggravate the very regime it intends to
+treat (Mercola, 2025). Bidirectional stress thus completes the argument
+of Sections 4 and 8: the vector of ratios is the relevant state variable,
+and both of its tails are pathological.
+
+
+=== PAGINA 19 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 19
+10. ROS as Signaling Patterns: Ultrasensitivity of the
+H₂O₂/PRX System
+Reactive oxygen species are incompletely reduced intermediates of
+molecular oxygen, principally superoxide (O₂•−), hydrogen peroxide
+(H₂O₂), and the hydroxyl radical (•OH), the last formed when peroxide
+encounters reduced transition metals. Their interconversion and
+removal are enzymatically organized: superoxide dismutases convert
+superoxide to H₂O₂, and peroxidases and catalase remove H₂O₂ using
+glutathione, peroxiredoxin thiols, or heme as reducing substrates. This
+chemical organization assigns each species a distinct biological
+meaning. Localized, low-level H₂O₂ oxidizes specific, low-pKa cysteine
+residues reversibly and thereby acts as a second messenger
+(Holmström & Finkel, 2014); the hydroxyl radical, reacting at the
+diffusion limit with nearly any organic molecule, is almost purely
+damaging wherever it is formed (Murphy, 2009). Biological information
+therefore resides not in a single "quantity of oxidant" but in patterns
+defined jointly by source, chemical species, location, and time (Sies &
+Jones, 2020).
+The pattern framework resolves the apparent paradox that the same
+molecule is both signal and stressor. Compartmentalized
+sources—NADPH oxidases at membranes, electron leak at
+mitochondrial sites—generate H₂O₂ in spatially restricted domains, and
+equally localized peroxidase arrays shape its steady-state profile, so
+that a cytosolic and a nuclear H₂O₂ excursion of identical magnitude
+can carry different instructions. Signaling specificity thus emerges from
+network topology and enzyme positioning, the same principles that
+organize electron traffic in general (Section 3).
+Within this framework, a quantitative question arises: how does the
+system convert smooth, graded H₂O₂ gradients into discrete biological
+decisions? Kinetic analysis of the peroxiredoxin system identifies
+multiple intrinsic sources of ultrasensitivity (Liu et al., 2025). First,
+zero-order kinetic cycles: when the peroxiredoxin is saturated with
+H₂O₂, its rate of removal becomes independent of substrate
+concentration, producing all-or-none behavior at the sensor. Second,
+multistep signaling: the sequential oxidation of the peroxiredoxin
+catalytic cysteine—sulfenic acid, disulfide, hyperoxidized sulfinic
+
+
+=== PAGINA 20 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 20
+state—introduces nonlinearities that amplify small differences in input.
+Third, diminished removal at high hyperoxidation: as peroxiredoxin
+accumulates in its hyperoxidized state, H₂O₂-removal capacity falls,
+creating positive feedback that further amplifies the excursion. In
+integrated models, the coupled sulfenylation–sulfinylation cycle (CSSC)
+constitutes a structurally positive-feedback loop capable of bistability
+under defined parameter regimes, so that the H₂O₂/PRX module
+behaves as a switch rather than a linear transducer (Liu et al., 2025).
+This digitalizing behavior complements, at the systems level, the
+floodgate mechanism of peroxiredoxin hyperoxidation described at the
+molecular level (Wood et al., 2003).
+Recent work extends this signaling logic into the nucleus and the
+epigenetic machinery. Using a nuclear-targeted YAP1-based probe, De
+Smet et al. (2025) mapped the nuclear sulfenome of Arabidopsis and
+identified the histone acetyltransferase GCN5 as a direct target of
+sulfenylation at defined cysteines (Cys293, Cys368, Cys400),
+demonstrating that H₂O₂ can modulate histone acetylation—and
+thereby gene expression—through direct, reversible oxidation of a
+chromatin enzyme. Although demonstrated in a plant system, the
+finding establishes a structural principle with plausible generality:
+nuclear sulfenylation provides a direct channel by which metabolic
+state, via oxidant flux, is converted into transcriptional reprogramming,
+without intermediate transcription factors.
+Two conclusions follow for the architecture of redox control. First, the
+cell does not require a dedicated sensor for every concentration band:
+ultrasensitive kinetics within a single enzyme system spans
+physiological and stress-level oxidant regimes. Second, redox signaling
+is chemically specific—sulfenylation, the subject of this section, is one
+modification among several sulfur-based chemistries, and its selectivity
+is defined by cysteine microenvironment as much as by local H₂O₂
+concentration. The sulfur signaling repertoire extends beyond oxygen
+chemistry, however: hydrogen sulfide and persulfides constitute a third
+gaseous signaling layer, to which the section that follows is devoted.
+
+
+=== PAGINA 21 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 21
+11. Hydrogen Sulfide and Persulfides: The Third
+Gaseous Signaler
+Hydrogen sulfide (H₂S) joins nitric oxide and carbon monoxide as the
+third gaseous signaling molecule of mammalian physiology, but its
+redox chemistry is more structurally layered than that of its
+predecessors. H₂S is generated enzymatically—chiefly by cystathionine
+γ-synthase-like enzymes of the transsulfuration pathway, cystathionine
+γ-lyase (CSE) and cystathionine β-synthase (CBS), and by
+3-mercaptopyruvate sulfurtransferase—and it is oxidized along an
+ascending ladder to persulfides (H₂S₂), sulfite (SO₃²⁻), and sulfate
+(SO₄²⁻). The mitochondrial sulfide:quinone oxidoreductase (SQR)
+occupies a particularly instructive position in the network: it consumes
+H₂S and feeds the liberated electrons into the coenzyme Q pool, so that
+sulfide functions as an inorganic electron donor wired directly into the
+respiratory chain, a genuine network edge in the sense of Section 3
+(Filipovic et al., 2018).
+The signaling chemistry of sulfur centers on protein persulfidation (also
+termed sulfhydration), the conversion of a cysteine thiol (RSH) to a
+persulfide (RSSH) by sulfur transfer from H₂S₂ or related sulfane sulfur
+species. Persulfidation is mechanistically distinct from the sulfenylation
+discussed in Section 10: whereas sulfenylation (RSOH) is an
+oxygen-centered oxidation executed by H₂O₂, persulfidation is a
+sulfur-centered transfer that preserves the thiol's protonated character
+while dramatically enhancing its nucleophilicity. Persulfide residues are
+both more reactive toward electrophilic partners and more reducing,
+yet the modification remains reversible through the thioredoxin and
+glutaredoxin systems, so that persulfidation constitutes a genuine,
+resettable signaling modification rather than irreversible damage
+(Filipovic et al., 2018).
+Functionally, persulfidation regulates an expanding set of targets that
+spans the physiological systems treated in this monograph: ion
+channels, metabolic enzymes, and transcriptional regulators—including
+components of the Keap1–Nrf2 axis, whose persulfidation favors
+antioxidant program induction. The chemical logic mirrors that of
+oxygen-based signaling with a twist: because persulfidation alters
+nucleophilicity rather than creating an oxidized oxyacid intermediate, it
+
+
+=== PAGINA 22 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 22
+can activate as well as inhibit target functions, and it does so with
+residue selectivity governed by local sulfur-transferase and oxidase
+activities. In effect, the cell operates two partially parallel sulfur
+chemistries—oxygen-derived sulfenylation and sulfide-derived
+persulfidation—that interconvert through the shared pool of reactive
+cysteines (Filipovic et al., 2018).
+The systemic implication completes the argument of this part of the
+monograph. The redox network is more complex than the historical
+"ROS plus glutathione" dyad: H₂S and persulfides add a sulfur-signaling
+layer that interacts with oxygen-based signaling at multiple
+points—competing for the same cysteine residues, feeding electrons
+through SQR into the Q pool, and modulating the very transcriptional
+programs (Nrf2) that govern antioxidant capacity. Any redox-directed
+therapeutic or engineering design that ignores sulfur chemistry
+therefore omits a layer of the control architecture. The remaining
+sections of this block examine how these chemistries determine cell
+fate, beginning with the redox-dependent regulated cell death pathway
+ferroptosis.
+12. Ferroptosis: Redox-Dependent Regulated Cell Death
+Ferroptosis is a form of regulated cell death defined by two biochemical
+signatures: dependence on iron and on the accumulation of oxidized
+phospholipids. First named and distinguished from apoptosis,
+necroptosis, and autophagy-dependent death in 2012, ferroptosis was
+identified through the action of small molecules (erastin and RSL3) that
+killed cells bearing oncogenic RAS mutations without activating the
+caspase scaffold of classical apoptosis (Dixon et al., 2012). The pathway
+has since become the most explicit demonstration of the central thesis
+of this monograph: cell fate is an emergent property of the redox
+network, and death ensues not from the presence of any single reactive
+species but from the failure of the network's removal loops to keep pace
+with lipid-phase electron flux (Stockwell et al., 2017).
+The critical dangerous reaction is lipid peroxidation. Polyunsaturated
+fatty acyl chains esterified in membrane phospholipids are unusually
+susceptible to hydrogen abstraction by radical species; the resulting
+phospholipid radical reacts with oxygen to form a phospholipid peroxyl
+
+
+=== PAGINA 23 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 23
+radical, propagating a chain reaction within the hydrophobic membrane
+interior. The only enzyme capable of directly reducing phospholipid
+hydroperoxides within intact bilayers is glutathione peroxidase 4
+(GPX4), which consumes GSH in the manner described in Section 5.
+Consequently, the GSH/GSSG pair—whose compartmental potentials
+were tabulated in Section 4—is not merely a stress indicator in this
+context but the substrate supply line for the decisive anti-ferroptotic
+enzyme: ferroptosis is what happens when the glutathione edge of the
+graph fails at the lipid membrane (Stockwell et al., 2017).
+The defense architecture surrounding GPX4 illustrates the
+compartmental redundancy anticipated by the network model of
+Section 3. Ferroptosis suppressor protein 1 (FSP1) functions as a
+glutathione-independent, GPX4-parallel system: a CoQ oxidoreductase
+that regulates the plasma-membrane pool of coenzyme Q, regenerating
+the reduced CoQH₂ that acts as a radical-trapping antioxidant at the
+cell surface, thereby protecting the plasma membrane even when GPX4
+is inactive (Bersuker et al., 2019). A second parallel loop guards the
+mitochondrial compartment: dihydroorotate dehydrogenase (DHODH),
+an enzyme of the pyrimidine-biosynthesis pathway, reduces CoQ at the
+outer face of the inner mitochondrial membrane and in doing so
+maintains a mitochondrial CoQH₂ pool that suppresses mitochondrial
+lipid peroxidation, providing protection that is separable from both
+GPX4 and FSP1 (Mao et al., 2021). Three biochemically independent
+removal loops—GPX4/GSH, FSP1/CoQ, DHODH/CoQ—are thus mapped
+onto distinct subcellular locations, and each constitutes an
+enzymatically gated edge of exactly the kind formalized in Section 3.
+Ferroptosis therefore reframes "oxidative stress" in operational terms.
+Death is not triggered by a threshold concentration of hydrogen
+peroxide or by a single potential reading; it ensues when lipid
+peroxidation flux exceeds the aggregate capacity of the parallel
+removal systems, which can occur through substrate supply
+(polyunsaturated lipid loading), through GSH depletion (as in the
+cystine-starvation geometry of erastin), through direct enzymatic
+inhibition (RSL3 versus GPX4), or through CoQH₂ exhaustion. This
+multiplicity explains why ferroptosis resistance in cancer cells
+frequently arises through amplification of any one of the three
+loops—GPX4 overexpression, elevated FSP1, or augmented
+
+
+=== PAGINA 24 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 24
+DHODH—and why combinatorial targeting is rational (Bersuker et al.,
+2019; Mao et al., 2021). Conversely, the pathway offers a therapeutic
+aperture: tumor cells with high lipid-remediation demands can be
+pushed across the ferroptotic threshold by depriving them of a single
+defense loop, and ferroptosis induction is currently being exploited as a
+mechanism underlying several chemotherapeutic and radiotherapeutic
+modalities (Stockwell et al., 2017).
+The physiological reach of ferroptosis extends beyond oncology.
+Ischemia–reperfusion injury in kidney, heart, and brain, and aspects of
+neurodegeneration, have all been associated with GPX4 failure and
+lipid-peroxide accumulation, although the in vivo attribution of specific
+pathologies to ferroptosis versus other death programs remains an
+active area of scrutiny. What is certain at the level of network
+architecture is that a multi-loop, compartment-resolved defense system
+of this kind converts the abstract redox potentials of Section 4 into a
+concrete life-or-death decision variable—and that the same logic of
+sensing, supply, and removal governs how these chemical events are
+read out by the circadian, immune, and endoplasmic systems to which
+the discussion now turns.
+13. Physiological Integration: Circadian, Immune, and
+ER Systems
+The redox network analyzed in the preceding sections does not operate
+in isolation: it is embedded in—and constitutive of—the organism-level
+systems that coordinate physiology. Three of these systems deserve
+explicit treatment because redox state functions simultaneously as their
+input and their output: the circadian clock, which times metabolic and
+stress-response capacity across the day; the immune system, whose
+effector functions are themselves redox chemical operations; and the
+endoplasmic reticulum, the compartment in which redox potential is a
+structural requirement of protein maturation. The cell-fate chemistry of
+Section 12 is, in practice, read out by these three systems, and each
+converts redox information back into metabolic instructions. The
+integrated-network thesis of this monograph therefore scales from
+molecular chemistry to organismal physiology.
+
+
+=== PAGINA 25 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 25
+The coupling between the circadian clock and redox state is
+bidirectional and mechanistically explicit. The core clock machinery
+(CLOCK/BMAL1) transcriptionally regulates redox enzymatic
+capacity—Nrf2 expression and GPX4 abundance are reported to
+oscillate with the circadian cycle—while the redox state conversely
+modulates clock function (Stangherlin & Reddy, 2013). The most
+conserved demonstration of this reciprocity comes from the
+peroxiredoxin system introduced in Section 10: cycles of peroxiredoxin
+oxidation and reduction run with ~24-hour periodicity in organisms
+from all domains of life, constituting a universal marker of circadian
+rhythmicity even in cells lacking canonical clock gene transcription
+(Edgar et al., 2012). NAD⁺ supplies a third coupling channel: the
+rate-limiting NAD⁺-biosynthetic enzyme NAMPT is itself
+clock-controlled, NAD⁺ levels oscillate diurnally, and SIRT1 closes the
+loop by deacetylating clock components, thereby linking the coupled
+variables of Section 8 into the timekeeping apparatus (Ramsey et al.,
+2009; Covarrubias et al., 2021). Disruption of this redox–clock feedback
+loop is implicated in aging, metabolic disease, and cancer (Stangherlin
+& Reddy, 2013).
+The immune system illustrates redox integration at the level of
+cell-state transitions. Immunometabolic reprogramming upon activation
+reorganizes the redox wiring described in Sections 5 and 6: classically
+activated (M1-like) macrophages run glycolysis with a high
+pentose-phosphate flux that feeds NADPH to oxidant generation and
+maintenance of the GSH pool, sustaining high ROS output as an
+antimicrobial effector function; alternatively activated (M2-like)
+macrophages rely on oxidative phosphorylation and fatty-acid oxidation
+and operate at lower ROS levels consistent with repair and resolution
+functions (O'Neill et al., 2016). Together with the professional oxidant
+generation of the phagocyte NADPH oxidase, these configurations
+establish oxidant amplitude as a regulated effector parameter rather
+than a pathology. It follows that redox modulation is an emerging
+immunotherapeutic strategy: shifting the vector of ratios—through
+NADPH supply, GSH capacity, or NAD⁺ availability—can bias immune
+programs between inflammatory and reparative states (O'Neill et al.,
+2016).
+
+
+=== PAGINA 26 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 26
+The endoplasmic reticulum demonstrates that an oxidizing setpoint can
+be a designed physiological state rather than a stress condition. As
+tabulated in Section 4, the ER maintains the most oxidizing glutathione
+potential of the major compartments (EGSH ≈ −208 mV), an
+electrochemical requirement for oxidative protein folding, in which
+disulfide bonds are introduced into nascent polypeptides. The folding
+machinery is itself a redox network: Ero1 oxidases transfer disulfides to
+folding substrates and generate hydrogen peroxide as a stoichiometric
+byproduct, which ER-resident peroxidases such as GPX7 and GPX8 can
+productively consume, converting a potentially damaging byproduct
+into further disulfide-forming equivalents. Folding load is monitored by
+the unfolded protein response (UPR), whose three sensors—IRE1,
+ATF6, and PERK, the last attenuating translation through eIF2α
+phosphorylation—integrate folding demand with ER capacity (Ron &
+Walter, 2007). The redox–UPR crosstalk is bidirectional: an oxidant
+deficit in the ER impairs disulfide formation and blunts UPR signaling,
+whereas sustained oxidative load drives chronic UPR activation (Ron &
+Walter, 2007).
+Read together, the three systems form a triadic loop of the kind the
+network formalism predicts. The clock times the expression of folding
+and immune capacities; immune activation redraws the
+metabolic-redox map of its host cells; folding load feeds back on
+compartmental potentials and stress programs. Every arrow in this
+triangle is bidirectional, in the same sense that redox state and NAD⁺
+state behave as coupled variables (Section 8), and each arrow is
+executed by enzymatically gated edges rather than passive
+equilibration (Jones & Sies, 2015). The monograph's argument has now
+scaled from electrochemistry (Section 2) through cell fate (Section 12)
+to physiological integration. What remains hidden at this scale,
+however, is variability among cells: population-level measurements
+average over distributions that may be biologically decisive, and the
+next section addresses single-cell heterogeneity together with the
+biosensor technologies that make it measurable.
+
+
+=== PAGINA 27 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 27
+14. Single-Cell Heterogeneity and the Limits of
+Population Averages
+The vector of ratios developed in Section 4 is defined for an individual
+cell—and, within that cell, for an individual compartment—at a given
+moment. Population-level measurements, by contrast, return averages
+over distributions of these vectors, and the relationship between a
+distribution and its mean is a substantive biological question, not a
+statistical formality. The redox state is not uniform across cellular
+populations: single cells exhibit measurable redox heterogeneity that
+arises from identifiable physiological sources. A bulk mean may
+therefore describe no actual member of the population, and the
+distribution may be multimodal, with modality—rather than central
+tendency—carrying the biologically decisive information. Heterogeneity
+thus extends the validation requirement of Section 7 from the
+dimension of redox pairs and compartments to the dimension of the
+population itself.
+Three sources of single-cell redox heterogeneity can be identified. First,
+cell-cycle position: the glutathione potential varies systematically
+through the division cycle, with more reducing environments
+characteristic of the G1 phase than of later phases, and nuclear
+glutathione content undergoing a coordinated cycle coupled to
+cell-cycle progression (Diaz Vivancos et al., 2010). Second,
+microenvironment: gradients of oxygen and nutrients—within tissues,
+spheroids, or even a single culture—impose different boundary
+conditions on the exchange terms of the Section 7 model, so that
+geometrically identical cells may occupy measurably different redox
+states; the mirroring of cytosolic glutathione potential by
+membraneless organelles (Section 3) shows that even intracellular
+microenvironments carry this information (Rovira & Rivera-Fuentes,
+2025). Third, stochastic noise in the expression of redox enzymes
+produces dispersion in the kinetic parameters of Section 5, and—given
+the ultrasensitivity and bistability documented in Section 10—small
+parameter differences can separate cells into qualitatively distinct
+dynamical regimes.
+Live single-cell imaging with genetically encoded probes has converted
+these sources from inference into observation. Persistent
+
+
+=== PAGINA 28 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 28
+subpopulations with distinct glutathione potentials are routinely
+resolved within nominally homogeneous cultures. Stem-like populations
+maintain a more reduced state than their differentiated counterparts, a
+configuration mechanistically linked to self-renewal and differentiation
+decisions (Wang et al., 2013). Drug-tolerant subpopulations have been
+reported to occupy more reducing glutathione environments than their
+drug-sensitive counterparts, and tumor cells frequently exhibit more
+oxidizing potentials than matched normal cells in various experimental
+systems—although the generality of these patterns remains an active
+area of investigation. Crucially, such subpopulations are not
+measurement noise: persistence implies distinct kinetic regimes in
+which different control loops of Section 6 dominate supply and removal,
+which is to say, genuinely different network states.
+The therapeutic implication is direct and uncomfortable: bulk studies
+conceal the subpopulation structure that is critical for treatment
+decisions. A therapy calibrated to the population mean systematically
+mistreats the tails of the distribution. In oncology this failure mode is
+well characterized—a reducing-shifted, drug-tolerant subpopulation
+contributes little to a bulk redox assay yet dominates regrowth after
+treatment, so that residual disease is progressively enriched for the
+resistant tail. The ferroptosis framework of Section 12 sharpens the
+point: the ferroptotic threshold is itself a distributed quantity,
+determined cell by cell by the aggregate capacity of the removal loops,
+and a population mean of GPX4 or GSH abundance predicts the fraction
+of cells that will cross the threshold only weakly. Killing the mean is not
+killing the population.
+The methodological consequence completes this section's argument. If
+the decisive variables live at the level of individual cells and
+compartments, then measurement must be live, single-cell,
+compartment-resolved, and reversible—requirements that define the
+genetically encoded biosensor class. Ratiometric probes such as the
+roGFP2 family and HyPer7, targetable by signal sequences to specific
+organelles and calibrated in situ against the Nernstian framework of
+Section 4, supply exactly this capability (Gutscher et al., 2008; Meyer &
+Dick, 2010). The next section surveys this measurement apparatus in
+detail, together with the quantitative ranges and limitations that
+determine what these instruments can—and cannot—report about the
+
+
+=== PAGINA 29 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 29
+network state.
+15. Measuring the Vector: Genetically Encoded
+Biosensors for Compartment-Resolved Redox State
+The vector-of-ratios thesis is, at bottom, a measurement thesis: if the
+operative state is multiplex across redox pairs and compartments, then
+the instruments must meet four requirements simultaneously. They
+must be ratiometric, so that the readout is independent of probe
+expression level; genetically encoded, so that measurements are
+acquired in living cells rather than lysates; reversible, so that dynamics
+rather than endpoint snapshots are captured; and targetable, so that
+the compartment dimension of the vector is actually sampled.
+Genetically encoded fluorescent biosensors satisfy all four: a sensing
+domain whose own thiol or cofactor-binding state equilibrates with a
+target redox pair is fused to a fluorescent reporter whose excitation or
+emission ratio reports that state (Meyer & Dick, 2010). Individual
+probes can then be redirected by signal sequences to the cytosol,
+nucleus (NLS), mitochondria (MTS), endoplasmic reticulum, or other
+destinations, converting the reference frame of Table 1 from a
+compilation of literature values into a directly measurable coordinate
+system.
+The glutathione channel is the most mature. Grx1-roGFP2 fuses
+glutaredoxin 1 to a redox-sensitive GFP variant; the glutaredoxin
+catalyzes rapid equilibrium between the probe's dithiol/disulfide state
+and the GSH/GSSG couple, so that the fluorescence ratio maps onto the
+glutathione potential through the Nernst relation quantified in Section
+4 (Gutscher et al., 2008). Targeted variants of this probe supplied the
+compartmental measurements that ground this monograph's reference
+values, and related probes established that membraneless organelles
+faithfully mirror the cytosolic glutathione environment and that the
+endoplasmic reticulum maintains its characteristic oxidizing potential
+of approximately −208 mV (Rovira & Rivera-Fuentes, 2025). The
+hydrogen peroxide channel exists in two chemically instructive designs.
+roGFP2-Orp1 couples the yeast peroxidase Orp1 to roGFP2, so that
+peroxidase cycling—not direct reaction with H₂O₂—transfers oxidation
+to the probe (Gutscher et al., 2009), an instrumentation-level
+demonstration of the enzymatically gated edges of Section 5. HyPer7,
+
+
+=== PAGINA 30 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 30
+built on the OxyR regulatory domain fused to roGFP2, is bright,
+pH-stable, fast, and ultrasensitive, extending usable ratiometric
+readouts to near-basal peroxide fluxes (Pak et al., 2020).
+The pyridine nucleotide channels complete the vector's NAD edges.
+Peredox employs a bacterial NADH-binding regulatory domain (T-Rex)
+fused to circularly permuted GFP to report the cytosolic NADH/NAD⁺
+ratio, calibratable in situ with exogenous lactate and pyruvate (Hung et
+al., 2011). SoNar, built on the same domain class fused to cpYFP,
+provides a highly responsive dual-excitation readout of NAD⁺/NADH
+that has enabled high-throughput metabolic screening of anti-tumor
+agents (Zhao et al., 2015). The iNap family extends the architecture to
+NADPH/NADP⁺, with affinity variants tuned to the physiological range
+of the NADPH pool that supplies Section 6's actuator layer (Tao et al.,
+2017). Table 2 summarizes the six probes, their analytes, molecular
+principles, and indicative operating ranges.
+Table 2. Genetically encoded fluorescent biosensors for compartment-resolved redox
+ measurement.
+Biosensor
+Analyte /
+redox pair
+Molecular principle
+Indicative range*
+Grx1-roGFP2
+EGSH
+(GSH/GSSG)
+Glutaredoxin fusion equilibrates probe
+dithiol/disulfide state with GSH/GSSG
+−300 to −200 mV
+roGFP2-Orp1
+H₂O₂
+Yeast peroxidase Orp1 fused to
+roGFP2; peroxidase cycling transfers
+oxidation to the probe
+0.1–10 µM
+HyPer7
+H₂O₂
+OxyR regulatory domain on roGFP2;
+bright, pH-stable, ultrafast,
+ultrasensitive
+~1–100 µM (bolus);
+ultrasensitive to
+near-basal fluxes
+Peredox
+NADH/NAD⁺
+T-Rex NADH-binding domain fused to
+cpGFP
+0.1–10 (ratio units)
+SoNar
+NADH/NAD⁺
+T-Rex domain fused to cpYFP;
+dual-excitation ratiometric
+0.1–10 (ratio units)
+iNap
+NADPH/NADP⁺
+T-Rex/cpGFP family with affinity
+variants
+0.1–10 (ratio units)
+*Indicative ranges are system-dependent (expression level, targeting,
+pH, calibration); pyridine-nucleotide probes report dimensionless ratios
+calibrated in situ. Sources: Gutscher et al. (2008, 2009); Meyer & Dick
+(2010); Hung et al. (2011); Zhao et al. (2015); Tao et al. (2017); Pak et
+al. (2020).
+
+
+=== PAGINA 31 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 31
+Interpretive discipline requires that the instruments' limitations be
+stated with the same precision as their capabilities. First, pH: the
+glutathione potential varies by approximately −59 mV per pH unit for
+the GSSG/2GSH couple (Section 4), so EGSH readouts are interpretable
+only with compartmental pH known or co-measured—a confound the
+field addresses through pH-stable probe engineering and parallel pH
+sensors (Pak et al., 2020). Second, kinetics: probe response times range
+from sub-second to minutes, so instrument bandwidth filters the
+transients the network actually generates, and fast excursions may be
+underestimated. Third, calibration: conversion of fluorescence ratios to
+absolute potentials or concentrations requires in situ titration under
+defined pH, ionic strength, and temperature, consistent with the
+comparability caveats of Section 4; published values remain
+incomparable unless these conditions are fixed. Fourth, perturbation:
+the probe is itself a—small—additional sink and source within the
+network, with expression level and targeting as experimental variables
+to be controlled rather than ignored.
+With the heterogeneity argument of Section 14 and the instrument
+class surveyed here, the vector of ratios becomes measurable at the
+resolution of individual cells and organelles. The final section turns
+from measurement to infrastructure and design: model interoperability
+through ontology-based exchange, redox-aware metabolic engineering,
+and the synthesis of the integrated-network framework.
+
+
+=== PAGINA 32 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 32
+16. Interoperability, Metabolic Engineering, and
+Synthesis
+The final components of the framework are infrastructural, and they
+determine whether the preceding fourteen sections amount to a
+durable scientific discipline or to a collection of well-instrumented
+fragments. The first requirement is interoperability. A redox kinetic
+model that cannot be exchanged without losing the semantic identity of
+its redox-pair identifiers—GSH, GSSG, NADPH—or of its enzymatic
+reactions and compartment annotations is not a durable scientific
+object, because it cannot be reproduced, merged, or tested by others.
+SBPAX (Systems Biology Pathway Exchange) addresses this by
+functioning as an OWL ontology that bridges quantitative modeling
+formats (SBML/VCML) with qualitative pathway knowledge (BioPAX):
+its domain is the common subset of the two representations, and its
+expressive power is their super-union (Ruebenacker et al., 2009). When
+direct conversion between formats is impossible because of
+ambiguities, models can be exported losslessly into SBPAX as an
+intermediate, enriched with disambiguating information, and imported
+into the target format. The operational lesson is that standards do not
+replace measurements; they prevent fragmented maps from being
+mistaken for different biologies—precisely the failure mode this
+monograph has attributed to single-pair, bulk-averaged descriptions.
+The second requirement is that design activities respect the same
+network physics. Strain-design and flux-optimization algorithms search
+over gene knockouts, enzyme expression levels, and flux caps to elevate
+a product titer under stoichiometric—and sometimes
+kinetic—constraints. Redox-blind objectives routinely return infeasible
+designs, because if the solution collapses NAD(P)H balance, oxygen
+uptake, or glutathione-supported detoxification, the predicted titer is
+chemically unreachable. The Redox Imbalance Forces Drive (RIFD)
+strategy, introduced in 2025, makes the redox dimension explicit
+through four coordinated approaches to expanding the NADPH pool:
+expression of cofactor-converting enzymes; expression of heterologous
+cofactor-dependent enzymes; expression of NADPH-synthesis pathway
+enzymes; and reduction of NADPH waste through knockdown of
+non-essential genes (Jin et al., 2025). Experimentally validated in
+Escherichia coli for L-threonine production, the strategy achieved a
+
+
+=== PAGINA 33 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 33
+titer of 117.65 g/L and a yield of 0.65 g/g with simultaneous restoration
+of cell growth. The conceptual advance is direct: controlled redox
+imbalance can serve as a driving force for production rather than
+merely a stressor to be avoided. Multi-objective search that includes
+ROS load and redox-pair potentials alongside carbon yield thereby
+excludes designs that maximize yield on paper while collapsing
+homeostasis—the winning production plan is the one that remains
+within the out-of-equilibrium redox envelope (Jin et al., 2025).
+The synthesis consolidates the argument into a single architecture. The
+state of the system is the vector of ratios: multiplex across
+NAD⁺/NADH, NADP⁺/NADPH, GSH/GSSG, and TrxSS/TrxSH,
+compartment-resolved, and refined rather than erased by
+membraneless organelles, which mirror the cytosolic glutathione
+environment. Measurement of this state requires simultaneous
+multi-pair, single-cell, compartment-resolved readouts—requirements
+now met by the biosensor class of Section 15 and undermined by bulk
+averaging, which conceals the subpopulations that determine
+therapeutic outcomes. The chemistry that reads and writes this state is
+enzymatically gated throughout: hydrogen peroxide acts as a second
+messenger through selective, reversible cysteine oxidation, with
+nuclear targets such as GCN5 connecting redox state to epigenetic
+regulation; the peroxiredoxin/H₂O₂ module converts analog gradients
+into digital outputs through zero-order cycling, multistep oxidation, and
+hyperoxidation-gated positive feedback; hydrogen sulfide and
+persulfides add a sulfur-signaling layer interlocking with oxygen
+chemistry; and ferroptosis operationalizes redox control as a
+life-or-death decision executed by three compartment-mapped removal
+loops (GPX4/GSH, FSP1/CoQ, DHODH/CoQ). The pathology is
+bidirectional: reductive stress, driven in part by reverse electron
+transport, is as consequential as oxidative stress, and NAD⁺ decline
+couples redox state to epigenetics and metabolism in aging. The
+physiology is integrative: the circadian clock regulates and is regulated
+by redox state; immune activation reprograms the metabolic wiring of
+the vector; and the oxidizing endoplasmic reticulum ties protein-folding
+load to the UPR (Jones & Sies, 2015; Sies & Jones, 2020).
+Three perspectives follow. First, data infrastructure: the field will
+benefit from standardized, multi-pair, compartment-resolved datasets
+
+
+=== PAGINA 34 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 34
+accompanied by ontology-based model exchange, so that kinetic models
+accumulate rather than fragment. Second, therapy: the bidirectional
+stress framework implies that interventions must restore the failing
+loop—sensing, supply, or removal—rather than flood the system with
+chemically unrelated reductants. Third, design: metabolic engineering
+demonstrates that network awareness is productive, converting redox
+imbalance from a constraint into an actuated driving force. The picture
+that emerges is of the cell as an out-of-equilibrium electronic network,
+engineered by evolution to keep its potentials where its enzymes need
+them—and of the redox state, reported by the vector of ratios, as the
+quantitative language in which that engineering is described,
+measured, and redesigned.
+References
+Bersuker, K., Hendricks, J. M., Li, Z., et al. (2019). The CoQ oxidoreductase
+ FSP1 acts parallel to GPX4 to inhibit ferroptosis. Nature, 575(7784),
+688–692.
+Birk, J., Ramming, T., Odermatt, A., & Appenzeller-Herzog, C. (2013). Green
+ fluorescent protein-based monitoring of endoplasmic reticulum redox
+poise. Frontiers in Genetics, 4, 108.
+https://doi.org/10.3389/fgene.2013.00108
+Brand, M. D. (2016). Mitochondrial generation of superoxide and hydrogen
+ peroxide as the source of mitochondrial redox signaling. Free Radical
+Biology & Medicine, 100, 14–31.
+Covarrubias, A. J., Perrone, R., Grozio, A., & Verdin, E. (2021). NAD⁺
+ metabolism and its roles in cellular processes during ageing. Nature
+Reviews Molecular Cell Biology, 22(2), 119–141.
+De Smet, B., et al. (2025). The nuclear sulfenome of Arabidopsis: Spotlight on
+ histone acetyltransferase GCN5 regulation through functional thiols.
+Journal of Experimental Botany, 76(6), 1569–1584.
+Diaz Vivancos, P., Wolff, T., Markovic, J., et al. (2010). A nuclear glutathione
+ cycle within the cell cycle. Biochemical Journal, 431(2), 169–178.
+Dixon, S. J., Lemberg, K. M., Lamprecht, M. R., et al. (2012). Ferroptosis: An
+ iron-dependent form of nonapoptotic cell death. Cell, 149(5),
+1060–1072.
+Edgar, R. S., Green, E. W., Zhao, Y., et al. (2012). Peroxiredoxins are
+ conserved markers of circadian rhythms. Nature, 485(7399), 459–464.
+https://doi.org/10.1038/nature11088
+
+
+=== PAGINA 35 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 35
+Fisher, A. B. (2011). Peroxiredoxin 6: A bifunctional enzyme with glutathione
+ peroxidase and phospholipase A₂ activities. Antioxidants & Redox
+Signaling, 15(3), 831–844.
+Filipovic, M. R., Zivanovic, J., Alvarez, B., & Banerjee, R. (2018). Chemical
+ biology of H₂S signaling through persulfidation. Chemical Reviews,
+118(3), 1253–1337.
+Gutscher, M., Pauleau, A.-L., Marty, L., et al. (2008). Real-time imaging of the
+ intracellular glutathione redox potential. Nature Methods, 5(6),
+553–559.
+Gutscher, M., Sobotta, M. C., Wabnitz, G. H., et al. (2009). Proximity-based
+ protein thiol oxidation by H₂O₂-scavenging peroxidases. Journal of
+Biological Chemistry, 284(46), 31532–31540.
+Holmström, K. M., & Finkel, T. (2014). Cellular mechanisms and physiological
+ consequences of redox-dependent signalling. Nature Reviews
+Molecular Cell Biology, 15(6), 411–421.
+Hung, Y. P., Albeck, J. G., Tantama, M., & Yellen, G. (2011). Imaging cytosolic
+ NADH–NAD⁺ redox state with a genetically encoded fluorescent
+biosensor. Cell Metabolism, 14(4), 545–554.
+Jin, X., et al. (2025). Developing a Redox Imbalance Forces Drive (RIFD)
+ strategy and its application in L-threonine production. Metabolic
+Engineering, 92, 113–124.
+Jones, D. P., & Sies, H. (2015). The redox code. Antioxidants & Redox
+ Signaling, 23(9), 734–746.
+Kensler, T. W., Wakabayashi, N., & Biswal, S. (2007). Cell survival responses
+ to environmental stresses via the Keap1–Nrf2–ARE pathway. Annual
+Review of Pharmacology and Toxicology, 47, 89–116.
+Liu, S., Pi, J., & Zhang, Q. (2025). Origins of ultrasensitivity and complex
+ signaling dynamics of cellular hydrogen peroxide and peroxiredoxin.
+Antioxidants, 14(2), 235.
+Lu, S. C. (2009). Regulation of glutathione synthesis. Molecular Aspects of
+ Medicine, 30(1–2), 42–59.
+Lu, J., & Holmgren, A. (2014). The thioredoxin antioxidant system. Free
+ Radical Biology & Medicine, 66, 75–87.
+Mao, C., et al. (2021). DHODH-mediated ferroptosis defence is a targetable
+ vulnerability in cancer. Nature, 593(7860), 586–590.
+Mercola, J. (2025). Reductive stress and mitochondrial dysfunction: The
+ hidden link in chronic disease. Free Radical Biology & Medicine, 233,
+118–131.
+
+
+=== PAGINA 36 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 36
+Meyer, A. J., & Dick, T. P. (2010). Fluorescent protein-based redox probes.
+ Antioxidants & Redox Signaling, 13(5), 621–650.
+Michaelis, L., & Menten, M. L. (1913). Die Kinetik der Invertinwirkung.
+ Biochemische Zeitschrift, 49, 333–369.
+Miró-Vinyals, C., Emmert, S., et al. (2025). Characterization of the glutathione
+ redox state in the Golgi apparatus. Redox Biology, 81, 103560.
+https://doi.org/10.1016/j.redox.2025.103560
+Mitchell, P. (1961). Chemiosmotic coupling in oxidative and photosynthetic
+ phosphorylation. Nature, 191(4784), 144–148.
+O'Neill, L. A. J., Kishton, R. J., & Rathmell, J. (2016). A guide to
+ immunometabolism for immunologists. Nature Reviews Immunology,
+16(9), 553–565.
+Pak, V. V., Ezerina, D., Lyublinskaya, O. G., et al. (2020). Ultrasensitive
+ genetically encoded indicator for hydrogen peroxide identifies roles for
+the oxidant in cell migration and mitochondrial signaling. Cell
+Metabolism, 31(3), 642–653.e6.
+https://doi.org/10.1016/j.cmet.2020.02.003
+Paulsen, C. E., & Carroll, K. S. (2010). Orchestration through chemical
+ signaling. ACS Chemical Biology, 5(1), 47–62.
+Prigogine, I. (1978). Time, structure, and fluctuations. Science, 201(4358),
+ 777–785.
+Ramsey, K. M., Yoshino, J., Brace, C. S., et al. (2009). Circadian clock
+ feedback cycle through NAMPT-mediated NAD⁺ biosynthesis. Science,
+324(5927), 651–654. https://doi.org/10.1126/science.1171641
+Ron, D., & Walter, P. (2007). Signal integration in the endoplasmic reticulum
+ unfolded protein response. Nature Reviews Molecular Cell Biology,
+8(7), 519–529.
+Rovira, A., & Rivera-Fuentes, P. (2025). Measurement of the glutathione redox
+ potentials in membraneless organelles. bioRxiv (preprint).
+https://doi.org/10.1101/2025.03.30.646167
+Ruebenacker, O., Blinov, M. L., & Moraru, I. I. (2009). Integrating BioPAX
+ pathway knowledge with SBML models. IET Systems Biology, 3(5),
+317–328.
+Schafer, F. Q., & Buettner, G. R. (2001). Redox environment of the cell as
+ viewed through the redox state of the glutathione disulfide/glutathione
+couple. Free Radical Biology & Medicine, 30(10), 1191–1212.
+Semenza, G. L. (2012). Hypoxia-inducible factors in physiology and medicine.
+ Cell, 148(3), 399–408.
+
+
+=== PAGINA 37 ===
+REDOX BIOLOGY AS AN INTEGRATED NETWORK SYSTEM
+Page 37
+Sies, H. (2015). Hydrogen peroxide as a central redox signaling molecule in
+ physiological oxidative stress: Efferent and afferent mechanisms. Redox
+Biology, 4, 180–183.
+Sies, H., & Jones, D. P. (2020). Reactive oxygen species (ROS) as pleiotropic
+ physiological signaling agents. Nature Reviews Molecular Cell Biology,
+21(7), 363–383.
+Stangherlin, A., & Reddy, A. B. (2013). Regulation of circadian clocks by redox
+ homeostasis. Journal of Biological Chemistry, 288(37), 26505–26511.
+Stockwell, B. R., Friedmann Angeli, J. P., Bayir, H., et al. (2017). Ferroptosis:
+ A regulated cell death nexus linking metabolism, redox biology, and
+disease. Cell, 171(2), 273–285.
+Tao, R., Zhao, Y., et al. (2017). Genetically encoded fluorescent sensors reveal
+ dynamic regulation of NADPH metabolism. Nature Methods, 14(7),
+720–728. https://doi.org/10.1038/nmeth.4306
+Verdin, E. (2015). NAD⁺ in aging, metabolism, and neurodegeneration.
+ Science, 350(6265), 1208–1213.
+Wang, K., Zhang, T., Dong, Q., et al. (2013). Redox homeostasis: The linchpin
+ in stem cell self-renewal and differentiation. Cell Death & Disease, 4(3),
+e537. https://doi.org/10.1038/cddis.2013.50
+Wood, Z. A., Poole, L. B., & Karplus, P. A. (2003). Peroxiredoxin evolution and
+ the regulation of hydrogen peroxide signaling. Science, 300(5619),
+650–653.
+Zhao, Y., et al. (2015). SoNar, a highly responsive NAD⁺/NADH sensor, allows
+ high-throughput metabolic screening of anti-tumor agents. Cell
+Metabolism, 21(5), 777–789.

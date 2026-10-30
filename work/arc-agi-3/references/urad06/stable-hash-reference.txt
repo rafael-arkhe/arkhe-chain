@@ -1,0 +1,23 @@
+def stable_picture_key(picture):
+    """Status-bar-light stable hash for standard-agent state memory.
+
+    ARC-AGI-3 frames include volatile HUD/status pixels. We mask the extreme
+    top/bottom rows and hash the canonical uint8 board so the graph memory does
+    not explode on timer/score text changes.
+    """
+    try:
+        arr = np.asarray(picture, dtype=np.uint8)
+        if arr.ndim == 3:
+            arr = arr[-1] if arr.shape[0] <= 5 else arr[:, :, 0]
+        if arr.size == 4096:
+            arr = arr.reshape(64, 64)
+        arr = arr.copy()
+        if arr.shape[0] >= 64:
+            arr[:2, :] = 0
+            arr[-2:, :] = 0
+        return _stable_bytes_hash(arr.tobytes(), digest_size=8)
+    except Exception:
+        try:
+            return _stable_bytes_hash(np.asarray(picture).tobytes(), digest_size=8)
+        except Exception:
+            return 0

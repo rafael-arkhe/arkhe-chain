@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe-Intra — Portal Principal Corporativo Fiduciário</title>
+<!-- Fonts: Inter, Poppins, JetBrains Mono & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "pass-surface": "#ECFDF5",
+            "primary-fixed": "#dde1ff",
+            "primary-light": "#DBEAFE",
+            "on-secondary-fixed": "#25005a",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed": "#07006c",
+            "outline": "#757684",
+            "surface-container-high": "#e2e7ff",
+            "fail-surface": "#FEF2F2",
+            "secondary": "#712ae2",
+            "on-tertiary": "#ffffff",
+            "secondary-container": "#8a4cfc",
+            "text-primary": "#0F172A",
+            "on-primary-container": "#a8b8ff",
+            "secondary-fixed": "#eaddff",
+            "inconclusive-text": "#92400E",
+            "tertiary-fixed": "#e1e0ff",
+            "danger-fail": "#DC2626",
+            "pass-text": "#065F46",
+            "on-secondary": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-container": "#eaedff",
+            "tertiary-container": "#3433c3",
+            "surface-container-low": "#f2f3ff",
+            "on-secondary-fixed-variant": "#5a00c6",
+            "fail-border": "#FECACA",
+            "on-secondary-container": "#fffbff",
+            "tertiary-fixed-dim": "#c0c1ff",
+            "primary": "#00288e",
+            "surface-variant": "#dae2fd",
+            "inconclusive-border": "#FDE68A",
+            "on-primary": "#ffffff",
+            "surface-sunken": "#F1F5F9",
+            "on-error-container": "#93000a",
+            "on-background": "#131b2e",
+            "success-pass": "#059669",
+            "surface-dim": "#d2d9f4",
+            "error": "#ba1a1a",
+            "primary-fixed-dim": "#b8c4ff",
+            "on-primary-fixed": "#001453",
+            "primary-dark": "#1E3A8A",
+            "primary-container": "#1e40af",
+            "on-surface": "#131b2e",
+            "tertiary": "#170cae",
+            "secondary-fixed-dim": "#d2bbff",
+            "surface-container-highest": "#dae2fd",
+            "fail-text": "#991B1B",
+            "inverse-primary": "#b8c4ff",
+            "surface-bright": "#faf8ff",
+            "warning-inconclusive": "#D97706",
+            "inconclusive-surface": "#FFFBEB",
+            "info": "#0284C7",
+            "text-secondary": "#475569",
+            "on-surface-variant": "#444653",
+            "surface-tint": "#3755c3",
+            "pass-border": "#A7F3D0",
+            "inverse-on-surface": "#eef0ff",
+            "on-tertiary-container": "#b3b5ff",
+            "on-primary-fixed-variant": "#173bab",
+            "on-tertiary-fixed-variant": "#2f2ebe",
+            "background": "#F8FAFC",
+            "inverse-surface": "#283044",
+            "surface-container-lowest": "#ffffff",
+            "border": "#E2E8F0",
+            "outline-variant": "#c4c5d5",
+            "border-strong": "#CBD5E1",
+            "surface": "#FFFFFF",
+            "text-tertiary": "#94A3B8"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "margin-tablet": "1.5rem",
+            "space-lg": "1.5rem",
+            "space-2xl": "2.5rem",
+            "gutter-sm": "1rem",
+            "space-xs": "0.25rem",
+            "margin-ultra": "4rem",
+            "margin-wide": "3rem",
+            "space-md": "1rem",
+            "space-3xl": "3rem",
+            "margin-mobile": "1rem",
+            "gutter-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "margin-desktop": "2rem",
+            "gutter": "1.5rem",
+            "margin": "2rem",
+            "gutter-md": "1.25rem",
+            "gutter-xl": "2rem"
+          },
+          fontFamily: {
+            "heading-3": ["Inter", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "display-lg-mobile": ["Poppins", "sans-serif"],
+            "display-md-mobile": ["Poppins", "sans-serif"],
+            "label-md": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "display-md": ["Poppins", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "display-lg": ["Poppins", "sans-serif"],
+            "code": ["JetBrains Mono", "monospace"],
+            "caption": ["Inter", "sans-serif"],
+            "heading-2": ["Inter", "sans-serif"],
+            "heading-4": ["Inter", "sans-serif"],
+            "heading-1": ["Poppins", "sans-serif"],
+            "code-sm": ["JetBrains Mono", "monospace"]
+          },
+          fontSize: {
+            "heading-3": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+            "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+            "display-lg-mobile": ["32px", { lineHeight: "38px", letterSpacing: "-0.01em", fontWeight: "700" }],
+            "display-md-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.01em", fontWeight: "700" }],
+            "label-md": ["14px", { lineHeight: "20px", fontWeight: "500" }],
+            "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+            "display-md": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+            "display-lg": ["48px", { lineHeight: "52px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "code": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+            "caption": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+            "heading-2": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+            "heading-4": ["18px", { lineHeight: "26px", fontWeight: "600" }],
+            "heading-1": ["30px", { lineHeight: "38px", fontWeight: "600" }],
+            "code-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-background text-text-primary antialiased min-h-screen flex flex-col font-body-md">
+<!-- ================= TOP NAVIGATION BAR ================= -->
+<header class="sticky top-0 z-50 bg-surface shadow-sm">
+<div class="w-full px-space-xl max-w-7xl mx-auto flex items-center justify-between h-16">
+<!-- Brand & Global Search -->
+<div class="flex items-center gap-space-lg">
+<a class="text-heading-3 font-heading-3 text-primary-dark tracking-tight flex items-center gap-2" href="#">
+<span class="w-8 h-8 rounded-lg bg-primary-container text-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" data-icon="shield">shield</span>
+</span>
+<span>Arkhe-Intra</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-code-sm bg-pass-surface text-pass-text border border-pass-border uppercase tracking-wider">v4.2 PROVED</span>
+</a>
+<!-- Global Search Input with Shortcut -->
+<div class="relative hidden lg:block w-72">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-text-tertiary text-[18px]" data-icon="search">search</span>
+<input class="w-full pl-9 pr-16 py-1.5 bg-surface-sunken border border-border rounded-lg text-body-sm font-body-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-light transition-all" placeholder="Pesquisar governança, atas, hash..." type="text"/>
+<kbd class="absolute right-2.5 top-2 px-1.5 py-0.5 text-[11px] font-code-sm text-text-tertiary bg-surface border border-border-strong rounded shadow-sm">Ctrl+K</kbd>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav aria-label="Navegação Central" class="hidden md:flex items-center gap-6">
+<a class="text-primary-container border-b-2 border-primary-container font-heading-4 pb-1" href="#">Governance</a>
+<a class="text-text-secondary hover:text-text-primary font-label-md transition-colors" href="#">Intelligence</a>
+<a class="text-text-secondary hover:text-text-primary font-label-md transition-colors" href="#">Policies</a>
+<a class="text-text-secondary hover:text-text-primary font-label-md transition-colors" href="#">Operations</a>
+</nav>
+<!-- Trailing Action Cluster & User Credentials -->
+<div class="flex items-center gap-space-md">
+<!-- Fast Verification CTA -->
+<button class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-label-md font-label-md text-text-primary hover:bg-surface-sunken transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px] text-primary-container" data-icon="verified_user">verified_user</span>
+<span>Quick Verify</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-container text-surface text-label-md font-label-md hover:bg-primary-dark transition-all active:scale-[0.98] shadow-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit_document">edit_document</span>
+<span>Sign Signature</span>
+</button>
+<!-- Notification Bell -->
+<div class="relative">
+<button aria-label="Notificações" class="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-sunken transition-colors relative">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-fail rounded-full ring-2 ring-surface"></span>
+</button>
+</div>
+<!-- Vertical Divider -->
+<div class="h-6 w-[1px] bg-border hidden sm:block"></div>
+<!-- User Institutional Profile -->
+<div class="flex items-center gap-2.5 pl-1">
+<div class="relative">
+<img class="w-8 h-8 rounded-full border border-border-strong object-cover" data-alt="Corporate headshot of Mariana Silva, a senior female executive in formal enterprise navy attire against a pristine minimalist studio background, with warm professional softbox lighting and sharp composition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBx9iVcwmJAEKpI3PqRoCX2vGHxH5POwCHJ5AL2ys0I7TPger5qePCC7OJG0HkKRRYi50CapKWESK_ec2gJqDqDfN0CIIqZo9SX0zIb5IMPYe-WIMz-HhP-r0b3CV3Nc8VgoQe7DFTF8vBhpw6e95IOrhvvBiqPIFGw68vEBT1WxMvKANEHZ416kG-MKD3LngVvQeCo-wVwR-elCwm4uhNMOheD7ndHFMoNpHWrn2188ay1lR8fNoGi"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success-pass border-2 border-surface rounded-full" title="Sessão autenticada via chave FIDO2 física"></span>
+</div>
+<div class="hidden xl:flex flex-col text-left">
+<span class="text-label-md font-label-md text-text-primary leading-tight">Mariana Silva</span>
+<span class="text-[11px] font-caption text-text-secondary leading-tight">Diretoria de Governança</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- ================= ARKHE STATUS BANNER (VERDICT & MERKLE ANCHOR) ================= -->
+<section class="w-full bg-pass-surface border-b border-pass-border px-space-xl py-2">
+<div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-body-sm font-body-sm">
+<div class="flex items-center gap-3">
+<!-- Verdict Badge -->
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-caption font-caption bg-surface text-pass-text border border-pass-border shadow-xs">
+<span class="w-2 h-2 rounded-full bg-success-pass animate-pulse"></span>
+<span>PASS</span>
+</span>
+<p class="text-pass-text font-medium text-[13px] sm:text-body-sm">
+<strong class="font-semibold">Arkhe Tenant Verificado:</strong> Consenso fiduciário em conformidade · Última ancoragem Rekor há 2 min · 1.247 evidências atestadas no WormGraph
+        </p>
+</div>
+<div class="flex items-center gap-3 ml-auto text-caption font-caption">
+<!-- Copyable Hash Pill -->
+<div class="flex items-center gap-1.5 bg-surface px-2.5 py-1 rounded border border-pass-border">
+<span class="text-text-secondary font-label-md">Merkle Root:</span>
+<code class="text-code-sm font-code-sm text-primary-container font-semibold cursor-pointer hover:underline" title="Clique para copiar hash completo">d7a1b49e8ff2...</code>
+<button aria-label="Copiar Hash" class="text-text-tertiary hover:text-text-primary p-0.5">
+<span class="material-symbols-outlined text-[14px]" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+<!-- Inclusion Proof Link -->
+<a class="inline-flex items-center gap-1 text-primary-container hover:text-primary-dark font-medium underline" href="#audit">
+<span>Verificar Prova de Inclusão</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span>
+</a>
+</div>
+</div>
+</section>
+<!-- ================= HERO SECTION & EXECUTIVE GREETING ================= -->
+<section class="w-full max-w-7xl mx-auto px-space-xl pt-space-xl pb-space-lg">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-lg pb-space-md border-b border-border">
+<div>
+<div class="flex items-center gap-2 text-text-tertiary text-caption font-caption mb-1">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="schedule">schedule</span>
+<span>Quarta-feira, 26 de Fevereiro de 2025 · 14:32 BRT (17:32 UTC)</span>
+</div>
+<h1 class="text-display-md font-display-md text-text-primary tracking-tight">
+          Bom dia, Mariana Silva
+        </h1>
+<p class="text-body-md font-body-md text-text-secondary mt-1 max-w-2xl">
+          O digital workplace fiduciário da sua organização — integridade criptográfica ponta a ponta e fail-closed por construção.
+        </p>
+</div>
+<!-- Trust Metrics Cards Row -->
+<div class="grid grid-cols-3 gap-3 w-full md:w-auto">
+<div class="bg-surface border border-border rounded-lg p-3 px-4 min-w-[130px] shadow-xs">
+<div class="text-[11px] font-caption text-text-secondary uppercase tracking-wider">Políticas</div>
+<div class="text-heading-3 font-heading-3 text-success-pass flex items-center gap-1">
+<span>100%</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle">check_circle</span>
+</div>
+<span class="text-[11px] text-text-tertiary">Validadas e Ativas</span>
+</div>
+<div class="bg-surface border border-border rounded-lg p-3 px-4 min-w-[130px] shadow-xs">
+<div class="text-[11px] font-caption text-text-secondary uppercase tracking-wider">Consenso</div>
+<div class="text-heading-3 font-heading-3 text-text-primary flex items-center gap-1">
+<span>Zero</span>
+<span class="material-symbols-outlined text-[16px] text-success-pass" data-icon="lock">lock</span>
+</div>
+<span class="text-[11px] text-text-tertiary">Bloqueios Ativos</span>
+</div>
+<div class="bg-surface border border-border rounded-lg p-3 px-4 min-w-[130px] shadow-xs">
+<div class="text-[11px] font-caption text-text-secondary uppercase tracking-wider">Fiduciário</div>
+<div class="text-heading-3 font-heading-3 text-warning-inconclusive flex items-center gap-1">
+<span>3</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="pending_actions">pending_actions</span>
+</div>
+<span class="text-[11px] text-text-tertiary">Aprovações Pendentes</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= MAIN WORKSPACE GRID (8 COLS MAIN + 4 COLS SIDEBAR) ================= -->
+<main class="w-full max-w-7xl mx-auto px-space-xl pb-space-2xl flex-1">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl">
+<!-- ================= LEFT COLUMN: MAIN CONTENT (8 COLS) ================= -->
+<div class="lg:col-span-8 flex flex-col gap-space-2xl">
+<!-- SECTION 1: NOTÍCIAS CORPORATIVAS & COMUNICADOS VERIFICADOS -->
+<section aria-labelledby="news-feed-heading">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[22px]" data-icon="newspaper">newspaper</span>
+<h2 class="text-heading-2 font-heading-2 text-text-primary" id="news-feed-heading">
+                Notícias Corporativas &amp; Diretivas Fiduciárias
+              </h2>
+</div>
+<a class="text-label-md font-label-md text-primary-container hover:underline inline-flex items-center gap-1" href="#">
+              Ver todos os comunicados
+              <span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+</a>
+</div>
+<!-- Featured News Card (Arkhe-Verified Card Variant) -->
+<article class="bg-surface border border-border rounded-xl p-space-lg relative overflow-hidden shadow-xs hover:shadow-md transition-shadow border-l-[4px] border-l-success-pass mb-space-md">
+<div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-0.5 rounded-full text-caption font-caption bg-primary-light text-primary-dark">
+                  Governança &amp; Compliance
+                </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-caption bg-pass-surface text-pass-text border border-pass-border">
+<span class="material-symbols-outlined text-[13px]" data-icon="verified">verified</span>
+                  Arkhe PASS
+                </span>
+</div>
+<time class="text-caption font-caption text-text-tertiary">Hoje, 09:15 · Bloco #894.201</time>
+</div>
+<h3 class="text-heading-2 font-heading-2 text-text-primary hover:text-primary-container cursor-pointer transition-colors mb-2">
+              Conselho Administrativo aprova o Novo Marco Fiduciário para Inteligência Artificial Autônoma
+            </h3>
+<p class="text-body-md font-body-md text-text-secondary mb-4 leading-relaxed">
+              O novo framework regulatório estabelece que qualquer agente algorítmico atuando em tesouraria ou aprovações contratuais deve possuir assinatura assimétrica Ed25519 e prova matemática de não-repúdio registrada no WormGraph empresarial.
+            </p>
+<div class="bg-surface-sunken rounded-lg p-2.5 border border-border flex flex-wrap items-center justify-between gap-3 text-code-sm font-code-sm">
+<div class="flex items-center gap-2">
+<span class="text-text-secondary">Assinado por:</span>
+<span class="text-text-primary font-medium">Conselho Consultivo (ID: ED-0x718B)</span>
+<span class="text-text-tertiary">·</span>
+<span class="text-primary-container font-mono">hash: 8f9b...3c12</span>
+</div>
+<a class="inline-flex items-center gap-1 text-primary-container font-medium hover:underline" href="#">
+<span class="material-symbols-outlined text-[14px]" data-icon="receipt_long">receipt_long</span>
+                Inspecionar no Rekor
+              </a>
+</div>
+</article>
+<!-- 2 Secondary News Items Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Secondary Item 1 -->
+<article class="bg-surface border border-border rounded-xl p-space-md shadow-xs hover:border-border-strong transition-all flex flex-col justify-between border-l-[3px] border-l-success-pass">
+<div>
+<div class="flex items-center justify-between gap-2 mb-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-caption bg-surface-sunken text-text-secondary border border-border">
+                    Segurança de Dados
+                  </span>
+<span class="inline-flex items-center gap-0.5 text-[11px] font-caption text-pass-text bg-pass-surface px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]" data-icon="check_circle">check_circle</span>
+                    PASS
+                  </span>
+</div>
+<h4 class="text-heading-4 font-heading-4 text-text-primary mb-1 hover:text-primary-container transition-colors">
+                  Nova Política de Retenção de Dados e PII v2.4
+                </h4>
+<p class="text-body-sm font-body-sm text-text-secondary line-clamp-2 mb-3">
+                  Prazos legais atualizados de expurgo com exclusão criptograficamente atestável por chaves efêmeras.
+                </p>
+</div>
+<div class="pt-2 border-t border-border flex items-center justify-between text-code-sm font-code-sm text-text-tertiary">
+<span>Digest: 4a2e...91bc</span>
+<span>Ontem</span>
+</div>
+</article>
+<!-- Secondary Item 2 -->
+<article class="bg-surface border border-border rounded-xl p-space-md shadow-xs hover:border-border-strong transition-all flex flex-col justify-between border-l-[3px] border-l-success-pass">
+<div>
+<div class="flex items-center justify-between gap-2 mb-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-caption bg-surface-sunken text-text-secondary border border-border">
+                    Auditoria Externa
+                  </span>
+<span class="inline-flex items-center gap-0.5 text-[11px] font-caption text-pass-text bg-pass-surface px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]" data-icon="check_circle">check_circle</span>
+                    PASS
+                  </span>
+</div>
+<h4 class="text-heading-4 font-heading-4 text-text-primary mb-1 hover:text-primary-container transition-colors">
+                  Relatório Trimestral de Auditoria SOC2 / Arkhe
+                </h4>
+<p class="text-body-sm font-body-sm text-text-secondary line-clamp-2 mb-3">
+                  Emitido parecer sem ressalvas para a arquitetura de segregação de deveres e integridade de registros fiduciários.
+                </p>
+</div>
+<div class="pt-2 border-t border-border flex items-center justify-between text-code-sm font-code-sm text-text-tertiary">
+<span>Digest: 9e01...ef55</span>
+<span>24 Fev</span>
+</div>
+</article>
+</div>
+</section>
+<!-- SECTION 2: ACESSO RÁPIDO A HUBS & SERVIÇOS CORPORATIVOS -->
+<section aria-labelledby="hubs-grid-heading">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[22px]" data-icon="apps">apps</span>
+<h2 class="text-heading-2 font-heading-2 text-text-primary" id="hubs-grid-heading">
+                Hubs de Serviços &amp; Departamentos
+              </h2>
+</div>
+<span class="text-caption font-caption text-text-tertiary">4 ecossistemas integrados</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Hub 1: RH & Pessoas -->
+<div class="bg-surface border border-border rounded-xl p-space-md shadow-xs hover:shadow-md transition-all group">
+<div class="flex items-start justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-primary-light text-primary-container flex items-center justify-center group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="groups">groups</span>
+</div>
+<span class="text-[11px] font-caption text-success-pass bg-pass-surface px-2 py-0.5 rounded-full font-medium">SLA: 99.9%</span>
+</div>
+<h3 class="text-heading-3 font-heading-3 text-text-primary group-hover:text-primary-container transition-colors mb-1">
+                Hub de RH &amp; Pessoas
+              </h3>
+<p class="text-body-sm font-body-sm text-text-secondary mb-4">
+                Gestão transparente de carreira, benefícios, férias programadas e holerites assinados digitalmente.
+              </p>
+<div class="flex flex-wrap gap-2 text-label-md font-label-md">
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Solicitar Férias</a>
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Holerite Digital</a>
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Plano Médico</a>
+</div>
+</div>
+<!-- Hub 2: TI & Infraestrutura -->
+<div class="bg-surface border border-border rounded-xl p-space-md shadow-xs hover:shadow-md transition-all group">
+<div class="flex items-start justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-surface-sunken text-text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="lan">lan</span>
+</div>
+<span class="text-[11px] font-caption text-success-pass bg-pass-surface px-2 py-0.5 rounded-full font-medium">Zero-Trust OK</span>
+</div>
+<h3 class="text-heading-3 font-heading-3 text-text-primary group-hover:text-primary-container transition-colors mb-1">
+                Hub de TI &amp; Infraestrutura
+              </h3>
+<p class="text-body-sm font-body-sm text-text-secondary mb-4">
+                Acesso seguro via FIDO2/mTLS, provisionamento de hardware corporativo e central de tickets de suporte.
+              </p>
+<div class="flex flex-wrap gap-2 text-label-md font-label-md">
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Abrir Chamado</a>
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Chaves FIDO2</a>
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">VPN Gateway</a>
+</div>
+</div>
+<!-- Hub 3: Jurídico & Compliance -->
+<div class="bg-surface border border-border rounded-xl p-space-md shadow-xs hover:shadow-md transition-all group">
+<div class="flex items-start justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-surface-sunken text-text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="gavel">gavel</span>
+</div>
+<span class="text-[11px] font-caption text-pass-text bg-pass-surface px-2 py-0.5 rounded-full font-medium">Fail-Closed</span>
+</div>
+<h3 class="text-heading-3 font-heading-3 text-text-primary group-hover:text-primary-container transition-colors mb-1">
+                Hub Jurídico &amp; Compliance
+              </h3>
+<p class="text-body-sm font-body-sm text-text-secondary mb-4">
+                Repositório de políticas em vigor, canal anônimo de denúncias criptografado e contratos auditáveis.
+              </p>
+<div class="flex flex-wrap gap-2 text-label-md font-label-md">
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Código de Ética</a>
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Canal Seguro</a>
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Pareceres</a>
+</div>
+</div>
+<!-- Hub 4: Central de Documentos & Templates -->
+<div class="bg-surface border border-border rounded-xl p-space-md shadow-xs hover:shadow-md transition-all group">
+<div class="flex items-start justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-surface-sunken text-text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="folder_managed">folder_managed</span>
+</div>
+<span class="text-[11px] font-caption text-text-secondary bg-surface-sunken px-2 py-0.5 rounded-full font-medium">Chancelados</span>
+</div>
+<h3 class="text-heading-3 font-heading-3 text-text-primary group-hover:text-primary-container transition-colors mb-1">
+                Documentos &amp; Templates Oficiais
+              </h3>
+<p class="text-body-sm font-body-sm text-text-secondary mb-4">
+                Modelos de procurações, minutas bilaterais e atas de reunião com carimbo de tempo inviolável.
+              </p>
+<div class="flex flex-wrap gap-2 text-label-md font-label-md">
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Minutas Padrão</a>
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Carimbo de Tempo</a>
+<a class="px-2.5 py-1 rounded-md bg-surface-sunken hover:bg-surface border border-border text-text-primary text-xs transition-colors" href="#">Log de Versões</a>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- ================= RIGHT COLUMN: SIDEBAR & FIDUCIARY OPERATIONS (4 COLS) ================= -->
+<aside aria-label="Ações Pendentes e Telemetria Fiduciária" class="lg:col-span-4 flex flex-col gap-space-xl">
+<!-- WIDGET A: MINHAS TAREFAS & APROVAÇÕES FIDUCIÁRIAS -->
+<div class="bg-surface border border-border rounded-xl p-space-md shadow-xs">
+<div class="flex items-center justify-between mb-3 pb-2 border-b border-border">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="fact_check">fact_check</span>
+<h3 class="text-heading-4 font-heading-4 text-text-primary">Minhas Tarefas</h3>
+</div>
+<span class="bg-primary-light text-primary-dark text-caption font-caption px-2 py-0.5 rounded-full font-semibold">3 Pendentes</span>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Pending Task 1 (Actionable Fiduciary Sign-off) -->
+<div class="p-3 bg-surface-sunken border border-border rounded-lg flex flex-col gap-2">
+<div class="flex items-start justify-between gap-2">
+<div>
+<span class="text-[11px] font-caption text-text-secondary uppercase">Despesa Corporativa</span>
+<h4 class="text-label-md font-label-md text-text-primary font-semibold">Aprovação de Viagem #4982</h4>
+<p class="text-body-sm font-body-sm text-text-secondary text-xs">Comitê de Auditoria Interna · R$ 14.850,00</p>
+</div>
+<span class="material-symbols-outlined text-warning-inconclusive text-[18px]" data-icon="hourglass_top">hourglass_top</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<button class="flex-1 py-1.5 px-2 bg-primary-container hover:bg-primary-dark text-surface text-caption font-caption font-medium rounded transition-all flex items-center justify-center gap-1 active:scale-[0.98]">
+<span class="material-symbols-outlined text-[14px]" data-icon="signature">signature</span>
+                  Assinar com Ed25519
+                </button>
+<button class="py-1.5 px-3 bg-surface hover:bg-fail-surface border border-border hover:border-fail-border text-fail-text text-caption font-caption font-medium rounded transition-all">
+                  Rejeitar
+                </button>
+</div>
+</div>
+<!-- Pending Task 2 -->
+<div class="p-3 bg-surface border border-border rounded-lg flex flex-col gap-1.5 hover:border-border-strong transition-all">
+<div class="flex items-start justify-between">
+<h4 class="text-label-md font-label-md text-text-primary font-medium">Revisão de Política de Segurança</h4>
+<span class="text-[11px] font-caption text-danger-fail font-medium">Vence em 2 dias</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary text-xs">Verificação de cláusula de retenção biométrica.</p>
+<div class="flex items-center justify-between pt-1 text-code-sm font-code-sm text-text-tertiary">
+<span>Versão 1.8-RC</span>
+<a class="text-primary-container text-xs hover:underline flex items-center gap-0.5" href="#">
+                  Revisar <span class="material-symbols-outlined text-[12px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Pending Task 3 -->
+<div class="p-3 bg-surface border border-border rounded-lg flex flex-col gap-1.5 hover:border-border-strong transition-all">
+<div class="flex items-start justify-between">
+<h4 class="text-label-md font-label-md text-text-primary font-medium">Homologação de Fornecedor</h4>
+<span class="text-[11px] font-caption text-warning-inconclusive font-medium">Em validação</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary text-xs">Due diligence de conformidade LGPD &amp; ISO 27001.</p>
+<div class="flex items-center justify-between pt-1 text-code-sm font-code-sm text-text-tertiary">
+<span>Certisign Corp</span>
+<a class="text-primary-container text-xs hover:underline flex items-center gap-0.5" href="#">
+                  Detalhes <span class="material-symbols-outlined text-[12px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<!-- WIDGET B: STATUS DA CAMADA FIDUCIÁRIA ARKHE (WORMGRAH TELEMETRY) -->
+<div class="bg-surface border border-border rounded-xl p-space-md shadow-xs">
+<div class="flex items-center justify-between mb-3 pb-2 border-b border-border">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="fingerprint">fingerprint</span>
+<h3 class="text-heading-4 font-heading-4 text-text-primary">Camada Fiduciária</h3>
+</div>
+<span class="inline-flex items-center gap-1 text-[11px] font-caption text-pass-text bg-pass-surface px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-success-pass"></span>
+              Sincronizado
+            </span>
+</div>
+<div class="space-y-3 text-body-sm font-body-sm">
+<div>
+<span class="text-caption font-caption text-text-secondary">MMR Root Atual (WormGraph):</span>
+<div class="mt-1 p-2 bg-surface-sunken border border-border rounded font-code-sm text-code-sm text-text-primary break-all flex items-center justify-between">
+<span>b3f9c801a24dfa8019e072b2</span>
+<span class="material-symbols-outlined text-[16px] text-text-tertiary" data-icon="lock">lock</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 text-xs">
+<div class="p-2 bg-surface-sunken border border-border rounded">
+<span class="text-text-secondary block font-caption">Quórum Rekor:</span>
+<span class="text-text-primary font-semibold">2/2 Witness Nodes</span>
+</div>
+<div class="p-2 bg-surface-sunken border border-border rounded">
+<span class="text-text-secondary block font-caption">Fail-Closed:</span>
+<span class="text-success-pass font-semibold">ATIVO / 100%</span>
+</div>
+</div>
+<a class="w-full mt-2 py-2 px-3 bg-surface hover:bg-surface-sunken border border-border text-text-primary text-caption font-caption font-medium rounded-lg text-center flex items-center justify-center gap-1.5 transition-colors" href="#audit-trail">
+<span class="material-symbols-outlined text-[16px] text-primary-container" data-icon="history_toggle_off">history_toggle_off</span>
+              Abrir Audit Trail Completo
+            </a>
+</div>
+</div>
+<!-- WIDGET C: FERRAMENTAS DIÁRIAS & LINKS RÁPIDOS -->
+<div class="bg-surface border border-border rounded-xl p-space-md shadow-xs">
+<h3 class="text-heading-4 font-heading-4 text-text-primary mb-3 pb-2 border-b border-border flex items-center gap-2">
+<span class="material-symbols-outlined text-text-secondary text-[20px]" data-icon="bolt">bolt</span>
+            Ferramentas do Dia a Dia
+          </h3>
+<div class="grid grid-cols-2 gap-2">
+<a class="p-2.5 rounded-lg border border-border hover:border-primary-container hover:bg-surface-sunken transition-all flex flex-col gap-1 text-left" href="#">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="card_membership">card_membership</span>
+<span class="text-label-md font-label-md text-text-primary text-xs leading-tight">Portal Benefícios</span>
+</a>
+<a class="p-2.5 rounded-lg border border-border hover:border-primary-container hover:bg-surface-sunken transition-all flex flex-col gap-1 text-left" href="#">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="more_time">more_time</span>
+<span class="text-label-md font-label-md text-text-primary text-xs leading-tight">Registro de Ponto</span>
+</a>
+<a class="p-2.5 rounded-lg border border-border hover:border-primary-container hover:bg-surface-sunken transition-all flex flex-col gap-1 text-left" href="#">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="support_agent">support_agent</span>
+<span class="text-label-md font-label-md text-text-primary text-xs leading-tight">Solicitação de TI</span>
+</a>
+<a class="p-2.5 rounded-lg border border-border hover:border-primary-container hover:bg-surface-sunken transition-all flex flex-col gap-1 text-left" href="#">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="contact_phone">contact_phone</span>
+<span class="text-label-md font-label-md text-text-primary text-xs leading-tight">Central de Ramais</span>
+</a>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- ================= INSTITUTIONAL FOOTER ================= -->
+<footer class="w-full bg-surface border-t border-border mt-auto">
+<div class="w-full px-space-xl py-space-2xl max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-space-md">
+<!-- Left: Institutional Copyright & Consensus Statement -->
+<div class="flex flex-col gap-1 text-center md:text-left">
+<div class="flex items-center justify-center md:justify-start gap-2">
+<span class="text-heading-4 font-heading-4 text-text-primary tracking-tight">Arkhe-Intra</span>
+<span class="text-caption font-caption text-text-secondary">· Fiduciary Workplace Node #04</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary max-w-xl text-xs">
+          © 2025 Arkhe Enterprise Fiduciary Protocol. All systemic operations verified cryptographically under Rekor Log transparency standard. Fail-closed consensus v4.2.
+        </p>
+</div>
+<!-- Right: Cryptographic Transparency Links -->
+<nav aria-label="Links de Auditoria Fiduciária" class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-caption font-caption">
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">Merkle Transparency Log</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">BLAKE3 Identity Digest</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">System Attestation Tree</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">Governance Registry</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors" href="#">Cryptographic Keyring</a>
+</nav>
+</div>
+</footer>
+</body></html>

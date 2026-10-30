@@ -1,0 +1,82 @@
+   Compiling arkhe-verify-self-demo v0.1.0 (C:\Users\Lemes\AppData\Local\Temp\arkhe-verifier-gate-mutations-3a_ldf3m\remove_rekor_binding)
+   Compiling sigstore-verify v0.6.6 (C:\Users\Lemes\AppData\Local\Temp\arkhe-verifier-gate-mutations-3a_ldf3m\remove_rekor_binding\vendor\sigstore-verify)
+warning: unused import: `hashedrekord::verify_hashedrekord_entries`
+  --> vendor\sigstore-verify\src\verify_impl\mod.rs:13:9
+   |
+13 | pub use hashedrekord::verify_hashedrekord_entries;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `verify_hashedrekord_entries` is never used
+  --> vendor\sigstore-verify\src\verify_impl\hashedrekord.rs:16:8
+   |
+16 | pub fn verify_hashedrekord_entries(bundle: &Bundle, artifact: &Artifact<'_>) -> Result<()> {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `verify_hashedrekord_entry` is never used
+  --> vendor\sigstore-verify\src\verify_impl\hashedrekord.rs:26:4
+   |
+26 | fn verify_hashedrekord_entry(
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `compute_artifact_digest` is never used
+  --> vendor\sigstore-verify\src\verify_impl\hashedrekord.rs:86:4
+   |
+86 | fn compute_artifact_digest(artifact: &Artifact<'_>) -> Sha256Hash {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `validate_artifact_hash` is never used
+  --> vendor\sigstore-verify\src\verify_impl\hashedrekord.rs:94:4
+   |
+94 | fn validate_artifact_hash(artifact_hash: &Sha256Hash, expected_hash: &Sha256Hash) -> Result<()> {
+   |    ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `validate_certificate_match` is never used
+   --> vendor\sigstore-verify\src\verify_impl\hashedrekord.rs:105:4
+    |
+105 | fn validate_certificate_match(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `validate_signature_match` is never used
+   --> vendor\sigstore-verify\src\verify_impl\hashedrekord.rs:163:4
+    |
+163 | fn validate_signature_match(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `verify_signature_cryptographically` is never used
+   --> vendor\sigstore-verify\src\verify_impl\hashedrekord.rs:211:4
+    |
+211 | fn verify_signature_cryptographically(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `validate_integrated_time` is never used
+   --> vendor\sigstore-verify\src\verify_impl\hashedrekord.rs:308:4
+    |
+308 | fn validate_integrated_time(entry: &TransparencyLogEntry, bundle: &Bundle) -> Result<()> {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `sigstore-verify` (lib) generated 9 warnings (run `cargo fix --lib -p sigstore-verify` to apply 1 suggestion)
+    Finished `test` profile [unoptimized] target(s) in 6.41s
+     Running tests\negative.rs (D:\arkhe\arkhe-verify-self-demo\target\debug\deps\negative-47bf6da3d93dfb5b.exe)
+
+running 1 test
+test unrelated_rekor_entry_rejected ... FAILED
+
+failures:
+
+---- unrelated_rekor_entry_rejected stdout ----
+
+thread 'unrelated_rekor_entry_rejected' (12816) panicked at tests\negative.rs:80:18:
+expected artifact binding rejection, got Ok(SelfVerificationResult { wasm_sha256: "ccf59f0f7a7625ee380ed228905aadfa11072ac14cea1c53d1e7f3953d4d48c6", integrated_time: Some(1767225600) })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    unrelated_rekor_entry_rejected
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--test negative`

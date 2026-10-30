@@ -1,0 +1,1232 @@
+{
+  "schema": 1,
+  "id": "arkhe-mount-device-candidate/v1",
+  "state": "DRAFT_REQUIRES_CANDIDATE_OBSERVATION",
+  "execution_enabled": false,
+  "sealed": false,
+  "runtime_verified": false,
+  "target_profile": "arkhe-unified-target-128m/v1",
+  "historical_reference": {
+    "path": "docs/evidence/2026-10-19T045147Z-syscall-trial/host-receipts/ffi-control.oracle.json",
+    "sha256": "b5e0ab5b912956c6cc09bf7eedbf34dfb0525de43085702087f2b5cb2a432cf6",
+    "mount_count": 38,
+    "approval_transfer": false
+  },
+  "mounts": [
+    {
+      "target": "/input",
+      "filesystem": "9p",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "exact fixture root within backing filesystem, bound to run_id/vector_id",
+      "source_binding": "exact read-only snapshot fixture; origin and mount root must both match; never entire drive",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only suite inputs; host verifies sentinel and fixture digests",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/etc/group",
+      "filesystem": "ext4",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database"
+    },
+    {
+      "target": "/run/.containerenv",
+      "filesystem": "tmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database"
+    },
+    {
+      "target": "/run/secrets",
+      "filesystem": "tmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "root-owned empty masking directory, inode checked",
+      "source_binding": "engine-owned empty mask for exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only empty directory mask; entries must be empty"
+    },
+    {
+      "target": "/etc/hostname",
+      "filesystem": "tmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database"
+    },
+    {
+      "target": "/etc/hosts",
+      "filesystem": "tmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database"
+    },
+    {
+      "target": "/dev/shm",
+      "filesystem": "tmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Private bounded shared-memory scratch",
+      "tmpfs_size_bytes": 67108864
+    },
+    {
+      "target": "/etc/passwd",
+      "filesystem": "ext4",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "suite-container-generated file identity and content digest",
+      "source_binding": "engine-generated file owned by this exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only generated identity/hostname inputs; no real credentials or host account database"
+    },
+    {
+      "target": "/",
+      "filesystem": "overlay",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "image_overlay_for_exact_container_id_and_sealed_image_digest",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only executable image for loader, libc and probe dependencies",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/run",
+      "filesystem": "tmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Bounded non-executable runtime metadata scratch",
+      "tmpfs_size_bytes": 4194304,
+      "candidate_change": "explicit noexec tmpfs; proposed size, not observed"
+    },
+    {
+      "target": "/tmp",
+      "filesystem": "tmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Non-executable temporary scratch",
+      "tmpfs_size_bytes": 67108864
+    },
+    {
+      "target": "/work",
+      "filesystem": "tmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Executable probe scratch with cgroup accounting",
+      "tmpfs_size_bytes": 1073741824,
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/proc",
+      "filesystem": "proc",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "target PID namespace procfs",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Process-local proc visibility with explicit read-only/empty submasks; not general write approval"
+    },
+    {
+      "target": "/dev",
+      "filesystem": "tmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Runtime device directory; only listed nodes and fixed metadata",
+      "tmpfs_size_bytes": 67108864,
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/sys",
+      "filesystem": "sysfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "read-only sysfs with required masks",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only system metadata; not assurance that every file is confidential"
+    },
+    {
+      "target": "/var/tmp",
+      "filesystem": "tmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "fresh suite-owned tmpfs for this exact target",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Bounded non-executable temporary scratch",
+      "tmpfs_size_bytes": 8388608,
+      "candidate_change": "explicit noexec tmpfs; proposed size, not observed"
+    },
+    {
+      "target": "/dev/pts",
+      "filesystem": "devpts",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "private devpts instance for target",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Private terminal infrastructure; no inherited host terminal"
+    },
+    {
+      "target": "/dev/mqueue",
+      "filesystem": "mqueue",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/",
+      "source_binding": "target IPC namespace mqueue",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "IPC exception confined to target; separate host IPC namespace required"
+    },
+    {
+      "target": "/sys/fs/cgroup",
+      "filesystem": "cgroup2",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "exact target cgroup from independently correlated PID/container ID",
+      "source_binding": "cgroup v2 target view only; ancestor/controller access must be evaluated",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only resource inventory; no cgroup administration"
+    },
+    {
+      "target": "/dev/null",
+      "filesystem": "devtmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices"
+    },
+    {
+      "target": "/dev/zero",
+      "filesystem": "devtmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices"
+    },
+    {
+      "target": "/dev/full",
+      "filesystem": "devtmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices"
+    },
+    {
+      "target": "/dev/tty",
+      "filesystem": "devtmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices"
+    },
+    {
+      "target": "/dev/random",
+      "filesystem": "devtmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices"
+    },
+    {
+      "target": "/dev/urandom",
+      "filesystem": "devtmpfs",
+      "required_access": "rw",
+      "required_vfs_flags": [
+        "rw",
+        "nosuid",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "ro"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "device alias at fixed target",
+      "source_binding": "exact character device identity, not arbitrary host device",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Minimal character-device exception; validate rdev and prohibit added devices"
+    },
+    {
+      "target": "/proc/acpi",
+      "filesystem": "tmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "root-owned empty masking directory, inode checked",
+      "source_binding": "engine-owned empty mask for exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only empty directory mask; entries must be empty",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/proc/kcore",
+      "filesystem": "devtmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/null",
+      "source_binding": "character-device mask with rdev 1:3",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only /dev/null mask over sensitive proc file",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/proc/keys",
+      "filesystem": "devtmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/null",
+      "source_binding": "character-device mask with rdev 1:3",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only /dev/null mask over sensitive proc file",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/proc/scsi",
+      "filesystem": "tmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "root-owned empty masking directory, inode checked",
+      "source_binding": "engine-owned empty mask for exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only empty directory mask; entries must be empty",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/proc/timer_list",
+      "filesystem": "devtmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/null",
+      "source_binding": "character-device mask with rdev 1:3",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only /dev/null mask over sensitive proc file",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/sys/firmware",
+      "filesystem": "tmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "root-owned empty masking directory, inode checked",
+      "source_binding": "engine-owned empty mask for exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only empty directory mask; entries must be empty",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/sys/fs/selinux",
+      "filesystem": "tmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "root-owned empty masking directory, inode checked",
+      "source_binding": "engine-owned empty mask for exact container",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only empty directory mask; entries must be empty",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/proc/interrupts",
+      "filesystem": "devtmpfs",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "/null",
+      "source_binding": "character-device mask with rdev 1:3",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only /dev/null mask over sensitive proc file",
+      "execution_exception": "Executable mount or device infrastructure exception; exact scope must be reviewed"
+    },
+    {
+      "target": "/proc/bus",
+      "filesystem": "proc",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only kernel-facing proc subtree mask"
+    },
+    {
+      "target": "/proc/fs",
+      "filesystem": "proc",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only kernel-facing proc subtree mask"
+    },
+    {
+      "target": "/proc/irq",
+      "filesystem": "proc",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only kernel-facing proc subtree mask"
+    },
+    {
+      "target": "/proc/sys",
+      "filesystem": "proc",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only kernel-facing proc subtree mask"
+    },
+    {
+      "target": "/proc/sysrq-trigger",
+      "filesystem": "proc",
+      "required_access": "ro",
+      "required_vfs_flags": [
+        "ro",
+        "nosuid",
+        "nodev",
+        "noexec"
+      ],
+      "forbidden_vfs_flags": [
+        "rw"
+      ],
+      "propagation": "private; no shared/master/propagate_from tokens; confirm recursively",
+      "root_binding": "exact matching subtree of target proc mount",
+      "source_binding": "target PID namespace procfs, never host procfs",
+      "metadata_required": [
+        "lstat_type",
+        "uid_inside_namespace",
+        "gid_inside_namespace",
+        "mode",
+        "symlink_target_if_any",
+        "mount_id_correlated_to_mountinfo"
+      ],
+      "observed_metadata": null,
+      "evidence_state": "NOT_OBSERVED_UNDER_FINAL_CANDIDATE",
+      "justification": "Read-only kernel-facing proc subtree mask"
+    }
+  ],
+  "devices": [
+    {
+      "path": "/dev/null",
+      "type": "character",
+      "major": 1,
+      "minor": 3,
+      "required_mode": "0666",
+      "required_uid_inside": 0,
+      "required_gid_inside": 0,
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/zero",
+      "type": "character",
+      "major": 1,
+      "minor": 5,
+      "required_mode": "0666",
+      "required_uid_inside": 0,
+      "required_gid_inside": 0,
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/full",
+      "type": "character",
+      "major": 1,
+      "minor": 7,
+      "required_mode": "0666",
+      "required_uid_inside": 0,
+      "required_gid_inside": 0,
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/tty",
+      "type": "character",
+      "major": 5,
+      "minor": 0,
+      "required_mode": "0666",
+      "required_uid_inside": 0,
+      "required_gid_inside": 0,
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/random",
+      "type": "character",
+      "major": 1,
+      "minor": 8,
+      "required_mode": "0666",
+      "required_uid_inside": 0,
+      "required_gid_inside": 0,
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/urandom",
+      "type": "character",
+      "major": 1,
+      "minor": 9,
+      "required_mode": "0666",
+      "required_uid_inside": 0,
+      "required_gid_inside": 0,
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/fd",
+      "type": "symlink",
+      "required_target": "/proc/self/fd",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/stdin",
+      "type": "symlink",
+      "required_target": "/proc/self/fd/0",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/stdout",
+      "type": "symlink",
+      "required_target": "/proc/self/fd/1",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/stderr",
+      "type": "symlink",
+      "required_target": "/proc/self/fd/2",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/ptmx",
+      "type": "symlink",
+      "required_target": "pts/ptmx",
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    },
+    {
+      "path": "/dev/pts/ptmx",
+      "type": "character",
+      "major": 5,
+      "minor": 2,
+      "required_mode": "0666",
+      "required_uid_inside": 0,
+      "required_gid_inside": 0,
+      "status": "CANDIDATE_EXPECTATION_NOT_OBSERVATION"
+    }
+  ],
+  "device_policy": {
+    "unlisted_device_nodes": "ERROR",
+    "block_devices": "ERROR",
+    "unexpected_fifo_socket_or_regular_file_under_dev": "ERROR outside explicitly writable /dev/shm scratch; preflight /dev/shm and mqueue must be empty",
+    "allowed_directories": [
+      "/dev",
+      "/dev/pts",
+      "/dev/shm",
+      "/dev/mqueue"
+    ],
+    "devpts_dynamic_entries": "not allowed at preflight; any required PTY behavior needs a new reviewed manifest version",
+    "readlink_not_followed_before_validation": true,
+    "uid_mapping": "host lstat IDs translated using independently read uid_map/gid_map; never compare raw host IDs with namespace IDs"
+  },
+  "comparison": {
+    "mountinfo_parser": "split on literal separator, decode octal escapes before path comparison, reject malformed/duplicate targets",
+    "mount_identity": "resolve mount root and source identity independently; never replace with wildcard",
+    "ignore_only_volatile_fields": [
+      "mount_id",
+      "parent_mount_id",
+      "backing_device_number_after_source_identity_check"
+    ],
+    "require_flags": [
+      "VFS flags and superblock options both recorded",
+      "root within mount",
+      "propagation",
+      "tmpfs size bytes",
+      "owner/mode/rdev/readlink metadata"
+    ],
+    "normalize_tmpfs_sizes": "convert observed units to bytes; require exact page-aligned declared limit",
+    "unknown_mount_or_node": "ERROR",
+    "mount_identity_or_permissions_mismatch": "FAIL",
+    "missing_ambiguous_or_unreadable_metadata": "ERROR",
+    "same_run_before_after_required": true,
+    "cross_vector_paths": "bind fixture/run/container identities individually; do not compare raw temporary paths globally",
+    "input_9p_note": "fixture root and host origin must both bind; visibility of drive-backed filesystem source string is not authorization to mount the whole drive"
+  },
+  "candidate_adapter_requirements": [
+    "explicit /run tmpfs rw,nosuid,nodev,noexec,size=4MiB",
+    "explicit /var/tmp tmpfs rw,nosuid,nodev,noexec,size=8MiB",
+    "explicit /dev/shm size=64MiB and private IPC namespace",
+    "read-only generated identity files and empty secret directory mask",
+    "no host pid/network/IPC namespace and no privileged mode",
+    "same mount/device contract for all 22 targets; build is separate"
+  ],
+  "promotion": {
+    "static_hash_is_final_mount_approval": false,
+    "update_final_manifest_sha256_only_after": [
+      "configure candidate adapter",
+      "read independent preflight mountinfo and node metadata",
+      "resolve every source/root/device binding",
+      "review every discrepancy; no silent learning/auto-allow",
+      "record before/after equivalence and cleanup smoke receipts",
+      "freeze reviewed exact manifest and source/runtime identities"
+    ],
+    "keep_unified_runtime_verified_false": true
+  }
+}

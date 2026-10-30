@@ -1,0 +1,887 @@
+
+=== PAGINA 1 ===
+Arkhe: A Verifiable Trust Infrastructure and Engineering
+Roadmap for Artificial General Intelligence
+A Monograph
+Rafael Oliveira 1 and Jameson Bednarski 2
+1Safe Core, Rio de Janeiro, Brazil
+2Independent Researcher
+July 15, 2026
+Version 1.0 — Preprint for academic dissemination
+Abstract
+The dominant research programs pursuing artificial general intelligence (AGI) treat safety, auditabil-
+ity, and governance as properties to be layered onto capable systems after the fact. This monograph
+presentsArkhe, a research program and engineering architecture that inverts that ordering: it takes
+verifiable trust infrastructureas the load-bearing foundation upon which increasingly general AI
+capabilities can be responsibly built. Arkhe is organized around a single constitutional principle—
+that a claim about system behavior counts only when it is backed by mechanical evidence: compiler
+output, passing tests, cryptographic hashes, and independently checkable proofs. We make four con-
+tributions. First, we specify a canonical trust-infrastructure architecture of seven Rust crates plus
+an event bus, organized into platform, domain, and security layers, with a compiler-enforced depen-
+dency discipline and an explicit separation betweentechnical invariants(properties the code must
+guarantee in every reachable state) andgovernance policies(rules humans decide and may change
+without touching code). Second, we present a threat model that takes the internal adversary—the
+malicious engineer, the compromised dependency, the colluding key holders—as seriously as the
+external one. Third, we describe an economic layer in which autonomous agents transact under
+the x402 payment protocol and payment is modeled as a capability constraint inside the policy
+engine, with every settlement leaving immutable evidence. Fourth, we situate a prescriptive 2026–
+2045 cognitive-architecture roadmap—spanning causal world models, continual learning, and a
+multi-layer Safety Kernel—on top of this infrastructure, using quantitative milestones and explicit
+maturity labels. Throughout, we are deliberate about epistemic status: we distinguish what is im-
+plemented and tested, what is specified but unbuilt, and what remains open research. Arkhe does
+not claim that AGI has been achieved or is imminent; it claims thatifgeneral systems are built, the
+order of construction matters, and that trust must be a precondition rather than a patch.
+Keywords:artificial general intelligence; AI safety; trust infrastructure; verifiable computing; Rust;
+decentralized identifiers; verifiable credentials; threshold cryptography; threat modeling; x402;
+agentic commerce; AI governance; continual learning; world models.
+1
+
+=== PAGINA 2 ===
+Contents
+1 Introduction 3
+1.1 The inversion problem . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+1.2 The constitutional principle: mechanical verification . . . . . . . . . . . . . . . . . . 3
+1.3 What Arkhe is, and what it is not . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+1.4 Structure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+2 Background and Related Work 4
+2.1 The capability–verification gap . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+2.2 Alignment approaches and their runtime gap . . . . . . . . . . . . . . . . . . . . . . . 5
+2.3 Agent infrastructure, identity, and delegation . . . . . . . . . . . . . . . . . . . . . . . 5
+2.4 Programmatic payments: the x402 protocol . . . . . . . . . . . . . . . . . . . . . . . 5
+2.5 The regulatory environment . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+3 The Arkhe Thesis and Design Principles 6
+3.1 Thesis . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+3.2 Principle 1 — Invariants are code; policies are configuration . . . . . . . . . . . . . . 6
+3.3 Principle 2 — Fail closed . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+3.4 Principle 3 — Prove execution, not reasoning . . . . . . . . . . . . . . . . . . . . . . 7
+3.5 Principle 4 — No single point of trust, including insiders . . . . . . . . . . . . . . . . 7
+3.6 Principle 5 — Everything observable, everything evidenced . . . . . . . . . . . . . . . 7
+4 The Trust Infrastructure: Canonical Architecture 7
+4.1 Seven crates and an event bus . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+4.2 Communication discipline . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+4.3 Representative technical invariants . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+4.4 Representative governance policies . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+4.5 Implementation status and dependency discipline . . . . . . . . . . . . . . . . . . . . 8
+5 Standardized Interfaces and Verification Methodology 8
+5.1 Interface design rules . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+5.2 The shape of the contracts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+5.3 Verification methodology . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+6 Threat Model v2: Taking the Insider Seriously 11
+6.1 Methodology . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+6.2 The thirteen threats . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+6.3 Honest accounting . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+7 The Safety Kernel and the Cognitive-Architecture Roadmap 12
+7.1 Four pillars . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+7.2 The cognitive message protocol . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+7.3 Layered architecture with latency contracts . . . . . . . . . . . . . . . . . . . . . . . 13
+7.4 CL-4L: the continual-learning proposal . . . . . . . . . . . . . . . . . . . . . . . . . 13
+7.5 The Safety Kernel . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+7.6 Roadmap and metrics, 2026–2045 . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+7.7 Relationship between roadmap and infrastructure . . . . . . . . . . . . . . . . . . . . 14
+2
+
+=== PAGINA 3 ===
+8 The Economic Layer: Programmatic Commerce under x402 14
+8.1 Motivation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+8.2 Design principles . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+8.3 The governed payment flow . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+8.4 Threat model of the economic layer . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+8.5 Why an economic layer belongs in a trust infrastructure . . . . . . . . . . . . . . . . . 15
+9 Governance and Regulatory Alignment 16
+9.1 Governance architecture . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+9.2 Mapping to the EU AI Act . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+9.3 Mapping to Brazil’s PL 2338 and the ANPD . . . . . . . . . . . . . . . . . . . . . . . 16
+9.4 Institutional posture . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+10 Epistemic Status and Limitations 17
+10.1 Maturity table . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+10.2 Known limitations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+11 Conclusion 18
+Author Contributions and Declarations 18
+1 Introduction
+1.1 The inversion problem
+The contemporary trajectory of AI development follows a recognizable pattern: capabilities are
+scaled first, and the apparatus of trust—evaluation, interpretability, oversight, incident response, and
+regulation—races to catch up. Frontier language models are deployed to hundreds of millions of users
+while the tools for understanding their internal computation remain nascent; autonomous agents are
+granted tool access, budgets, and long-horizon goals while the mechanisms for constraining, auditing,
+and reversing their actions remain ad hoc [28, 26]. The gap between what systems candoand what
+their operators canverify about what they didis widening, not narrowing [4, 5].
+This monograph presents Arkhe, a research program built on the opposite premise. Arkhe holds that
+for systems approaching general capability, trust infrastructure is not a feature but aprerequisite: the
+substrate of identity, attestation, immutable evidence, governed policy, and hardware-anchored control
+must exist, be tested, and be adversarially hardenedbeforethe capabilities that will stress it are attached.
+The name is drawn from the Greekarkh ¯e(αρ χη)—origin, foundation, first principle—and the choice
+is programmatic: the foundation comes first.
+1.2 The constitutional principle: mechanical verification
+Arkhe’s development is governed by a rule the project treats as constitutional rather than merely method-
+ological:a claim counts only when it is mechanically verifiable.Concretely, an assertion about the
+system must be backed by at least one of: (a)compiler output—the code type-checks and builds under
+a compiler-enforced dependency graph; (b)passing tests—behavior is demonstrated by executable, re-
+producible test suites; (c)cryptographic evidence—hashes, signatures, and Merkle proofs that any third
+party can recheck without trusting the claimant.
+This principle has a corollary that shapes everything in this monograph, including its own prose:
+unverified statements must be labeled, not presumed.Where a component is specified but unim-
+plemented, we say so. Where a projection depends on research that has not yet succeeded, we say so.
+Where a number originates in the project’s internal planning documents rather than in independently
+reproducible measurement, we attribute it as such. Section 10 consolidates these epistemic-status dis-
+tinctions into a single maturity table.
+3
+
+=== PAGINA 4 ===
+The principle also has a stringent negative consequence that Arkhe accepts explicitly: some things
+cannotbe proven, and pretending otherwise is harmful. In particular, Arkhe’s attestation layer proves
+thatdeterministic executionfaithfully followed a committed plan; it does not, and cannot, prove that a
+large language model’s natural-languagereasoningwas semantically correct. Cryptographic proof of
+“correct reasoning” for LLMs is not a solved problem and may be mathematically ill-defined [1]; Arkhe
+therefore scopes its proofs to deterministic execution and treats semantic risk as a governance problem,
+handled by policy, risk classification, and human oversight rather than by a false promise of proof.
+1.3 What Arkhe is, and what it is not
+Arkhe, as presented here, comprises three artifacts of differing maturity:
+1.The Trust Infrastructure— a canonical architecture of seven Rust crates plus an event bus
+(identity, attestation, storage, governance, security, consensus, observability, event bus), with
+standardizedasync_traitinterfaces, runtime-verifiable invariants, and a v2 threat model cover-
+ing internal adversaries and supply-chain compromise. This is the most mature layer: portions are
+implemented and tested in a multi-crate Rust workspace; the remainder is specified at interface
+level [1].
+2.The Economic Layer— a proposed integration (ADR-0002) of the x402 payment protocol, un-
+der which autonomous agents pay for APIs, inference, and digital resources programmatically
+over HTTP, with payment modeled as a policy constraint and every settlement recorded as im-
+mutable evidence. This is at the architecture-decision-record stage: designed, threat-modeled,
+not yet in production [3].
+3.The Cognitive Roadmap— a prescriptive 2026–2045 plan (v2.0) for the capability layers an
+AGI would require: multimodal perception, a causal world model (C-JEPA), a hybrid continual-
+learning architecture (CL-4L), and a four-layer Safety Kernel interposed between cognition and
+action. This is a roadmap with quantitative milestones, not a description of an implemented
+system [2].
+Equally important is what Arkhe isnot. Arkhe is not a claim that AGI exists, that it will arrive
+on a particular date, or that the roadmap targets will be met. It is not a proof system for machine
+consciousness, semantic truth, or benevolence—categories that the project explicitly declines to treat
+as provable. And it is not a single monolithic system: it is a layered discipline in which each layer’s
+guarantees are stated precisely, verified where possible, and honestly bounded where not.
+1.4 Structure
+Section 2 surveys the technical and regulatory background. Section 3 states the Arkhe thesis and design
+principles. Sections 4–6 present the trust infrastructure: architecture, interfaces, and threat model.
+Section 7 presents the Safety Kernel and the cognitive-architecture roadmap. Section 8 presents the
+x402 economic layer. Section 9 maps the architecture to the emerging regulatory landscape. Section 10
+states epistemic status and limitations. Section 11 concludes.
+2 Background and Related Work
+2.1 The capability–verification gap
+Frontier models as of mid-2026 demonstrate strong performance on knowledge-intensive and reason-
+ing benchmarks, and test-time compute scaling has driven rapid cost reductions for hard reasoning
+tasks. Yet the project’s internal state-of-the-art assessment [2]—consistent with the broader literature
+on generalization benchmarks such as the ARC-AGI family [4]—identifies a persistent qualitative gap:
+current systems areskill systems, notskill-acquisition systems. A human learns a novel abstraction
+4
+
+=== PAGINA 5 ===
+task from tens of examples; frontier models require orders of magnitude more supervision or search.
+Sample efficiency, compositional generalization, causal (rather than correlational) reasoning [16, 17],
+and continual learning without catastrophic forgetting [9] remain open, and each of these gaps is also a
+verificationgap: a system whose learning is opaque and whose competence boundary is unknown is a
+system whose behavior cannot be bounded.
+Mechanistic interpretability has made genuine progress—notably sparse autoencoders (SAEs)
+that decompose model activations into more monosemantic features [18, 19] and automated circuit-
+discovery methods [20]—and Arkhe’s Safety Kernel roadmap builds on that line of work (Section 7).
+But feature coverage is partial, and interpretability tooling today monitors and flags rather than proves.
+Arkhe’s position is that interpretability is a necessary layer of defense-in-depth, not a substitute for
+architectural constraint.
+2.2 Alignment approaches and their runtime gap
+Constitutional AI [6] and RLHF-family methods [7] shape model dispositions at training time; process
+supervision rewards verified reasoning steps [8]. What these approaches under-supply is aruntime
+enforcement substrate: a place where an explicit, human-legible constitution is evaluated on every
+proposed action, where high-risk actions fail closed, and where every decision leaves tamper-evident
+evidence. Work on concrete safety problems, control, and capability-threshold frameworks [22, 23,
+24, 21] motivates such a substrate; Arkhe attempts to engineer it, drawing on the verified-microkernel
+tradition—seL4’s machine-checked proof of functional correctness demonstrated that small, verified
+enforcement cores are feasible [25]—for the intuition that the enforcement layer should be minimal,
+decidable, and independently auditable.
+2.3 Agent infrastructure, identity, and delegation
+A rapidly consolidating literature argues that agentic AI requiresexternaltechnical infrastructure—
+identifiers, credentials, delegation, and incident attribution—rather than model-internal safety alone.
+Chan et al. propose “infrastructure for AI agents” as a research agenda spanning agent IDs, certifica-
+tion, and accountability channels [26]; South et al. formalizeauthenticated delegation, in which third
+parties can verify that an agent acts on behalf of a specific principal within cryptographically bounded
+permissions [27]; Shavit et al. enumerate governance practices for agentic systems, including action
+logging and human-in-the-loop controls [28]; and privilege-control frameworks such as Progent bring
+least-authority enforcement to agent tool use [29]. Arkhe is best read as an opinionated, end-to-end en-
+gineering instantiation of this agenda: its identity layer adopts the W3C Decentralized Identifier (DID)
+and Verifiable Credential (VC) standards [30, 31]—identities resolve to verifiable public keys; capabil-
+ities are granted as signed, expiring, revocable credentials checked cryptographicallyat the moment of
+use—and its bound-credential mechanism (Section 6) implements scope attenuation of exactly the kind
+the delegation literature calls for. For distributed control of privileged operations, Arkhe standardizes
+on threshold Schnorr signatures per FROST (RFC 9591) [32].
+2.4 Programmatic payments: the x402 protocol
+A general agent that cannot pay for resources is dependent on human-provisioned accounts and API
+keys—a dependency that is both an operational bottleneck and an accountability blur. The x402 proto-
+col, originated by Coinbase in May 2025 and subsequently transferred to a vendor-neutral x402 Founda-
+tion under the Linux Foundation, revives the HTTP 402 “Payment Required” status code as a machine-
+navigable payment handshake: a server answers an unpaid request with 402 and machine-readable
+payment requirements; the client signs a stablecoin transfer authorization and retries with the payment
+attached in a header; a facilitator verifies and settles on-chain; the resource is delivered with a settlement
+receipt [33, 34, 35]. The protocol is chain-agnostic via CAIP-2 network identifiers, is designed around
+small-value machine-to-machine payments, and by mid-2026 had attracted broad industry governance
+5
+
+=== PAGINA 6 ===
+participation—including major card networks and cloud providers—with monthly volumes in the tens
+of millions of transactions at sub-dollar average values [36]. Arkhe’s ADR-0002 (Section 8) adopts
+x402 not merely as a payment rail but as agovernedone: payment becomes a constraint evaluated by
+the policy engine, and every payment stage emits auditable evidence.
+2.5 The regulatory environment
+The architecture described here is being developed as comprehensive AI regulation crystallizes. The
+EU AI Act entered into force in August 2024 with staggered application: prohibitions from Febru-
+ary 2025, general-purpose-model obligations from August 2025, and—following the 2025–2026 “Dig-
+ital Omnibus” simplification package—a deferral of most high-risk-system obligations into late 2027
+and 2028 [37, 38]. In Brazil, PL 2338/2023 (Marco Legal da IA) passed the Senate in December 2024
+and, as of mid-2026, awaits a Chamber of Deputies vote; it establishes a risk-tiered framework with
+rights to information, explanation, contestation, and human review, an enforcement architecture coordi-
+nated by the ANPD, and sanctions up to R$50 million per violation [39, 40]. Both regimes converge
+on demands—documented risk management, human oversight, traceability, incident reporting, tamper-
+resistant logs—that arearchitecturalin nature. Section 9 argues that Arkhe’s invariants map onto these
+obligations by construction rather than by retrofit.
+3 The Arkhe Thesis and Design Principles
+3.1 Thesis
+Thesis.Ifsystems of increasingly general capability are to be built,thenthey must be built on top
+of an infrastructure in which identity is verifiable, execution is attestable, evidence is immutable,
+policy is decidable and human-governed, and shutdown is a distributed, hardware-anchored capa-
+bility that no single party—including the system itself—controls.
+The thesis is conditional by design. Arkhe takes no position on whether or when AGI will be achieved;
+it takes a strong position on theorder of constructionif it is attempted.
+3.2 Principle 1 — Invariants are code; policies are configuration
+Arkhe draws a hard line between two kinds of rules [1]:
+•Technical invariantsare properties the code must guarantee ineveryreachable state. They are
+identified (T-A1,T-S2,T-K1, . . . ), verified at runtime, and their violation triggers panic, degraded
+mode, or rejection—never silent continuation. Changing an invariant requires a code change and
+re-audit.
+•Governance policiesare rules humans decide: quorum sizes, timelock durations, attestation
+intervals, latency SLAs. They are identified (P-G1,P-S2, . . . ), live in configuration or in a Datalog
+constitution, and can be changed through a governed amendment process without recompilation.
+The separation is itself an anti-corruption device: it prevents policy debates from being smuggled
+into code (where they escape governance) and prevents engineering constraints from being weakened
+by configuration (where they escape audit).
+3.3 Principle 2 — Fail closed
+Every enforcement point in Arkhe defaults to denial. A credential that cannot be verified blocks the
+action. A rule the policy engine cannot decide is rejected at parse time—the constitution is expressed
+in decidable logic (Datalog) precisely so that “the engine could not evaluate this” is impossible by con-
+struction (invariantT-G3). A trusted-execution environment whose remote attestation fails drops the
+6
+
+=== PAGINA 7 ===
+system into degraded mode (T-K2). Availability is sacrificed to integrity at every such point, deliber-
+ately.
+3.4 Principle 3 — Prove execution, not reasoning
+Attestation in Arkhe is scoped to deterministic computation: the system can prove that a committed
+DecisionGraph—a hashed, step-wise plan with expected input/output hashes—was executed faithfully
+against a known state root (T-A2). It cannot prove that the plan waswise. This scoping is a direct
+application of the constitutional principle: promising cryptographic proof of LLM reasoning would be
+a false promise, so the architecture refuses to make it, and routes semantic risk to the governance and
+oversight layers instead [1, 2].
+3.5 Principle 4 — No single point of trust, including insiders
+No privileged operation may depend on a single key, machine, person, or organization. The kill switch
+requires a threshold of distinct signature shards (T-K1) held across a mandated geographic and jurisdic-
+tional spread (policyP-S2), implemented over FROST threshold Schnorr signatures [32]. Long-term
+keys never reside whole in unprotected memory (T-K3) and, notably, never inside the TEE that hosts
+the safety logic—so that even a TEE side-channel compromise yields no signing capability (Section 6,
+T-04). Constitutional changes require quorum plus a timelock of at least seven days (T-G1), making
+silent rule changes structurally impossible. And the threat model (Section 6) treats the project’s own
+engineers, dependencies, and key holders as adversaries to be constrained, not colleagues to be trusted.
+3.6 Principle 5 — Everything observable, everything evidenced
+Every public API emits structured telemetry with trace identifiers (T-O1); every event carries causa-
+tion and correlation metadata (T-E2); every consequential decision, proof, and payment is appended
+to a content-addressed, append-only log whose Merkle roots make tampering detectable and history
+replayable (T-S1–T-S3). Auditability is not a report generated after the fact; it is a byproduct of the only
+way the system is able to operate.
+4 The Trust Infrastructure: Canonical Architecture
+4.1 Seven crates and an event bus
+The canonical architecture [1] fixes seven Rust crates plus one event bus, arranged in three layers
+(Table 1). Each crate carries a one-sentence invariant that summarizes its contract. The earlier four-crate
+proposal (attestation, storage, governance, security) was rejected because it hid coupling—attestation
+calling storage directly to persist proofs—and left identity and observability as second-class, scattered
+concerns.
+4.2 Communication discipline
+Four rules govern inter-crate structure, and the first is enforced by the compiler:
+1.Domain crates never import each other.All domain-to-domain communication flows through
+arkhe-event-busas typed publish/subscribe events. A direct import fails compilation and
+blocks CI (invariantT-E1).
+2. Infrastructure crates are consumed by domain crates, never the reverse.
+3. Security crates are invoked by domain logic (e.g., to trigger the kill switch) but contain no domain
+knowledge.
+4. Observability is transversal: injected into every crate via tracing.
+7
+
+=== PAGINA 8 ===
+Table 1:Canonical layering of the Arkhe Trust Infrastructure.
+Layer Crate Contract (one-sentence invariant)
+Platformarkhe-event-busNo crate knows another directly; all domain communication is typed
+pub/sub.
+arkhe-identityEvery identity is verifiable (DID→public key; VC checked at use).
+arkhe-observabilityEvery event is observable (tracing, metrics, alerting, causality).
+Domainarkhe-attestationEvery proof is independently verifiable (hashes, signatures, Merkle; zk
+as research).
+arkhe-storageEvery object is content-addressed; the log is append-only and re-
+playable.
+arkhe-governanceNo constitutional change without quorumandtimelock.
+Securityarkhe-securityNo privileged operation depends on a single key or entity (TEE, MPC,
+FROST threshold, kill switch, remote attestation).
+arkhe-consensusBFT consensus for governance and checkpointing, off the hot path.
+The payoff of routing everything through the bus is that the system’s causal history is a first-class
+artifact: every event carriesevent_id,trace_id,causation_id, andcorrelation_id(T-E2); un-
+known future event schemas never panic a consumer (T-E3); and any flow can be replayed or audited
+from the event stream alone.
+4.3 Representative technical invariants
+The full specification enumerates runtime-verified invariants per crate, each with its verification mech-
+anism and violation consequence [1]. Table 2 shows a representative selection.
+4.4 Representative governance policies
+Alongside the invariants sit human-decided, amendment-changeable policies [1], including: constitu-
+tional amendment quorum (default 4/7 of an ethics board,P-G1); default timelock 7 days, extended to
+14 days with a 5/7 quorum for critical changes such as kill-switch or TEE configuration (P-G2,P-G3);
+kill-switch quorum 4/7 (P-S1); shard holders distributed across at least three continents and two legal
+jurisdictions (P-S2); TEE attestation interval 60 seconds (P-S3); and proof-verification latency SLAs
+(P-A1,P-A2). None of these values is hard-coded; all are auditable configuration.
+4.5 Implementation status and dependency discipline
+The Arkhe workspace is developed under a compiler-enforced layered dependency graph and, as of
+July 2026, comprises on the order of eighteen verified crates spanning the canonical seven plus sup-
+porting components (content-addressed storage with convergent encoding and Merkle-tree tamper de-
+tection; interfaces-only binary provenance that refuses to fabricate provenance data; interpretability
+tooling; a web gateway over TLS 1.3 in progress). The phased implementation roadmap [1] is delib-
+erately conservative: Phase 1 (2026–2027) delivers storage, identity, event bus, and observability with
+local IPFS and in-memory pub/sub; Phase 2 (2027–2028) adds FROST 3-of-5 threshold signatures [32]
+and hash/signature attestation while explicitly labeling zero-knowledge proof generation asresearch;
+TEEs reach production no earlier than Phase 4 (2030–2032), reflecting their vulnerability history; and
+BFT consensus stays off the hot path until and unless latency permits. Where a milestone depends on
+immature technology, the roadmap says “pilot” or “research,” not “delivered.”
+5 Standardized Interfaces and Verification Methodology
+8
+
+=== PAGINA 9 ===
+Table 2:Selected technical invariants (runtime-verified; violation is never silent).
+ID Invariant Runtime verification / on violation
+T-A1Every attestation is verifiable from its public in-
+puts and proof bytes alone, with no external state.
+verify()succeeds without database access /
+proof rejected, critical alert.
+T-A2TheDecisionGraphhash is a public input; if the
+plan changes, the proof fails.
+Graph hash recomputed duringverify()/ proof
+rejected as inconsistent.
+T-S1Every stored object is addressed by the hash of its
+content (CID).
+verify(cid, data)recomputes and compares /
+integrity failure, critical alert.
+T-S2The event log is append-only; the past is never
+modified.
+Merkle DAG with immutable roots; overwrites
+error / operation rejected, security alert.
+T-S3Every snapshot is reproducible by replaying the
+log.
+replay(from_root)must reproduce the snap-
+shot exactly / snapshot invalidated.
+T-I2Every accepted VC has a valid signatureat the
+moment of use.
+Ed25519 check against the issuer’s resolved key /
+credential rejected, action blocked.
+T-I3Credentials without expiration are malformed. Parse-time rejection of VCs lacking temporal
+bounds.
+T-G1No constitutional change without an amendment
+and a timelock≥7 days.
+now()≥proposed_at+timelock checked before
+application / bypass attempt logged.
+T-G3The constitution is decidable (Datalog); undecid-
+able rules are rejected at parse.
+Parser rejects unbounded recursion, higher-order
+constructs / constitution not loaded.
+T-K1Kill-switch activation requires≥thresholddis-
+tinctshards.
+Duplicate shard IDs rejected; count checked /
+activation fails, replay attempt alerted.
+T-K2The TEE hosting safety logic must attest re-
+motely; failure degrades the system.
+Remote attestation on a fixed interval (default
+60 s) / safe mode, critical alert.
+T-K3No whole private key persists in unprotected
+memory beyond a single operation.
+zeroizeon all private keys; memory audit /
+forced key rotation.
+T-O1Every public API emits
+start/success/failure/latency with a trace
+ID.
+Procedural instrumentation checked in integration
+tests / CI blocks the merge.
+9
+
+=== PAGINA 10 ===
+5.1 Interface design rules
+All cross-crate contracts are expressed as Rust traits under five rules [1]: all I/O is asynchronous
+(async_trait); all types areSend + Sync; lifetimes are explicit; each layer exposes exactly one error
+enum, composable into a workspace-wideArkheError; and no trait presumes a concrete implementa-
+tion, so every provider is mockable and every subsystem is testable in isolation. As one representative
+contract, the identity provider separates authorization into three independently checkable questions:
+#[ a s y n c _ t r a i t ]
+pub trait I d e n t i t y P r o v i d e r : Send + Sync {
+// / Who are you ? DID -> v e r i f i a b l e public key .
+async fn r e s o l v e _ d i d (& self , did : & DID ) -> Result < PublicKey , IdentityError
+>;
+// / Is this c r e d e n t i a l valid * now *? ( s ign at ur e + expiry + r e v o c a t i o n )
+async fn v e r i f y _ c r e d e n t i a l (& self , vc : & V e r i f i a b l e C r e d e n t i a l )
+-> Result < CredentialStatus , IdentityError >;
+// / Does its scope cover * this * action ?
+fn c o v e r s _ a c t i o n (& self , vc : & V e r i f i a b l e C r e d e n t i a l , a c t i o n _ s c o p e : & str ) ->
+bool ;
+}
+5.2 The shape of the contracts
+Rather than reproduce the full trait listing, we summarize what each contractguarantees:
+•EventBus/Publisher/Subscriber— typed topics (attestation completed/failed, storage
+stored, amendments proposed/applied, kill switch activated, credentials verified/rejected, alerts);
+mandatoryEventMetawith identifiers and schema version on every event; malformed events are
+unpublishable.
+•AttestationProvider—attest_execution(graph, state_root),verify(proof,
+expected_root)with constant or logarithmic verification cost (T-A3), and optional recursive
+aggregate. The error type includesNonDeterministic: a computation that is not deterministic
+is not attestable, and the API says so rather than pretending.
+•ImmutableStoreandEventSourcedLog—put,get, andverifyover content identifiers;
+append,replay,snapshot, andcurrent_rootover a Merkle-rooted, append-only log; op-
+tionalpersistpinning for multi-year retention.
+•PolicyEngine—evaluate_action(proposal, credentials)→Verdict, where a
+verdict carries not just permit/deny but risk level and whether attestation is required; plus
+propose_amendment,vote, andapply_amendmentimplementing the quorum-and-timelock
+lifecycle. Risk levels run Negligible→Critical, with Critical mandating human-in-the-loop by
+policy.
+•ThresholdKillSwitch/TrustedExecution— threshold configuration, shard-based activa-
+tion with nonce-carrying shards (anti-replay), kill-signal verification; enclave initialization to a
+code-hash measurement, attestation report generation, and report verification against expected
+measurement.
+•BFTProvider— off-hot-path consensus:proposefor critical actions,checkpointfor Merkle-
+root agreement.
+•ObservabilityProvider— spans, latency and counter metrics, and alerts with severities Info
+→Emergency, with an alert-pipeline latency invariant (T-O2: violated-invariant alerts within
+100 ms).
+10
+
+=== PAGINA 11 ===
+5.3 Verification methodology
+Arkhe’s verification stack is layered to match its claims. At the bottom, thecompilerenforces the depen-
+dency architecture (a domain-to-domain import cannot build). Above it,tests—including integration
+tests that check observability instrumentation and property tests over storage (deduplication, tamper
+detection, replay determinism)—gate CI. Above that,runtime checksimplement the T-invariants: CID
+recomputation on reads, Merkle-root comparison on replay, signature verification on every credential
+use, threshold counting on every kill-switch attempt. At the top,cryptographic evidence—hashes, signa-
+tures, and eventually attestation proofs—allows parties outside the system to re-verify without trusting
+it. Each layer catches what the layer below cannot express, and no claim in the architecture is supposed
+to rest on a layer weaker than the claim requires.
+6 Threat Model v2: Taking the Insider Seriously
+6.1 Methodology
+The threat model [1] follows STRIDE extended with explicit internal-adversary analysis. Each of
+thirteen threats is characterized by vector, impact, mitigation, adversary category (external, internal-
+privileged, collusion, supply chain, hardware, governance), owning crate, and the technical invariant
+that anchors the mitigation. Two properties distinguish it from typical models in this space: it refuses
+to assume the project’s own staff, dependencies, and governance participants are honest, and it records
+unmitigated threats as explicit roadmap debt (“requires. . . ”) rather than omitting them.
+6.2 The thirteen threats
+External and environmental. T-01, LLM hallucination attack: a model emits aDecisionGraph
+that is computationally valid but semantically malicious (data destruction framed as storage optimiza-
+tion); mitigation is the explicit scoping of proofs (a proof attests execution, never semantics; Section 3.4)
+combined with risk-tiered policy that blocks high-risk actions regardless of proof.T-02, trusted-setup
+compromiseof zk-SNARKs; mitigation is migration toward transparent (STARK-class) or universal-
+setup systems plus multi-verifier checking.T-05, storage censorshipby providers refusing to pin
+audit logs; mitigation is mandatory multi-provider replication with periodic integrity verification and
+anchoring of final hashes on an immutable layer.T-06, credential leak and reuse; mitigation isbound
+credentials cryptographically tied to the hash of the specific action proposal, so a stolen VC fails verifi-
+cation against any other action—an instance of the scope-attenuated delegation the agent-infrastructure
+literature calls for [27, 29].T-11, Sybil attackson BFT (DID-gated validator identity).T-12, man-in-
+the-middle between crates(mTLS with 24-hour certificates plus per-event Ed25519 signatures verified
+by the bus).T-13, replay against the event log(monotonic sequence numbers, Merkle roots, signed
+events, checkpoint fencing).
+Internal-privileged. T-07, malicious engineer with commit accessinserting a Safety-Kernel back-
+door. Mitigations are both technical—reproducible builds with publicly auditable binary hashes, manda-
+tory multi-party review (3+ independent reviewers) on safety-critical paths, SBOM per release, periodic
+external audit—and organizational: separation of duties between authorship and deployment, and a two-
+person rule for Safety-Kernel deploys.
+Collusion. T-03, malicious or negligent key holder(refusal to sign a necessary kill switch, or
+key loss); mitigation includes proactive secret sharing (shard refresh without changing the pub-
+lic key) and social-recovery escrow.T-09, collusion among shard holders(threshold reached
+by coordinated bad actors, or blocked by coordinated refusal); mitigations combine mandated geo-
+graphic/jurisdictional/institutional diversity, logging and alerting on same-entity shard assembly, holder
+rotation, and good-faith legal protection for holders who activate honestly.
+11
+
+=== PAGINA 12 ===
+Supply chain. T-08, dependency backdoorin a cryptographic crate; mitigations are allow-listed
+dependencies (cargo deny), auditable builds (cargo auditable), internal mirroring with hash verifi-
+cation, SBOM-against-CVE checking, continuous fuzzing of critical dependencies, and version pinning
+with no automatic updates on critical paths.
+Hardware. T-04, TEE side channels; the mitigation is architectural rather than reactive: no long-
+term key ever lives inside the running TEE—the enclave holds only decidable policy logic, and signa-
+tures always require the external threshold scheme—so a side-channel success yields policy code, not
+signing power.
+Governance. T-10, stale constitution cache: the low-latency local cache of the constitution lags
+a legitimate on-chain amendment; mitigations are TTL-bounded caching with asynchronous sync,
+conservative-mode operation on staleness, mandatory primary-source consultation for the highest-risk
+action class, and automatic discrepancy alerts to the ethics board.
+6.3 Honest accounting
+The threat matrix records mitigation status per threat, and several read “requires” rather than “imple-
+mented”: STARK migration (T-02), proactive secret sharing (T-03), reproducible builds (T-07), full
+SBOM/allow-list enforcement (T-08), and enforced holder diversity (T-09) are acknowledged open
+items. This bookkeeping is itself an instance of the constitutional principle: a mitigation that has not
+been built is a plan, and the document says so.
+7 The Safety Kernel and the Cognitive-Architecture Roadmap
+This section describes the prescriptive capability roadmap [2]. Unless stated otherwise, everything in it
+is a specification with quantitative targets, not a report of built systems. Quantitative claims about the
+July 2026 state of the art originate in the plan’s internal assessment and should be read as the authors’
+estimates.
+7.1 Four pillars
+The plan’s central thesis is that AGI requires theintegrationof four pillars, none sufficient alone:
+(1) multimodal perception, whose foundations it treats as consolidated in the 2024–2026 generation
+of models; (2) reasoning and planning, in active development (2026–2032), where test-time compute
+scaling must generalize beyond mathematics and drop in cost by more than an order of magnitude;
+(3) continual learning (2026–2038), the critical unsolved problem of acquiring new skills without catas-
+trophic forgetting [9]; and (4) alignment and safety, treated not as a pillar among equals but as aprecon-
+ditionfor the other three.
+7.2 The cognitive message protocol
+Everything in the cognitive architecture communicates through a typed, versionedMessage<T>struc-
+ture carrying: a content union (embedding, symbol, or probability distribution) with a Blake3 content
+hash;epistemic metadata—a calibrated certainty value, confidence intervals, an explicitSourceenum
+(perception; inference with a Merkle-rooted reasoning trace; memory with retrieval confidence; or ex-
+ternal input with a DID signature), and a validity scope; a dependency DAG of presupposed beliefs
+enabling provenance-tracing of any conclusion back to its origins; and an execution-control block with
+anActionBudget(maximum FLOPs, maximum wall-clock, and a rollback checkpoint) plus a safety-
+clearance level. Four capabilities fall out of this design: full provenance audit, principled conflict
+detection when modules disagree, uncertainty propagation along dependency chains (decisions require
+12
+
+=== PAGINA 13 ===
+certainty above a domain-configurable threshold), and hard sandboxing of actions against unbounded
+execution.
+7.3 Layered architecture with latency contracts
+The architecture is specified in six layers, each with explicit latency SLAs:Layer 0, multimodal percep-
+tion with cross-modal fusion (<50 ms streaming);Layer 1, the world model—acausaljoint-embedding
+predictive architecture (“C-JEPA”) extending the JEPA line [12, 13, 14] with approximate causal dis-
+covery in latent space (PC-algorithm plus differentiable NOTEARS refinement), counterfactual simu-
+lation via do-calculus [16, 17], and multi-scale temporal prediction [15], alongside intuitive-physics
+and theory-of-mind models;Layer 2, a reasoning engine combining neural pattern-matching, symbolic
+search and planning, and probabilistic inference through a neuro-symbolic integration layer;Layer 3,
+episodic, semantic, and procedural memory stores;Layer 4, the learning core, including the continual-
+learning architecture below; andLayer 5, action and tool use (APIs, sandboxed code execution, browser
+and robotics control), with tool creation, composition, and discovery as learned capabilities.
+7.4 CL-4L: the continual-learning proposal
+The plan’s answer to the plasticity–stability–scalability trilemma is a four-layer hybrid (“CL-4L”): a
+frozen base modelfor stability;task-specific adapters(LoRA-family [10]) with a learned router for
+plasticity—including an explicit “novel task” signal when routing confidence collapses;episodic mem-
+ory with experience replay[11] for rare or critical experiences; and periodicsleep-phase consolidation,
+in which the base model is re-distilled from itself-plus-adapters on a mixture of old and new tasks,
+accepted only if retention on old tasks stays within a 5% degradation budget, with rejection-and-retry
+under stronger regularization otherwise. Consolidation is scheduled (per∼1,000 tasks or monthly), not
+online.
+7.5 The Safety Kernel
+The Safety Kernel is the component where the cognitive roadmap and the trust infrastructure meet: a
+mandatory interposition layer, inspired by verified microkernels [25], through whicheveryproposed
+action must pass. It stacks four defenses:
+1.Policy Engine— the explicit constitution, compiled from decidable Datalog, evaluated in under
+10 ms, fail-closed: what no rule permits is blocked. This is the same governance machinery
+specified in Section 4 (T-G1–T-G3), now sitting on the action path of a cognitive system.
+2.Risk Classifier— neural-plus-symbolic classification of each action into five risk levels; Critical
+always requires a human in the loop.
+3.Impact Simulator— counterfactual rollout of the proposed action inside the world model before
+real execution, predicting second- and third-order effects; predicted harm above threshold blocks
+the action (<500 ms for simple simulations).
+4.Human-in-the-Loop— an approval interface for critical actions with timeout and escalation
+(junior→senior→ethics board).
+Around the stack sit three further mechanisms.Circuit monitoring: SAE-based detectors [18, 19]
+watch for activation of risk-associated features (deception, power-seeking, manipulation), and sustained
+activation places the system in quarantine, where every action requires human approval; feature ac-
+tivations are logged immutably for forensics.Kill switch and reversion: a hardware-plus-software
+stop signal targeting sub-100 ms interruption, not deactivatable by the system itself, backed by the
+threshold-shard scheme of Section 4; all mutable state is Merkle-versioned, enabling rollback to any
+checkpoint, after which the system runs read-only pending audit.Immutable decision logging: every
+permit/block/HITL outcome is appended to the evidence log with its rollback checkpoint reference.
+13
+
+=== PAGINA 14 ===
+7.6 Roadmap and metrics, 2026–2045
+The roadmap defines five phases, each with falsifiable target metrics—a deliberate design choice, since
+a roadmap without failure conditions is unfalsifiable marketing. In compressed form:Phase 2 (2026–
+2028)targets generalized test-time reasoning at greatly reduced cost, a v1 causal world model, ma-
+ture neuro-symbolic program synthesis, and human-level performance on the second-generation ARC
+benchmark [4], alongside a>95% red-team block rate.Phase 3 (2028–2032)targets persistent-memory
+agents (90% retention across 1,000 sequential tasks), continual learning meeting the 95%-retention
+bar, self-directed learning in unknown environments, autonomous tool discovery,>99% adversarial
+robustness, and kill-switch latency under 10 ms.Phase 4 (2032–2038)targets robust compositional
+generalization, order-of-magnitude few-shot efficiency gains, causal world models capable of gen-
+erating testable scientific hypotheses, and formal-proof coverage of critical safety properties above
+50%.Phase 5 (2038–2045)targets human-comparable skill-acquisition efficiency, autonomous scien-
+tific discovery at publishable quality, recursive self-improvement under a hard rate cap (<5%/month)
+with verifiable bounds and reversibility, and formally verified or rigorously bounded alignment (target
+P(harm)<10 −6), with the human-oversight ratio falling only as verification coverage rises.
+The plan pairs each major technical risk with an engineering mitigation and a fallback: catastrophic
+forgetting (CL-4L, with learning paused if retention drops below 90%); hallucinated reasoning chains
+(process supervision [8], symbolic verification of critical steps, SAE confabulation detection, HITL fall-
+back); tool-use harm (the full Safety Kernel plus sandboxed execution); uncontrolled self-improvement
+(hard rate caps, hardware kill switch, 24-hour checkpointing, independent monthly audit). It likewise
+addresses alignment-specific risks—deceptive alignment [21], goal misgeneralization, power-seeking,
+value lock-in—and socioeconomic risks (labor displacement, power concentration, military use, indus-
+trialized disinformation) with named mitigations, including provenance standards (C2PA) and crypto-
+graphic watermarking for generated content, and an explicit stance that no single entity should control
+a dominant share of AGI-relevant compute.
+7.7 Relationship between roadmap and infrastructure
+The dependency between Sections 4–6 and this section is directional and deliberate. The Safety Kernel
+presupposes the trust infrastructure: its constitution is the governed Datalog ofarkhe-governance; its
+decision log is the append-only Merkle store ofarkhe-storage; its kill switch is the threshold scheme
+ofarkhe-security; its identities and tool credentials arearkhe-identityVCs; its telemetry is
+arkhe-observability. The reverse is not true—the infrastructure stands alone and is useful today
+for governing narrow agents. That asymmetry is the Arkhe thesis in engineering form:the foundation
+must not depend on the thing it is meant to constrain.
+8 The Economic Layer: Programmatic Commerce under x402
+Status: proposed (ADR-0002, July 2026). Designed and threat-modeled; not yet in production[3].
+8.1 Motivation
+Autonomous agents that consume paid resources today do so through human-provisioned accounts and
+API keys—an arrangement that blurs accountability (whose key? whose budget? whose liability?) and
+does not scale to machine-speed, machine-count commerce. The x402 protocol (Section 2.4) removes
+the account layer: agents pay per request, in stablecoins, over plain HTTP [33, 34]. ADR-0002 adopts
+x402 as Arkhe’s native payment layer with one decisive twist:payment is a governance constraint,
+not a bolt-on gate.The transformation the ADR names is from trust as a compliance property to trust
+as aneconomicone—actions are not merely authorized; they are priced, paid, verified, and evidenced.
+14
+
+=== PAGINA 15 ===
+8.2 Design principles
+Five principles govern the integration:facilitator-agnosticism(the newarkhe-x402crate works with
+any facilitator, hosted or local, so no single settlement provider becomes a trusted party);nonce isola-
+tion(replay protection is Arkhe’s own responsibility, inarkhe-x402::noncewith a persistent store,
+never delegated to the facilitator);evidence by default(every payment produces an immutable record in
+arkhe-storage);payment-as-constraint(thePolicyEnginegains aPaymentConstraint, so a cre-
+dential authorizes an action only if the accompanying payment is verified and within the credential’s lim-
+its); andevent-auditability(each stage—requested, verified, settled, failed—publishes onarkhe-bus).
+8.3 The governed payment flow
+An agent request arrives carrying three things: an mTLS client certificate, an Arkhe VC header, and an
+x402PAYMENT-SIGNATUREheader containing the signed payment payload (scheme, CAIP-2 network
+identifier, token, recipient, amount, nonce, signature). The gateway then executes a strict sequence:
+1.Identity— resolve the DID, verify the VC, bind the certificate CN to the credential.
+2.Payment parse and nonce check— reject any reused nonce.
+3.Governance—evaluate_actionover the VCandthe payment proof, enforcing constraints
+such as maximum amount and permitted network.
+4.Verification— via facilitator/verifyor local cryptographic verification.
+5.Execution of the work.
+6.Settlement—/settle, yielding a transaction hash, deliberatelyafterthe work (pay-after-
+delivery, so settlement without delivery is structurally excluded).
+7.Event publication(PaymentSettled).
+8.Evidence append— VC, payment signature, and settlement receipt chained under Blake3 in the
+append-only log.
+9. Response with thePAYMENT-RESPONSEreceipt header.
+Wallet addresses are mapped to DIDs, so economic activity and identity share one audit trail.
+8.4 Threat model of the economic layer
+The ADR’s threat table extends Section 6 into the payment domain: nonce replay (persistent TTL store);
+forged signatures (facilitator or localk256verification plus VC signature checks); expired credentials
+(policy rejection onvalid_until); amount mismatch (credential-embeddedmax_amountceilings);
+facilitator compromise (local verification fallback and multi-facilitator support); settlement-without-
+delivery (excluded by flow ordering); and evidence tampering (the Blake3 hash chain). Scope exclu-
+sions are recorded with the same honesty as elsewhere: credit-based billing, on-chain escrow, fiat rails,
+and multi-signature agent wallets are explicitly out of scope for v1. The acknowledged costs are depen-
+dence on blockchain infrastructure (mitigated by L2 settlement) and two to three additional round-trips
+per paid request.
+8.5 Why an economic layer belongs in a trust infrastructure
+Three reasons. First,accountability: a payment is a costly, signed, timestamped commitment—a natural
+anti-Sybil and anti-abuse primitive that complements credentials. Second,auditability: when every
+resource consumption event is a settled transaction bound to a DID and an action hash, the question
+“what did this agent do, for whom, at what cost?” has a cryptographic answer. Third,alignment of
+15
+
+=== PAGINA 16 ===
+incentives: metered, per-action payment gives operators a native mechanism for budgeting and rate-
+limiting agent behavior—anActionBudget(Section 7.2) denominated not only in FLOPs and time but
+in money.
+9 Governance and Regulatory Alignment
+9.1 Governance architecture
+Arkhe’s governance stack is constitutional in the literal sense: a machine-readable constitution in de-
+cidable logic, amendable only through proposal, quorum, and timelock (T-G1,P-G1–P-G3); an ethics
+board holding both amendment votes and kill-switch shards under mandated diversity requirements
+(P-S2); and a strict channel separation wherebyvalueslive in the constitution (governed, versioned,
+hash-addressed) andmechanismslive in code (audited, invariant-checked). The timelock deserves em-
+phasis: it converts governance capture from an instantaneous attack into one that must survive at least
+seven days of public visibility, alerting, and counter-action.
+9.2 Mapping to the EU AI Act
+The EU AI Act’s obligations for high-risk systems—risk management systems, logging and traceability,
+human oversight, robustness, and post-market monitoring—apply on a staggered timeline now extend-
+ing into December 2027 and August 2028 following the Digital Omnibus agreement of May 2026
+[37, 38]. Arkhe’s relevant property is that these obligations are dischargedby construction: record-
+keeping is the append-only evidence log (T-S1–T-S3) rather than a bolt-on logger; human oversight
+is the HITL layer with risk-tiered mandatory escalation; traceability is the causation-carrying event
+bus (T-E2); and the transparency/marking obligations for synthetic content align with the roadmap’s
+provenance-and-watermarking commitments (Section 7.6). An architecture whose only mode of opera-
+tion produces the compliance artifacts is easier to audit than one that produces them on request.
+9.3 Mapping to Brazil’s PL 2338 and the ANPD
+Brazil’s PL 2338/2023, Senate-approved in December 2024 and pending in the Chamber as of mid-
+2026, establishes a risk-tiered regime with rights to information, explanation, contestation, and human
+review; algorithmic-impact assessments for high-risk systems; an enforcement system coordinated by
+the ANPD; regulatory sandboxes; and sanctions up to R$50 million per violation [39, 40]. Arkhe’s
+evidence log directly supports the explanation and contestation rights (every consequential decision
+is reconstructible with its inputs, credentials, verdict, and rationale); the risk-tier machinery of the
+PolicyEnginemirrors the bill’s classification structure; and the sandbox provisions align with Arkhe’s
+phased, pilot-first deployment posture. We note one acknowledged gap on the deployment side: a
+specified-but-unimplemented anonymization/PII-scrubbing component, treated as a blocker for data-
+protection-sensitive public-sector deployments—recorded here, in keeping with the project’s practice,
+as debt rather than omitted.
+9.4 Institutional posture
+The plan’s governance chapter [2] situates Arkhe within the broader ecosystem—academic safety re-
+search, standards bodies (IEEE, ISO/IEC, W3C for DID/VC [30, 31]), international coordination frame-
+works, and deliberative public engagement—and takes explicit positions against capability concentra-
+tion (no entity controlling a dominant share of AGI compute; safety-kernel and constitution designs
+as open standards) and for external auditability (independent audits, reproducible builds, public binary
+hashes). These are policy positions of the authors, stated as such.
+16
+
+=== PAGINA 17 ===
+10 Epistemic Status and Limitations
+10.1 Maturity table
+Table 3:Epistemic status of Arkhe components as of July 2026. This table is normative for the interpretation of
+every claim in this monograph.
+Component Status
+Multi-crate Rust workspace; layered, compiler-
+enforced dependency graph
+Implemented, building (∼18 crates)
+Content-addressed storage: convergent encoding,
+Merkle tree, dedup/tamper tests
+Implemented and tested
+Canonical 7-crate + event-bus architecture; trait
+interfaces; invariant catalog
+Specified; partially implemented
+Threat model v2 (13 threats incl. insider & supply
+chain)
+Specified; several mitigations open
+Web gateway (TLS 1.3, JWT, evidence-logging
+middleware)
+In progress (MVP)
+x402 economic layer (arkhe-x402, PaymentCon-
+straint, evidence flow)
+Proposed (ADR-0002)
+zk attestation of deterministic execution Research; hashes + signatures are the near-term deliverable
+TEE in production; BFT on the hot path Deferred by design (Phase 4+ / conditional)
+C-JEPA world model; CL-4L continual learning;
+integrated Safety Kernel runtime
+Roadmap with quantitative targets; not built
+AGI / general capabilityNot claimed
+10.2 Known limitations
+Semantic risk is not proven away.The central honest limitation, stated in Section 3.4 and threat
+T-01: Arkhe proves execution fidelity, never plan wisdom. A perfectly attested execution of a malicious
+plan is caught—if it is caught—by policy, risk classification, simulation, and humans, all of which are
+fallible.
+Hardware trust is bounded, not eliminated.TEEs have a documented side-channel history; Arkhe’s
+response (no keys in the enclave, continuous attestation, degraded-mode failure) reduces the blast radius
+of compromise but does not restore the enclave’s confidentiality guarantee.
+Governance is only as diverse as its participants.Threshold cryptography converts “trust one party”
+into “trust thatkofndo not collude”; the diversity policies (P-S2, rotation, escrow) raise the cost of
+collusion but cannot make it impossible.
+External dependencies remain.The economic layer depends on facilitators, RPC infrastructure, and
+L2 liveness; storage persistence depends on external pinning networks; the supply-chain mitigations for
+the project’s own dependencies (T-08) are partially open items.
+Roadmap numbers are targets, not measurements.All Phase 2–5 metrics in Section 7.6, and the
+state-of-the-art estimates in the underlying plan, are the authors’ planning estimates. Several of the
+roadmap’s load-bearing research bets—latent-space causal discovery at scale, consolidation without
+forgetting at the stated retention bar, SAE coverage sufficient for reliable risk-feature monitoring, for-
+mal verification of nontrivial safety properties—may fail, and the roadmap’s fallback clauses (pause
+learning, tighten oversight, reduce scope) exist precisely because they may.
+17
+
+=== PAGINA 18 ===
+This monograph is a conceptual presentation, not an evaluation.No independent benchmark re-
+sults, red-team reports, or third-party audits of Arkhe are presented here, because none yet exist. Pro-
+ducing them is one goal of the phased roadmap.
+11 Conclusion
+The argument of this monograph can be compressed into one sentence:in the construction of general
+artificial intelligence, the order of operations is a safety property.Arkhe’s contribution is not a new
+learning algorithm or a capability result; it is an insistence, backed by working code where it exists and
+by honest labels where it does not, that identity, attestation, immutable evidence, decidable governed
+policy, distributed shutdown, and priced accountability constitute the layer that must existfirst—and a
+demonstration, at the level of compilable interfaces, runtime invariants, and an adversarial threat model
+that includes the builders themselves, of what that layer concretely looks like.
+The project’s deepest commitment is epistemic rather than architectural. A trust infrastructure built
+by a team that tolerates unverified claims about its own system is a contradiction; Arkhe therefore
+binds itself to the same standard it imposes on the machines—claims count when the compiler, the
+tests, and the hashes say so, and everything else is labeled a hypothesis. Whether the 2045 horizon
+of the roadmap is reached, and whether the systems built along the way deserve the word “general,”
+are questions this monograph deliberately leaves open. What it does not leave open is the standard by
+which any such claim should eventually be judged: mechanically, independently, and against evidence
+that no one—including the system, and including its authors—can quietly rewrite.
+Author Contributions and Declarations
+Author contributions.R.O.: conception of the Arkhe program; architecture and specification of the
+trust infrastructure; implementation of the Rust workspace; drafting. J.B.: independent review; drafting
+and revision.
+Competing interests.R.O. is affiliated with Safe Core, which develops the Arkhe software described
+herein. J.B. declares no competing interests.
+Data and code availability.The specifications summarized here (canonical spec v1.0 [1], AGI Plan
+v2.0 [2], ADR-0002 [3]) are project documents of the Arkhe program; interface definitions are repro-
+duced in part in Sections 4–5. Implementation artifacts are verifiable by build and test reproduction
+within the Arkhe workspace.
+AI-assistance disclosure.Drafting of this monograph was assisted by a large language model
+(Claude, Anthropic) under author direction; all technical claims derive from the cited project docu-
+ments and referenced literature, and the authors bear full responsibility for the content.
+Epistemic-status note.In accordance with the project’s constitutional principle (Section 1.2), readers
+should treat Table 3 as normative for the interpretation of every claim in this document.
+References
+[1] Arkhe Core Team.Arkhe Trust Infrastructure — Canonical Consolidated Specification, v1.0.0-canonical,
+July 15, 2026. (ADR-0001; invariants catalog; Rust trait interfaces; threat model v2.)
+[2] Arkhe Core Team.Complete Plan for AGI/ASI: A Strategic Synthesis 2026–2045, v2.0, July 15, 2026.
+(Prescriptive roadmap; cognitive message protocol; C-JEPA; CL-4L; Safety Kernel; risk register.)
+[3] Arkhe Core Team.ADR-0002: x402 Integration — Programmatic Commerce for Autonomous Agents, pro-
+posed, July 15, 2026.
+18
+
+=== PAGINA 19 ===
+[4] F. Chollet. On the Measure of Intelligence.arXiv:1911.01547, 2019.
+[5] J. Ji et al. AI Alignment: A Comprehensive Survey.arXiv:2310.19852, 2023.
+[6] Y . Bai et al. Constitutional AI: Harmlessness from AI Feedback.arXiv:2212.08073, 2022.
+[7] L. Ouyang et al. Training Language Models to Follow Instructions with Human Feedback.NeurIPS, 2022.
+[8] H. Lightman et al. Let’s Verify Step by Step.arXiv:2305.20050, 2023.
+[9] J. Kirkpatrick et al. Overcoming Catastrophic Forgetting in Neural Networks.PNAS, 114(13):3521–3526,
+2017.
+[10] E. Hu et al. LoRA: Low-Rank Adaptation of Large Language Models.ICLR, 2022.
+[11] D. Rolnick et al. Experience Replay for Continual Learning.NeurIPS, 2019.
+[12] Y . LeCun. A Path Towards Autonomous Machine Intelligence.OpenReview, 2022.
+[13] M. Assran et al. Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture.
+CVPR, 2023.
+[14] Q. Garrido et al. Learning and Leveraging World Models in Visual Representation Learning.
+arXiv:2403.00504, 2024.
+[15] D. Hafner et al. Dream to Control: Learning Behaviors by Latent Imagination.ICLR, 2020.
+[16] J. Pearl.Causality: Models, Reasoning, and Inference, 2nd ed. Cambridge University Press, 2009.
+[17] B. Schölkopf et al. Toward Causal Representation Learning.Proceedings of the IEEE, 109(5), 2021.
+[18] T. Bricken et al. Towards Monosemanticity: Decomposing Language Models with Dictionary Learning.
+Transformer Circuits Thread, 2023.
+[19] A. Templeton et al. Scaling Monosemanticity: Extracting Interpretable Features from Claude 3 Sonnet.
+Anthropic Research, 2024.
+[20] A. Conmy et al. Towards Automated Circuit Discovery for Mechanistic Interpretability.NeurIPS, 2023.
+[21] E. Hubinger et al. Sleeper Agents: Training Deceptive LLMs that Persist Through Safety Training.
+arXiv:2401.05566, 2024.
+[22] D. Amodei et al. Concrete Problems in AI Safety.arXiv:1606.06565, 2016.
+[23] S. Russell.Human Compatible: Artificial Intelligence and the Problem of Control. Viking, 2019.
+[24] N. Bostrom.Superintelligence: Paths, Dangers, Strategies. Oxford University Press, 2014.
+[25] G. Klein et al. seL4: Formal Verification of an OS Kernel.SOSP, 2009.
+[26] A. Chan, K. Wei, S. Huang, N. Rajkumar, E. Perrier, S. Lazar, G. K. Hadfield, and M. Anderljung. Infras-
+tructure for AI Agents.Transactions on Machine Learning Research, 2025. arXiv:2501.10114.
+[27] T. South, S. Marro, T. Hardjono, R. Mahari, C. D. Whitney, D. Greenwood, A. Chan, and A. Pentland.
+Authenticated Delegation and Authorized AI Agents.ICML (Position), 2025. arXiv:2501.09674.
+[28] Y . Shavit et al. Practices for Governing Agentic AI Systems. OpenAI Research Paper, 2023.
+[29] T. Shi, J. He, Z. Wang, H. Li, L. Wu, W. Guo, and D. Song. Progent: Securing AI Agents with Privilege
+Control.arXiv:2504.11703, 2025.
+[30] W3C.Decentralized Identifiers (DIDs) v1.0. W3C Recommendation, 2022.
+[31] W3C.Verifiable Credentials Data Model v2.0. W3C Recommendation, 2025.
+[32] D. Connolly, C. Komlo, I. Goldberg, and C. A. Wood. The Flexible Round-Optimized Schnorr Threshold
+(FROST) Protocol for Two-Round Schnorr Signatures.RFC 9591, IRTF, June 2024.
+[33] x402 Foundation. x402: An Open Standard for Internet-Native Payments.https://www.x402.org/; ref-
+erence implementation:https://github.com/x402-foundation/x402.
+[34] Coinbase Developer Platform. x402 Documentation.https://docs.cdp.coinbase.com/x402/
+welcome.
+19
+
+=== PAGINA 20 ===
+[35] Cloudflare. Launching the x402 Foundation with Coinbase.https://blog.cloudflare.com/x402/,
+2025.
+[36] Linux Foundation / x402 Foundation. Governance announcements and published protocol usage statistics,
+2026. Seehttps://www.x402.org/and contemporaneous industry coverage.
+[37] European Commission. AI Act — Regulatory Framework for AI (Regulation (EU) 2024/1689), in-
+cluding the Digital Omnibus on AI amendments (political agreement, May 7, 2026).https://
+digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai.
+[38] Covington & Burling. EU AI Act Update: Timeline Relief, Targeted Simplification, and New Prohibitions.
+Global Policy Watch, May 2026.
+[39] Senado Federal do Brasil. PL 2338/2023 — Marco Legal da Inteligência Artificial (Senate-approved con-
+solidated text, Dec. 10, 2024; pending in the Chamber of Deputies as of July 2026).
+[40] Regulations.ai. Projeto de Lei nº 2.338/2023 — Brazil.https://regulations.ai/regulations/
+RAI-BR-NA-PDLN2XX-2023, 2026.
+20

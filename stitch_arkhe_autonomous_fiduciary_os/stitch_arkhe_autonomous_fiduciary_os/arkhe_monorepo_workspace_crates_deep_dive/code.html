@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // COMPUTATIONAL FIDUCIARY RUNTIME - Mapeamento Exaustivo de Crates Rust</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error": "#690005",
+            "tertiary-fixed": "#ffddb8",
+            "background": "#111319",
+            "on-tertiary": "#472a00",
+            "on-primary-fixed-variant": "#005236",
+            "primary-fixed-dim": "#4edea3",
+            "inverse-primary": "#006c49",
+            "on-tertiary-container": "#523200",
+            "on-tertiary-fixed": "#2a1700",
+            "secondary-fixed-dim": "#7bd0ff",
+            "on-surface-variant": "#bbcabf",
+            "surface-container-lowest": "#0b0e13",
+            "surface-container-high": "#272a30",
+            "on-background": "#e1e2ea",
+            "surface": "#111319",
+            "tertiary-fixed-dim": "#ffb95f",
+            "primary": "#4edea3",
+            "on-secondary-container": "#00374d",
+            "on-tertiary-fixed-variant": "#653e00",
+            "primary-container": "#10b981",
+            "inverse-surface": "#e1e2ea",
+            "on-surface": "#e1e2ea",
+            "outline-variant": "#3c4a42",
+            "error": "#ffb4ab",
+            "surface-dim": "#111319",
+            "surface-tint": "#4edea3",
+            "on-secondary": "#00354a",
+            "on-primary-container": "#00422b",
+            "tertiary": "#ffb95f",
+            "surface-container-low": "#191c21",
+            "inverse-on-surface": "#2e3036",
+            "on-primary": "#003824",
+            "surface-variant": "#32353b",
+            "secondary-fixed": "#c4e7ff",
+            "tertiary-container": "#e29100",
+            "error-container": "#93000a",
+            "secondary-container": "#00a6e0",
+            "on-primary-fixed": "#002113",
+            "on-secondary-fixed-variant": "#004c69",
+            "surface-bright": "#36393f",
+            "outline": "#86948a",
+            "on-secondary-fixed": "#001e2c",
+            "surface-container": "#1d2025",
+            "surface-container-highest": "#32353b",
+            "primary-fixed": "#6ffbbe",
+            "secondary": "#7bd0ff",
+            "on-error-container": "#ffdad6"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2rem",
+            "gutter-desktop": "1.5rem",
+            "margin": "1rem",
+            "margin-desktop": "2rem",
+            "space-2xl": "3rem",
+            "space-md": "1rem",
+            "gutter": "1rem"
+          },
+          "fontFamily": {
+            "display-lg-mobile": ["Inter"],
+            "title-md": ["Inter"],
+            "headline-xl-mobile": ["Inter"],
+            "headline-xl": ["Inter"],
+            "code-md": ["JetBrains Mono"],
+            "code-sm": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "code-lg": ["JetBrains Mono"],
+            "headline-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "display-lg": ["Inter"],
+            "label-caps": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "title-md": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+            "code-md": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "code-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "code-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "label-caps": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom scrollbars for high-density engineering workspaces */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0e13;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #272a30;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3c4a42;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-x-hidden min-h-screen flex flex-col font-body-md text-body-md selection:bg-primary selection:text-on-primary">
+<!-- ========================================================================= -->
+<!-- TOP APP BAR (Shared Components JSON execution)                           -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-space-lg h-12 bg-surface-container-lowest border-b border-outline-variant">
+<!-- Brand / Identifier -->
+<div class="flex items-center space-x-space-md">
+<div class="flex items-center space-x-space-sm">
+<span class="w-2.5 h-2.5 rounded-none bg-primary animate-pulse"></span>
+<span class="font-headline-sm text-headline-sm font-bold tracking-wider text-primary">ARKHE // COMPUTATIONAL FIDUCIARY RUNTIME</span>
+</div>
+<!-- Security Status Badge -->
+<div class="hidden xl:flex items-center space-x-space-xs px-2 py-0.5 bg-surface-container border border-outline-variant rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="font-label-caps text-label-caps text-primary">TCB STATUS: FAIL-CLOSED ARMED</span>
+</div>
+<div class="hidden 2xl:flex items-center text-on-surface-variant font-code-sm text-code-sm px-1.5 py-0.5 bg-surface-container-low border border-outline-variant rounded">
+        v0.9.4-PROD // BLAKE3-VERIFIED
+      </div>
+</div>
+<!-- Center Search Console (search_bar: on_left / center-aligned) -->
+<div class="hidden lg:flex items-center w-80 relative">
+<span class="material-symbols-outlined absolute left-2 text-outline text-sm">terminal</span>
+<input class="w-full bg-surface-container-low text-on-surface border border-outline-variant pl-8 pr-3 py-1 text-code-sm font-code-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary rounded transition-colors" placeholder="Filter crates, digests, or symbols (e.g. arkhe-verify)..." type="text"/>
+<span class="absolute right-2 font-code-sm text-code-sm text-outline-variant px-1 border border-outline-variant rounded">/</span>
+</div>
+<!-- Navigation Links & Trailing Cryptographic Actuators -->
+<div class="flex items-center space-x-space-md">
+<nav class="hidden md:flex items-center space-x-space-md text-label-caps font-label-caps">
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#tcb-ledger">TCB Ledger</a>
+<a class="text-primary border-b-2 border-primary pb-1 font-semibold" href="#workspaces">Workspaces</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#contracts">Contracts</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#causal-db">Causal DB</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#cicd">CI/CD Gates</a>
+</nav>
+<div class="h-4 w-[1px] bg-outline-variant hidden md:block"></div>
+<!-- Trailing Icon Actions -->
+<div class="flex items-center space-x-space-xs text-on-surface-variant">
+<button class="p-1 hover:text-primary hover:bg-surface-container rounded transition-colors" title="Diagnostics Terminal">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+</button>
+<button class="p-1 hover:text-primary hover:bg-surface-container rounded transition-colors" title="Lock TCB Matrix">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</button>
+<button class="p-1 hover:text-primary hover:bg-surface-container rounded transition-colors" title="Sync Canonical Roots">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+</button>
+</div>
+<!-- Trailing Action Buttons -->
+<div class="flex items-center space-x-space-xs">
+<button class="px-2.5 py-1 bg-surface-container border border-outline-variant text-secondary hover:border-secondary hover:bg-surface-container-high transition-all text-label-caps font-label-caps rounded flex items-center space-x-1">
+<span class="material-symbols-outlined text-[14px]">security</span>
+<span>FAIL-CLOSED AUDIT</span>
+</button>
+<button class="px-3 py-1 bg-primary text-surface-container-lowest font-medium hover:bg-primary-container transition-all text-label-caps font-label-caps rounded flex items-center space-x-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+<span>VERIFY PROOFS</span>
+</button>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- MAIN WORKBENCH LAYOUT: SideNav + Fluid Engineering Canvas                -->
+<!-- ========================================================================= -->
+<div class="flex pt-12 w-full min-h-[calc(100vh-3rem)]">
+<!-- ======================================================================= -->
+<!-- SIDE NAV BAR (Shared Components JSON execution)                         -->
+<!-- ======================================================================= -->
+<aside class="fixed left-0 top-12 bottom-0 w-64 flex flex-col justify-between p-space-sm z-40 bg-surface-container-low border-r border-outline-variant overflow-y-auto">
+<div>
+<!-- SideNav Header Section -->
+<div class="p-space-sm mb-space-sm border-b border-outline-variant">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]">shield_person</span>
+<div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">ARKHE MONOREPO</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant">v0.9.4-PROD // BLAKE3-VERIFIED</div>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs (With Tab 2: "Workspace Crates" / "2. Mapeamento & Crates" Active) -->
+<div class="space-y-0.5">
+<!-- 1. Separação de Autoridades -->
+<a class="flex items-center space-x-space-sm px-space-md py-space-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]">shield_person</span>
+<span>1. Authority Separation</span>
+</a>
+<!-- 2. Mapeamento & Crates (ACTIVE STATE) -->
+<a class="flex items-center space-x-space-sm text-primary bg-surface-container border-l-2 border-primary px-space-md py-space-sm font-medium rounded-r text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">folder_data</span>
+<div class="flex-1 flex items-center justify-between">
+<span>2. Mapeamento &amp; Crates</span>
+<span class="font-code-sm text-code-sm text-primary bg-surface-container-lowest px-1 border border-outline-variant rounded">14</span>
+</div>
+</a>
+<!-- 3. Contratos AKG-CBOR -->
+<a class="flex items-center space-x-space-sm px-space-md py-space-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+<span>3. AKG-CBOR-v1 Contracts</span>
+</a>
+<!-- 4. Persistência & SQL -->
+<a class="flex items-center space-x-space-sm px-space-md py-space-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]">database</span>
+<span>4. Causal &amp; Append-Only SQL</span>
+</a>
+<!-- 5. Gates & Sandboxes -->
+<a class="flex items-center space-x-space-sm px-space-md py-space-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span>5. CI/CD &amp; Sandboxes</span>
+</a>
+<!-- 6. Síntese & Status TCB -->
+<a class="flex items-center space-x-space-sm px-space-md py-space-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]">security</span>
+<span>6. Vulnerability Matrix</span>
+</a>
+</div>
+</div>
+<!-- SideNav Footer with CTA, MMR Telemetry & Diagnostics -->
+<div class="pt-space-sm border-t border-outline-variant space-y-space-sm">
+<button class="w-full py-1.5 px-space-sm bg-surface-container-high hover:bg-surface-variant text-primary border border-outline-variant hover:border-primary transition-all text-label-caps font-label-caps rounded flex items-center justify-center space-x-1">
+<span class="material-symbols-outlined text-[14px]">sync_alt</span>
+<span>SYNC CANONICAL MMR</span>
+</button>
+<div class="p-2 bg-surface-container-lowest border border-outline-variant rounded font-code-sm text-code-sm space-y-1">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>MMR LEAF COUNT</span>
+<span class="text-on-surface font-semibold">1,048,576</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>CANONICAL ROOT</span>
+<span class="text-primary truncate max-w-[90px]">0x38bf...7a1f</span>
+</div>
+</div>
+<div class="space-y-0.5">
+<a class="flex items-center space-x-space-sm px-space-md py-1 text-on-surface-variant hover:text-on-surface text-code-sm font-code-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">developer_board</span>
+<span>Diagnostic Terminal</span>
+</a>
+<a class="flex items-center space-x-space-sm px-space-md py-1 text-on-surface-variant hover:text-on-surface text-code-sm font-code-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">query_stats</span>
+<span>Kernel Telemetry</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- ======================================================================= -->
+<!-- PRIMARY ENGINEERING WORKSPACE (Content Canvas)                          -->
+<!-- ======================================================================= -->
+<main class="flex-1 ml-64 p-space-lg lg:p-space-xl overflow-y-auto bg-surface-dim">
+<div class="max-w-[1600px] mx-auto space-y-space-lg">
+<!-- =================================================================== -->
+<!-- 1. SECTION HEADER: METRICS & CONTEXT                               -->
+<!-- =================================================================== -->
+<section class="border border-outline-variant bg-surface-container-lowest p-space-md lg:p-space-lg rounded">
+<div class="flex flex-col xl:flex-row xl:items-start justify-between gap-space-md pb-space-md border-b border-outline-variant">
+<div class="space-y-1">
+<div class="flex items-center space-x-2">
+<span class="px-2 py-0.5 bg-surface-container border border-outline-variant font-label-caps text-label-caps text-primary">
+                  SEÇÃO 2 // WORKSPACES &amp; ENGENHARIA DE CRATES
+                </span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">
+                  ID: <span class="text-on-surface">TCB-CRATE-MAP-REV4</span>
+</span>
+<span class="inline-flex items-center text-primary text-code-sm font-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block mr-1"></span> CANONICAL
+                </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold">
+                Mapeamento Exaustivo dos Crates do Workspace Rust e Topologia do Monorepo
+              </h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-4xl">
+                Arquitetura de workspaces duplos (Cargo Rust <code class="text-secondary font-code-sm">no_std/pure</code> vs. pnpm TypeScript/Node WASM bindings) garantindo compilação independente do TCB, ausência de vazamento de credenciais e reprodutibilidade estrita com BLAKE3.
+              </p>
+</div>
+<!-- Export / Hash Stamp Action -->
+<div class="flex items-center space-x-space-xs self-start shrink-0">
+<button class="px-2.5 py-1.5 bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-code-sm font-code-sm rounded flex items-center space-x-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+<span>Cargo.lock JSON</span>
+</button>
+<button class="px-2.5 py-1.5 bg-surface-container border border-outline-variant text-primary hover:border-primary text-code-sm font-code-sm rounded flex items-center space-x-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px]">fingerprint</span>
+<span>Verify Workspace Signatures</span>
+</button>
+</div>
+</div>
+<!-- Quick Metrics Ribbon -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-space-md pt-space-md">
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded">
+<div class="font-label-caps text-label-caps text-on-surface-variant">CRATES RUST ATIVOS</div>
+<div class="flex items-baseline space-x-2 mt-1">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">14 Crates</span>
+<span class="text-primary font-code-sm text-code-sm">100% frozen</span>
+</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant mt-0.5">5 kernel + 5 evidence + 4 orch</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded">
+<div class="font-label-caps text-label-caps text-on-surface-variant">PACKAGES PNPM</div>
+<div class="flex items-baseline space-x-2 mt-1">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">3 Packages</span>
+<span class="text-on-surface-variant font-code-sm text-code-sm">Node/WASM</span>
+</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant mt-0.5">mcp-server, vscode, cli-shim</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded">
+<div class="font-label-caps text-label-caps text-on-surface-variant">RIGOR DE COMPILAÇÃO</div>
+<div class="flex items-baseline space-x-2 mt-1">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">0 Warnings</span>
+<span class="text-primary font-code-sm text-code-sm">clippy::pedantic</span>
+</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant mt-0.5">deny(unsafe_code) ativo</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded">
+<div class="font-label-caps text-label-caps text-on-surface-variant">PARIDADE WASM RUNTIME</div>
+<div class="flex items-baseline space-x-2 mt-1">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">100% Bit-a-bit</span>
+<span class="text-primary font-code-sm text-code-sm">Wasmtime P2</span>
+</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant mt-0.5">Host ptr isolation confirmada</div>
+</div>
+</div>
+</section>
+<!-- =================================================================== -->
+<!-- 2. WORKSPACE DUAL ARCHITECTURE & FFI WASM BRIDGE                     -->
+<!-- =================================================================== -->
+<section class="border border-outline-variant bg-surface-container-lowest p-space-md lg:p-space-lg rounded">
+<div class="flex items-center justify-between mb-space-md">
+<div>
+<span class="font-label-caps text-label-caps text-secondary">TOPOLOGIA DE EXECUÇÃO DUPLA</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                Dual-Workspace Boundary: Isolamento Estrito do TCB vs. Tooling
+              </h2>
+</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant px-2 py-0.5 bg-surface-container border border-outline-variant rounded">
+              BOUND: ZERO_HOST_AUTHORITY
+            </div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-11 gap-space-md items-stretch">
+<!-- Rust Cargo Workspace Card -->
+<div class="lg:col-span-5 bg-surface-container-low border border-outline-variant p-space-md rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-sm border-b border-outline-variant mb-space-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]">memory</span>
+<span class="font-headline-sm text-title-md font-semibold text-on-surface">Cargo Workspace (Rust Pure / no_std)</span>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-primary/10 border border-primary/30 text-primary rounded">SOVEREIGN TCB</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-space-sm">
+                  Coração criptográfico determinístico e compilado com restrições máximas. Sem acesso a IO não autenticado ou relógios arbitrários do sistema hospedeiro.
+                </p>
+<div class="space-y-1.5 font-code-sm text-code-sm">
+<div class="flex justify-between py-1 px-2 bg-surface-container-lowest border border-outline-variant rounded">
+<span class="text-on-surface-variant">Profile Flags:</span>
+<span class="text-on-surface">opt-level = 3, lto = "fat", codegen-units = 1</span>
+</div>
+<div class="flex justify-between py-1 px-2 bg-surface-container-lowest border border-outline-variant rounded">
+<span class="text-on-surface-variant">Safety Invariant:</span>
+<span class="text-error font-mono">panic = "abort" // sem unwinding de stack</span>
+</div>
+<div class="flex justify-between py-1 px-2 bg-surface-container-lowest border border-outline-variant rounded">
+<span class="text-on-surface-variant">Hash Canon:</span>
+<span class="text-primary font-mono">BLAKE3-256 (32 bytes raw keyed / MAC)</span>
+</div>
+<div class="flex justify-between py-1 px-2 bg-surface-container-lowest border border-outline-variant rounded">
+<span class="text-on-surface-variant">Memory Standard:</span>
+<span class="text-secondary font-mono">core + alloc (sem standard library std)</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-outline-variant flex items-center justify-between text-code-sm font-code-sm">
+<span class="text-on-surface-variant">Monorepo path: <code class="text-on-surface">crates/kernel/*</code></span>
+<span class="text-primary">14 Crates Inspecionados</span>
+</div>
+</div>
+<!-- Bridge / FFI Interconnector -->
+<div class="lg:col-span-1 flex flex-col items-center justify-center py-2 lg:py-0">
+<div class="w-full flex lg:flex-col items-center justify-center space-x-2 lg:space-x-0 lg:space-y-2">
+<span class="hidden lg:block h-10 w-[1px] bg-outline-variant"></span>
+<div class="p-2 bg-surface-container-high border border-secondary text-secondary rounded flex flex-col items-center text-center shadow-lg">
+<span class="material-symbols-outlined text-[20px]">swap_horiz</span>
+<span class="font-label-caps text-[9px] tracking-widest mt-1">WASM FFI</span>
+</div>
+<span class="hidden lg:block h-10 w-[1px] bg-outline-variant"></span>
+</div>
+<div class="mt-2 text-center">
+<span class="font-code-sm text-[10px] text-on-surface-variant">arkhe-verify-wasm</span>
+</div>
+</div>
+<!-- pnpm Workspace Card -->
+<div class="lg:col-span-5 bg-surface-container-low border border-outline-variant p-space-md rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-sm border-b border-outline-variant mb-space-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">layers</span>
+<span class="font-headline-sm text-title-md font-semibold text-on-surface">pnpm Workspace (Node / TS / WASM)</span>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-secondary/10 border border-secondary/30 text-secondary rounded">NON-AUTHORITATIVE</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-space-sm">
+                  Camada de orquestração externa, conectores MCP (Model Context Protocol) e integrações de desenvolvedor. Opera puramente com dados verificados pela ponte WASM sem custódia de chaves.
+                </p>
+<div class="space-y-1.5 font-code-sm text-code-sm">
+<div class="flex justify-between py-1 px-2 bg-surface-container-lowest border border-outline-variant rounded">
+<span class="text-on-surface-variant">Packages:</span>
+<span class="text-on-surface">mcp-server, vscode-ext, arkhe-ts-client</span>
+</div>
+<div class="flex justify-between py-1 px-2 bg-surface-container-lowest border border-outline-variant rounded">
+<span class="text-on-surface-variant">WASM Bindgen:</span>
+<span class="text-primary font-mono">wasm32-unknown-unknown / direct linear memory</span>
+</div>
+<div class="flex justify-between py-1 px-2 bg-surface-container-lowest border border-outline-variant rounded">
+<span class="text-on-surface-variant">Security Perimeter:</span>
+<span class="text-tertiary font-mono">Keys &amp; Signing Prohibited (Read-only Verification)</span>
+</div>
+<div class="flex justify-between py-1 px-2 bg-surface-container-lowest border border-outline-variant rounded">
+<span class="text-on-surface-variant">Audit Tooling:</span>
+<span class="text-secondary font-mono">pnpm audit --audit-level=high (0 vulns)</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-outline-variant flex items-center justify-between text-code-sm font-code-sm">
+<span class="text-on-surface-variant">Monorepo path: <code class="text-on-surface">packages/*</code></span>
+<span class="text-secondary">3 Packages Ativos</span>
+</div>
+</div>
+</div>
+</section>
+<!-- =================================================================== -->
+<!-- 3. DETALHAMENTO PROFUNDO POR GRUPOS DE CRATES (Bento Grid)          -->
+<!-- =================================================================== -->
+<section class="space-y-space-lg">
+<!-- ================================================================= -->
+<!-- A) GENOMA DA VERIFICABILIDADE (kernel/) - THEOREM / FROZEN        -->
+<!-- ================================================================= -->
+<div class="border border-outline-variant bg-surface-container-lowest p-space-md lg:p-space-lg rounded">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-space-sm border-b border-outline-variant mb-space-md">
+<div class="flex items-center space-x-2">
+<span class="px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary font-label-caps text-label-caps rounded">
+                  GRUPO A // KERNEL TCB
+                </span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">
+                  Genoma da Verificabilidade (kernel/)
+                </h3>
+</div>
+<div class="flex items-center space-x-2">
+<span class="px-2 py-0.5 bg-surface-container border border-outline-variant text-label-caps font-label-caps text-primary">
+                  FORMAL STATUS: THEOREM / FROZEN
+                </span>
+<span class="px-2 py-0.5 bg-surface-container border border-outline-variant text-label-caps font-label-caps text-secondary">
+                  NO_STD COMPLIANT
+                </span>
+</div>
+</div>
+<!-- Bento Grid of Kernel Crates -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+<!-- arkhe-core -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all p-space-md rounded flex flex-col justify-between group">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-code-lg text-code-lg font-bold text-primary">arkhe-core</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">crates/kernel/arkhe-core</span>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-primary/10 border border-primary/30 text-primary rounded">THEOREM</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Tipos canônicos fundamentais, primitivas hash BLAKE3/SHA-256 e serializador AKG-CBOR-v1 determinístico com ordenação canônica de chaves lexicográficas.
+                  </p>
+<div class="mt-3 pt-3 border-t border-outline-variant/50 space-y-1 font-code-sm text-code-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Target:</span>
+<span class="text-on-surface font-mono">no_std + alloc</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Primitivas:</span>
+<span class="text-secondary font-mono">Blake3Hash, CborKey&lt;T&gt;</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Digest BLAKE3:</span>
+<span class="text-primary font-mono truncate max-w-[140px]" title="e4d909c290d0fb1ca068ffaddf22cbd0">e4d909c...cbd0</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between text-label-caps font-label-caps">
+<span class="text-on-surface-variant">DEP: ZERO EXTERNAL CRATES</span>
+<span class="text-primary font-semibold">FROZEN TCB</span>
+</div>
+</div>
+<!-- arkhe-verify-core -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all p-space-md rounded flex flex-col justify-between group">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-code-lg text-code-lg font-bold text-primary">arkhe-verify-core</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">crates/kernel/arkhe-verify-core</span>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-primary/10 border border-primary/30 text-primary rounded">THEOREM</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Motor puro de validação de atestações C2PA, verificação de provas ZK (UltraHonk via genshi-core no_std) e validação estática de cabeçalhos GGUF. Sem I/O de rede.
+                  </p>
+<div class="mt-3 pt-3 border-t border-outline-variant/50 space-y-1 font-code-sm text-code-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Target:</span>
+<span class="text-on-surface font-mono">no_std (pure verifier)</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>ZK Backend:</span>
+<span class="text-secondary font-mono">UltraHonk Noir / Barretenberg</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Digest BLAKE3:</span>
+<span class="text-primary font-mono truncate max-w-[140px]" title="9b14f828a2bb563e410b6d2719273">9b14f82...273a</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between text-label-caps font-label-caps">
+<span class="text-on-surface-variant">NO NETWORK ALLOWED</span>
+<span class="text-primary font-semibold">FROZEN TCB</span>
+</div>
+</div>
+<!-- arkhe-verify-wasm -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all p-space-md rounded flex flex-col justify-between group">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-code-lg text-code-lg font-bold text-primary">arkhe-verify-wasm</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">crates/kernel/arkhe-verify-wasm</span>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-primary/10 border border-primary/30 text-primary rounded">THEOREM</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Compilação em WebAssembly direcionada para consumo em runtimes Node.js e extensões sem expor ponteiros de memória do host nem permitir injeção de ponteiros mutáveis.
+                  </p>
+<div class="mt-3 pt-3 border-t border-outline-variant/50 space-y-1 font-code-sm text-code-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Target:</span>
+<span class="text-secondary font-mono">wasm32-unknown-unknown</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Exports:</span>
+<span class="text-on-surface font-mono">verify_proof(), decode_cbor()</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Digest BLAKE3:</span>
+<span class="text-primary font-mono truncate max-w-[140px]" title="31c8e7161b9a93f18e9d">31c8e71...9a93</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between text-label-caps font-label-caps">
+<span class="text-on-surface-variant">TS/MCP BRIDGE</span>
+<span class="text-primary font-semibold">FROZEN TCB</span>
+</div>
+</div>
+<!-- arkhe-kernel -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all p-space-md rounded flex flex-col justify-between group">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-code-lg text-code-lg font-bold text-primary">arkhe-kernel</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">crates/kernel/arkhe-kernel</span>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-primary/10 border border-primary/30 text-primary rounded">LEMMA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Microkernel de contenção formal, mecanismo ContainmentGate, isolamento de recursos computacionais e replay determinístico bit-a-bit de operações autorizadas.
+                  </p>
+<div class="mt-3 pt-3 border-t border-outline-variant/50 space-y-1 font-code-sm text-code-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Target:</span>
+<span class="text-on-surface font-mono">x86_64-musl (containment)</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Safety Gate:</span>
+<span class="text-error font-mono">ContainmentGate::assert_closed()</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Digest BLAKE3:</span>
+<span class="text-primary font-mono truncate max-w-[140px]" title="aa459e7710c9d7bb3e24">aa459e7...bb3e</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between text-label-caps font-label-caps">
+<span class="text-on-surface-variant">ISOLATION ENGINE</span>
+<span class="text-primary font-semibold">FROZEN TCB</span>
+</div>
+</div>
+<!-- arkhe-verify-cli -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all p-space-md rounded flex flex-col justify-between group md:col-span-2 lg:col-span-2">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-code-lg text-code-lg font-bold text-primary">arkhe-verify-cli</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">crates/kernel/arkhe-verify-cli</span>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-primary/10 border border-primary/30 text-primary rounded">LEMMA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Interface de linha de comando para auditoria de artefatos locais, integração com fluxos Cosign/Sigstore sem chaves e saída em streams JSON determinísticos para pipelines de CI/CD fail-closed.
+                  </p>
+<div class="mt-3 pt-3 border-t border-outline-variant/50 grid grid-cols-1 sm:grid-cols-2 gap-2 font-code-sm text-code-sm">
+<div class="flex justify-between text-on-surface-variant bg-surface-container-lowest p-1.5 border border-outline-variant rounded">
+<span>Binário CLI:</span>
+<span class="text-on-surface font-mono">arkhe-verify (static)</span>
+</div>
+<div class="flex justify-between text-on-surface-variant bg-surface-container-lowest p-1.5 border border-outline-variant rounded">
+<span>Keyless Support:</span>
+<span class="text-secondary font-mono">Fulcio / Rekor OIDC</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between text-label-caps font-label-caps">
+<span class="text-on-surface-variant">AUDIT HARNESS // ZERO RUNTIME LEAK</span>
+<span class="text-primary font-semibold">FROZEN TCB</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ================================================================= -->
+<!-- B) PERSISTÊNCIA CAUSAL & GOVERNANÇA (evidence/ & governance/)     -->
+<!-- ================================================================= -->
+<div class="border border-outline-variant bg-surface-container-lowest p-space-md lg:p-space-lg rounded">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-space-sm border-b border-outline-variant mb-space-md">
+<div class="flex items-center space-x-2">
+<span class="px-2 py-0.5 bg-secondary/10 border border-secondary/30 text-secondary font-label-caps text-label-caps rounded">
+                  GRUPO B // PERSISTÊNCIA &amp; GOVERNANÇA
+                </span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">
+                  Persistência Causal &amp; Governança (evidence/ &amp; governance/)
+                </h3>
+</div>
+<div class="flex items-center space-x-2">
+<span class="px-2 py-0.5 bg-surface-container border border-outline-variant text-label-caps font-label-caps text-secondary">
+                  FORMAL STATUS: LEMMA / FROZEN
+                </span>
+<span class="px-2 py-0.5 bg-surface-container border border-outline-variant text-label-caps font-label-caps text-primary">
+                  APPEND-ONLY SQL
+                </span>
+</div>
+</div>
+<!-- Bento Grid Group B -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+<!-- arkhe-wormgraph -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-secondary/50 transition-all p-space-md rounded flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-code-lg text-code-lg font-bold text-secondary">arkhe-wormgraph</span>
+<div class="font-code-sm text-code-sm text-on-surface-variant">crates/evidence/arkhe-wormgraph</div>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-secondary/10 border border-secondary/30 text-secondary rounded">LEMMA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Grafo causal imutável baseado no modelo WORM (Write Once, Read Many). Encadeamento estrutural via <code class="text-primary font-mono">record_hash</code> e <code class="text-primary font-mono">prev_hash</code> com exportação para logs Rekor.
+                  </p>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">DAG Verification:</span>
+<span class="text-primary font-mono">O(1) Incremental</span>
+</div>
+</div>
+<!-- arkhe-memory -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-secondary/50 transition-all p-space-md rounded flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-code-lg text-code-lg font-bold text-secondary">arkhe-memory</span>
+<div class="font-code-sm text-code-sm text-on-surface-variant">crates/evidence/arkhe-memory</div>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-secondary/10 border border-secondary/30 text-secondary rounded">LEMMA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Memória episódica com geração de provas de inclusão criptográfica instantâneas através de Merkle Mountain Ranges (MMR) baseadas em nós BLAKE3.
+                  </p>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">Peak Count:</span>
+<span class="text-secondary font-mono">Log2(N) Peaks</span>
+</div>
+</div>
+<!-- arkhe-sql -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-secondary/50 transition-all p-space-md rounded flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-code-lg text-code-lg font-bold text-secondary">arkhe-sql</span>
+<div class="font-code-sm text-code-sm text-on-surface-variant">crates/evidence/arkhe-sql</div>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-secondary/10 border border-secondary/30 text-secondary rounded">LEMMA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Camada de persistência relacional PostgreSQL usando SQLx com Row-Level Security (RLS) forçado e triggers que rejeitam operações de <code class="text-error font-mono">UPDATE</code> e <code class="text-error font-mono">DELETE</code>.
+                  </p>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">RLS Invariant:</span>
+<span class="text-primary font-mono">FAIL_ON_MUTATION</span>
+</div>
+</div>
+<!-- arkhe-governance -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-secondary/50 transition-all p-space-md rounded flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-code-lg text-code-lg font-bold text-secondary">arkhe-governance</span>
+<div class="font-code-sm text-code-sm text-on-surface-variant">crates/governance/arkhe-governance</div>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-secondary/10 border border-secondary/30 text-secondary rounded">LEMMA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Validação de quórum multi-sig (ADR-011), agregação de assinaturas BLS / Ed25519 e compilação de artefatos de políticas canônicas resolvidas.
+                  </p>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">Quorum Engine:</span>
+<span class="text-on-surface font-mono">m-of-n Strict Rule</span>
+</div>
+</div>
+<!-- arkhe-sql-migrate -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-secondary/50 transition-all p-space-md rounded flex flex-col justify-between md:col-span-2 lg:col-span-2">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-code-lg text-code-lg font-bold text-secondary">arkhe-sql-migrate</span>
+<div class="font-code-sm text-code-sm text-on-surface-variant">crates/evidence/arkhe-sql-migrate</div>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-secondary/10 border border-secondary/30 text-secondary rounded">LEMMA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2.5">
+                    Ferramenta de auditoria e aplicação determinística de migrações SQL. Validação pré-execução via digest SHA-384 registrado no manifesto do TCB e rollback atômico em caso de anomalia causal.
+                  </p>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">Migration Seal:</span>
+<span class="text-primary font-mono">SHA-384 Integrity Verified (32 migrations checked)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ================================================================= -->
+<!-- C & D) ORQUESTRRAÇÃO (LEMMA) & GENOMA DA COGNIÇÃO (CONJECTURE)    -->
+<!-- ================================================================= -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+<!-- C) ORQUESTRAÇÃO & SUBSTRATO DE TRABALHO -->
+<div class="border border-outline-variant bg-surface-container-lowest p-space-md lg:p-space-lg rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-sm border-b border-outline-variant mb-space-md">
+<div class="flex items-center space-x-2">
+<span class="px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary font-label-caps text-label-caps rounded">
+                      GRUPO C // WORK
+                    </span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">
+                      Orquestração &amp; Substrato
+                    </h3>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-secondary/10 border border-secondary/30 text-secondary rounded">LEMMA</span>
+</div>
+<div class="space-y-space-md">
+<!-- arkhe-containers -->
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-code-md font-semibold text-primary">arkhe-containers</span>
+<span class="font-code-sm text-code-sm text-secondary">Wasmtime P2 / gVisor</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                      Gerenciamento de runtimes sandbox ultrasseguros (Wasmtime preview 2, Wasmer, WaSC e shims de isolamento runwasi) com budgets de memória rígidos.
+                    </p>
+</div>
+<!-- arkhe-workers -->
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-code-md font-semibold text-primary">arkhe-workers</span>
+<span class="font-code-sm text-code-sm text-secondary">Awa (Postgres) / BullMQ</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                      Gerenciamento assíncrono de jobs com fila transacional idempotente, suporte a heartbeat estrito e recuperação após falhas sem repetição de efeitos colaterais.
+                    </p>
+</div>
+<!-- arkhe-work -->
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-code-md font-semibold text-primary">arkhe-work</span>
+<span class="font-code-sm text-code-sm text-secondary">WorkIntent Canonical</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                      Definição canônica de intenções de trabalho (WorkIntent) e classificadores normativos que avaliam pré-condições antes do despacho ao ContainmentGate.
+                    </p>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant text-label-caps font-label-caps text-on-surface-variant flex justify-between">
+<span>SANDBOX CONTAINMENT: ARMED</span>
+<span class="text-primary font-semibold">ALL CRATES FROZEN</span>
+</div>
+</div>
+<!-- D) GENOMA DA COGNIÇÃO (cognition/ - PENDING / CONJECTURE) -->
+<div class="border border-outline-variant bg-surface-container-lowest p-space-md lg:p-space-lg rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-sm border-b border-outline-variant mb-space-md">
+<div class="flex items-center space-x-2">
+<span class="px-2 py-0.5 bg-tertiary/10 border border-tertiary/30 text-tertiary font-label-caps text-label-caps rounded">
+                      GRUPO D // COGNIÇÃO
+                    </span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">
+                      Genoma da Cognição (cognition/)
+                    </h3>
+</div>
+<span class="px-1.5 py-0.5 text-label-caps font-label-caps bg-tertiary/10 border border-tertiary/30 text-tertiary rounded">CONJECTURE</span>
+</div>
+<div class="p-space-sm bg-tertiary/5 border border-tertiary/20 rounded mb-space-md">
+<div class="flex items-center space-x-2 text-tertiary font-code-sm text-code-sm">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+<span class="font-bold">STATUS FORMAL: CONJECTURE / PENDING // ZERO CUSTÓDIA</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                    Crates cognitivos não possuem autoridade de escrita no ledger, não custodiam chaves privadas criptográficas e operam inteiramente em modo de inferência sob contenção estrita.
+                  </p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm font-code-sm text-code-sm">
+<div class="p-2 bg-surface-container-low border border-outline-variant rounded">
+<div class="flex items-center justify-between">
+<span class="text-tertiary font-semibold">arkhe-learning</span>
+<span class="text-outline text-label-caps">CONJECTURE</span>
+</div>
+<span class="text-on-surface-variant text-[11px] block mt-0.5">Otimizadores e inferência de tensores locais</span>
+</div>
+<div class="p-2 bg-surface-container-low border border-outline-variant rounded">
+<div class="flex items-center justify-between">
+<span class="text-tertiary font-semibold">arkhe-world-model</span>
+<span class="text-outline text-label-caps">CONJECTURE</span>
+</div>
+<span class="text-on-surface-variant text-[11px] block mt-0.5">Modelagem probabilística de estados futuros</span>
+</div>
+<div class="p-2 bg-surface-container-low border border-outline-variant rounded">
+<div class="flex items-center justify-between">
+<span class="text-tertiary font-semibold">arkhe-metacognition</span>
+<span class="text-outline text-label-caps">CONJECTURE</span>
+</div>
+<span class="text-on-surface-variant text-[11px] block mt-0.5">Avaliação de auto-confiança e bounds de incerteza</span>
+</div>
+<div class="p-2 bg-surface-container-low border border-outline-variant rounded">
+<div class="flex items-center justify-between">
+<span class="text-tertiary font-semibold">arkhe-perception</span>
+<span class="text-outline text-label-caps">CONJECTURE</span>
+</div>
+<span class="text-on-surface-variant text-[11px] block mt-0.5">Tokenização multimodal e encoders de embedding</span>
+</div>
+<div class="p-2 bg-surface-container-low border border-outline-variant rounded sm:col-span-2">
+<div class="flex items-center justify-between">
+<span class="text-tertiary font-semibold">arkhe-rag</span>
+<span class="text-outline text-label-caps">CONJECTURE</span>
+</div>
+<span class="text-on-surface-variant text-[11px] block mt-0.5">Busca vetorial densa com verificação de proveniência de contexto</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant text-label-caps font-label-caps text-on-surface-variant flex justify-between">
+<span>NON-FIDUCIARY LAYER</span>
+<span class="text-tertiary font-semibold">ISOLATED FROM TCB</span>
+</div>
+</div>
+</div>
+</section>
+<!-- =================================================================== -->
+<!-- 4. MATRIZ DE COMPILAÇÃO & INSPEÇÃO DE CARGO.TOML                     -->
+<!-- =================================================================== -->
+<section class="border border-outline-variant bg-surface-container-lowest p-space-md lg:p-space-lg rounded">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-space-sm border-b border-outline-variant mb-space-md">
+<div>
+<span class="font-label-caps text-label-caps text-primary">MATRIZ TÉCNICA EXAUSTIVA</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                Matriz de Compilação, Targets e Nível Formal dos Crates
+              </h2>
+</div>
+<div class="flex items-center space-x-2">
+<span class="font-code-sm text-code-sm text-on-surface-variant">Rustc 1.84.0-nightly (e72c842 2025-01-15)</span>
+</div>
+</div>
+<!-- Technical Table -->
+<div class="overflow-x-auto border border-outline-variant rounded mb-space-lg">
+<table class="w-full text-left font-code-sm text-code-sm border-collapse">
+<thead>
+<tr class="bg-surface-container border-b border-outline-variant text-on-surface-variant font-label-caps text-label-caps">
+<th class="py-2 px-3">CRATE NAME</th>
+<th class="py-2 px-3">TARGET TRIPLE</th>
+<th class="py-2 px-3">ALLOCATION (STD)</th>
+<th class="py-2 px-3">NÍVEL FORMAL</th>
+<th class="py-2 px-3">WORKSPACE</th>
+<th class="py-2 px-3">BLAKE3 INTEGRITY</th>
+<th class="py-2 px-3 text-right">AÇÕES</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-2 px-3 font-semibold text-primary">arkhe-core</td>
+<td class="py-2 px-3 text-on-surface">x86_64-unknown-linux-musl</td>
+<td class="py-2 px-3"><span class="px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded">no_std + alloc</span></td>
+<td class="py-2 px-3"><span class="text-primary font-bold">THEOREM</span></td>
+<td class="py-2 px-3 text-on-surface-variant">crates/kernel</td>
+<td class="py-2 px-3 font-mono text-on-surface">e4d909c2...</td>
+<td class="py-2 px-3 text-right text-primary"><button class="hover:underline">Inspect AST</button></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-2 px-3 font-semibold text-primary">arkhe-verify-core</td>
+<td class="py-2 px-3 text-on-surface">x86_64-unknown-linux-musl</td>
+<td class="py-2 px-3"><span class="px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded">no_std (pure)</span></td>
+<td class="py-2 px-3"><span class="text-primary font-bold">THEOREM</span></td>
+<td class="py-2 px-3 text-on-surface-variant">crates/kernel</td>
+<td class="py-2 px-3 font-mono text-on-surface">9b14f828...</td>
+<td class="py-2 px-3 text-right text-primary"><button class="hover:underline">Inspect Proof</button></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-2 px-3 font-semibold text-secondary">arkhe-verify-wasm</td>
+<td class="py-2 px-3 text-secondary">wasm32-unknown-unknown</td>
+<td class="py-2 px-3"><span class="px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded">no_std + alloc</span></td>
+<td class="py-2 px-3"><span class="text-primary font-bold">THEOREM</span></td>
+<td class="py-2 px-3 text-on-surface-variant">crates/kernel</td>
+<td class="py-2 px-3 font-mono text-on-surface">31c8e716...</td>
+<td class="py-2 px-3 text-right text-secondary"><button class="hover:underline">Wasm Disasm</button></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-2 px-3 font-semibold text-primary">arkhe-kernel</td>
+<td class="py-2 px-3 text-on-surface">x86_64-unknown-linux-musl</td>
+<td class="py-2 px-3"><span class="px-1.5 py-0.5 bg-surface-container-high text-on-surface-variant border border-outline-variant rounded">std (controlled)</span></td>
+<td class="py-2 px-3"><span class="text-secondary font-bold">LEMMA</span></td>
+<td class="py-2 px-3 text-on-surface-variant">crates/kernel</td>
+<td class="py-2 px-3 font-mono text-on-surface">aa459e77...</td>
+<td class="py-2 px-3 text-right text-primary"><button class="hover:underline">Gate Audit</button></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-2 px-3 font-semibold text-secondary">arkhe-wormgraph</td>
+<td class="py-2 px-3 text-on-surface">x86_64-unknown-linux-musl</td>
+<td class="py-2 px-3"><span class="px-1.5 py-0.5 bg-surface-container-high text-on-surface-variant border border-outline-variant rounded">std</span></td>
+<td class="py-2 px-3"><span class="text-secondary font-bold">LEMMA</span></td>
+<td class="py-2 px-3 text-on-surface-variant">crates/evidence</td>
+<td class="py-2 px-3 font-mono text-on-surface">58f01b44...</td>
+<td class="py-2 px-3 text-right text-secondary"><button class="hover:underline">Verify DAG</button></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-2 px-3 font-semibold text-secondary">arkhe-memory</td>
+<td class="py-2 px-3 text-on-surface">x86_64-unknown-linux-musl</td>
+<td class="py-2 px-3"><span class="px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded">no_std + alloc</span></td>
+<td class="py-2 px-3"><span class="text-secondary font-bold">LEMMA</span></td>
+<td class="py-2 px-3 text-on-surface-variant">crates/evidence</td>
+<td class="py-2 px-3 font-mono text-on-surface">71ea9401...</td>
+<td class="py-2 px-3 text-right text-secondary"><button class="hover:underline">MMR Trees</button></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-2 px-3 font-semibold text-tertiary">arkhe-learning</td>
+<td class="py-2 px-3 text-on-surface">x86_64-unknown-linux-gnu</td>
+<td class="py-2 px-3"><span class="px-1.5 py-0.5 bg-surface-container-high text-on-surface-variant border border-outline-variant rounded">std + torch-ffi</span></td>
+<td class="py-2 px-3"><span class="text-tertiary font-bold">CONJECTURE</span></td>
+<td class="py-2 px-3 text-on-surface-variant">crates/cognition</td>
+<td class="py-2 px-3 font-mono text-outline">f028ab61...</td>
+<td class="py-2 px-3 text-right text-tertiary"><button class="hover:underline">Sandbox Status</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Live Manifest Inspector (Cargo.toml) -->
+<div>
+<div class="flex items-center justify-between pb-2">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[18px]">code</span>
+<span class="font-headline-sm text-body-lg font-semibold text-on-surface">Root Cargo.toml &amp; Security Profile Flags</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">/arkhe/Cargo.toml (Canonical Hash Verified)</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md rounded font-code-sm text-code-sm text-on-surface overflow-x-auto">
+<pre class="leading-relaxed"><code><span class="text-on-surface-variant"># ARKHE COMPUTATIONAL FIDUCIARY RUNTIME // ROOT WORKSPACE CONFIGURATION</span>
+<span class="text-primary">[workspace]</span>
+<span class="text-secondary">resolver</span> = <span class="text-tertiary">"2"</span>
+<span class="text-secondary">members</span> = [
+    <span class="text-tertiary">"crates/kernel/arkhe-core"</span>,
+    <span class="text-tertiary">"crates/kernel/arkhe-verify-core"</span>,
+    <span class="text-tertiary">"crates/kernel/arkhe-verify-wasm"</span>,
+    <span class="text-tertiary">"crates/kernel/arkhe-kernel"</span>,
+    <span class="text-tertiary">"crates/kernel/arkhe-verify-cli"</span>,
+    <span class="text-tertiary">"crates/evidence/arkhe-wormgraph"</span>,
+    <span class="text-tertiary">"crates/evidence/arkhe-memory"</span>,
+    <span class="text-tertiary">"crates/evidence/arkhe-sql"</span>,
+    <span class="text-tertiary">"crates/evidence/arkhe-sql-migrate"</span>,
+    <span class="text-tertiary">"crates/governance/arkhe-governance"</span>,
+    <span class="text-tertiary">"crates/orchestration/arkhe-containers"</span>,
+    <span class="text-tertiary">"crates/orchestration/arkhe-workers"</span>,
+    <span class="text-tertiary">"crates/work/arkhe-work"</span>,
+    <span class="text-tertiary">"crates/cognition/arkhe-learning"</span>,
+]
+
+<span class="text-primary">[workspace.lints.clippy]</span>
+<span class="text-secondary">pedantic</span> = { level = <span class="text-tertiary">"deny"</span>, priority = -1 }
+<span class="text-secondary">panic</span> = <span class="text-tertiary">"deny"</span>
+<span class="text-secondary">unwrap_used</span> = <span class="text-tertiary">"deny"</span>
+<span class="text-secondary">indexing_slicing</span> = <span class="text-tertiary">"deny"</span>
+
+<span class="text-primary">[profile.release]</span>
+<span class="text-secondary">opt-level</span> = <span class="text-tertiary">3</span>
+<span class="text-secondary">lto</span> = <span class="text-tertiary">"fat"</span>
+<span class="text-secondary">codegen-units</span> = <span class="text-tertiary">1</span>
+<span class="text-secondary">panic</span> = <span class="text-tertiary">"abort"</span>
+<span class="text-secondary">strip</span> = <span class="text-tertiary">"symbols"</span></code></pre>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,18 @@
+import { spawnSync, spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+const cwd=fileURLToPath(new URL('..',import.meta.url));
+const require=createRequire(import.meta.url);
+const mode=process.argv[2]==='start'?'start':'dev';
+const port=Number(process.env.ARKHE_GOVTECH_PORT||3012);
+if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('ARKHE_GOVTECH_PORT inválida.');
+const env={...process.env,ARKHE_INTRA_DATA_DIR:process.env.ARKHE_GOVTECH_DATA_DIR||resolve(cwd,'../../ops/local/govtech'),ARKHE_INTRA_ORIGIN:`http://127.0.0.1:${port}`};
+const setup=spawnSync(process.execPath,['scripts/setup.mjs'],{cwd,env,stdio:'inherit'});
+if(setup.status!==0)process.exit(setup.status||1);
+console.log(`Arkhe GovTech: http://127.0.0.1:${port}/govtech`);
+console.log(`Dados e credenciais locais: ${env.ARKHE_INTRA_DATA_DIR}`);
+const child=spawn(process.execPath,[require.resolve('next/dist/bin/next'),mode,'--hostname','127.0.0.1','--port',String(port)],{cwd,env,stdio:'inherit',windowsHide:true});
+for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>child.kill(signal));
+child.on('exit',code=>process.exit(code||0));
+child.on('error',error=>{console.error(error.message);process.exit(1);});

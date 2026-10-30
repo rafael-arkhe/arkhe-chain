@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Favicon + preview de link PADRAO: logo light + cor de destaque do AEGIS
+       (dinamico, mesma origem /api). Um padrao em toda superficie. -->
+  <link rel="icon" type="image/svg+xml" href="/api/brand/favicon">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/api/brand/og">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="/api/brand/og">
+  <title>Alertas ao vivo</title>
+  <script>
+    // Título segue o NOME DA MARCA setado no painel do AEGIS (company_name).
+    (async () => { try {
+      const r = await fetch(location.origin + '/api/styles/brand/public', { cache: 'no-store' });
+      if (!r.ok) return; const b = await r.json();
+      if (b && typeof b.company_name === 'string' && b.company_name.trim())
+        document.title = b.company_name.trim() + ' · Alertas ao vivo';
+    } catch (e) {} })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Onda 3 Safe Tag: backend AEGIS (sem Firebase, sem JWT-na-URL, sem Google
+       Maps — a fila não desenha mapa; sem analytics externo). A portaria loga no
+       AEGIS; um EventSource same-origin recebe o push. O JS vira módulo. -->
+  <style>
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+      overflow-y: auto;
+    }
+    
+    /* Hide WebKit scrollbars */
+    body::-webkit-scrollbar {
+      display: none;
+    }
+    
+    html {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      overflow-y: auto;
+    }
+    
+    html::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Modal */
+    .modal {
+      display: flex;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .modal.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 35px 25px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      max-width: 90%;
+      width: 320px;
+      transform: scale(0.85);
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                  opacity 0.3s ease;
+    }
+    
+    .modal.visible .modal-content {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .modal-content .warning-icon {
+      font-size: 38px;
+      margin-bottom: 15px;
+      display: block;
+      color: #F9A825;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .modal-content p:nth-child(1) {
+      font-size: 20px;
+      font-weight: 600;
+      color: #101518;
+      margin: 0 0 15px 0;
+      line-height: 1.3;
+    }
+
+    .modal-content p:nth-child(2) {
+      margin: 0;
+      line-height: 1.5;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .modal-content p:nth-child(3) {
+      margin: 7px 0 15px 0;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+
+    .modal button {
+      padding: 14px 20px;
+      background-color: #132034;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      height: 52px;
+      font-size: 16px;
+      font-weight: 500;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.12);
+      transition: all 0.3s ease;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .modal button .ripple {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: scale(0);
+      pointer-events: none;
+      animation: ripple 0.6s linear;
+    }
+    
+    @keyframes ripple {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+    
+    .modal button::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: -100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: all 0.6s ease;
+    }
+    
+    .modal button:hover::after {
+      left: 100%;
+    }
+    
+    .modal button:hover {
+      background-color: #1F3A5F;
+      transform: translateY(-2px);
+      box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal button:active {
+      transform: translateY(0);
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modal button .sound-icon {
+      font-size: 18px;
+    }
+
+    .list-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 15px 23px 15px 20px;
+      border-top: #E0E3E7 1px solid;
+      gap: 8px;
+      background-color: #FFFFFF;
+      /* margin-bottom: 8px; */
+      position: relative;
+      /* border-radius: 8px; */
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-left 0.3s ease;
+      border-left: 4px solid transparent;
+    }
+    
+    .list-item:hover {
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+
+    .list-item .icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      background-color: #132034;
+      font-weight: 500;
+      font-size: 16px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .list-item .info {
+      flex: 1 1 45%;
+      min-width: 150px;
+    }
+
+    .list-item .name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      color: #101518;
+    }
+
+    .list-item .contact {
+      font-size: 12px;
+      font-weight: 400;
+      color: #101518;
+      /* display: flex;
+      align-items: center; */
+    }
+    
+    .phone-number {
+      display: flex;
+      align-items: center;
+    }
+    
+    .phone-number::before {
+      content: '';
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 5px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23555"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>');
+    }
+    
+    .list-item .contact:has(.speed-value):before {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23555"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm-1 7h4v2h-4z"/></svg>');
+    }
+    
+    .list-item .contact:contains("Endereço:"):before {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23555"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>');
+    }
+
+    .list-item .status {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      white-space: nowrap;
+      font-size: 13px;
+      margin-right: 4px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .list-item .status:before {
+      content: '';
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 6px;
+      border-radius: 50%;
+    }
+
+    .list-item .status.success {
+      background-color: #F0FFF8;
+      color: #02CA79;
+      border: 1px solid #02CA79;
+    }
+    
+    .list-item .status.success:before {
+      background-color: #02CA79;
+      box-shadow: 0 0 4px rgba(2, 202, 121, 0.5);
+    }
+
+    .list-item .status.error {
+      background: #FFE8E8;
+      color: #E65454;
+      border: 1px solid #e65454;
+      animation: pulse-error 2s infinite;
+    }
+    
+    .list-item .status.error:before {
+      background-color: #E65454;
+      box-shadow: 0 0 4px rgba(230, 84, 84, 0.5);
+    }
+
+    .list-item .status.waiting {
+      background: #F3F5F7;
+      color: #666;
+      border: 1px solid #D0D5DD;
+    }
+    
+    .list-item .status.waiting:before {
+      background-color: #D0D5DD;
+    }
+
+    .list-item .success {
+      background-color: #F0FFF8;
+      color: #02CA79;
+      border: 1px solid #02CA79;
+    }
+
+    .list-item .error {
+      background: #FFE8E8;
+      color: #E65454;
+      border: 1px solid #e65454;
+      animation: pulse-error 2s infinite;
+    }
+
+    .list-item .high-speed {
+      color: #E65454;
+      font-weight: bold;
+    }
+
+    .list-item .medium-speed {
+      color: #F9A825;
+      font-weight: bold;
+    }
+
+    .list-item .low-speed {
+      color: #101518;
+      font-weight: normal;
+    }
+
+    .mute-button {
+      padding: 6px;
+      margin-left: auto;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      background-color: #132034;
+      color: white;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .mute-button:hover {
+      background-color: #2C3E50;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+    }
+
+    .mute-button.muted {
+      background-color: #95A5A6;
+    }
+
+    .list-item .info-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      width: 100%;
+      margin-top: 12px;
+      background-color: #F9FAFB;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .list-item .info-group .info {
+      flex: 1;
+      min-width: auto;
+    }
+
+    /* Style for the new guest container */
+    .guest-container {
+      display: flex;
+      align-items: center;
+      gap: 8px; /* Space between icon and text */
+      flex: 1 1 45%; /* Take up space similar to .info */
+      min-width: 150px;
+      justify-content: flex-start; /* Align icon/text group to the left by default */
+    }
+
+    /* Adjust guest-container and its contents for small screens */
+    .list-item .guest-container {
+      order: 0; /* Place guest info before resident info */
+      width: 100%;
+      justify-content: flex-start; /* Align icon/text group to the left */
+      margin-bottom: 8px; /* Add margin below instead of above */
+      /* Remove flex properties specific to row layout */
+      flex: none;
+      min-width: auto;
+    }
+
+    .list-item .guest-info {
+      /* Remove specific alignment/order as container handles it */
+      text-align: left !important; /* Keep text left-aligned */
+      /* Remove properties handled by container or default .info */
+      /* order: 1; */
+      /* margin-top: 8px; */
+    }
+
+    /* Adjust guest-container and its contents for small screens up to 700px */
+    .list-item .guest-container {
+      /* min-width: 150px; */
+    }
+
+    .speed-value {
+      position: relative;
+      font-weight: 500;
+    }
+
+    .validate-button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+      background-color: #F3F5F7;
+      color: #333;
+      border: 1px solid #D0D5DD;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .validate-button:after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: -100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: all 0.6s ease;
+    }
+    
+    .validate-button:hover:after {
+      left: 100%;
+    }
+
+    .validate-button:hover {
+      background-color: #E9ECEF;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .validate-button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .validate-button:disabled {
+      background-color: #a0a0a0;
+      color: #fff;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .validate-button.loading {
+      position: relative;
+      pointer-events: none;
+    }
+
+    .validate-button.loading::after {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border: 2px solid #132034;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 8px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+    
+    /* Add loader for initial content */
+    .loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100px;
+      width: 100%;
+    }
+    
+    .loader::after {
+      content: '';
+      width: 30px;
+      height: 30px;
+      border: 3px solid #132034;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    /* Status indicator for API requests */
+    .api-status {
+      text-align: center;
+      padding: 8px;
+      font-size: 12px;
+      color: #757575;
+      display: none;
+      margin-top: 10px;
+    }
+    
+    /* Enhanced empty state styling */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #757575;
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+      margin: 20px auto;
+      max-width: 400px;
+      /* background-color: #F9FAFB; */
+      /* border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05); */
+    }
+    
+    .empty-state h3 {
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 18px;
+    }
+    
+    .empty-state p {
+      margin-bottom: 20px;
+    }
+    
+    .empty-state img {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 15px;
+      opacity: 0.7;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Error message styling */
+    .error-message {
+      color: #E65454;
+      padding: 20px;
+      text-align: center;
+      width: 100%;
+      background-color: rgba(230, 84, 84, 0.1);
+      border-radius: 8px;
+      margin: 10px 0;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    /* Added pulsing animation for error status */
+    @keyframes pulse-error {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(230, 84, 84, 0.7);
+      }
+      70% {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 10px rgba(230, 84, 84, 0);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(230, 84, 84, 0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="list-container">
+    <div class="loader" id="loader"></div>
+    <div class="empty-state" id="empty-state">
+      <img src="https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/safe-tag-l5p8b4/assets/lsp2iidyhyfr/checklist.png" alt="No drivers">
+      <h3>Nenhum visitante ativo</h3>
+      <p>Não há visitantes ativos no momento. Novos visitantes aparecerão aqui automaticamente quando estiverem disponíveis.</p>
+      <p style="font-size: 12px; color: #999;">Última verificação: <span id="last-check-time"></span></p>
+    </div>
+    <div class="api-status" id="api-status">Aguardando clique...</div>
+  </div>
+
+  <!-- Audio element with preload attribute -->
+  <audio id="sound" style="display: none;" preload="auto"
+    src="https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/safe-tag-l5p8b4/assets/n7nc4hby8577/alert-notification.mp3"
+    controls></audio>
+
+  <!-- Modal -->
+  <div id="audio-modal" class="modal">
+    <div class="modal-content">
+      <span class="warning-icon">⚠️</span>
+      <p>Você está no Modo Ausente!</p>
+      <p>Para receber alertas importantes, ative o modo alerta abaixo.</p>
+      <button id="allow-audio-button"><span class="sound-icon">🔊</span> Ligar Modo Alerta</button>
+    </div>
+  </div>
+
+  <script type="module">
+    // Onda 3 Safe Tag — guestalerts troca o backend Firebase por AEGIS (push via
+    // SSE). A SPA (fila de cartões + sirene contínua por fora-de-rota) é mantida
+    // (D8); só a camada de dados troca. Adaptador em js/aegis-live.js.
+    import { AegisLive } from './js/aegis-live.js?v=f31f736ae7';
+
+    // Constants for API endpoints and settings
+    const VALIDATION_COOLDOWN = 30000; // 30 seconds
+    const NOTIFICATION_COOLDOWN = 60000; // 1 minute
+    const BATCH_SIZE = 100; // Number of documents to fetch at once
+    const CACHE_TTL = 300000; // 5 minutes cache TTL for reference data
+    const ROUTE_CACHE_TTL = 600000; // 10 minutes cache for routes
+    const NOTIFICATION_INTERVAL = 5000; // 5 seconds between notification sounds
+    
+    // Route cache to avoid repeated requests
+    const routeCache = new Map();
+    
+    // Set to track off-route drivers and notification timer
+    const offRouteDrivers = new Set();
+    let notificationTimerId = null;
+    
+    // Onda 3: sem Firebase — a camada de dados é o EventSource do AEGIS
+    // (ver startLiveAlerts, no fim). Cache de refs herdado fica p/ o dead code.
+    const refCache = new Map();
+    let __live = null;                 // instância do stream ao vivo
+    const liveCards = new Map();       // token_id -> elemento do cartão
+    
+    // Elements cache
+    const elements = {
+      modal: document.getElementById('audio-modal'),
+      allowAudioButton: document.getElementById('allow-audio-button'),
+      sound: document.getElementById('sound'),
+      listContainer: document.getElementById('list-container'),
+      loader: document.getElementById('loader'),
+      emptyState: document.getElementById('empty-state'),
+      lastCheckTime: document.getElementById('last-check-time'),
+      apiStatus: document.getElementById('api-status')
+    };
+
+    // Store last validation and notification timestamps
+    const validationCooldowns = new Map();
+    const notificationCooldowns = new Map();
+    
+    // Store all tokens in memory for consistent ordering
+    let allTokens = new Map();
+    // Track whether we're waiting for API responses
+    let pendingApiRequests = 0;
+    // Track loading state
+    let isInitialLoadComplete = false;
+    // Track empty state check time
+    let lastEmptyCheckTime = null;
+    
+    // Initialize query parameters
+    const params = {
+      deviationRadius: getQueryParam("deviationRadius"),
+      location: getQueryParam("location")
+    };
+    
+    // Check for invalid parameters
+    if (params.deviationRadius && Number(params.deviationRadius) > 100) {
+      alert("Taxa de desvio proibido!");
+      window.location.href = "https://safetag.lat";
+    }
+
+    // Extract params of URL
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    // Allow audio on modal click with ripple effect
+    elements.allowAudioButton.addEventListener('click', function(e) {
+      // Create ripple effect
+      const button = this;
+      const ripple = document.createElement('span');
+      const rect = button.getBoundingClientRect();
+      
+      const size = Math.max(rect.width, rect.height);
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top - size / 2;
+      
+      ripple.className = 'ripple';
+      ripple.style.width = ripple.style.height = `${size}px`;
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      
+      button.appendChild(ripple);
+      
+      // Remove ripple after animation completes
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+      
+      // Create silent audio to unlock audio on iOS
+      const silentAudio = new Audio();
+      silentAudio.src = "data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAA..."; 
+      silentAudio.play().then(() => {
+        closeModal();
+      }).catch(error => {
+        closeModal();
+      });
+    });
+    
+    // Close modal when clicking outside content
+    elements.modal.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+    
+    // Prevent propagation from modal content to modal
+    document.querySelector('.modal-content').addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+
+    // Show modal with animation
+    function showModal() {
+      elements.modal.classList.add('visible');
+    }
+    
+    // Close modal with animation
+    function closeModal() {
+      elements.modal.classList.remove('visible');
+    }
+
+    // Authenticate user with JWT
+    async function authenticateWithJWT() {
+      const token = getQueryParam("jwt");
+
+      if (!token) {
+        alert("Token de autenticação não fornecido.");
+        window.location.href = "https://app.safetag.lat/signIn";
+        return false;
+      }
+
+      try {
+        const decoded = jwt_decode(token);
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        if (decoded.exp && decoded.exp < currentTime) {
+          alert("Token expirado!");
+          window.location.href = "https://app.safetag.lat/signIn";
+          return false;
+        }
+        
+        // Convert JWT to Firebase custom token
+        const firebaseToken = await convertToFirebaseToken(token);
+        
+        // Sign in with the custom token
+        await firebase.auth().signInWithCustomToken(firebaseToken);
+        
+        console.log("Sessão do Guest Alerts autenticada com sucesso.");
+        showModal();
+        return true;
+      } catch (error) {
+        console.error("Erro ao autenticar Guest Alerts:", error);
+        alert("Token inválido ou expirado.");
+        window.location.href = "https://app.safetag.lat/signIn";
+        return false;
+      }
+    }
+
+    // Convert JWT to Firebase custom token
+    async function convertToFirebaseToken(jwt) {
+      try {
+        const response = await fetch('https://bridge.safetag.lat/guard/convert-to-firebase-token', {
+          method: 'POST',
+          headers: {
+            'Authorization': jwt,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data.token; // Assuming the response contains a token field
+      } catch (error) {
+        console.error("Error converting token:", error);
+        throw new Error("Failed to convert JWT to Firebase token");
+      }
+    }
+
+    // Resolve Firestore references with caching
+    async function resolveReference(ref) {
+      if (!ref) return null;
+      
+      // Create a cache key from the reference path
+      const cacheKey = ref.path;
+      
+      // Check if we have a cached result and it's not expired
+      const cachedItem = refCache.get(cacheKey);
+      const now = Date.now();
+      
+      if (cachedItem && (now - cachedItem.timestamp) < CACHE_TTL) {
+        return cachedItem.data;
+      }
+      
+      try {
+        const doc = await ref.get();
+        if (doc.exists) {
+          const data = doc.data();
+          // Store in cache with timestamp
+          refCache.set(cacheKey, { data, timestamp: now });
+          return data;
+        }
+        return null;
+      } catch (error) {
+        console.error('Error resolving reference:', error);
+        return null;
+      }
+    }
+
+    // Improved function to get precise initials from display_name
+    function getInitials(displayName) {
+      if (!displayName) return '🖼️';
+
+      // Extract the name part before the bracket
+      const namePart = displayName.split('[')[0].trim();
+
+      // Split into words and filter out empty strings
+      const words = namePart.split(' ').filter(word => word.length > 0);
+
+      // Get first and last word initials
+      if (words.length === 0) return '🖼️';
+      if (words.length === 1) return words[0].charAt(0).toUpperCase();
+      const initials = (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+      return initials || '🖼️';
+    }
+
+    // Format a date consistently
+    function formatDate(timestamp) {
+      if (!timestamp) return 'Desconhecido';
+      
+      try {
+        const date = timestamp.toDate();
+        return date.toLocaleString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+      } catch (error) {
+        return 'Data inválida';
+      }
+    }
+
+    // Function to create a better phone display
+    function formatPhoneNumber(phone) {
+      if (!phone) return 'Desconhecido';
+      
+      // Remove +55 prefix if present
+      let formattedPhone = phone.startsWith('+55') ? phone.substring(3) : phone;
+      
+      // Remove any non-digit characters
+      formattedPhone = formattedPhone.replace(/\D/g, '');
+      
+      // Format in PT-BR cell phone format: (XX) XXXXX-XXXX
+      if (formattedPhone.length === 11) {
+        formattedPhone = `(${formattedPhone.substring(0, 2)}) ${formattedPhone.substring(2, 7)}-${formattedPhone.substring(7)}`;
+      } else if (formattedPhone.length === 10) { // Handle landline numbers
+        formattedPhone = `(${formattedPhone.substring(0, 2)}) ${formattedPhone.substring(2, 6)}-${formattedPhone.substring(6)}`;
+      }
+      
+      return `<span class="phone-number">${formattedPhone}</span>`;
+    }
+
+    // Create token element
+    async function renderToken(id, data) {
+      // Load reference data in parallel for better performance
+      const [guest, owner, marker, primaryResident] = await Promise.all([
+        resolveReference(data.guest_assigned),
+        resolveReference(data.owner),
+        resolveReference(data.markerRef),
+        data.users_assigned?.length > 0 ? resolveReference(data.users_assigned[0]) : Promise.resolve(null)
+      ]);
+
+      // Resolve names for multiple route markers if applicable
+      let routeMarkerNamesHtml = '';
+      if (data.is_multiple_route && Array.isArray(data.route_markers) && data.route_markers.length > 0) {
+        const markerPromises = data.route_markers.map(async (routeMarker) => {
+          let name = routeMarker.display_name || 'Destino Desconhecido'; // Fallback to marker display_name first
+          if (routeMarker.userRef) {
+            const user = await resolveReference(routeMarker.userRef);
+            if (user?.display_name) {
+              name = user.display_name;
+            } 
+          }
+          return name;
+        });
+        const resolvedNames = await Promise.all(markerPromises);
+        // Create simple list items for each name
+        routeMarkerNamesHtml = `
+          <div class="route-markers" style="font-size: 11px; color: #555; margin-top: 3px;">
+            <strong>Paradas:</strong> ${resolvedNames.join(', ')}
+          </div>
+        `;
+      }
+
+      // Format timestamps
+      const formattedCreated = formatDate(data.time_created);
+      const formattedUpdated = formatDate(data.last_updated);
+
+      // Get initials for profile picture
+      const initials = getInitials(guest?.display_name);
+
+      // Create element
+      const item = document.createElement('div');
+      item.className = 'list-item';
+      item.id = `token-${id}`;
+      item.innerHTML = `
+        <div class="guest-container">
+          <div class="icon">${initials}</div>
+          <div class="info guest-info">
+            <div class="name">${guest?.display_name || 'Sem Nome'}</div>
+            <div class="contact">${formatPhoneNumber(guest?.phone_number)}</div>
+          </div>
+        </div>
+        <div class="info">
+          <div class="name">${primaryResident?.display_name?.split(' [')[0] || 'Residente Desconhecido'}</div>
+          <div class="contact">Endereço: ${marker?.address || 'Desconhecido'}</div>
+          ${routeMarkerNamesHtml}
+        </div>
+        <div class="info-group">
+          <div class="info speed-info">
+            <div class="name">Velocidade</div>
+            <div class="contact speed-value ${getSpeedClass(data?.last_speed_kmh)}">${data?.last_speed_kmh_txt || '0.0'} km/h</div>
+          </div>
+          <div class="info" style="text-align: left;">
+            <div class="name">Criado</div>
+            <div class="contact">${formattedCreated}</div>
+          </div>
+          <div class="info" style="text-align: right;">
+            <div class="name">Atualizado</div>
+            <div class="contact">${formattedUpdated}</div>
+          </div>
+        </div>
+        <div class="status waiting">Aguardando clique...</div>
+        <button class="validate-button" data-token-id="${id}">
+          <span>Verificar Desvio</span>
+        </button>
+        <button class="mute-button" data-token-id="${id}">🔇</button>
+      `;
+
+      // Set up mute button
+      const muteButton = item.querySelector('.mute-button');
+      muteButton.addEventListener('click', function() {
+        const tokenId = this.getAttribute('data-token-id');
+        const isMuted = this.textContent === '🔊';
+        this.textContent = isMuted ? '🔇' : '🔊';
+        this.classList.toggle('muted', isMuted);
+        
+        // Check if this token is off-route and update notification accordingly
+        const tokenData = allTokens.get(tokenId);
+        if (tokenData) {
+          const statusDiv = tokenData.element.querySelector('.status');
+          const isOffRoute = statusDiv && statusDiv.className.includes('error');
+          
+          if (isOffRoute) {
+            if (isMuted) {
+              stopOffRouteNotification(tokenId);
+            } else {
+              startOffRouteNotification(tokenId, false);
+            }
+          }
+        }
+        
+        // Store mute state
+        localStorage.setItem(`mute-${tokenId}`, isMuted);
+      });
+
+      // Restore mute state
+      const isMuted = localStorage.getItem(`mute-${id}`) === 'true';
+      if (isMuted) {
+        muteButton.textContent = '🔇';
+        muteButton.classList.add('muted');
+      }
+
+      // Return the created element
+      return item;
+    }
+
+    // Helper function to get speed class
+    function getSpeedClass(speed) {
+      if (!speed) return 'low-speed';
+      
+      if (speed > 30) {
+        return 'high-speed';
+      } else if (speed > 15) {
+        return 'medium-speed';
+      } else {
+        return 'low-speed';
+      }
+    }
+
+    // Function to calculate if a point is near a polyline (route)
+    function isLocationNearPolyline(point, polylinePath, tolerance) {
+      // For each segment in the polyline
+      for (let i = 0; i < polylinePath.length - 1; i++) {
+        const start = polylinePath[i];
+        const end = polylinePath[i + 1];
+        
+        // Calculate closest point on segment
+        const closestPoint = closestPointOnSegment(start, end, point);
+        
+        // Calculate distance using Haversine formula
+        const distance = haversineDistance(
+          point.lat, point.lng,
+          closestPoint.lat, closestPoint.lng
+        );
+        
+        // If distance is within tolerance, location is on route
+        if (distance <= tolerance) {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+    
+    // Calculate closest point on a line segment to a given point
+    function closestPointOnSegment(start, end, point) {
+      // Convert to Cartesian coordinates for simplicity
+      // (this is an approximation that works for short distances)
+      const x = point.lng;
+      const y = point.lat;
+      const x1 = start.lng;
+      const y1 = start.lat;
+      const x2 = end.lng;
+      const y2 = end.lat;
+      
+      // Calculate the line length squared
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const lineLengthSq = dx * dx + dy * dy;
+      
+      // If segment is actually a point, return the start point
+      if (lineLengthSq === 0) {
+        return start;
+      }
+      
+      // Calculate projection scalar
+      const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / lineLengthSq));
+      
+      // Get the closest point
+      return {
+        lat: y1 + t * dy,
+        lng: x1 + t * dx
+      };
+    }
+    
+    // Haversine distance calculation between two points in meters
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // Earth's radius in meters
+      const φ1 = lat1 * Math.PI / 180;
+      const φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
+      
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      
+      return R * c; // Distance in meters
+    }
+    
+    // Get route from Google Maps Directions API
+    async function getRoute(origin, destination, waypoints = []) {
+      // Create cache key for this route
+      const waypointsKey = waypoints.map(wp => `${wp.location.lat()},${wp.location.lng()}`).join(';');
+      const cacheKey = `${origin.lat},${origin.lng}|${destination.lat},${destination.lng}|${waypointsKey}`;
+      
+      // Check cache first
+      const now = Date.now();
+      const cachedRoute = routeCache.get(cacheKey);
+      if (cachedRoute && (now - cachedRoute.timestamp < ROUTE_CACHE_TTL)) {
+        console.log("Using cached route");
+        return cachedRoute.path;
+      }
+      
+      try {
+        // Create a DirectionsService object
+        const directionsService = new google.maps.DirectionsService();
+        
+        // Set up request
+        const request = {
+          origin: new google.maps.LatLng(origin.lat, origin.lng),
+          destination: new google.maps.LatLng(destination.lat, destination.lng),
+          travelMode: google.maps.TravelMode.DRIVING,
+          optimizeWaypoints: false, // Don't reorder waypoints
+          avoidHighways: false,
+          avoidTolls: false,
+          region: 'BR',
+          provideRouteAlternatives: true,
+          drivingOptions: {
+            departureTime: new Date(),  // Use current time
+            trafficModel: google.maps.TrafficModel.BEST_GUESS
+          }          
+        };
+        
+        // Add waypoints if provided
+        if (waypoints.length > 0) {
+          request.waypoints = waypoints;
+          request.optimizeWaypoints = true; // Let Google optimize the order if needed
+        }
+        
+        // Make the request
+        const result = await new Promise((resolve, reject) => {
+          directionsService.route(request, (response, status) => {
+            if (status === 'OK') {
+              resolve(response);
+            } else {
+              reject(new Error(`Directions request failed: ${status}`));
+            }
+          });
+        });
+        
+        // Extract the path from the result
+        const route = result.routes[0];
+        const path = route.overview_path.map(point => ({
+          lat: point.lat(),
+          lng: point.lng()
+        }));
+        
+        // Cache the result
+        routeCache.set(cacheKey, { path, timestamp: now });
+        
+        return path;
+      } catch (error) {
+        console.error("Error fetching directions:", error);
+        throw error;
+      }
+    }
+
+    // Validate a single route - Now primarily relies on backend flag
+    async function validateRoute(item, id, data) {
+      // Check if in cooldown period
+      const lastValidation = validationCooldowns.get(id);
+      const now = Date.now();
+      if (lastValidation && (now - lastValidation) < VALIDATION_COOLDOWN) {
+        return;
+      }
+
+      try {
+        const tokenData = allTokens.get(id);
+        if (!tokenData) {
+          console.error("Token data not found for validation");
+          return;
+        }
+        
+        // Get the route for display purposes
+        performInitialRouteValidation(id, tokenData);
+        
+        // Use the is_off_route flag from RTDB if available
+        if (tokenData.rtdbData && tokenData.rtdbData.is_off_route !== undefined) {
+          const isOnRoute = !tokenData.rtdbData.is_off_route;
+          
+          // Update UI with backend-provided route status
+          updateTokenDisplay(item, data, isOnRoute);
+          
+          // Update cooldown timestamp
+          validationCooldowns.set(id, now);
+          
+          // Handle notification based on route status
+          const muteButton = item.querySelector('.mute-button');
+          const isMuted = muteButton.textContent === '🔇';
+          
+          if (!isOnRoute) {
+            startOffRouteNotification(id, isMuted);
+            notificationCooldowns.set(id, now);
+          } else {
+            stopOffRouteNotification(id);
+          }
+          return;
+        }
+        
+        // If no is_off_route data is available, show pending status
+        console.warn("No route status data available from backend");
+        const statusDiv = item.querySelector('.status');
+        if (statusDiv) {
+          statusDiv.className = 'status';
+          statusDiv.textContent = 'Aguardando clique...';
+        }
+      } catch (error) {
+        console.error("Error in route validation:", error);
+      }
+    }
+
+    // Play notification with error handling
+    function playNotification() {
+      // Make sure audio is loaded
+      if (elements.sound.readyState < 2) {
+        elements.sound.load();
+      }
+      
+      elements.sound.play().catch(error => {
+        console.error('Error playing notification:', error);
+      });
+    }
+
+    // Start or manage continuous notifications
+    function startOffRouteNotification(driverId, isMuted) {
+      // If driver is muted, don't add to off-route set
+      if (isMuted) {
+        offRouteDrivers.delete(driverId);
+        return;
+      }
+      
+      // Add driver to off-route set
+      offRouteDrivers.add(driverId);
+      
+      // If notification interval is not yet running, start it
+      if (!notificationTimerId) {
+        // Play sound immediately
+        playNotification();
+        
+        // Then set interval to repeat
+        notificationTimerId = setInterval(() => {
+          if (offRouteDrivers.size > 0) {
+            playNotification();
+          } else {
+            // Stop if no drivers are off-route
+            clearInterval(notificationTimerId);
+            notificationTimerId = null;
+          }
+        }, NOTIFICATION_INTERVAL);
+      }
+    }
+    
+    // Stop notification for a specific driver
+    function stopOffRouteNotification(driverId) {
+      // Remove driver from off-route set
+      offRouteDrivers.delete(driverId);
+      
+      // If set is empty, clear the interval
+      if (offRouteDrivers.size === 0 && notificationTimerId) {
+        clearInterval(notificationTimerId);
+        notificationTimerId = null;
+      }
+    }
+
+    // Update token display with new data
+    function updateTokenDisplay(item, data, inRouteStatus = null) {
+      // Update speed display
+      const speedDiv = item.querySelector('.speed-info .speed-value');
+      if (speedDiv) {
+        speedDiv.textContent = `${data?.last_speed_kmh_txt || '0.0'} km/h`;
+        
+        // Classify speed
+        const speed = data?.last_speed_kmh || 0;
+        if (speed > 30) {
+          speedDiv.className = 'contact speed-value high-speed';
+        } else if (speed > 15) {
+          speedDiv.className = 'contact speed-value medium-speed';
+        } else {
+          speedDiv.className = 'contact speed-value low-speed';
+        }
+      }
+
+      // Update route status if provided
+      if (inRouteStatus !== null) {
+        const statusDiv = item.querySelector('.status');
+        if (statusDiv) {
+          if (inRouteStatus) {
+            statusDiv.className = 'status success';
+            statusDiv.textContent = 'Em Percurso';
+            // Add subtle green border to the list item
+            item.style.borderLeft = '4px solid #02CA79';
+          } else {
+            statusDiv.className = 'status error';
+            statusDiv.textContent = 'Fora do Percurso';
+            // Add subtle red border to the list item
+            item.style.borderLeft = '4px solid #E65454';
+          }
+        }
+      } else {
+        // Reset border if no status
+        item.style.borderLeft = '';
+      }
+    }
+
+    // Store RTDB listeners for cleanup later
+    const rtdbListeners = {};
+    
+    // Set up Firebase listener with query optimization
+    function setupTokensListener() {
+      // console.log("Setting up Firestore and Realtime Database listeners...");
+      elements.loader.style.display = 'flex'; // Show loader during initial fetch
+      
+      // Create base query
+      let query = db.collection("tokens").where("status", "==", "active");
+      
+      // Add location filter if provided
+      if (params.location) {
+        // console.log(`Filtering tokens by location: ${params.location}`);
+        // Create a reference to the location document
+        const locationRef = db.collection("locations").doc(params.location);
+        // Filter by owner field which is a reference
+        query = query.where("owner", "==", locationRef);
+      }
+      
+      // Add limit and create the listener
+      query.limit(BATCH_SIZE)
+        .onSnapshot(snapshot => {
+          // console.log(`Received snapshot with ${snapshot.size} tokens and ${snapshot.docChanges().length} changes`);
+          handleTokensSnapshot(snapshot);
+        }, error => {
+          console.error("Error listening to tokens collection:", error);
+          elements.loader.style.display = 'none';
+          showErrorMessage("Erro ao carregar motoristas: " + error.message);
+        });
+    }
+
+    // Handle Firestore snapshot updates
+    async function handleTokensSnapshot(snapshot) {
+      try {
+        // Update empty state check time
+        lastEmptyCheckTime = new Date();
+        if (elements.lastCheckTime) {
+          elements.lastCheckTime.textContent = lastEmptyCheckTime.toLocaleTimeString();
+        }
+        
+        const changes = snapshot.docChanges();
+        // console.log(`Processing ${changes.length} changes...`);
+        
+        let hasChanges = false;
+        let tokensToSetupListeners = [];
+        
+        // Process changes in batches using Promise.all for parallel processing
+        const changePromises = changes.map(async change => {
+          const id = change.doc.id;
+          const data = change.doc.data();
+          // console.log(`Processing change type: ${change.type} for token ${id}`);
+
+          if (change.type === "added") {
+            // Create token without location data initially, we'll update later
+            const item = await renderToken(id, data);
+            allTokens.set(id, { id, data, element: item, rtdbData: null });
+            tokensToSetupListeners.push(id);
+            hasChanges = true;
+          }
+          else if (change.type === "modified") {
+            const existing = allTokens.get(id);
+            if (existing) {
+              // Update only Firestore data, preserving RTDB data
+              existing.data = data;
+              updateTokenDisplay(existing.element, {...data, ...existing.rtdbData});
+              hasChanges = true;
+            }
+          }
+          else if (change.type === "removed") {
+            // Remove RTDB listener if present
+            if (rtdbListeners[id]) {
+              rtdb.ref(`tokens/${id}`).off('value', rtdbListeners[id]);
+              delete rtdbListeners[id];
+            }
+            allTokens.delete(id);
+            hasChanges = true;
+          }
+        });
+        
+        // Wait for all changes to be processed
+        await Promise.all(changePromises);
+        
+        // Configure RTDB listeners for new tokens
+        tokensToSetupListeners.forEach(setupRTDBListener);
+        
+        // Only re-render if there were actual changes
+        if (hasChanges || !isInitialLoadComplete) {
+          // console.log(`Rendering updated list with ${allTokens.size} tokens`);
+          renderOrderedList();
+        }
+        
+        // Always mark as complete after processing, even if empty
+        isInitialLoadComplete = true;
+        // Hide loader after initial load
+        elements.loader.style.display = 'none';
+        
+        // Check for empty list and update UI accordingly
+        updateEmptyState();
+      } catch (error) {
+        console.error("Error processing token changes:", error);
+        elements.loader.style.display = 'none';
+        showErrorMessage("Erro ao processar dados: " + error.message);
+        // Still show empty state if there's an error but no tokens
+        updateEmptyState();
+      }
+    }
+    
+    // Configure RTDB listener for a specific token
+    function setupRTDBListener(tokenId) {
+      // console.log(`Setting up RTDB listener for token ${tokenId}`);
+      
+      // Remove existing listener if present
+      if (rtdbListeners[tokenId]) {
+        rtdb.ref(`tokens/${tokenId}`).off('value', rtdbListeners[tokenId]);
+      }
+      
+      // Create new listener
+      const callback = rtdbListeners[tokenId] = snapshot => {
+        const rtdbData = snapshot.val();
+        if (rtdbData) {
+          // console.log(`Received RTDB update for token ${tokenId}`, rtdbData);
+          
+          // Update data in allTokens object
+          const tokenData = allTokens.get(tokenId);
+          if (tokenData) {
+            // Merge location data with existing data
+            tokenData.rtdbData = rtdbData;
+            
+            // Update specific fields in data object
+            if (rtdbData.last_position) {
+              tokenData.data.last_position = rtdbData.last_position;
+            }
+            if (rtdbData.last_speed_kmh !== undefined) {
+              tokenData.data.last_speed_kmh = rtdbData.last_speed_kmh;
+            }
+            if (rtdbData.last_speed_kmh_txt) {
+              tokenData.data.last_speed_kmh_txt = rtdbData.last_speed_kmh_txt;
+            }
+            if (rtdbData.last_updated) {
+              tokenData.data.last_updated = {
+                seconds: Math.floor(rtdbData.last_updated / 1000),
+                nanoseconds: (rtdbData.last_updated % 1000) * 1000000
+              };
+            }
+            
+            // Update the view with new data (speed, etc.)
+            updateTokenDisplay(tokenData.element, tokenData.data);
+            
+            // Check for is_off_route flag from backend
+            if (rtdbData.is_off_route !== undefined) {
+              // Update route status based on backend flag
+              const isOnRoute = !rtdbData.is_off_route;
+              updateTokenDisplay(tokenData.element, tokenData.data, isOnRoute);
+              
+              // Handle notifications based on route status
+              const muteButton = tokenData.element.querySelector('.mute-button');
+              const isMuted = muteButton && muteButton.textContent === '🔇';
+              
+              if (!isOnRoute) {
+                // Start notification for off-route driver
+                startOffRouteNotification(tokenId, isMuted);
+                // Update cooldown timestamp
+                notificationCooldowns.set(tokenId, Date.now());
+              } else {
+                // Stop notification if driver is back on route
+                stopOffRouteNotification(tokenId);
+              }
+            }
+          }
+        }
+      };
+      
+      // Enable the listener
+      rtdb.ref(`tokens/${tokenId}`).on('value', callback);
+    }
+    
+    // Fetch route for display purposes only (no validation)
+    async function performInitialRouteValidation(tokenId, tokenData) {
+      try {
+        // Get reference data in parallel
+        const [guest, owner, marker] = await Promise.all([
+          resolveReference(tokenData.data.guest_assigned),
+          resolveReference(tokenData.data.owner),
+          resolveReference(tokenData.data.markerRef)
+        ]);
+
+        if (!owner?.gps_point || !marker?.gps_point) {
+          console.error("Missing required data for route display");
+          return;
+        }
+
+        // Prepare coordinates for Google Maps
+        const origin = {
+          lat: owner.gps_point.latitude,
+          lng: owner.gps_point.longitude
+        };
+        
+        const destination = {
+          lat: marker.gps_point.latitude,
+          lng: marker.gps_point.longitude
+        };
+
+        pendingApiRequests++;
+        updateApiStatusDisplay();
+        
+        try {
+          let routeOrigin = origin;
+          let routeDestination = destination;
+          let routeWaypoints = [];
+
+          // Handle multiple routes
+          if (tokenData.data.is_multiple_route && Array.isArray(tokenData.data.route_markers) && tokenData.data.route_markers.length > 0) {
+            const markers = tokenData.data.route_markers;
+            
+            // Destination is the last marker
+            const lastMarker = markers[markers.length - 1];
+            if (lastMarker?.gps_point) {
+              routeDestination = {
+                lat: lastMarker.gps_point.latitude,
+                lng: lastMarker.gps_point.longitude
+              };
+            } else {
+              console.error("Last marker in multiple route is missing gps_point");
+              // Fallback to original marker destination if last one is invalid
+              routeDestination = destination; 
+            }
+
+            // Waypoints are all markers except the last one
+            routeWaypoints = markers.slice(0, -1)
+              .filter(marker => marker?.gps_point) // Ensure waypoint has gps_point
+              .map(marker => ({
+                location: new google.maps.LatLng(marker.gps_point.latitude, marker.gps_point.longitude),
+                stopover: true 
+              }));
+              
+            console.log(`Multi-stop route detected for ${tokenId}. Origin: ${JSON.stringify(routeOrigin)}, Destination: ${JSON.stringify(routeDestination)}, Waypoints: ${routeWaypoints.length}`);
+          } else {
+             console.log(`Single-stop route detected for ${tokenId}. Origin: ${JSON.stringify(routeOrigin)}, Destination: ${JSON.stringify(routeDestination)}`);
+          }
+
+          // Fetch the route polyline using the potentially updated origin, destination, and waypoints
+          const polylinePath = await getRoute(routeOrigin, routeDestination, routeWaypoints);
+          
+          if (polylinePath) {
+            // Store the route details with the token data for reference
+            tokenData.routePath = polylinePath;
+            tokenData.routeOrigin = routeOrigin; // Store the actual origin used
+            tokenData.routeDestination = routeDestination; // Store the actual destination used
+            tokenData.routeWaypoints = routeWaypoints; // Store the waypoints used
+          }
+          
+          // Route status is determined by backend, not local calculation
+          if (tokenData.rtdbData && tokenData.rtdbData.is_off_route !== undefined) {
+            const isOnRoute = !tokenData.rtdbData.is_off_route;
+            updateTokenDisplay(tokenData.element, tokenData.data, isOnRoute);
+          }
+        } catch (error) {
+          console.error("Error fetching route:", error);
+        } finally {
+          pendingApiRequests--;
+          updateApiStatusDisplay();
+        }
+      } catch (error) {
+        console.error("Error in route initialization:", error);
+      }
+    }
+    
+    // Local validation is no longer needed as we use backend flag
+    /* 
+    function performLocalRouteValidation(tokenId, tokenData) {
+      // This function is kept for backward compatibility but no longer performs validation
+      // Route status is now determined by backend is_off_route flag
+      return;
+    }
+    */
+    
+    // Clear the live stream + siren when leaving the page
+    window.addEventListener('beforeunload', () => {
+      if (__live) __live.stop();
+      if (notificationTimerId) {
+        clearInterval(notificationTimerId);
+        notificationTimerId = null;
+      }
+    });
+
+    // Display error message to user
+    function showErrorMessage(message) {
+      if (!document.getElementById('error-message')) {
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'error-message';
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        elements.listContainer.insertBefore(errorDiv, elements.emptyState);
+      } else {
+        document.getElementById('error-message').textContent = message;
+      }
+    }
+
+    // Update empty state display
+    function updateEmptyState() {
+      if (isInitialLoadComplete && allTokens.size === 0) {
+        // console.log("No tokens found, showing empty state");
+        elements.emptyState.style.display = 'block';
+        
+        // Update last check time
+        if (elements.lastCheckTime) {
+          elements.lastCheckTime.textContent = lastEmptyCheckTime ? 
+            lastEmptyCheckTime.toLocaleTimeString() : 
+            new Date().toLocaleTimeString();
+        }
+        
+        // Check again in 30 seconds to give visual feedback
+        setTimeout(() => {
+          if (allTokens.size === 0) {
+            lastEmptyCheckTime = new Date();
+            if (elements.lastCheckTime) {
+              elements.lastCheckTime.textContent = lastEmptyCheckTime.toLocaleTimeString();
+            }
+          }
+        }, 30000);
+      } else {
+        elements.emptyState.style.display = 'none';
+      }
+    }
+
+    // Render all tokens in order
+    function renderOrderedList() {
+      try {
+        // Convert map to array and sort by time_created
+        const sortedTokens = Array.from(allTokens.values())
+          .sort((a, b) => {
+            // Handle null timestamps
+            if (!a.data.time_created) return 1;
+            if (!b.data.time_created) return -1;
+            return b.data.time_created.toDate() - a.data.time_created.toDate();
+          });
+
+        // console.log(`Rendering ${sortedTokens.length} tokens in the list`);
+        
+        // Save reference to any error message and API status
+        const errorElement = document.getElementById('error-message');
+        
+        // Clear current list, being careful not to remove loader, empty state, error message, or API status
+        const elementsToPreserve = [elements.loader, elements.emptyState, errorElement, elements.apiStatus].filter(Boolean);
+        while (elements.listContainer.firstChild) {
+          if (!elementsToPreserve.includes(elements.listContainer.firstChild)) {
+            elements.listContainer.removeChild(elements.listContainer.firstChild);
+          } else {
+            break; // Stop if we hit a preserved element
+          }
+        }
+        
+        // Add all tokens before any preserved elements
+        sortedTokens.forEach(token => {
+          elements.listContainer.insertBefore(token.element, elementsToPreserve[0] || null);
+        });
+        
+        // Show loader ONLY during initial load, not for API requests
+        elements.loader.style.display = (!isInitialLoadComplete) ? 'flex' : 'none';
+        
+        // Show API status indicator separately
+        updateApiStatusDisplay();
+        
+        // Update empty state visibility
+        updateEmptyState();
+      } catch (error) {
+        console.error("Error rendering tokens list:", error);
+        showErrorMessage("Erro ao renderizar lista: " + error.message);
+        updateEmptyState();
+      }
+    }
+
+    // Update API status indicator 
+    function updateApiStatusDisplay() {
+      if (pendingApiRequests > 0) {
+        elements.apiStatus.style.display = 'block';
+        elements.apiStatus.textContent = `Verificando rota${pendingApiRequests > 1 ? 's' : ''}...`;
+      } else {
+        elements.apiStatus.style.display = 'none';
+      }
+    }
+
+    // Initialize app
+    // ── Onda 3 — camada AO VIVO (substitui Firestore+RTDB) ──────────────────
+
+    /** Cartão lean a partir do `subject` (sem resolver refs Firestore). Reusa o
+     *  CSS/DOM validado + o botão de mute e a máquina de sirene existentes. */
+    // Escapa string do PUSH (nome do visitante, rótulos) antes de ir p/ innerHTML.
+    // O subject/labels vêm do AJX (não-confiável) e este é o console AUTENTICADO
+    // do operador — sem escape, um nome com markup vira XSS armazenado.
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function makeCardLive(id, subject) {
+      const item = document.createElement('div');
+      item.className = 'list-item';
+      item.id = `token-${id}`;
+      const initials = getInitials(subject || '??');
+      item.innerHTML = `
+        <div class="guest-container">
+          <div class="icon">${escapeHtml(initials)}</div>
+          <div class="info guest-info">
+            <div class="name">${escapeHtml(subject || 'Visitante')}</div>
+            <div class="contact phone">—</div>
+            <div class="contact unit">—</div>
+          </div>
+        </div>
+        <div class="info">
+          <div class="name resident">—</div>
+          <div class="contact address">—</div>
+          <div class="route-markers paradas" style="font-size:11px;color:#555;margin-top:3px;display:none"></div>
+        </div>
+        <div class="info-group">
+          <div class="info speed-info">
+            <div class="name">Velocidade</div>
+            <div class="contact speed-value low-speed">0.0 km/h</div>
+          </div>
+          <div class="info" style="text-align: right;">
+            <div class="name">Atualizado</div>
+            <div class="contact upd">—</div>
+          </div>
+        </div>
+        <div class="status waiting">Aguardando posição…</div>
+        <button class="mute-button" data-token-id="${id}">🔇</button>
+      `;
+      const muteButton = item.querySelector('.mute-button');
+      muteButton.addEventListener('click', function () {
+        const isMuted = this.textContent === '🔊';
+        this.textContent = isMuted ? '🔇' : '🔊';
+        this.classList.toggle('muted', isMuted);
+        const statusDiv = item.querySelector('.status');
+        const isOff = statusDiv && statusDiv.className.includes('error');
+        if (isOff) { isMuted ? stopOffRouteNotification(id) : startOffRouteNotification(id, false); }
+        localStorage.setItem(`mute-${id}`, isMuted);
+      });
+      if (localStorage.getItem(`mute-${id}`) === 'true') {
+        muteButton.textContent = '🔇'; muteButton.classList.add('muted');
+      }
+      return item;
+    }
+
+    /** Cria/atualiza o cartão a partir de um evento `position` e dirige a sirene. */
+    function upsertCardLive(p) {
+      let el = liveCards.get(p.token_id);
+      if (!el) {
+        el = makeCardLive(p.token_id, p.subject);
+        liveCards.set(p.token_id, el);
+        elements.listContainer.insertBefore(el, elements.listContainer.firstChild);
+        elements.emptyState.style.display = 'none';
+        elements.loader.style.display = 'none';
+      }
+      // Onda 3b — velocidade DESNORMALIZADA no push: texto + RECLASSIFICAÇÃO da
+      // cor via getSpeedClass (paridade com renderToken legado).
+      const spd = el.querySelector('.speed-value');
+      if (spd) {
+        spd.textContent = `${p.last_speed_kmh_txt || '0.0'} km/h`;
+        spd.className = 'contact speed-value ' + getSpeedClass(Number(p.last_speed_kmh) || parseFloat(p.last_speed_kmh_txt) || 0);
+      }
+      const upd = el.querySelector('.upd');
+      if (upd) upd.textContent = new Date().toLocaleTimeString();
+      // Onda 3b — contato/morador/endereço DESNORMALIZADOS no push (sem N+ reads).
+      // phone vem de p.contact.phone (mascarado via formatPhoneNumber legado);
+      // morador de p.resident_name; unidade/endereço de p.house_number. Ausente
+      // ⇒ traço neutro (a linha some).
+      const phoneEl = el.querySelector('.phone');
+      if (phoneEl) {
+        const phone = p.contact && p.contact.phone;
+        phoneEl.innerHTML = phone ? formatPhoneNumber(phone) : '—';
+        phoneEl.style.display = phone ? '' : 'none';
+      }
+      const residentEl = el.querySelector('.resident');
+      if (residentEl) {
+        residentEl.textContent = p.resident_name || '—';
+        residentEl.style.display = p.resident_name ? '' : 'none';
+      }
+      const addressEl = el.querySelector('.address');
+      if (addressEl) {
+        addressEl.textContent = p.house_number ? ('Endereço: ' + p.house_number) : '—';
+      }
+      const paradasEl = el.querySelector('.paradas');
+      if (paradasEl) {
+        if (Array.isArray(p.route_labels) && p.route_labels.length > 1) {
+          paradasEl.style.display = '';
+          paradasEl.innerHTML = '<strong>Paradas:</strong> ' + p.route_labels.map(escapeHtml).join(', ');
+        } else {
+          paradasEl.style.display = 'none';
+        }
+      }
+      const unitEl = el.querySelector('.unit');
+      if (unitEl) {
+        unitEl.textContent = p.house_number ? `Unidade ${p.house_number}` : '—';
+        unitEl.style.display = p.house_number ? '' : 'none';
+      }
+
+      const statusDiv = el.querySelector('.status');
+      const muted = localStorage.getItem(`mute-${p.token_id}`) === 'true';
+      if (p.is_off_route) {
+        if (statusDiv) { statusDiv.className = 'status error'; statusDiv.textContent = 'Fora do Percurso'; }
+        el.style.borderLeft = '4px solid #E65454';
+        startOffRouteNotification(p.token_id, muted);   // sirene contínua
+      } else {
+        if (statusDiv) { statusDiv.className = 'status success'; statusDiv.textContent = 'Em Percurso'; }
+        el.style.borderLeft = '4px solid #02CA79';
+        stopOffRouteNotification(p.token_id);
+      }
+    }
+
+    function removeCardLive(id) {
+      stopOffRouteNotification(id);
+      const el = liveCards.get(id);
+      if (el) { el.remove(); liveCards.delete(id); }
+      if (liveCards.size === 0) elements.emptyState.style.display = 'block';
+    }
+
+    function startLiveAlerts() {
+      __live = new AegisLive();
+      __live.on('ready', () => {
+        for (const el of liveCards.values()) el.remove();
+        liveCards.clear();
+        if (notificationTimerId) { clearInterval(notificationTimerId); notificationTimerId = null; }
+        offRouteDrivers.clear();
+      });
+      __live.on('position', (p) => { if (p && p.token_id) upsertCardLive(p); });
+      __live.on('remove', (id) => removeCardLive(id));
+      // 'alert' (guest_deviation) é redundante com is_off_route do position p/ a
+      // sirene; fica disponível p/ futuros toasts.
+      __live.start();
+      // handle de diagnóstico ("o stream está vivo?") — espelha o livemap.
+      window.__aegisLive = __live;
+    }
+
+    function initApp() {
+      // O operador já está logado no AEGIS (cookie same-origin) — sem auth-na-URL.
+      // O modal desbloqueia o áudio (gesto do usuário) p/ a sirene poder tocar.
+      showModal();
+      isInitialLoadComplete = true;
+      startLiveAlerts();
+    }
+
+    // Start the application when the window loads
+    window.addEventListener('load', initApp);
+  </script>
+</body>
+
+</html>

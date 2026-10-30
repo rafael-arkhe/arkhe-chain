@@ -1,0 +1,25 @@
+{
+  "note": "Cross-crate reuse of an AKG domain literal is allowed only for the same object re-derived. Checked by scripts/check_domains.py.",
+  "shared": [
+    {
+      "domain": "AKG:CHECKPOINT:v1",
+      "crates": ["integration/arkhe-bugbounty", "verification/crates/arkhe-verify-core"],
+      "reason": "Same MMR checkpoint object (version, tenant_id, stream_id, leaf_count, mmr_size, mmr_root, profile_digest, covered_up_to_hash); export_checkpoint.rs and examples/gov_fixture.rs encode it with two AKG-CBOR encoders"
+    },
+    {
+      "domain": "AKG:RAG:CHUNK:v1",
+      "crates": ["cognition/arkhe-rag", "orchestration/arkhe-runtime"],
+      "reason": "Runtime examples recompute the arkhe-rag chunk digest to build expected citations"
+    },
+    {
+      "domain": "AKG:WER:v1",
+      "crates": ["evidence/arkhe-wormgraph", "kernel/arkhe-core"],
+      "reason": "Replica bundles re-derive the arkhe-core WER object digest"
+    },
+    {
+      "domain": "AKG:WORKINTENT:v1",
+      "crates": ["evidence/arkhe-wormgraph", "kernel/arkhe-core"],
+      "reason": "Replica bundles re-derive the arkhe-core WorkIntent object digest"
+    }
+  ]
+}

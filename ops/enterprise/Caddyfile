@@ -1,0 +1,17 @@
+# Public deployment template. Supply actual domain and TLS account email.
+{$ARKHE_PUBLIC_HOST} {
+    tls {$ARKHE_TLS_EMAIL}
+    encode zstd gzip
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options nosniff
+        Referrer-Policy same-origin
+    }
+    @metrics path /api/metrics
+    respond @metrics 404
+    reverse_proxy {$ARKHE_UPSTREAM:arkhe:3003} {
+        health_uri /api/ready
+        health_interval 30s
+        health_timeout 5s
+    }
+}

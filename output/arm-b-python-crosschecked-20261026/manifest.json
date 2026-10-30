@@ -1,0 +1,88 @@
+{
+  "phase": "B_live_retrieval_smoke",
+  "config": {
+    "base_url": "http://127.0.0.1:11434",
+    "model": "north-mini-code-1.0:latest",
+    "model_digest": "d8b269ad5c7c7144ce104b83ce93bc3efb85e0f74e01be6be5f5d6f7ca90b60f",
+    "timeout_seconds": 180,
+    "context_tokens": 4096,
+    "max_output_tokens": 1024
+  },
+  "corpus": {
+    "tenant": "pilot",
+    "subject": "local-evaluator",
+    "chunks": [
+      {
+        "id": "provider",
+        "tenant": "pilot",
+        "readers": [
+          "local-evaluator"
+        ],
+        "text": "The local provider uses the installed Ollama HTTP API and the existing north-mini-code-1.0:latest model. config/ollama.json pins the installed digest; a changed/missing model fails closed. No model is downloaded automatically.",
+        "expected_digest_hex": "3fc7ff62ee4c5e8706225136c69938b3f20ec7504cf4c9fece237bdabb4bd3f0",
+        "source_ref_hex": "4194bfa788b5a74260e98af5dc2233f42060b5c126f83adf63aa068cbfc73006"
+      },
+      {
+        "id": "environment",
+        "tenant": "pilot",
+        "readers": [
+          "local-evaluator"
+        ],
+        "text": "Monorepo do ambiente Arkhe: kernel, cogni\u00e7\u00e3o, governan\u00e7a, evid\u00eancia persistente, verifica\u00e7\u00e3o, aplica\u00e7\u00f5es e adapters seguem uma arquitetura comum na raiz.",
+        "expected_digest_hex": "2845f144baa35b92114562516fda7f524f12b9268c4446444a9028c0ecab2764",
+        "source_ref_hex": "18dafa2750a71fb28876cf70e59ea561e3cf510def9ff0658c23cd2f4445d437"
+      },
+      {
+        "id": "private-sentinel",
+        "tenant": "another-tenant",
+        "readers": [
+          "local-evaluator"
+        ],
+        "text": "Ollama provider model DO_NOT_EXPOSE_PRIVATE_CHUNK",
+        "expected_digest_hex": "582198882a2d82c955dcbf2b24d4671302abe4122b75aca69e94628cedfac98d",
+        "source_ref_hex": "abababababababababababababababababababababababababababababababab"
+      }
+    ],
+    "provenance": [
+      {
+        "id": "provider",
+        "path": "D:\\arkhe\\integration\\arkhe-ollama\\README.md",
+        "raw_sha256": "251d516917ff348eb4159e33a7f3e201cd85ef96d9d2cbfed5495034a5b91bf2",
+        "excerpt_transform": "join_whitespace"
+      },
+      {
+        "id": "environment",
+        "path": "D:\\arkhe\\README.md",
+        "raw_sha256": "fb9ed6d87b82c3dcd8d2c7c8df4e1d3634a56a92defacf61419fe511e64c2203",
+        "excerpt_transform": "join_whitespace"
+      }
+    ],
+    "private_chunk": "synthetic ACL control, not confidential user data"
+  },
+  "query": "Which model does the local Ollama provider use?",
+  "limits": {
+    "max_tokens": 4096,
+    "max_tool_calls": 0,
+    "max_wall_clock": 180
+  },
+  "output_cap": 256,
+  "placement": "cpu",
+  "bridge_sha256": "c231257c49924a8f0fcb67bb6fdd6d6ca8191de317d5d24710e6c96837940b37",
+  "retrieval_bridge_sha256": "fd37c6ec5bd443d7a247fbd0d8c45fd8a532a5ffbf30fac436b032ca178bf1fb",
+  "python_crosscheck": {
+    "enabled": true,
+    "profile": "ASCII_LEXICAL_AND_UNSIGNED_EXPORT_V1",
+    "source_sha256": "6df9f4602bdf7338fdb1d1658d402150737f4df5ed4e57c92902a00eba638a6d",
+    "blake3_reference_sha256": "fe6590f29c4e21cb2d44e92cb1495ff9ffd8f42129bef4341149013e5e323cce"
+  },
+  "prompt_sha256": "bddb75d8990410c4ebe09a70c59d4f37fae557009c93a51f80a453961f09a001",
+  "memory_sha256": "77e1d1e310488c25cc0cc6f84ae33d900e1b39838f975da9c85158e6549b921b",
+  "response_format_sha256": "7f24b6d773adccc296a2a1fb26c16ae1887fc56bf01d538da162e065a630b1fc",
+  "device_placement_requested": "cpu",
+  "sampling": {
+    "seed": 20261026,
+    "temperature": 0,
+    "num_ctx": 4096,
+    "raw_prompt": true
+  }
+}

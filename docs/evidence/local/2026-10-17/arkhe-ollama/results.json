@@ -1,0 +1,120 @@
+{
+  "scope": "Local execution only; no remote CI, protocol freeze or production attestation",
+  "context": {},
+  "attempts": [
+    {
+      "gate": "ollama-live-json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-ollama",
+        "--features",
+        "ollama-integration",
+        "--test",
+        "ollama_live",
+        "--locked",
+        "--",
+        "--nocapture"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T19:57:03.147070+00:00",
+      "duration_seconds": 16.689,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "4d1c00058a320340794cfc0dec20f930ce12c58c0fe4f824dd00dd9e20ec7f52",
+      "source_after_sha256": "4d1c00058a320340794cfc0dec20f930ce12c58c0fe4f824dd00dd9e20ec7f52",
+      "source_changed_during_execution": false,
+      "log": "01-ollama-live-json.log",
+      "log_sha256": "784dd5003e5cb2340d496c98d4527ea3580ec5dde975dd6568a1f58ae43c1d65",
+      "inputs": "01-ollama-live-json.inputs.json"
+    },
+    {
+      "gate": "ollama-live-triage",
+      "command": [
+        "python",
+        "scripts/ollama.py",
+        "triage",
+        "ops/local/ollama/report.json",
+        "Critical",
+        "Triaged"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T19:58:09.239715+00:00",
+      "duration_seconds": 43.417,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "4d1c00058a320340794cfc0dec20f930ce12c58c0fe4f824dd00dd9e20ec7f52",
+      "source_after_sha256": "4d1c00058a320340794cfc0dec20f930ce12c58c0fe4f824dd00dd9e20ec7f52",
+      "source_changed_during_execution": false,
+      "log": "02-ollama-live-triage.log",
+      "log_sha256": "6dfdc07446d564adc57e4b066fba1b8b7b06253c4d75a4f830a1504bb21afdc3",
+      "inputs": "02-ollama-live-triage.inputs.json"
+    },
+    {
+      "gate": "ollama-adapter-tests",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-ollama",
+        "-p",
+        "arkhe-bugbounty",
+        "--test",
+        "client",
+        "--test",
+        "ollama",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T22:08:25.309765+00:00",
+      "duration_seconds": 14.023,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "68c5c805c64ab65705c355adc693fb15a58634a3e23c0e78d1b7c860507ce071",
+      "source_after_sha256": "68c5c805c64ab65705c355adc693fb15a58634a3e23c0e78d1b7c860507ce071",
+      "source_changed_during_execution": false,
+      "log": "03-ollama-adapter-tests.log",
+      "log_sha256": "89865fdef848747e42bc59df996f135045734de8660f26395479b4e06d45da0d",
+      "inputs": "03-ollama-adapter-tests.inputs.json"
+    },
+    {
+      "gate": "architecture",
+      "command": [
+        "python",
+        "scripts/check_architecture.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T22:08:39.812120+00:00",
+      "duration_seconds": 0.567,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "68c5c805c64ab65705c355adc693fb15a58634a3e23c0e78d1b7c860507ce071",
+      "source_after_sha256": "68c5c805c64ab65705c355adc693fb15a58634a3e23c0e78d1b7c860507ce071",
+      "source_changed_during_execution": false,
+      "log": "04-architecture.log",
+      "log_sha256": "8cc7820836a2c792a64a2215d986396c292e357946d80d8c37d0c34f7bb4d8e6",
+      "inputs": "04-architecture.inputs.json"
+    },
+    {
+      "gate": "cargo-workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T22:08:40.845033+00:00",
+      "duration_seconds": 43.854,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "68c5c805c64ab65705c355adc693fb15a58634a3e23c0e78d1b7c860507ce071",
+      "source_after_sha256": "68c5c805c64ab65705c355adc693fb15a58634a3e23c0e78d1b7c860507ce071",
+      "source_changed_during_execution": false,
+      "log": "05-cargo-workspace.log",
+      "log_sha256": "56dea7e21edf32823d8fee20c7fa3c905ec72aec1d5ee5f55e54adf9bf750a66",
+      "inputs": "05-cargo-workspace.inputs.json"
+    }
+  ]
+}

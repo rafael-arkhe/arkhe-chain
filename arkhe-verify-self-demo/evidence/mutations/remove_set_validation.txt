@@ -1,0 +1,52 @@
+   Compiling arkhe-verify-self-demo v0.1.0 (C:\Users\Lemes\AppData\Local\Temp\arkhe-verifier-gate-mutations-3a_ldf3m\remove_set_validation)
+   Compiling sigstore-verify v0.6.6 (C:\Users\Lemes\AppData\Local\Temp\arkhe-verifier-gate-mutations-3a_ldf3m\remove_set_validation\vendor\sigstore-verify)
+warning: unreachable statement
+   --> vendor\sigstore-verify\src\verify_impl\tlog.rs:146:5
+    |
+144 |       return Ok(()); // MUTATION ONLY
+    |       ------------- any code following this expression is unreachable
+145 |
+146 | /     let promise = entry
+147 | |         .inclusion_promise
+148 | |         .as_ref()
+149 | |         .ok_or(Error::Verification("Missing inclusion promise".into()))?;
+    | |_________________________________________________________________________^ unreachable statement
+    |
+    = note: `#[warn(unreachable_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `entry`
+   --> vendor\sigstore-verify\src\verify_impl\tlog.rs:143:19
+    |
+143 | pub fn verify_set(entry: &TransparencyLogEntry, trusted_root: &TrustedRoot) -> Result<()> {
+    |                   ^^^^^ help: if this is intentional, prefix it with an underscore: `_entry`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `trusted_root`
+   --> vendor\sigstore-verify\src\verify_impl\tlog.rs:143:49
+    |
+143 | pub fn verify_set(entry: &TransparencyLogEntry, trusted_root: &TrustedRoot) -> Result<()> {
+    |                                                 ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_trusted_root`
+
+warning: `sigstore-verify` (lib) generated 3 warnings (run `cargo fix --lib -p sigstore-verify` to apply 2 suggestions)
+    Finished `test` profile [unoptimized] target(s) in 6.44s
+     Running tests\negative.rs (D:\arkhe\arkhe-verify-self-demo\target\debug\deps\negative-47bf6da3d93dfb5b.exe)
+
+running 1 test
+test forged_set_rejected ... FAILED
+
+failures:
+
+---- forged_set_rejected stdout ----
+
+thread 'forged_set_rejected' (34836) panicked at tests\negative.rs:112:18:
+expected SET rejection, got Ok(SelfVerificationResult { wasm_sha256: "ccf59f0f7a7625ee380ed228905aadfa11072ac14cea1c53d1e7f3953d4d48c6", integrated_time: Some(1767225600) })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    forged_set_rejected
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--test negative`

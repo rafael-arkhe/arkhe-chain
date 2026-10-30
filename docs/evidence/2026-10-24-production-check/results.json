@@ -1,0 +1,91 @@
+{
+  "scope": "Root Cargo workspace, default features, local host. No production deployment or full security audit.",
+  "source_identity_scope": "Root Cargo/lock/toolchain/config, this runner, and member Rust/manifests/JSON/SQL/YAML/TXT sources and fixtures; other root resources are not included.",
+  "workspace_members": [
+    "integration/arkhe-crm-bridge",
+    "integration/arkhe-depin",
+    "integration/auth-md",
+    "integration/orkut",
+    "integration/arkhe-ollama",
+    "integration/arkhe-bugbounty",
+    "kernel/arkhe-core",
+    "kernel/arkhe-kernel",
+    "evidence/arkhe-wormgraph",
+    "evidence/arkhe-memory",
+    "governance/arkhe-governance",
+    "work/arkhe-work",
+    "work/arkhe-work-channels",
+    "cognition/arkhe-cognition-sdk",
+    "cognition/arkhe-perception",
+    "cognition/arkhe-rag",
+    "cognition/arkhe-metacognition",
+    "cognition/arkhe-world-model",
+    "cognition/arkhe-learning",
+    "cognition/arkhe-agent",
+    "orchestration/arkhe-runtime",
+    "storage/sql/crates/arkhe-sql",
+    "storage/sql/crates/arkhe-sql-migrate",
+    "verification/crates/arkhe-verify-core",
+    "verification/crates/arkhe-verify-cli",
+    "verification/crates/arkhe-verify-wasm",
+    "integrations/arkhe-python-runtime/bridge"
+  ],
+  "started_at": "2026-10-24T12:04:51.817108+00:00",
+  "versions": {
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "gates": [
+    {
+      "name": "build",
+      "argv": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--locked"
+      ],
+      "exit_code": 0,
+      "seconds": 1.4,
+      "log": "01-build.log",
+      "log_sha256": "aee39b929d664bdfc595e2e9389496876e3d6f5d925a1d9e39fd9f10ce8a2602"
+    },
+    {
+      "name": "test",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exit_code": 0,
+      "seconds": 140.567,
+      "log": "02-test.log",
+      "log_sha256": "d33af2aef714c9481c66caf4ea11a135e6c61e4342ae4e23969d67d9169d2468",
+      "test_totals": {
+        "passed": 293,
+        "failed": 0,
+        "ignored": 3
+      }
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 35.956,
+      "log": "03-clippy.log",
+      "log_sha256": "e3c27fa7a1d940d65974d2924d8e7b39df90ab5489397d7de73d4bb88d4dfab4"
+    }
+  ],
+  "source_changed": false,
+  "status": "PASS",
+  "finished_at": "2026-10-24T12:07:51.102993+00:00"
+}

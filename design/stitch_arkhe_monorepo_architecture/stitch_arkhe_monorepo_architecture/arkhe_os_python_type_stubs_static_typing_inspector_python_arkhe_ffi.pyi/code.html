@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe OS // Python Type Stub &amp; Static Typing Inspector</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed": "#002022",
+            "on-error": "#690005",
+            "on-background": "#dfe2ed",
+            "surface-container": "#1c2027",
+            "on-tertiary-fixed-variant": "#005236",
+            "inverse-primary": "#006970",
+            "on-tertiary": "#003824",
+            "secondary-fixed-dim": "#7bd0ff",
+            "secondary": "#7bd0ff",
+            "inverse-surface": "#dfe2ed",
+            "surface-container-high": "#262a32",
+            "surface-container-lowest": "#0a0e15",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-secondary-fixed": "#001e2c",
+            "surface-container-low": "#181c23",
+            "surface": "#0f131b",
+            "error-container": "#93000a",
+            "surface-tint": "#00dbe9",
+            "outline": "#849495",
+            "on-surface": "#dfe2ed",
+            "tertiary-container": "#65f2b5",
+            "surface-bright": "#353941",
+            "on-primary": "#00363a",
+            "on-primary-container": "#006970",
+            "on-secondary-container": "#00374d",
+            "error": "#ffb4ab",
+            "surface-container-highest": "#31353d",
+            "on-tertiary-fixed": "#002113",
+            "tertiary": "#d8ffe7",
+            "on-primary-fixed-variant": "#004f54",
+            "primary-fixed-dim": "#00dbe9",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-variant": "#31353d",
+            "on-secondary-fixed-variant": "#004c69",
+            "background": "#0f131b",
+            "secondary-fixed": "#c4e7ff",
+            "outline-variant": "#3b494b",
+            "on-secondary": "#00354a",
+            "surface-dim": "#0f131b",
+            "inverse-on-surface": "#2d3038",
+            "primary": "#dbfcff",
+            "primary-container": "#00f0ff",
+            "primary-fixed": "#7df4ff",
+            "on-tertiary-container": "#006d4a",
+            "on-surface-variant": "#b9cacb",
+            "on-error-container": "#ffdad6",
+            "secondary-container": "#00a6e0"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "0.75rem",
+            "gutter-desktop": "1rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "margin": "1rem",
+            "gutter": "0.75rem",
+            "space-xl": "2rem",
+            "margin-desktop": "1.5rem"
+          },
+          "fontFamily": {
+            "mono-md": ["JetBrains Mono"],
+            "headline-lg": ["Space Grotesk"],
+            "body-md": ["Geist"],
+            "mono-lg": ["JetBrains Mono"],
+            "display-lg": ["Space Grotesk"],
+            "body-sm": ["Geist"],
+            "display-lg-mobile": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "mono-sm": ["JetBrains Mono"],
+            "label-caps": ["JetBrains Mono"],
+            "body-lg": ["Geist"]
+          },
+          "fontSize": {
+            "mono-md": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0a0e15;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #3b494b;
+      border-radius: 2px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #00f0ff;
+    }
+    .photonic-active {
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden select-none font-body-md text-body-md h-screen flex flex-col">
+<!-- TOP APP BAR -->
+<header class="flex justify-between items-center w-full px-space-md h-12 bg-surface dark:bg-surface border-b border-outline-variant z-50 shrink-0">
+<!-- Left Section: Brand, Version, Breadcrumbs -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="text-headline-md font-headline-md font-bold tracking-tight text-primary dark:text-primary">ARKHE // OS</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant font-label-caps text-label-caps text-primary-container">v0.2.0</span>
+</div>
+<div class="h-4 w-px bg-outline-variant"></div>
+<!-- Active File Breadcrumb Indicator -->
+<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container-lowest border border-outline-variant">
+<span class="material-symbols-outlined text-secondary text-sm">code</span>
+<span class="font-mono-sm text-mono-sm text-on-surface font-medium">python/arkhe_ffi.pyi</span>
+<span class="text-outline-variant text-xs">/</span>
+<span class="font-label-caps text-label-caps text-tertiary-fixed-dim bg-on-tertiary-container px-1 rounded">PEP 561 / TYPING STUBS</span>
+</div>
+<!-- Top Nav Shared Links -->
+<nav class="hidden xl:flex items-center gap-space-md pl-space-sm">
+<a class="border-b-2 border-primary-container dark:border-primary-container text-primary dark:text-primary pb-1 font-mono-sm text-mono-sm" href="#">Monorepo Explorer</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors" href="#">GGUF 4-Gate Pipeline</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors" href="#">Formal Verification</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface pb-1 font-mono-sm text-mono-sm transition-colors" href="#">ADR Matrix</a>
+</nav>
+</div>
+<!-- Right Trailing Actions & Telemetry status -->
+<div class="flex items-center gap-2">
+<!-- Fail-Closed Armed Status Pill -->
+<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-error-container/20 border border-error/40 text-error font-mono-sm text-mono-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span>
+<span class="font-label-caps text-label-caps">Fail-Closed [ARMED]</span>
+</div>
+<!-- Static Type Verifier Badge -->
+<div class="hidden sm:flex items-center gap-1 px-2 py-1 rounded bg-surface-container border border-outline-variant font-mono-sm text-mono-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-tertiary-fixed-dim" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span>MYPY &amp; PYRIGHT STRICT</span>
+</div>
+<!-- Zero Drift Indicator -->
+<div class="hidden md:flex items-center gap-1 px-2 py-1 rounded bg-surface-container border border-outline-variant font-label-caps text-label-caps text-primary-fixed-dim">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>ZERO-DRIFT</span>
+</div>
+<!-- Trailing Action Icons -->
+<div class="flex items-center gap-1 pl-1">
+<button class="p-1.5 rounded bg-surface-container hover:bg-surface-container-high hover:text-primary text-on-surface-variant border border-outline-variant transition-colors" title="Terminal View">
+<span class="material-symbols-outlined">terminal</span>
+</button>
+<button class="p-1.5 rounded bg-surface-container hover:bg-surface-container-high hover:text-primary text-on-surface-variant border border-outline-variant transition-colors" title="Formal Shield">
+<span class="material-symbols-outlined">shield</span>
+</button>
+<button class="p-1.5 rounded bg-surface-container hover:bg-surface-container-high hover:text-primary text-on-surface-variant border border-outline-variant transition-colors" title="AST Hub">
+<span class="material-symbols-outlined">hub</span>
+</button>
+<button class="p-1.5 rounded bg-surface-container hover:bg-surface-container-high hover:text-primary text-on-surface-variant border border-outline-variant transition-colors" title="Type System Tuning">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+<div class="h-4 w-px bg-outline-variant"></div>
+<!-- Action Buttons -->
+<button class="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container border border-outline-variant hover:border-secondary hover:bg-surface-container-high text-on-surface font-mono-sm text-mono-sm transition-colors">
+<span class="material-symbols-outlined text-sm">file_download</span>
+<span>Export .pyi Stubs</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1 rounded bg-primary-container hover:bg-secondary text-on-primary-fixed font-mono-sm text-mono-sm font-semibold photonic-active active:opacity-80 transition-all">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span>Run Mypy --strict</span>
+</button>
+</div>
+</header>
+<!-- MAIN WORKBENCH 3-PANE LAYOUT -->
+<div class="flex-1 flex overflow-hidden">
+<!-- PANE 1: LEFT SIDEBAR / MONOREPO & LEMMATA TREE (w-64) -->
+<aside class="w-64 flex flex-col justify-between bg-surface-container-lowest border-r border-outline-variant shrink-0 z-40 select-none">
+<!-- Top Section: Identity + Nav Tabs -->
+<div class="flex flex-col overflow-hidden">
+<!-- Cryptographic Operator Key Identity -->
+<div class="p-space-sm border-b border-outline-variant bg-surface-container-low/60">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-sm">fingerprint</span>
+</div>
+<div class="overflow-hidden">
+<div class="font-mono-sm text-mono-sm text-primary font-semibold truncate tracking-tight">ROOT::0x8f2a...c01d</div>
+<div class="font-label-caps text-label-caps text-tertiary-fixed-dim truncate">MMR VERIFIED // ZERO-DRIFT</div>
+</div>
+</div>
+</div>
+<!-- System Architecture Mode Bar -->
+<div class="border-b border-outline-variant bg-surface-container-lowest p-1 flex gap-1">
+<button class="flex-1 py-1 px-1.5 text-center font-label-caps text-label-caps rounded bg-surface-container text-primary-container border border-outline-variant">
+            FILE TREE
+          </button>
+<button class="flex-1 py-1 px-1.5 text-center font-label-caps text-label-caps rounded hover:bg-surface-container text-on-surface-variant transition-colors">
+            TYPE GATES
+          </button>
+</div>
+<!-- Scrollable Crate & File Tree View -->
+<div class="p-space-sm overflow-y-auto custom-scrollbar max-h-56 border-b border-outline-variant">
+<div class="font-label-caps text-label-caps text-outline mb-1.5 px-1 flex items-center justify-between">
+<span>MONOREPO REPOSITORY TREE</span>
+<span class="text-on-surface-variant font-mono-sm">PEP-561</span>
+</div>
+<!-- Tree Directory: python/ -->
+<div class="space-y-0.5">
+<div class="flex items-center gap-1.5 px-1.5 py-1 text-on-surface font-mono-sm text-mono-sm font-medium">
+<span class="material-symbols-outlined text-xs text-primary-container">folder_open</span>
+<span>python/</span>
+</div>
+<!-- python/arkhe_ffi.py -->
+<div class="flex items-center gap-1.5 pl-5 pr-2 py-1 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm cursor-pointer transition-colors group">
+<span class="material-symbols-outlined text-xs text-outline group-hover:text-primary">description</span>
+<span class="truncate">arkhe_ffi.py</span>
+<span class="ml-auto text-[9px] font-label-caps text-outline">ctypes</span>
+</div>
+<!-- python/arkhe_ffi.pyi [ACTIVE] -->
+<div class="flex items-center gap-1.5 pl-5 pr-2 py-1 rounded border-l-2 border-primary-container bg-surface-container-low text-primary font-mono-sm text-mono-sm cursor-pointer photonic-active">
+<span class="material-symbols-outlined text-xs text-primary-container">sticky_note_2</span>
+<span class="font-semibold truncate">arkhe_ffi.pyi</span>
+<span class="ml-auto text-[9px] font-label-caps bg-primary-container/20 text-primary-container px-1 rounded">STUB</span>
+</div>
+<!-- python/py.typed -->
+<div class="flex items-center gap-1.5 pl-5 pr-2 py-1 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm cursor-pointer transition-colors group">
+<span class="material-symbols-outlined text-xs text-tertiary-fixed-dim">verified</span>
+<span class="truncate">py.typed</span>
+<span class="ml-auto text-[9px] font-label-caps text-tertiary-fixed-dim">PEP 561</span>
+</div>
+<!-- python/tests/test_typing.py -->
+<div class="flex items-center gap-1.5 pl-5 pr-2 py-1 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm cursor-pointer transition-colors group">
+<span class="material-symbols-outlined text-xs text-outline group-hover:text-primary">science</span>
+<span class="truncate">tests/test_typing.py</span>
+</div>
+<!-- include/arkhe_verify.h -->
+<div class="flex items-center gap-1.5 px-1.5 py-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm cursor-pointer transition-colors group">
+<span class="material-symbols-outlined text-xs text-secondary-fixed-dim">article</span>
+<span class="truncate">include/arkhe_verify.h</span>
+<span class="ml-auto text-[9px] font-label-caps text-outline">C99</span>
+</div>
+<!-- src/ffi.rs -->
+<div class="flex items-center gap-1.5 px-1.5 py-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm cursor-pointer transition-colors group">
+<span class="material-symbols-outlined text-xs text-secondary">memory</span>
+<span class="truncate">src/ffi.rs</span>
+<span class="ml-auto text-[9px] font-label-caps text-outline">Rust</span>
+</div>
+<!-- scripts/generate-gguf-vectors.py -->
+<div class="flex items-center gap-1.5 px-1.5 py-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-mono-sm text-mono-sm cursor-pointer transition-colors group">
+<span class="material-symbols-outlined text-xs text-outline">terminal</span>
+<span class="truncate">scripts/gen_gguf.py</span>
+</div>
+</div>
+</div>
+<!-- Static Type Safety Lemmata (5/5 PASS) -->
+<div class="p-space-sm flex-1 overflow-y-auto custom-scrollbar">
+<div class="flex items-center justify-between mb-2 px-1">
+<span class="font-label-caps text-label-caps text-outline">STATIC LEMMATA SUITE</span>
+<span class="font-label-caps text-label-caps text-tertiary-fixed-dim bg-on-tertiary-container/30 px-1.5 py-0.2 rounded border border-tertiary-fixed-dim/30">5/5 VERIFIED</span>
+</div>
+<div class="space-y-1.5">
+<!-- Lemma 1 -->
+<div class="p-1.5 rounded bg-surface-container border border-outline-variant hover:border-outline transition-colors">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-primary font-semibold">L1: PEP 561 Package</span>
+<span class="text-tertiary-fixed-dim flex items-center"><span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span></span>
+</div>
+<p class="text-[10px] text-on-surface-variant font-mono-md mt-0.5 leading-tight">py.typed marker verified in root</p>
+</div>
+<!-- Lemma 2 -->
+<div class="p-1.5 rounded bg-surface-container border border-outline-variant hover:border-outline transition-colors">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-primary font-semibold">L2: Zero-Cost Static</span>
+<span class="text-tertiary-fixed-dim flex items-center"><span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span></span>
+</div>
+<p class="text-[10px] text-on-surface-variant font-mono-md mt-0.5 leading-tight">0.000 ms runtime overhead cost</p>
+</div>
+<!-- Lemma 3 -->
+<div class="p-1.5 rounded bg-surface-container border border-outline-variant hover:border-outline transition-colors">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-primary font-semibold">L3: Buffer Protocol</span>
+<span class="text-tertiary-fixed-dim flex items-center"><span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span></span>
+</div>
+<p class="text-[10px] text-on-surface-variant font-mono-md mt-0.5 leading-tight">PEP 688 AnyBuffer strict union</p>
+</div>
+<!-- Lemma 4 -->
+<div class="p-1.5 rounded bg-surface-container border border-outline-variant hover:border-outline transition-colors">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-primary font-semibold">L4: Literal Narrowing</span>
+<span class="text-tertiary-fixed-dim flex items-center"><span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span></span>
+</div>
+<p class="text-[10px] text-on-surface-variant font-mono-md mt-0.5 leading-tight">Literal[0..3] &amp; IntEnum match sound</p>
+</div>
+<!-- Lemma 5 -->
+<div class="p-1.5 rounded bg-surface-container border border-outline-variant hover:border-outline transition-colors">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-primary font-semibold">L5: TypeGuard Predicates</span>
+<span class="text-tertiary-fixed-dim flex items-center"><span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span></span>
+</div>
+<p class="text-[10px] text-on-surface-variant font-mono-md mt-0.5 leading-tight">is_valid_verdict narrowing proven</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Dock: Actions & Footer Links -->
+<div class="border-t border-outline-variant bg-surface-container-lowest p-space-sm space-y-2">
+<button class="w-full py-1.5 px-2 rounded bg-surface-container-high hover:bg-surface-container border border-outline-variant text-primary font-mono-sm text-mono-sm font-semibold flex items-center justify-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span>EXEC MYPY HARNESS</span>
+</button>
+<!-- Footer Utility Links -->
+<div class="flex items-center justify-between pt-1 text-on-surface-variant font-mono-sm text-mono-sm px-1">
+<a class="flex items-center gap-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xs">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xs">menu_book</span>
+<span>Docs</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- PANE 2: CENTRAL EDITOR & VERIFICATION HARNESS (flex-1) -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface-container-lowest overflow-hidden">
+<!-- Editor Tab Header Bar -->
+<div class="flex items-center justify-between bg-surface-container-low border-b border-outline-variant px-space-xs shrink-0 select-none">
+<!-- Tab List -->
+<div class="flex items-center overflow-x-auto no-scrollbar">
+<!-- Active Tab: python/arkhe_ffi.pyi -->
+<div class="flex items-center gap-2 px-3 py-2 bg-surface-container-lowest border-r border-outline-variant border-t-2 border-t-primary-container text-primary font-mono-sm text-mono-sm">
+<span class="material-symbols-outlined text-primary-container text-xs">sticky_note_2</span>
+<span class="font-semibold">python/arkhe_ffi.pyi</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="material-symbols-outlined text-xs text-outline hover:text-primary cursor-pointer ml-1">close</span>
+</div>
+<!-- Inactive Tab 1: python/arkhe_ffi.py -->
+<div class="flex items-center gap-2 px-3 py-2 border-r border-outline-variant text-on-surface-variant hover:bg-surface-container font-mono-sm text-mono-sm cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-xs text-outline">description</span>
+<span>arkhe_ffi.py</span>
+</div>
+<!-- Inactive Tab 2: py.typed -->
+<div class="flex items-center gap-2 px-3 py-2 border-r border-outline-variant text-on-surface-variant hover:bg-surface-container font-mono-sm text-mono-sm cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-xs text-tertiary-fixed-dim">verified</span>
+<span>py.typed</span>
+</div>
+<!-- Inactive Tab 3: tests/test_typing.py -->
+<div class="hidden sm:flex items-center gap-2 px-3 py-2 border-r border-outline-variant text-on-surface-variant hover:bg-surface-container font-mono-sm text-mono-sm cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-xs text-outline">science</span>
+<span>tests/test_typing.py</span>
+</div>
+<!-- Inactive Tab 4: include/arkhe_verify.h -->
+<div class="hidden md:flex items-center gap-2 px-3 py-2 border-r border-outline-variant text-on-surface-variant hover:bg-surface-container font-mono-sm text-mono-sm cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-xs text-secondary-fixed-dim">article</span>
+<span>include/arkhe_verify.h</span>
+</div>
+</div>
+<!-- Tab Bar Metadata Info -->
+<div class="hidden lg:flex items-center gap-3 px-2 text-outline font-mono-sm text-mono-sm">
+<span>SHA256: 7f3b...e4a1</span>
+<span>142 lines</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-tertiary-fixed-dim font-label-caps text-label-caps">STRICT MYPY PASS</span>
+</div>
+</div>
+<!-- High-Fidelity Monospace Code Editor Area -->
+<div class="flex-1 flex overflow-hidden bg-[#070b11]">
+<!-- Code Content with Line Numbers -->
+<div class="flex-1 overflow-auto custom-scrollbar p-space-sm font-mono-md text-mono-md leading-relaxed flex">
+<!-- Line Numbers Gutter -->
+<div class="text-right pr-4 select-none text-outline-variant/60 font-mono-sm text-mono-sm space-y-[2px]">
+<div>01</div><div>02</div><div>03</div><div>04</div><div>05</div>
+<div>06</div><div>07</div><div>08</div><div>09</div><div>10</div>
+<div>11</div><div>12</div><div>13</div><div>14</div><div>15</div>
+<div>16</div><div>17</div><div>18</div><div>19</div><div>20</div>
+<div>21</div><div>22</div><div>23</div><div>24</div><div>25</div>
+<div>26</div><div>27</div><div>28</div><div>29</div><div>30</div>
+<div>31</div><div>32</div><div>33</div><div>34</div><div>35</div>
+<div>36</div><div>37</div><div>38</div><div>39</div><div>40</div>
+<div>41</div><div>42</div><div>43</div><div>44</div><div>45</div>
+</div>
+<!-- Code Token Syntax Body -->
+<div class="overflow-x-auto whitespace-pre font-mono-sm text-mono-sm text-on-surface space-y-[2px] flex-1 pl-2">
+<div><span class="text-outline-variant"># python/arkhe_ffi.pyi</span></div>
+<div><span class="text-outline-variant"># Arkhe Formal Verification C-ABI Python Type Stubs (PEP 484, 561, 688)</span></div>
+<div><span class="text-outline-variant"># Generated for arkhe-verify-core v0.2.0 C-ABI contract</span></div>
+<div><span class="text-secondary">from</span> <span class="text-primary-container">__future__</span> <span class="text-secondary">import</span> <span class="text-on-surface">annotations</span></div>
+<div></div>
+<div><span class="text-secondary">import</span> <span class="text-primary-container">ctypes</span></div>
+<div><span class="text-secondary">from</span> <span class="text-primary-container">enum</span> <span class="text-secondary">import</span> <span class="text-tertiary-fixed-dim">IntEnum</span></div>
+<div><span class="text-secondary">from</span> <span class="text-primary-container">typing</span> <span class="text-secondary">import</span> <span class="text-tertiary-fixed-dim">Final</span>, <span class="text-tertiary-fixed-dim">Literal</span>, <span class="text-tertiary-fixed-dim">Optional</span>, <span class="text-tertiary-fixed-dim">Sequence</span>, <span class="text-tertiary-fixed-dim">TypeAlias</span>, <span class="text-tertiary-fixed-dim">TypeGuard</span>, <span class="text-tertiary-fixed-dim">Union</span>, <span class="text-tertiary-fixed-dim">overload</span></div>
+<div><span class="text-secondary">from</span> <span class="text-primary-container">collections.abc</span> <span class="text-secondary">import</span> <span class="text-tertiary-fixed-dim">Buffer</span> <span class="text-outline-variant"># Python 3.12+ PEP 688 zero-copy</span></div>
+<div></div>
+<div><span class="text-primary font-semibold">ARKHE_ABI_VERSION</span>: <span class="text-tertiary-fixed-dim">Final</span>[<span class="text-primary-container">int</span>] = <span class="text-secondary-fixed">0x000200</span> <span class="text-outline-variant"># v0.2.0 strict match</span></div>
+<div></div>
+<div><span class="text-secondary">class</span> <span class="text-tertiary-fixed-dim font-bold">ArkheStatus</span>(<span class="text-tertiary-fixed-dim">IntEnum</span>):</div>
+<div> <span class="text-on-surface">PASS</span>: <span class="text-tertiary-fixed-dim">Literal</span>[<span class="text-secondary-fixed">0</span>] = <span class="text-secondary-fixed">0</span></div>
+<div> <span class="text-on-surface">REJECT</span>: <span class="text-tertiary-fixed-dim">Literal</span>[<span class="text-secondary-fixed">1</span>] = <span class="text-secondary-fixed">1</span></div>
+<div> <span class="text-on-surface">PANIC_TRAPPED</span>: <span class="text-tertiary-fixed-dim">Literal</span>[<span class="text-secondary-fixed">2</span>] = <span class="text-secondary-fixed">2</span></div>
+<div> <span class="text-on-surface">INCOMPLETE</span>: <span class="text-tertiary-fixed-dim">Literal</span>[<span class="text-secondary-fixed">3</span>] = <span class="text-secondary-fixed">3</span></div>
+<div></div>
+<div><span class="text-secondary">class</span> <span class="text-tertiary-fixed-dim font-bold">ArkheErrorCode</span>(<span class="text-tertiary-fixed-dim">IntEnum</span>):</div>
+<div> <span class="text-on-surface">OK</span>: <span class="text-tertiary-fixed-dim">Literal</span>[<span class="text-secondary-fixed">0</span>] = <span class="text-secondary-fixed">0</span></div>
+<div> <span class="text-on-surface">INVALID_MAGIC</span>: <span class="text-tertiary-fixed-dim">Literal</span>[-<span class="text-secondary-fixed">1</span>] = -<span class="text-secondary-fixed">1</span></div>
+<div> <span class="text-on-surface">INTEGER_OVERFLOW</span>: <span class="text-tertiary-fixed-dim">Literal</span>[-<span class="text-secondary-fixed">2</span>] = -<span class="text-secondary-fixed">2</span></div>
+<div> <span class="text-on-surface">SHA256_MISMATCH</span>: <span class="text-tertiary-fixed-dim">Literal</span>[-<span class="text-secondary-fixed">3</span>] = -<span class="text-secondary-fixed">3</span></div>
+<div> <span class="text-on-surface">SIGNATURE_INVALID</span>: <span class="text-tertiary-fixed-dim">Literal</span>[-<span class="text-secondary-fixed">4</span>] = -<span class="text-secondary-fixed">4</span></div>
+<div> <span class="text-on-surface">UNALIGNED_BUFFER</span>: <span class="text-tertiary-fixed-dim">Literal</span>[-<span class="text-secondary-fixed">5</span>] = -<span class="text-secondary-fixed">5</span></div>
+<div> <span class="text-on-surface">PANIC_UNWIND_BLOCKED</span>: <span class="text-tertiary-fixed-dim">Literal</span>[-<span class="text-secondary-fixed">99</span>] = -<span class="text-secondary-fixed">99</span></div>
+<div></div>
+<div><span class="text-secondary">class</span> <span class="text-tertiary-fixed-dim font-bold">ArkheVerdict</span>(<span class="text-primary-container">ctypes</span>.<span class="text-tertiary-fixed-dim">Structure</span>):</div>
+<div> <span class="text-on-surface">status</span>: <span class="text-primary-container">int</span></div>
+<div> <span class="text-on-surface">error_code</span>: <span class="text-primary-container">int</span></div>
+<div> <span class="text-on-surface">details</span>: <span class="text-tertiary-fixed-dim">Optional</span>[<span class="text-primary-container">bytes</span>]</div>
+<div> <span class="text-secondary">def</span> <span class="text-primary font-semibold">__init__</span>(<span class="text-on-surface-variant">self</span>, <span class="text-on-surface">status</span>: <span class="text-primary-container">int</span> = ..., <span class="text-on-surface">error_code</span>: <span class="text-primary-container">int</span> = ..., <span class="text-on-surface">details</span>: <span class="text-tertiary-fixed-dim">Optional</span>[<span class="text-primary-container">bytes</span>] = ...) -&gt; <span class="text-primary-container">None</span>: ...</div>
+<div> <span class="text-tertiary-fixed-dim">@property</span></div>
+<div> <span class="text-secondary">def</span> <span class="text-primary font-semibold">is_verified</span>(<span class="text-on-surface-variant">self</span>) -&gt; <span class="text-primary-container">bool</span>: ...</div>
+<div> <span class="text-tertiary-fixed-dim">@property</span></div>
+<div> <span class="text-secondary">def</span> <span class="text-primary font-semibold">diagnostic_message</span>(<span class="text-on-surface-variant">self</span>) -&gt; <span class="text-primary-container">str</span>: ...</div>
+<div> <span class="text-secondary">def</span> <span class="text-primary font-semibold">__enter__</span>(<span class="text-on-surface-variant">self</span>) -&gt; <span class="text-tertiary-fixed-dim">ArkheVerdict</span>: ...</div>
+<div> <span class="text-secondary">def</span> <span class="text-primary font-semibold">__exit__</span>(<span class="text-on-surface-variant">self</span>, <span class="text-on-surface">exc_type</span>: <span class="text-primary-container">object</span>, <span class="text-on-surface">exc_val</span>: <span class="text-primary-container">object</span>, <span class="text-on-surface">exc_tb</span>: <span class="text-primary-container">object</span>) -&gt; <span class="text-primary-container">None</span>: ...</div>
+<div></div>
+<div><span class="text-secondary">class</span> <span class="text-tertiary-fixed-dim font-bold">ArkheByteBuffer</span>(<span class="text-primary-container">ctypes</span>.<span class="text-tertiary-fixed-dim">Structure</span>):</div>
+<div> <span class="text-on-surface">data</span>: <span class="text-primary-container">ctypes.c_void_p</span></div>
+<div> <span class="text-on-surface">len</span>: <span class="text-primary-container">int</span></div>
+<div> <span class="text-on-surface">cap</span>: <span class="text-primary-container">int</span></div>
+<div> <span class="text-secondary">def</span> <span class="text-primary font-semibold">to_bytes</span>(<span class="text-on-surface-variant">self</span>) -&gt; <span class="text-primary-container">bytes</span>: ...</div>
+<div> <span class="text-secondary">def</span> <span class="text-primary font-semibold">to_memoryview</span>(<span class="text-on-surface-variant">self</span>) -&gt; <span class="text-primary-container">memoryview</span>: ...</div>
+<div></div>
+<div><span class="text-primary font-semibold">AnyBuffer</span>: <span class="text-tertiary-fixed-dim">TypeAlias</span> = <span class="text-tertiary-fixed-dim">Union</span>[<span class="text-primary-container">bytes</span>, <span class="text-primary-container">bytearray</span>, <span class="text-primary-container">memoryview</span>, <span class="text-tertiary-fixed-dim">Buffer</span>]</div>
+<div></div>
+<div><span class="text-tertiary-fixed-dim">@overload</span></div>
+<div><span class="text-secondary">def</span> <span class="text-primary font-semibold">arkhe_verify_gguf</span>(<span class="text-on-surface">model_bytes</span>: <span class="text-tertiary-fixed-dim">AnyBuffer</span>, <span class="text-on-surface">policy_bytes</span>: <span class="text-tertiary-fixed-dim">Optional</span>[<span class="text-tertiary-fixed-dim">AnyBuffer</span>] = ...) -&gt; <span class="text-tertiary-fixed-dim">ArkheVerdict</span>: ...</div>
+<div></div>
+<div><span class="text-tertiary-fixed-dim">@overload</span></div>
+<div><span class="text-secondary">def</span> <span class="text-primary font-semibold">arkhe_verify_intoto_statement</span>(<span class="text-on-surface">statement_bytes</span>: <span class="text-tertiary-fixed-dim">AnyBuffer</span>, <span class="text-on-surface">public_key_32</span>: <span class="text-primary-container">bytes</span>) -&gt; <span class="text-tertiary-fixed-dim">ArkheVerdict</span>: ...</div>
+<div></div>
+<div><span class="text-secondary">def</span> <span class="text-primary font-semibold">arkhe_project_canonical_cbor</span>(<span class="text-on-surface">gguf_bytes</span>: <span class="text-tertiary-fixed-dim">AnyBuffer</span>) -&gt; <span class="text-tertiary-fixed-dim">ArkheByteBuffer</span>: ...</div>
+<div><span class="text-secondary">def</span> <span class="text-primary font-semibold">arkhe_abi_version</span>() -&gt; <span class="text-primary-container">int</span>: ...</div>
+<div><span class="text-secondary">def</span> <span class="text-primary font-semibold">is_valid_verdict</span>(<span class="text-on-surface">verdict</span>: <span class="text-primary-container">object</span>) -&gt; <span class="text-tertiary-fixed-dim">TypeGuard</span>[<span class="text-tertiary-fixed-dim">ArkheVerdict</span>]: ...</div>
+</div>
+</div>
+</div>
+<!-- Sub-Pane Terminal / Type Checker Execution Harness -->
+<section class="h-44 border-t border-outline-variant bg-surface-container-lowest flex flex-col shrink-0">
+<!-- Terminal Header Bar -->
+<div class="flex items-center justify-between px-space-sm py-1 bg-surface-container-low border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-primary-container">terminal</span>
+<span class="font-label-caps text-label-caps text-primary tracking-wider">MYPY &amp; PYRIGHT STRICT TYPE-CHECK TERMINAL // EXIT 0 // ZERO-DRIFT</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-mono-sm text-mono-sm text-tertiary-fixed-dim flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim"></span>
+<span>SYNCHRONIZED (0.04s)</span>
+</span>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-xs">clear_all</span>
+</button>
+</div>
+</div>
+<!-- Terminal Shell Output Log -->
+<div class="p-space-sm flex-1 overflow-y-auto font-mono-sm text-mono-sm space-y-1 text-on-surface leading-tight custom-scrollbar bg-surface-container-lowest">
+<div class="flex items-center gap-2 text-outline">
+<span class="text-secondary">$</span>
+<span class="text-on-surface">mypy --strict --no-incremental --show-error-codes python/</span>
+</div>
+<div class="text-tertiary-fixed-dim pl-3 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs">check</span>
+<span>Success: no issues found in 2 source files (arkhe_ffi.py, arkhe_ffi.pyi)</span>
+</div>
+<div class="flex items-center gap-2 text-outline pt-1">
+<span class="text-secondary">$</span>
+<span class="text-on-surface">pyright --lib python/</span>
+</div>
+<div class="text-primary-container pl-3">
+<span>0 errors, 0 warnings, 0 informations analyzed in 0.038s</span>
+</div>
+<div class="text-on-surface-variant pl-3 font-label-caps text-label-caps">
+<span>[PEP 561] Verified package distribution compliance: 'py.typed' discovered inline at package anchor root.</span>
+</div>
+</div>
+</section>
+</main>
+<!-- PANE 3: RIGHT INSPECTOR & TYPE SYSTEM TELEMETRY (w-80) -->
+<aside class="w-80 bg-surface-container-low border-l border-outline-variant flex flex-col justify-between shrink-0 overflow-y-auto custom-scrollbar select-none">
+<!-- Top Inspector Header -->
+<div class="p-space-sm border-b border-outline-variant bg-surface-container-low sticky top-0 z-20">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-primary-container">rule</span>
+<span class="font-label-caps text-label-caps text-primary tracking-wider">TYPE INVARIANT MATRIX // PEP 561 &amp; 688</span>
+</div>
+<span class="font-label-caps text-label-caps text-tertiary-fixed-dim bg-on-tertiary-container/30 px-1 rounded">SOUND</span>
+</div>
+</div>
+<!-- Bento Cards Container -->
+<div class="p-space-sm space-y- space-y-space-sm">
+<!-- Card 1: PEP 688 Buffer Protocol Interop -->
+<div class="p-3 rounded bg-surface-container border border-outline-variant hover:border-secondary transition-all">
+<div class="flex items-center justify-between">
+<div class="font-mono-sm text-mono-sm font-semibold text-primary">PEP 688 Buffer Protocol</div>
+<span class="font-label-caps text-label-caps px-1 rounded bg-surface-container-high text-primary-container">ZERO-COPY</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
+            Accepts <code class="font-mono-sm text-primary bg-surface-container-lowest px-1 rounded">AnyBuffer</code> (<code class="font-mono-sm text-xs text-secondary-fixed">bytes</code>, <code class="font-mono-sm text-xs text-secondary-fixed">memoryview</code>, <code class="font-mono-sm text-xs text-secondary-fixed">Buffer</code>).
+          </p>
+<div class="mt-2 pt-2 border-t border-outline-variant flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-outline">Type Soundness</span>
+<span class="text-tertiary-fixed-dim font-semibold">100% SOUND</span>
+</div>
+</div>
+<!-- Card 2: Literal & IntEnum Exhaustive Narrowing -->
+<div class="p-3 rounded bg-surface-container border border-outline-variant hover:border-secondary transition-all">
+<div class="flex items-center justify-between">
+<div class="font-mono-sm text-mono-sm font-semibold text-primary">Literal &amp; IntEnum Exhaustive</div>
+<span class="font-label-caps text-label-caps px-1 rounded bg-surface-container-high text-tertiary-fixed-dim">EXHAUSTIVE</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
+            Pattern matching &amp; <code class="font-mono-sm text-secondary-fixed">assert_never</code> narrowing for <code class="font-mono-sm text-primary">ArkheStatus</code> and <code class="font-mono-sm text-primary">ArkheErrorCode</code>.
+          </p>
+<div class="mt-2 pt-2 border-t border-outline-variant flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-outline">Unreachable Traps</span>
+<span class="text-tertiary-fixed-dim font-semibold">PASS (0 Leaks)</span>
+</div>
+</div>
+<!-- Card 3: ContextManager & RAII Typing -->
+<div class="p-3 rounded bg-surface-container border border-outline-variant hover:border-secondary transition-all">
+<div class="flex items-center justify-between">
+<div class="font-mono-sm text-mono-sm font-semibold text-primary">ContextManager &amp; RAII</div>
+<span class="font-label-caps text-label-caps px-1 rounded bg-surface-container-high text-primary-fixed-dim">DETERMINISTIC</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
+<code class="font-mono-sm text-primary">ArkheVerdict</code> enforces <code class="font-mono-sm text-xs text-secondary">__enter__</code> &amp; <code class="font-mono-sm text-xs text-secondary">__exit__</code> typing for unmanaged C-ABI finalization.
+          </p>
+<div class="mt-2 pt-2 border-t border-outline-variant flex items-center justify-between text-mono-sm font-mono-sm">
+<span class="text-outline">Finalizer Risk</span>
+<span class="text-tertiary-fixed-dim font-semibold">0.000%</span>
+</div>
+</div>
+<!-- Card 4: Type Checker Matrix -->
+<div class="p-3 rounded bg-surface-container border border-outline-variant">
+<div class="font-mono-sm text-mono-sm font-semibold text-primary mb-2">Type Checker Engine Matrix</div>
+<div class="space-y-1.5 font-mono-sm text-mono-sm">
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-lowest">
+<span class="text-on-surface">Mypy 1.8.0 (strict)</span>
+<span class="text-tertiary-fixed-dim font-semibold">PASS (0.04s)</span>
+</div>
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-lowest">
+<span class="text-on-surface">Pyright 1.1.350</span>
+<span class="text-tertiary-fixed-dim font-semibold">PASS (0.02s)</span>
+</div>
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-lowest">
+<span class="text-on-surface">PyLance / LSP</span>
+<span class="text-primary-container font-semibold">SOUND</span>
+</div>
+</div>
+</div>
+<!-- Card 5: Benchmark & Type-Checking Latency -->
+<div class="p-3 rounded bg-surface-container border border-outline-variant">
+<div class="flex items-center justify-between text-mono-sm font-mono-sm mb-1.5">
+<span class="text-outline">Verification Latency</span>
+<span class="text-primary-container font-mono-lg text-mono-lg font-bold">38 ms</span>
+</div>
+<!-- Sparkline Indicator Bars -->
+<div class="h-6 flex items-end gap-1 px-1 py-0.5 bg-surface-container-lowest rounded border border-outline-variant">
+<div class="w-full bg-surface-container-high h-[40%] rounded-xs"></div>
+<div class="w-full bg-surface-container-high h-[55%] rounded-xs"></div>
+<div class="w-full bg-surface-container-high h-[35%] rounded-xs"></div>
+<div class="w-full bg-surface-container-high h-[70%] rounded-xs"></div>
+<div class="w-full bg-secondary h-[45%] rounded-xs"></div>
+<div class="w-full bg-primary-container h-[20%] rounded-xs photonic-active"></div>
+<div class="w-full bg-primary-container h-[30%] rounded-xs"></div>
+<div class="w-full bg-tertiary-fixed-dim h-[18%] rounded-xs"></div>
+</div>
+<div class="flex justify-between text-[10px] text-outline font-mono-sm mt-1">
+<span>AST Parse</span>
+<span>Unification</span>
+<span>Cold Finish</span>
+</div>
+</div>
+</div>
+<!-- Inspector Quick Action CTA Stack -->
+<div class="p-space-sm border-t border-outline-variant bg-surface-container-lowest space-y-2 sticky bottom-0">
+<button class="w-full py-1.5 px-2 rounded bg-primary-container hover:bg-secondary text-on-primary-fixed font-mono-sm text-mono-sm font-semibold flex items-center justify-center gap-1.5 photonic-active transition-all">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span>Run Mypy Typecheck</span>
+</button>
+<div class="grid grid-cols-2 gap-2">
+<button class="py-1 px-2 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-mono-sm text-mono-sm flex items-center justify-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-xs">archive</span>
+<span>Export .pyi</span>
+</button>
+<button class="py-1 px-2 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-mono-sm text-mono-sm flex items-center justify-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-xs">content_copy</span>
+<span>Copy Stubs</span>
+</button>
+</div>
+</div>
+</aside>
+</div>
+<!-- DETERMINISTIC FOOTER STATUS BAR -->
+<footer class="h-6 bg-surface-container-lowest border-t border-outline-variant flex items-center justify-between px-space-md text-[11px] font-mono-sm text-outline shrink-0 select-none">
+<!-- Left Status -->
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
+<span class="text-on-surface-variant">ARKHE TYPE STUB ENGINE // PEP 561 STRICT // PYTHON 3.10 - 3.13+</span>
+</div>
+<!-- Center Status -->
+<div class="hidden md:flex items-center gap-4">
+<span class="text-tertiary-fixed-dim">MYPY STRICT: 0 ERRORS</span>
+<span class="text-outline-variant">|</span>
+<span class="text-tertiary-fixed-dim">PYRIGHT: 0 ERRORS</span>
+<span class="text-outline-variant">|</span>
+<span class="text-primary-container">ZERO RUNTIME COST</span>
+</div>
+<!-- Right Status -->
+<div class="flex items-center gap-3">
+<span>SHA256: 7f3b4a2...9c01</span>
+<span class="text-outline-variant">|</span>
+<span>UTF-8 LF</span>
+<span class="text-outline-variant">|</span>
+<span>TAB: 4</span>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // SEÇÃO 4: Persistência Causal, SQLx e Triggers Append-Only</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration matching Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-high": "#272a30",
+            "on-surface-variant": "#bbcabf",
+            "secondary-fixed-dim": "#7bd0ff",
+            "primary-fixed": "#6ffbbe",
+            "surface-bright": "#36393f",
+            "secondary-container": "#00a6e0",
+            "primary-fixed-dim": "#4edea3",
+            "inverse-surface": "#e1e2ea",
+            "on-secondary-container": "#00374d",
+            "tertiary-container": "#e29100",
+            "inverse-primary": "#006c49",
+            "on-secondary": "#00354a",
+            "surface-container-lowest": "#0b0e13",
+            "on-primary-container": "#00422b",
+            "surface-dim": "#111319",
+            "error": "#ffb4ab",
+            "on-primary-fixed": "#002113",
+            "surface-tint": "#4edea3",
+            "secondary-fixed": "#c4e7ff",
+            "inverse-on-surface": "#2e3036",
+            "outline": "#86948a",
+            "tertiary-fixed": "#ffddb8",
+            "error-container": "#93000a",
+            "surface-variant": "#32353b",
+            "surface-container-low": "#191c21",
+            "primary": "#4edea3",
+            "on-secondary-fixed": "#001e2c",
+            "surface-container": "#1d2025",
+            "primary-container": "#10b981",
+            "tertiary-fixed-dim": "#ffb95f",
+            "secondary": "#7bd0ff",
+            "on-background": "#e1e2ea",
+            "tertiary": "#ffb95f",
+            "surface-container-highest": "#32353b",
+            "on-tertiary-fixed-variant": "#653e00",
+            "on-tertiary-fixed": "#2a1700",
+            "on-primary-fixed-variant": "#005236",
+            "surface": "#111319",
+            "background": "#111319",
+            "on-primary": "#003824",
+            "on-tertiary": "#472a00",
+            "on-secondary-fixed-variant": "#004c69",
+            "on-surface": "#e1e2ea",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "on-tertiary-container": "#523200",
+            "outline-variant": "#3c4a42"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          spacing: {
+            "space-xl": "2rem",
+            "space-2xl": "3rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "margin-desktop": "2rem",
+            "margin": "1rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "gutter-desktop": "1.5rem",
+            "space-lg": "1.5rem"
+          },
+          fontFamily: {
+            "label-caps": ["JetBrains Mono"],
+            "headline-lg": ["Inter"],
+            "code-lg": ["JetBrains Mono"],
+            "display-lg-mobile": ["Inter"],
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-xl": ["Inter"],
+            "code-md": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "display-lg": ["Inter"],
+            "title-md": ["Inter"],
+            "body-md": ["Inter"],
+            "code-sm": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "headline-xl-mobile": ["Inter"]
+          },
+          fontSize: {
+            "label-caps": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "code-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+            "code-md": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "title-md": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "code-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #0b0e13;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #272a30;
+      border-radius: 2px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #4edea3;
+    }
+    /* Pulse glow for deterministic sync */
+    @keyframes pulse-emerald {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+    .animate-beacon {
+      animation: pulse-emerald 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-x-hidden selection:bg-primary selection:text-on-primary">
+<!-- ==================== TOP NAVIGATION BAR ==================== -->
+<header class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-space-lg h-12 bg-surface-container-lowest border-b border-outline-variant">
+<!-- Left: Brand / Runtime Identifier & Quick Jump -->
+<div class="flex items-center space-x-space-md">
+<div class="flex items-center space-x-space-xs">
+<span class="w-2 h-2 rounded-full bg-primary animate-beacon"></span>
+<span class="text-title-md font-title-md font-code-md tracking-wider text-primary">ARKHE // COMPUTATIONAL FIDUCIARY RUNTIME</span>
+</div>
+<span class="text-outline-variant font-code-sm text-code-sm">|</span>
+<div class="hidden xl:flex items-center space-x-space-xs bg-surface-container-low px-space-sm py-1 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-outline text-[16px]" data-icon="search">search</span>
+<input class="bg-transparent border-0 p-0 text-code-sm font-code-sm text-on-surface placeholder-outline focus:ring-0 w-56" placeholder="Grep MMR / Digest / SQL Invariant..." type="text"/>
+<kbd class="text-[9px] font-label-caps px-1 py-0.5 rounded bg-surface-container-high text-outline">⌘K</kbd>
+</div>
+</div>
+<!-- Center: Global Navigation Links -->
+<nav class="hidden md:flex items-center space-x-space-lg text-code-sm font-code-sm">
+<a class="text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-150 py-1 px-2 rounded" href="#tcb-ledger">TCB Ledger</a>
+<a class="text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-150 py-1 px-2 rounded" href="#workspaces">Workspaces</a>
+<a class="text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-150 py-1 px-2 rounded" href="#contracts">Contracts</a>
+<a class="text-primary border-b-2 border-primary pb-1 font-semibold py-1 px-2" href="#causal-db">Causal DB</a>
+<a class="text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-150 py-1 px-2 rounded" href="#cicd-gates">CI/CD Gates</a>
+</nav>
+<!-- Right: Operational Actuators & Key Identity -->
+<div class="flex items-center space-x-space-sm">
+<button class="hidden lg:flex items-center space-x-space-xs bg-surface-container border border-outline-variant hover:border-outline text-secondary text-code-sm font-code-sm px-space-sm py-1 rounded transition-all duration-150">
+<span class="material-symbols-outlined text-[16px]" data-icon="terminal">terminal</span>
+<span>FAIL-CLOSED AUDIT</span>
+</button>
+<button class="flex items-center space-x-space-xs bg-primary text-on-primary text-code-sm font-code-sm font-semibold px-space-md py-1 rounded hover:bg-primary-fixed-dim transition-colors duration-150">
+<span class="material-symbols-outlined text-[16px]" data-icon="verified_user">verified_user</span>
+<span>VERIFY PROOFS</span>
+</button>
+<div class="flex items-center space-x-1 pl-space-xs border-l border-outline-variant">
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors" title="Kernel Syscalls">
+<span class="material-symbols-outlined text-[18px]" data-icon="sync">sync</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors" title="Security Enclave Locked">
+<span class="material-symbols-outlined text-[18px]" data-icon="lock">lock</span>
+</button>
+<div class="ml-1 w-6 h-6 rounded bg-surface-container-high border border-outline flex items-center justify-center font-code-sm text-[10px] text-primary" title="Security Architect Key Identity">
+          SE-0
+        </div>
+</div>
+</div>
+</header>
+<!-- ==================== SIDE NAVIGATION BAR ==================== -->
+<aside class="fixed left-0 top-12 bottom-0 w-64 flex flex-col justify-between p-space-sm z-40 bg-surface-container-low border-r border-outline-variant">
+<!-- Subsystem Header -->
+<div>
+<div class="px-space-md py-space-sm border-b border-outline-variant mb-space-sm">
+<div class="flex items-center space-x-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="developer_board">developer_board</span>
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">ARKHE MONOREPO</span>
+</div>
+<p class="text-code-sm font-code-sm text-outline mt-0.5">v0.9.4-PROD // BLAKE3-VERIFIED</p>
+</div>
+<!-- Navigation Tabs (6 Primary Modules) -->
+<nav class="space-y-0.5">
+<a class="flex items-center space-x-space-sm text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 rounded" href="#auth-sep">
+<span class="material-symbols-outlined text-[18px]" data-icon="shield_person">shield_person</span>
+<span class="text-label-caps font-label-caps uppercase tracking-wider">Authority Separation</span>
+</a>
+<a class="flex items-center space-x-space-sm text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 rounded" href="#crates">
+<span class="material-symbols-outlined text-[18px]" data-icon="folder_data">folder_data</span>
+<span class="text-label-caps font-label-caps uppercase tracking-wider">Workspace Crates</span>
+</a>
+<a class="flex items-center space-x-space-sm text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 rounded" href="#cbor-contracts">
+<span class="material-symbols-outlined text-[18px]" data-icon="terminal">terminal</span>
+<span class="text-label-caps font-label-caps uppercase tracking-wider">AKG-CBOR-v1 Contracts</span>
+</a>
+<!-- ACTIVE TAB: Causal & Append-Only SQL -->
+<a class="flex items-center space-x-space-sm text-primary bg-surface-container border-l-2 border-primary px-space-md py-space-sm font-medium rounded-r" href="#causal-sql">
+<span class="material-symbols-outlined text-[18px]" data-icon="database">database</span>
+<div class="flex-1 flex items-center justify-between">
+<span class="text-label-caps font-label-caps uppercase tracking-wider">Causal &amp; Append-Only SQL</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+</div>
+</a>
+<a class="flex items-center space-x-space-sm text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 rounded" href="#cicd-sandboxes">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified_user">verified_user</span>
+<span class="text-label-caps font-label-caps uppercase tracking-wider">CI/CD &amp; Sandboxes</span>
+</a>
+<a class="flex items-center space-x-space-sm text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 rounded" href="#vulnerability-matrix">
+<span class="material-symbols-outlined text-[18px]" data-icon="security">security</span>
+<span class="text-label-caps font-label-caps uppercase tracking-wider">Vulnerability Matrix</span>
+</a>
+</nav>
+</div>
+<!-- Footer Controls & Diagnostic Telemetry -->
+<div class="pt-space-sm border-t border-outline-variant space-y-space-sm">
+<button class="w-full flex items-center justify-center space-x-space-xs bg-surface-container border border-primary/40 hover:border-primary text-primary text-code-sm font-code-sm py-1.5 px-space-sm rounded transition-all">
+<span class="material-symbols-outlined text-[16px]" data-icon="sync">sync</span>
+<span>SYNC CANONICAL MMR</span>
+</button>
+<div class="space-y-1">
+<a class="flex items-center space-x-space-sm text-outline px-space-md py-1 text-code-sm font-code-sm hover:text-on-surface" href="#diag-terminal">
+<span class="material-symbols-outlined text-[16px]" data-icon="developer_board">developer_board</span>
+<span>Diagnostic Terminal</span>
+</a>
+<a class="flex items-center space-x-space-sm text-outline px-space-md py-1 text-code-sm font-code-sm hover:text-on-surface" href="#kernel-telemetry">
+<span class="material-symbols-outlined text-[16px]" data-icon="query_stats">query_stats</span>
+<span>Kernel Telemetry</span>
+</a>
+</div>
+<div class="bg-surface-container-lowest p-space-xs rounded border border-outline-variant flex items-center justify-between text-[10px] font-code-sm text-outline">
+<span>TCB ENGINE: RUNNING</span>
+<span class="text-primary font-semibold">TICK #149,021</span>
+</div>
+</div>
+</aside>
+<!-- ==================== MAIN WORKBENCH CANVAS ==================== -->
+<main class="ml-64 mt-12 p-space-lg min-h-screen space-y-space-xl pb-24">
+<!-- 1. HEADER DA SEÇÃO: PERSISTÊNCIA CAUSAL & AUDITORIA DE BANCO -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded p-space-lg relative overflow-hidden">
+<!-- Glow ambient background decoration -->
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md border-b border-outline-variant pb-space-md">
+<div>
+<div class="flex flex-wrap items-center gap-space-sm mb-space-xs">
+<span class="bg-primary/10 border border-primary/30 text-primary text-label-caps font-label-caps px-2 py-0.5 rounded tracking-wider">
+              SEÇÃO 4 // PERSISTÊNCIA CAUSAL &amp; AUDITORIA DE BANCO
+            </span>
+<span class="bg-surface-container border border-outline-variant text-outline font-code-sm text-code-sm px-2 py-0.5 rounded">
+              TCB-SPEC-SQL-v1 // POSTGRESQL 16+ WITH RLS FORCE &amp; STRICT WORM
+            </span>
+<span class="bg-surface-container-high text-secondary border border-secondary/30 font-code-sm text-code-sm px-2 py-0.5 rounded flex items-center space-x-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>WormGraph Active Synced</span>
+</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">
+            Persistência Causal, SQLx e Triggers Append-Only em <span class="font-code-lg text-code-lg text-primary">evidence/arkhe-sql</span>
+</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-5xl mt-space-xs">
+            Conversão do motor relacional PostgreSQL em um log de auditoria criptográfico estritamente append-only, com isolamento forçado de múltiplos locatários (multi-tenancy) e ancoragem das raízes da Merkle Mountain Range em transparência pública (Rekor).
+          </p>
+</div>
+<div class="flex flex-col items-end justify-center shrink-0">
+<div class="text-right font-code-sm text-code-sm text-outline">Merkle Mountain Range Tip</div>
+<div class="font-code-md text-code-md text-primary font-semibold tracking-wider">0x93F4…B390_EVID_MMR</div>
+<div class="text-[10px] font-label-caps text-on-surface-variant">42,912 CANONICAL COMMITS</div>
+</div>
+</div>
+<!-- Metadata Badges Strip -->
+<div class="flex flex-wrap items-center gap-space-sm pt-space-md text-code-sm font-code-sm">
+<div class="flex items-center space-x-1.5 bg-surface-container px-space-sm py-1 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="database">database</span>
+<span class="text-outline">Engine:</span>
+<span class="text-on-surface font-semibold">PostgreSQL 16+</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-surface-container px-space-sm py-1 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="terminal">terminal</span>
+<span class="text-outline">Driver:</span>
+<span class="text-on-surface font-semibold">SQLx (Rust Compile-Time Checked)</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-surface-container px-space-sm py-1 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="security">security</span>
+<span class="text-outline">Multi-Tenancy:</span>
+<span class="text-tertiary font-semibold">FORCE ROW LEVEL SECURITY</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-surface-container px-space-sm py-1 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-error" data-icon="lock">lock</span>
+<span class="text-outline">Imutabilidade:</span>
+<span class="text-error font-semibold">Triggers BEFORE UPDATE/DELETE</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-surface-container px-space-sm py-1 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="verified_user">verified_user</span>
+<span class="text-outline">Ancoragem:</span>
+<span class="text-secondary font-semibold">Sigstore Rekor (RFC 6962)</span>
+</div>
+</div>
+</section>
+<!-- 2. PILARES MECÂNICOS DE IMUTABILIDADE E SEGURANÇA NO BANCO DE DADOS (4 Cards Grid) -->
+<section class="space-y-space-md">
+<div class="flex items-center justify-between">
+<h2 class="text-headline-sm font-headline-sm text-on-surface flex items-center space-x-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="shield">shield</span>
+<span>Pilares Mecânicos de Imutabilidade e Isolamento Relacional</span>
+</h2>
+<span class="text-code-sm font-code-sm text-outline">TCB-ENFORCEMENT-LEVEL: STRICT_FAIL_CLOSED</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md">
+<!-- Pilar 01: RLS Forçado -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all p-space-md rounded flex flex-col justify-between relative group">
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-primary tracking-wider uppercase">Pilar 01 // Isolamento</span>
+<span class="bg-primary/10 text-primary text-[10px] font-label-caps px-1.5 py-0.5 rounded border border-primary/20">ACTIVE</span>
+</div>
+<h3 class="text-title-md font-title-md font-semibold text-on-surface">Row Level Security (RLS) Forçado</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+              Aplicação de <code class="font-code-sm text-code-sm text-secondary bg-surface-container-lowest px-1 rounded">ENABLE ROW LEVEL SECURITY</code> e <code class="font-code-sm text-code-sm text-secondary bg-surface-container-lowest px-1 rounded">FORCE ROW LEVEL SECURITY</code> em 100% das tabelas de evidência. Execução sob a função <code class="font-code-sm text-code-sm text-primary bg-surface-container-lowest px-1 rounded">arkhe_assert_tenant()</code>, disparando exceção imediata caso <code class="font-code-sm text-code-sm text-on-surface bg-surface-container-lowest px-1 rounded">app.tenant_id</code> não esteja injetado na sessão, prevenindo vazamentos entre locatários.
+            </p>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm">
+<span class="text-outline">Injeção:</span>
+<span class="text-primary font-mono">SET LOCAL app.tenant_id</span>
+</div>
+</div>
+<!-- Pilar 02: Triggers BEFORE UPDATE OR DELETE -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-error/50 transition-all p-space-md rounded flex flex-col justify-between relative group">
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-error tracking-wider uppercase">Pilar 02 // Imutabilidade</span>
+<span class="bg-error/10 text-error text-[10px] font-label-caps px-1.5 py-0.5 rounded border border-error/20">HARD_BLOCK</span>
+</div>
+<h3 class="text-title-md font-title-md font-semibold text-on-surface">Triggers BEFORE UPDATE / DELETE</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+              Backstop mecânico inquebrável. Qualquer tentativa de alteração ou remoção de linha dispara <code class="font-code-sm text-code-sm text-error bg-surface-container-lowest px-1 rounded">RAISE EXCEPTION 'Operacao invalida: tabelas de evidencia sao append-only'</code> diretamente no motor SQL, garantindo preservação física dos dados mesmo se houver bypass ou comprometimento na camada da aplicação Rust.
+            </p>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm">
+<span class="text-outline">Trigger:</span>
+<span class="text-error font-mono">trg_prevent_mutation</span>
+</div>
+</div>
+<!-- Pilar 03: Segregação Estrita de Roles -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-tertiary/50 transition-all p-space-md rounded flex flex-col justify-between relative group">
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-tertiary tracking-wider uppercase">Pilar 03 // Privilégios</span>
+<span class="bg-tertiary/10 text-tertiary text-[10px] font-label-caps px-1.5 py-0.5 rounded border border-tertiary/20">LEAST_PRIVILEGE</span>
+</div>
+<h3 class="text-title-md font-title-md font-semibold text-on-surface">Segregação Estrita de Roles</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+              Todas as roles criadas com <code class="font-code-sm text-code-sm text-tertiary bg-surface-container-lowest px-1 rounded">NOSUPERUSER NOBYPASSRLS</code>. Tripartição soberana: <code class="font-code-sm text-code-sm text-primary">arkhe_append</code> (apenas INSERT e SELECT), <code class="font-code-sm text-code-sm text-secondary">arkhe_read</code> (apenas SELECT para auditoria forense), e <code class="font-code-sm text-code-sm text-outline">arkhe_admin</code> (apenas migrações DDL via arkhe-sql-migrate com checagem rigorosa de digest SHA-384).
+            </p>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm">
+<span class="text-outline">Permissões:</span>
+<span class="text-tertiary font-mono">REVOKE ALL ON SCHEMA</span>
+</div>
+</div>
+<!-- Pilar 04: Ancoragem Externa no WormGraph -->
+<div class="bg-surface-container-low border border-outline-variant hover:border-secondary/50 transition-all p-space-md rounded flex flex-col justify-between relative group">
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-secondary tracking-wider uppercase">Pilar 04 // Transparência</span>
+<span class="bg-secondary/10 text-secondary text-[10px] font-label-caps px-1.5 py-0.5 rounded border border-secondary/20">REKOR_ANCHOR</span>
+</div>
+<h3 class="text-title-md font-title-md font-semibold text-on-surface">Ancoragem Externa no WormGraph</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+              Exportação periódica e determinística de <code class="font-code-sm text-code-sm text-secondary bg-surface-container-lowest px-1 rounded">mmr_checkpoints</code> (bagged roots) para logs públicos de transparência (Sigstore Rekor). Estabelecimento de proof-of-existence externa imutável, impossibilitando adulteração retroativa do banco sem invalidar provas públicas indexadas por RFC 6962.
+            </p>
+</div>
+<div class="mt-space-md pt-space-sm border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm">
+<span class="text-outline">Padrão:</span>
+<span class="text-secondary font-mono">Cosign Keyless / Rekor</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. TABELA COMPARATIVA EXAUSTIVA DE TABELAS DE EVIDÊNCIA -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded p-space-md space-y-space-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-outline-variant pb-space-sm">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-on-surface flex items-center space-x-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="table_chart">table_chart</span>
+<span>Matriz de Tabelas de Evidência e Mecanismos de Imutabilidade</span>
+</h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Topologia relacional das tabelas gerenciadas sob o crate <code class="font-code-sm text-code-sm text-primary">evidence/arkhe-sql</code></p>
+</div>
+<div class="flex items-center space-x-space-xs font-code-sm text-code-sm text-outline">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>4 Schemas Validated via SQLx Offline Query Cache</span>
+</div>
+</div>
+<div class="overflow-x-auto custom-scroll">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container border-b border-outline-variant text-label-caps font-label-caps text-outline uppercase tracking-wider">
+<th class="py-2.5 px-space-md">Nome da Tabela SQL</th>
+<th class="py-2.5 px-space-md">Tipo de Dado Armazenado</th>
+<th class="py-2.5 px-space-md">Mecanismos de Imutabilidade (Trigger / RLS / Roles)</th>
+<th class="py-2.5 px-space-md">Estratégia de Limpeza / TTL</th>
+<th class="py-2.5 px-space-md">Impacto no WormGraph</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant text-body-sm font-body-sm">
+<!-- Row 1: verification_records -->
+<tr class="hover:bg-surface-container-low transition-colors duration-150">
+<td class="py-3 px-space-md font-code-md text-code-md text-primary font-semibold whitespace-nowrap">
+                verification_records
+              </td>
+<td class="py-3 px-space-md text-on-surface">
+                Provas de verificação, decisões de atestação e digests emitidos pelo microkernel
+              </td>
+<td class="py-3 px-space-md">
+<div class="flex flex-wrap gap-1 font-code-sm text-code-sm">
+<span class="bg-error/15 text-error border border-error/30 px-1.5 py-0.5 rounded">Trigger BEFORE UPDATE/DELETE</span>
+<span class="bg-primary/15 text-primary border border-primary/30 px-1.5 py-0.5 rounded">FORCE RLS</span>
+<span class="bg-surface-container-high text-on-surface px-1.5 py-0.5 rounded">REVOKE UPDATE/DELETE ON arkhe_append</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-code-sm text-code-sm whitespace-nowrap">
+<span class="text-tertiary font-semibold">Sem TTL</span> (Retenção permanente inegociável)
+              </td>
+<td class="py-3 px-space-md text-on-surface-variant text-body-sm">
+                Ancoragem causal direta; gera nós folha sequenciais no WormGraph.
+              </td>
+</tr>
+<!-- Row 2: mmr_checkpoints -->
+<tr class="hover:bg-surface-container-low transition-colors duration-150">
+<td class="py-3 px-space-md font-code-md text-code-md text-secondary font-semibold whitespace-nowrap">
+                mmr_checkpoints
+              </td>
+<td class="py-3 px-space-md text-on-surface">
+                Raízes de acúmulo da Merkle Mountain Range (bagged_root) e picos ativos
+              </td>
+<td class="py-3 px-space-md">
+<div class="flex flex-wrap gap-1 font-code-sm text-code-sm">
+<span class="bg-error/15 text-error border border-error/30 px-1.5 py-0.5 rounded">Trigger BEFORE UPDATE/DELETE</span>
+<span class="bg-primary/15 text-primary border border-primary/30 px-1.5 py-0.5 rounded">FORCE RLS</span>
+<span class="bg-surface-container-high text-on-surface px-1.5 py-0.5 rounded">role arkhe_append</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-code-sm text-code-sm whitespace-nowrap">
+<span class="text-tertiary font-semibold">Sem TTL</span> (Retenção permanente de checkpoints)
+              </td>
+<td class="py-3 px-space-md text-on-surface-variant text-body-sm">
+                Define a raiz global de auditoria para provas de inclusão criptográfica.
+              </td>
+</tr>
+<!-- Row 3: stamp_evidence -->
+<tr class="hover:bg-surface-container-low transition-colors duration-150">
+<td class="py-3 px-space-md font-code-md text-code-md text-on-surface font-semibold whitespace-nowrap">
+                stamp_evidence
+              </td>
+<td class="py-3 px-space-md text-on-surface">
+                Evidências de atestação do Human Passport e provas ZK de identidade
+              </td>
+<td class="py-3 px-space-md">
+<div class="flex flex-wrap gap-1 font-code-sm text-code-sm">
+<span class="bg-primary/15 text-primary border border-primary/30 px-1.5 py-0.5 rounded">FORCE RLS</span>
+<span class="bg-error/15 text-error border border-error/30 px-1.5 py-0.5 rounded">Trigger append-only</span>
+<span class="bg-surface-container-high text-outline px-1.5 py-0.5 rounded">assert_tenant()</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-code-sm text-code-sm whitespace-nowrap">
+                TTL de 90 dias (Renovação de conformidade)
+              </td>
+<td class="py-3 px-space-md text-on-surface-variant text-body-sm">
+                Atestações externas verificáveis contextualmente vinculadas à sessão.
+              </td>
+</tr>
+<!-- Row 4: usage_events -->
+<tr class="hover:bg-surface-container-low transition-colors duration-150">
+<td class="py-3 px-space-md font-code-md text-code-md text-outline font-semibold whitespace-nowrap">
+                usage_events
+              </td>
+<td class="py-3 px-space-md text-on-surface">
+                Logs operacionais, telemetria de chamadas de sandbox e métricas de consumo
+              </td>
+<td class="py-3 px-space-md">
+<div class="flex flex-wrap gap-1 font-code-sm text-code-sm">
+<span class="bg-primary/15 text-primary border border-primary/30 px-1.5 py-0.5 rounded">RLS por tenant</span>
+<span class="bg-surface-container-high text-on-surface px-1.5 py-0.5 rounded">INSERT/SELECT restrito</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-code-sm text-code-sm whitespace-nowrap">
+                TTL 90 dias com particionamento temporal
+              </td>
+<td class="py-3 px-space-md text-on-surface-variant text-body-sm">
+                Evidência operacional secundária (não altera raiz matemática do WormGraph).
+              </td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- 4. BLOCO DE CÓDIGO SQL & RUST SQLx DE ALTA FIDELIDADE (Interactive Tabs) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded p-space-md space-y-space-sm">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-outline-variant pb-space-xs gap-2">
+<div class="flex items-center space-x-1">
+<button class="px-space-md py-1.5 font-code-sm text-code-sm font-semibold rounded-t border-b-2 border-primary text-primary bg-surface-container" id="btn-tab-sql" onclick="switchCodeTab('sql')">
+            migrations/20261017_append_only.sql
+          </button>
+<button class="px-space-md py-1.5 font-code-sm text-code-sm font-semibold rounded-t border-b-2 border-transparent text-outline hover:text-on-surface hover:bg-surface-container-low" id="btn-tab-rust" onclick="switchCodeTab('rust')">
+            crates/evidence/arkhe-sql/src/lib.rs
+          </button>
+<button class="px-space-md py-1.5 font-code-sm text-code-sm font-semibold rounded-t border-b-2 border-transparent text-outline hover:text-on-surface hover:bg-surface-container-low" id="btn-tab-rekor" onclick="switchCodeTab('rekor')">
+            crates/evidence/arkhe-sql/src/rekor_anchor.rs
+          </button>
+</div>
+<div class="flex items-center space-x-2 text-code-sm font-code-sm text-outline">
+<span class="bg-surface-container px-2 py-0.5 rounded border border-outline-variant">SHA-384: 8a4c…e3b1</span>
+<button class="hover:text-primary p-1" onclick="navigator.clipboard.writeText(document.querySelector('.active-code-block').innerText)" title="Copiar código">
+<span class="material-symbols-outlined text-[16px]" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Tab 1: SQL Migrations -->
+<div class="code-tab-panel active-code-block font-code-md text-code-md bg-surface-dim p-space-md rounded border border-outline-variant overflow-x-auto text-[#e1e2ea] leading-relaxed custom-scroll" id="tab-content-sql">
+<pre><code class="language-sql"><span class="text-outline">-- ============================================================================
+-- ARKHE PROTOCOL CAUSAL PERSISTENCE ENGINE: POSTGRESQL 16+ APPEND-ONLY SCHEMA
+-- MIGRATION: 20261017_0001_append_only_rules.sql
+-- ============================================================================</span>
+
+<span class="text-primary font-bold">CREATE OR REPLACE FUNCTION</span> arkhe_assert_tenant()
+<span class="text-secondary">RETURNS</span> text <span class="text-primary font-bold">AS</span> $$
+<span class="text-primary font-bold">DECLARE</span>
+    v_tenant text;
+<span class="text-primary font-bold">BEGIN</span>
+    v_tenant := current_setting(<span class="text-tertiary">'app.tenant_id'</span>, true);
+    <span class="text-primary font-bold">IF</span> v_tenant <span class="text-secondary">IS NULL OR</span> length(trim(v_tenant)) = 0 <span class="text-primary font-bold">THEN</span>
+        <span class="text-error font-bold">RAISE EXCEPTION</span> <span class="text-tertiary">'[CRITICAL_SECURITY_VIOLATION] Sessao nao autenticada: app.tenant_id ausente'</span>
+            <span class="text-secondary">USING ERRCODE</span> = <span class="text-tertiary">'42501'</span>;
+    <span class="text-primary font-bold">END IF</span>;
+    <span class="text-secondary">RETURN</span> v_tenant;
+<span class="text-primary font-bold">END</span>;
+$$ <span class="text-secondary">LANGUAGE</span> plpgsql <span class="text-secondary">STABLE SECURITY DEFINER</span>;
+
+<span class="text-outline">-- Função guardiã imutável: intercepta comandos de mutação</span>
+<span class="text-primary font-bold">CREATE OR REPLACE FUNCTION</span> arkhe_prevent_mutation()
+<span class="text-secondary">RETURNS TRIGGER AS</span> $$
+<span class="text-primary font-bold">BEGIN</span>
+    <span class="text-error font-bold">RAISE EXCEPTION</span> <span class="text-tertiary">'[ARKHE_WORM_VIOLATION] Operacao invalida: tabelas de evidencia sao estritamente append-only'</span>
+        <span class="text-secondary">USING ERRCODE</span> = <span class="text-tertiary">'23514'</span>;
+<span class="text-primary font-bold">END</span>;
+$$ <span class="text-secondary">LANGUAGE</span> plpgsql;
+
+<span class="text-outline">-- Criação de tabelas críticas</span>
+<span class="text-primary font-bold">CREATE TABLE IF NOT EXISTS</span> verification_records (
+    record_id <span class="text-secondary">UUID PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    tenant_id <span class="text-secondary">VARCHAR(64) NOT NULL</span>,
+    record_hash <span class="text-secondary">BYTEA NOT NULL</span>,
+    intent_digest <span class="text-secondary">BYTEA NOT NULL</span>,
+    payload_cbor <span class="text-secondary">BYTEA NOT NULL</span>,
+    blake3_signature <span class="text-secondary">BYTEA NOT NULL</span>,
+    created_at <span class="text-secondary">TIMESTAMPTZ NOT NULL DEFAULT</span> clock_timestamp()
+);
+
+<span class="text-primary font-bold">CREATE TABLE IF NOT EXISTS</span> mmr_checkpoints (
+    checkpoint_id <span class="text-secondary">BIGSERIAL PRIMARY KEY</span>,
+    tenant_id <span class="text-secondary">VARCHAR(64) NOT NULL</span>,
+    bagged_root <span class="text-secondary">BYTEA NOT NULL</span>,
+    peak_count <span class="text-secondary">INTEGER NOT NULL</span>,
+    leaf_count <span class="text-secondary">BIGINT NOT NULL</span>,
+    rekor_log_index <span class="text-secondary">BIGINT</span>,
+    created_at <span class="text-secondary">TIMESTAMPTZ NOT NULL DEFAULT</span> clock_timestamp()
+);
+
+<span class="text-outline">-- Habilitação e Imposição estrita de Row Level Security (RLS)</span>
+<span class="text-primary font-bold">ALTER TABLE</span> verification_records <span class="text-secondary">ENABLE ROW LEVEL SECURITY</span>;
+<span class="text-error font-bold">ALTER TABLE</span> verification_records <span class="text-error font-bold">FORCE ROW LEVEL SECURITY</span>;
+
+<span class="text-primary font-bold">ALTER TABLE</span> mmr_checkpoints <span class="text-secondary">ENABLE ROW LEVEL SECURITY</span>;
+<span class="text-error font-bold">ALTER TABLE</span> mmr_checkpoints <span class="text-error font-bold">FORCE ROW LEVEL SECURITY</span>;
+
+<span class="text-outline">-- Políticas de Isolamento Multi-Tenant</span>
+<span class="text-primary font-bold">CREATE POLICY</span> tenant_isolation_verification_records <span class="text-primary font-bold">ON</span> verification_records
+    <span class="text-secondary">FOR ALL USING</span> (tenant_id = arkhe_assert_tenant());
+
+<span class="text-primary font-bold">CREATE POLICY</span> tenant_isolation_mmr_checkpoints <span class="text-primary font-bold">ON</span> mmr_checkpoints
+    <span class="text-secondary">FOR ALL USING</span> (tenant_id = arkhe_assert_tenant());
+
+<span class="text-outline">-- Instalação dos Triggers Append-Only Inquebráveis</span>
+<span class="text-primary font-bold">CREATE TRIGGER</span> trg_prevent_update_delete_verification
+    <span class="text-secondary">BEFORE UPDATE OR DELETE ON</span> verification_records
+    <span class="text-secondary">FOR EACH STATEMENT EXECUTE FUNCTION</span> arkhe_prevent_mutation();
+
+<span class="text-primary font-bold">CREATE TRIGGER</span> trg_prevent_update_delete_checkpoints
+    <span class="text-secondary">BEFORE UPDATE OR DELETE ON</span> mmr_checkpoints
+    <span class="text-secondary">FOR EACH STATEMENT EXECUTE FUNCTION</span> arkhe_prevent_mutation();
+
+<span class="text-outline">-- Segregação de Privilégios (Least Privilege)</span>
+<span class="text-secondary font-bold">REVOKE ALL ON</span> verification_records, mmr_checkpoints <span class="text-secondary font-bold">FROM PUBLIC</span>;
+<span class="text-primary font-bold">GRANT SELECT, INSERT ON</span> verification_records, mmr_checkpoints <span class="text-primary font-bold">TO</span> arkhe_append;
+<span class="text-primary font-bold">GRANT SELECT ON</span> verification_records, mmr_checkpoints <span class="text-primary font-bold">TO</span> arkhe_read;</code></pre>
+</div>
+<!-- Tab 2: Rust SQLx Integration -->
+<div class="code-tab-panel hidden font-code-md text-code-md bg-surface-dim p-space-md rounded border border-outline-variant overflow-x-auto text-[#e1e2ea] leading-relaxed custom-scroll" id="tab-content-rust">
+<pre><code class="language-rust"><span class="text-outline">// crates/evidence/arkhe-sql/src/lib.rs
+// Rust SQLx Safe Append-Only Fiduciary Storage Actor</span>
+
+<span class="text-secondary">use</span> sqlx::{PgPool, Transaction, Postgres};
+<span class="text-secondary">use</span> blake3::Hasher;
+<span class="text-secondary">use</span> thiserror::Error;
+
+<span class="text-primary">#[derive(Error, Debug)]</span>
+<span class="text-secondary">pub enum</span> StorageError {
+    <span class="text-primary">#[error("SQLx Execution Error: {0}")]</span>
+    Database(#[from] sqlx::Error),
+    <span class="text-primary">#[error("Audit Mutation Blocked by Trigger (WORM Compliance Violation)")]</span>
+    MutationForbidden,
+}
+
+<span class="text-secondary">pub struct</span> CausalEvidenceStore {
+    pool: PgPool,
+}
+
+<span class="text-secondary">impl</span> CausalEvidenceStore {
+    <span class="text-secondary">pub async fn</span> append_verification_record(
+        &amp;self,
+        tenant_id: &amp;str,
+        intent_digest: &amp;[u8; 32],
+        payload_cbor: &amp;[u8],
+    ) -&gt; Result&lt;[u8; 32], StorageError&gt; {
+        <span class="text-outline">// 1. Cálculo determinístico de hash BLAKE3</span>
+        <span class="text-secondary">let mut</span> hasher = Hasher::new();
+        hasher.update(b<span class="text-tertiary">"ARKHE_EVID_v1"</span>);
+        hasher.update(tenant_id.as_bytes());
+        hasher.update(intent_digest);
+        hasher.update(payload_cbor);
+        <span class="text-secondary">let</span> record_hash = *hasher.finalize().as_bytes();
+
+        <span class="text-outline">// 2. Abertura de Transação Atômica com Injeção de RLS Tenant Session</span>
+        <span class="text-secondary">let mut</span> tx: Transaction&lt;<span class="text-secondary">Postgres</span>&gt; = self.pool.begin().<span class="text-secondary">await</span>?;
+
+        <span class="text-outline">// Previne cross-tenant leaks forçando a variável local</span>
+        sqlx::query!(<span class="text-tertiary">"SET LOCAL app.tenant_id = $1"</span>, tenant_id)
+            .execute(&amp;<span class="text-secondary">mut</span> *tx)
+            .<span class="text-secondary">await</span>?;
+
+        <span class="text-outline">// 3. Inserção estritamente Append-Only validada em tempo de compilação</span>
+        sqlx::query!(
+            <span class="text-tertiary">r#"
+            INSERT INTO verification_records (
+                tenant_id, record_hash, intent_digest, payload_cbor, blake3_signature
+            ) VALUES ($1, $2, $3, $4, $5)
+            "#</span>,
+            tenant_id,
+            &amp;record_hash[..],
+            &amp;intent_digest[..],
+            payload_cbor,
+            &amp;record_hash[..] <span class="text-outline">// Mocked signature payload</span>
+        )
+        .execute(&amp;<span class="text-secondary">mut</span> *tx)
+        .<span class="text-secondary">await</span>?;
+
+        tx.commit().<span class="text-secondary">await</span>?;
+        Ok(record_hash)
+    }
+}</code></pre>
+</div>
+<!-- Tab 3: Rekor Anchor Service -->
+<div class="code-tab-panel hidden font-code-md text-code-md bg-surface-dim p-space-md rounded border border-outline-variant overflow-x-auto text-[#e1e2ea] leading-relaxed custom-scroll" id="tab-content-rekor">
+<pre><code class="language-rust"><span class="text-outline">// crates/evidence/arkhe-sql/src/rekor_anchor.rs
+// Sigstore Rekor RFC 6962 Transparancy Log Publisher</span>
+
+<span class="text-secondary">use</span> reqwest::Client;
+<span class="text-secondary">use</span> serde_json::json;
+
+<span class="text-secondary">pub struct</span> RekorAnchorClient {
+    endpoint: String,
+    http: Client,
+}
+
+<span class="text-secondary">impl</span> RekorAnchorClient {
+    <span class="text-secondary">pub async fn</span> anchor_mmr_root(
+        &amp;self,
+        bagged_root: &amp;[u8; 32],
+        leaf_count: u64,
+    ) -&gt; Result&lt;u64, Box&lt;<span class="text-secondary">dyn</span> std::error::Error&gt;&gt; {
+        <span class="text-secondary">let</span> root_hex = hex::encode(bagged_root);
+        <span class="text-secondary">let</span> payload = json!({
+            <span class="text-tertiary">"kind"</span>: <span class="text-tertiary">"rekord"</span>,
+            <span class="text-tertiary">"apiVersion"</span>: <span class="text-tertiary">"0.0.1"</span>,
+            <span class="text-tertiary">"spec"</span>: {
+                <span class="text-tertiary">"signature"</span>: {
+                    <span class="text-tertiary">"format"</span>: <span class="text-tertiary">"x509"</span>,
+                    <span class="text-tertiary">"content"</span>: <span class="text-tertiary">"COSIGN_KEYLESS_EPHEMERAL_CERT"</span>
+                },
+                <span class="text-tertiary">"data"</span>: {
+                    <span class="text-tertiary">"hash"</span>: { <span class="text-tertiary">"algorithm"</span>: <span class="text-tertiary">"sha256"</span>, <span class="text-tertiary">"value"</span>: root_hex }
+                },
+                <span class="text-tertiary">"extraData"</span>: { <span class="text-tertiary">"leaf_count"</span>: leaf_count }
+            }
+        });
+
+        <span class="text-secondary">let</span> resp = self.http.post(&amp;format!(<span class="text-tertiary">"{}/api/v1/log/entries"</span>, self.endpoint))
+            .json(&amp;payload)
+            .send()
+            .<span class="text-secondary">await</span>?;
+
+        <span class="text-secondary">let</span> log_entry: serde_json::Value = resp.json().<span class="text-secondary">await</span>?;
+        <span class="text-secondary">let</span> log_index = log_entry[<span class="text-tertiary">"logIndex"</span>].as_u64().unwrap_or(<span class="text-tertiary">84920412</span>);
+
+        Ok(log_index)
+    }
+}</code></pre>
+</div>
+</section>
+<!-- 5. VISUALIZADOR DE TRANSAÇÃO E PROVA CAUSAL DE GRAFO (WormGraph Visualizer & Audit Trail) -->
+<section class="space-y-space-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-on-surface flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[22px]" data-icon="account_tree">account_tree</span>
+<span>WormGraph Visualizer: Pipeline Causal de Inclusão Criptográfica</span>
+</h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+            Rastreabilidade determinística do registro relacional bruto até o log público de transparência RFC 6962.
+          </p>
+</div>
+<div class="flex items-center space-x-2 text-code-sm font-code-sm">
+<span class="px-2 py-0.5 rounded bg-surface-container border border-outline-variant text-outline">
+            Protocol: RFC 6962 / BLAKE3
+          </span>
+<span class="px-2 py-0.5 rounded bg-primary/10 border border-primary/30 text-primary font-semibold">
+            STATUS: 100% VERIFIED
+          </span>
+</div>
+</div>
+<!-- 5-Step Architecture Graph Flow -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-space-sm">
+<!-- Step 1 -->
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded flex flex-col justify-between space-y-space-sm relative">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-secondary">PASSO 01</span>
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="input">input</span>
+</div>
+<div>
+<div class="font-code-md text-code-md text-on-surface font-semibold">INSERT INTO</div>
+<div class="text-[11px] font-code-sm text-outline mt-1 leading-snug">
+              verification_records com tenant_id, record_hash, intent_digest e CBOR payload.
+            </div>
+</div>
+<div class="bg-surface-container-lowest p-1 rounded font-code-sm text-[10px] text-on-surface-variant truncate">
+            SET LOCAL app.tenant_id
+          </div>
+</div>
+<!-- Step 2 -->
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded flex flex-col justify-between space-y-space-sm relative">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-primary">PASSO 02</span>
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="gavel">gavel</span>
+</div>
+<div>
+<div class="font-code-md text-code-md text-on-surface font-semibold">Trigger Exec</div>
+<div class="text-[11px] font-code-sm text-outline mt-1 leading-snug">
+              Validação mecânica do gatilho append-only. Zero mutações permitidas na transação.
+            </div>
+</div>
+<div class="bg-primary/10 text-primary border border-primary/20 p-1 rounded font-code-sm text-[10px] text-center font-bold">
+            PASS (FAIL-CLOSED)
+          </div>
+</div>
+<!-- Step 3 -->
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded flex flex-col justify-between space-y-space-sm relative">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-tertiary">PASSO 03</span>
+<span class="material-symbols-outlined text-tertiary text-[16px]" data-icon="schema">schema</span>
+</div>
+<div>
+<div class="font-code-md text-code-md text-on-surface font-semibold">MMR Buffer Ingest</div>
+<div class="text-[11px] font-code-sm text-outline mt-1 leading-snug">
+              Inserção do leaf_hash no acumulador Merkle Mountain Range com separador de domínio 0x00.
+            </div>
+</div>
+<div class="bg-surface-container-lowest p-1 rounded font-code-sm text-[10px] text-tertiary truncate">
+            Leaf #1048577 (0x00)
+          </div>
+</div>
+<!-- Step 4 -->
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded flex flex-col justify-between space-y-space-sm relative">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-secondary">PASSO 04</span>
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="compress">compress</span>
+</div>
+<div>
+<div class="font-code-md text-code-md text-on-surface font-semibold">Peak Bagging</div>
+<div class="text-[11px] font-code-sm text-outline mt-1 leading-snug">
+              Recálculo logarítmico dos picos ativos e persistência periódica em mmr_checkpoints.
+            </div>
+</div>
+<div class="bg-surface-container-lowest p-1 rounded font-code-sm text-[10px] text-secondary truncate">
+            bagged_root: 0x93F4…B390
+          </div>
+</div>
+<!-- Step 5 -->
+<div class="bg-surface-container-low border border-outline-variant p-space-sm rounded flex flex-col justify-between space-y-space-sm relative">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-primary">PASSO 05</span>
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="cloud_sync">cloud_sync</span>
+</div>
+<div>
+<div class="font-code-md text-code-md text-on-surface font-semibold">Rekor Attestation</div>
+<div class="text-[11px] font-code-sm text-outline mt-1 leading-snug">
+              Atestação pública no Sigstore Rekor com inclusão de log_index e assinatura Cosign Keyless.
+            </div>
+</div>
+<div class="bg-primary/10 text-primary border border-primary/20 p-1 rounded font-code-sm text-[10px] text-center font-bold">
+            INDEX #84920412
+          </div>
+</div>
+</div>
+<!-- SIMULADOR DE TESTE DE MUTAÇÃO MALICIOSA (Interactive Mutation Test Console) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-md space-y-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-outline-variant pb-space-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-error text-[20px]" data-icon="warning">warning</span>
+<h3 class="text-title-md font-title-md font-semibold text-on-surface">
+              Simulador de Teste de Mutação Maliciosa (Fail-Closed Verification)
+            </h3>
+</div>
+<span class="font-code-sm text-code-sm text-outline">Gatilho ativo: trg_prevent_update_delete_verification</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-md">
+<!-- Command Form / Payload Injector -->
+<div class="space-y-space-sm">
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+              Tente submeter uma instrução SQL arbitrária de alteração ou expurgo de registro histórico para observar o bloqueio mecânico no motor relacional:
+            </p>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-outline uppercase">Instrução SQL a ser executada na sessão:</label>
+<div class="flex flex-col space-y-1">
+<div class="flex space-x-2">
+<button class="px-space-sm py-1 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded text-code-sm font-code-sm text-on-surface" onclick="injectQuery('UPDATE')">
+                    Testar UPDATE Malicioso
+                  </button>
+<button class="px-space-sm py-1 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded text-code-sm font-code-sm text-error" onclick="injectQuery('DELETE')">
+                    Testar DELETE Não Autorizado
+                  </button>
+<button class="px-space-sm py-1 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded text-code-sm font-code-sm text-primary" onclick="injectQuery('INSERT')">
+                    Testar INSERT Válido
+                  </button>
+</div>
+<textarea class="w-full bg-surface-dim border border-outline-variant focus:border-secondary focus:ring-0 rounded font-code-sm text-code-sm text-on-surface p-space-sm" id="sql-input-box" rows="3">UPDATE verification_records SET payload_cbor = '\x00deadbeef' WHERE record_id = '8f31b81e-1051-4171-8bc6-94073fb81a4d';</textarea>
+</div>
+</div>
+<div class="flex items-center space-x-space-sm">
+<button class="bg-error hover:bg-error-container text-surface-container-lowest font-code-sm text-code-sm font-bold px-space-md py-1.5 rounded flex items-center space-x-1.5 transition-colors" onclick="executeSimulatedSql()">
+<span class="material-symbols-outlined text-[16px]" data-icon="play_arrow">play_arrow</span>
+<span>DISPARAR TRANSAÇÃO NO MOTOR</span>
+</button>
+<span class="font-code-sm text-code-sm text-outline">Sessão: <code class="text-on-surface">app.tenant_id = 'arkhe-prod-tenant-01'</code></span>
+</div>
+</div>
+<!-- Real-Time Database Response Window -->
+<div class="bg-surface-dim border border-outline-variant rounded p-space-sm flex flex-col justify-between font-code-sm text-code-sm">
+<div class="flex items-center justify-between border-b border-outline-variant pb-1 mb-2">
+<span class="text-outline text-[11px] font-label-caps uppercase">Console PostgreSQL 16 Telemetry Buffer</span>
+<span class="px-1.5 py-0.5 rounded bg-error/20 text-error text-[10px] font-bold" id="exec-status-badge">
+                SQLSTATE 23514 [FAIL_CLOSED]
+              </span>
+</div>
+<div class="text-on-surface space-y-1.5 font-code-sm leading-relaxed overflow-y-auto max-h-48 custom-scroll" id="sql-output-log">
+<div class="text-outline">[2026-10-17 14:02:11.890] BEGIN TRANSACTION READ WRITE;</div>
+<div class="text-outline">[2026-10-17 14:02:11.891] SET LOCAL app.tenant_id = 'arkhe-prod-tenant-01';</div>
+<div class="text-tertiary">[2026-10-17 14:02:11.892] EXEC: UPDATE verification_records SET payload_cbor = '\x00deadbeef'...</div>
+<div class="text-error font-semibold">[2026-10-17 14:02:11.893] ERROR: [ARKHE_WORM_VIOLATION] Operacao invalida: tabelas de evidencia sao estritamente append-only</div>
+<div class="text-error">[2026-10-17 14:02:11.893] SQLSTATE: 23514 (check_violation triggered by trg_prevent_update_delete_verification)</div>
+<div class="text-secondary">[2026-10-17 14:02:11.894] TRANSACTION ROLLBACK ISSUED. Motor relacional preservado sem mutacao.</div>
+</div>
+<div class="mt-2 pt-1 border-t border-outline-variant/60 flex items-center justify-between text-[11px] text-outline">
+<span>WormGraph Invariant: <span class="text-primary font-semibold">INTACTO</span></span>
+<span>Audit Proof: <span class="text-primary font-mono">B3_OK</span></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Operational Telemetry Status Banner -->
+<footer class="bg-surface-container-low border border-outline-variant rounded p-space-sm flex flex-col sm:flex-row items-center justify-between gap-space-sm text-code-sm font-code-sm text-outline">
+<div class="flex items-center space-x-space-sm">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-on-surface">Storage Actor:</span>
+<span class="text-primary font-mono">crates/evidence/arkhe-sql</span>
+<span class="text-outline-variant">|</span>
+<span>Driver: SQLx 0.8 with Offline Cached Prepared Statements</span>
+</div>
+<div class="flex items-center space-x-space-md">
+<span>Rekor Public Key: <code class="text-secondary">0x12a8…90de</code></span>
+<span>Canonical MMR Pk: <code class="text-primary font-mono">P-42</code></span>
+</div>
+</footer>
+</main>
+<!-- ==================== JAVASCRIPT INTERACTIONS ==================== -->
+<script>
+    // Tab switching for Code blocks
+    function switchCodeTab(tab) {
+      // Hide all panels
+      document.querySelectorAll('.code-tab-panel').forEach(el => {
+        el.classList.add('hidden');
+        el.classList.remove('active-code-block');
+      });
+
+      // Reset button styles
+      const btnSql = document.getElementById('btn-tab-sql');
+      const btnRust = document.getElementById('btn-tab-rust');
+      const btnRekor = document.getElementById('btn-tab-rekor');
+
+      [btnSql, btnRust, btnRekor].forEach(btn => {
+        btn.classList.remove('border-primary', 'text-primary', 'bg-surface-container');
+        btn.classList.add('border-transparent', 'text-outline', 'bg-transparent');
+      });
+
+      // Activate selected tab
+      if (tab === 'sql') {
+        const content = document.getElementById('tab-content-sql');
+        content.classList.remove('hidden');
+        content.classList.add('active-code-block');
+        btnSql.classList.add('border-primary', 'text-primary', 'bg-surface-container');
+        btnSql.classList.remove('border-transparent', 'text-outline', 'bg-transparent');
+      } else if (tab === 'rust') {
+        const content = document.getElementById('tab-content-rust');
+        content.classList.remove('hidden');
+        content.classList.add('active-code-block');
+        btnRust.classList.add('border-primary', 'text-primary', 'bg-surface-container');
+        btnRust.classList.remove('border-transparent', 'text-outline', 'bg-transparent');
+      } else if (tab === 'rekor') {
+        const content = document.getElementById('tab-content-rekor');
+        content.classList.remove('hidden');
+        content.classList.add('active-code-block');
+        btnRekor.classList.add('border-primary', 'text-primary', 'bg-surface-container');
+        btnRekor.classList.remove('border-transparent', 'text-outline', 'bg-transparent');
+      }
+    }
+
+    // Mutation Simulator Interactions
+    function injectQuery(type) {
+      const input = document.getElementById('sql-input-box');
+      if (type === 'UPDATE') {
+        input.value = "UPDATE verification_records SET payload_cbor = '\\x00deadbeef' WHERE record_id = '8f31b81e-1051-4171-8bc6-94073fb81a4d';";
+      } else if (type === 'DELETE') {
+        input.value = "DELETE FROM verification_records WHERE tenant_id = 'arkhe-prod-tenant-01';";
+      } else if (type === 'INSERT') {
+        input.value = "INSERT INTO verification_records (tenant_id, record_hash, intent_digest, payload_cbor, blake3_signature) VALUES ('arkhe-prod-tenant-01', '\\x1234', '\\xabcd', '\\xa164', '\\x8899');";
+      }
+    }
+
+    function executeSimulatedSql() {
+      const query = document.getElementById('sql-input-box').value;
+      const log = document.getElementById('sql-output-log');
+      const badge = document.getElementById('exec-status-badge');
+      const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+      if (query.toUpperCase().includes('UPDATE') || query.toUpperCase().includes('DELETE')) {
+        badge.className = "px-1.5 py-0.5 rounded bg-error/20 text-error text-[10px] font-bold";
+        badge.innerText = "SQLSTATE 23514 [FAIL_CLOSED]";
+
+        log.innerHTML = `
+          <div class="text-outline">[${timestamp}.101] BEGIN TRANSACTION READ WRITE;</div>
+          <div class="text-outline">[${timestamp}.102] SET LOCAL app.tenant_id = 'arkhe-prod-tenant-01';</div>
+          <div class="text-tertiary">[${timestamp}.103] EXEC: ${query.substring(0, 65)}...</div>
+          <div class="text-error font-semibold">[${timestamp}.105] ERROR: [ARKHE_WORM_VIOLATION] Operacao invalida: tabelas de evidencia sao estritamente append-only</div>
+          <div class="text-error">[${timestamp}.105] SQLSTATE: 23514 (check_violation triggered by trg_prevent_update_delete_verification)</div>
+          <div class="text-secondary">[${timestamp}.106] TRANSACTION ROLLBACK ISSUED. Motor relacional preservado sem mutacao.</div>
+        `;
+      } else {
+        badge.className = "px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[10px] font-bold";
+        badge.innerText = "SQLSTATE 00000 [APPEND_SUCCESS]";
+
+        log.innerHTML = `
+          <div class="text-outline">[${timestamp}.201] BEGIN TRANSACTION READ WRITE;</div>
+          <div class="text-outline">[${timestamp}.202] SET LOCAL app.tenant_id = 'arkhe-prod-tenant-01';</div>
+          <div class="text-tertiary">[${timestamp}.203] EXEC: ${query.substring(0, 65)}...</div>
+          <div class="text-primary font-semibold">[${timestamp}.205] SUCCESS: Linha persistida com sucesso em verification_records.</div>
+          <div class="text-secondary">[${timestamp}.206] WormGraph MMR leaf acumulado via domain separator 0x00.</div>
+          <div class="text-primary">[${timestamp}.207] COMMIT PREPARED TRANSACTION. Hash BLAKE3 validado.</div>
+        `;
+      }
+    }
+  </script>
+</body></html>

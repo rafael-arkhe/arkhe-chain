@@ -1,0 +1,182 @@
+{
+  "scope": "Local execution only; no remote CI, protocol freeze or production attestation",
+  "context": {},
+  "attempts": [
+    {
+      "gate": "migration",
+      "command": [
+        "cargo",
+        "run",
+        "-p",
+        "arkhe-sql-migrate",
+        "--locked",
+        "--",
+        "migrate"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T12:01:50.232281+00:00",
+      "duration_seconds": 8.081,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "b46f66a12680ef3f5e2bd0fb43a4f1adfd41340d340bb977b8d3734524757145",
+      "source_after_sha256": "b46f66a12680ef3f5e2bd0fb43a4f1adfd41340d340bb977b8d3734524757145",
+      "source_changed_during_execution": false,
+      "log": "01-migration.log",
+      "log_sha256": "f4d1cdf57c4c751b1acd371e9f7b87720f72bd21140b944f0a092f1c02108e5e",
+      "inputs": "01-migration.inputs.json"
+    },
+    {
+      "gate": "postgres-gates",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "postgres-integration",
+        "--test",
+        "durable_gates",
+        "--locked",
+        "--",
+        "--nocapture"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T12:02:59.318900+00:00",
+      "duration_seconds": 26.599,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "05ecc0fc1eb8168483a39c9cb561652cd42850dab136d9db214d5f9601a68b2e",
+      "source_after_sha256": "05ecc0fc1eb8168483a39c9cb561652cd42850dab136d9db214d5f9601a68b2e",
+      "source_changed_during_execution": false,
+      "log": "02-postgres-gates.log",
+      "log_sha256": "ac0290cb25c088c6a76168ad8eec1bc063e75396476a34ed129d67741af58e05",
+      "inputs": "02-postgres-gates.inputs.json"
+    },
+    {
+      "gate": "postgres-gates-final",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "postgres-integration",
+        "--test",
+        "durable_gates",
+        "--locked",
+        "--",
+        "--nocapture"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T12:04:11.752516+00:00",
+      "duration_seconds": 7.515,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_after_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_changed_during_execution": false,
+      "log": "03-postgres-gates-final.log",
+      "log_sha256": "33ce438e464ec41a1bb8fce9e5e667125b3bf80adf23355b7e10cfbf4596107b",
+      "inputs": "03-postgres-gates-final.inputs.json"
+    },
+    {
+      "gate": "workspace-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T12:04:19.889367+00:00",
+      "duration_seconds": 72.212,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_after_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_changed_during_execution": false,
+      "log": "04-workspace-tests.log",
+      "log_sha256": "6432fc1de25fb35b5c011fbc69bc413b88c8a6c600791568218933d1ee8ea400",
+      "inputs": "04-workspace-tests.inputs.json"
+    },
+    {
+      "gate": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T12:06:26.595359+00:00",
+      "duration_seconds": 1.424,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_after_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_changed_during_execution": false,
+      "log": "05-format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "inputs": "05-format.inputs.json"
+    },
+    {
+      "gate": "architecture",
+      "command": [
+        "python",
+        "scripts/check_architecture.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T12:06:28.544615+00:00",
+      "duration_seconds": 0.735,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_after_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_changed_during_execution": false,
+      "log": "06-architecture.log",
+      "log_sha256": "5e6515f414b5f8b7b718ef71aaca1aee74ba0b2a731a965fccc24a19b126a1f6",
+      "inputs": "06-architecture.inputs.json"
+    },
+    {
+      "gate": "migration-checksums",
+      "command": [
+        "cargo",
+        "run",
+        "-p",
+        "arkhe-sql-migrate",
+        "--locked",
+        "--",
+        "checksum-verify"
+      ],
+      "cwd": "storage\\sql",
+      "started_at_utc": "2026-10-18T12:06:29.817038+00:00",
+      "duration_seconds": 1.595,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_after_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_changed_during_execution": false,
+      "log": "07-migration-checksums.log",
+      "log_sha256": "dad921301f8d971b1a5a11ed85c4217c24dc4f992c6ceaed2ecdc782fa2b6a60",
+      "inputs": "07-migration-checksums.inputs.json"
+    },
+    {
+      "gate": "embedded-assets",
+      "command": [
+        "python",
+        "scripts/check_embedded_assets.py"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T12:06:31.949713+00:00",
+      "duration_seconds": 0.568,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_after_sha256": "e1b0a520246dc310b96e954b6cd4c7d87e46d81c9e69b471ca87472e3262d6cb",
+      "source_changed_during_execution": false,
+      "log": "08-embedded-assets.log",
+      "log_sha256": "97cd7a9179049ca7597297ddabc3e62526714a857db25b0e587a2d4038f4822d",
+      "inputs": "08-embedded-assets.inputs.json"
+    }
+  ]
+}

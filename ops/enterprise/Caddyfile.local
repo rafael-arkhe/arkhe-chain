@@ -1,0 +1,7 @@
+# Local TLS validation only. No public CA/domain and no machine trust changes.
+https://localhost:8443 {
+    tls internal
+    @metrics path /api/metrics
+    respond @metrics 404
+    reverse_proxy arkhe:3003
+}

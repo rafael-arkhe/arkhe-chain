@@ -1,0 +1,36 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  rust:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+        with:
+          components: rustfmt, clippy
+      - uses: taiki-e/install-action@nextest
+      - run: cargo build --locked --workspace
+      - run: cargo nextest run --locked --workspace
+      - run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - run: cargo fmt --all --check
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s integrations/deepinfer -p test_bridge.py -v
+  typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test

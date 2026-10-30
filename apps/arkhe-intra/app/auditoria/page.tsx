@@ -1,0 +1,26 @@
+'use client';
+import Link from 'next/link';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Search, ArrowDownUp, Fingerprint } from 'lucide-react';
+import { api } from '@/lib/client';
+import type { AuditEvent, Dashboard } from '@/lib/types';
+import { PageTitle, Badge, Digest, Empty, Notice, LoadingCards } from '@/components/ui';
+const actionNames: Record<string, string> = { evaluation_baseline_frozen: 'Baseline congelado', evaluation_baseline_measured: 'Baseline medido', evaluation_cycle_measured: 'Capacidades comparadas', evaluation_promote: 'Candidato promovido no estudo', evaluation_rollback: 'Rollback do estudo', development_started: 'Desenvolvimento iniciado', development_finished: 'Testes concluídos', development_approved: 'Exportação aprovada', development_rejected: 'Proposta rejeitada', 'credential-invited': 'Convite de credencial', 'credential-requested': 'Credencial solicitada', 'credential-approved': 'Credencial ativada', 'credential-rejected': 'Credencial rejeitada', created: 'Minuta criada', edited: 'Rascunho editado', submit: 'Enviado à revisão', review: 'Revisão assinada', approve: 'Aprovação assinada', 'anchor-intent': 'Ancoragem iniciada', published: 'Documento publicado' };
+export default function Audit() {
+  const [search, setSearch] = useState(''), [newestFirst, setNewestFirst] = useState(true);
+  const rows = useQuery({ queryKey: ['audit'], queryFn: () => api<AuditEvent[]>('audit') });
+  const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: () => api<Dashboard>('dashboard') });
+  const filtered = (rows.data || []).filter(row => [row.event.actor, row.event.documentId, row.event.action, actionNames[row.event.action] || '', String(row.seq)].join(' ').toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')));
+  const displayed = newestFirst ? [...filtered].reverse() : filtered;
+  const latest = rows.data?.at(-1);
+  const verdict = dashboard.data ? (dashboard.data.auditIntegrity ? 'PASS' : 'FAIL') : 'INCONCLUSIVE';
+  return <><PageTitle eyebrow="TRANSPARÊNCIA / EVIDÊNCIAS" title="Trilha de auditoria"><Badge verdict={verdict}>Cadeia local</Badge></PageTitle>
+    <div className="summary-grid"><div><small>EVENTOS REGISTRADOS</small><strong>{rows.data?.length ?? '—'}</strong></div><div><small>DOCUMENTOS NA TRILHA</small><strong>{rows.data ? new Set(rows.data.filter(row => !row.event.documentId.includes(':')).map(row => row.event.documentId)).size : '—'}</strong></div><div><small>ÚLTIMO REGISTRO</small><strong className="summary-text">{latest ? new Date(latest.event.at).toLocaleString('pt-BR') : 'Nenhum evento'}</strong></div></div>
+    <details className="panel audit-scope"><summary><Fingerprint size={17} />O que esta trilha comprova?</summary><p>Os eventos da aplicação são encadeados por BLAKE3 e não podem ser editados por ela. A conferência avalia a integridade da cadeia local.</p><p>Esta trilha não representa admissão no WormGraph. Sem raiz externa confiável, a verificação não detecta a remoção do final da cadeia.</p></details>
+    <div className="audit-controls"><label className="filter"><Search size={18} /><input aria-label="Filtrar eventos" placeholder="Buscar responsável, ação, documento ou número…" value={search} onChange={event => setSearch(event.target.value)} /></label><button className="button secondary" onClick={() => setNewestFirst(value => !value)}><ArrowDownUp size={15} />{newestFirst ? 'Mais recentes primeiro' : 'Mais antigos primeiro'}</button><small aria-live="polite">{displayed.length} {displayed.length === 1 ? 'evento' : 'eventos'}</small></div>
+    {rows.error ? <Notice error>{rows.error.message}</Notice> : rows.isPending ? <LoadingCards /> : displayed.length ? <div className="table-wrap panel"><table><caption className="sr-only">Eventos da aplicação, {newestFirst ? 'mais recentes primeiro' : 'mais antigos primeiro'}</caption><thead><tr><th>Evento</th><th>Data e hora</th><th>Responsável</th><th>Ação</th><th>Recurso</th><th>Digest do evento</th></tr></thead><tbody>{displayed.map(row => <tr key={row.seq}><td className="mono">#{row.seq}</td><td className="audit-time">{new Date(row.event.at).toLocaleString('pt-BR')}</td><td>{row.event.actor}</td><td className="audit-action">{actionNames[row.event.action] || row.event.action}</td><td><Link href={row.event.documentId.startsWith('evaluation:') ? '/avaliacoes' : row.event.documentId.startsWith('development:') ? '/desenvolvimento' : row.event.documentId.startsWith('credential:') ? '/credenciais' : '/documentos/' + row.event.documentId} title={row.event.documentId}>{row.event.documentId.startsWith('credential:') ? 'Credencial ' + row.event.documentId.slice(11, 19) : 'Abrir ' + row.event.documentId.slice(0, 8)}…</Link></td><td><Digest value={row.hash} /></td></tr>)}</tbody></table></div> : <Empty title={search ? 'Nenhum evento encontrado' : 'Sua trilha começa com o primeiro documento'}><p>{search ? 'Tente outro responsável, ação ou identificador.' : 'As ações de criação, revisão e aprovação aparecerão aqui automaticamente.'}</p>{search ? <button className="button secondary" onClick={() => setSearch('')}>Limpar busca</button> : <Link className="button secondary" href="/documentos">Abrir biblioteca</Link>}</Empty>}
+  </>;
+}
+
+

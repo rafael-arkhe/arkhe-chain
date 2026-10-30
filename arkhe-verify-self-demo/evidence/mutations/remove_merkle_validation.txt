@@ -1,0 +1,74 @@
+   Compiling sigstore-merkle v0.6.6 (C:\Users\Lemes\AppData\Local\Temp\arkhe-verifier-gate-mutations-3a_ldf3m\remove_merkle_validation\vendor\sigstore-merkle)
+   Compiling arkhe-verify-self-demo v0.1.0 (C:\Users\Lemes\AppData\Local\Temp\arkhe-verifier-gate-mutations-3a_ldf3m\remove_merkle_validation)
+warning: unreachable statement
+  --> vendor\sigstore-merkle\src\proof.rs:31:5
+   |
+29 |       return Ok(()); // MUTATION ONLY
+   |       ------------- any code following this expression is unreachable
+30 |
+31 | /     if tree_size == 0 {
+32 | |         return Err(Error::InvalidTreeSize(
+33 | |             "tree size cannot be zero".to_string(),
+34 | |         ));
+35 | |     }
+   | |_____^ unreachable statement
+   |
+   = note: `#[warn(unreachable_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `leaf_hash`
+  --> vendor\sigstore-merkle\src\proof.rs:23:5
+   |
+23 |     leaf_hash: &Sha256Hash,
+   |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_leaf_hash`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `leaf_index`
+  --> vendor\sigstore-merkle\src\proof.rs:24:5
+   |
+24 |     leaf_index: u64,
+   |     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_leaf_index`
+
+warning: unused variable: `tree_size`
+  --> vendor\sigstore-merkle\src\proof.rs:25:5
+   |
+25 |     tree_size: u64,
+   |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_tree_size`
+
+warning: unused variable: `proof_hashes`
+  --> vendor\sigstore-merkle\src\proof.rs:26:5
+   |
+26 |     proof_hashes: &[Sha256Hash],
+   |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_proof_hashes`
+
+warning: unused variable: `expected_root`
+  --> vendor\sigstore-merkle\src\proof.rs:27:5
+   |
+27 |     expected_root: &Sha256Hash,
+   |     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_expected_root`
+
+   Compiling sigstore-rekor v0.6.6
+warning: `sigstore-merkle` (lib) generated 6 warnings (run `cargo fix --lib -p sigstore-merkle` to apply 5 suggestions)
+   Compiling sigstore-bundle v0.6.6
+   Compiling sigstore-verify v0.6.6
+    Finished `test` profile [unoptimized] target(s) in 8.09s
+     Running tests\negative.rs (D:\arkhe\arkhe-verify-self-demo\target\debug\deps\negative-aa2c6d4dedb29e16.exe)
+
+running 1 test
+test damaged_merkle_path_rejected ... FAILED
+
+failures:
+
+---- damaged_merkle_path_rejected stdout ----
+
+thread 'damaged_merkle_path_rejected' (35820) panicked at tests\negative.rs:91:5:
+assertion failed: matches!(verify_self(A, &bad), Err(VerifyError::MerkleProof))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    damaged_merkle_path_rejected
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.03s
+
+error: test failed, to rerun pass `--test negative`

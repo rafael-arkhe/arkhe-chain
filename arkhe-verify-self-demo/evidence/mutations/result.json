@@ -1,0 +1,269 @@
+{
+  "baseline_source_sha256": {
+    "build.rs": "97fd036e1609a1fda044cbc5a6ebec255e4ce4f7edbdd65dc7eb5680f8c5896f",
+    "Cargo.lock": "c25ab5708f2c4b80b8bf04f74c53ef14bc3a644e1f3022f4e04f0c6e6102738e",
+    "Cargo.toml": "dffcc8079fde74127e311ce6dd8be77dd3b92b4986570afcd3576c77a2f02b63",
+    "rust-toolchain.toml": "2c388180d0d5476ed0d69975b382feaf709bb072d51a342add3030cfb3d1bdb2",
+    "src/lib.rs": "8cce404cd70f223a4b9320bcd0b3e5791542001f1bd7663c9d9351ee49c0396e",
+    "tests/negative.rs": "660cbeea55f29db32fbe3db4c64f5b07626e98672e1d147e12de3480a7f031fd",
+    "tests/positive.rs": "0c7a071f587bb289cd793ccaf7362da6c465ba627e92a54318f6233c3d3804b1",
+    "tests/public_cosign.rs": "e29a633a3fc71d7e47b5bf4c342fbeb93354c6601fd9be918a131fa7a4e4664f"
+  },
+  "rustflags": "",
+  "cases": [
+    {
+      "mutation": "remove_rekor_binding",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "negative",
+        "unrelated_rekor_entry_rejected",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "unrelated_rekor_entry_rejected"
+      ],
+      "actual_failed_tests": [
+        "unrelated_rekor_entry_rejected"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "067d6cbf33f2e93b99d492d71714944385e97d57d98e701d68a97ebb1c71b2e8",
+      "dependency_patch": "sigstore-verify",
+      "application_guard_unit_test": false,
+      "upstream_source_sha256": "fed4d7a0600b32f162e580aa2d79b928603ceb524da1b6550930fddee023813c"
+    },
+    {
+      "mutation": "remove_hash_gate",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "negative"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "tampered_wasm_rejected_before_compile",
+        "unapproved_but_validly_signed_module_rejected_by_hash_pin"
+      ],
+      "actual_failed_tests": [
+        "tampered_wasm_rejected_before_compile",
+        "unapproved_but_validly_signed_module_rejected_by_hash_pin"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "c7b4d882122b2546d335cfc407cb0c8cc0baddb4220392fd805b817f36ebe57f",
+      "dependency_patch": null,
+      "application_guard_unit_test": false
+    },
+    {
+      "mutation": "remove_freshness_gate",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "tests::stale_capture_blocks_the_complete_verifier",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "tests::stale_capture_blocks_the_complete_verifier"
+      ],
+      "actual_failed_tests": [
+        "tests::stale_capture_blocks_the_complete_verifier"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "71784a8a45d6906851ecb9c515df8d0da3a986b94a4eeaf936adb610ed9b9dd3",
+      "dependency_patch": null,
+      "application_guard_unit_test": true
+    },
+    {
+      "mutation": "remove_warning_gate",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "tests::application_rejects_warning_report",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "tests::application_rejects_warning_report"
+      ],
+      "actual_failed_tests": [
+        "tests::application_rejects_warning_report"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "ed6787a6423b02f8a7e63d1903ae5345aded382712729eebfd2db4ab9d47ac5a",
+      "dependency_patch": null,
+      "application_guard_unit_test": true
+    },
+    {
+      "mutation": "remove_success_gate",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "tests::application_rejects_unsuccessful_report",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "tests::application_rejects_unsuccessful_report"
+      ],
+      "actual_failed_tests": [
+        "tests::application_rejects_unsuccessful_report"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "96b853b620c50febab24caf9d1606a43a9458fb3a23ea30f0cc1eb0c4044ac47",
+      "dependency_patch": null,
+      "application_guard_unit_test": true
+    },
+    {
+      "mutation": "remove_merkle_validation",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "negative",
+        "damaged_merkle_path_rejected",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "damaged_merkle_path_rejected"
+      ],
+      "actual_failed_tests": [
+        "damaged_merkle_path_rejected"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "4df30cf0204de1bfcfc52ca5ce88aac457523cdee124f205ce9fc7d422888b68",
+      "dependency_patch": "sigstore-merkle",
+      "application_guard_unit_test": false,
+      "upstream_source_sha256": "6f863452194184631cd0f771b0ec9fcecde8d1da2d3164550e497e95681330b5"
+    },
+    {
+      "mutation": "remove_set_validation",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "negative",
+        "forged_set_rejected",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "forged_set_rejected"
+      ],
+      "actual_failed_tests": [
+        "forged_set_rejected"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "334d4886215956f56186406df076566ccd4456d918a8bf355fd9b7ab3c01a604",
+      "dependency_patch": "sigstore-verify",
+      "application_guard_unit_test": false,
+      "upstream_source_sha256": "b3a59be03bde25b988b812efb9df6cfd9bcc29d9f298da03b2dc40df524cb6da"
+    },
+    {
+      "mutation": "remove_checkpoint_validation",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "negative",
+        "forged_checkpoint_rejected",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "forged_checkpoint_rejected"
+      ],
+      "actual_failed_tests": [
+        "forged_checkpoint_rejected"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "f03caa68a29099fd90068cb1611bbaa54e444a661c0dcc652549f251c5707230",
+      "dependency_patch": "sigstore-verify",
+      "application_guard_unit_test": false,
+      "upstream_source_sha256": "b3a59be03bde25b988b812efb9df6cfd9bcc29d9f298da03b2dc40df524cb6da"
+    },
+    {
+      "mutation": "remove_identity_constraint",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "public_cosign",
+        "wildcard_identity_is_not_authorized",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "wildcard_identity_is_not_authorized"
+      ],
+      "actual_failed_tests": [
+        "wildcard_identity_is_not_authorized"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "df37075acd26a808f28d5aa9bda2eb318e329a11cf67c1d6d0b081788bd3140a",
+      "dependency_patch": "sigstore-verify",
+      "application_guard_unit_test": false,
+      "upstream_source_sha256": "fed4d7a0600b32f162e580aa2d79b928603ceb524da1b6550930fddee023813c"
+    },
+    {
+      "mutation": "remove_issuer_constraint",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "public_cosign",
+        "wrong_issuer_is_not_authorized",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 101,
+      "killed_by_assertions": true,
+      "expected_failed_tests": [
+        "wrong_issuer_is_not_authorized"
+      ],
+      "actual_failed_tests": [
+        "wrong_issuer_is_not_authorized"
+      ],
+      "dependency_graph_unchanged_except_intended_path_patch": true,
+      "mutated_source_sha256": "7aef9322e13170cb0c70c25429f4a36b782a681bfa23b89824046565b0bd30d5",
+      "dependency_patch": "sigstore-verify",
+      "application_guard_unit_test": false,
+      "upstream_source_sha256": "fed4d7a0600b32f162e580aa2d79b928603ceb524da1b6550930fddee023813c"
+    }
+  ],
+  "original_source_unchanged": true,
+  "final_original_exit_code": 0
+}

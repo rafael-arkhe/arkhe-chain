@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AKG B.1 Conformance Vector (Draft)",
+  "type": "object",
+  "required": [
+    "vector_id",
+    "object_type",
+    "semantic_input",
+    "expected_validation_result"
+  ],
+  "properties": {
+    "vector_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "object_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "semantic_input": {},
+    "exact_wire_projection": {},
+    "expected_canonical_cbor_hex": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]*$"
+    },
+    "expected_object_digest_hex": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{64}$"
+    },
+    "expected_signing_message_hex": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]*$"
+    },
+    "expected_validation_result": {
+      "enum": [
+        "ACCEPT",
+        "REJECT",
+        "INCONCLUSIVE",
+        "NOT_APPLICABLE"
+      ]
+    },
+    "expected_findings": {
+      "type": "array"
+    },
+    "policy_binding": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    },
+    "independent_derivation": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

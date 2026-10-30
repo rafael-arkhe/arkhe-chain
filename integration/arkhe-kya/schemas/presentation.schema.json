@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "arkhe-kya-presentation@1"
+    },
+    "label": {
+      "const": "synthetic-poc"
+    },
+    "receipt": {
+      "$ref": "../agent-integrity-record.schema.json"
+    },
+    "status": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "status-envelope.schema.json"
+        }
+      ]
+    }
+  },
+  "required": [
+    "format",
+    "label",
+    "receipt"
+  ],
+  "$comment": "Untrusted transport only. Context, policy and state must arrive separately. Components carry their own signatures; no exterior signature is claimed."
+}

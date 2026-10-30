@@ -1,0 +1,1148 @@
+
+=== PAGINA 1 ===
+Infraestrutura Internacional de Pesquisa Redox:
+Documento Técnico-Programático do Framework
+ Unificado de Transferência de Elétrons para
+Apresentação à Organização Mundial da Saúde e ao
+ BRICS
+ Documento técnico-programático para apresentação à Organização Mundial da
+ Saúde (OMS) e aos mecanismos de cooperação em saúde do BRICS
+ Autor: Rafael Oliveira
+ Instituição: Safe Core — Psychology Behavioral Analysis, São Paulo, Brasil
+ ORCID:  https://orcid.org/0009-0005-2697-4668
+ 14 de setembro de 2026
+
+
+=== PAGINA 2 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 2
+Resumo
+A pesquisa redox encontra-se fragmentada entre domínios que compartilham um mesmo
+fenômeno físico — a transferência de elétrons — mas medem, armazenam e modelam seus
+resultados em sistemas incompatíveis. Este documento consolida, em formato submetível à
+Organização Mundial da Saúde (OMS) e aos mecanismos de cooperação em saúde do
+BRICS, o Framework Unificado de Transferência de Elétrons: uma proposta de
+infraestrutura internacional de pesquisa organizada em quatro camadas interdependentes
+(medição padronizada, dados interoperáveis, modelagem multiescala e design/engenharia),
+com ontologia mínima viável em OWL 2 RL validada por SHACL, extensões para as
+ontologias SBPAX e EMMO e princípios FAIR. O documento especifica o modelo de
+governança multinacional — com coordenação normativa da OMS (Política de
+Compartilhamento de Dados de 2022, diretrizes CIOMS de 2016, GCLP e plataforma
+ICTRP) e legitimidade política e financeira do BRICS (Novo Banco de Desenvolvimento,
+Programa-Quadro de CTI, redes setoriais) —, o plano de implantação em três fases
+(fundação, 0-18 meses; piloto clínico multinacional, 18-36 meses; expansão, 36-60 meses),
+o orçamento indicativo de US$ 10,05 milhões, os indicadores de sucesso por fase e o
+registro de riscos. Conclui-se que a infraestrutura técnica necessária já existe e está madura;
+o gargalo é a coordenação e a adoção, e os riscos maiores são político-financeiros, não
+técnicos. Propõe-se como próximo passo a convocação do consórcio fundador, a assinatura
+da carta de constituição e o início da Fase 1.
+Palavras-chave: biologia redox; infraestrutura de pesquisa; interoperabilidade de dados;
+OMS; BRICS; governança de dados clínicos.
+Abstract
+Redox research is fragmented across domains that share a single physical phenomenon -
+electron transfer - yet measure, store and model their results in incompatible systems. This
+document consolidates, in a form suitable for submission to the World Health Organization
+(WHO) and to BRICS health cooperation mechanisms, the Unified Electron Transfer
+Framework: a proposal for an international research infrastructure organized in four
+interdependent layers (standardized measurement, interoperable data, multiscale modelling,
+and design/engineering), with a minimal viable ontology in OWL 2 RL validated by
+SHACL, extensions to the SBPAX and EMMO ontologies, and FAIR principles. The
+document specifies a multinational governance model - with WHO providing normative
+coordination (2022 Data Sharing Policy, CIOMS 2016 guidelines, GCLP and the ICTRP
+platform) and BRICS providing political legitimacy and financing (New Development
+Bank, STI Framework Programme, sectoral networks) - as well as a three-phase
+
+
+=== PAGINA 3 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 3
+implementation plan (foundation, 0-18 months; multinational clinical pilot, 18-36 months;
+expansion, 36-60 months), an indicative budget of US$ 10.05 million, phase-specific
+success indicators and a risk register. It concludes that the required technical infrastructure
+already exists and is mature; the bottleneck is coordination and adoption, and the greatest
+risks are political and financial rather than technical. The proposed next step is to convene
+the founding consortium, sign the charter and launch Phase 1.
+Keywords: redox biology; research infrastructure; data interoperability; WHO; BRICS;
+clinical data governance.
+1 Introdução
+ As doenças crônicas não transmissíveis (DCNT) respondem hoje por
+aproximadamente três quartos de todas as mortes no mundo (WHO, 2023) — e a economia
+científica que deveria explicá-las, preveni-las e tratá-las carrega um erro conceitual que se
+repete há décadas: a redução do estado redox celular a um único número escalar. O
+conselho clínico resultante — 'tome antioxidantes' — prescreve inundar o sistema com
+redutores sem diagnosticar qual malha do controle falhou, e o fracasso repetido de
+suplementação antioxidante genérica em ensaios clínicos é uma consequência direta dessa
+simplificação. A biologia redox contemporânea sustenta a conclusão oposta: o estado do
+sistema é um vetor de razões oxidadas/reduzidas — NAD+/NADH, NADP+/NADPH,
+GSH/GSSG, TrxSS/TrxSH — resolvido por compartimento, e tanto o excesso oxidativo
+quanto o reduzido são regimes patológicos genuínos (Jones; Sies, 2015; Sies; Jones, 2020;
+Holmström; Finkel, 2014).
+ O problema, porém, transcende a conceituação. O corpus técnico que fundamenta
+este documento — o Framework Unificado de Transferência de Elétrons, produzido entre
+2025 e 2026 e consolidado como fonte primária do projeto (Oliveira, 2026) — diagnostica
+que a própria empresa de pesquisa redox sofre do mesmo defeito que a monografia de
+biologia redox atribui ao relato escalar: fragmentação. Não existe hoje, publicamente,
+nenhum conjunto de dados redox que seja simultaneamente multi-pares, resolvido por
+compartimento, calibrado em absoluto e resolvido em célula única; benchmarks
+eletroquímicos de materiais em duas dimensões (MXenes) carecem de protocolo
+padronizado de preparo de eletrodo e de métrica de estabilidade comparável; e modelos
+biológicos e de materiais usam vocabulários de transferência de elétrons mutuamente
+incomunicáveis. Em termos de rede: faltam arestas. O fragmento é o estado natural da
+literatura porque a infraestrutura que produziria a rede nunca foi construída.
+ Este documento responde a essa lacuna com uma proposta institucional:
+transformar o Framework Unificado em um dossiê técnico-programático apresentável à
+
+
+=== PAGINA 4 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 4
+Organização Mundial da Saúde e aos mecanismos de cooperação em saúde do BRICS. A
+escolha dos dois destinatários não é arbitrária. A OMS fornece o guarda-chuva normativo
+que a proposta requer — política de compartilhamento e reúso de dados de saúde para
+pesquisa (WHO, 2022), diretrizes éticas internacionais (CIOMS, 2016), boas práticas de
+laboratório clínico (WHO, 2009) e registro prospectivo de ensaios (ICTRP; WHO, 2024)
+— e a demonstração de que ensaios multicêntricos globais são viáveis quando há
+coordenação: o Solidarity Trial randomizou 11.330 participantes em 405 hospitais de 30
+países em tempo recorde (WHO Solidarity Trial Consortium, 2021). O BRICS fornece
+legitimidade política, densidade epidemiológica e capacidade financeira: o Novo Banco de
+Desenvolvimento, o Programa-Quadro de Ciência, Tecnologia e Inovação, a Rede BRICS
+de Pesquisa em Tuberculose — criada em 2017 a partir de mandato ministerial consolidado
+desde o Comunicado de Delhi de 2013 — e o Centro BRICS de P&D; de Vacinas são
+exatamente os tipos de mecanismo que esta proposta reutiliza, em vez de duplicar
+(Brookings Institution, 2014; BRICS TB Research Network, 2024; BRICS Think Tanks
+Council, 2024; BRICS STI Framework Programme, 2026).
+ A tese central é que a infraestrutura internacional de pesquisa redox é um bem
+público global viável: a pilha tecnológica necessária — ontologias OWL 2 RL validadas
+por SHACL, bibliotecas RDFLib, Owlready2 e pySHACL, repositórios FAIR com DOI,
+como o Zenodo — está madura e disponível; o que falta não é ciência nova, mas
+governança, padronização e incentivos (Wilkinson et al., 2016). O documento assume uma
+posição explícita: a iniciativa deve conectar instituições existentes — OMS para ética,
+coordenação e padrões; NDB e agências nacionais para financiamento; autoridades
+reguladoras dos cinco países para regulação — em vez de criar estruturas paralelas
+(Oliveira, 2026).
+ As contribuições do documento são quatro. Primeiro, apresenta sistematicamente a
+arquitetura de quatro camadas do framework, com o que existe, o que falta e a
+implementação proposta em cada camada (Seção 3). Segundo, especifica o modelo de
+governança multinacional e a conformidade com os instrumentos da OMS e com a
+paisagem regulatória de proteção de dados das cinco jurisdições (Seção 4). Terceiro,
+detalha o programa de implantação em três fases, com entregáveis, marcos, orçamento,
+indicadores e caminho crítico (Seção 5). Quarto, demarca as aplicações prioritárias em
+saúde global e os contra-argumentos e limitações que qualificam toda a proposta (Seções 6
+e 7). O critério editorial adotado é a verificabilidade: afirmações externas são ancoradas em
+fontes verificadas na data de acesso; números que provêm exclusivamente do corpus
+interno do projeto são sinalizados como tais, conforme a citação indireta ABNT (Oliveira,
+2026).
+
+
+=== PAGINA 5 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 5
+2 Contexto e justificativa
+2.1 O erro escalar e a fragmentação da pesquisa redox
+ A formulação vetorial do estado redox é o fundamento conceitual de toda a
+proposta. O potencial de um par redox é descrito pela equação de Nernst — para o par
+glutatião, EGSH = E°' + (RT/2F) · ln([GSSG]/[GSH]2), com dependência de pH de
+aproximadamente -59 mV por unidade — de modo que reportar 'o' estado redox de uma
+célula sem especificar par, compartimento, pH e temperatura é produzir um número sem
+significado físico. A rede é ativada por enzimas: as arestas termodinamicamente favoráveis
+só são percorridas onde existe catalisador, e o particionamento por compartimentos —
+citosol, matriz mitocondrial, núcleo, retículo e complexo de Golgi — produz potenciais
+substancialmente distintos e parcialmente isolados (Jones; Sies, 2015). O estresse
+reductivo, mediado em parte pelo transporte reverso de elétrons no complexo I, é tão
+patológico quanto o oxidativo, e a sinalização por espécies reativas é pleiotrópica e fina:
+sistemas como H2O2/peroxirredoxinas comportam-se como chaves ultrasensíveis (Sies;
+Jones, 2020; Holmström; Finkel, 2014).
+ A base de instrumentação para uma ciência vetorial já existe. Biossensores
+geneticamente codificados — Grx1-roGFP2 para o potencial do glutatião, roGFP2-Orp1 e
+HyPer7 para peróxido, Peredox e SoNar para NAD+/NADH — fornecem leituras
+razométricas, reversíveis e endereçáveis a compartimentos específicos (Gutscher et al.,
+2008; Meyer; Dick, 2010). O que falta não é sensor, mas organização: nenhum conjunto de
+dados público satisfaz simultaneamente os quatro critérios que tornariam os resultados
+comparáveis entre laboratórios — multi-pares, resolvido por compartimento, calibrado em
+absoluto e resolvido em célula única ou subpopulação (Oliveira, 2026). A consequência é
+análoga à que a genômica conheceu antes do consórcio: milhares de estudos de laboratório
+único, incomparáveis entre si, cuja soma não equivale a uma base de conhecimento
+cumulativa.
+2.2 Fundamento científico consolidado nas três pontas do framework
+ A proposta não nasce do vazio: cada uma das três pontas científicas do framework
+está ancorada em literatura consolidada ou em resultados experimentais recentes. Na
+biologia redox, o código redox de Jones e Sies (2015) formalizou o paradigma vetorial; a
+ferroptose — morte celular dependente de ferro e peroxidação lipídica, executada por três
+malhas paralelas de remoção de peróxido (GPX4/GSH, FSP1/CoQ, DHODH/CoQ) — foi
+descrita em 2012 (Dixon et al., 2012), consolidada como nó entre metabolismo e doença
+(Stockwell et al., 2017) e revisada uma década depois (Stockwell, 2022); e o declínio de
+NAD+ é reconhecido como característica do envelhecimento com papel causal em doenças
+
+
+=== PAGINA 6 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 6
+associadas à idade (Verdin, 2015; Covarrubias et al., 2021). Nos materiais, os MXenes —
+carburetas, nitretores e carbonitreos bidimensionais de metais de transição, primeiramente
+obtidos por exfoliação de Ti3AlC2 em 2011 (Naguib et al., 2011) — combinam
+condutividade metálica e terminações hidrofílicas, alcançando capacitâncias de volume que
+evoluíram de aproximadamente 350 F cm-3 em eletrodos de papel para cerca de 900 F cm-3
+em filmes de argila LiF/HCl, com compósitos como MXene/PANI reportando
+aproximadamente 503 F g-1 e 98,3% de retenção após 10.000 ciclos; em eletrocátalise,
+suportes de MXene reduzem o sobrepotencial de HER a 27 mV em 10 mA cm-2 (Sau et al.,
+2026, conforme citado em Oliveira, 2026). Na síntese, a hidroaminoalquilação
+redox-neutra de aminociclopropanos demonstra que densidade eletrônica pode ser
+redistribuída sem oxidação ou redução líquidas, com tolerância a grupos funcionais
+sensíveis — e o bioisóstero homo-nor-fentermina apresenta inibição de DAT/NET
+comparável à fentermina com efluxo mediado por DAT negligenciável, sugerindo menor
+potencial de abuso (Oliveira, 2026).
+ O elo de engenharia fecha a cadeia de dependências. A estratégia RIFD (Redox
+Imbalance Forces Drive) converte desequilíbrio redox em força motriz de desenho
+metabólico: em Escherichia coli, a expansão do pool de NADPH combinada à expressão de
+enzimas conversoras de cofatores elevou a produção de L-treonina a 117,65 g/L com
+rendimento de 0,65 g/g e restauração simultânea do crescimento celular (Jin et al., 2025,
+conforme citado em Oliveira, 2026). O caso demonstra que o vetor redox não é apenas
+variável diagnóstica, mas alvo projetável — e que os mesmos princípios que organizam a
+medição padronizada organizam a engenharia multirobjetivo.
+2.3 A oportunidade institucional: complementaridade OMS-BRICS
+ A janela institucional é específica e não permanente. Do lado da OMS, quatro
+instrumentos criam o arcabouço que uma infraestrutura de dados redox clínicos requer: a
+Política de Compartilhamento e Reúso de Dados de Saúde para Fins de Pesquisa, de 2022,
+que exige de pesquisadores apoiados pela Organização compartilhamento equitativo, ético
+e eficiente (WHO, 2022); as diretrizes éticas internacionais do CIOMS, em sua quarta
+edição, que padronizam consentimento, populações vulneráveis e comunidades (CIOMS,
+2016); as boas práticas de laboratório clínico (GCLP), que definem sistemas e
+procedimentos para análise de amostras de ensaios clínicos (WHO, 2009); e a plataforma
+ICTRP, que consolida o registro prospectivo de ensaios (WHO, 2024). A experiência do
+Solidarity Trial — 405 hospitais, 30 países, 11.330 participantes — demonstra que essa
+arquitetura normativa suporta execução multinacional em escala (WHO Solidarity Trial
+Consortium, 2021).
+
+
+=== PAGINA 7 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 7
+ Do lado do BRICS, os mecanismos existentes cobrem os três insumos que a
+iniciativa requer: legitimidade política, financiamento e redes operacionais. A Rede BRICS
+de Pesquisa em Tuberculose e o Centro BRICS de P&D; de Vacinas estabeleceram o
+precedente de redes temáticas de saúde sob mandato ministerial (BRICS TB Research
+Network, 2024; BRICS Think Tanks Council, 2024); o Programa-Quadro de CTI opera
+chamadas coordenadas multinacionais com participação das agências nacionais —
+FAPESP e CNPq no Brasil, DST e ICMR na Índia, NSFC na China, NRF na África do Sul,
+RFBR na Rússia (BRICS STI Framework Programme, 2026); e o Novo Banco de
+Desenvolvimento, criado em 2014 com mandato de infraestrutura e desenvolvimento
+sustentável, já demonstrou capacidade de desembolso rápido em programas de assistência
+emergencial aos membros (Brookings Institution, 2014; New Development Bank,
+2020-2025). A complementaridade é o ponto: a OMS fornece padrões que conferem às
+moedas de dados do consórcio valor global; o BRICS fornece a base política e financeira
+que confere à iniciativa massa crítica; nenhuma das partes substitui as autoridades
+reguladoras nacionais, que permanecem soberanas (Oliveira, 2026).
+3 O Framework Unificado de Transferência de Elétrons
+3.1 Premissa e arquitetura de quatro camadas
+ A premissa operacional do framework é uma tríade: a termodinâmica define o que é
+possível; a cinética e a localização definem o que de fato acontece; a medição define o que
+se pode conhecer (Oliveira, 2026). Sobre essa premissa, a arquitetura organiza a
+infraestrutura de pesquisa em quatro camadas interdependentes — medição padronizada,
+dados interoperáveis, modelagem multiescala e design/engenharia — dispostas em cadeia
+de dependência, porém explicitamente iterativa: progresso em qualquer camada acelera as
+demais, e nenhuma camada precisa estar completa para que as seguintes avancem. A
+Tabela 1 resume, para cada camada e subdireção, o que já existe, o que falta e a
+implementação proposta. A analogia que o framework adota é deliberada: a empresa de
+pesquisa é ela mesma uma rede integrada, e sua fragmentação atual espelha, na
+infraestrutura, o erro escalar que a biologia redox corrige no objeto.
+
+
+=== PAGINA 8 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 8
+ Tabela 1 – Arquitetura de quatro camadas do Framework Unificado: existente, lacuna e implementação
+Camada
+O que existe
+O que falta
+Implementação proposta
+1. Medição
+padronizada (1A
+biologia redox; 1B
+MXenes; 1C
+síntese)
+Biossensores razométricos
+endereçáveis a
+compartimentos
+(Grx1-roGFP2,
+roGFP2-Orp1, HyPer7,
+Peredox, SoNar, iNap);
+ensaios CV/LSV e
+cronamperometria de
+12-24 h; método
+redox-neuto com tolerância
+a grupos funcionais
+Nenhum dataset público
+multi-pares, resolvido por
+compartimento, calibrado
+e resolvido em célula
+única; protocolo
+padronizado de eletrodo e
+métrica de estabilidade
+comparável; validação in
+vivo de bioisósteros
+Linha celular de referência
+com variantes isogênicas;
+lote de referência de
+Ti3C2Tx com checklist
+obrigatório; estudo
+round-robin em 5+
+laboratórios; escopo
+expandido com ADME/PK
+2. Dados
+interoperáveis
+SBPAX, ontologia de
+ponte entre SBML e
+BioPAX; EMMO em
+materiais; BattINFO em
+baterias
+Extensões redox
+(potenciais nernstianos,
+pH, força iônica), de
+materiais e de síntese;
+adoção pela comunidade;
+mandatos de periódicos
+Ontologia mínima viável
+em OWL 2 RL com
+SHACL; extensões
+modulares; conversores e
+ferramentas de consulta;
+depósito FAIR com DOI
+3. Modelagem
+multiescala
+Cinética de massa de ação
+e Michaelis-Menten;
+MD/DFT para
+eletrocátalise; sistema
+modelo MP-11/grafeno
+Ontologia comum de
+transferência de elétrons;
+formalismo de ponte entre
+escalas; estimação de
+parâmetros orientada a
+dados
+Arquitetura em camadas
+(química quântica, MD,
+cinética, rede); interface
+comum (força diretora,
+energia de reorganização,
+acoplamento eletrônico);
+propagação de incerteza
+4. Design e
+engenharia
+Estratégia RIFD validada
+(L-treonina a 117,65 g/L
+em E. coli)
+Critérios de design que
+integrem as camadas 1-3;
+busca multirobjetivo com
+carga de ROS e potenciais
+redox como restrições
+Busca multirobjetivo com
+restrições redox; design
+orientado a modelo;
+validação iterativa com
+depósito interoperável
+ Fonte: Elaboração do autor (2026) a partir do corpus técnico do Framework Unificado (Oliveira, 2026).
+3.2 Camada 1: medição padronizada em três subdireções
+ A subdireção 1A (biologia redox) propõe uma linha celular de referência com
+variantes isogênicas expressando biossensores mitocondriais e citossólicos para
+GSH/GSSG e NAD+/NADH, protocolo comum de calibração por titulação in situ com
+tampos redox definidos, controle de temperatura a 37 °C e comedição de pH, e um modelo
+de dados que indexa cada medida pelo quinteto (par, compartimento, célula, tempo,
+condição), com campos para potencial convertido, parâmetros de calibração, incerteza e
+metadados de ciclo celular, tensão de oxigênio e passagem (Oliveira, 2026). As
+perturbações do protocolo experimental — rotenona, antimicina A, FCCP, privação de
+
+
+=== PAGINA 9 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 9
+glicose, titulação lactato/piruvato — são escolhidas para sondar, em 12-18 meses, a cadeia
+completa de medição a modelagem em um domínio biologicamente central e tecnicamente
+viável.
+ A subdireção 1B (materiais) ataca a reproducibilidade eletroquímica dos MXenes
+com o instrumento que a fotovoltaica já provou: um lote de material de referência —
+Ti3C2Tx delaminado por rota definida — distribuído a laboratórios participantes,
+acompanhado de checklist obrigatório de relato (rota de síntese, composição de
+terminações por XPS, espaciamento intercalar por XRD, espessura de filme, carregamento
+de massa, eletrólito e geometria de célula), de múltiplos protocolos de estabilidade
+análogos ao ISOS-L-1 solar e de padrões de caracterização post-mortem, culminando em
+estudo round-robin com pelo menos cinco laboratórios (Oliveira, 2026). A subdireção 1C
+(síntese) expande o escopo de substratos dos aminociclopropanos para alquenos não
+ativados e completa a validação farmacológica — ADME in vitro, PK in vivo,
+farmacologia comportamental e de segurança — que o caso homo-nor-fentermina demanda
+antes de qualquer tradução clínica.
+3.3 Camada 2: dados interoperáveis e ontologia mínima viável
+ A camada de dados parte de um ativo já publicado: a ontologia SBPAX, projetada
+como formato de ponte entre os modelos quantitativos do SBML e o conhecimento de vias
+qualitativo do BioPAX (Ruebenacker et al., 2009) — referida em parte do corpus técnico
+como SBPAA. Sobre esse núcleo, o framework define uma ontologia mínima viável com
+nove classes centrais (RedoxCouple, Compartment, Measurement, Calibration, Biosensor,
+Sample, Condition, Uncertainty, Metadata) e propriedades que explicitam a estrutura
+vetorial da medição — hasPair, hasCompartment, hasValue, hasUnit, hasCalibration,
+hasUncertainty —, serializada em OWL 2 RL e validada por formas SHACL que capturam,
+por exemplo, a obrigatoriedade de calibração e de comedição de pH para medidas de
+potencial (Oliveira, 2026). A escolha do perfil OWL 2 RL é deliberada: maximiza
+interoperabilidade com triple stores e validadores de produção, ao custo controlado de
+expressividade.
+ As extensões modulares seguem o mesmo princípio: extensão redox (potencial
+nernstiano, pH, força iônica, temperatura), extensão de materiais alinhada à EMMO — a
+ontologia de referência do Conselho Europeu de Modelagem de Materiais (European
+Materials Modelling Council, 2024) — e à BattINFO para baterias, e extensão de síntese
+com procedimentos reacionais, escopo de substratos e ensaios biológicos em forma legível
+por máquina. Todo o desenho adere aos princípios FAIR — encontrável, acessível,
+interoperável, reutilizável (Wilkinson et al., 2016; GO FAIR, 2024) — e ao precedente de
+depósito obrigatório que o PDB estabeleceu para estruturas: o valor científico do depósito é
+
+
+=== PAGINA 10 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 10
+reconhecido pela comunidade quando ele é condição de publicação, não cortesia.
+3.4 Camada 3: modelagem multiescala
+ A modelagem parte de dois corpos maduros e incomunicáveis entre si: em biologia,
+modelos cinéticos de massa de ação e Michaelis-Menten que representam volumes
+compartimentais, transportadores de membrana e troca aberta com o ambiente; em
+materiais, dinâmica molecular e teoria do funcional da densidade para eletrocátalise em
+interfaces. O framework propõe como formalismo de ponte uma interface comum de
+transferência de elétrons — a taxa como função da força diretora, da energia de
+reorganização e do acoplamento eletrônico — implementada em arquitetura em camadas
+(química quântica, MD, cinética, rede/dispositivo), com propagação de incerteza em cada
+nível e validação obrigatória contra os dados da camada 1, começando pelo sistema modelo
+demonstrado microperoxidase-11/grafeno (Oliveira, 2026). A opção por começar pequeno
+é metodológica: sistemas-modelo simples expõem os problemas de acoplamento entre
+escalas antes que o custo de coordená-los se multiplique.
+3.5 Camada 4: design e engenharia redox-aware
+ A camada superior converte dados padronizados e modelos validados em critérios
+de desenho. A restrição central é que otimizações que maximizam rendimento de papel mas
+colapsam a homeostase celular são tratadas como falhas de projeto, não como acidentes: a
+busca multirobjetivo deve incluir carga de ROS, potenciais dos pares redox, balanço de
+NAD(P)H e viabilidade celular como restrições explícitas, ao lado do rendimento de
+carbono (Oliveira, 2026). O caso RIFD — 117,65 g/L de L-treonina com rendimento de
+0,65 g/g e crescimento celular restaurado (Jin et al., 2025, conforme citado em Oliveira,
+2026) — demonstra a direção; o que a infraestrutura adiciona é a capacidade de iterar: cada
+ciclo de desenho deposita dados interoperáveis que recalibram os modelos que orientam o
+ciclo seguinte. É essa recursividade entre camadas — e não qualquer resultado isolado —
+que a proposta submete à OMS e ao BRICS como ativo de longo prazo.
+4 Governança e conformidade regulatória
+4.1 Estrutura de governança multinacional
+ A estrutura proposta conecta três níveis institucionais. No topo, a OMS exerce
+coordenação global normativa: o Research Ethics Review Committee (ERC) orienta a ética
+da pesquisa com seres humanos; o ICTRP recebe o registro prospectivo do piloto clínico; e
+a Política de Compartilhamento de Dados de 2022 fornece os princípios de reúso equitativo
+(WHO, 2022; WHO, 2024). No nível intermediário, o Consórcio BRICS de Saúde abriga o
+
+
+=== PAGINA 11 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 11
+Steering Committee com um representante por país mais a OMS, o Data Governance
+Committee multinacional — com cientistas de dados, eticistas, juristas, especialistas de
+domínio, um representante do ERC da OMS e um representante de participantes (Oliveira,
+2026) —, o Comitê de Ética multinacional e quatro grupos de trabalho temáticos (WG1
+Medição Redox; WG2 Interoperabilidade; WG3 Modelagem Multiescala; WG4 Design e
+Engenharia). Na base, as autoridades nacionais conservam plena soberania regulatória:
+ANVISA e CONEP no Brasil; CDSCO e ICMR na Índia; NMPA e comitê de ética
+nacional na China; SAHPRA e NHREC na África do Sul; Roszdravnadzor e comitê de
+ética na Rússia (Oliveira, 2026). O princípio de subsidiariedade organiza os três níveis:
+decisões tomadas no mais baixo nível competente, com transparência de atas, inclusividade
+de pauta e responsabilização dos presidentes de comitê.
+4.2 Processos de decisão, quórum e resolução de disputas
+ O corpus de análise crítica do plano identificou que listar comitês não basta sem
+especificar como decidem, e a versão operacional aqui consolidada preenche essa lacuna
+(Oliveira, 2026). Para decisões ordinárias exige-se quórum de pelo menos três países
+presentes; para decisões extraordinárias — mudança de escopo, orçamento ou estatuto —,
+quatro. A busca de consenso é o método preferencial, com recurso a maioria qualificada de
+dois terços como fallback formal. Disputas entre países seguem escala em três graus:
+mediação pela OMS; arbitragem internacional quando a mediação falhar; e mediação
+neutra para controvérsias interpessoais ou institucionais. A saída de um país exige
+notificação com 12 meses de antecedência, e os dados já depositados permanecem no
+repositório — condição que protege o ativo público contra ciclos políticos. A não
+conformidade é gradativa: suspensão de direitos de voto e exclusão após três advertências
+formais. Essas especificações convertem a governança de declaração de intenções em
+contrato operacional testável.
+4.3 Paisagem regulatória de proteção de dados nas cinco jurisdições
+ O piloto clínico manipula dados de saúde em cinco jurisdições com regimes de
+proteção de dados distintos, e a análise do plano operacional concluiu que a complexidade
+legal estava subestimada na versão inicial (Oliveira, 2026). A Tabela 2 consolida a
+paisagem: no Brasil, a LGPD exige consentimento explícito e tem a ANPD como
+autoridade, com a Resolução CD/ANPD nº 19/2024 regulamentando a transferência
+internacional (Brasil, 2018; ANPD, 2024); na Índia, o DPDP Act de 2023 exige
+consentimento informado e permite que o governo restrinja transferências a países não
+notificados, com possibilidade de servidores locais (Índia, 2023); na China, o ecossistema
+PIPL-CSL-DSL exige consentimento separado, avaliação de segurança da CAC para
+
+
+=== PAGINA 12 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 12
+transferência internacional e admite restrições de localização (China, 2021); na África do
+Sul, a POPIA impõe consentimento, notificação de violações ao Information Regulator e
+regulamentação específica para dados de saúde (África do Sul, 2013); na Rússia, a Lei
+152-FZ exige localização primária de dados pessoais de cidadãos russos em servidores
+domésticos (Rússia, 2006). A recomendação operacional é tripla: criar um Legal Working
+Group com advogados de cada país para harmonizar acordos de compartilhamento;
+privilegiar dados anonimizados como moeda de troca internacional; e hospedar a
+infraestrutura em nuvens com regiões nos países do BRICS, com réplicas em pelo menos
+duas regiões, failover automático, criptografia em trânsito e em repouso, monitoramento
+com alertas e plano de recuperação de desastres (Oliveira, 2026).
+ Tabela 2 – Paisagem regulatória de proteção de dados nas cinco jurisdições do consórcio
+País
+Lei
+Requisito crítico
+Implicação operacional
+Brasil
+LGPD (Lei
+13.709/2018); Res.
+CD/ANPD 19/2024
+Consentimento explícito; ANPD
+como autoridade; hipóteses legais
+de transferência internacional
+Dados anonimizados
+preferenciais; cláusulas
+contratuais padrão na DSA
+Índia
+DPDP Act, 2023
+Consentimento informado;
+restrição de transferência a países
+não notificados
+Servidores locais podem ser
+exigidos; avaliação por país de
+destino
+China
+PIPL (2021); CSL;
+DSL
+Consentimento separado;
+avaliação de segurança da CAC;
+aprovação para saída de dados
+Transferência internacional
+restrita; trilha documental por lote
+de dados
+África do
+Sul
+POPIA (2013)
+Consentimento; Information
+Regulator; notificação de
+violações; regras específicas de
+dados de saúde
+Plano de resposta a incidentes;
+conformidade de processadores
+Rússia
+Lei 152-FZ (2006)
+Localização primária de dados de
+cidadãos russos; notificação de
+processamento transfronteiriço
+Servidores russos exigidos para a
+base primária; espelhamento
+controlado
+ Fonte: Elaboração do autor (2026) a partir do corpus técnico do Framework Unificado (Oliveira, 2026).
+4.4 Alinhamento com os instrumentos da OMS
+ Cada componente operacional do programa tem um instrumento da OMS
+correspondente, e o dossiê explicita o mapeamento para permitir avaliação regulatória
+direta. Os POPs (procedimentos operacionais padrão) do consórcio — no mínimo sete,
+cobrindo calibração, pH, temperatura, manuseio de biossensores e cadeia de custódia de
+amostras — aderem às boas práticas de laboratório clínico GCLP (WHO, 2009). O registro
+do piloto no ICTRP antecede o recrutamento, seguindo a norma de registro prospectivo
+(WHO, 2024). O consentimento, o tratamento de populações vulneráveis e a política de
+
+
+=== PAGINA 13 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 13
+achados incidentais seguem as diretrizes CIOMS 2016 (CIOMS, 2016). O depósito de
+dados segue a Política de Compartilhamento de 2022 — reúso equitativo, ético e eficiente
+— e os princípios FAIR (WHO, 2022; Wilkinson et al., 2016), com depósito público no
+Zenodo e atribuição de DOI (Zenodo, 2024). A integração desses instrumentos não é
+burocrática: é o que torna os dados do consórcio aceitáveis como evidência por reguladores
+fora do BRICS — condição para que a infraestrutura seja, de fato, global.
+5 Programa de implantação em três fases
+5.1 Fase 1 — Fundação (0-18 meses)
+ A Fase 1 constrói o mínimo institucional e técnico para que o piloto exista. No eixo
+institucional: assinatura da carta de constituição, instalação dos comitês, assinatura de pelo
+menos três acordos de compartilhamento de dados (DSAs) e definição de pelo menos sete
+POPs redox aderentes à GCLP (WHO, 2009). No eixo técnico: operacionalização do
+pipeline de integração contínua — GitHub Actions com validação SHACL via pySHACL,
+manipulação OWL via RDFLib e Owlready2, checagem de owl:imports e métricas de
+qualidade de dados por lote — e liberação da ontologia mínima viável no mês 6, das
+extensões redox no mês 12 e de materiais no mês 18 (Oliveira, 2026). No eixo de
+capacitação: treinamento do módulo M0 (fundamentos de redox, GCP e ética segundo a
+OMS, regulamentações nacionais) com meta de pelo menos 50 profissionais certificados
+sob certificação conjunta OMS-BRICS. Os indicadores da fase exigem no mínimo três
+países com acordos assinados — base mínima para que o round-robin da fase seguinte
+tenha variância interlaboratorial real.
+5.2 Fase 2 — Piloto clínico multinacional (18-36 meses)
+ A Fase 2 executa o piloto que valida a cadeia completa em domínio clínico. O
+desenho consolidado incorpora as correções da análise crítica em neurociência e saúde
+mental: o campo magnético é 3T (mais disponível nos países do BRICS que 7T); as
+regiões-alvo são o córtex pré-frontal medial e o hipocampo; o biomarcador primário é o
+GSH total por espectroscopia de ressonância magnética — técnica com evidência clínica
+robusta em humanos e confiabilidade avaliada a 3T — acompanhado do lactato como
+proxy de bioenergética mitocondrial; NAD+ permanece exploratório; FRAP plasmático é
+coletado como marcador sistêmico complementar; e GSH sanguíneo não é usado como
+proxy cerebral, dado que a evidência de coorte indica baixa correlação entre medidas
+periféricas e centrais (Quantification..., 2017; A Multi-Center Study..., 2018; Benzie;
+Strain, 1996; Oliveira, 2026). As metas operacionais são: no mínimo dois países no piloto,
+no mínimo 500 amostras analisadas, validação SHACL sobre dados clínicos reais, depósito
+
+
+=== PAGINA 14 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 14
+público no Zenodo com DOI, artigo de posição revisado por pares, reprodutibilidade
+interlaboratorial de pelo menos 80% e certificação de pelo menos 30 profissionais nos
+módulos M1-M2 (Oliveira, 2026).
+ A ética do piloto segue CIOMS 2016 com especificações próprias para o contexto
+neuropsiquiátrico: processo de consentimento reforçado, com representante legal quando
+necessário; opção explícita de não receber achados incidentais; acionabilidade definida por
+comitê de especialistas (radiologista, clínico e eticista); comunicação presencial com apoio
+psicológico; retorno de resultados em resumo agregado, com individual sob solicitação; e
+parceria com serviços de saúde locais para encaminhamento (CIOMS, 2016; Oliveira,
+2026). O registro prospectivo no ICTRP precede o recrutamento (WHO, 2024).
+5.3 Fase 3 — Expansão e mandatos (36-60 meses)
+ A Fase 3 expande a base coberta pela ontologia e converte adoção em norma. No
+eixo técnico: expansão para pelo menos seis pares redox e cinco compartimentos;
+publicação da extensão EMMO para integração com sensores e materiais; publicação da
+extensão de síntese alinhada às prioridades de saúde pública da OMS — doenças
+negligenciadas e resistência antimicrobiana; integração com wearables e ligação de dados
+de ensaio (Oliveira, 2026). No eixo institucional: mandatos de depósito ontológico em pelo
+menos três periódicos parceiros e em financiadores — NDB, agências nacionais e
+programas da OMS —, integração com o ICTRP para os ensaios subsequentes e
+certificação integral dos módulos M3-M4 com no mínimo 20 profissionais. A lógica dos
+mandatos segue o precedente do PDB: a curva de adoção de infraestruturas de dados muda
+de patamar quando o depósito passa de cortesia a condição de publicação e financiamento.
+5.4 Orçamento e financiamento
+ O orçamento indicativo consolidado totaliza US$ 10,05 milhões em cinco anos,
+distribuídos conforme a Tabela 3: pessoal é o bloco dominante (US$ 5,4 milhões, 54%),
+seguido de infraestrutura (US$ 1,2 milhão), viagens e reuniões (US$ 750 mil), materiais de
+referência (US$ 700 mil), tradução (US$ 600 mil — cinco jurisdições, múltiplos idiomas) e
+publicação (US$ 450 mil), com contingência de 10% (Oliveira, 2026). As fontes estão
+mapeadas por mecanismo e escala: o NDB financia infraestrutura e pesquisa em saúde dos
+membros na faixa de US$ 1-10 milhões (New Development Bank, 2020-2025); grants da
+OMS, alinhados às prioridades da Organização, na faixa de US$ 500 mil a 5 milhões
+(WHO, 2022); agências nacionais via BRICS STI Framework Programme e mecanismos
+domésticos; parcerias público-privadas com acordos de propriedade intelectual; e
+filantropia alinhada à missão (Brookings Institution, 2014; BRICS STI Framework
+Programme, 2026; Oliveira, 2026). A estratégia de sustentabilidade é faseada: semente
+
+
+=== PAGINA 15 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 15
+institucional na Fase 1; consórcio e indústria na Fase 2; mandatos e suporte institucional
+permanente da infraestrutura de dados na Fase 3 — com metas de autossuficiência e
+estratégia de saída explicitadas para evitar dependência perpétua de grant.
+ Tabela 3 – Orçamento indicativo por fase e categoria (em US$)
+Categoria
+Fase 1 (18
+meses)
+Fase 2 (18
+meses)
+Fase 3 (24
+meses)
+Total
+Pessoal
+1.200.000
+1.800.000
+2.400.000
+5.400.000
+Infraestrutura
+300.000
+400.000
+500.000
+1.200.000
+Materiais de referência
+200.000
+300.000
+200.000
+700.000
+Tradução
+150.000
+200.000
+250.000
+600.000
+Viagens e reuniões
+200.000
+250.000
+300.000
+750.000
+Publicação e disseminação
+100.000
+150.000
+200.000
+450.000
+Contingência (10%)
+215.000
+330.000
+405.000
+950.000
+Total
+2.365.000
+3.430.000
+4.255.000
+10.050.000
+ Fonte: Elaboração do autor (2026) a partir do corpus técnico do Framework Unificado (Oliveira, 2026).
+5.5 Indicadores de sucesso e avaliação
+ Os indicadores são específicos, mensuráveis e verificáveis por método declarado,
+cobrindo as três fases e métricas transversais (Tabela 4). Três métricas atravessam o
+programa inteiro: conformidade de depósito de dados de pelo menos 90% nos relatórios de
+financiamento; adoção da ontologia em pelo menos 50% dos artigos do consórcio; e
+reprodutibilidade de pelo menos 80% dos achados-chave sob replicação independente. A
+arquitetura de avaliação é tripla: revisão anual pelo Steering Committee, avaliação externa
+de meio de percurso cobrindo as Fases 1 e 2, e avaliação final externa por painel
+independente com participação da OMS e especialistas (Oliveira, 2026). Métricas e metas
+são revisáveis — o plano prevê revisão com base em progresso e retorno das partes
+interessadas, evitando que indicadores vencidos se convertam em incentivo perverso.
+
+
+=== PAGINA 16 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 16
+ Tabela 4 – Indicadores de sucesso consolidados por fase
+Fase
+Indicador
+Meta
+Método de verificação
+Fase 1
+Países participantes com acordos
+assinados
+>= 3
+Acordos e atas
+Fase 1
+POPs redox publicados
+>= 7
+Documentos
+Fase 1
+Equipe treinada no módulo M0
+>= 50
+Certificados
+Fase 2
+Países no piloto clínico
+>= 2
+Dados coletados; registro ICTRP
+Fase 2
+Amostras analisadas
+>= 500
+Dataset com DOI no Zenodo
+Fase 2
+Reprodutibilidade interlaboratorial
+>= 80%
+Comparação entre países
+Fase 3
+Pares redox e compartimentos na
+ontologia
+>= 6 / >= 5
+Arquivos OWL
+Fase 3
+Mandatos editoriais de depósito
+>= 3
+Políticas editoriais
+Transversal
+Conformidade de depósito de dados
+>= 90%
+Relatórios de funding
+Transversal
+Adoção da ontologia nos artigos
+>= 50%
+Análise de publicações
+ Fonte: Elaboração do autor (2026) a partir do corpus técnico do Framework Unificado (Oliveira, 2026).
+5.6 Caminho crítico
+ A análise de caminho crítico do plano operacional identifica uma sequência de
+gargalos que ordena a alocação de recursos e a agenda das reuniões do Steering Committee:
+Carta de Constituição, Comitês, POPs, Aprovações Regulatórias, Infraestrutura Técnica,
+Treinamento, Piloto, Validação, Depósito, Expansão e Mandatos (Oliveira, 2026). Duas
+implicações práticas decorrem. Primeira, as aprovações regulatórias nacionais e os DSAs
+estão no início da cadeia — atrasos legais propagam-se para todo o cronograma, e por isso
+o Legal Working Group deve ser instalado antes da infraestrutura técnica. Segunda, a
+demonstração de valor depende da publicação da Fase 2: o artigo de posição e o dataset
+público com DOI são o produto que sustenta politicamente as Fases 2 e 3, e qualquer
+replanejamento deve protegê-los como marco intocável.
+6 Aplicações prioritárias em saúde global
+6.1 DCNT e estratificação redox em saúde mental
+ A aplicação clínica mais direta é a conversão do vetor redox em ferramenta de
+estratificação. Em esquizofrenia, a literatura e o corpus convergem para a existência de
+subtipo com défice de GSH — mensurável por MRS — associado a sintomas negativos;
+
+
+=== PAGINA 17 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 17
+em depressão, a intersecção inflamação-redox sugere subtipos em que GSH e lactato
+separam fenótipos de anedonia; e os biótipos neurofisiológicos recentes criam o precedente
+de classificação biológica que a estratificação redox pode estender (Oliveira, 2026; Rolls,
+2021). O programa proposto é faseado e honesto sobre incerteza: replicar os biótipos em
+coortes dos BRICS — identificados originalmente em populações ocidentais —; validar
+GSH por MRS como biomarcador de subtipo; estratificar pacientes por GSH cerebral; e
+testar intervenções como N-acetilcisteína e ativadores de Nrf2 em subtipos
+pré-especificados. Em doenças metabólicas, o estresse reductivo mediado por transporte
+reverso de elétrons abre alvo terapêutico para diabetes tipo 2 e esteatose hepática além do
+controle glicêmico. Os horizontes são de 5 a 15 anos para mudanças em diretrizes e prática
+clínica, com incerteza alta declarada — a tradução redox é lenta e o framework serve,
+antes, para impedir que a próxima década repita o ciclo de suplementação genérica sem
+estratificação.
+6.2 Envelhecimento saudável
+ O declínio de NAD+ é característica do envelhecimento com papel causal
+sustentado por literatura revisada por pares (Verdin, 2015; Covarrubias et al., 2021), e a
+exploração comercial de precursores como NR e NMN avança mais rápido que a evidência
+estratificada. A contribuição da infraestrutura redox é metodológica: NAD+ não é variável
+isolada, mas componente de um vetor acoplado a ritmo circadiano, imunometabolismo e
+estado de ferroptose-resistência; a avaliação de qualquer intervenção — exercício, restrição
+calórica, inibição de CD38, suplementação — requer perfis multi-pares comparáveis entre
+coortes, exatamente o que o consórcio produziria (Oliveira, 2026). Para sistemas de saúde
+que envelhecem — os cinco países do BRICS entre eles —, a diferença entre protocolo
+combinado baseado em evidência e suplementação não estratificada é medida em bilhões
+de gasto evitado, e o horizonte declarado de 5 a 10 anos para protocolos baseados em
+evidência é o argumento para começar a coleta padronizada agora.
+6.3 Energia: MXenes, hidrogênio verde e transição
+ A ponta de materiais conecta a saúde pública à agenda energética. Supercapacitores
+de MXene alimentam eletrônica, veículos e armazenamento de rede com ciclagem rápida
+— com desempenho reportado até 98,3% de retenção após 10.000 ciclos em compósitos
+(Sau et al., 2026, conforme citado em Oliveira, 2026) — e os suportes de MXene para
+eletrocátalise reduzem o sobrepotencial de HER/OER, caminho para hidrogênio verde
+competitivo em países com abundância solar e eólica — categoria na qual os BRICS
+protagonizam a oferta global. O gargalo reconhecido é a estabilidade à oxidação, o
+restacking e a escalabilidade, e é precisamente o que o round-robin da camada 1B endereça
+
+
+=== PAGINA 18 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 18
+com material de referência e métricas padronizadas (Naguib et al., 2011; Oliveira, 2026). A
+integração entre as pontas biomédica e de materiais não é retórica: biossensores e eletrodos
+compartilham química de superfície, e a extensão EMMO da ontologia é o ponto formal de
+encontro (European Materials Modelling Council, 2024).
+6.4 Alinhamento com os Objetivos de Desenvolvimento Sustentável
+ O programa alinha-se explicitamente a cinco ODS: ODS 3 (saúde e bem-estar), pela
+estratificação redox de DCNT que respondem por cerca de três quartos das mortes globais
+(WHO, 2023); ODS 7 (energia limpa), pela via do hidrogênio verde e do armazenamento
+eletroquímico; ODS 9 (indústria, inovação e infraestrutura), pela própria natureza da
+iniciativa — infraestrutura científica compartilhada; ODS 10 (redução das desigualdades),
+pela cooperação Sul-Sul que o consórcio institucionaliza entre cinco economias
+emergentes; e ODS 17 (parcerias), pelo modelo de governança OMS-BRICS que conecta
+normas globais a capacidade regional (Oliveira, 2026). Para a OMS, o alinhamento
+adicional é temático: as prioridades de DCNT, resistência antimicrobiana e doenças
+negligenciadas recebem, no desenho da Fase 3, extensões específicas da ontologia de
+síntese e do pipeline de dados.
+7 Contra-argumentos e limitações
+7.1 A barreira hematoencefálica e a validade periferia-cérebro
+ O contra-argumento científico mais forte contra o piloto neuropsiquiátrico é que a
+maioria dos biossensores geneticamente codificados não atravessa a barreira
+hematoencefálica e não pode ser usada em humanos, e que medidas periféricas não
+espelham o estado redox cerebral. A resposta do desenho consolidado é técnica, não
+retórica: priorizar MRS de GSH e lactato — modalidades validadas e não invasivas em
+humanos — com sangue periférico como medida complementar, nunca substituta, e CSF
+apenas por indicação clínica (Quantification..., 2017; A Multi-Center Study..., 2018;
+Oliveira, 2026). As limitações da própria MRS estão declaradas: voxel de
+aproximadamente 2 × 2 × 2 cm3, que não resolve sub-regiões; medição de GSH total, que
+não permite calcular o potencial EGSH sem GSSG; sensibilidade a pH e temperatura,
+corrigida por comedição; 5 a 10 minutos por voxel; e disponibilidade limitada de 7T nos
+países do BRICS — o que fixa o córtex pré-frontal medial e o hipocampo como
+regiões-alvo do piloto a 3T. Adicionalmente, a mitocôndria cerebral remove H2O2
+dominantemente via sistema Trx2/Prx3 (aproximadamente 60% ± 20% da detoxificação),
+não mensurável in vivo — o que limita GSH e lactato a proxies e reserva Trx2 e Prx3 para
+validação animal pré-clínica (Oliveira, 2026). A consequência metodológica é aceitar
+
+
+=== PAGINA 19 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 19
+validação cruzada periferia-cérebro em modelos animais antes de generalizar correlações
+humanas.
+7.2 Heterogeneidade clínica e replicação transcultural
+ Os biótipos psiquiátricos e as associações redox-clínica foram identificados, em sua
+maioria, em populações ocidentais; não há garantia de replicação em coortes brasileiras,
+indianas, chinesas, sul-africanas ou russas, cujas dietas, exposições ambientais,
+ancestralidade genética e sistemas diagnósticos diferem. O risco não é teórico:
+esquizofrenia é heterogênea por construção diagnóstica, e a sobreposição entre biótipos e
+transtornos é esperada. A mitigação é desenho: o piloto exige replicação dos biótipos em
+coortes dos BRICS como passo 1, antes de qualquer estratificação terapêutica; os
+biomarcadores acessíveis em todos os centros (GSH por MRS, PUFA sérico) são preferidos
+a marcadores restritos a laboratórios de pesquisa; e os desfechos são subtipo-específicos
+(sintomas negativos, anedonia, compulsões, motores), não categorias diagnósticas inteiras
+(Oliveira, 2026). A honestidade sobre esse risco é condição de credibilidade do dossiê: a
+reivindicação é de infraestrutura para descobrir, não de descoberta pré-fabricada.
+7.3 Padronização prematura e alinhamento de incentivos
+ O contra-argumento metodológico é que padronizar cedo pode congelar o estado da
+arte e sufocar inovação — ontologias falham quando prescrevem antes de descrever. A
+arquitetura já incorpora a mitigação clássica: começar com checklists flexíveis de relato,
+revisados periodicamente, e endurecer apenas o núcleo mínimo viável (as nove classes
+centrais e as formas SHACL de calibração), mantendo extensões modulares sob proposta
+comunitária permanente (Oliveira, 2026). O problema complementar é de incentivos:
+pesquisadores são recompensados por publicações, não por depósitos de dados. A resposta
+do programa é a bateria de mecanismos da Seção 5.3 — depósito como condição de
+funding, citação formal de datasets, prêmios de reprodutibilidade, reconhecimento em
+promoção e avaliação — e a lição do precedente editorial: o PDB transformou
+cristalografia porque o depósito virou condição de publicação; a infraestrutura redox segue
+o mesmo roteiro, com mandatos de periódicos e financiadores como marco da Fase 3
+(Wilkinson et al., 2016).
+7.4 Complexidade legal e riscos político-financeiros
+ Os riscos maiores do programa não são técnicos. Cinco jurisdições com regimes de
+proteção de dados distintos — incluindo localização obrigatória na Rússia e avaliação de
+segurança na China — podem atrasar ou fragmentar a moeda de dados do consórcio; ciclos
+políticos podem cortar financiamento em meio à Fase 2; e a retirada de um país pode
+
+
+=== PAGINA 20 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 20
+comprometer a variância interlaboratorial que dá valor ao round-robin. O registro de riscos
+consolidado (Tabela 5) associa cada risco a probabilidade, impacto e mitigação, e a
+arquitetura de contingência prevê: saída com notificação de 12 meses e permanência dos
+dados depositados; diversificação de fontes (NDB, OMS, agências nacionais, PPPs,
+filantropia) para reduzir dependência de qualquer doador; engajamento precoce com
+autoridades reguladoras antes dos marcos dependentes de aprovação; e proteção do artigo
+de posição e do dataset da Fase 2 como demonstração de valor politicamente intocável
+(Oliveira, 2026). A avaliação de viabilidade do plano operacional conclui com a mesma
+leitura: o maior risco permanece político e financeiro, não técnico.
+ Tabela 5 – Registro de riscos consolidado do programa
+Risco
+Prob.
+Impacto
+Mitigação
+Atrasos regulatórios nas
+cinco jurisdições
+Alta
+Alto
+Legal Working Group instalado na Fase 1; engajamento
+precoce com ANVISA, CDSCO, NMPA, SAHPRA e
+Roszdravnadzor; dados anonimizados
+Corte ou atraso de
+financiamento
+Média
+Alto
+Diversificação NDB/OMS/agências/PPPs; priorização por
+fase; proteção dos marcos da Fase 2
+Retirada de país
+participante
+Baixa
+Médio
+Notificação de 12 meses; dados permanecem depositados;
+meta de quórum >= 3 países
+Baixa adoção da
+ontologia
+Média
+Alto
+Mandatos de periódicos e financiadores; piloto com
+periódicos parceiros; incentivos de carreira
+Falha de replicação
+interlaboratorial (<
+80%)
+Média
+Alto
+Lotes de referência; checklists obrigatórios; treinamento
+certificado; revisão de POPs
+Violação de dados ou
+não conformidade legal
+Baixa
+Alto
+Criptografia, réplicas em >= 2 regiões, plano de resposta a
+incidentes, notificação ao Information Regulator onde
+aplicável
+Padronização prematura
+Média
+Médio
+Checklists flexíveis; núcleo mínimo; revisão periódica de
+padrões
+ Fonte: Elaboração do autor (2026) a partir do corpus técnico do Framework Unificado (Oliveira, 2026).
+7.5 Limitações do corpo de evidência
+ Finalmente, as limitações que qualificam o próprio dossiê. Primeira, o corpus
+interno do Framework Unificado é documento de projeto, não literatura revisada por pares:
+números como os desempenhos de MXene, o resultado RIFD ou a fração Trx2/Prx3 de
+60% ± 20% provêm de fontes internas ou indiretas sinalizadas como tais (Sau et al., 2026,
+conforme citado em Oliveira, 2026; Jin et al., 2025, conforme citado em Oliveira, 2026), e
+requerem verificação primária antes de submissão formal às instituições. Segunda, os
+
+
+=== PAGINA 21 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 21
+cronogramas são otimistas: instalar consórcio, linha celular de referência, lote de MXene e
+ontologia em 18 meses pressupõe coordenação que experiências comparáveis raramente
+entregam sem folga; a mitigação é tratar os marcos como alvos de monitoramento
+trimestral, não compromissos rígidos. Terceira, a cadeia 1C (síntese e farmacologia) é
+menos acoplada às camadas 2-4 que as subdireções 1A e 1B — o programa funciona sem
+ela, e sua inclusão é decisão de completude, não de dependência. Quarta, este documento é
+analítico e programático: nenhuma parte dele constitui dado experimental novo, e a
+reivindicação central é estrutural — que a infraestrutura proposta é viável, regulável e
+alinhada aos instrumentos das instituições destinatárias.
+8 Conclusões e implicações
+ Este documento consolidou o Framework Unificado de Transferência de Elétrons
+em dossiê técnico-programático apresentável à OMS e ao BRICS, sob cinco vertentes.
+Conceitualmente, partiu do erro escalar e da formulação vetorial do estado redox (Jones;
+Sies, 2015; Sies; Jones, 2020) para justificar por que a fragmentação da pesquisa é um
+problema de infraestrutura, não de talento. Arquiteturalmente, especificou as quatro
+camadas — medição padronizada, dados interoperáveis, modelagem multiescala e design
+— com ontologia mínima viável em OWL 2 RL e SHACL, extensões SBPAX e EMMO e
+princípios FAIR (Ruebenacker et al., 2009; European Materials Modelling Council, 2024;
+Wilkinson et al., 2016). Institucionalmente, mapeou a governança sobre os instrumentos
+existentes da OMS — Política de Dados de 2022, CIOMS 2016, GCLP, ICTRP — e sobre
+os mecanismos do BRICS — NDB, Programa-Quadro de CTI, redes temáticas — com
+processos de decisão, quórum e resolução de disputas explicitados (WHO, 2022; CIOMS,
+2016; WHO, 2009; WHO, 2024; Brookings Institution, 2014). Programaticamente,
+detalhou três fases com entregáveis, orçamento de US$ 10,05 milhões, indicadores
+verificáveis e caminho crítico. E criticamente, demarcou os contra-argumentos — barreira
+hematoencefálica, validade periferia-cérebro, heterogeneidade transcultural, padronização
+prematura, riscos político-financeiros e limitações do corpus — como restrições de
+desenho, não como objeções genéricas.
+ As implicações para os destinatários são distintas. Para a OMS, a proposta oferece
+um vetor de DCNT compatível com seus instrumentos normativos e com a agenda de
+DCNT que responde por cerca de três quartos das mortes globais (WHO, 2023), além de
+extensões alinhadas a resistência antimicrobiana e doenças negligenciadas. Para o BRICS,
+oferece a oportunidade de converter capacidade científica em infraestrutura compartilhada
+de valor global — o padrão que a Rede BRICS de Tuberculose e o Centro de Vacinas
+inauguraram em temas específicos (BRICS TB Research Network, 2024; BRICS Think
+
+
+=== PAGINA 22 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 22
+Tanks Council, 2024) — com financiamento na escala do NDB (New Development Bank,
+2020-2025). Para a comunidade científica, oferece a saída do regime de estudos
+incomparáveis: datasets multi-pares e compartimento-resolvidos, materiais de referência,
+ontologia adotável e mandatos que convertem depósito em norma (Wilkinson et al., 2016).
+ O próximo passo requerido pelos destinatários é operacional: convocar o consórcio
+fundador, assinar a carta de constituição, instalar os comitês e iniciar a Fase 1. A
+infraestrutura técnica já existe e é madura — OWL 2 RL, SHACL, RDFLib, pySHACL,
+Zenodo, biossensores, MRS a 3T; o gargalo permanece a coordenação e a adoção, e é
+exatamente isso que este dossiê endereça com governança clara, incentivos alinhados,
+financiamento multinacional e treinamento certificado. A proposta está pronta para
+avaliação pelas instâncias competentes da OMS e dos mecanismos de saúde do BRICS; o
+que ela solicita não é funding sem contrapartida, mas a institucionalização de um processo
+— cartas, comitês, POPs, registro, piloto — cujo primeiro produto público com DOI já
+constituiria, por si, precedente para a próxima infraestrutura de pesquisa em saúde global.
+Referências
+AGENCIA NACIONAL DE PROTECAO DE DADOS (ANPD). Resolução CD/ANPD nº 19, de
+ 23 de agosto de 2024: regulamenta a transferência internacional de dados pessoais. Brasília:
+ANPD, 2024. Disponível em: https://www.gov.br/anpd. Acesso em: 14 set. 2026.
+A MULTI-CENTER STUDY on human brain glutathione conformation. Journal of Alzheimer's
+ Disease, 2018. DOI: https://doi.org/10.3233/JAD-180648. Acesso em: 14 set. 2026.
+AFRICA DO SUL. Protection of Personal Information Act, No. 4 of 2013 (POPIA). Pretoria:
+ Government Gazette, 2013. Disponível em: https://popia.co.za. Acesso em: 14 set. 2026.
+BATTINFO. Battery Interface Ontology: extensão de domínio da EMMO para baterias. BIG-MAP
+ / Battery 2030+, [2023]. Disponível em: https://github.com/BIG-MAP/BattINFO. Acesso
+em: 14 set. 2026.
+BENZIE, I. F. F.; STRAIN, J. J. The ferric reducing ability of plasma (FRAP) as a measure of
+ 'antioxidant power': the FRAP assay. Analytical Biochemistry, v. 239, n. 1, p. 70-76, 1996.
+DOI: https://doi.org/10.1006/abio.1996.0292. Acesso em: 14 set. 2026.
+BRASIL. Lei nº 13.709, de 14 de agosto de 2018: Lei Geral de Proteção de Dados Pessoais
+ (LGPD). Brasília: Presidência da República, 2018. Disponível em:
+https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm. Acesso em: 14
+set. 2026.
+BRICS STI FRAMEWORK PROGRAMME. Coordinated calls for multinational collaborative
+ research proposals. [2026]. Disponível em: https://aistic.gov.in. Acesso em: 14 set. 2026.
+BRICS TB RESEARCH NETWORK. About us. South African Medical Research Council, [2024].
+ Disponível em: https://bricstb.samrc.ac.za/about.html. Acesso em: 14 set. 2026.
+
+
+=== PAGINA 23 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 23
+BRICS THINK TANKS COUNCIL. BRICS Vaccine Research and Development Centre. [2024].
+ Disponível em: https://bricsthinktankscouncil.org/mechanisms/brics-vaccine-research-and-
+development-centre. Acesso em: 14 set. 2026.
+BROOKINGS INSTITUTION. What the New Bank of BRICS is all about. Washington, D.C., 17
+ jul. 2014. Disponível em:
+https://www.brookings.edu/articles/what-the-new-bank-of-brics-is-all-about/. Acesso em:
+14 set. 2026.
+CHINA. Personal Information Protection Law of the People's Republic of China (PIPL). Beijing,
+ 2021. (Acesso por: DLA Piper, Data Protection Laws of the World: China). Disponível em:
+https://www.dlapiperdataprotection.com/countries/china/transfer.html. Acesso em: 14 set.
+2026.
+CIOMS. International Ethical Guidelines for Health-related Research Involving Humans. 4. ed.
+ Geneva: Council for International Organizations of Medical Sciences, 2016. Disponível
+em: https://cioms.ch/publications/product/international-ethical-guidelines-for-health-relate
+d-research-involving-humans/. Acesso em: 14 set. 2026.
+COVARRUBIAS, A. J.; PERRONE, R.; GROZIO, A.; VERDIN, E. NAD+ metabolism and its
+ roles in cellular processes during ageing. Nature Reviews Molecular Cell Biology, v. 22, p.
+119-141, 2021. DOI: https://doi.org/10.1038/s41580-020-00313-x. Acesso em: 14 set.
+2026.
+DIXON, S. J.; LEMBERG, K. M.; LAMPRECHT, M. R. et al. Ferroptosis: an iron-dependent form
+ of nonapoptotic cell death. Cell, v. 149, n. 5, p. 1060-1072, 2012. DOI:
+https://doi.org/10.1016/j.cell.2012.03.042. Acesso em: 14 set. 2026.
+EUROPEAN MATERIALS MODELLING COUNCIL (EMMC). EMMO: the Elementary
+ Multiperspective Material Ontology. [2024]. Disponível em: https://emmc.eu/emmo.
+Acesso em: 14 set. 2026.
+GO FAIR. FAIR Principles. Leiden, [2024]. Disponível em:
+ https://www.go-fair.org/fair-principles/. Acesso em: 14 set. 2026.
+GUTSCHER, M.; WABNITZ, G. H.; MEYER, A. J.; DICK, T. P. Real-time imaging of the
+ intracellular glutathione redox potential. Nature Methods, v. 5, n. 6, p. 553-559, 2008. DOI:
+https://doi.org/10.1038/nmeth.1212. Acesso em: 14 set. 2026.
+HOLMSTROM, K. M.; FINKEL, T. Cellular mechanisms and physiological consequences of
+ redox-dependent signalling. Nature Reviews Molecular Cell Biology, v. 15, p. 411-421,
+2014. DOI: https://doi.org/10.1038/nrm3801. Acesso em: 14 set. 2026.
+INDIA. Digital Personal Data Protection Act, 2023 (DPDP Act, No. 22 de 2023). New Delhi:
+ Gazette of India, 11 ago. 2023. Disponível em:
+https://www.meity.gov.in/data-protection-framework. Acesso em: 14 set. 2026.
+JIN, [equipe de engenharia metabólica]. Estratégia RIFD (Redox Imbalance Forces Drive):
+ produção de L-treonina em E. coli (117,65 g/L; rendimento 0,65 g/g). 2025. (Conforme
+citado em OLIVEIRA, 2026).
+
+
+=== PAGINA 24 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 24
+JONES, D. P.; SIES, H. The Redox Code. Antioxidants & Redox Signaling, v. 23, n. 7, p. 734-746,
+ 2015. DOI: https://doi.org/10.1089/ars.2015.6247. Acesso em: 14 set. 2026.
+MEYER, A. J.; DICK, T. P. Fluorescent protein-based redox probes. Antioxidants & Redox
+ Signaling, v. 13, n. 5, p. 621-650, 2010. DOI: https://doi.org/10.1089/ars.2009.2948.
+Acesso em: 14 set. 2026.
+NAGUIB, M.; KURTOGLU, M.; PRESSER, V. et al. Two-dimensional nanocrystals produced by
+ exfoliation of Ti3AlC2. Advanced Materials, v. 23, n. 37, p. 4248-4253, 2011. DOI:
+https://doi.org/10.1002/adma.201102306. Acesso em: 14 set. 2026.
+NEW DEVELOPMENT BANK (NDB). About NDB; Emergency Assistance Program. Shanghai,
+ [2020-2025]. Disponível em: https://www.ndb.int. Acesso em: 14 set. 2026.
+OLIVEIRA, R. Framework Unificado de Transferência de Elétrons e Programa BRICS-OMS:
+ corpus técnico-programático integrado (biologia redox, materiais MXene, síntese
+redox-neutra, ontologia, governança, plano operacional e extensão em neurociência). São
+Paulo: Safe Core, 2026.
+QUANTIFICATION of glutathione in the human brain by MR spectroscopy: reliability of PRESS
+ and MEGA-PRESS at 3 Tesla. NMR in Biomedicine, 2017. Disponível em:
+https://pmc.ncbi.nlm.nih.gov/articles/PMC5469715/. Acesso em: 14 set. 2026.
+ROLLS, E. T. Brain Computations: what and how. 2. ed. Oxford: Oxford University Press, 2021.
+ 
+RUEBENACKER, O. et al. SBPAX: an ontology for BioPAX/SBML integration. In:
+ INTERNATIONAL CONFERENCE ON BIOINFORMATICS AND COMPUTATIONAL
+BIOLOGY (BICOB), 2009. Disponível em: http://vcell.org/sbpax. Acesso em: 14 set.
+2026.
+RUSSIA. Federal Law No. 152-FZ on Personal Data, de 27 de julho de 2006 (com alterações).
+ Moscou, 2006. Disponível em: https://pd.rkn.gov.ru/en/. Acesso em: 14 set. 2026.
+SAU, S.; HASSAN, M.; DAS, P. et al. MXenes: frontier nanomaterials for supercapacitors and
+ water splitting. Discover Electrochemistry, 2026. (Conforme citado em OLIVEIRA, 2026).
+SIES, H.; JONES, D. P. Reactive oxygen species (ROS) as pleiotropic physiological signalling
+ agents. Nature Reviews Molecular Cell Biology, v. 21, p. 363-383, 2020. DOI:
+https://doi.org/10.1038/s41580-020-0230-3. Acesso em: 14 set. 2026.
+STOCKWELL, B. R.; FRIEDMAN ANGELI, J. P.; BAYIR, H. et al. Ferroptosis: a regulated cell
+ death nexus linking metabolism, redox biology, and disease. Cell, v. 171, n. 2, p. 273-285,
+2017. DOI: https://doi.org/10.1016/j.cell.2017.09.021. Acesso em: 14 set. 2026.
+STOCKWELL, B. R. Ferroptosis turns 10: emerging mechanisms, physiological functions, and
+ therapeutic applications. Cell, v. 185, n. 14, p. 2401-2421, 2022. DOI:
+https://doi.org/10.1016/j.cell.2022.06.003. Acesso em: 14 set. 2026.
+VERDIN, E. NAD+ in aging, metabolism, and neurodegeneration. Science, v. 350, n. 6265, p.
+ 1208-1213, 2015. DOI: https://doi.org/10.1126/science.aac4854. Acesso em: 14 set. 2026.
+
+
+=== PAGINA 25 ===
+Infraestrutura Internacional de Pesquisa Redox — BRICS-OMS
+Página 25
+WILKINSON, M. D.; DUMONTIER, M.; AALBERSBERG, I. J. et al. The FAIR Guiding
+ Principles for scientific data management and stewardship. Scientific Data, v. 3, 160018,
+2016. DOI: https://doi.org/10.1038/sdata.2016.18. Acesso em: 14 set. 2026.
+WHO SOLIDARITY TRIAL CONSORTIUM. Repurposed antiviral drugs for Covid-19: interim
+ WHO Solidarity Trial results. New England Journal of Medicine, v. 384, p. 497-511, 2021.
+DOI: https://doi.org/10.1056/NEJMoa2023184. Acesso em: 14 set. 2026.
+WORLD HEALTH ORGANIZATION. Noncommunicable diseases [fact sheet]. Geneva: WHO,
+ 2023. Disponível em:
+https://www.who.int/news-room/fact-sheets/detail/noncommunicable-diseases. Acesso em:
+14 set. 2026.
+WORLD HEALTH ORGANIZATION. Sharing and reuse of health-related data for research
+ purposes: WHO policy and implementation guidance. Geneva: WHO, 6 abr. 2022.
+Disponível em: https://www.who.int/publications/i/item/9789240044960. Acesso em: 14
+set. 2026.
+WORLD HEALTH ORGANIZATION. International Clinical Trials Registry Platform (ICTRP).
+ Geneva: WHO, [2024]. Disponível em:
+https://www.who.int/clinical-trials-registry-platform. Acesso em: 14 set. 2026.
+WORLD HEALTH ORGANIZATION; UNICEF/UNDP/WORLD BANK/WHO SPECIAL
+ PROGRAMME FOR RESEARCH AND TRAINING IN TROPICAL DISEASES. Good
+Clinical Laboratory Practice (GCLP). Geneva: WHO, 2009. Disponível em:
+https://iris.who.int. Acesso em: 14 set. 2026.
+ZENODO. Zenodo: a universal repository for all your research. Geneva: CERN, [2024]. Disponível
+ em: https://zenodo.org. Acesso em: 14 set. 2026.

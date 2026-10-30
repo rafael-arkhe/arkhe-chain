@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "report_id": "origin-corrected",
+  "severity": "High",
+  "title": "Alleged origin phishing drain",
+  "report_body": "Wallet code: address owner; function pay(address payable to,uint amount) external {require(msg.sender==owner); (bool ok,)=to.call{value:amount}(\"\");require(ok);} No meta-transactions, delegatecall or alternate auth path exists. Attacker intermediary calling pay has msg.sender equal to attacker contract, not owner. Local trace reverts before transfer. Claim is specifically that tx.origin authorizes this code; there is no tx.origin use.",
+  "submitted_at": 1,
+  "affected_assets": []
+}

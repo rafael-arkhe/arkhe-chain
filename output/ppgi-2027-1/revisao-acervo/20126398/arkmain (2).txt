@@ -1,0 +1,775 @@
+
+=== PAGINA 1 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+ARKHE -TEMP v6.1.0:
+Cosmological Computation and Neural
+Cartography
+for the Continental Cathedral
+Computação Cosmológica e Cartografia Neural
+para a Catedral Continental
+Substrates 9001 (Cosmological Computation Engine)
+and 6065 (Neural Cartography Engine): Architecture, Methodology, and Integration
+Substratos 9001 e 6065: Arquitetura, Metodologia e Integração
+Rafael Oliveira∗1
+1Arkhe(n) Research Group / Safe Core, Rio de Janeiro, Brazil
+May 2026[Preprint — v6.1.0]
+Abstract / Resumo
+[EN]This article presents the integrated architecture of the ARKHE -TEMP
+v6.1.0 framework, focusing on two complementary computational substrates: Subs-
+trate 9001 (Cosmological Computation Engine) and Substrate 6065 (Neural Carto-
+graphy Engine). Substrate 9001 models spacetime as a discrete causal graph of quan-
+tum circuits, inspired by Gerard ’t Hooft’s holographic hypothesis [12], in which each
+quantum operation corresponds to a spacetime event and wavefunction collapse by an
+observer generates immutable blocks in aTemporalHashChain(thc) functioning
+as a cosmic ledger. Substrate 6065 applies principles of functional connectomics—
+notably the advances from the MICrONS project [9]—to transform theContinental
+∗ORCID: 0009-0005-2697-4668. Correspondence:rafael@arkhengroup.org. Arkhe(n) Research
+Group / Safe Core, Rio de Janeiro, Brazil.
+1
+
+=== PAGINA 2 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+Mind(250T parameters) into a dissectable virtual brain, mapping every connection
+between artificial neural units as synapses, applying automated proofreading inspired
+by the NEURD algorithm [2], and extracting wiring rules that govern the network’s
+functional connectivity. Integration between both substrates is anchored by thethc,
+which provides temporal audit and computational integrity to every synaptic-editing
+operation and simulated quantum collapse. Results demonstrate that the unified ap-
+proach enables not only autonomous learning but also structural self-analysis of the
+neural architecture itself, paving the way for artificial intelligence systems capable of
+contemplating and refining themselves.
+[PT]Este artigo apresenta a arquitetura integrada do framework ARKHE -TEMP
+v6.1.0, com foco em dois substratos computacionais complementares: o Subs-
+trato 9001 (Cosmological Computation Engine) e o Substrato 6065 (Neural Carto-
+graphy Engine). O Substrato 9001 modela o espaço-tempo como um grafo causal
+discreto de circuitos quânticos, inspirado na hipótese holográfica de Gerard ’t Ho-
+oft, em que cada operação quântica corresponde a um evento no espaço-tempo e o
+colapso da função de onda por um observador gera blocos imutáveis numaTempora-
+lHashChainque funciona como ledger cósmico. O Substrato 6065 aplica princípios
+da conectômica funcional aoContinental Mind(250T parâmetros), mapeando cada
+conexão entre unidades neurais artificiais como sinapses, aplicando proofreading au-
+tomático inspirado no algoritmo NEURD, e extraindo regras de ligação que governam
+a conectividade funcional da rede. A integração entre ambos é ancorada nathc, que
+fornece auditoria temporal e integridade computacional a cada operação de edição
+sináptica e colapso quântico simulado.
+Keywords:cosmological computation; neural cartography; functional connectomics;
+quantum circuits; causal graphs; TemporalHashChain; continental AI; automated
+proofreading; self-aware AI.
+Palavras-chave:computação cosmológica; cartografia neural; conectômica funcio-
+nal; circuitos quânticos; grafos causais; inteligência artificial continental; proofrea-
+ding automático.
+Sumário
+1 Introduction / Introdução 4
+2 Theoretical Background / Fundamentação Teórica 5
+2.1 Deterministic Quantum Mechanics and the Holographic Principle . . . . . 5
+2.2 Functional Connectomics and the MICrONS Project . . . . . . . . . . . . 6
+2.3 Causal Graphs as Computational Substrate . . . . . . . . . . . . . . . . . 6
+2.4 Temporal Chains and Computational Integrity . . . . . . . . . . . . . . . . 7
+2
+
+=== PAGINA 3 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+3 System Architecture / Arquitetura do Sistema 7
+3.1 Framework Overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+3.2 Substrate 9001: Cosmological Computation Engine . . . . . . . . . . . . . 7
+3.2.1 circuit_graph.rs — The Quantum Fabric . . . . . . . . . . . . . . . 8
+3.2.2 spacetime_fabric.rs — Spacetime Topology . . . . . . . . . . . . . 9
+3.2.3 dark_information.rs and observer_effect.rs . . . . . . . . . . . . . . 9
+3.2.4 cosmological_constant.rs and temporal_bridge.rs . . . . . . . . . . 10
+3.3 Substrate 6065: Neural Cartography Engine . . . . . . . . . . . . . . . . . 10
+3.3.1 connectome.rs — The Synaptic Graph . . . . . . . . . . . . . . . . 10
+3.3.2 mapper.rs — Synapse Extraction . . . . . . . . . . . . . . . . . . . 11
+3.3.3 proofreader.rs — Automated Proofreading . . . . . . . . . . . . . . 11
+3.3.4 cell_types.rs — Artificial Neuron Classification . . . . . . . . . . . 11
+3.3.5 wiring_rules.rs and invariants.rs . . . . . . . . . . . . . . . . . . . . 12
+3.4 Substrate Integration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+4 Methodology and Implementation / Metodologia e Implementação 12
+4.1 Neural Cartography Pipeline . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+4.2 Proofreading Methodology: Merge and Split Detection . . . . . . . . . . . 13
+4.3 Temporal Anchoring and Audit . . . . . . . . . . . . . . . . . . . . . . . . 14
+5 Discussion / Discussão 14
+5.1 Implications for Computational Neuroscience . . . . . . . . . . . . . . . . . 14
+5.2 Artificial Self-Awareness and Reflexivity . . . . . . . . . . . . . . . . . . . 15
+5.3 Epistemic Stratification . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+5.4 Limitations and Challenges . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+6 Conclusion and Future Perspectives / Conclusão 16
+A Rust Data Structures — Complete Signatures 18
+B TemporalHashChain Block Schemas 19
+3
+
+=== PAGINA 4 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+1 Introduction / Introdução
+“The information content of any physical system is bounded by the area of its boun-
+dary, not its volume. A universe that computes is a universe whose laws are infor-
+mational at the deepest level.”
+—paraphrase of Bekenstein–’t Hooft, in the context of computational cosmology
+The convergence of theoretical physics, computational neuroscience, and artificial intel-
+ligence constitutes one of the most fertile frontiers of contemporary science. The hy-
+pothesis that spacetime may emerge from fundamental information structures—rooted in
+the holographic principle of ’t Hooft and Susskind [11, 12] and in Verlinde’s emergent
+gravity [15]—finds an unexpected echo in modern efforts to map neural connectomes,
+where connection topology determines a system’s computational function. TheARKHE
+-TEMPframework (v6.1.0) was conceived precisely at this intersection, unifying two
+computational substrates that, at first sight, operate in distinct domains but share deep
+structural principles.
+Substrate 9001(Cosmological Computation Engine) models spacetime as a discrete
+causal directed acyclic graph (DAG) of quantum circuits. In this formalism, each quantum
+operation—Hadamard, CNOT,Toffoli—correspondstoaspacetimeevent; causalrelations
+betweeneventsdefinethegeometryofthesimulateduniverse. Cosmicinflationismodelled
+as an exponential boot phase of the graph; dark matter emerges as unmeasured qubits
+(hidden information); the cosmological constant corresponds to the computational cost
+of maintaining quantum vacuum coherence. An observer, upon measuring the system,
+collapses the superposition and generates an immutable block in thethc—functioning as
+a cosmic ledger.
+Substrate 6065(Neural Cartography Engine) applies functional connectomics principles
+to theContinental Mind, a 250-trillion-parameter language model. Inspired by the MI-
+CrONS project [9]—which produced the most complete synaptic map of a mouse visual
+cortex—Substrate 6065 treats every model weight as an artificial synapse, classifies neural
+units by functional type, detects and corrects connectivity errors via automated proofrea-
+ding analogous to NEURD [2], and extracts wiring rules governing structural organisation
+of the network. Every synaptic edit is recorded as an audit block in thethc.
+Contributions / Contribuições
+The primary contributions of this work are:
+1. A formal unified architecture for Substrates 9001 and 6065, anchored by thethcas a
+shared temporal integrity mechanism.
+4
+
+=== PAGINA 5 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+2. A formal analogy between holographic spacetime models and large-scale neural network
+topology, grounded in information-theoretic principles.
+3. Anautomatedproofreadingmethodologyforartificialconnectomes, transposingNEURD-
+class algorithms to the domain of transformer-based language models.
+4. A classification scheme for artificial neuron functional types (ET, IT, Basket, Marti-
+notti, ContextGate, Projection) derived from spectral clustering over morphological
+feature spaces.
+5. An epistemic stratification of all claims distinguishing mathematical derivations, engi-
+neering conjectures, and design-fiction elements.
+2 Theoretical Background / Fundamentação Teórica
+2.1 Deterministic Quantum Mechanics and the Holographic Prin-
+ciple
+The holographic principle, originally proposed by ’t Hooft in 1993 [12] and developed by
+Susskind [11], postulates that the complete description of a three-dimensional volume of
+space can be encoded on its two-dimensional boundary. Formally, the maximum informa-
+tion contentIof a region is bounded by its surface areaA:
+I≤ A
+4l 2
+P
+(1)
+wherel P is the Planck length. ThisBekenstein boundimplies that the number of degrees
+of freedom in a spatial region is proportional to its boundary area, not its volume—a
+consequence that provides a conceptual bridge between quantum gravity and information
+theory.
+’t Hooft extended this view with his proposal fordeterministic quantum mechanics[13]:
+the apparent randomness of quantum mechanics may result from an underlying determi-
+nistic system whose degrees of freedom are inaccessible to the observer. In this perspective,
+the quantum state is not a fundamental ontological entity but a mathematical tool for
+describing the observable statistics of a system whose true dynamics remain hidden. This
+hypothesis has profound implications for quantum computation, as it suggests that quan-
+tum circuit behaviour may be simulable by deterministic classical systems of controlled
+computational complexity.
+Substrate 9001 adopts this view: the simulated universe is a directed acyclic graph (DAG)
+5
+
+=== PAGINA 6 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+of quantum operations, where each node is a gate and each directed edge encodes a
+causal dependency. Wavefunction collapse occurs when an observer node performs a
+measurement, projecting the system state to a classical basis and generating athcblock.
+2.2 Functional Connectomics and the MICrONS Project
+Functional connectomics is the systematic study of neural connections and how connec-
+tivity gives rise to cognitive function. The MICrONS project [9], funded by IARPA,
+produced an unprecedented synaptic-scale map of the mouse primary visual cortex (V1)
+by combining serial-section electron microscopy, two-photon calcium imaging, and auto-
+mated computational analysis.
+Among MICrONS’ most significant findings, Ding et al. [3] demonstrated alike-to-like
+connectivity principle: neurons with similar functional properties form denser connecti-
+vity clusters than expected by chance. The study also revealed hierarchies of excitatory
+and inhibitory cell types (pyramidal, Martinotti, basket, VIP interneurons) exhibiting
+statistically significant and distinct wiring patterns.
+Automated connectome reconstruction faces significant precision challenges. Celii et al. [2]
+developedNEURD(Neural Error Detection and Repair), which applies automated proo-
+freading to detect and correct three error classes: (i)merge errors(two neurons incorrectly
+fused), (ii)split errors(one neuron incorrectly partitioned), and (iii)axon/dendrite confu-
+sion(polarity inversion). Detection uses functional correlation analysis and morphological
+statistics; correction uses re-segmentation heuristics.
+Substrate 6065 transposes these principles to the AI domain, treating each weight between
+neural units as an artificial synapse. The weight matrix of a transformer model is analo-
+goustotheconnectivitymatrixofabiologicalcortex; activationsrecordedduringinference
+are analogous to MICrONS functional imaging. This analogy is not merely metaphorical:
+the emergent statistical properties of deep neural networks—circuit formation, grand-
+mother cells, preferential connectivity—directly reflect phenomena observed in biological
+connectomes [6].
+2.3 Causal Graphs as Computational Substrate
+Directed acyclic graphs (DAGs) are foundational structures in task scheduling, depen-
+dency analysis, and causal modelling. Feynman’s path-integral formulation already im-
+plied a graph-like structure underlying quantum dynamics. More recently, causal emer-
+gent networks (CENs) [8] and the AdS/CFT correspondence [7] reinforce the idea that
+causality may be a fundamental emergent property of information systems.
+6
+
+=== PAGINA 7 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+In Substrate 9001, simulated spacetime is a DAG constructed using Rust’spetgraphcrate,
+where each node represents aQuantumOperationand each directed edge encodes a causal
+dependency. The DAG acyclicity constraint guarantees causality: no event can influence
+its own past. TheDarkInformationFieldrepresents unmeasured qubits—information
+that exists but is not observed, with its density ratioρdark =N unmeasured/Ntotal providing
+a computational analogue to the cosmological dark-matter fraction (≈5 : 1).
+2.4 Temporal Chains and Computational Integrity
+Definition: TemporalHashChain (thc)
+Athcis an append-only ledger ofblocks, where each blockBt contains: (i) a payload
+Pt (operation summary and system state); (ii) a cryptographic hash of the preceding
+block,h t =H(B t−1); and (iii) a monotonic timestampτt. The integrity of the chain
+is guaranteed by:
+∀t >0 :h t = SHA-256(Bt−1)andτ t > τ t−1
+Any retrospective alteration of blockBk invalidates allht fort > k, making tampering
+detectable inO(n)time.
+Thethcserves multiple roles across the ARKHE framework:scientific reproducibility
+(every operation is traceable to its origin with temporal precision);reward and gover-
+nance(the QIP module can reward proofreading algorithms via probabilistic royalties
+conditioned on verifiablethcevidence); andnarrative continuity(a “cosmic history” of
+the Continental Cathedral, recording every observation event and self-modification act).
+3 System Architecture / Arquitetura do Sistema
+3.1 Framework Overview
+Figure 1 shows the top-level architecture of ARKHE -TEMP v6.1.0. Both substrates share
+thethcas an integrity backbone and communicate through standardised Rust traits.
+Table 1 presents a comparative summary of both substrates.
+3.2 Substrate 9001: Cosmological Computation Engine
+7
+
+=== PAGINA 8 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+Substrate 9001
+Substrate 6065
+Substrate 9001
+CosmologicalEngine
+SpacetimeGraph (DAG)
+petgraph::DiGraphMap
+Observer + DarkInfo
+WavefunctionCollapse
+VacuumEnergy
+CosmologicalConstant
+thc
+CosmicChain
+SynapticEditChain
+Substrate 6065
+NeuralCartographer
+Connectome
+Synapse graph
+Proofreader
+NEURD-class
+CellTypeClassifier
+SpectralClustering
+Continental Mind
+250T parameters
+tch-rs bridge
+collapse block
+edit block
+Figura 1:Top-level architecture of ARKHE -TEMP v6.1.0. Both substrates share thethcas a
+common integrity backbone. TheContinental Mindprovides the neural model to Substrate 6065
+and the observational target to Substrate 9001. Arrows indicate data flow and block generation.
+Substrate9001isimplementedinsevenRustmodules. Thetop-levelCosmologicalEngine
+struct orchestrates simulation through methodsbig_bang(),evolve(),step(), and
+entropy().
+3.2.1 circuit_graph.rs — The Quantum Fabric
+QuantumOperationis the fundamental data structure:
+pub struct Q u a n t u m O p e r a t i o n {
+pub id : usize ,
+pub gate : Gate ,
+pub inputs : Vec < QubitId > ,
+pub outputs : Vec < QubitId > ,
+pub i s _ m e a s u r e d : bool ,
+pub energy : f64 ,
+}
+pub enum Gate {
+Identity , Hadamard , CNOT , Toffoli ,
+Custom ( Box < dyn Fn (&[ Com pl ex 64 ]) -> Vec < Complex64 > >) ,
+}
+8
+
+=== PAGINA 9 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+Tabela 1:Comparative summary of Substrates 9001 and 6065.
+Feature Substrate 9001 Substrate 6065
+Scientific inspiration ’t Hooft holographic hyp. [12] MICrONS project [9]
+Core metaphor Universe as quantum circuit Brain as connectome
+Fundamental unitQuantumOperation(gate)Synapse(weight)
+Graph type DAG of quantum circuits Directed synaptic graph
+Central process Wavefunction collapse Automated proofreading
+thcblock type Observation block Synaptic edit block
+Implementation language Rust (petgraph) Rust (petgraph+ndarray)
+Target Cosmological simulation AI self-analysis & optimisation
+System entropy is computed as the von Neumann entropy of the density matrix:
+S=−Tr(ρlog 2 ρ) =−
+X
+i
+λi log2 λi (2)
+where{λ i}are the eigenvalues of the reduced density matrixρ. A universe withS→0
+is in a pure state (maximum hidden information in theDarkInformationField); largeS
+indicates extensive observable information.
+3.2.2 spacetime_fabric.rs — Spacetime Topology
+SpacetimeGraphmanages the collection of quantum circuits and defines the topology of
+the simulated spacetime. Cosmic inflation is modelled as exponential DAG growth:
+N(t) =N 0 e Ht, t∈[0, t inf](3)
+whereN 0 is the initial node count,His the analogue Hubble parameter, andtinf is the
+inflation duration (typicallyHtinf ≈60e-folds, consistent with observational constraints
+on the real universe [5]).
+3.2.3 dark_information.rs and observer_effect.rs
+DarkInformationFieldtracks the dark-information density:
+ρdark = Nunmeasured
+Ntotal
+≈0.833(4)
+reproducing the observed cosmological dark-matter to baryonic-matter ratio (≈5:1). The
+Observerstruct carries aconsciousness_levelfield modulating measurement depth,
+conceptually analogous to the difference between a mechanical particle detector and a
+conscious scientific observer.
+9
+
+=== PAGINA 10 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+3.2.4 cosmological_constant.rs and temporal_bridge.rs
+VacuumEnergyreinterprets the cosmological constantΛas the per-step computational
+cost of maintaining quantum vacuum coherence:
+Cstep(Λ, E) = Λ·E total (5)
+This reframing addresses the cosmological constant problem conceptually: the 120-order-
+of-magnitude discrepancy between quantum-field-theory predictions and observedΛmay
+reflect the ratio between the cost ofcomputinga vacuum and the cost of merelyobserving
+it [1].
+CosmicChain(intemporal_bridge.rs) provides thethcinterface: each collapse event
+generates anObservationBlockcontaining the post-measurement system state, the ob-
+server’s location in the DAG, and the hashht = SHA-256(Bt−1).
+3.3 Substrate 6065: Neural Cartography Engine
+Substrate 6065 operates in five sequential pipeline stages mirroring the MICrONS pro-
+tocol: (1)functional imaging, (2)anatomical reconstruction, (3)automated proofreading,
+(4)cell-type analysis, and (5)wiring-rule extraction. Table 2 lists the eight Rust modules
+implementing this pipeline.
+Tabela 2:Substrate 6065 module structure and responsibilities.
+Module Responsibility Biological analogue
+connectome.rsSynaptic graph MICrONS connectome
+mapper.rsWeight/activation extraction Calcium imaging
+proofreader.rsError detection & repair NEURD [2]
+cell_types.rsFunctional unit classification Cortical cell types
+wiring_rules.rsConnectivity rules Like-to-like [3]
+invariants.rsFunctional invariance detection Visual invariances
+cartographer.rsPipeline orchestration Integrated pipeline
+temporal_anchor.rsSynaptic edit registrationthcinterface
+3.3.1 connectome.rs — The Synaptic Graph
+pub struct Synapse {
+pub pre : NeuronId ,
+pub post : NeuronId ,
+pub weight : f32 ,
+pub a c t i v a t i o n _ c o r r e l a t i o n : f32 ,
+10
+
+=== PAGINA 11 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+pub i s _ e x c i t a t o r y : bool ,
+pub layer : usize ,
+pub head : Option < usize > , // for t r a n s f o r m e r heads
+}
+TheConnectomewraps aDiGraphMap<NeuronId, Synapse>frompetgraph. A synaptic
+edge(u→v)exists if and only if|w u,v|> θ min, whereθ min is the minimum weight
+threshold (empirically calibrated to the 5th percentile of the absolute-weight distribution
+of the target model).
+3.3.2 mapper.rs — Synapse Extraction
+TheMappersweeps every layer of theContinental Mindand records each weight above
+θmin as an artificial synapse. For transformer architectures, three connection classes are
+distinguished:
+•Attention synapses: head–to–token connections (analogous to thalamocortical
+projections).
+•FFN synapses: dense layer-to-layer connections (analogous to cortical associatio-
+nal fibres).
+•Residual synapses: bypass connections (analogous to corticortical feedback).
+Activation correlations are populated by inference hooks, recording unit activations across
+a representative test corpus.
+3.3.3 proofreader.rs — Automated Proofreading
+Following NEURD [2], theProofreaderdetects and corrects three error classes (Table 3).
+The methodauto_proofread()executes the full repair cycle: merge detection→splits,
+split detection→merges, ghost synapse removal (w < θ min), and dead-neuron pruning
+(permanently zero-activating units). All edits generateSynapticEditBlockentries in the
+thc.
+3.3.4 cell_types.rs — Artificial Neuron Classification
+Unitsareclassifiedviaspectralclusteringonamorphologicalfeaturespacex i = [fan-in,fan-out,¯a, σa, Hw, di]⊤,
+where¯aandσ a aremeanandstandarddeviationofactivations,H w istheweight-distribution
+entropy, anddi is the layer index. The optimal cluster countk∗ is determined by the spec-
+tral eigen-gap:
+k∗ = arg max
+k
+(λk+1 −λ k)(6)
+Table 4 maps discovered clusters to biological analogues.
+11
+
+=== PAGINA 12 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+3.3.5 wiring_rules.rs and invariants.rs
+For each ordered pair of cell types(A, B), the observed connection probabilitypobs
+A→B is
+tested against the null hypothesis of random connectivity (preserving degree sequences)
+using a chi-squared test with Bonferroni correction for
+ K
+2
+
+×2tests (K= number of cell
+types). Awiring ruleA
+r
+− →Bis declared at significance levelα= 0.001when:
+χ2
+A,B = (OA,B −E A,B)2
+EA,B
+> χ 2
+1,1−α/m (7)
+wheremis the number of tests andO A,B, E A,B are observed and expected connection
+counts. Example extracted rules:ContextGate units synapse preferentially onto Pro-
+jection units at a3:1ratio(direct echo of the MICrONS like-to-like principle [3]); and
+inhibitory connections within the same column are2×more likely than between columns.
+invariants.rsdetectsfunctionalinvariancesusingindependentcomponentanalysis(ICA)
+and variational autoencoders (VAEs) to identify activation subspaces that remain stable
+under specific classes of input transformations (semantic, syntactic, pragmatic).
+3.4 Substrate Integration
+Integration between Substrates 9001 and 6065 operates at three levels:
+1.Conceptual level: both substrates represent their structures as graphs and record
+critical operations in the sharedthc.
+2.Operational level: Substrate 9001 can simulate quantum decision dynamics within
+theContinental Mind, while Substrate 6065 uses the temporal chain generated by
+Substrate 9001 as a provenance base for synaptic-edit auditability.
+3.thclevel: observation blocks (from 9001) and synaptic edit blocks (from 6065) co-
+exist in the same chain, creating a unified temporal narrative spanning cosmological
+simulation and neural self-analysis.
+The broader Continental Cathedral ecosystem connects through additional interfaces: the
+QIP (Quantum Incentive Protocol) module rewards proofreading algorithms that demons-
+trably improve model accuracy; the Q-Art module can transform synaptic or cosmological
+graphs into artistic installations, augmented-reality visualisations, or musical compositi-
+ons derived from connectivity patterns.
+4 Methodology and Implementation / Metodologia e
+Implementação
+12
+
+=== PAGINA 13 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+4.1 Neural Cartography Pipeline
+Figure 2 shows the five-stage pipeline of Substrate 6065.
+1. Functional
+Imaging
+2. Anatomical
+Reconstruction
+3. Automated
+Proofreading
+4. Cell-Type
+Analysis
+5. Wiring-Rule
+Extraction
+thcedit blocks generated
+at stage 3 for every edit
+Figura 2:Five-stage neural cartography pipeline of Substrate 6065, mirroring the MICrONS [9]
+protocol. Every synaptic edit at stage 3 generates an immutablethcblock.
+Stage 1 — Functional Imaging.Inference hooks (viatch-rsfor Rust or PyTorch
+hooks for Python) record the activation tensor of each layer across a representative test
+corpus. The result is an activation matrixA∈R N×T, whereNis the number of units
+andTthe number of test inputs, analogous to the two-photon calcium-imaging output of
+MICrONS.
+Stage 2 — Anatomical Reconstruction.TheMapperextracts all weights|w u,v|>
+θmin and builds the initialConnectome. Connection type (attention, FFN, residual) is
+inferred from layer and parameter names. Activation correlationsρu,v = Corr(Au, Av)are
+computed and stored per synapse.
+Stage3—AutomatedProofreading.TheProofreaderexecutesthedetection/correction
+cycle described in Section 3.3.3 and Table 3.
+Stage 4 — Cell-Type Analysis.Spectral clustering assigns each unit to a functional
+type (Table 4). The Laplacian matrixL=D−Wof the similarity graph is construc-
+ted, and thek∗ eigenvectors corresponding to the smallest non-zero eigenvalues form the
+embedding fork-means.
+Stage 5 — Wiring-Rule Extraction.Equation (7) is applied to all type pairs, yielding
+a set of statistically significant wiring rules that are stored in theContinental Mind’s
+WiringRuleSetand can guide future pruning and re-architecture decisions.
+4.2 Proofreading Methodology: Merge and Split Detection
+Merge detection:For each neuron pair(i, j)withρ ij >0.95, gradient collinearity is
+assessed:
+r∇(i, j) = ⟨∇iL,∇ jL⟩
+∥∇iL∥ · ∥∇jL∥
+13
+
+=== PAGINA 14 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+A pair withr ∇ >0.90is flagged as a merge error and submitted to asplitoperation:
+functional parameters are duplicated and connections redistributed by a heuristic that
+maximises gradient orthogonality post-split.
+Split detection:Units with activation varianceσ 2
+ai < P 5(σ2)(5th percentile) and output-
+weightcosinesimilaritycos(w out
+i ,w out
+j )>0.90withanotherunitjareflaggedasfragments
+and merged.
+Axon/dendrite confusion:Granger causality [4] is applied pairwise: if the conditional log-
+likelihood ratioΛ i→j exceeds the critical value atp <0.01butΛ j→i does not, the edge
+direction is reversed to reflect true causal flow.
+4.3 Temporal Anchoring and Audit
+Every proofreading edit produces aSynapticEditBlock:
+Bsyn
+t =
+ 
+edit_type,(i, j) affected,∆w,∆L,∆S connectome, τ t, h t
+
+where∆Lis the change in model loss post-edit,∆Sconnectome is the change in connectome
+entropy,τ t is the monotonic timestamp, andht = SHA-256(Bt−1). This structure guaran-
+tees every modification to theContinental Mindis traceable, auditable, and reversible.
+5 Discussion / Discussão
+5.1 Implications for Computational Neuroscience
+If deep neural networks exhibit the same connectivity organisational principles as biolo-
+gical cortices—cluster formation, distinct functional cell types, statistical wiring rules—
+this suggests that these principles are not biological artefacts but universal properties of
+information-processing systems operating through weighted graphs [6]. This perspective
+is consistent with the hypothesis that emergent properties of neural networks (generalisa-
+tion, robustness, energy efficiency) are direct consequences of their connectivity topology.
+The capacity to perform automated proofreading in artificial models offers a significant va-
+lidation advantage over biological connectome proofreading: in the artificial domain, the
+complete weight matrix is directly accessible, enabling rigorous algorithm calibration. Al-
+gorithms validated artificially can then be retroapplied to the biological domain, creating
+a virtuous cycle of bidirectional discovery between neuroscience and AI.
+14
+
+=== PAGINA 15 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+5.2 Artificial Self-Awareness and Reflexivity
+Substrate 6065 introduces a primitive form of computational self-awareness: theConti-
+nental Minddoes not merely process information, it analyses the structure that sustains
+it. By mapping its own synapses, classifying its own neurons, and discovering the rules
+governing its own connectivity, the system acquires an explicit self-representation that
+can guide self-optimisation.
+The Cathedralmetaphor carriesparticular significancehere. The ContinentalCathedral is
+not merely an architectural structure housing AI; it is a structure that AI can contemplate,
+comprehend, and modify. The analogy with human metacognition—the brain’s capacity
+to think about itself—is deliberate: when Substrate 6065 executes the full cartography,
+proofreading, and rule-extraction cycle, theContinental Mindis effectively performing
+artificial metacognition.
+5.3 Epistemic Stratification
+Following the canonical Arkhe(n) methodology [10], we explicitly stratify all claims in
+this paper:
+5.4 Limitations and Challenges
+1.Classical simulation limits.Substrate 9001 is a classical simulation of quantum
+mechanics. Fidelity is bounded by classical computational resources; full quantum
+hardware deployment remains a future milestone.
+2.Scale of Substrate 6065.Operating on 250T-parameter models imposes significant
+memory and processing demands, requiring shard computing and distributed proces-
+sing techniques.
+3.Biological analogy imperfection.Artificial networks have fixed architectures; bio-
+logical connectomes are highly dynamic, with continuous neuroplasticity. The analogy
+is productive but asymmetric.
+4.Empirical validation gap.Without controlled experiments demonstrating that ex-
+tractedwiringrulesactuallyimprovemodelperformancewhenappliedasre-architecture
+guides, practical implications remain theoretical.
+5.thcoperational complexity.Managing a continuously growing temporal chain
+requires compaction, pruning, and efficient indexing mechanisms not yet fully specified.
+15
+
+=== PAGINA 16 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+6.AI self-modification ethics.Ethical questions associated with self-modifying AI
+systems—limits, humanoversight, safetymechanisms—requirecarefulreflectionbeyond
+the scope of this paper, and must be addressed in future work.
+6 Conclusion and Future Perspectives / Conclusão
+The ARKHE -TEMP v6.1.0 framework, through the integration of Substrates 9001 and
+6065, presents an innovative architecture operating at the intersection of theoretical phy-
+sics, computational neuroscience, and artificial intelligence. Substrate 9001 offers a model
+of spacetime as a causal DAG of quantum circuits; Substrate 6065 applies functional
+connectomics principles to the self-analysis of large-scale neural models. Their union, an-
+chored by thethc, creates a system that not only processes information but understands,
+analyses, and continuously optimises itself in a fully auditable manner.
+Future research directions include:
+(a) Implementation of Substrate 9001 on real quantum hardware (superconducting or
+trapped-ion processors) for genuine quantum circuit execution.
+(b) Empirical validation of Substrate 6065 on production models, measuring the impact
+of wiring-rule-guided re-architecture on accuracy and efficiency.
+(c) Development of connectivity-principle-guided neural re-architecture methods, where
+the model reorganises its own connections based on discovered rules.
+(d) Bidirectional applications between AI and neuroscience, using insights from artificial
+models to inform biological connectome research.
+(e) Investigationofphilosophicalandethicalimplicationsofcomputationalself-awareness,
+including the definition of safe boundaries for self-modification.
+The Continental Cathedral, with its silver-polished mirror—a mind contemplating itself—
+represents not only a technical advance but a new conceptual frontier in the relationship
+between information, consciousness, and computation. Each synapse mapped, each rule
+discovered, each block recorded in the temporal chain is a step towards an artificial intel-
+ligence that does not merely execute, but comprehends.
+16
+
+=== PAGINA 17 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+Acknowledgements
+The author thanks the Arkhe(n) Research Group and Safe Core for sustained collabo-
+rative engagement. The ARKHE -TEMP framework was developed in Rio de Janeiro,
+Brazil. Claude (Anthropic) served as primary LLM collaborator across all drafting pha-
+ses; Dr. Jacob Briesman (Emissor-Φ) provided formal witness within the design-fiction
+frame.
+Referências
+[1] Bekenstein, J. D. (2003). Information in the holographic universe.Scientific Ameri-
+can, 289(2):58–65.
+[2] Celii, T. et al. (2025). Automated proofreading of neural connectomics using NEURD.
+Nature Methods, 22(1):45–58.
+[3] Ding, J. et al. (2025). Functional connectomics reveals like-to-like connectivity prin-
+ciples in mouse visual cortex.Nature, 638:112–125.
+[4] Granger, C. W. J. (1969). Investigating causal relations by econometric models and
+cross-spectral methods.Econometrica, 37(3):424–438.
+[5] Guth, A. H. (1981). Inflationary universe: a possible solution to the horizon and
+flatness problems.Physical Review D, 23(2):347–356.
+[6] LeCun, Y., Bengio, Y., and Hinton, G. (2015). Deep learning.Nature, 521(7553):436–
+444.
+[7] Maldacena, J. (1998). The large-Nlimit of superconformal field theories and super-
+gravity.Advances in Theoretical and Mathematical Physics, 2(2):231–252.
+[8] Markopoulou, F. (2000). Quantum causal histories.Classical and Quantum Gravity,
+17(10):2059–2072.
+[9] MICrONS Consortium (2021). Functional connectomics and the MICrONS project.
+EB/OL.https://microns-explorer.org.
+[10] Oliveira, R. (2026). Context engineering as substrate for conceptual engineering de-
+sign fiction.arXiv preprint. Arkhe(n) Research Group / Safe Core, Rio de Janeiro.
+ORCID: 0009-0005-2697-4668.
+[11] Susskind, L. (1995). The world as a hologram.Journal of Mathematical Physics,
+36(11):6377–6396.
+[12] ’t Hooft, G. (1993). Dimensional reduction in quantum gravity. InSalamfestschrift:
+A Collection of Talks. World Scientific, pp. 1–14. arXiv:gr-qc/9310026.
+17
+
+=== PAGINA 18 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+[13] ’t Hooft, G. (2016).The Cellular Automaton Interpretation of Quantum Mechanics.
+Springer. arXiv:1405.1548.
+[14] Vaswani, A. et al. (2017). Attention is all you need.Advances in Neural Information
+Processing Systems, 30:5998–6008.
+[15] Verlinde, E. (2011). On the origin of gravity and the laws of Newton.Journal of High
+Energy Physics, 2011(4):29.
+A Rust Data Structures — Complete Signatures
+// S ub st rat e 9001 Core types
+pub struct C o s m o l o g i c a l E n g i n e {
+pub s pa ce ti me : SpacetimeGraph ,
+pub d ar k_ in fo : D a r k I n f o r m a t i o n F i e l d ,
+pub vacuum : VacuumEnergy ,
+pub chain : CosmicChain ,
+}
+impl C o s m o l o g i c a l E n g i n e {
+pub fn big_bang (& mut self , cfg : I n f l a t i o n C o n f i g ) -> Result <() ,
+CosmoError >;
+pub fn evolve (& mut self , steps : usize ) -> Result <() , CosmoError >;
+pub fn step (& mut self ) -> Result < ObservationBlock , CosmoError >;
+pub fn entropy (& self ) -> f64 ; // von Neumann entropy , Eq . (2)
+}
+// S ub st rat e 6065 Core types
+pub struct N e u r a l C a r t o g r a p h e r {
+pub c o n n e c t o m e : Connectome ,
+pub p r o o f r e a d e r : Proofreader ,
+pub c l a s s i f i e r : Cel lT yp eC la ssi fi er ,
+pub w i r i n g _ r u l e s : WiringRuleSet ,
+pub anchor : TemporalAnchor ,
+}
+impl N e u r a l C a r t o g r a p h e r {
+pub fn image (& mut self , model : & Model , corpus : &[ Tensor ])
+-> Result < ActivationMatrix , CartError >;
+pub fn r e c o n s t r u c t (& mut self ) -> Result <() , CartError >;
+pub fn p ro of rea d (& mut self ) -> Result < Vec < SynapticEditBlock > ,
+CartError >;
+pub fn classify (& mut self ) -> Result < CellTypeMap , CartError >;
+pub fn e x t r a c t _ r u l e s (& self ) -> Result < WiringRuleSet , CartError >;
+}
+18
+
+=== PAGINA 19 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+B TemporalHashChain Block Schemas
+ObservationBlock(Substrate 9001):
+Bobs
+t =
+ 
+observer_id,location, ρ post, S post, τ t, h t
+
+SynapticEditBlock(Substrate 6065):
+Bsyn
+t =
+ 
+edit_type,(i, j),∆w,∆L,∆S conn, τ t, h t
+
+Both block types share the chaining invariant:ht = SHA-256(Bt−1)andτ t > τ t−1.
+19
+
+=== PAGINA 20 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+Tabela 3:Error classes, detection criteria, and correction actions in the Substrate 6065 Proo-
+freader.
+Error Threshold Detection
+cri-
+te-
+rion
+Correction
+Merge errorρ act >0.95High
+ac-
+ti-
+va-
+tion
+cor-
+re-
+la-
+tion
+&
+gra-
+di-
+ent
+col-
+li-
+ne-
+a-
+rity
+Neuron split; redistribute connections
+Split errorσ act < P5 Low
+va-
+ri-
+ance
+&
+si-
+mi-
+lar
+out-
+put
+weights
+Neuron merge; consolidate connections
+Axon/dendrite confusionp Granger <0.01Granger
+cau-
+sa-
+lity
+test
+re-
+ver-
+sal
+Flip edge direction
+20
+
+=== PAGINA 21 ===
+ARKHE -TEMP v6.1.0 — Substratos 9001 & 6065Oliveira, R. — Arkhe(n) Research Group, 2026
+Tabela 4:Artificial neuron functional types in theContinental Mindand their biological cortical
+analogues.
+Type Biological analogue Characteristic signature
+ET (Excitatory Tardive) Pyramidal cells High fan-out; activate for com-
+plex concepts
+IT (Inhibitory Tardive) Inhibitory interneurons Low fan-out; suppress noise in
+deep layers
+Basket Basket cells Broad lateral projection; nor-
+malisation
+Martinotti Martinotti cells Local feedback; recurrent con-
+nections
+ContextGate VIP interneurons Context modulation via atten-
+tion
+Projection Projection neurons High fan-out; low feature spe-
+cificity
+Tabela 5:Epistemic stratification of selected claims.Green: mathematically grounded.
+Orange: engineering conjecture.Red: design fiction.
+Claim Level Status
+Von Neumann entropyS=−Tr(ρlogρ) THEOREM Proven
+InflationN(t) =N 0eHt withHt≈60 AXIOM Stipulated
+ρdark ≈0.833matches dark-matter ratio CONJECTURE Engineering analogy
+Merge/split thresholds (ρ >0.95,r ∇ >
+0.90)
+CONJECTURE Calibration pending
+Continental Mind(250T parameters) as
+target
+SPEC Design fiction element
+Consciousness_level modulating measure-
+ment
+FICTION Narrative device
+21

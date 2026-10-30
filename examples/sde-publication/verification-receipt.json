@@ -1,0 +1,117 @@
+{
+  "recordedAt": "2026-10-24T19:57:51.0060533Z",
+  "stencilVersion": "1.6.0",
+  "nodeVersion": "v24.13.0",
+  "verification": {
+    "command": "node --test --test-reporter=spec examples/sde-publication/publication.test.mjs examples/sde-publication/ai-aggregate.test.mjs examples/sde-publication/calibrate.test.mjs",
+    "executed": true,
+    "passed": 47,
+    "failed": 0,
+    "basis": "Observed execution in this chat; not a formal proof"
+  },
+  "demo": {
+    "command": "node examples/sde-publication/demo.mjs",
+    "records": 4
+  },
+  "findings": [
+    "Private WeakMap binds immutable tickets to internal state",
+    "Unsupported actions return DENY with rule action.allowed",
+    "Request identity uses four fields in fixed order; extras ignored",
+    "Revalidation failure takes precedence over stencil.changed",
+    "Candidate document output schema validated during evaluation and revalidation; restricted profile, not full JSON Schema",
+    "Aggregation v0.1.0 implemented standalone; 10 aggregation tests pass; calibration remains PENDING"
+  ],
+  "files": [
+    {
+      "file": "publication.mjs",
+      "sha256": "33dc4e237f43e1c8afe4a7c62727a309aa33b925dcfd8144d47321296e8064f0"
+    },
+    {
+      "file": "publication.test.mjs",
+      "sha256": "e7c8c203702ee01ecc2f9e2fa4cb04eccfde3ea668dcae747fb528d82b368bfb"
+    },
+    {
+      "file": "output-schema.mjs",
+      "sha256": "c0c84f2d65c556134e3ad820f686c0c5376d0e98c4649f140f1c125a37995c1a"
+    },
+    {
+      "file": "ai-aggregate.mjs",
+      "sha256": "9cac5ec88ea1959f63afb08ac461b8b902e29d453da3aa1e24898464b89252e0"
+    },
+    {
+      "file": "ai-aggregate.test.mjs",
+      "sha256": "bedde35a4ed7de20ef9430057b3b37c1bd32ced304cc36454a1bd48a3aca38ea"
+    },
+    {
+      "file": "calibrate.mjs",
+      "sha256": "6bfd3fbe0959a9612b0c60981fc479d7370b8f3a5a841fbf35d52eb4da2b1460"
+    },
+    {
+      "file": "calibrate.test.mjs",
+      "sha256": "81778058a3e85553cc7c173ad85af84e3afb5b6332c7b4e89fe9930333e420d3"
+    },
+    {
+      "file": "calibration-fixture.jsonl",
+      "sha256": "797b7760c3ee319353f76e14aeda3fcd124b18cb54c08689c1db40f7f1602fb7"
+    },
+    {
+      "file": "calibration-report.json",
+      "sha256": "bf037e4594495813e00a9f0f1a9ab53116417cd6cd88ddfe0ef8eac5db9cc8b8"
+    },
+    {
+      "file": "CALIBRATION.md",
+      "sha256": "8ef7f06a339be197eb6bc847947392aca0600d795ea08afe7028cadc8bcfe38e"
+    },
+    {
+      "file": "stencil.json",
+      "sha256": "778b081f859d647ed017f0b7e4a5ce4408e86ec5f549ac38347375bef1d0a88d"
+    },
+    {
+      "file": "aggregation.spec.json",
+      "sha256": "d0d214b236addc0e0cb4d926ee374730659366966605b7072ff3775483d5adbc"
+    },
+    {
+      "file": "README.md",
+      "sha256": "7a3bc56c90e944ec7b45636981f6467125947d5e12222cb65aacb19fe4b6cc10"
+    },
+    {
+      "file": "demo.mjs",
+      "sha256": "af5b60c849e8daab1182b146a80f4a11a6f9282e2713cdc077b65dba1702c7a0"
+    },
+    {
+      "file": "evidence.jsonl",
+      "sha256": "d029dccf9b7ad9b8e0ae191d0796ac91f47b7a82b7f52179926dfb6f7c831638"
+    },
+    {
+      "file": "test-run.log",
+      "sha256": "f4ba3b8f79f9ff7a7985bc242e8ad04a939fb7523b03a99a9ce8b0b4aa89764b"
+    },
+    {
+      "file": "compose.yaml",
+      "sha256": "20f5b9af8a235ae2e8ffafb689d96ed1362be2e2de5692a5e410e55771daf902"
+    },
+    {
+      "file": "container-run.mjs",
+      "sha256": "a1384b4d7003d5a44860f00576b61601dc8c4888b0d142ddc8b0468bb67af2b2"
+    }
+  ],
+  "limitations": [
+    "Unsigned local receipt",
+    "No formal verification or universal security claim"
+  ],
+  "containerVerification": {
+    "completed": false,
+    "command": "podman --connection arkhe-runtime compose -f examples/sde-publication/compose.yaml up --abort-on-container-exit --exit-code-from publication",
+    "error": "Podman socket refused connection at 127.0.0.1:57265; Docker executable unavailable",
+    "machine": "arkhe-runtime reports running after startup attempt",
+    "scope": "Historical failure from v1.4.0; container execution not retried for v1.6.0"
+  },
+  "calibrationRun": {
+    "command": "node examples/sde-publication/calibrate.mjs examples/sde-publication/calibration-fixture.jsonl examples/sde-publication/calibration-report.json",
+    "cases": 8,
+    "datasetKind": "synthetic smoke fixture, not domain golden set",
+    "status": "PENDING",
+    "domainCalibrated": false,
+    "selectedThreshold": null
+  }
+}

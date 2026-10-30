@@ -1,0 +1,315 @@
+name: núcleo
+
+# 🔴 O CI corre a prova **contra o Postgres de verdade**, com serviço
+# declarado. Um job que só fizesse `cargo test` teria as provas de integração
+# em SKIP — e SKIP é inconclusivo, nunca verde.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Um aviso de clippy é falha. Foi assim que a validação com `?` faltou
+  # passar: o aviso existia e ninguém o leu.
+  RUSTFLAGS: -D warnings
+  # 🔴 `-j 2` não é o sítio certo. Foi medido: compilar a janela com o paralelismo
+  # todo de uma vez fez o `rustc` morrer com `STATUS_STACK_BUFFER_OVERRUN`
+  # (0xc0000409) a meio, em `regex-automata` e `sqlx-postgres` — nenhuma
+  # delas tinha mudado. O erro não aponta para código nenhum, e é por isso
+  # que custa tanto: parece o código, e não é.
+  CARGO_BUILD_JOBS: "2"
+
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: aegis
+          POSTGRES_PASSWORD: aegis_t1
+          POSTGRES_DB: aegis_t1
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U aegis -d aegis_t1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+        # 🔴 `fetch-depth: 0` — e não é para ser mais rápido, é porque o
+        # portão da divergência **compara com um commit que não é a ponta**.
+        # A árvore do upstream entra como uma *subtree*, e a comparação é
+        # `git diff <commit-da-importação> HEAD`. 🔴 O `fetch-depth: 1` de
+        # omissão traz o último commit e nada mais — e o portão saía com `2`
+        # ("o commit de importação não está no repositório"), que parece uma
+        # configuração errada e é um commit que o runner nunca viu.
+        with:
+          fetch-depth: 0
+
+      - name: Piso de Rust
+        # 🔴 MSRV declarado no workspace. Sem este passo, um `cargo update` que
+        # traga uma dependência com MSRV maior passa o CI e quebra a máquina
+        # de quem ainda não atualizou o toolchain.
+        run: |
+          rustc --version
+          cargo --version
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Bibliotecas de sistema (o Tauri em Linux)
+        # 🔴 Esta linha só existe porque a CI **correu pela primeira vez** a
+        # 29/09/2026. Sem ela o `clippy` morre em
+        # `The system library 'glib-2.0' required by crate 'glib-sys' was not
+        # found` — que não parece uma dependência em falta, parece o código.
+        #
+        # A `aegis-gui` é Tauri, e Tauri em Linux liga-se ao GTK pelo
+        # `pkg-config`. No `windows-laptop` da bancada isso não aparece; no
+        # runner, aparece sempre. É a forma mais direta de a armadilha
+        # clássica da casa se repetir ao contrário: um job que nunca foi
+        # executado não é um job testado.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends             libwebkit2gtk-4.1-dev             libappindicator3-dev             librsvg2-dev             patchelf             libssl-dev             libglib2.0-dev
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Formato
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: A raiz de teste
+        id: raiz
+        run: |
+          echo "chave=$(cat crates/aegis-license/fixtures/chaves/vendor-teste.pub)" >> "$GITHUB_OUTPUT"
+
+      - name: Provas
+        env:
+          AEGIS_TESTE_BANCO: postgres://aegis:aegis_t1@127.0.0.1:5432/aegis_t1
+          AEGIS_RAIZ_VENDOR: ${{ steps.raiz.outputs.chave }}
+        # 🔴 E **sem** licença gerada por runner. Houve um passo que emitia uma
+        # licença para o fingerprint do runner, e ele era a segunda via: o
+        # `aegis-cli` (o emissor de verdade) vive no repo da RAIZ e não está
+        # no checkout deste repo, e mesmo que estivesse a licença tinha de ser
+        # por plataforma.
+        #
+        # A prova nomeia a máquina que mede e o repo traz a licença dessa
+        # máquina, para cada plataforma que o produto alvo. Uma prova que
+        # depende de ser emitida no sitio onde corre não é uma prova: é uma
+        # que só corre na máquina de quem a escreveu — que é o que ela estava
+        # a medir, e a CI foi que lho disse.
+        run: cargo test --workspace -- --nocapture
+
+      - name: A referência está em dia com o código
+        # 🔴 A referência é GERADA, e um ficheiro gerado que ninguém regenera
+        # é a queixa nº2 do dono outra vez, noutra forma: passa a descrever um
+        # produto que não existe, e **parece** a verdade.
+        #
+        # Esta prova já corre dentro de `cargo test`
+        # (`apps/bin/tests/referencia.rs`). O passo aqui é redundante de
+        # propósito — é a **segunda** rede. A casa já pagou por uma prova que
+        # dependia de o `cargo test` passar: uma suite que deixa de compilar
+        # desaparece do relatório sem deixar rasto, e a contagem desce um bocado
+        # que ninguém compara com nada.
+        #
+        # E `--verificar` sai com `3`, que é o código de RECUSA. Um job que
+        # falha com `3` é um job que diz "isto está desatualizado", e não
+        # "o CI partiu" — que é a diferença entre ir corrigir o ficheiro e ir
+        # ver o runner.
+        run: |
+          cargo build -p aegis
+          ./target/debug/aegis referencia --verificar --saida docs/REFERENCIA.md
+
+      - name: A marca que o operador lê é do AEGIS
+        # 🔴 O quarto portão do fork, e o que tem mais dentes de todos.
+        #
+        # Uma marca errada não dá erro: dá um produto que se chama AEGIS na
+        # janela e OpenMausBot no About, e o sintoma é um nome de outra
+        # empresa na tela de um cliente. 🔴 Nenhum dos cinco sítios (o
+        # `electron-builder.yml` empacota, o `index.html` dá o título, o
+        # `server/brand.ts` serve o que o ecrã mostra, o `app-links.ts` aponta
+        # o About, o `package.json` dá o pacote) **verifica os outros**, e por
+        # isso a lista é escrita à mão — com a razão de cada linha, que é o
+        # que impede a lista de crescer por preguiça.
+        #
+        # 🔴 E o `--morde` vem logo a seguir, porque uma folha que passa com a
+        # lista vazia passa com a lista vazia para sempre. Ele planta o
+        # `DEFAULT_BRAND` antigo e confirma que a folha reprova — e diz que o
+        # plantou, que foi a lição das três vezes em que não disse.
+        run: |
+          bash ferramentas/marca.sh --ci
+          bash ferramentas/marca.sh --morde
+          # 🔴 E a folha **depois** do `--morde`, porque essa é a pergunta que
+          # o `--morde` não pode fazer de dentro de si: o restore dos casos só
+          # corre no `EXIT` do processo, e uma verificação feita durante o
+          # `--morde` veria a planta do caso 1 ainda no ficheiro e acusaria o
+          # produto do que a própria folha plantou. 🔴 Foi o que aconteceu a
+          # 30/09/2026: um `--morde` que devolveu verde e deixou o
+          # `DEFAULT_BRAND` do upstream no ficheiro.
+          bash ferramentas/marca.sh --ci
+          # 🔴 E o contraste, com a prova **do upstream** (`pnpm check:contrast`
+          # de lá). É a única que mede os pares de cor de todas as peles, e o
+          # que medimos aqui foi o acento de fábrica: o #2D77BE com texto branco
+          # dá 4.67:1 e o piso da midnight subiu de 3.65 para 4.50 — 🔴 trocar a
+          # cor e deixar o piso antigo era deixar o portão a admitir a
+          # regressão que ele existia para impedir.
+          node apps/console/scripts/check-skin-contrast.mjs
+
+      - name: O motor está pado, e é o nosso
+        # 🔴 O D8. O `opencode` é motor **nativo** do upstream, e o que o pino
+        # tinha de fixar era a ficha: o `driver` (nativo, e não `customAcp`,
+        # que é o caminho mais longo para o mesmo sítio e um que o upstream não
+        # testa), o rótulo **AIP**, o registo do MCP, e o facto de a Chave OEM
+        # viajar no `env` e **nunca** nos `args` — 🔴 porque uma chave nos
+        # argumentos aparece no `ps` de qualquer processo da máquina.
+        #
+        # 🔴 E o `--morde` planta `customAcp` e confirma que a folha reprova,
+        # porque uma folha que passa sempre não está a proteger nada.
+        run: |
+          bash ferramentas/motor.sh --ci
+          bash ferramentas/motor.sh --morde
+
+      - name: O fork do console continua dentro do orçamento de divergência
+        # 🔴 A terceira alteração ao CI do D6, e a que tem teeth.
+        #
+        # Um fork dentro do repo é a coisa mais fácil do mundo de deixar
+        # divergir sem ninguém dar por isso: não há submodule, não há aviso do
+        # git, e o `git status` continua limpo porque o fork já está no repo.
+        # Passados seis meses ninguém sabe o que é do upstream e o que é nosso
+        # — e a decisão de assumir que é nosso já foi tomada sem ser tomada.
+        #
+        # O portão mede **dois** números e os dois estão escritos em
+        # `apps/console/equipa/PATCHES-AEGIS.md` (ficheiros acrescentados e
+        # linhas alteradas no upstream), lidos de lá e nunca copiados para o
+        # código — um orçamento em dois sítios diverge no primeiro `git pull` do
+        # inventário, e o que ficaria verde é o número do código.
+        #
+        # 🔴 E o portão tem de conseguir **ler o upstream**. Um clone sem blobs
+        # (que foi o primeiro erro medido) fazia a leitura falhar, o fork
+        # contava como não-editado, e o portão imprimia `linhas: 0` e dizia
+        # `OK`. Um portão que não mede e se declara verde é pior do que
+        # nenhum — por isso ele morre, com a razão, se não conseguir ler.
+        #
+        # 🔴 O `--filter=blob:none` é de propósito: a árvore chega toda, e os
+        # conteúdos que o portão precisa (dos ficheiros que nós editamos, que
+        # são poucos) vêm à lazily. Sem ele, cada corrida puxa 149 MB para
+        # medir uma dúzia de linhas.
+        run: bash ferramentas/divergencia-console.sh --ci
+
+      - name: O livro sai do repo e não depende da rede
+        # 🔴 A promessa do livro é que ele não pode divergir do produto, porque
+        # cada capítulo é um `{{#include}}` de um ficheiro já versionado. Essa
+        # promessa cai no dia em que alguém copia um README para dentro de
+        # `src/` — e a partir daí há duas documentações, e a que se lê é a
+        # errada. A prova apanha a cópia **e** o livro que pede algo à rede.
+        #
+        # E o livro é ARTIFACATO do job, não um ficheiro versionado: 1,7 MB de
+        # HTML que se regeneram em segundos, e um `git diff` com duas mil
+        # linhas que ninguém lê não é uma mudança que se revista.
+        run: |
+          # 🔴 O **binário pronto**, e não `cargo install`: o `cargo install
+          # mdbook` compila 195 crates e o cache do Rust não o apanha, e cada
+          # corrida pagava três minutos para obter a mesma coisa.
+          #
+          # 🔴 E a versão é a **mesma** que a da bancada (0.5.4). Com o CI a
+          # construir o livro numa versão diferente, o livro do runner e o da
+          # bancada não eram o mesmo ficheiro — que é exactamente a divergência
+          # que o livro existe para eliminar, feita pelo próprio livro.
+          MDBOOK=0.5.4
+          curl -fsSL -o /tmp/mdbook.tar.gz             "https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK}/mdbook-v${MDBOOK}-x86_64-unknown-linux-gnu.tar.gz"
+          tar -xzf /tmp/mdbook.tar.gz -C /tmp
+          sudo install -m 0755 /tmp/mdbook /usr/local/bin/mdbook
+          mdbook --version
+          bash ferramentas/prova-docs.sh
+          tar -czf livro-aegis.tar.gz -C book .
+        continue-on-error: false
+
+      - name: Guardar o livro
+        uses: actions/upload-artifact@v4
+        with:
+          name: livro-aegis
+          path: livro-aegis.tar.gz
+          retention-days: 30
+
+      - name: O vertical de prova instala do zero, com licença
+        # 🔴 A régua do tijolo 1 é tempo, e tempo não se prova em cache. Este
+        # passo corre `ilha instalar` num banco **recém-criado** e confere que
+        # a ilha fica pronta.
+        #
+        # 🔴 E instala **com licença**, porque o gate recusa sem ela. Um CI que
+        # passasse a licença à parte estaria a medir um caminho que ninguém usa
+        # — e foi assim que esta divergência entrou: a versão anterior do
+        # ficheiro instalava sem `--licenca`, e quando o gate passou a existir
+        # o job passou a falhar sem ninguém olhar porque ninguém o corria.
+        #
+        # A raiz é a de **TESTE**, e a licença é emitida para a máquina do
+        # runner. Um job com a chave de produção transformava o runner num
+        # emissor de licença, e o runner vive num log.
+        env:
+          AEGIS_BANCO: postgres://aegis:aegis_t1@127.0.0.1:5432/aegis_prova
+          AEGIS_RAIZ_VENDOR: ${{ steps.raiz.outputs.chave }}
+        run: |
+          psql "postgres://aegis:aegis_t1@127.0.0.1:5432/postgres" \
+            -c "create database aegis_prova"
+          cargo build --release -p aegis
+
+          # 🔴 A máquina é NOMEADA, e a licença é a do repo. O passo emitia uma
+          # licença para o runner com um script que vivia noutro repo — e esse
+          # repo não está no checkout, portanto o job morria a tentar ler um
+          # ficheiro que nunca lá esteve. A licença é `node-lock` sobre
+          # máquina + sistema, e o sistema é `linux` num runner e `windows` na
+          # bancada: o repo traz as duas, e o `machine_id` é o mesmo.
+          MAQUINA="aegis-maquina-de-teste"
+          ./target/release/aegis licenca fingerprint --machine-id "$MAQUINA" | head -1
+
+          start=$(date +%s)
+          ./target/release/aegis ilha instalar \
+            --vertical verticals/hotelaria \
+            --licenca crates/aegis-license/fixtures/licenca-hotelaria-linux.json \
+            --chave-oem crates/aegis-license/fixtures/chave-oem.json \
+            --machine-id "$MAQUINA"
+          fim=$(date +%s)
+          echo "instalar do zero: $((fim - start))s"
+          ./target/release/aegis ilha estado --vertical verticals/hotelaria
+
+      - name: Sem licença, a instalação é recusada
+        # 🔴 O gate tem de ser provado **a recusar**. Um gate só testado no
+        # caminho feliz é um gate que ninguém sabe se existe.
+        env:
+          AEGIS_BANCO: postgres://aegis:aegis_t1@127.0.0.1:5432/aegis_prova
+          AEGIS_RAIZ_VENDOR: ${{ steps.raiz.outputs.chave }}
+        run: |
+          set +e
+          # 🔴 O `2>&1` **não é opcional**. A recusa vai para o **stderr** — é
+          # onde a casca escreve tudo o que é recusa — e o `$(…)` sem ele
+          # apanha só o stdout. O passo falhava com *"a recusa não disse que
+          # era a licença que faltava"* e a mensagem estava no log, duas
+          # linhas acima, à vista de todos. Um teste que não consegue ver o
+          # que está a testar não é um teste: é um boato.
+          out=$(./target/release/aegis ilha instalar \
+            --vertical verticals/hotelaria \
+            --chave-oem crates/aegis-license/fixtures/chave-oem.json 2>&1)
+          codigo=$?
+          set -e
+          echo "$out"
+          [ "$codigo" = "3" ] || { echo "esperava recusa (3), deu $codigo"; exit 1; }
+          echo "$out" | grep -q "licenca.ausente" || {
+            echo "a recusa não disse que era a licença que faltava"; exit 1; }
+          echo "OK  sem licença: recusado com o motivo certo"
+
+      - name: O Construtor escreve o produto
+        # 🔴 O ponto 10 do dono: montar uma página **escreve** o vertical. A
+        # prova corre contra uma CÓPIA, porque uma prova que mexe na coisa que
+        # prova é uma fonte de corrupção — e já reverteu uma correção duas
+        # vezes.
+        env:
+          AEGIS_BANCO: postgres://aegis:aegis_t1@127.0.0.1:5432/aegis_prova
+          AEGIS_PROVA_PORTA: "8031"
+        run: sh ferramentas/prova-construtor.sh

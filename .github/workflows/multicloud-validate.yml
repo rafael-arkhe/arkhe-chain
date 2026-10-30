@@ -1,0 +1,72 @@
+name: multicloud-validate
+on:
+  pull_request:
+    paths:
+      - 'ops/multicloud/**'
+      - 'evidence/arkhe-wormgraph/**'
+      - 'governance/arkhe-governance/**'
+      - 'storage/sql/migrations/**'
+      - '.github/workflows/multicloud-validate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: arkhe-ci-test-only }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -r ops/multicloud/evidence/requirements.txt
+      - run: python -m unittest discover -s ops/multicloud/tests -v
+      - uses: dtolnay/rust-toolchain@1.96.0
+        with: { components: rustfmt }
+      - run: cargo test --locked -p arkhe-governance -p arkhe-wormgraph --all-targets
+      - run: cargo test --locked -p arkhe-governance --doc
+      - name: Fencing and recoverable export against isolated PostgreSQL
+        env:
+          PGPASSWORD: arkhe-ci-test-only
+          ARKHE_TEST_FENCE_ADMIN_URL: postgres://postgres:arkhe-ci-test-only@127.0.0.1:5432/postgres
+          ARKHE_TEST_FENCE_AWS_URL: postgres://aws_writer:aws-local-only@127.0.0.1:5432/postgres
+          ARKHE_TEST_FENCE_AZURE_URL: postgres://azure_writer:azure-local-only@127.0.0.1:5432/postgres
+        shell: bash
+        run: |
+          set -euo pipefail
+          for migration in storage/sql/migrations/*.sql; do
+            psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -f "$migration"
+          done
+          psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE aws_writer LOGIN PASSWORD 'aws-local-only' NOINHERIT; CREATE ROLE azure_writer LOGIN PASSWORD 'azure-local-only' NOINHERIT; GRANT arkhe_append,arkhe_read TO aws_writer,azure_writer;"
+          cargo test --locked -p arkhe-wormgraph --test fencing_postgres -- --ignored
+      - uses: azure/setup-helm@v4.3.0
+        with: { version: v3.17.3 }
+      - name: Render both clouds with validation-only image
+        shell: bash
+        run: |
+          set -euo pipefail
+          chart=ops/multicloud/charts/arkhe-service
+          for cloud in aws azure; do
+            helm lint "$chart" -f "$chart/values-$cloud.yaml" --set image.repository=example/arkhe --set image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --set configSecret=arkhe-runtime
+            helm template arkhe-ask "$chart" -f "$chart/values-$cloud.yaml" --set image.repository=example/arkhe --set image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --set configSecret=arkhe-runtime > "/tmp/arkhe-$cloud.yaml"
+          done
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: 1.10.5 }
+      - run: terraform fmt -recursive -check ops/multicloud/infra
+      - name: Validate provider schemas without cloud credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          for environment in dev routing; do
+            terraform -chdir="ops/multicloud/infra/environments/$environment" init -backend=false -input=false
+            terraform -chdir="ops/multicloud/infra/environments/$environment" validate
+          done
+# Applying Terraform, syncing Argo CD and injecting faults require real environment
+# configuration and are deliberately not automatic consequences of a push.

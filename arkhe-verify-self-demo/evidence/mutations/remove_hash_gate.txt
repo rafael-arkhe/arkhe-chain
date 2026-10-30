@@ -1,0 +1,40 @@
+   Compiling arkhe-verify-self-demo v0.1.0 (C:\Users\Lemes\AppData\Local\Temp\arkhe-verifier-gate-mutations-3a_ldf3m\remove_hash_gate)
+    Finished `test` profile [unoptimized] target(s) in 5.04s
+     Running tests\negative.rs (D:\arkhe\arkhe-verify-self-demo\target\debug\deps\negative-f9cb87ea442a4d64.exe)
+
+running 11 tests
+test trust_root_stale_rejected ... ok
+test trust_root_freshness_boundary_and_future ... ok
+test damaged_merkle_path_rejected ... ok
+test checkpoint_tree_size_mismatch_rejected ... ok
+test forged_checkpoint_rejected ... ok
+test forged_set_rejected ... ok
+test tampered_valid_wasm_rejected_by_attestation ... ok
+test bundle_for_other_artifact_rejected ... ok
+test unrelated_rekor_entry_rejected ... ok
+test tampered_wasm_rejected_before_compile ... FAILED
+test unapproved_but_validly_signed_module_rejected_by_hash_pin ... FAILED
+
+failures:
+
+---- tampered_wasm_rejected_before_compile stdout ----
+
+thread 'tampered_wasm_rejected_before_compile' (6152) panicked at tests\negative.rs:37:5:
+assertion failed: matches!(load_verified_module(&Engine::default(), &tampered, BA),
+    Err(VerifyError::HashMismatch))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- unapproved_but_validly_signed_module_rejected_by_hash_pin stdout ----
+
+thread 'unapproved_but_validly_signed_module_rejected_by_hash_pin' (30168) panicked at tests\negative.rs:48:5:
+assertion failed: matches!(load_verified_module(&Engine::default(), B, BB),
+    Err(VerifyError::HashMismatch))
+
+
+failures:
+    tampered_wasm_rejected_before_compile
+    unapproved_but_validly_signed_module_rejected_by_hash_pin
+
+test result: FAILED. 9 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+error: test failed, to rerun pass `--test negative`

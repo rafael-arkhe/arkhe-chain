@@ -1,0 +1,10 @@
+# Build this image only from a public source snapshot produced by sourceSnapshot.
+# Network is allowed during dependency preparation, never during generated tests.
+FROM docker.io/library/rust:1.96-bookworm
+ENV CARGO_HOME=/opt/cargo
+COPY . /build
+WORKDIR /build
+RUN cargo fetch --locked && chmod -R a+rX /opt/cargo && rm -rf /build
+WORKDIR /work
+USER 10001:10001
+ENTRYPOINT ["/bin/sh"]

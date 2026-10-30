@@ -1,0 +1,50 @@
+# O livro do AEGIS.
+#
+# 🔴 Por que mdBook e não uma plataforma alojada (Mintlify, GitBook, Docusaurus):
+# a plataforma só não dá retrabalho se **ler os ficheiros Markdown do repo**.
+# `src/SUMMARY.md` aponta para o `README.md`, a referência GERADA e os
+# `LEIA-ME.md` — os mesmos ficheiros que já estão versionados. Uma plataforma
+# que guardasse o texto do lado dela voltaria a ter duas verdadeiras, e a
+# divergência entre as duas é exactamente o defeito que a referência gerada
+# acabou de matar.
+#
+# E o produto é uma ilha **offline, sem runtime**: o livro sai como ficheiros
+# estáticos e a ilha serve-os pelo mesmo `axum` que serve a tela. Sem CDN, sem
+# analytics, sem conta, e a documentação de um cliente sem internet é a mesma
+# que a de quem tem.
+#
+# `book.toml`    esta configuração
+# `src/`         só o `SUMMARY.md` — o resto aponta para ficheiros do repo
+[book]
+title = "AEGIS"
+description = "O núcleo reconstruído em Rust: um produto é uma pasta."
+language = "pt-BR"
+src = "src"
+
+[build]
+build-dir = "book"
+# 🔴 Um `SUMMARY.md` que aponta para um ficheiro que não existe é um livro com
+# uma página em branco e **sem erro** — e um livro com uma página em branco
+# é pior do que nenhum, porque parece completo. Com `create-missing = false`
+# o build falha, e o `cargo test` vê.
+create-missing = false
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+# 🔴 Sem CDN. O tema do `mdbook` costuma buscar as fontes no Google Fonts, e
+# uma ilha sem internet ficava com a documentação em Times New Roman — o que
+# é a forma mais cara de dizer "a documentação não foi feita para isto".
+no-section-label = true
+git-repository-url = "https://github.com/Safe-Core/aegis"
+
+[output.html.search]
+# 🔴 `copy-js` é o que faz a busca funcionar sem servidor. Sem isto o índice
+# fica preso a um `fetch` que o browser recusa em `file://`, e a busca
+# desaparece exactamente no sítio onde a ilha vive.
+copy-js = true
+limit-results = 25
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 2
+boost-paragraph = 1

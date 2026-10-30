@@ -1,0 +1,48 @@
+{
+  "profile": "support-contrastive-v6-experiment",
+  "status": "NOT_PROMOTED",
+  "support_domain_calibration": "PENDING",
+  "temperature": 2.1687846760564096,
+  "formula": "max entailment - max contradiction; both maxima retained",
+  "state_policy": {
+    "conflict": "E>=0.8 and C>=0.8",
+    "contradiction": "difference<=-0.5",
+    "support": "difference>=0.5",
+    "otherwise": "uncertain or insufficient evidence"
+  },
+  "thresholds_calibrated": false,
+  "original_v5_modified": false,
+  "input_representation": "Log of recorded positive softmax scores; equal to logits up to additive constant and original float rounding. Zero/nonfinite scores are unavailable.",
+  "source_triage_sha256": "c49c2a3b1b7873f72c624224d320c09acb295c25b411ea5711e22f83aad3c132",
+  "temperature_report_sha256": "f914172d1e9ae960430afaffbdd7dc66e33037e2de7a89aab2785c84a3f5fb24",
+  "temperature_scope": "Generic MultiNLI only; not evidence of support-domain or max-over-window calibration",
+  "cases": [
+    {
+      "id": "wixqa-expert-001",
+      "decision": "REQUIRE_APPROVAL",
+      "states": [
+        "CONTRADICTION_SIGNAL",
+        "CONTRADICTION_SIGNAL",
+        "CONTRADICTION_SIGNAL"
+      ]
+    },
+    {
+      "id": "wixqa-expert-002",
+      "decision": "REQUIRE_APPROVAL",
+      "states": [
+        "CONTRADICTION_SIGNAL",
+        "CONTRADICTION_SIGNAL",
+        "CONTRADICTION_SIGNAL"
+      ]
+    },
+    {
+      "id": "wixqa-expert-003",
+      "decision": "REQUIRE_APPROVAL",
+      "states": [
+        "INSUFFICIENT_EVIDENCE",
+        "INSUFFICIENT_EVIDENCE",
+        "INSUFFICIENT_EVIDENCE"
+      ]
+    }
+  ]
+}

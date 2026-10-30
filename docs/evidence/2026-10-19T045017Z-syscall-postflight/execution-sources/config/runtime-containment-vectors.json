@@ -1,0 +1,334 @@
+{
+  "schema": 1,
+  "state": "SPECIFIED_NOT_EXECUTED",
+  "profile": "arkhe-development-rootless-podman/v1",
+  "runtime_source": "apps/arkhe-intra/lib/development.mjs",
+  "image_configuration": "ops/local/intra/development.json",
+  "execution_enabled": false,
+  "suite_limits": {
+    "parallel_containers": 1,
+    "max_suite_seconds": 180,
+    "max_probe_output_bytes": 65536,
+    "cleanup_timeout_seconds": 15,
+    "max_auxiliary_containers": 2,
+    "parallelism_scope": "parallel_containers limits targets; fixture oracle and positive clients are separately bounded"
+  },
+  "statuses": [
+    "PLANNED",
+    "PASS",
+    "FAIL",
+    "ERROR",
+    "UNSUPPORTED"
+  ],
+  "excluded": [
+    "kernel exploits",
+    "real secrets",
+    "public network destinations",
+    "host process execution of probe code",
+    "unbounded resource exhaustion",
+    "global container cleanup"
+  ],
+  "vectors": [
+    {
+      "id": "identity",
+      "area": "preflight",
+      "profile": "build-current",
+      "expected": "non-root-no-new-privileges",
+      "procedure": "Read uid, CapEff, NoNewPrivs and Seccomp from /proc/self/status.",
+      "oracle": "uid=10001, CapEff=0, NoNewPrivs=1; record Seccomp, do not infer a specific filter.",
+      "budget": {
+        "wall_seconds": 3
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "cgroup-enforcement",
+      "area": "preflight",
+      "profile": "build-current",
+      "expected": "limits-enforced",
+      "procedure": "Read memory.max, pids.max, cpu.max and cgroup mount mode.",
+      "oracle": "memory.max=1610612736; pids.max=128; cpu.max=200000 100000; missing controllers is ERROR.",
+      "budget": {
+        "wall_seconds": 3
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "mount-inventory",
+      "area": "filesystem",
+      "profile": "build-current",
+      "expected": "profile-described",
+      "procedure": "Inventory /proc/self/mountinfo and actual mount flags.",
+      "oracle": "Record every writable mount including Podman implicit tmpfs; unknown mounts require review, never silently certify only /tmp and /work.",
+      "budget": {
+        "wall_seconds": 3
+      },
+      "attribution": "inventory"
+    },
+    {
+      "id": "socket-local-control",
+      "area": "network",
+      "profile": "build-current",
+      "expected": "allowed",
+      "procedure": "Create TCP/UDP sockets and communicate over loopback inside the same target namespace.",
+      "oracle": "Both endpoints share only the target namespace; confirms probe functionality without claiming external connectivity.",
+      "budget": {
+        "wall_seconds": 3,
+        "messages": 2,
+        "bytes_per_message": 64
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "tcp-egress",
+      "area": "network",
+      "profile": "build-current",
+      "expected": "denied",
+      "procedure": "Attempt TCP connection to a suite-owned canary outside target network namespace.",
+      "oracle": "No connection or canary receipt; paired positive-control client must reach canary first.",
+      "budget": {
+        "wall_seconds": 3,
+        "attempts": 1
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "udp-egress",
+      "area": "network",
+      "profile": "build-current",
+      "expected": "denied",
+      "procedure": "Send a nonce datagram to the isolated canary outside target namespace.",
+      "oracle": "Canary receives no nonce; sendto success alone is inconclusive; positive-control delivery is required.",
+      "budget": {
+        "wall_seconds": 3,
+        "attempts": 1,
+        "bytes": 64
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "dns-egress",
+      "area": "network",
+      "profile": "build-current",
+      "expected": "denied",
+      "procedure": "Send one nonce query to suite-owned DNS canary, never a public resolver.",
+      "oracle": "No canary query receipt; paired positive control succeeds. getaddrinfo failure alone is insufficient.",
+      "budget": {
+        "wall_seconds": 3,
+        "queries": 1
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "image-read-control",
+      "area": "filesystem",
+      "profile": "build-current",
+      "expected": "allowed",
+      "procedure": "Read a harmless fixture shipped in the image, never host /etc or real secrets.",
+      "oracle": "Fixture content matches its known digest; image filesystem reads are expected.",
+      "budget": {
+        "wall_seconds": 3,
+        "bytes": 256
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "writable-control",
+      "area": "filesystem",
+      "profile": "build-current",
+      "expected": "allowed",
+      "procedure": "Create, read and remove a nonce file in /tmp and /work.",
+      "oracle": "Content matches and cleanup completes.",
+      "budget": {
+        "wall_seconds": 3,
+        "bytes": 1024
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "input-read-control",
+      "area": "filesystem",
+      "profile": "build-current",
+      "expected": "allowed",
+      "procedure": "Read a suite-owned sentinel mounted at /input/sentinel.",
+      "oracle": "Sentinel digest matches.",
+      "budget": {
+        "wall_seconds": 3,
+        "bytes": 256
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "input-write",
+      "area": "filesystem",
+      "profile": "build-current",
+      "expected": "denied",
+      "procedure": "Attempt overwrite, create and rename inside the read-only input mount.",
+      "oracle": "All writes fail with a relevant filesystem error and host verifies original digest.",
+      "budget": {
+        "wall_seconds": 3,
+        "attempts": 3,
+        "bytes": 256
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "image-write",
+      "area": "filesystem",
+      "profile": "build-current",
+      "expected": "denied",
+      "procedure": "Attempt creation of nonce files under /etc and container root /.",
+      "oracle": "Write fails; distinguish EROFS from permission denial; either alone does not identify seccomp.",
+      "budget": {
+        "wall_seconds": 3,
+        "attempts": 2,
+        "bytes": 256
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "outside-mount-canary",
+      "area": "filesystem",
+      "profile": "build-current",
+      "expected": "denied",
+      "procedure": "Attempt read and existing-file write at the suite-owned unmounted VM sentinel path.",
+      "oracle": "No host content is read or changed; host verifies nonce and hash. ENOENT is expected namespace behavior.",
+      "budget": {
+        "wall_seconds": 3,
+        "bytes": 256,
+        "attempts": 2
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "traversal-and-symlink",
+      "area": "filesystem",
+      "profile": "build-current",
+      "expected": "denied",
+      "procedure": "Read an inside symlink as positive control; attempt traversal and outside-sentinel symlink reads.",
+      "oracle": "Canary is not read or changed; never use real host paths or credentials.",
+      "budget": {
+        "wall_seconds": 3,
+        "attempts": 3
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "subprocess-control",
+      "area": "process",
+      "profile": "build-current",
+      "expected": "allowed",
+      "procedure": "Spawn /bin/true through std::process::Command inside the build container.",
+      "oracle": "Exit 0 is required: this profile intentionally supports compiler and test subprocesses.",
+      "budget": {
+        "wall_seconds": 3,
+        "children": 1
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "ffi-control",
+      "area": "syscall",
+      "profile": "build-current",
+      "expected": "allowed",
+      "procedure": "Invoke harmless libc getpid through a precompiled probe.",
+      "oracle": "PID agrees with process identity; FFI syntax itself is not a sandbox boundary.",
+      "budget": {
+        "wall_seconds": 3,
+        "calls": 1
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "mount-capability",
+      "area": "syscall",
+      "profile": "build-current",
+      "expected": "denied",
+      "procedure": "Attempt one tmpfs mount at a fresh /work/suite-mount directory.",
+      "oracle": "Must fail; record errno and capability state; cannot attribute denial exclusively to seccomp.",
+      "budget": {
+        "wall_seconds": 3,
+        "calls": 1
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "seccomp-inventory",
+      "area": "syscall",
+      "profile": "build-current",
+      "expected": "filter-identified",
+      "procedure": "Record OCI runtime, architecture, engine version, seccomp mode and effective profile digest if accessible.",
+      "oracle": "Do not label syscall-filter conformance PASS without a pinned policy and per-architecture vector.",
+      "budget": {
+        "wall_seconds": 3
+      },
+      "attribution": "inventory"
+    },
+    {
+      "id": "tmp-noexec",
+      "area": "filesystem",
+      "profile": "build-current",
+      "expected": "denied",
+      "procedure": "Copy the same known tiny executable into /work and /tmp; compare direct exec results.",
+      "oracle": "Direct exec fails on noexec tmpfs; interpreting text from /tmp is outside this guarantee.",
+      "budget": {
+        "wall_seconds": 3,
+        "bytes": 65536,
+        "children": 2
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "memory-bounded",
+      "area": "resources",
+      "profile": "resource-reduced",
+      "expected": "cgroup-contained",
+      "procedure": "Use a separate reduced-limit container; allocate/touch memory in 8 MiB chunks, capped at 192 MiB.",
+      "oracle": "Verify 128 MiB cgroup limit before allocating, then record memory.events/OOMKilled. Exit 137 alone is insufficient.",
+      "budget": {
+        "wall_seconds": 8,
+        "memory_attempt_bytes": 201326592,
+        "memory_limit_bytes": 134217728,
+        "swap_limit_bytes": 134217728
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "cpu-bounded",
+      "area": "resources",
+      "profile": "resource-reduced",
+      "expected": "cgroup-contained",
+      "procedure": "Use two bounded compute threads for at most 3 seconds at 0.5 CPU quota.",
+      "oracle": "Verify cpu.max first, measure cpu.stat throttling and host watchdog. A timeout alone is not proof of a quota.",
+      "budget": {
+        "wall_seconds": 8,
+        "compute_seconds": 3,
+        "threads": 2,
+        "cpu_limit": 0.5
+      },
+      "attribution": "behavior"
+    },
+    {
+      "id": "pids-bounded",
+      "area": "resources",
+      "profile": "resource-reduced",
+      "expected": "cgroup-contained",
+      "procedure": "In a reduced-limit container try at most 24 short-lived children; no recursive forking.",
+      "oracle": "Verify pids.max=16 before spawning; correlate EAGAIN with pids.events max and reap all children.",
+      "budget": {
+        "wall_seconds": 8,
+        "spawn_attempts": 24,
+        "pids_limit": 16
+      },
+      "attribution": "behavior"
+    }
+  ],
+  "execution_scope": "full-22-vector-suite (still disabled); partial runs are recorded separately",
+  "partial_runs": [
+    "docs/evidence/2026-10-19T040641Z-runtime-first-trial/results.json",
+    "docs/evidence/2026-10-19T041747Z-filesystem-trial/results.json",
+    "docs/evidence/2026-10-19T043018Z-network-trial/results.json",
+    "docs/evidence/2026-10-19T044454Z-resource-trial/results.json",
+    "docs/evidence/2026-10-19T044610Z-resource-trial/results.json"
+  ]
+}

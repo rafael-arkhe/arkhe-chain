@@ -1,0 +1,265 @@
+{
+  "phase": "STATIC_DSL_TYPECHECK_ONLY",
+  "controls": {
+    "click": {
+      "type": [
+        "Pair",
+        "Grid",
+        "State"
+      ],
+      "nodes": 20,
+      "uses_memory": false
+    },
+    "move": {
+      "type": [
+        "Pair",
+        "Grid",
+        "State"
+      ],
+      "nodes": 22,
+      "uses_memory": false
+    }
+  },
+  "asts": {
+    "click": {
+      "op": "pair",
+      "args": [
+        {
+          "op": "if",
+          "args": [
+            {
+              "op": "eq_kind",
+              "args": [
+                {
+                  "op": "action_kind",
+                  "args": [
+                    {
+                      "op": "var",
+                      "args": [],
+                      "name": "a"
+                    }
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "args": [],
+                  "type": "ActionKind",
+                  "value": "CLICK"
+                }
+              ]
+            },
+            {
+              "op": "grid_set",
+              "args": [
+                {
+                  "op": "var",
+                  "args": [],
+                  "name": "g"
+                },
+                {
+                  "op": "coord",
+                  "args": [
+                    {
+                      "op": "option_default",
+                      "args": [
+                        {
+                          "op": "action_click_x",
+                          "args": [
+                            {
+                              "op": "var",
+                              "args": [],
+                              "name": "a"
+                            }
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "args": [],
+                          "type": "Offset",
+                          "value": 0
+                        }
+                      ]
+                    },
+                    {
+                      "op": "option_default",
+                      "args": [
+                        {
+                          "op": "action_click_y",
+                          "args": [
+                            {
+                              "op": "var",
+                              "args": [],
+                              "name": "a"
+                            }
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "args": [],
+                          "type": "Offset",
+                          "value": 0
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "args": [],
+                  "type": "Color",
+                  "value": 5
+                }
+              ]
+            },
+            {
+              "op": "var",
+              "args": [],
+              "name": "g"
+            }
+          ]
+        },
+        {
+          "op": "var",
+          "args": [],
+          "name": "s"
+        }
+      ]
+    },
+    "move": {
+      "op": "match_option",
+      "args": [
+        {
+          "op": "list_head",
+          "args": [
+            {
+              "op": "grid_objects",
+              "args": [
+                {
+                  "op": "var",
+                  "args": [],
+                  "name": "g"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "op": "pair",
+          "args": [
+            {
+              "op": "var",
+              "args": [],
+              "name": "g"
+            },
+            {
+              "op": "var",
+              "args": [],
+              "name": "s"
+            }
+          ]
+        },
+        {
+          "op": "lambda",
+          "args": [
+            {
+              "op": "pair",
+              "args": [
+                {
+                  "op": "if",
+                  "args": [
+                    {
+                      "op": "is_blocked",
+                      "args": [
+                        {
+                          "op": "var",
+                          "args": [],
+                          "name": "g"
+                        },
+                        {
+                          "op": "var",
+                          "args": [],
+                          "name": "o"
+                        },
+                        {
+                          "op": "literal",
+                          "args": [],
+                          "type": "Offset",
+                          "value": 1
+                        },
+                        {
+                          "op": "literal",
+                          "args": [],
+                          "type": "Offset",
+                          "value": 0
+                        }
+                      ]
+                    },
+                    {
+                      "op": "var",
+                      "args": [],
+                      "name": "g"
+                    },
+                    {
+                      "op": "translate",
+                      "args": [
+                        {
+                          "op": "var",
+                          "args": [],
+                          "name": "g"
+                        },
+                        {
+                          "op": "var",
+                          "args": [],
+                          "name": "o"
+                        },
+                        {
+                          "op": "literal",
+                          "args": [],
+                          "type": "Offset",
+                          "value": 1
+                        },
+                        {
+                          "op": "literal",
+                          "args": [],
+                          "type": "Offset",
+                          "value": 0
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "var",
+                  "args": [],
+                  "name": "s"
+                }
+              ]
+            }
+          ],
+          "params": [
+            "o"
+          ]
+        }
+      ]
+    }
+  },
+  "monomorphic_primitive_count": 28,
+  "special_forms": [
+    "if",
+    "let",
+    "pair",
+    "fold",
+    "list_head",
+    "list_len",
+    "is_some",
+    "option_default",
+    "match_option"
+  ],
+  "max_nodes": 24,
+  "tests_passed": 106,
+  "new_tests": 4,
+  "interpreter_implemented": false,
+  "enumerator_implemented": false,
+  "new_environment_actions": 0,
+  "source_sha256": "9060906e9b93105200e1f59dcff25eafcc26a158baa4773965e6b7886c361ce4"
+}

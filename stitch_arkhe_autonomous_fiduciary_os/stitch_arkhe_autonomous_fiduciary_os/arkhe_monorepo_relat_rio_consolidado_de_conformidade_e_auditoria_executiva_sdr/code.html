@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // SDR-001: Relatório Executivo Consolidado de Conformidade e Auditoria</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Inter & JetBrains Mono Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Container Queries and Forms -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary": "#472a00",
+            "surface-bright": "#36393f",
+            "on-tertiary-fixed": "#2a1700",
+            "on-primary-container": "#00422b",
+            "on-primary-fixed-variant": "#005236",
+            "on-secondary": "#00354a",
+            "surface-container-low": "#191c21",
+            "background": "#111319",
+            "error": "#ffb4ab",
+            "primary-fixed-dim": "#4edea3",
+            "tertiary": "#ffb95f",
+            "on-primary-fixed": "#002113",
+            "secondary": "#7bd0ff",
+            "on-secondary-container": "#00374d",
+            "on-error-container": "#ffdad6",
+            "secondary-fixed-dim": "#7bd0ff",
+            "surface-container-highest": "#32353b",
+            "inverse-primary": "#006c49",
+            "on-surface-variant": "#bbcabf",
+            "tertiary-fixed": "#ffddb8",
+            "on-background": "#e1e2ea",
+            "primary": "#4edea3",
+            "secondary-container": "#00a6e0",
+            "surface-container": "#1d2025",
+            "secondary-fixed": "#c4e7ff",
+            "primary-fixed": "#6ffbbe",
+            "inverse-surface": "#e1e2ea",
+            "surface": "#111319",
+            "on-surface": "#e1e2ea",
+            "tertiary-container": "#e29100",
+            "outline": "#86948a",
+            "surface-dim": "#111319",
+            "primary-container": "#10b981",
+            "on-secondary-fixed": "#001e2c",
+            "surface-tint": "#4edea3",
+            "on-secondary-fixed-variant": "#004c69",
+            "inverse-on-surface": "#2e3036",
+            "error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-container-high": "#272a30",
+            "on-primary": "#003824",
+            "outline-variant": "#3c4a42",
+            "tertiary-fixed-dim": "#ffb95f",
+            "surface-variant": "#32353b",
+            "surface-container-lowest": "#0b0e13",
+            "on-error": "#690005",
+            "on-tertiary-container": "#523200"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "space-md": "1rem",
+            "gutter-desktop": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.5rem",
+            "margin-desktop": "2rem",
+            "margin": "1rem",
+            "space-xl": "2rem",
+            "space-2xl": "3rem"
+          },
+          "fontFamily": {
+            "display-lg-mobile": ["Inter"],
+            "title-md": ["Inter"],
+            "headline-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "code-lg": ["JetBrains Mono"],
+            "headline-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "code-md": ["JetBrains Mono"],
+            "label-caps": ["JetBrains Mono"],
+            "headline-xl": ["Inter"],
+            "code-sm": ["JetBrains Mono"],
+            "headline-xl-mobile": ["Inter"],
+            "headline-sm": ["Inter"],
+            "display-lg": ["Inter"]
+          },
+          "fontSize": {
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "title-md": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "code-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "code-md": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-caps": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+            "code-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Monospace tabular metrics for invariant alignment */
+    .tabular-mono {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1, "zero" 1;
+    }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0e13;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #272a30;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3c4a42;
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface antialiased font-body-md selection:bg-primary-container selection:text-on-primary">
+<!-- ================= TOP NAVIGATION BAR (ANCHOR COMPONENT) ================= -->
+<header class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-space-lg h-12 bg-surface-container-lowest border-b border-outline-variant">
+<!-- Left: Brand / System Identifier -->
+<div class="flex items-center space-x-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="terminal">terminal</span>
+<span class="text-title-md font-title-md font-code-md tracking-wider text-primary">ARKHE // COMPUTATIONAL FIDUCIARY RUNTIME</span>
+</div>
+<span class="hidden xl:inline-block text-outline-variant">|</span>
+<span class="hidden xl:flex items-center gap-1.5 text-label-caps font-label-caps text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+        SDR-001 // EXECUTIVE COMPLIANCE REPORT // CANONICAL AUDIT
+      </span>
+</div>
+<!-- Center Navigation Links -->
+<nav class="hidden lg:flex items-center space-x-space-lg">
+<a class="text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-150 text-body-sm font-body-sm py-1 px-2 rounded" href="#">TCB Ledger</a>
+<a class="text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-150 text-body-sm font-body-sm py-1 px-2 rounded" href="#">Workspaces</a>
+<a class="text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-150 text-body-sm font-body-sm py-1 px-2 rounded" href="#">Contracts</a>
+<a class="text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-150 text-body-sm font-body-sm py-1 px-2 rounded" href="#">Causal DB</a>
+<a class="text-primary border-b-2 border-primary pb-1 font-semibold text-body-sm font-body-sm" href="#">CI/CD Gates</a>
+</nav>
+<!-- Right Actions Cluster -->
+<div class="flex items-center space-x-space-sm">
+<!-- Status Badges -->
+<div class="hidden md:flex items-center gap-2 mr-2">
+<span class="px-2 py-0.5 rounded bg-primary-container/10 border border-primary-container/30 text-primary text-label-caps font-label-caps flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+          TCB VERIFIED: 100% BIT-A-BIT
+        </span>
+<span class="px-2 py-0.5 rounded bg-error/10 border border-error/30 text-error text-label-caps font-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="lock">lock</span>
+          FAIL-CLOSED GATES: ARMED
+        </span>
+</div>
+<!-- Trailing Primary & Secondary Actions -->
+<button class="bg-surface-container-high hover:bg-surface-container border border-outline-variant hover:border-outline text-secondary text-label-caps font-label-caps px-3 py-1.5 rounded transition-all duration-150 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]" data-icon="sync">sync</span>
+        RE-VERIFY CANONICAL MMR
+      </button>
+<button class="bg-primary hover:bg-primary-fixed-dim text-surface-container-lowest font-medium text-label-caps font-label-caps px-3 py-1.5 rounded transition-all duration-150 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified_user">verified_user</span>
+        EXPORT AUDIT CERTIFICATE (PDF/C2PA)
+      </button>
+<!-- Trailing Icon Action -->
+<div class="flex items-center border-l border-outline-variant pl-space-sm ml-1 text-on-surface-variant">
+<button class="w-7 h-7 rounded border border-outline-variant bg-surface-container flex items-center justify-center hover:border-primary transition-colors" title="Security Architect Key Identity">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="shield_person">shield_person</span>
+</button>
+</div>
+</div>
+</header>
+<!-- ================= SHELL WRAPPER ================= -->
+<div class="flex pt-12 min-h-screen">
+<!-- ================= SIDEBAR NAVIGATION (ANCHOR COMPONENT) ================= -->
+<aside class="fixed left-0 top-12 bottom-0 w-64 flex flex-col justify-between p-space-sm z-40 bg-surface-container-low border-r border-outline-variant overflow-y-auto">
+<!-- Header Section -->
+<div>
+<div class="px-space-md py-space-sm mb-space-sm border-b border-outline-variant/60">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="developer_board">developer_board</span>
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight">ARKHE MONOREPO</span>
+</div>
+<div class="text-code-sm font-code-sm text-outline flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+            v0.9.4-PROD // BLAKE3-VERIFIED
+          </div>
+</div>
+<!-- Action Button -->
+<div class="px-space-xs mb-space-md">
+<button class="w-full bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary text-primary text-label-caps font-label-caps py-2 px-3 rounded flex items-center justify-center gap-2 transition-all duration-150">
+<span class="material-symbols-outlined text-[14px]" data-icon="sync">sync</span>
+            SYNC CANONICAL MMR
+          </button>
+</div>
+<!-- Navigation Tabs -->
+<nav class="space-y-1">
+<div class="px-space-md py-1 text-label-caps font-label-caps text-outline uppercase tracking-wider">Módulos Auditados</div>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 px-space-md py-space-sm flex items-center gap-2.5 rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="shield_person">shield_person</span>
+<span>1. Separação de Autoridades</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 px-space-md py-space-sm flex items-center gap-2.5 rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="folder_data">folder_data</span>
+<span>2. Mapeamento &amp; Crates</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 px-space-md py-space-sm flex items-center gap-2.5 rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="terminal">terminal</span>
+<span>3. Contratos AKG-CBOR-v1</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 px-space-md py-space-sm flex items-center gap-2.5 rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="database">database</span>
+<span>4. Causal DB &amp; Triggers</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 px-space-md py-space-sm flex items-center gap-2.5 rounded text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified_user">verified_user</span>
+<span>5. Gates &amp; Sandboxes</span>
+</a>
+<!-- ACTIVE ITEM: SDR-001 Executive Audit -->
+<a class="text-primary bg-surface-container border-l-2 border-primary px-space-md py-space-sm font-medium flex items-center justify-between rounded-r text-body-sm font-body-sm" href="#">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="security">security</span>
+<span>6. Auditoria Executiva SDR-001</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+</a>
+</nav>
+</div>
+<!-- Footer Subsystem Diagnostics -->
+<div class="border-t border-outline-variant pt-space-sm space-y-1">
+<div class="px-space-md py-1 text-label-caps font-label-caps text-outline uppercase tracking-wider">Infraestrutura TCB</div>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 px-space-md py-space-sm flex items-center gap-2 rounded text-code-sm font-code-sm" href="#">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="developer_board">developer_board</span>
+<span>Diagnostic Terminal</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 px-space-md py-space-sm flex items-center gap-2 rounded text-code-sm font-code-sm" href="#">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="query_stats">query_stats</span>
+<span>Kernel Telemetry</span>
+</a>
+<div class="mt-2 p-2 bg-surface-container-lowest rounded border border-outline-variant/40">
+<div class="flex justify-between items-center text-label-caps font-label-caps text-outline">
+<span>MEM-ISOLATION</span>
+<span class="text-primary">SECURE</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full mt-1 overflow-hidden">
+<div class="bg-primary h-full w-full"></div>
+</div>
+</div>
+</div>
+</aside>
+<!-- ================= MAIN CONTENT CANVAS ================= -->
+<main class="ml-64 flex-1 p-space-lg xl:p-space-xl bg-surface-container-lowest overflow-x-hidden min-h-[calc(100vh-3rem)]">
+<div class="max-w-[1600px] mx-auto space-y-space-lg">
+<!-- SECTION 1: HEADER & EXECUTIVE SUMMARY -->
+<section class="bg-surface border border-outline-variant rounded p-space-lg relative overflow-hidden">
+<!-- Background decorative engineering grid hint -->
+<div class="absolute right-0 top-0 w-96 h-full opacity-5 pointer-events-none bg-[radial-gradient(#4edea3_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-md border-b border-outline-variant/60 pb-space-lg">
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant text-secondary text-code-sm font-code-sm tabular-mono">
+                  RELATÓRIO AUDIT-SPEC-SDR-001
+                </span>
+<span class="px-2 py-0.5 rounded bg-primary-container/20 border border-primary-container/40 text-primary text-label-caps font-label-caps">
+                  CANONICAL AUDIT PASS
+                </span>
+<span class="text-code-sm font-code-sm text-outline tabular-mono">
+                  SHA-256: 4c2b9a1e09df8c...
+                </span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">
+                SDR-001: Relatório Executivo Consolidado de Conformidade e Auditoria Criptográfica
+              </h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-4xl">
+                Atestação formal e verificação ponta a ponta da Camada de Fideicomisso Computacional (Arkhe Monorepo v0.9.4-PROD). Verificação bit-a-bit e auditoria determinística de invariants matemáticos, autoridade de chaves e barreiras de sandbox.
+              </p>
+</div>
+<!-- Header Quick Verification Meta -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+<div class="bg-surface-container-low border border-outline-variant px-space-md py-space-sm rounded">
+<span class="text-label-caps font-label-caps text-outline block">ESTADO DO RUNTIME</span>
+<span class="text-code-md font-code-md text-primary font-bold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                  FAIL-CLOSED ENFORCED
+                </span>
+</div>
+<div class="bg-surface-container-low border border-outline-variant px-space-md py-space-sm rounded">
+<span class="text-label-caps font-label-caps text-outline block">QUÓRUM ADR-011</span>
+<span class="text-code-md font-code-md text-secondary font-bold">3/3 ATTESTED</span>
+</div>
+</div>
+</div>
+<!-- BENTO KPI CARDS (GRID OF 4) -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md mt-space-lg">
+<!-- Card 1 -->
+<div class="bg-surface-container-low border border-outline-variant p-space-md rounded hover:border-primary transition-all duration-150">
+<div class="flex items-center justify-between text-label-caps font-label-caps text-outline mb-2">
+<span>POSTULADO FORMAL I</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="verified_user">verified_user</span>
+</div>
+<div class="text-headline-md font-headline-md font-bold text-primary mb-1">
+                100%
+              </div>
+<div class="text-title-md font-title-md text-on-surface font-semibold mb-1">
+                Pureza Formal do TCB
+              </div>
+<p class="text-code-sm font-code-sm text-on-surface-variant">
+                Zero <code class="text-error font-code-sm">unsafe</code>, Clippy Pedantic Deny ativo em todo o monorepo, zero vazamentos FFI Rust.
+              </p>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-code-sm font-code-sm text-outline tabular-mono">
+<span>Linhas Auditadas</span>
+<span class="text-on-surface">148,290 LOC</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-low border border-outline-variant p-space-md rounded hover:border-secondary transition-all duration-150">
+<div class="flex items-center justify-between text-label-caps font-label-caps text-outline mb-2">
+<span>DETERMINISMO BINÁRIO</span>
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="terminal">terminal</span>
+</div>
+<div class="text-headline-md font-headline-md font-bold text-secondary mb-1">
+                0 Bit Delta
+              </div>
+<div class="text-title-md font-title-md text-on-surface font-semibold mb-1">
+                Paridade Nativa vs. WASM
+              </div>
+<p class="text-code-sm font-code-sm text-on-surface-variant">
+                Verificado em 1,024 golden vectors RFC 8949 §4.2.1. Execução determinística idêntica x86_64 e wasm32.
+              </p>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-code-sm font-code-sm text-outline tabular-mono">
+<span>AKG-CBOR-v1</span>
+<span class="text-secondary">ISOMÓRFICO</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-low border border-outline-variant p-space-md rounded hover:border-primary transition-all duration-150">
+<div class="flex items-center justify-between text-label-caps font-label-caps text-outline mb-2">
+<span>CRIPTO-HISTÓRIA</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="database">database</span>
+</div>
+<div class="text-headline-md font-headline-md font-bold text-on-surface mb-1">
+                1,048,576
+              </div>
+<div class="text-title-md font-title-md text-on-surface font-semibold mb-1">
+                Integridade do WormGraph
+              </div>
+<p class="text-code-sm font-code-sm text-on-surface-variant">
+                Nós imutáveis ancorados. Raiz MMR <code class="text-primary font-code-sm">0x4c2b9a1e</code> atestada no Sigstore Rekor RFC 6962.
+              </p>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-code-sm font-code-sm text-outline tabular-mono">
+<span>Rekor Entry ID</span>
+<span class="text-on-surface">#84920412</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-low border border-outline-variant p-space-md rounded hover:border-tertiary transition-all duration-150">
+<div class="flex items-center justify-between text-label-caps font-label-caps text-outline mb-2">
+<span>SUPERFÍCIE DE ATAQUE</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="security">security</span>
+</div>
+<div class="text-headline-md font-headline-md font-bold text-primary mb-1">
+                Zero CVEs Ativos
+              </div>
+<div class="text-title-md font-title-md text-on-surface font-semibold mb-1">
+                Resiliência de Sandbox Escape
+              </div>
+<p class="text-code-sm font-code-sm text-on-surface-variant">
+                gVisor ≥ 20260831.0 &amp; runwasi ≥ 0.6.1 mitigando formalmente CVE-2026-95702 e CVE-2026-47218.
+              </p>
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-code-sm font-code-sm text-outline tabular-mono">
+<span>Isolamento Duplo</span>
+<span class="text-tertiary">FAIL-CLOSED</span>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: MATRIZ CONSOLIDADA DE CONFORMIDADE REGULATÓRIA E FIDUCIÁRIA -->
+<section class="bg-surface border border-outline-variant rounded p-space-lg space-y-space-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-outline-variant/60 pb-space-sm">
+<div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="verified">verified</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">
+                  Matriz Consolidada de Conformidade Regulatória e Fiduciária
+                </h2>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+                Garantias mecânicas não-negociáveis de execução, atestadas pelo motor formal do kernel Arkhe.
+              </p>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-code-sm font-code-sm text-outline tabular-mono">5 DOMÍNIOS // 100% PASS</span>
+<button class="bg-surface-container-high border border-outline-variant text-on-surface hover:text-primary text-label-caps font-label-caps px-2.5 py-1 rounded transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="terminal">terminal</span>
+                INSPECIONAR ASSERTIONS
+              </button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto border border-outline-variant rounded bg-surface-container-lowest">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant h-8">
+<th class="px-space-md py-2 text-label-caps font-label-caps text-outline uppercase tracking-wider">Domínio / Subsistema</th>
+<th class="px-space-md py-2 text-label-caps font-label-caps text-outline uppercase tracking-wider">Mecanismo de Prova Inegociável</th>
+<th class="px-space-md py-2 text-label-caps font-label-caps text-outline uppercase tracking-wider">Garantia Mecânica / Enforcement</th>
+<th class="px-space-md py-2 text-label-caps font-label-caps text-outline uppercase tracking-wider">Status de Auditoria</th>
+<th class="px-space-md py-2 text-label-caps font-label-caps text-outline uppercase tracking-wider">Hash de Atestação BLAKE3</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30 text-body-sm font-body-sm">
+<!-- Row 1: Segregação de Autoridades -->
+<tr class="hover:bg-surface-container/60 transition-colors duration-100 group">
+<td class="px-space-md py-3 font-medium text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="shield_person">shield_person</span>
+<span>Segregação de Autoridades</span>
+</div>
+<span class="text-code-sm font-code-sm text-outline block mt-0.5">kernel/ vs cognition/</span>
+</td>
+<td class="px-space-md py-3 text-on-surface-variant font-code-sm text-code-sm">
+                    ContainmentGate Rust <code class="text-secondary font-code-sm">no_std</code>, barreira de hardware ring-0.
+                  </td>
+<td class="px-space-md py-3 text-on-surface-variant">
+                    Chave Privada isolada no TCB; cognição opera sob <strong class="text-on-surface">Zero Custody</strong> absoluta.
+                  </td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary-container/15 border border-primary-container/30 text-primary text-label-caps font-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                      CONFORME (Fail-Closed)
+                    </span>
+</td>
+<td class="px-space-md py-3 font-code-sm text-code-sm tabular-mono text-outline group-hover:text-primary transition-colors">
+<div class="flex items-center gap-1">
+<span class="text-secondary font-semibold">B3:</span>
+<span>7f8b91a2…e4c1</span>
+<button class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity hover:text-white" title="Copiar Hash">content_copy</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Contratos Binários -->
+<tr class="hover:bg-surface-container/60 transition-colors duration-100 group">
+<td class="px-space-md py-3 font-medium text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="terminal">terminal</span>
+<span>Contratos Binários</span>
+</div>
+<span class="text-code-sm font-code-sm text-outline block mt-0.5">crates/akg-cbor-v1</span>
+</td>
+<td class="px-space-md py-3 text-on-surface-variant font-code-sm text-code-sm">
+                    RFC 8949 §4.2.1 ordenação determinística estrita.
+                  </td>
+<td class="px-space-md py-3 text-on-surface-variant">
+                    Domain separation canônica <code class="text-primary font-code-sm">0x00 / 0x01</code> impedindo confusão de tipo.
+                  </td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-secondary-container/15 border border-secondary/30 text-secondary text-label-caps font-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                      MATEMATICAMENTE PROVADO
+                    </span>
+</td>
+<td class="px-space-md py-3 font-code-sm text-code-sm tabular-mono text-outline group-hover:text-primary transition-colors">
+<div class="flex items-center gap-1">
+<span class="text-secondary font-semibold">B3:</span>
+<span>3d12ca90…9f5e</span>
+<button class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity hover:text-white" title="Copiar Hash">content_copy</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Imutabilidade de Dados -->
+<tr class="hover:bg-surface-container/60 transition-colors duration-100 group">
+<td class="px-space-md py-3 font-medium text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="database">database</span>
+<span>Imutabilidade de Dados</span>
+</div>
+<span class="text-code-sm font-code-sm text-outline block mt-0.5">evidence/arkhe-sql</span>
+</td>
+<td class="px-space-md py-3 text-on-surface-variant font-code-sm text-code-sm">
+                    PostgreSQL 16+ FORCE RLS &amp; Append-Only WORM.
+                  </td>
+<td class="px-space-md py-3 text-on-surface-variant">
+                    Triggers BEFORE UPDATE/DELETE que abortam mutações com exceção fatal. Roles sem privilégio DML.
+                  </td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary-container/15 border border-primary-container/30 text-primary text-label-caps font-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                      IMUTÁVEL / BACKSTOP ATIVO
+                    </span>
+</td>
+<td class="px-space-md py-3 font-code-sm text-code-sm tabular-mono text-outline group-hover:text-primary transition-colors">
+<div class="flex items-center gap-1">
+<span class="text-secondary font-semibold">B3:</span>
+<span>a049cf12…3302</span>
+<button class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity hover:text-white" title="Copiar Hash">content_copy</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Isolamento de Sandboxes -->
+<tr class="hover:bg-surface-container/60 transition-colors duration-100 group">
+<td class="px-space-md py-3 font-medium text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="security">security</span>
+<span>Isolamento de Sandboxes</span>
+</div>
+<span class="text-code-sm font-code-sm text-outline block mt-0.5">orchestration/</span>
+</td>
+<td class="px-space-md py-3 text-on-surface-variant font-code-sm text-code-sm">
+                    Perfis Wasmtime / Wasmer / WaSC hiper-restritivos.
+                  </td>
+<td class="px-space-md py-3 text-on-surface-variant">
+                    Dupla virtualização gVisor para todo código untrusted. Seccomp-BPF bloqueando syscalls não mapeadas.
+                  </td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary-container/15 border border-primary-container/30 text-primary text-label-caps font-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                      ISOLAMENTO TOTAL
+                    </span>
+</td>
+<td class="px-space-md py-3 font-code-sm text-code-sm tabular-mono text-outline group-hover:text-primary transition-colors">
+<div class="flex items-center gap-1">
+<span class="text-secondary font-semibold">B3:</span>
+<span>52ea8804…bb91</span>
+<button class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity hover:text-white" title="Copiar Hash">content_copy</button>
+</div>
+</td>
+</tr>
+<!-- Row 5: Gates de CI/CD & CI Imutável -->
+<tr class="hover:bg-surface-container/60 transition-colors duration-100 group">
+<td class="px-space-md py-3 font-medium text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="verified_user">verified_user</span>
+<span>Gates de CI/CD &amp; CI Imutável</span>
+</div>
+<span class="text-code-sm font-code-sm text-outline block mt-0.5">.github/workflows/*</span>
+</td>
+<td class="px-space-md py-3 text-on-surface-variant font-code-sm text-code-sm">
+                    6 workflows invioláveis com branches protegidas.
+                  </td>
+<td class="px-space-md py-3 text-on-surface-variant">
+                    Bloqueio determinístico de merge em qualquer falha de teste estático, linter ou mutação de checksum.
+                  </td>
+<td class="px-space-md py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary-container/15 border border-primary-container/30 text-primary text-label-caps font-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                      100% GATES VERIFICADOS
+                    </span>
+</td>
+<td class="px-space-md py-3 font-code-sm text-code-sm tabular-mono text-outline group-hover:text-primary transition-colors">
+<div class="flex items-center gap-1">
+<span class="text-secondary font-semibold">B3:</span>
+<span>9c01f68e…018a</span>
+<button class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity hover:text-white" title="Copiar Hash">content_copy</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- SECTION 3: CERTIFICADO CRIPTOGRÁFICO DE AUDITORIA E ASSINATURA DIGITAL (INTERACTIVE PANEL) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+<!-- Left Col: The Fiduciary Certificate (7 Cols) -->
+<div class="lg:col-span-7 bg-surface border border-primary/30 rounded p-space-lg relative overflow-hidden flex flex-col justify-between">
+<div class="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+<div>
+<div class="flex items-start justify-between border-b border-outline-variant/60 pb-space-md mb-space-md">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-[24px]" data-icon="verified_user">verified_user</span>
+<span class="text-headline-sm font-headline-sm text-on-surface font-bold tracking-tight">
+                      Certificado de Fideicomisso Computacional
+                    </span>
+</div>
+<span class="text-code-sm font-code-sm text-outline tabular-mono">
+                    CANONICAL ATTESTATION BUNDLE // IDENTIFIER: ARKHE-CERT-2026-SDR001
+                  </span>
+</div>
+<div class="text-right">
+<span class="px-2.5 py-1 rounded bg-primary-container/20 border border-primary-container text-primary font-bold text-label-caps font-label-caps inline-block">
+                    PRODUCED &amp; VERIFIED
+                  </span>
+</div>
+</div>
+<!-- Seals & Sigstore Telemetry -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm mb-space-md">
+<div class="p-space-sm bg-surface-container-lowest border border-outline-variant rounded">
+<div class="flex items-center gap-1.5 text-label-caps font-label-caps text-outline mb-1">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="lock">lock</span>
+                    SIGSTORE REKOR LOG ENTRY
+                  </div>
+<div class="text-code-md font-code-md text-on-surface font-semibold tabular-mono">Entry ID: #84920412</div>
+<div class="text-code-sm font-code-sm text-outline mt-1 tabular-mono">Timestamp: 2026-09-01T04:12:09Z</div>
+<div class="text-code-sm font-code-sm text-primary mt-0.5 truncate tabular-mono">Root: 0x4c2b9a1e09df8c772b...</div>
+</div>
+<div class="p-space-sm bg-surface-container-lowest border border-outline-variant rounded">
+<div class="flex items-center gap-1.5 text-label-caps font-label-caps text-outline mb-1">
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="security">security</span>
+                    STATUS DO QUÓRUM M-DE-N (ADR-011)
+                  </div>
+<div class="text-code-md font-code-md text-primary font-semibold tabular-mono">3 / 3 Assinaturas Ativas</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant mt-1">Multi-Party Ed25519 Threshold</div>
+<div class="text-code-sm font-code-sm text-secondary mt-0.5">Enforcement: Hardware-Grounded</div>
+</div>
+</div>
+<!-- Signers List -->
+<div class="space-y-2 border-t border-outline-variant/40 pt-space-sm mb-space-md">
+<div class="text-label-caps font-label-caps text-outline uppercase">Chaves Criptográficas do Comitê de Fideicomisso</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low border border-outline-variant/40 text-code-sm font-code-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface font-medium">Security Architect Lead</span>
+</div>
+<span class="text-outline tabular-mono">ed25519:7a81b...c912</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low border border-outline-variant/40 text-code-sm font-code-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface font-medium">Formal Verification Principal</span>
+</div>
+<span class="text-outline tabular-mono">ed25519:3d09a...110e</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low border border-outline-variant/40 text-code-sm font-code-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface font-medium">Independent Infrastructure Auditor</span>
+</div>
+<span class="text-outline tabular-mono">ed25519:e459c...ff88</span>
+</div>
+</div>
+</div>
+<!-- Verdict Statement -->
+<div class="bg-primary-container/10 border border-primary-container/40 p-space-sm rounded flex items-center justify-between">
+<div>
+<span class="text-label-caps font-label-caps text-primary uppercase block">Veredicto Fiduciário Executivo</span>
+<span class="text-title-md font-title-md text-on-surface font-bold">
+                  APROVADO PARA PRODUÇÃO // FIDUCIARY INTEGRITY ASSURED
+                </span>
+</div>
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="verified">verified</span>
+</div>
+</div>
+<!-- Right Col: CLI Proof Snippet & Terminal Emulation (5 Cols) -->
+<div class="lg:col-span-5 bg-surface-container-lowest border border-outline-variant rounded p-space-md flex flex-col justify-between font-code-sm">
+<div>
+<!-- Terminal Header -->
+<div class="flex items-center justify-between pb-2 mb-3 border-b border-outline-variant/50">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-error"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+<span class="text-code-sm font-code-sm text-outline ml-1">arkhe-verify-cli v0.9.4</span>
+</div>
+<span class="text-label-caps font-label-caps text-outline">STRICT-DETERMINISM</span>
+</div>
+<!-- Terminal Content -->
+<div class="space-y-2 text-code-sm font-code-sm leading-relaxed text-on-surface-variant tabular-mono">
+<div class="text-outline">
+                  # Execução de atestação formal canônica com barreira fail-closed:
+                </div>
+<div class="text-on-surface bg-surface-container-low p-2 rounded border border-outline-variant/40">
+<span class="text-primary">$</span> arkhe-verify-cli audit-bundle \
+                  <br/>  --spec <span class="text-secondary">SDR-001</span> \
+                  <br/>  --canonical-mmr <span class="text-tertiary">0x9e8a04c2b9a1e09d</span> \
+                  <br/>  --strict-fail-closed
+                </div>
+<div class="pt-2 text-outline space-y-1">
+<div>[1/5] Verifying zero-unsafe invariants in crates/... <span class="text-primary">[OK]</span></div>
+<div>[2/5] Checking RFC 8949 CBOR lexicographical sort... <span class="text-primary">[OK]</span></div>
+<div>[3/5] Testing PostgreSQL 16 RLS triggers abort-path... <span class="text-primary">[OK]</span></div>
+<div>[4/5] Inspecting gVisor/Wasmtime sandbox barriers... <span class="text-primary">[OK]</span></div>
+<div>[5/5] Re-computing WormGraph MMR root digest... <span class="text-primary">[OK]</span></div>
+</div>
+<div class="p-2.5 bg-primary/10 border border-primary/30 rounded text-primary mt-2">
+<strong>-&gt; [PASS]</strong> Todos os 5 domínios arquiteturais satisfazem rigorosamente os postulados da Camada de Fideicomisso Computacional.
+                </div>
+</div>
+</div>
+<!-- Terminal Actions / Copy button -->
+<div class="pt-3 mt-3 border-t border-outline-variant/50 flex items-center justify-between text-code-sm">
+<span class="text-outline">Assinatura de saída: <span class="text-secondary">b3_39a1...ff02</span></span>
+<button class="text-label-caps font-label-caps text-primary hover:text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[14px]" data-icon="content_copy">content_copy</span>
+                COPIAR PROOF
+              </button>
+</div>
+</div>
+</section>
+<!-- SECTION 4: BOTÕES DE AÇÃO EXECUTIVA NO RODAPÉ -->
+<footer class="bg-surface border border-outline-variant rounded p-space-md flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-primary animate-pulse"></span>
+<div>
+<span class="text-body-sm font-body-sm text-on-surface font-semibold block">Audit Snapshot Ancorado e Criptograficamente Selado</span>
+<span class="text-code-sm font-code-sm text-outline tabular-mono">MMR Root: 0x4c2b9a1e09df8c772b90ae4402c9182310fa09ce // Invariante: Preservada</span>
+</div>
+</div>
+<!-- Executive Action Buttons -->
+<div class="flex flex-wrap items-center gap-space-sm w-full md:w-auto justify-end">
+<button class="bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-secondary text-secondary text-label-caps font-label-caps px-4 py-2 rounded transition-all duration-150 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="database">database</span>
+              Inspecionar Folhas no WormGraph
+            </button>
+<button class="bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-tertiary text-tertiary text-label-caps font-label-caps px-4 py-2 rounded transition-all duration-150 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="sync">sync</span>
+              Re-executar Suite Completa
+            </button>
+<button class="bg-primary hover:bg-primary-fixed-dim text-surface-container-lowest font-semibold text-label-caps font-label-caps px-4 py-2 rounded transition-all duration-150 flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+              Download Bundle de Provas C2PA
+            </button>
+</div>
+</footer>
+</div>
+</main>
+</div>
+</body></html>

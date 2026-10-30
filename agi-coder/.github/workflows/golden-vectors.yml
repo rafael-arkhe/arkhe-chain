@@ -1,0 +1,12 @@
+name: Static golden vectors
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - run: cargo test --locked -p agi-coder-tests --test golden_vectors --test security
+      # Never regenerate fixtures here. Changes to the profile require human review.

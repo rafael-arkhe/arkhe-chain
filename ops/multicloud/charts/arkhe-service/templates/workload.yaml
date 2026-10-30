@@ -1,0 +1,109 @@
+{{- $name := .Release.Name -}}
+{{- $repository := required "image.repository is required" .Values.image.repository -}}
+{{- $digest := required "image.digest is required" .Values.image.digest -}}
+{{- if not (regexMatch "^sha256:[a-f0-9]{64}$" $digest) }}
+{{- fail "image.digest must be a sha256 digest" }}
+{{- end }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  annotations:
+    {{- toYaml .Values.serviceAccount.annotations | nindent 4 }}
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: { app.kubernetes.io/name: {{ $name }} }
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ $name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile: { type: RuntimeDefault }
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app.kubernetes.io/name: {{ $name }} }
+      containers:
+        - name: service
+          image: {{ printf "%s@%s" $repository $digest | quote }}
+          ports: [{ name: http, containerPort: {{ .Values.port }} }]
+          env:
+            - { name: ARKHE_LISTEN, value: {{ printf "0.0.0.0:%v" .Values.port | quote }} }
+            - { name: ARKHE_CLOUD, value: {{ .Values.cloud | quote }} }
+          envFrom:
+            - secretRef:
+                name: {{ required "configSecret is required" .Values.configSecret }}
+          readinessProbe:
+            httpGet: { path: {{ .Values.healthPath | quote }}, port: http }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: {{ .Values.healthPath | quote }}, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: {} }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+spec:
+  selector: { app.kubernetes.io/name: {{ $name }} }
+  ports: [{ name: http, port: 80, targetPort: http }]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $name }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: {{ $name }} }
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $name }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ required "ingress.className required" .Values.ingress.className }}
+  tls:
+    - hosts: [{{ required "ingress.host required" .Values.ingress.host | quote }}]
+      secretName: {{ required "ingress.tlsSecret required" .Values.ingress.tlsSecret }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: {{ $name }}, port: { name: http } }
+{{- end }}

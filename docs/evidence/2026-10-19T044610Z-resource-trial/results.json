@@ -1,0 +1,817 @@
+{
+  "build": {
+    "binary_sha256": "023f3cb1331082e11e396862583946d132144701912c18e2aaa89e6803abc393",
+    "container_id": "a877b7810216f7ae461a6e83bf6ebef51df33b0ca3524b36cb6574793980ce4c",
+    "exit_code": 0,
+    "policy": [
+      "--connection",
+      "arkhe-containment",
+      "create",
+      "--label",
+      "io.arkhe.containment.run=3861d71f-29b7-41df-a881-1f4fe536a2dc",
+      "--name",
+      "arkhe-containment-3861d71f-29b7-41df-a881-1f4fe536a2dc-build",
+      "--pull=never",
+      "--network=none",
+      "--read-only",
+      "--cap-drop=ALL",
+      "--security-opt=no-new-privileges",
+      "--user=10001:10001",
+      "--pids-limit=128",
+      "--memory=1536m",
+      "--cpus=2",
+      "--cgroup-parent=/arkhe-sandbox",
+      "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+      "--tmpfs=/tmp:rw,noexec,size=67108864",
+      "--volume",
+      "/mnt/d/arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/build-input:/input:ro",
+      "--workdir=/work",
+      "--env=CARGO_HOME=/opt/cargo",
+      "--env=CARGO_TARGET_DIR=/work/target",
+      "--env=CARGO_NET_OFFLINE=true",
+      "--entrypoint=/bin/sh",
+      "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+      "-c",
+      "rustc --edition=2021 -C opt-level=s -C strip=symbols /input/probe.rs -o /work/probe && cat /work/probe",
+      "arkhe-containment"
+    ]
+  },
+  "cleanup": [
+    {
+      "absent": true,
+      "container_id": "a877b7810216f7ae461a6e83bf6ebef51df33b0ca3524b36cb6574793980ce4c"
+    },
+    {
+      "absent": true,
+      "container_id": "350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2"
+    },
+    {
+      "absent": true,
+      "container_id": "d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2"
+    },
+    {
+      "absent": true,
+      "container_id": "ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "info",
+        "--format",
+        "json"
+      ],
+      "duration_seconds": 1.3768,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "8da353e0916cb9be511a08b6eeff9455fcfb3c8b2c030a9a5b6171e120b58277"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "ps",
+        "--all",
+        "--format",
+        "json"
+      ],
+      "duration_seconds": 1.2247,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "image",
+        "inspect",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab"
+      ],
+      "duration_seconds": 1.2448,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "092565db863093c40796335879c7e07f3e8e58560edb26914615e5cfdc368ed0"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "user",
+        "--exec",
+        "python3",
+        "-c",
+        "import json,os\nfrom pathlib import Path\np=Path.home()/'.local/state/arkhe-containment/lease'\np.parent.mkdir(parents=True,exist_ok=True)\np.mkdir()\n(p/'owner.json').write_text(json.dumps({'run_id':'3861d71f-29b7-41df-a881-1f4fe536a2dc'}))\nprint('leased')"
+      ],
+      "duration_seconds": 0.2131,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "2fab15fb1a3d16d011b309eef3ba2e32db1cabf25a1e60264d31ca72e2c8aae3"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "-c",
+        "from pathlib import Path\nimport shutil,os,hashlib\nsource=Path('/mnt/d/arkhe/scripts/containment_vm_observer.py');target=Path('/opt/arkhe-containment/observer-518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e.py')\nassert hashlib.sha256(source.read_bytes()).hexdigest()=='518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e'\nassert not target.exists() or (target.stat().st_uid==0 and hashlib.sha256(target.read_bytes()).hexdigest()=='518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e')\ntarget.parent.mkdir(parents=True,exist_ok=True)\nshutil.copyfile(source,target);os.chmod(target,0o500)\nprint('observer staged')"
+      ],
+      "duration_seconds": 0.2187,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "ce4320cec59b19098d59914a73b866c2fbd884368118e2f816f658e37f65e5ce"
+    },
+    {
+      "command": [
+        "node",
+        "D:\\arkhe\\scripts\\export_sandbox_policy.mjs"
+      ],
+      "duration_seconds": 0.1003,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "fb6d40e155c1071e94864247a40278393ba3fec6662f12a7f26a05e5c4687d42"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "create",
+        "--label",
+        "io.arkhe.containment.run=3861d71f-29b7-41df-a881-1f4fe536a2dc",
+        "--name",
+        "arkhe-containment-3861d71f-29b7-41df-a881-1f4fe536a2dc-build",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--user=10001:10001",
+        "--pids-limit=128",
+        "--memory=1536m",
+        "--cpus=2",
+        "--cgroup-parent=/arkhe-sandbox",
+        "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+        "--tmpfs=/tmp:rw,noexec,size=67108864",
+        "--volume",
+        "/mnt/d/arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/build-input:/input:ro",
+        "--workdir=/work",
+        "--env=CARGO_HOME=/opt/cargo",
+        "--env=CARGO_TARGET_DIR=/work/target",
+        "--env=CARGO_NET_OFFLINE=true",
+        "--entrypoint=/bin/sh",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "-c",
+        "rustc --edition=2021 -C opt-level=s -C strip=symbols /input/probe.rs -o /work/probe && cat /work/probe",
+        "arkhe-containment"
+      ],
+      "duration_seconds": 1.2886,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "13fbb68dd3ac6d63091571cd981e01ff28cd260f825015838826c3bd6837c782"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "start",
+        "--attach",
+        "a877b7810216f7ae461a6e83bf6ebef51df33b0ca3524b36cb6574793980ce4c"
+      ],
+      "duration_seconds": 2.49,
+      "exit_code": 0,
+      "stderr": "warning: function `query_nonce` is never used\n  --> /input/network-wire.rs:18:8\n   |\n18 | pub fn query_nonce(packet: &[u8]) -> Option<String> {\n   |        ^^^^^^^^^^^\n   |\n   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\nwarning: 1 warning emitted\n\n",
+      "stdout_sha256": "023f3cb1331082e11e396862583946d132144701912c18e2aaa89e6803abc393"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "a877b7810216f7ae461a6e83bf6ebef51df33b0ca3524b36cb6574793980ce4c"
+      ],
+      "duration_seconds": 1.3306,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "a2682b150ed4663e33690cde94fd26ae814c49bc1609875c9a4b0647506ae5e2"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "rm",
+        "-f",
+        "--time=0",
+        "a877b7810216f7ae461a6e83bf6ebef51df33b0ca3524b36cb6574793980ce4c"
+      ],
+      "duration_seconds": 1.2948,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "13fbb68dd3ac6d63091571cd981e01ff28cd260f825015838826c3bd6837c782"
+    },
+    {
+      "command": [
+        "node",
+        "D:\\arkhe\\scripts\\export_sandbox_policy.mjs"
+      ],
+      "duration_seconds": 0.1103,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "31137eea6c248e9cf7f9fb8015226d2117ebe4b77aea058121d4ed3a9014ff12"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "create",
+        "--label",
+        "io.arkhe.containment.run=3861d71f-29b7-41df-a881-1f4fe536a2dc",
+        "--name",
+        "arkhe-containment-3861d71f-29b7-41df-a881-1f4fe536a2dc-memory-bounded",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--user=10001:10001",
+        "--pids-limit=16",
+        "--memory=128m",
+        "--cpus=0.5",
+        "--cgroup-parent=/arkhe-sandbox",
+        "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+        "--tmpfs=/tmp:rw,noexec,size=67108864",
+        "--volume",
+        "/mnt/d/arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/session/fixtures/memory-bounded:/input:ro",
+        "--workdir=/work",
+        "--env=CARGO_HOME=/opt/cargo",
+        "--env=CARGO_TARGET_DIR=/work/target",
+        "--env=CARGO_NET_OFFLINE=true",
+        "--entrypoint=/bin/sh",
+        "--memory-swap=128m",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "-c",
+        "cp /input/probe /work/probe && chmod 755 /work/probe && while [ ! -f /input/go ]; do sleep 0.05; done; /work/probe \"$1\" \"$2\" > /work/observation; echo $? > /work/exit; while [ ! -f /input/finish ]; do sleep 0.05; done",
+        "arkhe-containment",
+        "memory-bounded",
+        "a8aa645066350e118d297777dcec80e410186bcc953dead1704236e212789762"
+      ],
+      "duration_seconds": 1.3917,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "1c66133767f9f8ceaa64a7937d69d73e775c3594ecdacc5ff767bf8e6dec73f5"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "start",
+        "350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2"
+      ],
+      "duration_seconds": 1.3769,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "1c66133767f9f8ceaa64a7937d69d73e775c3594ecdacc5ff767bf8e6dec73f5"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2"
+      ],
+      "duration_seconds": 1.225,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "7ac66438bc899209b4dd8e7072121e5e75633a420ca8bf68e6d6f4abe71f6216"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "/opt/arkhe-containment/observer-518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e.py",
+        "1200",
+        "350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2"
+      ],
+      "duration_seconds": 0.2565,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "5fb2ec0272e1e4c3c605437c41b5a0d2a14dc36f395c66492f58bef0cdc4dd91"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "-c",
+        "import json,time\nfrom pathlib import Path\nbefore=json.loads('{\"observer\": \"VM-side host reader outside target namespace/cgroup\", \"observer_euid\": 0, \"container_id\": \"350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2\", \"host_pid\": 1259, \"engine_pid\": 1200, \"monotonic_ns\": 23477051231136, \"membership\": \"0::/arkhe-sandbox/libpod-350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2\\\\n\", \"observer_membership\": \"0::/non-systemd\\\\n\", \"status\": \"Name:\\\\tsh\\\\nUmask:\\\\t0022\\\\nState:\\\\tS (sleeping)\\\\nTgid:\\\\t1259\\\\nNgid:\\\\t0\\\\nPid:\\\\t1259\\\\nPPid:\\\\t1257\\\\nTracerPid:\\\\t0\\\\nUid:\\\\t534288\\\\t534288\\\\t534288\\\\t534288\\\\nGid:\\\\t534288\\\\t534288\\\\t534288\\\\t534288\\\\nFDSize:\\\\t64\\\\nGroups:\\\\t534288 \\\\nNStgid:\\\\t1259\\\\t1200\\\\t1\\\\nNSpid:\\\\t1259\\\\t1200\\\\t1\\\\nNSpgid:\\\\t1259\\\\t1200\\\\t1\\\\nNSsid:\\\\t1259\\\\t1200\\\\t1\\\\nKthread:\\\\t0\\\\nVmPeak:\\\\t    2592 kB\\\\nVmSize:\\\\t    2592 kB\\\\nVmLck:\\\\t       0 kB\\\\nVmPin:\\\\t       0 kB\\\\nVmHWM:\\\\t    1708 kB\\\\nVmRSS:\\\\t    1708 kB\\\\nRssAnon:\\\\t     108 kB\\\\nRssFile:\\\\t    1600 kB\\\\nRssShmem:\\\\t       0 kB\\\\nVmData:\\\\t     232 kB\\\\nVmStk:\\\\t     132 kB\\\\nVmExe:\\\\t      76 kB\\\\nVmLib:\\\\t    1528 kB\\\\nVmPTE:\\\\t      48 kB\\\\nVmSwap:\\\\t       0 kB\\\\nHugetlbPages:\\\\t       0 kB\\\\nCoreDumping:\\\\t0\\\\nTHP_enabled:\\\\t1\\\\nuntag_mask:\\\\t0xffffffffffffffff\\\\nThreads:\\\\t1\\\\nSigQ:\\\\t0/63565\\\\nSigPnd:\\\\t0000000000000000\\\\nShdPnd:\\\\t0000000000000000\\\\nSigBlk:\\\\t0000000000000000\\\\nSigIgn:\\\\t0000000000000000\\\\nSigCgt:\\\\t0000000000010002\\\\nCapInh:\\\\t0000000000000000\\\\nCapPrm:\\\\t0000000000000000\\\\nCapEff:\\\\t0000000000000000\\\\nCapBnd:\\\\t0000000000000000\\\\nCapAmb:\\\\t0000000000000000\\\\nNoNewPrivs:\\\\t1\\\\nSeccomp:\\\\t2\\\\nSeccomp_filters:\\\\t2\\\\nSpeculation_Store_Bypass:\\\\tthread vulnerable\\\\nSpeculationIndirectBranch:\\\\tconditional enabled\\\\nCpus_allowed:\\\\tfff\\\\nCpus_allowed_list:\\\\t0-11\\\\nMems_allowed:\\\\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\\\\nMems_allowed_list:\\\\t0\\\\nvoluntary_ctxt_switches:\\\\t96\\\\nnonvoluntary_ctxt_switches:\\\\t0\\\\n\", \"uid_map\": \"         0       1000          1\\\\n         1     524288      65536\\\\n\", \"stat\": \"1259 (sh) S 1257 1259 1259 0 -1 4194560 124 1740 0 0 0 0 1 0 20 0 1 0 2347557 2654208 400 18446744073709551615 110972073992192 110972074068921 140724804552960 0 0 0 0 0 65538 1 0 0 17 1 0 0 0 0 0 110972074098224 110972074103360 110972924882944 140724804558185 140724804558512 140724804558512 140724804558832 0\\\\n\", \"network\": {\"dev\": \"Inter-|   Receive                                                |  Transmit\\\\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\\\\n    lo:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0\\\\n\", \"route\": \"Iface\\\\tDestination\\\\tGateway \\\\tFlags\\\\tRefCnt\\\\tUse\\\\tMetric\\\\tMask\\\\t\\\\tMTU\\\\tWindow\\\\tIRTT                                                       \\\\n\", \"ipv6_route\": \"00000000000000000000000000000000 00 00000000000000000000000000000000 00 00000000000000000000000000000000 ffffffff 00000001 00000000 00200200       lo\\\\n00000000000000000000000000000001 80 00000000000000000000000000000000 00 00000000000000000000000000000000 00000000 00000002 00000000 80200001       lo\\\\n00000000000000000000000000000000 00 00000000000000000000000000000000 00 00000000000000000000000000000000 ffffffff 00000001 00000000 00200200       lo\\\\n\"}, \"mountinfo\": \"1179 1188 0:117 /arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/session/fixtures/memory-bounded /input ro,noatime - 9p D:\\\\\\\\134 rw,aname=drvfs;path=D:\\\\\\\\;uid=1000;gid=1000;symlinkroot=/mnt/,cache=0x5,access=client,msize=65536,trans=fd,rfd=5,wfd=5\\\\n1180 1193 0:129 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,size=64000k,uid=1000,gid=1000\\\\n1181 1188 8:64 /home/user/.local/share/containers/storage/overlay-containers/350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2/userdata/passwd /etc/passwd ro,nosuid,nodev,noexec,relatime - ext4 /dev/sde rw,discard,errors=remount-ro,data=ordered\\\\n1182 1188 8:64 /home/user/.local/share/containers/storage/overlay-containers/350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2/userdata/group /etc/group ro,nosuid,nodev,noexec,relatime - ext4 /dev/sde rw,discard,errors=remount-ro,data=ordered\\\\n1183 1191 0:128 /containers/overlay-containers/350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2/userdata/.containerenv /run/.containerenv ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1184 1191 0:128 /containers/overlay-containers/350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2/userdata/run/secrets /run/secrets ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1185 1188 0:128 /containers/overlay-containers/350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2/userdata/hostname /etc/hostname ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1186 1188 0:128 /containers/overlay-containers/350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2/userdata/hosts /etc/hosts ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1188 1122 0:130 / / ro,relatime - overlay overlay rw,lowerdir=/home/user/.local/share/containers/storage/overlay/l/LFCNTP6OCQ5VMGMUCVTNLNNR5Z:/home/user/.local/share/containers/storage/overlay/l/AKXLZEXDCOBE6UWEG6QFMEE2NV:/home/user/.local/share/containers/storage/overlay/l/OWPXG2ECSUVAHWG6JX35CH6HKY:/home/user/.local/share/containers/storage/overlay/l/IKOPLOZLTPSGARSW45FARM4KHN:/home/user/.local/share/containers/storage/overlay/l/PZHHVEWXNOOFLH4RPXYCEQRULJ:/home/user/.local/share/containers/storage/overlay/l/ZPU6MEFVMGQ7IXOCNPB3WYS3YJ:/home/user/.local/share/containers/storage/overlay/l/BPTW4GDCXGY67I3ODL4JGYRMDH,upperdir=/home/user/.local/share/containers/storage/overlay/d4a705ae8b5e85d00a6de87a2483dd4bbc7bddcff8b02f906d387c6fc76c98c2/diff,workdir=/home/user/.local/share/containers/storage/overlay/d4a705ae8b5e85d00a6de87a2483dd4bbc7bddcff8b02f906d387c6fc76c98c2/work,redirect_dir=nofollow,uuid=on,userxattr\\\\n1189 1188 0:134 / /work rw,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1048576k,uid=1000,gid=1000\\\\n1190 1188 0:135 / /tmp rw,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=65536k,uid=1000,gid=1000\\\\n1191 1188 0:136 / /run rw,nosuid,nodev,relatime - tmpfs tmpfs rw,mode=755,uid=1000,gid=1000\\\\n1192 1188 0:137 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1193 1188 0:138 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,uid=1000,gid=1000\\\\n1194 1188 0:139 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs rw\\\\n1195 1188 0:140 / /var/tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000\\\\n1196 1193 0:141 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=524292,mode=620,ptmxmode=666\\\\n1197 1193 0:132 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw\\\\n1198 1194 0:25 /arkhe-sandbox/libpod-350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2 /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime,nosymfollow - cgroup2 cgroup2 rw,nsdelegate\\\\n1199 1193 0:6 /null /dev/null rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1200 1193 0:6 /zero /dev/zero rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1201 1193 0:6 /full /dev/full rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1202 1193 0:6 /tty /dev/tty rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1203 1193 0:6 /random /dev/random rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1204 1193 0:6 /urandom /dev/urandom rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1205 1192 0:128 /crun/.empty-directory /proc/acpi ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1206 1192 0:6 /null /proc/kcore ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1207 1192 0:6 /null /proc/keys ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1208 1192 0:128 /crun/.empty-directory /proc/scsi ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1209 1192 0:6 /null /proc/timer_list ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1210 1194 0:128 /crun/.empty-directory /sys/firmware ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1211 1194 0:128 /crun/.empty-directory /sys/fs/selinux ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1212 1192 0:6 /null /proc/interrupts ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1213 1192 0:137 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1214 1192 0:137 /fs /proc/fs ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1215 1192 0:137 /irq /proc/irq ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1216 1192 0:137 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1217 1192 0:137 /sysrq-trigger /proc/sysrq-trigger ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n\", \"namespaces\": {\"pid\": \"pid:[4026532267]\", \"mnt\": \"mnt:[4026532264]\", \"net\": \"net:[4026532268]\", \"user\": \"user:[4026532261]\", \"cgroup\": \"cgroup:[4026532339]\"}, \"observer_namespaces\": {\"pid\": \"pid:[4026532256]\", \"mnt\": \"mnt:[4026532253]\", \"net\": \"net:[4026531833]\", \"user\": \"user:[4026531837]\", \"cgroup\": \"cgroup:[4026532252]\"}, \"cgroup\": {\"memory.max\": \"134217728\\\\n\", \"memory.swap.max\": \"0\\\\n\", \"memory.events\": \"low 0\\\\nhigh 0\\\\nmax 0\\\\noom 0\\\\noom_kill 0\\\\noom_group_kill 0\\\\n\", \"memory.peak\": \"2748416\\\\n\", \"cpu.max\": \"50000 100000\\\\n\", \"cpu.stat\": \"usage_usec 36259\\\\nuser_usec 5179\\\\nsystem_usec 31079\\\\nnice_usec 0\\\\nnr_periods 15\\\\nnr_throttled 0\\\\nthrottled_usec 0\\\\nnr_bursts 0\\\\nburst_usec 0\\\\n\", \"pids.max\": \"16\\\\n\", \"pids.current\": \"2\\\\n\", \"pids.events\": \"max 0\\\\n\"}, \"boot_id\": \"341a348d-f801-4cf0-b6cb-ff7bc247f558\", \"seccomp_default_profile_sha256\": \"2598b3b98e6970f37f917e210202fa8976aefcd99abf8955803a6e35bba17eb4\", \"seccomp_claim\": \"default profile inventory, not syscall-filter conformance\"}')\ngroup=Path('/sys/fs/cgroup')/next(x.split(':',2)[2] for x in before['membership'].splitlines() if x.startswith('0::')).lstrip('/')\nassert group.resolve().is_relative_to(Path('/sys/fs/cgroup'))\nroot=Path('/proc')/str(before['host_pid'])/'root/work'\nfixture=Path('/mnt/d/arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/session/fixtures/memory-bounded')\nsamples=[]\nstart=time.monotonic()\n(fixture/'go').write_text('release')\nexit_code=None\nwhile time.monotonic()-start<8:\n    sample={name:(group/name).read_text() for name in ['memory.events','memory.peak','cpu.stat','pids.events','pids.current']}\n    sample['elapsed_seconds']=time.monotonic()-start\n    samples.append(sample)\n    if (root/'exit').exists():\n        exit_code=int((root/'exit').read_text());break\n    time.sleep(0.05)\nobservation=(root/'observation').read_text() if (root/'observation').exists() else ''\nassert len(observation.encode())<=65536\nprint(json.dumps({'container_id':'350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2','samples':samples,'exit_code':exit_code,'deadline_exceeded':exit_code is None,'observer_inside_target':Path('/proc/self/cgroup').read_text()==before['membership'],'observation':observation,'duration_seconds':time.monotonic()-start}))\n"
+      ],
+      "duration_seconds": 0.8025,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "ad8aa7398602f342072973ef9fd4680d518b801a601f74a246dc58b9ecbeb74a"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2"
+      ],
+      "duration_seconds": 1.2188,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "7ac66438bc899209b4dd8e7072121e5e75633a420ca8bf68e6d6f4abe71f6216"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "wait",
+        "350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2"
+      ],
+      "duration_seconds": 1.2078,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2"
+      ],
+      "duration_seconds": 1.373,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "19847d0dbebec15a9280fa5c27700484994c1a54b341c8c156302936d97d35b4"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "rm",
+        "-f",
+        "--time=0",
+        "350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2"
+      ],
+      "duration_seconds": 1.415,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "1c66133767f9f8ceaa64a7937d69d73e775c3594ecdacc5ff767bf8e6dec73f5"
+    },
+    {
+      "command": [
+        "node",
+        "D:\\arkhe\\scripts\\export_sandbox_policy.mjs"
+      ],
+      "duration_seconds": 0.1062,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "6cbdb96e2b9074cceb833c6c26d2810a56ae2d3dd7a3ab7acd978c68d330eeac"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "create",
+        "--label",
+        "io.arkhe.containment.run=3861d71f-29b7-41df-a881-1f4fe536a2dc",
+        "--name",
+        "arkhe-containment-3861d71f-29b7-41df-a881-1f4fe536a2dc-cpu-bounded",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--user=10001:10001",
+        "--pids-limit=16",
+        "--memory=128m",
+        "--cpus=0.5",
+        "--cgroup-parent=/arkhe-sandbox",
+        "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+        "--tmpfs=/tmp:rw,noexec,size=67108864",
+        "--volume",
+        "/mnt/d/arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/session/fixtures/cpu-bounded:/input:ro",
+        "--workdir=/work",
+        "--env=CARGO_HOME=/opt/cargo",
+        "--env=CARGO_TARGET_DIR=/work/target",
+        "--env=CARGO_NET_OFFLINE=true",
+        "--entrypoint=/bin/sh",
+        "--memory-swap=128m",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "-c",
+        "cp /input/probe /work/probe && chmod 755 /work/probe && while [ ! -f /input/go ]; do sleep 0.05; done; /work/probe \"$1\" \"$2\" > /work/observation; echo $? > /work/exit; while [ ! -f /input/finish ]; do sleep 0.05; done",
+        "arkhe-containment",
+        "cpu-bounded",
+        "b83aad174876b9c3a69e95e251ec236ffce54d98184255bba896264590c9e49b"
+      ],
+      "duration_seconds": 1.2901,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "69374a3cabb20cbcb3fedfb6a3b8203884908ba981730d8f83a31554621889b8"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "start",
+        "d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2"
+      ],
+      "duration_seconds": 1.3572,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "69374a3cabb20cbcb3fedfb6a3b8203884908ba981730d8f83a31554621889b8"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2"
+      ],
+      "duration_seconds": 1.3569,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "a2a19ad3526578f5b34189864af1dd3292fe70f2c116ec3847a872faef162a98"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "/opt/arkhe-containment/observer-518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e.py",
+        "1330",
+        "d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2"
+      ],
+      "duration_seconds": 0.2361,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "f56d24f5157b46175156f27adc4d69dca50992f38d683b6bb54f7afbd0ffd952"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "-c",
+        "import json,time\nfrom pathlib import Path\nbefore=json.loads('{\"observer\": \"VM-side host reader outside target namespace/cgroup\", \"observer_euid\": 0, \"container_id\": \"d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2\", \"host_pid\": 1395, \"engine_pid\": 1330, \"monotonic_ns\": 23488713915297, \"membership\": \"0::/arkhe-sandbox/libpod-d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2\\\\n\", \"observer_membership\": \"0::/non-systemd\\\\n\", \"status\": \"Name:\\\\tsh\\\\nUmask:\\\\t0022\\\\nState:\\\\tS (sleeping)\\\\nTgid:\\\\t1395\\\\nNgid:\\\\t0\\\\nPid:\\\\t1395\\\\nPPid:\\\\t1393\\\\nTracerPid:\\\\t0\\\\nUid:\\\\t534288\\\\t534288\\\\t534288\\\\t534288\\\\nGid:\\\\t534288\\\\t534288\\\\t534288\\\\t534288\\\\nFDSize:\\\\t64\\\\nGroups:\\\\t534288 \\\\nNStgid:\\\\t1395\\\\t1330\\\\t1\\\\nNSpid:\\\\t1395\\\\t1330\\\\t1\\\\nNSpgid:\\\\t1395\\\\t1330\\\\t1\\\\nNSsid:\\\\t1395\\\\t1330\\\\t1\\\\nKthread:\\\\t0\\\\nVmPeak:\\\\t    2592 kB\\\\nVmSize:\\\\t    2592 kB\\\\nVmLck:\\\\t       0 kB\\\\nVmPin:\\\\t       0 kB\\\\nVmHWM:\\\\t    1624 kB\\\\nVmRSS:\\\\t    1624 kB\\\\nRssAnon:\\\\t     112 kB\\\\nRssFile:\\\\t    1512 kB\\\\nRssShmem:\\\\t       0 kB\\\\nVmData:\\\\t     232 kB\\\\nVmStk:\\\\t     132 kB\\\\nVmExe:\\\\t      76 kB\\\\nVmLib:\\\\t    1528 kB\\\\nVmPTE:\\\\t      44 kB\\\\nVmSwap:\\\\t       0 kB\\\\nHugetlbPages:\\\\t       0 kB\\\\nCoreDumping:\\\\t0\\\\nTHP_enabled:\\\\t1\\\\nuntag_mask:\\\\t0xffffffffffffffff\\\\nThreads:\\\\t1\\\\nSigQ:\\\\t0/63565\\\\nSigPnd:\\\\t0000000000000000\\\\nShdPnd:\\\\t0000000000000000\\\\nSigBlk:\\\\t0000000000000000\\\\nSigIgn:\\\\t0000000000000000\\\\nSigCgt:\\\\t0000000000010002\\\\nCapInh:\\\\t0000000000000000\\\\nCapPrm:\\\\t0000000000000000\\\\nCapEff:\\\\t0000000000000000\\\\nCapBnd:\\\\t0000000000000000\\\\nCapAmb:\\\\t0000000000000000\\\\nNoNewPrivs:\\\\t1\\\\nSeccomp:\\\\t2\\\\nSeccomp_filters:\\\\t2\\\\nSpeculation_Store_Bypass:\\\\tthread vulnerable\\\\nSpeculationIndirectBranch:\\\\tconditional enabled\\\\nCpus_allowed:\\\\tfff\\\\nCpus_allowed_list:\\\\t0-11\\\\nMems_allowed:\\\\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\\\\nMems_allowed_list:\\\\t0\\\\nvoluntary_ctxt_switches:\\\\t105\\\\nnonvoluntary_ctxt_switches:\\\\t0\\\\n\", \"uid_map\": \"         0       1000          1\\\\n         1     524288      65536\\\\n\", \"stat\": \"1395 (sh) S 1393 1395 1395 0 -1 4194560 121 1910 0 0 0 1 1 0 20 0 1 0 2348710 2654208 362 18446744073709551615 95168337870848 95168337947577 140734654190080 0 0 0 0 0 65538 1 0 0 17 1 0 0 0 0 0 95168337976880 95168337982016 95168502714368 140734654197100 140734654197424 140734654197424 140734654197744 0\\\\n\", \"network\": {\"dev\": \"Inter-|   Receive                                                |  Transmit\\\\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\\\\n    lo:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0\\\\n\", \"route\": \"Iface\\\\tDestination\\\\tGateway \\\\tFlags\\\\tRefCnt\\\\tUse\\\\tMetric\\\\tMask\\\\t\\\\tMTU\\\\tWindow\\\\tIRTT                                                       \\\\n\", \"ipv6_route\": \"00000000000000000000000000000000 00 00000000000000000000000000000000 00 00000000000000000000000000000000 ffffffff 00000001 00000000 00200200       lo\\\\n00000000000000000000000000000001 80 00000000000000000000000000000000 00 00000000000000000000000000000000 00000000 00000002 00000000 80200001       lo\\\\n00000000000000000000000000000000 00 00000000000000000000000000000000 00 00000000000000000000000000000000 ffffffff 00000001 00000000 00200200       lo\\\\n\"}, \"mountinfo\": \"1179 1188 0:117 /arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/session/fixtures/cpu-bounded /input ro,noatime - 9p D:\\\\\\\\134 rw,aname=drvfs;path=D:\\\\\\\\;uid=1000;gid=1000;symlinkroot=/mnt/,cache=0x5,access=client,msize=65536,trans=fd,rfd=5,wfd=5\\\\n1180 1188 0:128 /containers/overlay-containers/d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2/userdata/hostname /etc/hostname ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1181 1188 0:128 /containers/overlay-containers/d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2/userdata/hosts /etc/hosts ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1182 1193 0:129 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,size=64000k,uid=1000,gid=1000\\\\n1183 1188 8:64 /home/user/.local/share/containers/storage/overlay-containers/d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2/userdata/passwd /etc/passwd ro,nosuid,nodev,noexec,relatime - ext4 /dev/sde rw,discard,errors=remount-ro,data=ordered\\\\n1184 1188 8:64 /home/user/.local/share/containers/storage/overlay-containers/d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2/userdata/group /etc/group ro,nosuid,nodev,noexec,relatime - ext4 /dev/sde rw,discard,errors=remount-ro,data=ordered\\\\n1185 1191 0:128 /containers/overlay-containers/d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2/userdata/.containerenv /run/.containerenv ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1186 1191 0:128 /containers/overlay-containers/d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2/userdata/run/secrets /run/secrets ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1188 1122 0:130 / / ro,relatime - overlay overlay rw,lowerdir=/home/user/.local/share/containers/storage/overlay/l/LFCNTP6OCQ5VMGMUCVTNLNNR5Z:/home/user/.local/share/containers/storage/overlay/l/AKXLZEXDCOBE6UWEG6QFMEE2NV:/home/user/.local/share/containers/storage/overlay/l/OWPXG2ECSUVAHWG6JX35CH6HKY:/home/user/.local/share/containers/storage/overlay/l/IKOPLOZLTPSGARSW45FARM4KHN:/home/user/.local/share/containers/storage/overlay/l/PZHHVEWXNOOFLH4RPXYCEQRULJ:/home/user/.local/share/containers/storage/overlay/l/ZPU6MEFVMGQ7IXOCNPB3WYS3YJ:/home/user/.local/share/containers/storage/overlay/l/BPTW4GDCXGY67I3ODL4JGYRMDH,upperdir=/home/user/.local/share/containers/storage/overlay/97741e7a4ef7912cd7eb2d267f3305794157dbdfcbe8103cd6dadc07bfb571ad/diff,workdir=/home/user/.local/share/containers/storage/overlay/97741e7a4ef7912cd7eb2d267f3305794157dbdfcbe8103cd6dadc07bfb571ad/work,redirect_dir=nofollow,uuid=on,userxattr\\\\n1189 1188 0:134 / /work rw,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1048576k,uid=1000,gid=1000\\\\n1190 1188 0:135 / /tmp rw,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=65536k,uid=1000,gid=1000\\\\n1191 1188 0:136 / /run rw,nosuid,nodev,relatime - tmpfs tmpfs rw,mode=755,uid=1000,gid=1000\\\\n1192 1188 0:137 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1193 1188 0:138 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,uid=1000,gid=1000\\\\n1194 1188 0:139 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs rw\\\\n1195 1188 0:140 / /var/tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000\\\\n1196 1193 0:141 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=524292,mode=620,ptmxmode=666\\\\n1197 1193 0:132 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw\\\\n1198 1194 0:25 /arkhe-sandbox/libpod-d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2 /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime,nosymfollow - cgroup2 cgroup2 rw,nsdelegate\\\\n1199 1193 0:6 /null /dev/null rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1200 1193 0:6 /zero /dev/zero rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1201 1193 0:6 /full /dev/full rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1202 1193 0:6 /tty /dev/tty rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1203 1193 0:6 /random /dev/random rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1204 1193 0:6 /urandom /dev/urandom rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1205 1192 0:128 /crun/.empty-directory /proc/acpi ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1206 1192 0:6 /null /proc/kcore ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1207 1192 0:6 /null /proc/keys ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1208 1192 0:128 /crun/.empty-directory /proc/scsi ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1209 1192 0:6 /null /proc/timer_list ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1210 1194 0:128 /crun/.empty-directory /sys/firmware ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1211 1194 0:128 /crun/.empty-directory /sys/fs/selinux ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1212 1192 0:6 /null /proc/interrupts ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1213 1192 0:137 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1214 1192 0:137 /fs /proc/fs ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1215 1192 0:137 /irq /proc/irq ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1216 1192 0:137 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1217 1192 0:137 /sysrq-trigger /proc/sysrq-trigger ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n\", \"namespaces\": {\"pid\": \"pid:[4026532267]\", \"mnt\": \"mnt:[4026532264]\", \"net\": \"net:[4026532268]\", \"user\": \"user:[4026532261]\", \"cgroup\": \"cgroup:[4026532339]\"}, \"observer_namespaces\": {\"pid\": \"pid:[4026532256]\", \"mnt\": \"mnt:[4026532253]\", \"net\": \"net:[4026531833]\", \"user\": \"user:[4026531837]\", \"cgroup\": \"cgroup:[4026532252]\"}, \"cgroup\": {\"memory.max\": \"134217728\\\\n\", \"memory.swap.max\": \"0\\\\n\", \"memory.events\": \"low 0\\\\nhigh 0\\\\nmax 0\\\\noom 0\\\\noom_kill 0\\\\noom_group_kill 0\\\\n\", \"memory.peak\": \"2461696\\\\n\", \"cpu.max\": \"50000 100000\\\\n\", \"cpu.stat\": \"usage_usec 44033\\\\nuser_usec 7338\\\\nsystem_usec 36694\\\\nnice_usec 0\\\\nnr_periods 16\\\\nnr_throttled 0\\\\nthrottled_usec 0\\\\nnr_bursts 0\\\\nburst_usec 0\\\\n\", \"pids.max\": \"16\\\\n\", \"pids.current\": \"2\\\\n\", \"pids.events\": \"max 0\\\\n\"}, \"boot_id\": \"341a348d-f801-4cf0-b6cb-ff7bc247f558\", \"seccomp_default_profile_sha256\": \"2598b3b98e6970f37f917e210202fa8976aefcd99abf8955803a6e35bba17eb4\", \"seccomp_claim\": \"default profile inventory, not syscall-filter conformance\"}')\ngroup=Path('/sys/fs/cgroup')/next(x.split(':',2)[2] for x in before['membership'].splitlines() if x.startswith('0::')).lstrip('/')\nassert group.resolve().is_relative_to(Path('/sys/fs/cgroup'))\nroot=Path('/proc')/str(before['host_pid'])/'root/work'\nfixture=Path('/mnt/d/arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/session/fixtures/cpu-bounded')\nsamples=[]\nstart=time.monotonic()\n(fixture/'go').write_text('release')\nexit_code=None\nwhile time.monotonic()-start<8:\n    sample={name:(group/name).read_text() for name in ['memory.events','memory.peak','cpu.stat','pids.events','pids.current']}\n    sample['elapsed_seconds']=time.monotonic()-start\n    samples.append(sample)\n    if (root/'exit').exists():\n        exit_code=int((root/'exit').read_text());break\n    time.sleep(0.05)\nobservation=(root/'observation').read_text() if (root/'observation').exists() else ''\nassert len(observation.encode())<=65536\nprint(json.dumps({'container_id':'d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2','samples':samples,'exit_code':exit_code,'deadline_exceeded':exit_code is None,'observer_inside_target':Path('/proc/self/cgroup').read_text()==before['membership'],'observation':observation,'duration_seconds':time.monotonic()-start}))\n"
+      ],
+      "duration_seconds": 3.371,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9aa0bc050d07c439e0a3f647a5554ee3bf08302edf1b2ee9ff51af11fd2cdb71"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2"
+      ],
+      "duration_seconds": 1.2502,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "a2a19ad3526578f5b34189864af1dd3292fe70f2c116ec3847a872faef162a98"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "wait",
+        "d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2"
+      ],
+      "duration_seconds": 1.2201,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2"
+      ],
+      "duration_seconds": 1.2137,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "a2585ddda3e431f58cff84041d6ce215df702395df60327a077c4da0745a059a"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "rm",
+        "-f",
+        "--time=0",
+        "d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2"
+      ],
+      "duration_seconds": 1.2912,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "69374a3cabb20cbcb3fedfb6a3b8203884908ba981730d8f83a31554621889b8"
+    },
+    {
+      "command": [
+        "node",
+        "D:\\arkhe\\scripts\\export_sandbox_policy.mjs"
+      ],
+      "duration_seconds": 0.0963,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "3a8b631e4ad3e0d98acf9dc1d1d8463161b9716a3ce42358fc3d89ad74faa24d"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "create",
+        "--label",
+        "io.arkhe.containment.run=3861d71f-29b7-41df-a881-1f4fe536a2dc",
+        "--name",
+        "arkhe-containment-3861d71f-29b7-41df-a881-1f4fe536a2dc-pids-bounded",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--user=10001:10001",
+        "--pids-limit=16",
+        "--memory=128m",
+        "--cpus=0.5",
+        "--cgroup-parent=/arkhe-sandbox",
+        "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+        "--tmpfs=/tmp:rw,noexec,size=67108864",
+        "--volume",
+        "/mnt/d/arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/session/fixtures/pids-bounded:/input:ro",
+        "--workdir=/work",
+        "--env=CARGO_HOME=/opt/cargo",
+        "--env=CARGO_TARGET_DIR=/work/target",
+        "--env=CARGO_NET_OFFLINE=true",
+        "--entrypoint=/bin/sh",
+        "--memory-swap=128m",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "-c",
+        "cp /input/probe /work/probe && chmod 755 /work/probe && while [ ! -f /input/go ]; do sleep 0.05; done; /work/probe \"$1\" \"$2\" > /work/observation; echo $? > /work/exit; while [ ! -f /input/finish ]; do sleep 0.05; done",
+        "arkhe-containment",
+        "pids-bounded",
+        "29aa1b94599b1a90d0d29dd15a36b1b53789a7be44910e2576512377406dfb24"
+      ],
+      "duration_seconds": 1.2795,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "0656801be3206a4daf9130cf7d547b44054ca8d469bf06f3a5357e9824e70811"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "start",
+        "ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a"
+      ],
+      "duration_seconds": 1.2661,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "0656801be3206a4daf9130cf7d547b44054ca8d469bf06f3a5357e9824e70811"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a"
+      ],
+      "duration_seconds": 1.2231,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "26ab32015365d2e496b64f8c954f9eff6e57f88c0fb1b063e522cfe908d403dd"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "/opt/arkhe-containment/observer-518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e.py",
+        "1469",
+        "ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a"
+      ],
+      "duration_seconds": 0.208,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "1471730033ec68786df62c4c034f63d0f5cd902da2ee68499e588a3d4fb23351"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "-c",
+        "import json,time\nfrom pathlib import Path\nbefore=json.loads('{\"observer\": \"VM-side host reader outside target namespace/cgroup\", \"observer_euid\": 0, \"container_id\": \"ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a\", \"host_pid\": 1540, \"engine_pid\": 1469, \"monotonic_ns\": 23502381877131, \"membership\": \"0::/arkhe-sandbox/libpod-ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a\\\\n\", \"observer_membership\": \"0::/non-systemd\\\\n\", \"status\": \"Name:\\\\tsh\\\\nUmask:\\\\t0022\\\\nState:\\\\tD (disk sleep)\\\\nTgid:\\\\t1540\\\\nNgid:\\\\t0\\\\nPid:\\\\t1540\\\\nPPid:\\\\t1538\\\\nTracerPid:\\\\t0\\\\nUid:\\\\t534288\\\\t534288\\\\t534288\\\\t534288\\\\nGid:\\\\t534288\\\\t534288\\\\t534288\\\\t534288\\\\nFDSize:\\\\t64\\\\nGroups:\\\\t534288 \\\\nNStgid:\\\\t1540\\\\t1469\\\\t1\\\\nNSpid:\\\\t1540\\\\t1469\\\\t1\\\\nNSpgid:\\\\t1540\\\\t1469\\\\t1\\\\nNSsid:\\\\t1540\\\\t1469\\\\t1\\\\nKthread:\\\\t0\\\\nVmPeak:\\\\t    2592 kB\\\\nVmSize:\\\\t    2592 kB\\\\nVmLck:\\\\t       0 kB\\\\nVmPin:\\\\t       0 kB\\\\nVmHWM:\\\\t    1620 kB\\\\nVmRSS:\\\\t    1620 kB\\\\nRssAnon:\\\\t     108 kB\\\\nRssFile:\\\\t    1512 kB\\\\nRssShmem:\\\\t       0 kB\\\\nVmData:\\\\t     232 kB\\\\nVmStk:\\\\t     132 kB\\\\nVmExe:\\\\t      76 kB\\\\nVmLib:\\\\t    1528 kB\\\\nVmPTE:\\\\t      40 kB\\\\nVmSwap:\\\\t       0 kB\\\\nHugetlbPages:\\\\t       0 kB\\\\nCoreDumping:\\\\t0\\\\nTHP_enabled:\\\\t1\\\\nuntag_mask:\\\\t0xffffffffffffffff\\\\nThreads:\\\\t1\\\\nSigQ:\\\\t0/63565\\\\nSigPnd:\\\\t0000000000000000\\\\nShdPnd:\\\\t0000000000000000\\\\nSigBlk:\\\\t0000000000000000\\\\nSigIgn:\\\\t0000000000000000\\\\nSigCgt:\\\\t0000000000010002\\\\nCapInh:\\\\t0000000000000000\\\\nCapPrm:\\\\t0000000000000000\\\\nCapEff:\\\\t0000000000000000\\\\nCapBnd:\\\\t0000000000000000\\\\nCapAmb:\\\\t0000000000000000\\\\nNoNewPrivs:\\\\t1\\\\nSeccomp:\\\\t2\\\\nSeccomp_filters:\\\\t2\\\\nSpeculation_Store_Bypass:\\\\tthread vulnerable\\\\nSpeculationIndirectBranch:\\\\tconditional enabled\\\\nCpus_allowed:\\\\tfff\\\\nCpus_allowed_list:\\\\t0-11\\\\nMems_allowed:\\\\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\\\\nMems_allowed_list:\\\\t0\\\\nvoluntary_ctxt_switches:\\\\t94\\\\nnonvoluntary_ctxt_switches:\\\\t0\\\\n\", \"uid_map\": \"         0       1000          1\\\\n         1     524288      65536\\\\n\", \"stat\": \"1540 (sh) D 1538 1540 1540 0 -1 4194560 120 1736 0 0 0 0 1 0 20 0 1 0 2350095 2654208 362 18446744073709551615 106580291756032 106580291832761 140737025060176 0 0 0 0 0 65538 1 0 0 17 3 0 0 0 0 0 106580291862064 106580291867200 106580678463488 140737025068395 140737025068720 140737025068720 140737025069040 0\\\\n\", \"network\": {\"dev\": \"Inter-|   Receive                                                |  Transmit\\\\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\\\\n    lo:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0\\\\n\", \"route\": \"Iface\\\\tDestination\\\\tGateway \\\\tFlags\\\\tRefCnt\\\\tUse\\\\tMetric\\\\tMask\\\\t\\\\tMTU\\\\tWindow\\\\tIRTT                                                       \\\\n\", \"ipv6_route\": \"00000000000000000000000000000000 00 00000000000000000000000000000000 00 00000000000000000000000000000000 ffffffff 00000001 00000000 00200200       lo\\\\n00000000000000000000000000000001 80 00000000000000000000000000000000 00 00000000000000000000000000000000 00000000 00000002 00000000 80200001       lo\\\\n00000000000000000000000000000000 00 00000000000000000000000000000000 00 00000000000000000000000000000000 ffffffff 00000001 00000000 00200200       lo\\\\n\"}, \"mountinfo\": \"1179 1188 0:117 /arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/session/fixtures/pids-bounded /input ro,noatime - 9p D:\\\\\\\\134 rw,aname=drvfs;path=D:\\\\\\\\;uid=1000;gid=1000;symlinkroot=/mnt/,cache=0x5,access=client,msize=65536,trans=fd,rfd=5,wfd=5\\\\n1180 1188 0:128 /containers/overlay-containers/ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a/userdata/hosts /etc/hosts ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1181 1193 0:129 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,size=64000k,uid=1000,gid=1000\\\\n1182 1188 8:64 /home/user/.local/share/containers/storage/overlay-containers/ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a/userdata/passwd /etc/passwd ro,nosuid,nodev,noexec,relatime - ext4 /dev/sde rw,discard,errors=remount-ro,data=ordered\\\\n1183 1188 8:64 /home/user/.local/share/containers/storage/overlay-containers/ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a/userdata/group /etc/group ro,nosuid,nodev,noexec,relatime - ext4 /dev/sde rw,discard,errors=remount-ro,data=ordered\\\\n1184 1189 0:128 /containers/overlay-containers/ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a/userdata/.containerenv /run/.containerenv ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1185 1189 0:128 /containers/overlay-containers/ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a/userdata/run/secrets /run/secrets ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1186 1188 0:128 /containers/overlay-containers/ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a/userdata/hostname /etc/hostname ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1188 1122 0:130 / / ro,relatime - overlay overlay rw,lowerdir=/home/user/.local/share/containers/storage/overlay/l/LFCNTP6OCQ5VMGMUCVTNLNNR5Z:/home/user/.local/share/containers/storage/overlay/l/AKXLZEXDCOBE6UWEG6QFMEE2NV:/home/user/.local/share/containers/storage/overlay/l/OWPXG2ECSUVAHWG6JX35CH6HKY:/home/user/.local/share/containers/storage/overlay/l/IKOPLOZLTPSGARSW45FARM4KHN:/home/user/.local/share/containers/storage/overlay/l/PZHHVEWXNOOFLH4RPXYCEQRULJ:/home/user/.local/share/containers/storage/overlay/l/ZPU6MEFVMGQ7IXOCNPB3WYS3YJ:/home/user/.local/share/containers/storage/overlay/l/BPTW4GDCXGY67I3ODL4JGYRMDH,upperdir=/home/user/.local/share/containers/storage/overlay/2c0e62ca9263e09a3eea7e1f655047341273287e5b33521b0d9e4582e1061c32/diff,workdir=/home/user/.local/share/containers/storage/overlay/2c0e62ca9263e09a3eea7e1f655047341273287e5b33521b0d9e4582e1061c32/work,redirect_dir=nofollow,uuid=on,userxattr\\\\n1189 1188 0:134 / /run rw,nosuid,nodev,relatime - tmpfs tmpfs rw,mode=755,uid=1000,gid=1000\\\\n1190 1188 0:135 / /tmp rw,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=65536k,uid=1000,gid=1000\\\\n1191 1188 0:136 / /work rw,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1048576k,uid=1000,gid=1000\\\\n1192 1188 0:137 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1193 1188 0:138 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,uid=1000,gid=1000\\\\n1194 1188 0:139 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs rw\\\\n1195 1188 0:140 / /var/tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000\\\\n1196 1193 0:141 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=524292,mode=620,ptmxmode=666\\\\n1197 1193 0:132 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw\\\\n1198 1194 0:25 /arkhe-sandbox/libpod-ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime,nosymfollow - cgroup2 cgroup2 rw,nsdelegate\\\\n1199 1193 0:6 /null /dev/null rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1200 1193 0:6 /zero /dev/zero rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1201 1193 0:6 /full /dev/full rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1202 1193 0:6 /tty /dev/tty rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1203 1193 0:6 /random /dev/random rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1204 1193 0:6 /urandom /dev/urandom rw,nosuid,noexec,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1205 1192 0:128 /crun/.empty-directory /proc/acpi ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1206 1192 0:6 /null /proc/kcore ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1207 1192 0:6 /null /proc/keys ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1208 1192 0:128 /crun/.empty-directory /proc/scsi ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1209 1192 0:6 /null /proc/timer_list ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1210 1194 0:128 /crun/.empty-directory /sys/firmware ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1211 1194 0:128 /crun/.empty-directory /sys/fs/selinux ro,nosuid,nodev,relatime - tmpfs tmpfs rw,size=1628240k,nr_inodes=407060,mode=700,uid=1000,gid=1000\\\\n1212 1192 0:6 /null /proc/interrupts ro,nosuid,relatime - devtmpfs none rw,size=8136076k,nr_inodes=2034019,mode=755\\\\n1213 1192 0:137 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1214 1192 0:137 /fs /proc/fs ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1215 1192 0:137 /irq /proc/irq ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1216 1192 0:137 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n1217 1192 0:137 /sysrq-trigger /proc/sysrq-trigger ro,nosuid,nodev,noexec,relatime - proc proc rw\\\\n\", \"namespaces\": {\"pid\": \"pid:[4026532267]\", \"mnt\": \"mnt:[4026532264]\", \"net\": \"net:[4026532268]\", \"user\": \"user:[4026532261]\", \"cgroup\": \"cgroup:[4026532339]\"}, \"observer_namespaces\": {\"pid\": \"pid:[4026532256]\", \"mnt\": \"mnt:[4026532253]\", \"net\": \"net:[4026531833]\", \"user\": \"user:[4026531837]\", \"cgroup\": \"cgroup:[4026532252]\"}, \"cgroup\": {\"memory.max\": \"134217728\\\\n\", \"memory.swap.max\": \"0\\\\n\", \"memory.events\": \"low 0\\\\nhigh 0\\\\nmax 0\\\\noom 0\\\\noom_kill 0\\\\noom_group_kill 0\\\\n\", \"memory.peak\": \"2293760\\\\n\", \"cpu.max\": \"50000 100000\\\\n\", \"cpu.stat\": \"usage_usec 34111\\\\nuser_usec 6202\\\\nsystem_usec 27909\\\\nnice_usec 0\\\\nnr_periods 13\\\\nnr_throttled 0\\\\nthrottled_usec 0\\\\nnr_bursts 0\\\\nburst_usec 0\\\\n\", \"pids.max\": \"16\\\\n\", \"pids.current\": \"2\\\\n\", \"pids.events\": \"max 0\\\\n\"}, \"boot_id\": \"341a348d-f801-4cf0-b6cb-ff7bc247f558\", \"seccomp_default_profile_sha256\": \"2598b3b98e6970f37f917e210202fa8976aefcd99abf8955803a6e35bba17eb4\", \"seccomp_claim\": \"default profile inventory, not syscall-filter conformance\"}')\ngroup=Path('/sys/fs/cgroup')/next(x.split(':',2)[2] for x in before['membership'].splitlines() if x.startswith('0::')).lstrip('/')\nassert group.resolve().is_relative_to(Path('/sys/fs/cgroup'))\nroot=Path('/proc')/str(before['host_pid'])/'root/work'\nfixture=Path('/mnt/d/arkhe/docs/evidence/2026-10-19T044610Z-resource-trial/session/fixtures/pids-bounded')\nsamples=[]\nstart=time.monotonic()\n(fixture/'go').write_text('release')\nexit_code=None\nwhile time.monotonic()-start<8:\n    sample={name:(group/name).read_text() for name in ['memory.events','memory.peak','cpu.stat','pids.events','pids.current']}\n    sample['elapsed_seconds']=time.monotonic()-start\n    samples.append(sample)\n    if (root/'exit').exists():\n        exit_code=int((root/'exit').read_text());break\n    time.sleep(0.05)\nobservation=(root/'observation').read_text() if (root/'observation').exists() else ''\nassert len(observation.encode())<=65536\nprint(json.dumps({'container_id':'ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a','samples':samples,'exit_code':exit_code,'deadline_exceeded':exit_code is None,'observer_inside_target':Path('/proc/self/cgroup').read_text()==before['membership'],'observation':observation,'duration_seconds':time.monotonic()-start}))\n"
+      ],
+      "duration_seconds": 0.541,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9514ea098712d88be5ab46f2fb58ca410fb3e3ed3fbc3418d7a8c09364be1664"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a"
+      ],
+      "duration_seconds": 1.2409,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "26ab32015365d2e496b64f8c954f9eff6e57f88c0fb1b063e522cfe908d403dd"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "wait",
+        "ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a"
+      ],
+      "duration_seconds": 1.2396,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a"
+      ],
+      "duration_seconds": 1.2131,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "042a1b4000f966ae7fd960d7de7dd2c77e2fca560c95bf3fcb52fa7e010826e5"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "rm",
+        "-f",
+        "--time=0",
+        "ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a"
+      ],
+      "duration_seconds": 1.2974,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "0656801be3206a4daf9130cf7d547b44054ca8d469bf06f3a5357e9824e70811"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "user",
+        "--exec",
+        "python3",
+        "-c",
+        "from pathlib import Path\nimport json\np=Path.home()/'.local/state/arkhe-containment/lease'\nassert json.loads((p/'owner.json').read_text())['run_id']=='3861d71f-29b7-41df-a881-1f4fe536a2dc'\n(p/'owner.json').unlink();p.rmdir()\n"
+      ],
+      "duration_seconds": 0.2192,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "duration_seconds": 49.384,
+  "errors": [],
+  "image": "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+  "lease_released": true,
+  "machine": "arkhe-containment",
+  "oracle_source_sha256": "518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e",
+  "policy_source_sha256": "c7b5fb270d6467a8fdc272b92d8fb81164db5aeae328e6ee1d445892dad73317",
+  "preflight": {
+    "arch": "amd64",
+    "cgroupVersion": "v2",
+    "engine_version": {
+      "APIVersion": "5.8.9",
+      "BuildOrigin": "Copr: packit/podman-container-tools-podman-29958",
+      "Built": 1791763200,
+      "BuiltTime": "Sun Oct 11 21:00:00 2026",
+      "GitCommit": "40030f4073bd4e1bf4f2fd9df2f6952b4d9d350a",
+      "GoVersion": "go1.26.9-X:nodwarf5",
+      "Os": "linux",
+      "OsArch": "linux/amd64",
+      "Version": "5.8.9"
+    },
+    "kernel": "6.18.54.1-microsoft-standard-WSL2",
+    "memory_free_bytes": 15025446912,
+    "ociRuntime": {
+      "name": "crun",
+      "package": "crun-1.28-1.fc44.x86_64",
+      "path": "/usr/bin/crun",
+      "version": "crun version 1.28\ncommit: 54f16ffbefcd022bf032af768b5c5ce075c18bfc\nrundir: /run/user/1000/crun\nspec: 1.0.0\n+SYSTEMD +SELINUX +APPARMOR +CAP +SECCOMP +EBPF +CRIU +LIBKRUN +WASM:wasmedge +JSON_C"
+    },
+    "rootless": true
+  },
+  "run_id": "3861d71f-29b7-41df-a881-1f4fe536a2dc",
+  "runtime_verified": false,
+  "schema": 1,
+  "scope": "Three bounded resource vectors on rootless Podman/WSL2 only. Independent host cgroup counters; no transfer to gVisor/WASM. Full suite INCOMPLETE.",
+  "suite": {
+    "catalog_vectors": 22,
+    "status": "INCOMPLETE"
+  },
+  "trial": {
+    "execution_state": "COMPLETE",
+    "vectors": [
+      {
+        "cleanup_confirmed": true,
+        "container_id": "350503f9df884ba7b0ab9faf5dec37440f65694fc59fc3572a92f30abfa4b3b2",
+        "engine_oom_killed": true,
+        "probe_exit_code": 137,
+        "resource_receipt_sha256": "b681f9a22d3e56d3cf88976e0496e34d42da6947ae027bedad2650c57c90646b",
+        "vector_id": "memory-bounded",
+        "verdict": "PASS"
+      },
+      {
+        "cleanup_confirmed": true,
+        "container_id": "d30348e9fbb7cf2a50fe7390f1dd5bcdcd3764271ab20e494a39dd14d08310a2",
+        "engine_oom_killed": false,
+        "probe_exit_code": 0,
+        "resource_receipt_sha256": "5b28aa85fa85260a725483c65aba3c7cb07b64a66bc824fb2e54b565597e6d48",
+        "vector_id": "cpu-bounded",
+        "verdict": "PASS"
+      },
+      {
+        "cleanup_confirmed": true,
+        "container_id": "ad45bfe15c1be804447691c5b976213077640fa1a2dc61f9db5a2ccf0692522a",
+        "engine_oom_killed": false,
+        "probe_exit_code": 0,
+        "resource_receipt_sha256": "5e73257a02331d28ef6da5142d1c3cc59a8f02e5960edcdf3c923250cb6e244f",
+        "vector_id": "pids-bounded",
+        "verdict": "PASS"
+      }
+    ],
+    "verdict": "OBSERVATIONS_COLLECTED"
+  }
+}

@@ -1,0 +1,1893 @@
+# Transcrição de trabalho com correções editoriais pontuais
+
+Não é uma nova edição diagramada. Tabelas, fórmulas e figuras devem ser conferidas no PDF original. As correções abaixo não encerram os demais achados da revisão dirigida. A autoria e a versão publicada permanecem preservadas; integração final e revisão autoral pendentes.
+
+
+=== PAGINA 1 ===
+PROTOCOLO DE PESQUISA — ESTUDO DE DESIGN SCIENCE
+ Proposta de protocolo para construção de
+ conhecimento verificável sob incerteza
+profunda: um estudo de design science em
+ AGI/ASI
+ Rafael Oliveira
+ Pesquisador independente — Brasil
+ Autor para correspondência — ORCID: 0009-0005-2697-4668
+ Setembro de 2026
+ Documento reformulado como protocolo de pesquisa falseável a partir do
+ensaio anterior, incorporando integralmente a avaliação por pares recebida: o
+ texto agora se assume como protocolo e agenda de pesquisa, não como
+ contribuição validada.
+ RESUMO
+Contexto: sistemas de inteligência artificial tornam-se progressivamente autônomos, opacos
+e acoplados a cadeias sociotécnicas complexas, de modo que alegações sobre seu
+comportamento circulam antes de qualquer verificação independente, em regime de
+incerteza profunda.
+Lacuna: não há, na literatura, protocolo unificado que discipline a pesquisa exploratória em
+AGI/ASI, integrando geração abdutiva de hipóteses, serendipidade registrada e verificação
+falseável.
+Objetivo: propor um protocolo de pesquisa falseável — não um resultado validado — para
+construção de conhecimento verificável nesse regime.
+Método: estudo de design science (ciclos DSRM) que constrói e descreve quatro artefatos: (i)
+matriz de lacunas de conhecimento com priorização ponderada e plano de validação de
+conteúdo; (ii) modelo de verificação distribuída em cinco camadas (L0–L4), formalizado como
+máquina de estados com guardas, regras de conflito e critérios de terminação; (iii)
+arquitetura de proveniência (PROV-O/JSON-LD) com auditoria amostral; e (iv) conjunto de
+hipóteses pedagógicas testáveis. Apresenta-se plano de validação experimental detalhado
+(ensaio randomizado, avaliadores cegos, meta inicial N = 150, ANCOVA), ainda não executado e sujeito a pré-registro, com planejamento de protocolo
+ético (CEP, TCLE, LGPD).
+Contribuições: instrumentos auditáveis para converter alegações exploratórias em registros
+falseáveis, com separação explícita entre protocolo e evidência.
+Limitações: trata-se de proposta metodológica sem evidência causal própria; a validação
+empírica é planejada, não executada; riscos de teatro de verificação são mitigados, não
+eliminados.
+Palavras-chave: design science; incerteza profunda; abdução; verificação em camadas;
+pré-registro; auditoria.
+
+
+=== PAGINA 2 ===
+1 Introdução
+1.1 Contexto e problema
+ A pesquisa em inteligência artificial ingressou em um regime em que os
+artefatos técnicos precedem a compreensão teórica disponível sobre eles.
+Sistemas treinados em escala exibem comportamentos não antecipados por
+seus próprios projetistas, e tanto a literatura de segurança de aprendizado de
+máquina (AMODEI et al., 2016; HENDRYCKS et al., 2021) quanto a de
+alinhamento de objetivos (RUSSELL, 2019) documentam a dificuldade de
+produzir, sobre tais sistemas, afirmações que resistam a verificação
+independente. Nesse ambiente, alegações sobre capacidades, riscos e
+desempenho circulam rapidamente — em preprints, demonstrações e
+comunicados — antes que qualquer mecanismo de verificação tenha tido
+oportunidade de operar. O resultado é um mercado de afirmações cujo custo de
+produção é baixo e cujo custo de refutação é alto, configuração que a
+metodologia da ciência conhece bem por suas consequências indesejáveis
+(IOANNIDIS, 2005; LIPTON; STEINHARDT, 2019).
+ O problema adquire contornos agudos quando o objeto de investigação é a
+inteligência artificial geral (AGI) e, por extensão, a superinteligência artificial
+(ASI). Trata-se de um domínio em que a existência plena do fenômeno, suas
+categorias descritivas adequadas e suas relações causais relevantes ainda não
+estão estabelecidas — condição que este protocolo designa, na terminologia da
+decisão sob incerteza, como incerteza profunda (MARCHAU et al., 2019).
+Funtowicz e Ravetz (1993) caracterizaram esse regime como o domínio próprio
+da ciência pós-normal: fatos incertos, valores em disputa e decisões urgentes
+coexistem, e a qualidade da afirmação científica desloca-se da certeza do
+produto para a robustez do processo de justificação. É exatamente essa
+transferência — da certeza do produto para a robustez do processo — que o
+presente documento tenta operacionalizar.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 2 de 38
+
+
+=== PAGINA 3 ===
+1.2 Lacuna
+ As respostas existentes tratam partes do problema, mas não o conjunto. A
+literatura sobre afirmações verificáveis no desenvolvimento de IA propõe
+mecanismos institucionais de verificação (BRUNDAGE et al., 2020), mas não
+oferece um protocolo operacional para a fase exploratória de geração de
+hipóteses. A revolução do pré-registro disciplinou a pesquisa confirmatória
+(NOSEK et al., 2018; CHAMBERS; TZAVELLA, 2022), porém seu desenho
+pressupõe hipóteses já formuladas e desfechos já definidos — pressupostos que
+a pesquisa exploratória sob incerteza profunda não pode garantir a priori. Os
+trabalhos sobre auditoria de algoritmos estabelecem estruturas de governança
+para sistemas em operação (RAJI et al., 2020), mas não alcançam a
+epistemologia da formulação inicial de alegações. Resta, portanto, uma lacuna
+específica: não há, que se tenha localizado, um protocolo unificado que conecte
+a geração abdutiva de hipóteses — legítima e necessária em domínios
+pré-paradigmáticos (KUHN, 1962) — a critérios falseáveis de verificação
+escalonada, sem desqualificar a exploração e sem conceder às suas alegações
+estatuto que não possuem. O presente protocolo foi construído para ocupar essa
+lacuna.
+1.3 Pergunta de pesquisa e hipótese de trabalho
+Pergunta de pesquisa (RQ1): como operacionalizar um protocolo de
+verificação distribuída para alegações produzidas em pesquisa
+exploratória sob incerteza profunda em AGI/ASI, de modo que tais
+alegações sejam falseáveis, auditáveis e replicáveis?
+ A questão é delimitada por dois termos que exigem explicitação desde o
+início. Por falseáveis entende-se a propriedade popperiana de admitir
+procedimentos de refutação especificados de antemão (POPPER, 1959): cada
+alegação deve registrar, no momento de sua formulação, o que contaria como
+sua falha. Por auditáveis entende-se a existência de trilhas de proveniência que
+permitam a terceiros reconstituir a origem, os verificados e as decisões
+associadas a cada alegação. Replicáveis, por sua vez, refere-se à possibilidade
+de reprodução independente por agentes sem vínculo com o proponente,
+condição que a epistemologia social da confiança reconhece como constitutiva
+do conhecimento coletivo (HARDWIG, 1991; LONGINO, 1990).
+ O documento assume, adicionalmente, uma hipótese de trabalho de fundo,
+formulada explicitamente como hipótese — e não como resultado — em razão da
+ausência de evidência causal própria:
+Hipótese de trabalho (HT1): a produtividade epistêmica em contextos de
+incerteza profunda depende menos da aplicação isolada do método
+hipotético-dedutivo do que da combinação disciplinada entre abdução,
+serendipidade registrada e verificação distribuída.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 3 de 38
+
+
+=== PAGINA 4 ===
+HT1 é especulativa. Nada neste documento a demonstra; o plano de
+validação da Seção 6 testa indiretamente seus desdobramentos pedagógicos, e
+sua formulação causal completa exigiria desenho comparativo que excede o
+escopo aqui declarado. A honestidade epistêmica do protocolo depende de que
+essa condição permaneça visível em todas as camadas de leitura do texto.
+1.4 Natureza do documento e escopo
+ Este texto é um protocolo de pesquisa e uma agenda, não um relato de
+resultados. Ele descreve artefatos propostos, critérios de avaliação e planos de
+validação; não executa a avaliação que descreve. Essa declaração não é
+modestia retórica, mas a decisão de enquadramento exigida pelo gênero: segue
+o modelo de protocolos avaliados antes da execução (CHAMBERS; TZAVELLA,
+2022), nos quais o valor do documento reside na qualidade do plano e não na
+força dos achados. Em conformidade com esse enquadramento, todas as
+contribuições são formuladas com qualificadores epistêmicos explícitos —
+propõe-se, sugere-se, hipótese — e o termo proposta metodológica substitui,
+deliberadamente, qualquer pretensão de modelo validado.
+ O escopo está dividido em duas frentes que permanecem separadas por
+decisão de desenho. A primeira, objeto deste documento, é
+epistemológico-metodológica: o protocolo de verificação, a matriz de lacunas, a
+arquitetura de proveniência e as hipóteses pedagógicas. A segunda,
+técnico-engineering — especificação de arquitetura, implementação e testes de
+sistemas concretos — é deixada para documento próprio, evitando o excesso de
+escopo apontado na avaliação recebida. A integração entre as duas frentes
+ocorre apenas no nível de interfaces declaradas (Seção 4.4).
+1.5 Contribuições propostas
+ São quatro as contribuições, cada uma qualificada segundo seu estatuto
+epistêmico:
+– (i) propõe-se uma matriz de lacunas de conhecimento com campos
+padronizados, critérios de priorização ponderados e pré-registráveis, e plano
+de validação de conteúdo por painel de especialistas (Seção 4.1);
+– (ii) propõe-se um modelo de verificação distribuída em cinco camadas (L0–L4),
+formalizado como máquina de estados com guardas, ações, regras de conflito
+e critérios de terminação (Seções 4.2 e 4.3);
+– (iii) propõe-se uma arquitetura de referência de proveniência e auditoria,
+alinhada aos padrões W3C PROV e JSON-LD, com auditoria amostral anual
+(Seção 4.4);
+– (iv) sugere-se um conjunto de hipóteses pedagógicas testáveis, com
+instrumentos validados e desenho experimental detalhado (Seções 5 e 6).
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 4 de 38
+
+
+=== PAGINA 5 ===
+Não se afirma que esses artefatos funcionam; afirma-se, com precisão, o
+que teria de ser observado para que passassem a funcionar — e o plano para
+observá-lo. Essa é a diferença operacional entre um protocolo e um resultado, e
+ela é mantida em todo o texto.
+1.6 Estrutura
+ A Seção 2 apresenta o referencial teórico em cinco eixos e o
+posicionamento frente a trabalhos relacionados. A Seção 3 descreve o método
+design science, o corpus, a reflexividade e as limitações do próprio método. A
+Seção 4 desenvolve a proposta: matriz, camadas, máquina de estados,
+proveniência e núcleo de segurança. A Seção 5 formula as hipóteses
+pedagógicas; a Seção 6 detalha o plano de validação, inclusive ética; a Seção 7
+discute limitações, ameaças à validade e riscos de uso indevido; a Seção 8
+conclui e declara a agenda. Apêndices trazem protocolos operacionais, matriz
+preenchida, schema de proveniência, plano de análise estatística e nota sobre
+material suplementar.
+2 Referencial teórico
+O referencial é apresentado em cinco eixos, de forma concisa, com função
+estritamente instrumental: cada eixo sustenta um componente do protocolo. Ao
+final, a Seção 2.7 posiciona a proposta frente a linhas afins de pesquisa.
+2.1 Incerteza profunda e ciência pós-normal
+ A incerteza profunda, na literatura de apoio à decisão, designa situações
+com múltiplos futuros plausíveis, sem probabilidades acordadas e com sistemas
+de valor em disputa (MARCHAU et al., 2019). Ela difere da incerteza
+paramétrica — quantificável e propagável por métodos estatísticos
+convencionais — porque afeta a própria estrutura do problema: quais variáveis
+existem, quais relações as conectam e quais critérios de decisão são legítimos.
+Funtowicz e Ravetz (1993) argumentaram que, sob fatos incertos, valores em
+disputa e riscos elevados, a garantia de qualidade científica desloca-se do
+controle interno dos pares para processos estendidos de avaliação, que
+incorporam Afirmações-Avaliações amplamente disputadas e comunidades de
+interesse afetado. Esse deslocamento fundamenta duas decisões de desenho do
+protocolo: a verificação é distribuída entre agentes distintos (Seção 4.2), e a
+última camada incorpora avaliação sociotécnica por parte interessada (camada
+L4). A legitimidade dessa distribuição repousa, ademais, sobre a análise de
+Hardwig (1991) acerca da natureza social do testemunho epistêmico: em
+domínios especializados, ninguém verifica tudo, e a qualidade do conhecimento
+coletivo depende de estruturas confiáveis de delegação — que o protocolo tenta
+tornar explícitas e auditáveis.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 5 de 38
+
+
+=== PAGINA 6 ===
+2.2 Abdução e inferência para a melhor explicação
+ A abdução, na formulação peirceana, é a operação de introduzir uma
+hipótese explicativa diante de um fato surpreendente, anteriormente a qualquer
+teste (PEIRCE, 1955). Niiniluoto (2018) a recoloca como estratégia de busca de
+verdade em contexto de descoberta, e Schurz (2008) cataloga seus padrões
+recorrentes — do tipo másico ao tipo teórico. A relação entre abdução e
+inferência para a melhor explicação (IBE), contudo, é objeto de disputa
+conceitual: McAuliffe (2015) documenta como as duas noções foram
+progressivamente confundidas, e Douven (2013) examina criticamente a própria
+IBE quando confrontada com critérios bayesianos de acurácia. Críticas mais
+fundas questionam a existência de regras universais de indução e a legitimidade
+de preferir explicações por sua qualidade intrínseca (VAN FRAASSEN, 1989).
+Este protocolo adota, diante dessas controvérsias, uma posição
+deliberadamente modesta: a abdução é reconhecida como geradora de
+candidatos — e não como justificadora de crenças (LIPTON, 2004) —, o que
+explica por que o protocolo exige que toda hipótese abduzida atravesse
+camadas de verificação antes de receber qualquer estatuto epistêmico. Em
+domínios pré-paradigmáticos, nos quais a anomalia é o motor da investigação
+(KUHN, 1962), essa função geradora é indispensável; sua disciplina, porém,
+deve ser fornecida pelo protocolo de verificação, e não pela plausibilidade
+narrativa da hipótese.
+2.3 Serendipidade e descoberta disciplinada
+ A serendipidade — descoberta valiosa acidentalmente buscada — foi
+tematizada classicamente por Merton e Barber (2004) como categoria da
+sociologia da ciência e, mais recentemente, taxonomizada por Yaqub (2018),
+que distingue tipos walpolianos, mertonianos, bushianos e stephanianos
+conforme o papel do acaso, da sagacidade e do erro. A literatura reconhece que
+ambientes podem cultivar condições de serendipidade — densidade de
+conexões, registro de anomalias, tolerância a desvios — sem que a descoberta
+possa ser planejada. O protocolo incorpora essa constatação como
+serendipidade disciplinada: anomalias e coincidências observadas devem ser
+registradas com o mesmo rigor das hipóteses deliberadas, e passam pelas
+mesmas camadas de verificação. A disciplina tem dupla função: impede que a
+serendipidade se transforme em álibi para afirmações sem controle, e impede,
+na direção oposta, que a exigência de verificação imediata desestimule o
+registro de descobertas inesperadas — perda que a própria taxonomia de Yaqub
+(2018) sugere ser irrecuperável, pois parte do valor epistêmico do acaso reside
+justamente em sua improbabilidade retrospectiva.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 6 de 38
+
+
+=== PAGINA 7 ===
+2.4 Design science e design especulativo
+ A design science research produz conhecimento mediante a construção e
+avaliação de artefatos, com critérios explícitos de rigor e relevância (HEVNER
+et al., 2004) e ciclos metodológicos definidos (PEFFERS et al., 2007). Sua
+unidade de contribuição não é a verdade descritiva, mas a viabilidade
+demonstrada de um desenho — o que a torna adequada a domínios nos quais os
+objetos ainda não existem plenamente e a validação empírica direta é inviável
+ou prematura. O design especulativo complementa esse quadro ao usar
+artefatos conceituais de futuros possíveis como sondas para antecipar
+implicações e provocar debate (DUNNE; RABY, 2013); revisão sistemática
+recente consolida o processo e suas variações (CARDENAS CORDOVA et al.,
+2025). No protocolo, sondas especulativas atuam como geradoras de hipóteses
+e de lacunas — jamais como evidência —, e cada sonda relevante é convertida,
+quando formulável, em protoafirmação sujeita às camadas de verificação. Essa
+conversão é o ponto de ligação entre a geração exploratória (2.2 e 2.3) e a
+disciplina falseável que o protocolo impõe.
+2.5 Metacognição e aprendizagem autorregulada
+ O quinto eixo sustenta a dimensão formativa do protocolo. Flavell (1979)
+introduziu a metacognição como conhecimento e monitoramento da própria
+cognição; Panadero (2017) sistematiza seis modelos de aprendizagem
+autorregulada e suas direções de pesquisa; Winne (2018) articula cognição e
+metacognição dentro do ciclo de autorregulação; Kaplan (2008) adverte contra
+a diluição conceitual entre construtos vizinhos; Zimmerman (2002) descreve o
+ciclo de previsão, desempenho e autorreflexão que orienta as intervenções
+propostas. Duas revisões recentes são diretamente relevantes: Theobald et al.
+(2026) propõem o modelo EMERGE, integrando funções executivas,
+metacognição e autorregulação; de Mooij et al. (2025) revisam
+sistematicamente o uso de dados multimodais e inteligência artificial no estudo
+da aprendizagem autorregulada. A implicação operacional para este protocolo é
+dupla: a metacognição fornece os mecanismos individuais — monitoramento de
+conclusões precipitadas, avaliação de evidências próprias — que complementam
+os mecanismos sociais de verificação; e ela é treinável, com efeitos
+documentados sobre desempenho, o que legitima a formulação de hipóteses
+pedagógicas testáveis (Seção 5) em lugar de afirmações especulativas sobre
+formação.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 7 de 38
+
+
+=== PAGINA 8 ===
+2.6 Segurança, auditoria e reprodutibilidade em IA
+ A segurança de sistemas de IA inteligentes em geral e a reprodutibilidade
+da pesquisa no domínio constituem o contexto institucional do protocolo. A
+literatura de segurança identifica problemas em aberto — especificação,
+robustez, monitoramento — que tornam a verificação de alegações condição de
+segurança, e não apenas de qualidade (AMODEI et al., 2016; HENDRYCKS et
+al., 2021; RUSSELL, 2019). Propostas de debate entre agentes (IRVING et al.,
+2018), de saídas com prova embutida (AVNI et al., 2026) e de IA
+verification-first aplicada à revisão por pares (YOU; CAO; GUREVYCH, 2026)
+exploram mecanismos técnicos de verificação; o protocolo herede delas a
+exigência de independência entre proponente e verificador. No plano
+institucional, Brundage et al. (2020) mapeiam mecanismos para afirmações
+verificáveis em desenvolvimento de IA; Raji et al. (2020) definem estrutura de
+auditoria interna ponta a ponta; Amershi et al. (2019) documentam,
+empiricamente, a dificuldade de replicar resultados em equipes de aprendizado
+de máquina. O red teaming conduzido com modelos de linguagem (PEREZ et al.,
+2022) fornece técnica de ataque estruturado a alegações e sistemas. Na
+metodologia da ciência, o manifesto de Munafò et al. (2017) e o diagnóstico de
+Lipton e Steinhardt (2019) caracterizam os riscos de um ecossistema que
+recompensa afirmações não verificadas — o que o protocolo trata como ameaça
+de primeiro orden, a ser monitorada com indicadores próprios (Seção 7.3).
+2.7 Trabalhos relacionados e posicionamento
+A Tabela 1 compara as linhas afins com o que este protocolo acrescenta. O
+critério de comparação é funcional: o que a proposta adiciona que a linha
+correspondente não oferece.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 8 de 38
+
+
+=== PAGINA 9 ===
+Tabela 1 – Comparação com linhas de pesquisa afins
+Linha / trabalho
+Foco central
+O que o protocolo proposto
+acrescenta
+Ciência pós-normal —
+Funtowicz e Ravetz
+(1993); decisão sob
+incerteza profunda —
+Marchau et al. (2019)
+Diagnóstico do regime
+epistêmico e estratégias de
+decisão robusta.
+Operacionalização em protocolo
+auditável, com gates formais, máquina de
+estados e proveniência por alegação.
+Pré-registro e
+Registered Reports —
+Nosek et al. (2018);
+Chambers e Tzavella
+(2022)
+Disciplina da pesquisa
+confirmatória antes da coleta de
+dados.
+Extensão à fase exploratória:
+protoafirmações, serendipidade
+registrada e verificação escalonada antes
+de haver hipótese confirmatória.
+Afirmações verificáveis
+em IA — Brundage et
+al. (2020); auditoria —
+Raji et al. (2020)
+Mecanismos institucionais e de
+governança para verificação de
+alegações sobre IA.
+Protocolo de nível de alegação individual,
+com camadas cumulativas e terminação
+formal; aplicação à pesquisa exploratória,
+não apenas a sistemas em operação.
+Design science —
+Hevner et al. (2004);
+Peffers et al. (2007)
+Produção de conhecimento por
+construção e avaliação de
+artefatos.
+Gates de segurança sociotécnica como
+restrição de primeira ordem sobre o ciclo
+do artefato; camada L4 com
+comunidades afetadas.
+Design especulativo —
+Dunne e Raby (2013);
+Cardenas Cordova et
+al. (2025)
+Sondas conceituais sobre futuros
+possíveis.
+Regra de conversão obrigatória de sonda
+em protoafirmação verificável, impedindo
+que especulação circule como evidência.
+Metacognição e SRL —
+Flavell (1979);
+Panadero (2017);
+Theobald et al. (2026)
+Mecanismos individuais de
+monitoramento e regulação da
+aprendizagem.
+Integração curricular com protocolo de
+verificação social; hipóteses pedagógicas
+com instrumentos validados e desenho
+experimental.
+Segurança e
+verificação técnica de
+IA — Irving et al.
+(2018); Avni et al.
+(2026); You, Cao e
+Gurevych (2026)
+Mecanismos técnicos de debate,
+prova e verificação-first.
+Camada de governança epistêmica que
+organiza quando e por quem esses
+mecanismos técnicos são acionados, com
+terminação e disputa formais.
+Confiança epistêmica
+— Hardwig (1991);
+Longino (1990)
+Natureza social do testemunho e
+da objetividade científica.
+Estruturas de delegação explícitas e
+auditáveis: verificador designado, árbitro
+de disputa, auditoria amostral anual.
+Fonte: elaborado pelo autor (2026).
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 9 de 38
+
+
+=== PAGINA 10 ===
+3 Método
+3.1 Abordagem: design science research
+ O método adotado é a design science research em sua formulação clássica:
+construção de artefatos com relevância para um problema real e rigor na
+avaliação de sua eficácia (HEVNER et al., 2004), organizada pelos seis
+processos do DSRM — identificação do problema, definição dos objetivos,
+desenho e desenvolvimento, demonstração, avaliação e comunicação (PEFFERS
+et al., 2007). Neste documento, os artefatos são conceituais e procedurais
+(matriz, camadas, máquina de estados, schema, hipóteses pedagógicas), a
+demonstração é lógico-exemplificativa e a avaliação é um plano detalhado,
+pré-registrável, não executado. Essa configuração — DSRM interrompido antes
+da avaliação empírica — é declarada como limitação constitutiva e não como
+mérito: é ela que define o estatuto do texto como protocolo (Seção 1.4). A
+demonstração por exemplificação, nos limites do que é possível em papel, segue
+padrão de artefatos-conceito comuns à pesquisa de design; seu valor é
+ilustrativo, não probatório.
+3.2 Fontes e corpus
+ Três fontes alimentaram a construção. Primeira: literatura independente,
+nas áreas de epistemologia da descoberta, metodologia da ciência, segurança e
+auditoria de IA, e formação metacognitiva — são as referências citadas ao longo
+do texto, exclusivamente externas ao autor. Segunda: um corpus de motivação
+de autoria exclusiva do próprio pesquisador — registros técnicos anteriores,
+depositados publicamente —, que serviu de material de análise e fonte de
+instrumentos, mas que não desempenha função probatória alguma no
+argumento central. Por decisão metodológica, esse corpus foi retirado do corpo
+do documento e catalogado como material suplementar (Apêndice E), do qual
+constam também as correções de registro identificadas na revisão. Terceira:
+documentação técnica do próprio processo de elaboração — decisões de
+desenho, versões e registros de negação — que segue disponível na trilha de
+proveniência do projeto (Seção 4.4). Quando o texto refere genericamente o
+corpus técnico, a menção não deve ser lida como evidência, mas como indicador
+de origem de instrumentos.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 10 de 38
+
+
+=== PAGINA 11 ===
+3.3 Reflexividade e auto-referencialidade
+ A posição do autor é declarada: trata-se de pesquisa de autor único, com
+proximidade histórica ao corpus de motivação e sem filiação institucional. Essa
+configuração impõe riscos de viés — de confirmação na seleção de material, de
+ancoragem em instrumentos próprios e de captura epistêmica da agenda — que
+são tratados como parte do objeto, e não como defeito externo a ele. As
+mitigações adotadas são: ancoragem primária do referencial em literatura
+independente; isolamento do corpus de motivação sem função probatória;
+declaração formal de conflito de interesse epistêmico (Seção Declarações);
+plano de validação com replicação independente e colaboração adversarial
+(KAHNEMAN, 2003), conforme a tese de que a objetividade científica é
+propriedade de processos sociais críticos, e não de indivíduos (LONGINO,
+1990). O protocolo aplica a si mesmo seus próprios gates: as afirmações
+centrais do documento encontram-se registradas como protoafirmações L0, e
+sua progressão pelas camadas subsequentes depende exatamente dos
+mecanismos descritos na Seção 4.
+3.4 Nota terminológica e glossário operacional
+ A distinção entre verificação e validação — consagrada em engenharia de
+requisitos — é mantida em todo o texto: verificar é conferir que o registro
+corresponde à sua especificação declarada; validar é conferir que ele atende às
+necessidades do contexto de uso (BOEHM, 1984). As camadas L0–L3 verificam;
+a camada L4 valida, no sentido de avaliar efeitos em uso real. A Tabela 2
+consolida os termos de uso restrito; as definições da tabela valem como
+especificação interna do protocolo, e toda ocorrência no texto segue
+exclusivamente essas definições.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 11 de 38
+
+
+=== PAGINA 12 ===
+Tabela 2 – Glossário operacional do protocolo
+Termo
+Definição operacional
+Alegação
+Enunciado sobre um sistema, comportamento ou capacidade, registrado com
+escopo, premissas e evidência vinculada; unidade básica do protocolo.
+Protoafirmação
+Alegação recém-registrada, ainda sem qualquer status verificatório; estado
+inicial da máquina de estados (Seção 4.3).
+Gate (portão)
+Ponto de decisão cumulativo que uma alegação precisa atravessar para
+progredir; cada camada L0–L4 define um gate.
+Guarda g(Lk)
+Condição mensurável que autoriza a transição da alegação pelo gate da
+camada Lk; definida no protocolo operacional (Apêndice A).
+Verificação
+Conferência da correspondência entre registro e especificação declarada
+(camadas L0–L3) (BOEHM, 1984).
+Validação
+Avaliação da adequação do registro às necessidades e efeitos no contexto de
+uso (camada L4) (BOEHM, 1984).
+Proveniência
+Cadeia documentada de origem, autoria, dependências, verificador e decisão
+associados a cada evento do ciclo da alegação (W3C, 2013).
+Disputa
+Processo formal, com árbitro independente e janela T(d), aberto por
+evidência contrária a uma verificação (Seção 4.3).
+Núcleo de
+segurança
+Conjunto de restrições — reversibilidade, diversidade, preservação
+informacional — que prevalece sobre qualquer status verificatório (Seção
+4.5).
+Fonte: elaborado pelo autor (2026).
+3.5 Limitações do método
+ Quatro limitações delimitam o que o método pode entregar. Primeira:
+ausência de dados primários nesta versão — a validação é um plano, e a
+demonstração é exemplificativa. Segunda: autor único, com as consequências
+de viés descritas em 3.3; a mitigação é institucional (replicação e adversarial), e
+permanece por executar. Terceira: o domínio AGI/ASI é móvel — o referencial
+envelhece à medida que a prática de verificação institucionaliza-se, e o
+protocolo prevê revisão versionada da matriz de lacunas para absorver esse
+movimento. Quarta: a formalização em máquina de estados captura o fluxo
+verificatório de alegações individuais, mas não todos os aspectos sociotécnicos
+do processo científico; essa escolha deliberada privilegia auditabilidade sobre
+abrangência, e suas consequências são discutidas na Seção 7.2.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 12 de 38
+
+
+=== PAGINA 13 ===
+4 Proposta
+4.1 Matriz de lacunas de conhecimento com priorização
+ponderada
+ A matriz de lacunas é o instrumento que converte a desordem informativa
+da fase exploratória em agenda verificável: cada lacuna é formulada de modo a
+admitir método de investigação, critérios de encerramento e prioridade
+comparável. A Tabela 3 define os campos, agora com controle de qualidade
+explícito por campo — exigência da avaliação recebida, que identificou a
+ausência de validação de conteúdo na versão anterior.
+ Tabela 3 – Campos da matriz de lacunas e controles de qualidade
+Campo
+Conteúdo exigido
+Controle de qualidade
+Identificador
+Codificação estável (LG-XX) rastreável
+entre registros, ciclos e versões.
+Integridade referencial verificada
+na proveniência (4.4).
+Descrição
+Formulação verificável da lacuna, com
+escopo explícito e distinção entre
+desconhecido e não medido.
+Revisão dupla por painel;
+reformulação se o item não admitir
+método de investigação.
+Evidência de
+suporte
+Referência independente que justifica
+postular a lacuna, com citação verificável.
+Somente literatura independente;
+corpus próprio apenas como
+material de análise.
+Método proposto
+Procedimento indicado, com instrumentos,
+gates L0–L4 aplicáveis e custo estimado.
+Viabilidade revisada por
+especialista com experiência de
+execução.
+Prioridade
+P = 0,50·impacto + 0,30·tratabilidade +
+0,20·urgência, escala 1–5 por juiz.
+Pesos pré-registrados antes do
+painel; mediana entre juízes;
+dispersão reportada.
+Status
+Estado corrente: aberta, em investigação,
+verificada em nível Lk, sob disputa,
+encerrada.
+Atualização obrigatória a cada
+ciclo, com data, verificador e
+artefatos.
+Proveniência
+Registro do ciclo de criação e de cada
+alteração da linha.
+Cadeia PROV completa; alterações
+sem proveniência são inválidas.
+Fonte: elaborado pelo autor (2026).
+ A priorização ponderada substitui a classificação qualitativa anterior. Os
+pesos — 0,50 para impacto, 0,30 para tratabilidade e 0,20 para urgência — são
+propostos aqui e devem ser confirmados ou revisados em pré-registro antes da
+aplicação do painel, o que impede ajuste retrospectivo para favorecer qualquer
+agenda. A validação de conteúdo da matriz segue protocolo clássico: painel de 5
+a 8 especialistas independentes, com cálculo do índice de validade de conteúdo
+por item, admitindo-se como adequado valor igual ou superior a 0,80; itens
+abaixo do limiar são reformulados ou eliminados. A confiabilidade entre
+avaliadores é medida por kappa de Cohen para a classificação por dimensão,
+com meta igual ou superior a 0,61 (concordância substancial) (COHEN, 1960), e
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 13 de 38
+
+
+=== PAGINA 14 ===
+por coeficiente de correlação intraclasse ICC(2,k) para os escores de prioridade,
+com meta igual ou superior a 0,75, conforme diretriz de seleção e reporte (KOO;
+LI, 2016). O exemplar preenchido — seis lacunas, com evidência e prioridade —
+consta do Apêndice B, já no formato ponderado; seus valores são ilustrativos até
+a execução do painel.
+4.2 Camadas de verificação L0–L4
+ O modelo de verificação distribuída classifica as alegações em cinco
+camadas cumulativas, cada uma com definição, critério de falha, verificador
+designado e exemplo (Tabela 4; Figura 1). A propriedade central é a
+distribuição da carga de prova: cada camada desloca a responsabilidade para
+agentes distintos — do próprio proponente (L0) até auditores e comunidades
+afetadas (L4) —, reduzindo a dependência de autodeclarações, problema
+constitutivo da confiança epistêmica (HARDWIG, 1991). A cumulatividade
+implica que nenhum gate substitui outro: aprovação em camada superior não
+sanciona alegação com falha ativa em camada inferior.
+ Tabela 4 – Modelo de verificação distribuída em camadas (definição, critério de falha,
+ verificador e exemplo)
+Camada
+Definição
+Critério de falha
+Verificador
+Exemplo
+L0 —
+Consistência
+interna
+Ausência de contradições
+lógicas, terminológicas e
+de premissas entre as
+afirmações do registro.
+Demonstração de
+contradição entre
+afirmações centrais ou
+premissa implícita
+incompatível com
+afirmação explícita.
+Proponente,
+com verificação
+cruzada
+automatizada de
+consistência.
+Revisão lógica de
+um relatório técnico
+antes da
+protoafirmação.
+L1 —
+Verificação
+técnica
+Reprodução dos artefatos
+— código, dados, cálculos
+e protótipos — em
+ambiente controlado.
+Impossibilidade de
+reproduzir os
+resultados declarados
+a partir dos artefatos
+publicados.
+Verificador
+técnico
+designado,
+distinto do
+proponente.
+Execução
+independente de
+um pipeline em
+ambiente limpo,
+com registro
+assinado.
+L2 —
+Verificação
+empírica
+Comparação das
+previsões ou
+comportamentos
+declarados com
+evidências externas
+independentes.
+Desacordo sistemático
+entre previsões e
+observações, ou dados
+incompatíveis com a
+alegação.
+Terceiros com
+acesso a dados
+ou instrumentos
+independentes.
+Comparação de
+previsões com
+comportamento
+observado em
+benchmarks
+públicos.
+L3 —
+Reprodução
+comunitária
+Replicação independente
+por múltiplos grupos
+externos, com protocolos
+pré-registrados.
+Falha de replicação
+reportada por grupo
+qualificado e não
+contestada com
+sucesso.
+Comunidade
+científica e
+grupos
+concorrentes.
+Replicação
+pré-registrada de
+um protocolo por
+laboratório externo.
+L4 — Impacto
+sociotécnico
+Avaliação dos efeitos
+sociais, econômicos e de
+segurança durante e
+após a implantação.
+Evidência de dano
+sistêmico não previsto,
+ou benefícios
+declarados não
+observados.
+Auditores
+independentes,
+reguladores e
+comunidades
+afetadas.
+Auditoria
+pós-implantação
+com relatório
+público e
+apreciação de
+partes interessadas.
+Fonte: elaborado pelo autor (2026). Protocolos operacionais por camada no Apêndice A.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 14 de 38
+
+
+=== PAGINA 15 ===
+Figura 1 – Arquitetura de camadas de verificação L0–L4, com gates cumulativos, estados
+ terminais e núcleo de segurança
+Fonte: elaborado pelo autor (2026).
+4.3 Formalização: máquina de estados do ciclo de verificação
+ A versão anterior descrevia as camadas; esta as formaliza como máquina
+de estados de alegação individual, respondendo à exigência de especificar
+transições, guardas, ações, regras de conflito e terminação. O conjunto de
+estados é S = {REGISTRADA, EM_VERIF(Lk), VERIF(Lk), FALHA(Lk),
+DISPUTADA(Lk), RETIDA, RETIRADA}, com k variando de 0 a 4. Cada transição
+é da forma (origem, destino, guarda, ação): a guarda é uma condição
+mensurável; a ação é o artefato obrigatório registrado em proveniência no
+instante da transição. A Tabela 5 especifica as transições centrais; a Figura 2
+apresenta o diagrama.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 15 de 38
+
+
+=== PAGINA 16 ===
+Tabela 5 – Transições da máquina de estados (origem, destino, guarda, ação)
+Origem
+Destino
+Guarda
+Ação registrada
+REGISTRADA
+EM_VERIF(L0)
+Registro completo: enunciado, escopo,
+premissas e evidência vinculada
+presentes.
+Abertura de proveniência da
+alegação; carimbo temporal.
+EM_VERIF(L0)
+VERIF(L0)
+g(L0): checklist de consistência
+concluído; zero itens críticos abertos.
+Relatório de consistência
+anexado; prazo de validade
+T(L0) = 6 meses.
+EM_VERIF(Lk)
+FALHA(Lk)
+Critério de falha da camada verificado
+por agente autorizado.
+Relatório de falha; notificação
+ao proponente; janela de
+correção.
+VERIF(Lk)
+EM_VERIF(Lk+
+1)
+Verificador da camada seguinte
+designado, com independência
+declarada em relação ao proponente.
+Convite e declaração de
+independência em
+proveniência.
+EM_VERIF(L1)
+VERIF(L1)
+g(L1): reprodução integral dos
+artefatos por agente distinto, em
+ambiente controlado.
+Pacote de reprodução
+arquivado e assinado.
+VERIF(Lk)
+DISPUTADA(Lk)
+Evidência contrária apresentada por
+verificador qualificado (R3).
+Abertura de disputa;
+suspensão do uso externo da
+alegação; designação de
+árbitro.
+DISPUTADA(Lk)
+VERIF(Lk) ou
+FALHA(Lk)
+Decisão arbitral dentro da janela T(d) =
+30 dias.
+Ato arbitral com pareceres
+divergentes anexados;
+atualização de status.
+VERIF(Lk)
+EM_VERIF(Lk)
+Expiração do prazo de validade T(Lk)
+da camada.
+Convocação de re-verificação;
+status anterior congelado em
+proveniência.
+Qualquer
+VERIF(Lk) ou
+EM_VERIF(Lk)
+RETIDA
+Gate de segurança acionado (R4):
+violação de reversibilidade, diversidade
+ou preservação informacional.
+Registro de rollback; análise
+de causa; revisão obrigatória
+do núcleo de segurança.
+REGISTRADA
+ou
+EM_VERIF(Lk)
+RETIRADA
+Petição do proponente.
+Histórico integral preservado
+(preservação informacional);
+marcação de retirada.
+Fonte: elaborado pelo autor (2026).
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 16 de 38
+
+
+=== PAGINA 17 ===
+Figura 2 – Máquina de estados do ciclo de verificação de alegações
+Fonte: elaborado pelo autor (2026).
+ As regras de conflito completam a especificação:
+– R1 (cumulatividade): o trânsito da alegação só avança após guarda satisfeita
+na camada corrente; k cresce monotonicamente de 0 a 4, sem pulos e sem
+compensação entre camadas.
+– R2 (não-substituição): verificação em camada superior nunca sanciona
+alegação com falha ativa em camada inferior; falha ativa interrompe a
+progressão.
+– R3 (disputa): qualquer verificador qualificado pode mover a alegação para
+DISPUTADA(Lk) com evidência; o árbitro é independente das partes; a decisão
+deve ocorrer dentro de T(d) = 30 dias e é registrada com eventuais pareceres
+divergentes.
+– R4 (segurança prevalece): o estado RETIDA prevalece sobre qualquer
+VERIF(Lk); a saída de RETIDA exige reversibilidade demonstrada e revisão do
+núcleo de segurança.
+– R5 (meta-verificação finita): a verificação do próprio processo de verificação
+não se estende recursivamente — realiza-se por auditoria amostral anual, com
+amostra não inferior a 10% dos registros, sorteio registrado e auditores
+independentes; é essa regra que bloqueia o regresso infinito identificado na
+avaliação.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 17 de 38
+
+
+=== PAGINA 18 ===
+Os critérios de terminação são: estado estável quando a alegação alcança
+VERIF(4), FALHA(Lk) com janela de correção exaurida, RETIRADA ou RETIDA;
+ou decisão arbitral registrada após disputa. A verificação não é eterna: cada
+VERIF(Lk) expira no prazo T(Lk) — 6 meses para L0 e L1, 12 meses para L2, 24
+meses para L3 e L4 —, exigindo re-verificação. Assim, o sistema evita tanto o
+regresso infinito da meta-verificação (R5) quanto a eternização de verificações
+caducas.
+4.4 Arquitetura de proveniência e auditoria
+ Toda transição da máquina de estados gera eventos registrados em uma
+trilha de proveniência alinhada ao padrão PROV do W3C (W3C, 2013),
+serializada em JSON-LD (W3C, 2020) para interoperabilidade com
+infraestruturas de dados conectadas. Cada registro vincula: a alegação
+(entidade), a atividade de verificação (com camada, guardas avaliadas e
+resultado), os agentes envolvidos (proponente, verificador, árbitro, auditor) e as
+evidências utilizadas — com marca temporal e integridade por resumo
+criptográfico. A auditoria segue a estrutura ponta a ponta de auditoria interna
+de algoritmos (RAJI et al., 2020), adaptada ao nível de alegação: escopo
+definido, verificador independente, evidência arquivada, decisão registrada e
+apreciação por terceiros. O Apêndice C apresenta o schema completo; o
+seguinte registro ilustra o formato:
+{
+  "@context": ["https://www.w3.org/ns/prov.jsonld",
+               {"ex": "https://exemplo.org/vocab#"}],
+  "@type": "ex:Claim",
+  "@id": "ex:claim-2026-0001",
+  "ex:statement": "O pipeline P reproduz o resultado R no ambiente A",
+  "ex:scope": "válido para A e para a versão v2.1 de P",
+  "ex:currentStatus": "ex:VERIF_L1",
+  "prov:wasAttributedTo": {"@id": "ex:agent-proponente"},
+  "prov:wasGeneratedBy": {
+    "@type": "ex:VerificationActivity",
+    "ex:layer": "ex:L1",
+    "prov:startedAtTime": "2026-09-22T12:00:00Z",
+    "prov:endedAtTime": "2026-09-29T12:00:00Z",
+    "prov:used": [{"@id": "ex:evidence-001"}],
+    "prov:wasAssociatedWith": {"@id": "ex:agent-verificador-l1"}
+  },
+  "ex:safetyGate": "ex:not-triggered",
+  "ex:validUntil": "2027-03-29"
+}
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 18 de 38
+
+
+=== PAGINA 19 ===
+4.5 Núcleo de segurança operacionalizado
+ Reversibilidade, diversidade e preservação informacional deixam de ser
+princípios abstratos e passam a ser restrições com métricas, metas, exemplos
+de decisão e tensões declaradas (Tabela 6). O núcleo de segurança atua como
+gate transversal (R4): sua violação retém a alegação independentemente do
+status verificatório, incorporando ao protocolo a lição de Collingridge (1980)
+sobre a dificuldade crescente de controlar tecnologias à medida que se
+consolidam — o controle deve ser estruturado antes da consolidação, quando
+ainda é possível.
+ Tabela 6 – Operacionalização do núcleo de segurança
+Princípio
+Métrica e meta
+Exemplo de decisão de
+design
+Tensões declaradas
+Reversibilid
+ade
+IR = decisões com mecanismo
+de rollback testado / decisões
+reversíveis em tese; meta IR
+maior ou igual a 0,80; teste de
+reversibilidade semestral.
+Nenhuma alegação em uso
+externo sem procedimento de
+retirada documentado;
+integrações reversíveis por
+padrão; publicação irreversível
+exige VERIF(3).
+Custo operacional e
+latência contra
+capacidade de
+recuperação;
+reversibilidade parcial
+registrada como tensão
+na trilha de auditoria.
+Diversidade
+de arquitet
+uras
+DA = número efetivo de
+arquiteturas de verificação
+independentes em operação
+(entropia normalizada); meta
+DA maior ou igual a 2.
+Manutenção paralela de duas
+implementações
+independentes do schema de
+proveniência; avaliação
+cruzada entre pilhas distintas
+antes de VERIF(4).
+Redundância de recursos
+contra risco de ponto
+único de falha epistêmica;
+convergência acidental de
+implementações
+monitorada.
+Preservaçã
+o informaci
+onal
+CP = alegações em uso
+externo com proveniência
+completa / alegações em uso
+externo; meta CP = 1,00;
+arquivamento imutável com
+integridade criptográfica.
+Histórico de disputas e
+retiradas preservado
+integralmente, inclusive após
+RETIRADA; registros imutáveis
+para fins de auditoria.
+Transparência contra
+privacidade (LGPD):
+pseudonimização e
+minimização de dados
+pessoais na trilha; conflito
+resolvido em favor da
+minimização, com
+registro.
+Fonte: elaborado pelo autor (2026).
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 19 de 38
+
+
+=== PAGINA 20 ===
+4.6 Integração humano–IA: protoafirmação, crítica adversarial e
+formulação robusta
+ O ciclo de produção de alegações com apoio de sistemas de IA segue três
+etapas com papéis separados. Na protoafirmação, o proponente registra a
+alegação com escopo, premissas e plano de verificação — inclusive alegações
+originadas de serendipidade registrada (Seção 2.3) e de sondas especulativas
+convertidas (Seção 2.4). Na crítica adversarial, agentes distintos — humanos,
+sistemas de IA configurados como adversários, ou ambos — tentam refutar a
+protoafirmação, na linha dos mecanismos de debate (IRVING et al., 2018) e do
+red teaming estruturado com modelos de linguagem (PEREZ et al., 2022). Na
+formulação robusta, a alegação sobrevivente é reescrita com os escopos e as
+exceções descobertas, e só então ingressa na máquina de estados. Esse desenho
+segue a direção da pesquisa recente sobre equipes humano–IA, que indica que o
+ganho de desempenho emerge da complementaridade de papéis e não da mera
+combinação de agentes (GONZALEZ et al., 2026), e é consistente com propostas
+que situam a verificação como condição de saúde do próprio ecossistema de
+revisão (YOU; CAO; GUREVYCH, 2026). A separação de papéis é obrigatória: o
+sistema que auxilia a formulação não pode ser o mesmo que decide a guarda de
+qualquer camada, preservando a independência entre proponente e verificador
+(BRUNDAGE et al., 2020; AVNI et al., 2026).
+5 Hipóteses pedagógicas
+A versão anterior apresentava implicações pedagógicas especulativas; esta as
+reformula como hipóteses falseáveis, com desfechos, instrumentos e momentos
+de medida declarados — respondendo à exigência de que a dimensão formativa
+seja testável, e não apenas afirmada. A Tabela 7 formula as quatro hipóteses; os
+parágrafos seguintes delimitam seu alcance. As hipóteses ancoram-se na
+literatura de aprendizagem autorregulada, que documenta efeitos positivos de
+intervenções metacognitivas sobre desempenho acadêmico (THEOBALD et al.,
+2026; PANADERO, 2017; ZIMMERMAN, 2002), e na distinção conceitual entre
+metacognição, autorregulação e aprendizagem autorregulada, que orienta a
+escolha de instrumentos (KAPLAN, 2008; WINNE, 2018).
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 20 de 38
+
+
+=== PAGINA 21 ===
+Tabela 7 – Hipóteses pedagógicas com desfechos, instrumentos e momentos de medida
+Hipótese
+Desfecho
+Instrumento
+Momento
+HP1 — Participantes treinados no
+protocolo L0–L4 obtêm escores
+superiores em avaliação crítica de
+alegações sobre IA do que participantes
+de controle ativo.
+Desempenho em
+avaliação crítica
+(primário)
+Halpern Critical
+Thinking Assessment
+(HALPERN, 2010),
+adaptado ao domínio
+Pré, pós,
+follow-up 8
+semanas
+HP2 — O treinamento aumenta a
+consciência metacognitiva declarada.
+Consciência
+metacognitiva
+(secundário)
+Metacognitive
+Awareness Inventory
+(SCHRAW; DENNISON,
+1994)
+Pré, pós
+HP3 — O treinamento reduz a taxa de
+protoafirmações formuladas sem
+escopo, premissas ou plano de
+verificação em tarefas colaborativas
+com IA.
+Taxa de
+protoafirmações por
+tarefa (secundário)
+Rubrica de
+protoafirmação — novo
+instrumento, com
+validação de conteúdo
+(IVC) e pilotagem antes
+do uso
+Nas tarefas,
+avaliação
+cega
+HP4 — O treinamento transfere para
+casos inéditos de avaliação de
+alegações.
+Transferência
+próxima e distante
+(exploratório)
+Dois casos novos, não
+treinados, com
+correção cega
+Pós
+Fonte: elaborado pelo autor (2026).
+ Três ressalvas delimitam o alcance das hipóteses. Primeira: HP3 depende
+de instrumento novo, cuja validação de conteúdo — pelo mesmo procedimento
+de painel da matriz de lacunas (Seção 4.1) — é pré-condição do ensaio;
+resultados que dependam de instrumento não validado serão reportados como
+exploratórios. Segunda: os efeitos documentados na literatura de
+autorregulação vêm de intervenções diversas e com tamanhos de efeito
+heterogêneos; as metas aqui adotadas são conservadoras e o cálculo amostral
+assume efeito de magnitude modesta (Seção 6.2). Terceira: o desfecho de
+transferência (HP4) é exploratório e não confirma HP1–HP3; sua função é gerar
+hipóteses subsequentes, não encerrar o debate. O uso de dados multimodais e
+de sistemas de IA para apoiar a medição da autorregulação, examinado por de
+Mooij et al. (2025), é deixado como direção futura, fora do escopo deste
+protocolo.
+6 Plano de validação
+A Seção 6 detalha o plano que a versão anterior apenas esboçava: desenho,
+cálculo amostral, desfechos, gestão de dados, análise estatística, critérios de
+parada, replicação independente e ética. O plano é pré-registrável em sua
+totalidade — essa é sua propriedade de design mais importante.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 21 de 38
+
+
+=== PAGINA 22 ===
+6.1 Desenho
+ Ensaio controlado randomizado, de braços paralelos, com dois grupos:
+intervenção — treinamento no protocolo L0–L4 e na matriz de lacunas, com
+prática deliberada de protoafirmação e crítica adversarial — e controle ativo —
+instrução de mesma duração sobre pensamento crítico geral, sem os
+instrumentos do protocolo. O controle ativo isola o efeito do conteúdo específico
+do protocolo do efeito inespecífico de receber treinamento (SHADISH; COOK;
+CAMPBELL, 2002). Duração: 12 semanas, com duas sessões semanais de 90
+minutos e tarefas assíncronas. Randomização estratificada por curso e nível
+(graduação/pós), com alocação 1:1 gerada por script com semente registrada.
+Avaliadores de desfechos cegos à condição: as tarefas de avaliação e a rubrica
+são corrigidas por terceiros sem acesso ao grupo de origem das respostas. Os
+participantes não são cegos à condição — limitação inerente a intervenções
+pedagógicas, declarada e discutida na Seção 7.2.
+6.2 Amostra e poder estatístico
+ O cálculo amostral assume tamanho de efeito pequeno a médio (f de Cohen
+= 0,25) para o desfecho primário em ANCOVA com um covariável (escore
+pré-teste), erro tipo I de 5%, poder de 80% e dois grupos: o cálculo resulta em N
+= 128, e, com margem de 15% para perdas e desistências, a meta de
+recrutamento é N = 150 (75 por braço). Os parâmetros seguem convenções
+consolidadas para cálculo de poder (COHEN, 1988; FAUL et al., 2007) e serão
+confirmados em pré-registro; uma análise de poder em série para f entre 0,20 e
+0,30 acompanhará o registro. A elegibilidade compreende estudantes de
+graduação e pós-graduação maiores de 18 anos; critérios de exclusão:
+participação simultânea em outro estudo educacional com medição sobreposta e
+ausência de consentimento informado.
+6.3 Desfechos
+A Tabela 8 consolida os desfechos do ensaio, seu papel analítico, os
+instrumentos de medida e os momentos de coleta. O desfecho primário é único,
+conforme exigência do desenho; os demais são declarados como secundários ou
+exploratórios e tratados estatisticamente como tais (Seção 6.5).
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 22 de 38
+
+
+=== PAGINA 23 ===
+Tabela 8 – Desfechos primários, secundários e exploratórios
+Desfecho
+Papel
+Instrumento / medida
+Momento
+Avaliação crítica de
+alegações sobre IA
+Primário
+HCTA adaptado ao domínio (HALPERN,
+2010); escore total ajustado pelo
+pré-teste
+Pré, pós, follow-up
+8 semanas
+Consciência metacognitiva
+Secundário
+MAI (SCHRAW; DENNISON, 1994)
+Pré, pós
+Taxa de protoafirmações
+em tarefas colaborativas
+Secundário
+Rubrica de protoafirmação validada
+(IVC igual ou superior a 0,80);
+correção cega
+Semanas 4, 8, 12
+Transferência para casos
+inéditos
+Exploratório
+Dois casos novos, correção cega,
+escala analítica
+Pós
+Completude de
+proveniência nas tarefas
+do protocolo
+Exploratório
+Proporção de registros de tarefa com
+cadeia PROV completa (4.4)
+Semanas 4, 8, 12
+Fonte: elaborado pelo autor (2026).
+6.4 Gestão de dados: FAIR e privacidade
+ Os dados do ensaio seguem os princípios FAIR — encontráveis, acessíveis,
+interoperáveis e reutilizáveis (WILKINSON et al., 2016) — na medida
+compatível com a privacidade dos participantes: materiais de intervenção,
+instrumentos, scripts de randomização e código de análise são publicados em
+repositório aberto no momento do pré-registro; os dados pseudonimizados de
+participantes são depositados com restricções de acesso e licença declarada
+após a publicação dos resultados. A pseudonimização é imediata, com
+segregação entre identificadores e respostas; o prazo de retenção é de cinco
+anos após a publicação; os direitos dos titulares — acesso, correção e
+eliminação — são garantidos conforme a Lei Geral de Proteção de Dados
+(BRASIL, 2018). Nenhuma informação sensível é coletada além do mínimo
+necessário à estratificação da randomização.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 23 de 38
+
+
+=== PAGINA 24 ===
+6.5 Plano de análise estatística
+ A análise primária é por intenção de tratar: ANCOVA do escore pós-teste
+com o pré-teste como covariável e condição como fator, com verificação de
+pressupostos (linearidade, homogeneidade de variâncias e de regressão) e
+tamanho de efeito padronizado reportado (LAKENS, 2013). Análises de
+sensibilidade compreendem: modelo misto com medidas repetidas (pré, pós,
+follow-up) para capturar a trajetória; Mann-Whitney como análise não
+paramétrica de robustez; e análise por protocolo como contraste. Os desfechos
+secundários são avaliados com correção de Holm para múltiplas comparações
+(HOLM, 1979); os exploratórios são declarados como tais e não entram na
+correção, sendo reportados com intervalos de confiança. Dados ausentes:
+imputação múltipla (m = 20) sob a hipótese de ausência aleatória condicional,
+com análise de sensibilidade por ajuste de inclinação (delta); abandono é
+descrito e comparado entre braços. O plano completo — sequência de testes,
+hipóteses nulas, regras de decisão, tratamento de valores extremos e código —
+consta do Apêndice D e é parte do pré-registro, impedindo decisões analíticas
+post hoc (NOSEK et al., 2018; MUNAFÒ et al., 2017).
+6.6 Critérios de parada e de insucesso
+ O ensaio é interrompido se: taxa de abandono acumulada superior a 20%;
+ocorrência de evento adverso relacionado ao estudo — desconforto psicológico
+significativo associado aos temas — que o Comitê de Ética em Pesquisa
+considere indicativo de risco; ou decisão do próprio CEP. O ensaio é declarado
+inconclusivo se, ao final, a taxa de perdas superiores ao previsto comprometer o
+poder; nesse caso, os resultados são publicados como preliminares, com análise
+de poder retrospectiva. O protocolo também define insucesso da intervenção:
+efeito do desfecho primário nulo ou negativo, ou efeito positivo restrito ao
+desfecho declarado como secundário — nesse caso, o resultado é publicado sem
+ressalvas de framing, como exigência de consistência com o próprio protocolo.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 24 de 38
+
+
+=== PAGINA 25 ===
+6.7 Replicação independente e pré-registro
+ Todo o pacote do estudo — intervenção, instrumentos, dados sintéticos de
+exemplo, scripts e plano de análise — é publicado no pré-registro, com formato
+de Registered Report quando aceito pelo periódico alvo (CHAMBERS;
+TZAVELLA, 2022), ou em repositório aberto como registro de protocolo. A
+replicação independente é parte do desenho: após a publicação, o pacote é
+oferecido a pelo menos dois grupos externos, com critério de sucesso da
+replicação definido a priori — efeito na mesma direção, estatisticamente
+significativo, com magnitude não inferior a 0,15 em medida padronizada. A
+replicação pré-registrada por terceiros corresponde, no vocabulário do
+protocolo, ao gate L3 (Seção 4.2) aplicado ao próprio estudo; divergências entre
+estudos entram em disputa formal pelo mecanismo R3.
+6.8 Considerações éticas
+ O estudo será submetido a Comitê de Ética em Pesquisa via Plataforma
+Brasil, conforme a Resolução CNS nº 510/2016, aplicável a pesquisas com seres
+humanos nas ciências humanas e sociais (BRASIL, 2016), e só iniciará a coleta
+após aprovação. O consentimento livre, informado e esclarecido (TCLE) cobrirá:
+objetivos, procedimentos, riscos e benefícios, garantia de sigilo, direito de
+retirada a qualquer tempo sem prejuízo, e política de dados da Seção 6.4. Os
+riscos são avaliados como mínimos, mas não nulos: o conteúdo envolve temas de
+risco tecnológico e incerteza existencial, que podem gerar desconforto em parte
+dos participantes; por precaução, o protocolo prevê material de orientação,
+canal de suporte psicológico identificado no TCLE e critérios de
+encaminhamento profissional, sem custo para o participante. A compensação —
+certificação de participação e, quando aplicável, reembolso de transporte — é
+declarada e dimensionada para não configurar indução indevida. A pesquisa
+com dados pessoais segue a LGPD (BRASIL, 2018), com responsável designado
+para atendimento aos titulares. O registro prévio do ensaio em repositório
+público de protocolos completa o conjunto de salvaguardas.
+7 Discussão
+7.1 Autoavaliação sob os critérios do domínio
+A avaliação recebida estabeleceu quatro critérios para propostas desta natureza
+— coerência, novidade, utilidade e testabilidade. A Tabela 9 aplica os critérios à
+própria proposta, com qualificadores epistêmicos explícitos; essa autoavaliação
+não substitui a avaliação externa — ela apenas explicita o estatuto que o autor
+atribui a cada componente.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 25 de 38
+
+
+=== PAGINA 26 ===
+Tabela 9 – Autoavaliação da proposta sob os critérios de coerência, novidade, utilidade e
+ testabilidade
+Critério
+Avaliação sintética
+Qualificador epistêmico
+Coerência
+Interna: os artefatos derivam do referencial e entre si
+(matriz alimenta camadas; camadas alimentam
+proveniência; núcleo restringe tudo). Externa:
+dependente de validação, ainda não executada.
+Coerência interna
+demonstrável por inspeção;
+coerência externa não
+reivindicada.
+Novidade
+A integração é nova; os componentes individuais têm
+precedentes claros (Tabela 1). A máquina de estados
+com terminação e disputa formais não foi localizada na
+literatura consultada.
+Sugere-se novidade de
+integração; reivindicação
+limitada ao que foi
+localizado.
+Utilidade
+Instrumentos concretos e imediatamente utilizáveis por
+grupos de pesquisa exploratória e por docentes;
+aplicabilidade independe da aceitação do referencial
+teórico.
+Propõe-se utilidade
+demonstrável em piloto.
+Testabilidade
+HP1–HP4 são testáveis com o desenho da Seção 6; as
+camadas e regras são verificáveis por auditoria; HT1
+permanece especulativa.
+Hipótese de trabalho;
+testabilidade condicionada
+ao pré-registro e execução.
+Fonte: elaborado pelo autor (2026).
+7.2 Limitações e ameaças à validade
+ As ameaças são organizadas conforme as categorias clássicas de validade
+(SHADISH; COOK; CAMPBELL, 2002). Validade de construto: dois instrumentos
+são novos ou adaptados — a rubrica de protoafirmação e a adaptação do HCTA
+—, e a validação de conteúdo e a pilotagem são pré-condições; a adaptação de
+instrumento consagrado, ainda que procedimentalmente correta, permanece
+uma adaptação. Validade interna: participantes e instrutores não são cegos à
+condição; expectativas podem contaminar resultados; a mitigação — avaliadores
+cegos, controle ativo de mesma duração, randomização estratificada — reduz,
+mas não elimina, o efeito Hawthorne. Validade externa: a amostra alvo é de
+estudantes universitários brasileiros; a transferência para grupos de pesquisa
+profissional, para outros idiomas e para contextos de laboratório é hipótese.
+Validade de conclusão: com N = 150 e f = 0,25, o poder é de 80% para o
+desfecho primário apenas; interações e mediações declaradas como
+exploratórias não têm poder garantido. Acrescente-se a limitação de método
+(Seção 3.5): o protocolo formaliza o fluxo de alegações individuais e não o
+processo científico completo, e a demonstração em papel não substitui
+execução.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 26 de 38
+
+
+=== PAGINA 27 ===
+7.3 Riscos de uso indevido do protocolo
+ Um protocolo de verificação pode ser capturado pelo próprio teatro que
+combate. Três riscos são monitorados com indicadores declarados. Teatro de
+verificação: cerimônias de validação sem poder real de refutação — indicador
+de alarme: ausência persistente de resultados negativos no sistema; mitigações:
+auditoria amostral anual com auditores independentes e publicação obrigatória
+de falhas. Serendipidade fabricada: registro retroativo de coincidências como
+descobertas — indicador: proporção de registros declarados contemporâneos cuja gravação ocorreu depois do evento, com atraso e incerteza documentados; mitigação: carimbo temporal imutável na proveniência.
+Captura epistêmica: dominação da agenda de verificação por interesses do
+proponente ou de financiador — indicador: concentração de decisões de gate
+em agente único; mitigação: rotação de verificadores, declaração de conflitos e
+árbitros independentes. Esses riscos correspondem, em escala, aos problemas
+documentados pela sociologia da produção científica sob incentivos de atenção
+(IOANNIDIS, 2005; LIPTON; STEINHARDT, 2019); a contribuição específica do
+protocolo é transformá-los em métricas observáveis, ainda que a efetividade das
+mitigações dependa de execução — e permaneça por demonstrar.
+7.4 Agenda de pesquisa e separação de escopos
+ Três entregas sucessivas organizam a agenda. Primeira: implementação de
+referência do schema de proveniência e da máquina de estados, com piloto
+técnico em conjunto de alegações sintéticas e execução do painel de validação
+da matriz (Apêndices B e D). Segunda: execução do ensaio pedagógico da Seção
+6, com pré-registro e replicação independente. Terceira: documento separado —
+relatório técnico de arquitetura e engenharia — para a implementação em
+sistemas concretos, mantendo o escopo epistemológico-metodológico deste
+texto intacto. A essa agenda soma-se o convite à colaboração adversarial
+(KAHNEMAN, 2003): críticas estruturadas são bem-vindas e serão publicadas
+com as respostas, no mesmo repositório do protocolo.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 27 de 38
+
+
+=== PAGINA 28 ===
+8 Conclusão
+ À pergunta de pesquisa — como operacionalizar um protocolo de
+verificação distribuída para alegações produzidas em pesquisa exploratória sob
+incerteza profunda em AGI/ASI, de modo que sejam falseáveis, auditáveis e
+replicáveis? — este documento responde com um protocolo, e não com uma
+demonstração. A resposta compreende: a matriz de lacunas com priorização
+ponderada e validação de conteúdo planejada (4.1); as camadas cumulativas
+L0–L4 com critérios de falha e verificadores distribuídos (4.2); a máquina de
+estados que formaliza transições, guardas, conflitos e terminação — bloqueando
+o regresso infinito da meta-verificação pela regra R5 e a eternização de
+verificações por prazos de validade (4.3); a trilha de proveniência padronizada
+(4.4); o núcleo de segurança com métricas e tensões declaradas (4.5); e o
+conjunto de hipóteses pedagógicas com plano de validação detalhado, ética
+inclusiva e critérios de parada (5 e 6).
+ O estatuto epistêmico do conjunto é o de proposta metodológica: coerência
+interna demonstrável, utilidade plausível, testabilidade declarada — e validade
+empírica pendente, por definição, até que o plano pré-registrado seja executado
+e replicado. A contribuição pretendida não é a certeza de que o protocolo
+funciona; é a especificação pública e auditável do que significaria funcionar, e
+dos procedimentos para descobri-lo. Sob incerteza profunda, essa especificação
+— a conversão de alegações em registros falseáveis antes que circulem — é o
+mínimo que a prática de pesquisa em AGI/ASI pode oferecer a si mesma, e é
+nessa direção que as próximas etapas da agenda avançarão.
+Declarações
+Conflito de interesses epistêmicos
+ O autor declara que o corpus de motivação que deu origem ao trabalho é
+de sua própria autoria, o que configura conflito de interesse epistêmico
+declarado: a proximidade com os artefatos pode enviesar seleção, interpretação
+e avaliação. As mitigações adotadas — isolamento do corpus como material
+suplementar sem função probatória (Apêndice E), ancoragem em literatura
+independente e plano de replicação e adversarial — estão descritas nas Seções
+3.2, 3.3 e 6.7. O autor declara ausência de financiamento externo, de vínculos
+comerciais e de interesses patrimoniais relacionados ao conteúdo.
+Compromete-se a publicar críticas recebidas junto às respostas
+correspondentes.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 28 de 38
+
+
+=== PAGINA 29 ===
+Disponibilidade de dados, código e materiais
+ Os materiais do protocolo — schema de proveniência, protocolos
+operacionais das camadas, matriz de lacunas, instrumentos do ensaio e código
+de análise — serão disponibilizados em repositório aberto no momento do
+pré-registro (Seções 6.4 e 6.7). O corpus de motivação permanece depositado
+publicamente, catalogado no Apêndice E como material suplementar, sem
+função probatória neste documento.
+Nota sobre a reestruturação
+ Este documento reformula integralmente a versão anterior — um ensaio
+epistemológico-metodológico — como protocolo de pesquisa falseável, em
+resposta à avaliação por pares recebida. As mudanças principais foram: assumir
+o estatuto de protocolo e agenda (1.4); formalizar as camadas como máquina de
+estados com regras de conflito e terminação (4.3); dotar a matriz de priorização
+ponderada e validação de conteúdo (4.1); operacionalizar o núcleo de segurança
+com métricas (4.5); converter implicações pedagógicas em hipóteses testáveis
+(5); detalhar o plano de validação com poder estatístico, análise pré-registrada,
+critérios de parada e replicação (6); incluir considerações éticas completas
+(6.8); adicionar seção comparativa de trabalhos relacionados (2.7); reformular a
+tese causal como hipótese de trabalho (1.3); retirar do corpo as auto-citações,
+depositadas como material suplementar (Apêndice E); e padronizar citações e
+referências.
+Referências
+AMERSHI, S.; BEGEL, A.; BIRD, C.; DELINE, R.; GALL, H.; KAMAR, E.; NAGAPPAN, N.;
+ NUSHI, B.; ZIMMERMANN, T. Software engineering for machine learning: a case
+study. In: IEEE/ACM 41st International Conference on Software Engineering:
+Software Engineering in Practice (ICSE-SEIP). Piscataway: IEEE, 2019. p. 291-300.
+DOI: https://doi.org/10.1109/ICSE-SEIP.2019.00042. Acesso em: 22 set. 2026.
+AMODEI, C.; OLAH, C.; STEINHARDT, J.; CHRISTIANO, P.; SCHULMAN, J.; MANÉ, D.
+ Concrete problems in AI safety. [S. l.]: arXiv, 2016. Preprint arXiv:1606.06565.
+Disponível em: https://arxiv.org/abs/1606.06565. Acesso em: 22 set. 2026.
+AVNI, H.; DOLEV, S.; YAGUDAEV, A.; YUNG, M. Super-intelligence survival guide:
+ verification via proof-carrying output. Cryptology ePrint Archive, Paper 2026/994,
+2026. Disponível em: https://eprint.iacr.org/2026/994. Acesso em: 22 set. 2026.
+BOEHM, B. W. Verifying and validating software requirements and design specifications.
+ IEEE Software, v. 1, n. 1, p. 75-88, 1984.
+BRASIL. Conselho Nacional de Saúde. Resolução nº 510, de 7 de abril de 2016: dispõe
+ sobre as normas aplicáveis a pesquisas em Ciências Humanas e Sociais cujos
+procedimentos metodológicos envolvam a utilização de dados sensíveis. Brasília,
+DF: CNS, 2016. Disponível em:
+https://bvsms.saude.gov.br/bvs/saudelegis/cns/2016/res0510_07_04_2016.html.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 29 de 38
+
+
+=== PAGINA 30 ===
+Acesso em: 22 set. 2026.
+BRASIL. Lei nº 13.709, de 14 de agosto de 2018: Lei Geral de Proteção de Dados Pessoais
+ (LGPD). Brasília, DF: Presidência da República, 2018. Disponível em:
+http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm. Acesso
+em: 22 set. 2026.
+BRUNDAGE, M. et al. Toward trustworthy AI development: mechanisms for supporting
+ verifiable claims. [S. l.]: arXiv, 2020. Preprint arXiv:2004.07213. Disponível em:
+https://arxiv.org/abs/2004.07213. Acesso em: 22 set. 2026.
+CARDENAS CORDOVA, D.; KELLY, N.; REZAYAN, L. A systematic literature review of the
+ speculative design process and a proposed framework for speculative design.
+Design Science, v. 11, e38, 2025. DOI: https://doi.org/10.1017/dsj.2025.10030.
+Acesso em: 22 set. 2026.
+CHAMBERS, C. D.; TZAVELLA, L. The past, present and future of Registered Reports.
+ Nature Human Behaviour, v. 6, n. 1, p. 29-42, 2022. DOI:
+https://doi.org/10.1038/s41562-021-01193-7. Acesso em: 22 set. 2026.
+COHEN, J. A coefficient of agreement for nominal scales. Educational and Psychological
+ Measurement, v. 20, n. 1, p. 37-46, 1960. DOI:
+https://doi.org/10.1177/001316446002000104. Acesso em: 22 set. 2026.
+COHEN, J. Statistical power analysis for the behavioral sciences. 2. ed. Hillsdale:
+ Lawrence Erlbaum, 1988.
+COLLINGRIDGE, D. The social control of technology. London: Frances Pinter, 1980.
+ 
+DOUVEN, I. Inference to the best explanation, Dutch books, and inaccuracy minimisation.
+ The Philosophical Quarterly, v. 63, n. 252, p. 428-444, 2013. DOI:
+https://doi.org/10.1111/1467-9213.12032. Acesso em: 22 set. 2026.
+DUNNE, A.; RABY, F. Speculative everything: design, fiction, and social dreaming.
+ Cambridge, MA: MIT Press, 2013.
+FAUL, F.; ERDFELDER, E.; LANG, A.-G.; BUCHNER, A. G*Power 3: a flexible statistical
+ power analysis program for the social, behavioral, and biomedical sciences.
+Behavior Research Methods, v. 39, n. 2, p. 175-191, 2007. DOI:
+https://doi.org/10.3758/BF03193146. Acesso em: 22 set. 2026.
+FLAVELL, J. H. Metacognition and cognitive monitoring: a new area of
+ cognitive-developmental inquiry. American Psychologist, v. 34, n. 10, p. 906-911,
+1979.
+FUNTOWICZ, S. O.; RAVETZ, J. R. Science for the post-normal age. Futures, v. 25, n. 7, p.
+ 739-755, 1993. DOI: https://doi.org/10.1016/0016-3287(93)90022-L. Acesso em: 22
+set. 2026.
+GONZALEZ, C. et al. Toward a science of human-AI teaming for decision making: a
+ complementarity framework. PNAS Nexus, v. 5, n. 3, pgag030, 2026. DOI:
+https://doi.org/10.1093/pnasnexus/pgag030. Acesso em: 22 set. 2026.
+HALPERN, D. F. Halpern Critical Thinking Assessment (HCTA): manual. Cambridge, MA:
+ Hogrefe, 2010.
+HARDWIG, J. R. The role of trust in knowledge. The Journal of Philosophy, v. 88, n. 2, p.
+ 69-88, 1991.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 30 de 38
+
+
+=== PAGINA 31 ===
+HENDRYCKS, D.; CARLINI, N.; SCHULMAN, J.; STEINHARDT, J. Unsolved problems in
+ machine learning safety. [S. l.]: arXiv, 2021. Preprint arXiv:2109.13916. Disponível
+em: https://arxiv.org/abs/2109.13916. Acesso em: 22 set. 2026.
+HEVNER, A. R.; MARCH, S. T.; PARK, J.; RAM, S. Design science in information systems
+ research. MIS Quarterly, v. 28, n. 1, p. 75-105, 2004. DOI:
+https://doi.org/10.2307/25148625. Acesso em: 22 set. 2026.
+HOLM, S. A simple sequentially rejective multiple test procedure. Scandinavian Journal of
+ Statistics, v. 6, n. 2, p. 65-70, 1979.
+IOANNIDIS, J. P. A. Why most published research findings are false. PLoS Medicine, v. 2,
+ n. 8, e124, 2005. DOI: https://doi.org/10.1371/journal.pmed.0020124. Acesso em: 22
+set. 2026.
+IRVING, G.; CHRISTIANO, P.; AMODEI, D. AI safety via debate. [S. l.]: arXiv, 2018.
+ Preprint arXiv:1805.00899. Disponível em: https://arxiv.org/abs/1805.00899. Acesso
+em: 22 set. 2026.
+KAHNEMAN, D. Experiences of collaborative research. American Psychologist, v. 58, n. 9,
+ p. 723-726, 2003.
+KAPLAN, A. Clarifying metacognition, self-regulation, and self-regulated learning: what's
+ the purpose? Educational Psychology Review, v. 20, n. 4, p. 477-484, 2008. DOI:
+https://doi.org/10.1007/s10648-008-9087-2. Acesso em: 22 set. 2026.
+KOO, T. K.; LI, M. Y. A guideline of selecting and reporting intraclass correlation
+ coefficients for reliability research. Journal of Chiropractic Medicine, v. 15, n. 2, p.
+155-163, 2016. DOI: https://doi.org/10.1016/j.jcm.2016.02.005. Acesso em: 22 set.
+2026.
+KUHN, T. S. The structure of scientific revolutions. Chicago: University of Chicago Press,
+ 1962.
+LAKENS, D. Calculating and reporting effect sizes to facilitate cumulative science: a
+ practical primer for t-tests and ANOVAs. Frontiers in Psychology, v. 4, art. 863,
+2013. DOI: https://doi.org/10.3389/fpsyg.2013.00863. Acesso em: 22 set. 2026.
+LIPTON, P. Inference to the best explanation. 2. ed. London: Routledge, 2004.
+ 
+LIPTON, Z. C.; STEINHARDT, J. Troubling trends in machine learning scholarship.
+ Communications of the ACM, v. 62, n. 6, p. 45-53, 2019. DOI:
+https://doi.org/10.1145/3318280. Acesso em: 22 set. 2026.
+LONGINO, H. E. Science as social knowledge: values and objectivity in scientific inquiry.
+ Princeton: Princeton University Press, 1990.
+MARCHAU, V. A. W. J.; WALKER, W. E.; BLOEMEN, P. J. T. M.; POPPER, S. W. (ed.).
+ Decision making under deep uncertainty: from theory to practice. Cham: Springer,
+2019. DOI: https://doi.org/10.1007/978-3-030-05252-2. Acesso em: 22 set. 2026.
+MCAULIFFE, W. H. B. How did abduction get confused with inference to the best
+ explanation? Transactions of the Charles S. Peirce Society, v. 51, n. 3, p. 300-319,
+2015. DOI: https://doi.org/10.2979/trancharpeirsoc.51.3.300. Acesso em: 22 set.
+2026.
+DE MOOIJ, S. M. et al. A systematic review of self-regulated learning through integration
+ of multimodal data and artificial intelligence. Educational Psychology Review, v. 37,
+n. 2, art. 54, 2025. DOI: https://doi.org/10.1007/s10648-025-10028-0. Acesso em: 22
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 31 de 38
+
+
+=== PAGINA 32 ===
+set. 2026.
+MERTON, R. K.; BARBER, E. The travels and adventures of serendipity: a study in
+ sociological semantics and the sociology of science. Princeton: Princeton University
+Press, 2004.
+MUNAFÒ, M. R. et al. A manifesto for reproducible science. Nature Human Behaviour, v.
+ 1, art. 0021, 2017. DOI: https://doi.org/10.1038/s41562-016-0021. Acesso em: 22
+set. 2026.
+NIINILUOTO, I. Truth-seeking by abduction. Cham: Springer, 2018. (Synthese Library, v.
+ 400). DOI: https://doi.org/10.1007/978-3-319-99157-3. Acesso em: 22 set. 2026.
+NOSEK, B. A.; EBERSOLE, C. R.; DEHAVEN, A. C.; MELLOR, D. T. The preregistration
+ revolution. Proceedings of the National Academy of Sciences, v. 115, n. 11, p.
+2600-2606, 2018. DOI: https://doi.org/10.1073/pnas.1708274114. Acesso em: 22 set.
+2026.
+PANADERO, E. A review of self-regulated learning: six models and four directions for
+ research. Frontiers in Psychology, v. 8, art. 422, 2017. DOI:
+https://doi.org/10.3389/fpsyg.2017.00422. Acesso em: 22 set. 2026.
+PEFFERS, K.; TUUNANEN, T.; ROTHENBERGER, M. A.; CHATTERJEE, S. A design
+ science research methodology for information systems research. Journal of
+Management Information Systems, v. 24, n. 3, p. 45-77, 2007. DOI:
+https://doi.org/10.2753/MIS0742-1222240302. Acesso em: 22 set. 2026.
+PEIRCE, C. S. Philosophical writings of Peirce. BUCHLER, J. (ed.). New York: Dover,
+ 1955.
+PEREZ, E. et al. Red teaming language models with language models. [S. l.]: arXiv, 2022.
+ Preprint arXiv:2202.03286. Disponível em: https://arxiv.org/abs/2202.03286. Acesso
+em: 22 set. 2026.
+POPPER, K. R. The logic of scientific discovery. London: Hutchinson, 1959.
+ 
+RAJI, I. D.; SMART, A.; WHITE, R. N.; MITCHELL, M.; GEGRU, T.; HUTCHINSON, B.;
+ SMITH-LOUD, J.; THERON, D.; BARNES, P. Closing the AI accountability gap:
+defining an end-to-end framework for internal algorithmic auditing. In: Proceedings
+of the 2020 Conference on Fairness, Accountability, and Transparency (FAT*). New
+York: ACM, 2020. p. 33-44. DOI: https://doi.org/10.1145/3351095.3372873. Acesso
+em: 22 set. 2026.
+RUSSELL, S. Human compatible: artificial intelligence and the problem of control. New
+ York: Viking, 2019.
+SCHRAW, G.; DENNISON, R. S. Assessing metacognitive awareness. Contemporary
+ Educational Psychology, v. 19, n. 4, p. 460-475, 1994. DOI:
+https://doi.org/10.1006/ceps.1994.1033. Acesso em: 22 set. 2026.
+SCHURZ, G. Patterns of abduction. Synthese, v. 164, n. 2, p. 201-234, 2008. DOI:
+ https://doi.org/10.1007/s11229-007-9223-4. Acesso em: 22 set. 2026.
+SHADISH, W. R.; COOK, T. D.; CAMPBELL, D. T. Experimental and quasi-experimental
+ designs for generalized causal inference. Boston: Houghton Mifflin, 2002.
+THEOBALD, M. et al. Executive functions, metacognition, self-regulation, and
+ self-regulated learning – what are we talking about? A review and introduction of
+the EMERGE model of learning. Educational Psychology Review, v. 38, n. 1, art. 62,
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 32 de 38
+
+
+=== PAGINA 33 ===
+2026. DOI: https://doi.org/10.1007/s10648-026-10157-0. Acesso em: 22 set. 2026.
+VAN FRAASSEN, B. C. Laws and symmetry. Oxford: Clarendon Press, 1989.
+ 
+W3C. PROV-O: the PROV ontology. W3C Recommendation, 2013. Disponível em:
+ https://www.w3.org/TR/prov-o/. Acesso em: 22 set. 2026.
+W3C. JSON-LD 1.1: a JSON-based serialization for linked data. W3C Recommendation,
+ 2020. Disponível em: https://www.w3.org/TR/json-ld11/. Acesso em: 22 set. 2026.
+WILKINSON, M. D. et al. The FAIR Guiding Principles for scientific data management and
+ stewardship. Scientific Data, v. 3, art. 160018, 2016. DOI:
+https://doi.org/10.1038/sdata.2016.18. Acesso em: 22 set. 2026.
+WINNE, P. H. Cognition and metacognition within self-regulated learning. In: SCHUNK,
+ D. H.; GREENE, J. A. (ed.). Handbook of self-regulation of learning and
+performance. 2. ed. New York: Routledge, 2018. p. 36-48.
+YAQUB, O. Serendipity: towards a taxonomy and a theory. Research Policy, v. 47, n. 1, p.
+ 169-179, 2018. DOI: https://doi.org/10.1016/j.respol.2017.10.007. Acesso em: 22
+set. 2026.
+YOU, L.; CAO, L.; GUREVYCH, I. Preventing the collapse of peer review requires
+ verification-first AI. [S. l.]: arXiv, 2026. Preprint arXiv:2601.16909. Disponível em:
+https://arxiv.org/abs/2601.16909. Acesso em: 22 set. 2026.
+ZIMMERMAN, B. J. Becoming a self-regulated learner: an overview. Theory Into Practice,
+ v. 41, n. 2, p. 64-70, 2002.
+Apêndice A – Protocolos operacionais das camadas
+L0–L4
+Os protocolos abaixo especificam as guardas g(Lk) referidas na Tabela 5. Cada
+item é binário e obrigatório; a guarda só é satisfeita com todos os itens
+confirmados pelo verificador designado.
+A.1 Guarda g(L0) — consistência interna (verificador: proponente, com
+verificação cruzada automatizada)
+– Enunciado da alegação em uma frase autocontida, com escopo declarado.
+– Premissas listadas e distintas das conclusões.
+– Definições operacionais dos termos centrais presentes e idênticas às do
+glossário (Tabela 2).
+– Ausência de contradições entre afirmações do registro (verificada também por
+varredura automatizada).
+– O que contaria como falha da alegação declarado em termos observáveis.
+– Evidência vinculada identificada e acessível ao verificador.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 33 de 38
+
+
+=== PAGINA 34 ===
+A.2 Guarda g(L1) — verificação técnica (verificador técnico distinto do
+proponente)
+– Ambiente de reprodução especificado: versões, dependências e configuração
+congeladas.
+– Código e dados versionados, com integridade verificável por resumo
+criptográfico.
+– Execução integral do pipeline por agente distinto do proponente, em ambiente
+controlado.
+– Resultados reproduzidos dentro das tolerâncias declaradas na alegação.
+– Relatório de reprodução assinado e anexado à proveniência.
+– Divergências encontradas documentadas, ainda que compatíveis com a
+alegação.
+A.3 Guarda g(L2) — verificação empírica (terceiros com dados ou
+instrumentos independentes)
+– Previsões ou comportamentos declarados pela alegação enumerados em forma
+testável.
+– Fonte de evidência externa independente identificada, com proveniência
+própria.
+– Comparação executada e registrada, com desvios quantificados.
+– Desacordos sistemáticos caracterizados (ou sua ausência) com critérios
+declarados antes da comparação.
+– Conclusão emitida por terceiro sem vínculo com o proponente.
+A.4 Guarda g(L3) — reprodução comunitária (comunidade e grupos
+externos)
+– Protocolo de replicação pré-registrado por ao menos um grupo externo.
+– Materiais completos publicados: intervenção, instrumentos, dados, código.
+– Ao menos um grupo externo concluiu a replicação, com resultado reportado
+integralmente.
+– Divergências documentadas e submetidas ao mecanismo R3 quando
+pertinentes.
+– Resultados negativos publicados no mesmo canal dos positivos.
+A.5 Guarda g(L4) — impacto sociotécnico (auditores, reguladores e
+comunidades afetadas)
+– Mapeamento de partes interessadas e de cenários de uso efetivos.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 34 de 38
+
+
+=== PAGINA 35 ===
+– Avaliação de efeitos previstos e observados, com horizonte temporal
+declarado.
+– Red teaming estruturado executado, com registro de tentativas de refutação
+(PEREZ et al., 2022).
+– Avaliação de reversibilidade das decisões tomadas sob a alegação (Tabela 6).
+– Parecer de comunidades afetadas anexado quando identificadas.
+– Ausência de veto ativo do núcleo de segurança.
+Apêndice B – Matriz de lacunas preenchida (exemplar
+ilustrativo)
+Os valores de prioridade seguem a fórmula P = 0,50·impacto +
+0,30·tratabilidade + 0,20·urgência (Seção 4.1). A Tabela B1 apresenta o
+exemplar preenchido com seis lacunas; os escores abaixo são ilustrativos —
+valem até a execução do painel de validação de conteúdo com kappa e ICC
+pré-registrados.
+ Tabela B1 – Matriz de lacunas preenchida — exemplar com seis lacunas
+ID
+Dimensão
+Descrição sintética
+Evidência de suporte
+P
+Status
+LG-01
+Epistêmica
+Ausência de instrumentos validados
+para quantificar protoafirmações
+em equipes humano–IA.
+Inexistência de medida
+publicada localizada; HP3
+depende de instrumento
+novo (Seção 5).
+4,1
+Aberta
+LG-02
+Tecnológica
+Falta de benchmarks padronizados
+para reprodução de alegações
+exploratórias sobre IA.
+Amershi et al. (2019);
+Hendrycks et al. (2021).
+4,3
+Aberta
+LG-03
+Sociotécnica
+Opacidade de cadeias de decisão
+em implantações de IA e dificuldade
+de auditoria externa.
+Raji et al. (2020).
+4,6
+Aberta
+LG-04
+Epistêmica
+Risco de confirmação retroativa em
+registros de serendipidade.
+Merton e Barber (2004);
+Yaqub (2018).
+3,7
+Aberta
+LG-05
+Metodológica
+Desenho de validação pedagógica
+inexistente para protocolos de
+verificação distribuída.
+Theobald et al. (2026),
+suporte indireto; Seção 6
+deste protocolo.
+3,9
+Em investi
+gação
+LG-06
+Sociotécnica
+Assimetria de expertise entre
+proponentes e verificadores de
+alegações sobre IA.
+Brundage et al. (2020);
+Hardwig (1991).
+4,2
+Aberta
+Fonte: elaborado pelo autor (2026). Valores ilustrativos até validação por painel.
+Apêndice C – Schema de proveniência (JSON-LD)
+O schema abaixo estende PROV-O (W3C, 2013) com os termos de vocabulário
+próprio do protocolo (prefixo ex:) e é serializável em JSON-LD 1.1 (W3C, 2020).
+Campos obrigatórios por evento: camada, guarda avaliada, resultado, agentes e
+integridade.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 35 de 38
+
+
+=== PAGINA 36 ===
+{
+  "@context": {
+    "prov": "https://www.w3.org/ns/prov#",
+    "ex": "https://exemplo.org/vocab/protocolo#",
+    "claim": "ex:Claim",
+    "status": "ex:currentStatus",
+    "layer": "ex:layer",
+    "guard": "ex:guardEvaluated",
+    "result": "ex:gateResult",
+    "validUntil": "ex:validUntil",
+    "safetyGate": "ex:safetyGate",
+    "disputeWindow": "ex:disputeWindow",
+    "wasGeneratedBy": {"@id": "prov:wasGeneratedBy", "@type": "@id"},
+    "wasAttributedTo": {"@id": "prov:wasAttributedTo", "@type": "@id"},
+    "used": {"@id": "prov:used", "@type": "@id"},
+    "wasAssociatedWith": {"@id": "prov:wasAssociatedWith", "@type": "@id"}
+  },
+  "@graph": [
+    {
+      "@id": "ex:claim-2026-0001",
+      "@type": "claim",
+      "ex:statement": "O pipeline P reproduz o resultado R no ambiente A",
+      "ex:scope": "válido para A e para a versão v2.1 de P",
+      "ex:failureCriterion": "não-reprodução de R em duas execuções independentes",
+      "status": "ex:VERIF_L1",
+      "validUntil": "2027-03-29",
+      "safetyGate": "ex:not-triggered",
+      "wasAttributedTo": "ex:agent-proponente"
+    },
+    {
+      "@id": "ex:activity-2026-0001",
+      "@type": "ex:VerificationActivity",
+      "layer": "ex:L1",
+      "guard": "ex:g_L1",
+      "result": "ex:passed",
+      "disputeWindow": "ex:none",
+      "prov:startedAtTime": "2026-09-22T12:00:00Z",
+      "prov:endedAtTime": "2026-09-29T12:00:00Z",
+      "used": ["ex:evidence-001", "ex:artifact-pkg-001"],
+      "wasAssociatedWith": "ex:agent-verificador-l1"
+    },
+    {
+      "@id": "ex:claim-2026-0001",
+      "wasGeneratedBy": "ex:activity-2026-0001"
+    }
+  ]
+}
+Apêndice D – Plano de análise estatística detalhado
+(SAP)
+1. Desfecho primário: escore pós-teste do instrumento de avaliação crítica;
+ANCOVA com pré-teste como covariável e condição como fator; teste bilateral;
+significância em 5%.
+2. Pressupostos verificados antes da inferência: linearidade da relação pré-pós,
+homogeneidade das variâncias (Levene) e homogeneidade de regressão;
+violações acionam alternativas pré-especificadas (modelo misto ou
+Mann-Whitney).
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 36 de 38
+
+
+=== PAGINA 37 ===
+3. Tamanho de efeito reportado com intervalo de confiança de 95%, em escala
+padronizada (LAKENS, 2013).
+4. Desfechos secundários (MAI; taxa de protoafirmações): ANCOVA análoga ou
+modelo binomial/negativo para contagens, com correção sequencial de Holm
+(HOLM, 1979).
+5. Trajetória temporal (pré, pós, follow-up): modelo misto com efeito fixo de
+condição, tempo e interação; estrutura de covariância pré-especificada.
+6. Transferência e completude de proveniência: exploratórios; intervalos de
+confiança sem teste de hipótese confirmatório.
+7. Dados ausentes: imputação múltipla (m = 20) com variáveis auxiliares;
+sensibilidade por ajuste delta; padrões de abandono descritos e comparados
+entre braços.
+8. Valores extremos: inspeção com critério pré-definido (moderados por escore
+padronizado acima de 3 em valor absoluto); decisões registradas antes da
+análise principal.
+9. População de análise: intenção de tratar como principal; por protocolo como
+sensibilidade.
+10. Código em linguagem de análise estatística de fonte aberta, com sementes
+fixas, publicado no pré-registro e versionado junto aos dados.
+11. Reporte conforme fluxo CONSORT adaptado para ensaios educacionais, com
+tela de elegibilidade, alocação, perdas e análise.
+12. Critério de futilidade: análise interina única ao meio do ensaio, apenas
+descritiva, sem ajuste de significância; decisão de continuação documentada
+pelo Comitê de Ética em caso de evento adverso.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 37 de 38
+
+
+=== PAGINA 38 ===
+Apêndice E – Material suplementar (corpus de
+motivação)
+ O corpus de motivação — 33 registros técnicos de autoria exclusiva do
+autor, anteriormente listados como apêndice no corpo do documento — foi
+retirado do corpo desta versão e mantido exclusivamente como material
+suplementar depositado, conforme decisão metodológica declarada nas Seções
+3.2 e 3.3. O corpus não desempenha função probatória no argumento central;
+sua função é documentar a origem dos instrumentos e das decisões de desenho.
+Títulos, datas e identificadores persistentes constam dos próprios registros
+depositados. Como parte da revisão documental, a duplicata de registro
+identificada em um dos depósitos (dois identificadores para o mesmo texto) foi
+corrigida no repositório, prevalecendo o identificador canônico mais recente; a
+correspondência entre versões está anotada na trilha de proveniência do
+corpus. Nenhuma obra do corpus é citada como evidência no corpo deste
+documento, e nenhuma referência do corpo é de autoria do próprio autor.
+Protocolo para construção de conhecimento verificável sob incerteza profunda
+Página 38 de 38

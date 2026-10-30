@@ -1,0 +1,347 @@
+{
+  "status": "PROPOSED_IMPLEMENTATION_PLAN_NOT_EXECUTED",
+  "tasks": [
+    {
+      "acceptance": "Todo import resolve para bytes/version fixados; fonte ausente continua OPEN.",
+      "addresses": [
+        "F01",
+        "F02"
+      ],
+      "deliverable": "Manifesto com corpus, RFC-0001, RFC-0002 e B.0.1 identificados, classificação e aprovação.",
+      "depends_on": [],
+      "gate": "G0",
+      "id": "T01",
+      "owner_role": "Responsável normativo",
+      "title": "Arquivar fonte e imports"
+    },
+    {
+      "acceptance": "Exatamente uma regra por decisão; título FROZEN sem evidência não aprova release.",
+      "addresses": [
+        "F01",
+        "F03",
+        "F05",
+        "F06",
+        "F07"
+      ],
+      "deliverable": "Decision log com cláusula selecionada e cláusula superseded por conflito.",
+      "depends_on": [
+        "T01"
+      ],
+      "gate": "G0",
+      "id": "T02",
+      "owner_role": "Responsável normativo",
+      "title": "Ratificar regras de precedência e histórico"
+    },
+    {
+      "acceptance": "Cada tipo tem representação e limites; nenhum result_value adicionado sem emenda aprovada.",
+      "addresses": [
+        "F04"
+      ],
+      "deliverable": "Definições nominais dos seis aliases, semântica dos resultados e preimage de result_digest.",
+      "depends_on": [
+        "T02"
+      ],
+      "gate": "G1",
+      "id": "T03",
+      "owner_role": "Autor de especificação",
+      "title": "Fechar VerificationMethod"
+    },
+    {
+      "acceptance": "Artefato alterado falha no digest; referência igual não autoriza conteúdo diferente; resolução não usa estado mutável implícito.",
+      "addresses": [
+        "F03",
+        "F09"
+      ],
+      "deliverable": "Profile que define bytes, algoritmo, referências, dependências externas e reprodução da avaliação.",
+      "depends_on": [
+        "T02"
+      ],
+      "gate": "G1",
+      "id": "T04",
+      "owner_role": "Autor de especificação/segurança",
+      "title": "Fechar PolicyResolutionProfile"
+    },
+    {
+      "acceptance": "Teste com caracteres combinantes e identificadores opacos não produz alias silencioso.",
+      "addresses": [
+        "F11"
+      ],
+      "deliverable": "Regras por scheme, tratamento NFC e rejeição de colisões/entradas não canônicas.",
+      "depends_on": [
+        "T02"
+      ],
+      "gate": "G1",
+      "id": "T05",
+      "owner_role": "Autor de especificação",
+      "title": "Resolver identidade e normalização"
+    },
+    {
+      "acceptance": "Nenhuma célula TBD ou alias não resolvido; cinco coleções não vazias; unknown field/tag/enum rejeitado.",
+      "addresses": [
+        "F05",
+        "F06",
+        "F07",
+        "F12"
+      ],
+      "deliverable": "Schema/registry: presença, tipo, bounds, cardinalidade, sort key, duplicatas e condicionais para cada campo.",
+      "depends_on": [
+        "T03",
+        "T04",
+        "T05"
+      ],
+      "gate": "G1",
+      "id": "T06",
+      "owner_role": "Autor wire",
+      "title": "Completar a field matrix"
+    },
+    {
+      "acceptance": "NUL vs caracteres barra/zero diferem; chave/signature inválidas rejeitam; DomainPolicy continua ausente enquanto deferred.",
+      "addresses": [
+        "F13",
+        "F16"
+      ],
+      "deliverable": "Registry com hex, tamanho derivado, mensagem assinada, resolução de chave e critérios exatos de verificação.",
+      "depends_on": [
+        "T06"
+      ],
+      "gate": "G1",
+      "id": "T07",
+      "owner_role": "Revisor criptográfico",
+      "title": "Congelar registry de domínios e assinatura"
+    },
+    {
+      "acceptance": "Policy conflitante, contexto desconhecido e autor não autorizado nunca produzem elegibilidade.",
+      "addresses": [
+        "F09",
+        "F16"
+      ],
+      "deliverable": "Regras de matching nested/enclosing policy, chave/autorização, freshness e validade atual.",
+      "depends_on": [
+        "T04",
+        "T06"
+      ],
+      "gate": "G1",
+      "id": "T08",
+      "owner_role": "Segurança de protocolo",
+      "title": "Fechar contexto de avaliação e validade"
+    },
+    {
+      "acceptance": "Base ambígua e referência ausente não reduzem closure para permitir promoção; bounds e erro definidos.",
+      "addresses": [
+        "F14",
+        "F15"
+      ],
+      "deliverable": "Definições de B/F/R/P, intervalo, dependências, universo finito, estado completo e habilitação.",
+      "depends_on": [
+        "T06",
+        "T08"
+      ],
+      "gate": "G1",
+      "id": "T09",
+      "owner_role": "Autor M6",
+      "title": "Fechar entradas da closure e profile de estado"
+    },
+    {
+      "acceptance": "Nenhum bloco histórico ou proposta entra por varredura recursiva do corpus.",
+      "addresses": [
+        "F01",
+        "F02",
+        "F12"
+      ],
+      "deliverable": "Snapshot completo com imports fechados, schema, registry e manifesto aprovado.",
+      "depends_on": [
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T07",
+        "T08",
+        "T09"
+      ],
+      "gate": "G1",
+      "id": "T10",
+      "owner_role": "Responsável normativo",
+      "title": "Materializar snapshot autocontido"
+    },
+    {
+      "acceptance": "Zero severity em fatos; todos os predicados bloqueadores dependem de disposição válida sob policy.",
+      "addresses": [
+        "F08"
+      ],
+      "deliverable": "Relatório por campo, regra comportamental, referência e decisão.",
+      "depends_on": [
+        "T10"
+      ],
+      "gate": "G1",
+      "id": "T11",
+      "owner_role": "Revisor semântico",
+      "title": "Executar FindingPropagationAudit"
+    },
+    {
+      "acceptance": "Nenhum binding ausente, mutável ou incompatível; artefatos e profiles resolvem deterministicamente.",
+      "addresses": [
+        "F09"
+      ],
+      "deliverable": "Relatório de todos os usos security-relevant e bindings alcançáveis e cobertos.",
+      "depends_on": [
+        "T10"
+      ],
+      "gate": "G1",
+      "id": "T12",
+      "owner_role": "Revisor semântico",
+      "title": "Executar PolicyDigestPropagationAudit"
+    },
+    {
+      "acceptance": "Todos os gates completos e relatórios reproduzíveis; caso contrário NOT_FROZEN.",
+      "addresses": [
+        "F01"
+      ],
+      "deliverable": "Release manifest com snapshot, schema, registry, approvals e ambos os relatórios vinculados.",
+      "depends_on": [
+        "T11",
+        "T12"
+      ],
+      "gate": "G1",
+      "id": "T13",
+      "owner_role": "Responsável de release",
+      "title": "Decidir freeze B.0.2"
+    },
+    {
+      "acceptance": "Testar boundaries, duplicatas, CBOR não determinístico, self-digest, comprimento e desconhecidos; nenhum fallback permissivo.",
+      "addresses": [
+        "F10",
+        "F12",
+        "F13"
+      ],
+      "deliverable": "Codec, projeções unsigned, digests e assinaturas conforme profile congelado.",
+      "depends_on": [
+        "T13"
+      ],
+      "gate": "G2",
+      "id": "T14",
+      "owner_role": "Engenharia de protocolo",
+      "title": "Implementar referência E0"
+    },
+    {
+      "acceptance": "Oráculos revisados além do gerador; positivos e negativos, mudanças de policy e formatos históricos explicitamente recusados.",
+      "addresses": [
+        "F19"
+      ],
+      "deliverable": "Vetores com input bruto, canonical bytes, preimage, digest, assinatura quando aplicável e decisão esperada.",
+      "depends_on": [
+        "T14"
+      ],
+      "gate": "G2",
+      "id": "T15",
+      "owner_role": "Engenharia/revisor independente",
+      "title": "Criar e revisar B.1"
+    },
+    {
+      "acceptance": "Decisões e bytes exatos coincidem; divergência bloqueia release; duas compilações da mesma biblioteca não bastam.",
+      "addresses": [
+        "F19"
+      ],
+      "deliverable": "Implementação que não reutiliza o mesmo codec/gerador; relatório de paridade por vetor.",
+      "depends_on": [
+        "T15"
+      ],
+      "gate": "G2",
+      "id": "T16",
+      "owner_role": "Segunda implementação",
+      "title": "Implementar verificador independente e B.2"
+    },
+    {
+      "acceptance": "Contraexemplos base-only/observacional falham; certificados estruturais cobrem acessos; nenhum teste finito é anunciado como prova universal.",
+      "addresses": [
+        "F14",
+        "F15"
+      ],
+      "deliverable": "Obrigação formal de monotonicidade/terminação e semântica de comutação no domínio.",
+      "depends_on": [
+        "T09",
+        "T15"
+      ],
+      "gate": "G2",
+      "id": "T17",
+      "owner_role": "Engenharia formal",
+      "title": "Fechar propriedade M6"
+    },
+    {
+      "acceptance": "Trocar URI mantendo bytes não muda subject digest; alterar bytes invalida o binding. URI assinada pode mudar o digest do enclosing record.",
+      "addresses": [
+        "F19"
+      ],
+      "deliverable": "Envelope e referências de conteúdo sem circularidade, com localização separada de identidade do payload.",
+      "depends_on": [
+        "T15",
+        "T16"
+      ],
+      "gate": "G3",
+      "id": "T18",
+      "owner_role": "Engenharia de evidência",
+      "title": "Implementar EvidenceBundle detached"
+    },
+    {
+      "acceptance": "Replay, branch alterado e troca de policy entre avaliar/commit bloqueiam; crash não deixa promoção parcial.",
+      "addresses": [
+        "F16",
+        "F17"
+      ],
+      "deliverable": "Decisão nativa, autorização externa e operação protegida com precondição atômica.",
+      "depends_on": [
+        "T16",
+        "T17",
+        "T18"
+      ],
+      "gate": "G3",
+      "id": "T19",
+      "owner_role": "Engenharia de core/segurança",
+      "title": "Implementar enforcement e commit"
+    },
+    {
+      "acceptance": "UI adulterada não promove estado; Design.md descreve apenas capacidades demonstradas; variantes de idioma não mudam decisões.",
+      "addresses": [
+        "F20"
+      ],
+      "deliverable": "Adaptadores web/CLI/Tauri que invocam a mesma autoridade e apresentam estados honestos.",
+      "depends_on": [
+        "T19"
+      ],
+      "gate": "G4",
+      "id": "T20",
+      "owner_role": "Engenharia de produto",
+      "title": "Integrar interfaces sem autoridade própria"
+    },
+    {
+      "acceptance": "Nenhum benchmark sem método, CVE sem registro ou fornecedor sem avaliação vira garantia do produto.",
+      "addresses": [
+        "F18",
+        "F19"
+      ],
+      "deliverable": "Bibliografia resolúvel, versões e avaliação de bibliotecas, parsers e integrações.",
+      "depends_on": [
+        "T15"
+      ],
+      "gate": "G5",
+      "id": "T21",
+      "owner_role": "Pesquisa/segurança de fornecedores",
+      "title": "Verificar fontes e adaptar payloads"
+    },
+    {
+      "acceptance": "Só avança com fundamentos congelados e testes de escape/falha; existência de crate não equivale a aprovação.",
+      "addresses": [
+        "F17",
+        "F19"
+      ],
+      "deliverable": "PoC isolada com threat model, budgets e interfaces explícitas.",
+      "depends_on": [
+        "T19",
+        "T21"
+      ],
+      "gate": "G6",
+      "id": "T22",
+      "owner_role": "Arquitetura/segurança",
+      "title": "Avaliar execution container"
+    }
+  ]
+}

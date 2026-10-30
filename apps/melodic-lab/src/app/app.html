@@ -1,0 +1,239 @@
+<div class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
+  <!-- Application Header -->
+  <app-header
+    (viewScript)="showScriptModal.set(true)"
+    (viewReport)="activeTab.set('report')"
+  />
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Hero Context Header -->
+    <app-case-hero />
+
+    <!-- Navigation Tabs Bar -->
+    <div class="flex items-center justify-between border-b border-slate-800 pb-2 overflow-x-auto text-xs font-mono">
+      <div class="flex items-center space-x-1 sm:space-x-2">
+        <button
+          type="button"
+          (click)="activeTab.set('workbench')"
+          class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
+          [class]="activeTab() === 'workbench' ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
+        >
+          <mat-icon class="text-base text-amber-400">graphic_eq</mat-icon>
+          <span>Forensic Workbench</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('calibration')"
+          class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
+          [class]="activeTab() === 'calibration' ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
+        >
+          <mat-icon class="text-base text-purple-400">tune</mat-icon>
+          <span>Conformal Calibration</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('report')"
+          class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
+          [class]="activeTab() === 'report' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
+        >
+          <mat-icon class="text-base text-emerald-400">verified</mat-icon>
+          <span>Cryptographic Report & Hashes</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('cases')"
+          class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
+          [class]="activeTab() === 'cases' ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
+        >
+          <mat-icon class="text-base text-sky-400">folder_special</mat-icon>
+          <span>Case Benchmark Library</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('youtube')"
+          class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
+          [class]="activeTab() === 'youtube' ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
+        >
+          <mat-icon class="text-base text-rose-400">play_circle_filled</mat-icon>
+          <span>YouTube Music</span>
+        </button>
+      </div>
+
+      <!-- Quick Custom Melodic Comparator Button -->
+      <button
+        type="button"
+        (click)="showCustomModal.set(true)"
+        class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono transition ml-2 shrink-0"
+      >
+        <mat-icon class="text-sm text-amber-400">edit_note</mat-icon>
+        <span class="hidden sm:inline">Custom Input Comparator</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Forensic Workbench -->
+    @if (activeTab() === 'workbench') {
+      <div class="space-y-6">
+        <!-- Stages 1–5 Multi-stage Architecture -->
+        <app-pipeline-stepper />
+
+        <!-- Web Audio Synthesizer Bar -->
+        <app-audio-player-bar />
+
+        <!-- Dual Monophonic Skyline Piano Roll -->
+        <app-piano-roll-view />
+
+        <!-- D3-based Melodic Contour & Skyline Motif Comparator -->
+        <app-melodic-contour-d3 />
+
+        <!-- Smith-Waterman Dynamic Programming Alignment Matrix -->
+        <app-smith-waterman-view />
+
+        <!-- Aligned Relative Interval Trace -->
+        <app-interval-alignment-view />
+
+        <!-- YouTube Music Real Melodies Comparison -->
+        <app-youtube-music-explorer />
+      </div>
+    }
+
+    <!-- Tab 2: Conformal Calibration -->
+    @if (activeTab() === 'calibration') {
+      <div class="space-y-6">
+        <app-calibration-view />
+
+        <!-- Detailed Empirical Dataset Explorer -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <mat-icon class="text-amber-400 text-lg">dataset</mat-icon>
+                Empirical Calibration Benchmark Pairs (Positives & Negatives)
+              </h3>
+              <p class="text-xs text-slate-400">
+                Ground truth dataset used to estimate null distribution without assuming normal distributions.
+              </p>
+            </div>
+            <span class="text-xs font-mono text-purple-400">
+              Cutoff: {{ (pipeline.calibrationResult().threshold * 100).toFixed(1) }}%
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+            @for (pair of pipeline.calibrationResult().val_scores; track $index) {
+              <div
+                class="p-3 rounded-xl border flex items-center justify-between transition"
+                [class]="pair.label === 'positive' ? 'bg-rose-950/20 border-rose-500/30' : 'bg-slate-950 border-slate-800'"
+              >
+                <div>
+                  <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded mr-2" [class]="pair.label === 'positive' ? 'bg-rose-500/20 text-rose-300' : 'bg-slate-800 text-slate-400'">
+                    {{ pair.label }}
+                  </span>
+                  <span class="text-slate-200">{{ pair.name || 'Benchmark Pair' }}</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-sm block" [class]="pair.score > pipeline.calibrationResult().threshold ? 'text-rose-400' : 'text-emerald-400'">
+                    {{ (pair.score * 100).toFixed(1) }}%
+                  </span>
+                  <span class="text-[10px] text-slate-500">
+                    {{ pair.score > pipeline.calibrationResult().threshold ? 'Above &tau;' : 'Below &tau;' }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tab 3: Cryptographic Report & Hashes -->
+    @if (activeTab() === 'report') {
+      <div class="space-y-6">
+        <app-report-export-view />
+      </div>
+    }
+
+    <!-- Tab 4: Benchmark Case Library -->
+    @if (activeTab() === 'cases') {
+      <div class="space-y-4">
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <mat-icon class="text-sky-400 text-lg">history_edu</mat-icon>
+              Landmark Musicological Copyright Precedents
+            </h3>
+            <p class="text-xs text-slate-400">
+              Select any historical precedent to inspect its melodic skyline, Smith-Waterman alignment, and forensic metrics.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono">
+            @for (preset of pipeline.presets(); track preset.id) {
+              <button
+                type="button"
+                (click)="pipeline.selectPreset(preset.id); activeTab.set('workbench')"
+                class="p-4 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between space-y-3 w-full"
+                [class]="pipeline.activePresetId() === preset.id ? 'bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/30' : 'bg-slate-950 border-slate-800 hover:border-slate-700'"
+              >
+                <div>
+                  <div class="flex items-center justify-between text-[10px] text-slate-400">
+                    <span>{{ preset.yearA }} &times; {{ preset.yearB }}</span>
+                    @if (pipeline.activePresetId() === preset.id) {
+                      <span class="text-amber-400 font-bold">ACTIVE</span>
+                    }
+                  </div>
+                  <h4 class="text-sm font-bold text-white mt-1">{{ preset.name }}</h4>
+                  <p class="text-xs text-slate-400 font-sans mt-1 line-clamp-2">
+                    {{ preset.shortDesc }}
+                  </p>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800/80 text-[11px] text-slate-300 w-full">
+                  <p class="text-[10px] text-slate-400 font-sans italic line-clamp-2">
+                    {{ preset.legalOutcome }}
+                  </p>
+                </div>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tab 5: YouTube Music Audio Proof -->
+    @if (activeTab() === 'youtube') {
+      <div class="space-y-6">
+        <app-youtube-music-explorer />
+      </div>
+    }
+  </main>
+
+  <!-- Modals -->
+  @if (showScriptModal()) {
+    <app-script-viewer-modal (closeModal)="showScriptModal.set(false)" />
+  }
+
+  @if (showCustomModal()) {
+    <app-custom-benchmark-modal (closeModal)="showCustomModal.set(false)" />
+  }
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500 font-mono">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>
+        Arkhe Melodic Pipeline v11 &bull; Active Case: {{ activePreset().name }} (2026)
+      </p>
+      <div class="flex items-center space-x-3 text-[11px]">
+        <span>JSON com chaves ordenadas</span>
+        <span>&bull;</span>
+        <span>Demucs &times; basic-pitch &times; Smith-Waterman</span>
+        <span>&bull;</span>
+        <span>Conformal Calibration</span>
+      </div>
+    </div>
+  </footer>
+</div>

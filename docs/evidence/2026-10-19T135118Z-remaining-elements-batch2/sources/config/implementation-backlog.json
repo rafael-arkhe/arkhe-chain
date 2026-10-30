@@ -1,0 +1,204 @@
+{
+  "schema": 1,
+  "kind": "implementation-tracking-only",
+  "source_audit": "docs/evidence/2026-10-19-proposal-repository-audit/REPORT.md",
+  "authority": false,
+  "runtime_verified": false,
+  "items": [
+    {
+      "id": "A01",
+      "priority": "P0",
+      "finding": "Não existe aprovação unificada 22/22 do candidato. gVisor/runwasi/WASM e TEE não herdam resultados do Podman.",
+      "evidence_and_acceptance": "`runtime-unified-contract.json`, resumo do ensaio. Fechar cobertura dinâmica Seccomp e revisão da cadeia herdada; executar a matriz inteira com limpeza comprovada na mesma tupla. Depois, matriz independente por runtime/perfil/imagem.",
+      "state": "EVIDENCE_BLOCKED",
+      "next_step": "Implementar casos dinâmicos de Seccomp e revisão da cadeia herdada; só então executar a suíte completa sob a mesma tupla e coletar limpeza válida.",
+      "execution_authority": false,
+      "depends_on": [],
+      "evidence_reference": "docs/evidence/2026-10-19T121632Z-unified-trial-summary/results.json"
+    },
+    {
+      "id": "A02",
+      "priority": "P0",
+      "finding": "`verify_artifact` retorna `valid: true` para hashing e canonicalização C2PA/GGUF. Isso não constitui verificação de assinatura C2PA, cadeia de confiança, arquivo GGUF completo ou proveniência.",
+      "evidence_and_acceptance": "`integrations/verify-mcp/src/tools/verify-artifact.ts`, `verification/.../c2pa/claim.rs`. Separar resultado de digest/canonicalização de veredito criptográfico; testes negativos de assinatura, trust roots e bindings antes de anunciar verificação completa. Não foi demonstrado bypass do kernel por esse retorno.",
+      "state": "MITIGATED_IN_SOURCE",
+      "next_step": "Manter o contrato v2 sem valid genérico; acrescentar verificação de assinatura/proveniência apenas com perfis, raízes e testes próprios.",
+      "execution_authority": false,
+      "depends_on": [],
+      "implemented": [
+        "explicit digest/canonicalization result scope",
+        "MCP MMR inclusion verification with leaf-count/path-shape validation"
+      ],
+      "validation": [
+        "integrations/verify-mcp/tests/verification-scope.test.mjs",
+        "integrations/verify-mcp/tests/stdio.test.mjs"
+      ],
+      "limitations": [
+        "No C2PA signature verification",
+        "No checkpoint authentication",
+        "No execution authority"
+      ]
+    },
+    {
+      "id": "A03",
+      "priority": "P0",
+      "finding": "O perfil local do Intra não é a admissão nativa universal descrita na proposta. Seu fluxo de documentos usa autorização por papéis/assinaturas em Node e SQLite.",
+      "evidence_and_acceptance": "`apps/arkhe-intra/lib/documents.mjs`, `store.mjs`. O próprio export declara que não é receipt WormGraph. Se o produto exigir transição protegida Arkhe, integrar o gate e a admissão correspondente; até lá, manter explícito o escopo de evidência local.",
+      "state": "OPEN",
+      "next_step": "Definir uma jornada protegida do Intra e integrar WorkIntent/admissão/journal/commit, preservando a separação do perfil local.",
+      "execution_authority": false,
+      "depends_on": [
+        "A02",
+        "A09",
+        "A10"
+      ]
+    },
+    {
+      "id": "A04",
+      "priority": "P1",
+      "finding": "`DRAFT/NOT FROZEN` e `FROZEN` coexistem no anexo e em `design.md`. O registro de arquitetura classifica AKG como pre-freeze.",
+      "evidence_and_acceptance": "`design.md`, `config/architecture.json`. Definir por perfil versão, digest, autoridade de aprovação, testes de paridade e estado; congelar apenas o que tem evidência.",
+      "state": "PARTIAL",
+      "next_step": "Vincular status e evidência de cada perfil antes de qualquer freeze; usar o inventário ativo para atualizar os diagramas restantes.",
+      "execution_authority": false,
+      "depends_on": [],
+      "implemented": [
+        "global contradictory freeze removed",
+        "current workspace inventory",
+        "capability status registry"
+      ]
+    },
+    {
+      "id": "A05",
+      "priority": "P1",
+      "finding": "Cognição ainda não corresponde aos algoritmos descritos. Não há `dream_rsi.rs`, `simulator.rs` ou `self_model.rs` nesses módulos ativos.",
+      "evidence_and_acceptance": "`arkhe-learning` emite proposta; `world-model` gera digests do cenário sem modelo causal; `metacognition` escolhe confiança 7000/2500 e cobertura 10000/0 pela presença de referências. Implementar calibração histórica, simulador avaliável e aprendizado medido; não rotular os stubs como capacidade demonstrada.",
+      "state": "PARTIAL",
+      "next_step": "Integrar ingestão histórica autenticada no host; avaliar coortes reais e generalização; implementar simulador causal e RSI medido como capacidades separadas.",
+      "execution_authority": false,
+      "depends_on": [
+        "A10"
+      ],
+      "implemented": [
+        "Removed fixed confidence and coverage from assess; unknown values are None",
+        "Historical binary calibration with Brier/ECE and evidence-bound deterministic report",
+        "Prediction/outcome identity, payload, policy and causal-parent validation"
+      ],
+      "validation": [
+        "cognition/arkhe-metacognition/tests/calibration.rs"
+      ],
+      "limitations": [
+        "Synthetic interface/statistics tests only",
+        "Host authenticates snapshots and sample completeness",
+        "No automatic confidence for new predictions",
+        "No demonstrated RSI or causal simulator"
+      ]
+    },
+    {
+      "id": "A06",
+      "priority": "P1",
+      "finding": "RAG fornece estruturas de citação, mas `grounded` depende apenas de lista não vazia. Não foi evidenciada busca vetorial/híbrida com validação integral dos chunks nesse módulo.",
+      "evidence_and_acceptance": "`cognition/arkhe-rag/src/lib.rs`. Validar digest e prova de cada fonte/chunk, separar presença de citação de fundamentação, incluir recuperação e casos negativos de índice adulterado.",
+      "state": "OPEN",
+      "next_step": "Validar digest/prova de cada fonte e chunk; separar existência de citação de grounding e implementar recuperação testável.",
+      "execution_authority": false,
+      "depends_on": [
+        "A02",
+        "A10"
+      ]
+    },
+    {
+      "id": "A07",
+      "priority": "P1",
+      "finding": "Awa/BullMQ, heartbeat Tokio separado e DLQ de três tentativas não estão implementados pelas crates propostas, que não existem no workspace. Redis no Compose não demonstra fila.",
+      "evidence_and_acceptance": "`Cargo.toml`, `docker-compose.yml`. Há journal e jobs operacionais em integrações específicas. Uma fila genérica exige contrato de lease/retry, enqueue transacional, crash recovery e testes de reinício. Não substituir essas garantias por nomes de dependências.",
+      "state": "OPEN",
+      "next_step": "Escolher uma jornada que exija fila, definir leases/retries e enqueue transacional, implementar crash recovery e DLQ.",
+      "execution_authority": false,
+      "depends_on": []
+    },
+    {
+      "id": "A08",
+      "priority": "P1",
+      "finding": "Existem assinaturas Ed25519 e quórum em perfis específicos, mas isso não demonstra ML-DSA, HSM/PKCS#11, TEE ou uma ConstitutionStore universal.",
+      "evidence_and_acceptance": "`integration/auth-md/src/token.rs`, `integration/arkhe-bugbounty/src/governance.rs`, `provenance.rs`, `governance/arkhe-governance/src/lib.rs`. Preservar a capacidade existente; especificar escopo, rotação/revogação, anti-replay e custódia por integração.",
+      "state": "OPEN",
+      "next_step": "Definir custódia/rotação/revogação por perfil e implementar apenas o mecanismo selecionado; não anunciar HSM/TEE/ML-DSA sem evidência.",
+      "execution_authority": false,
+      "depends_on": []
+    },
+    {
+      "id": "A09",
+      "priority": "P1",
+      "finding": "SQL append-only é uma propriedade de tabelas/roles, não de todo estado. O journal permite transições operacionais controladas por trigger. O DDL simplificado do anexo omite tenant e ator.",
+      "evidence_and_acceptance": "`storage/sql/migrations/20261017000009_bugbounty.sql`. Preservar PK `(tenant_id,requested_by,operation_id)` e parâmetros imutáveis; documentar estado operacional mutável versus evidência imutável; testar isolamento/conflitos nas APIs. Não reescrever as migrações publicadas para copiar o exemplo.",
+      "state": "OPEN",
+      "next_step": "Acrescentar testes vivos das APIs escolhidas para tenant/ator, conflito de parâmetros e replay; preservar migrações publicadas.",
+      "execution_authority": false,
+      "depends_on": []
+    },
+    {
+      "id": "A10",
+      "priority": "P1",
+      "finding": "O SDK e o gate têm controles reais, mas não substituem isolamento de runtime. O host continua responsável por autenticar evidências antes do snapshot.",
+      "evidence_and_acceptance": "`docs/COGNITION-SDK.md`, testes executados. Manter allowlist, sandbox e admissão; testar recebimento de evidência inválida e identidade duplicada no host, além da tipagem.",
+      "state": "OPEN",
+      "next_step": "Testar autenticação, replay e duplicidade na fronteira do host; manter SDK, grafo e sandbox como camadas distintas.",
+      "execution_authority": false,
+      "depends_on": []
+    },
+    {
+      "id": "A11",
+      "priority": "P1",
+      "finding": "O CI possui separação de OIDC no job de atestação, mas a existência do YAML não comprova execução remota ou publicação. Algumas etapas fora dos cognition gates ainda usam tags de actions/tooling sem pin equivalente.",
+      "evidence_and_acceptance": "`.github/workflows/ci.yml`, `besu-b0.yml`. Obter receipts remotos do commit, validar permissões e identidades, revisar pins do restante da cadeia. O diretório local não contém metadados `.git`; esta auditoria não atribui um commit verificado ao checkout.",
+      "state": "OPEN",
+      "next_step": "Uniformizar pins da cadeia CI e obter receipts remotos vinculados ao commit e à identidade de workflow.",
+      "execution_authority": false,
+      "depends_on": []
+    },
+    {
+      "id": "A12",
+      "priority": "P1",
+      "finding": "`ClusterImagePolicy` é um template deliberadamente incompleto, com `authorities: []`; não há aprovação de admissão Kubernetes demonstrada.",
+      "evidence_and_acceptance": "`ops/verification/kubernetes/admission-policy/policy.yaml`. Vincular autoridades/identidades reais e testar rejeição de imagem não autorizada no cluster de destino antes de usá-lo como garantia.",
+      "state": "OPEN",
+      "next_step": "Definir infraestrutura e autoridades de imagem; preencher política candidata e provar rejeições no cluster de destino.",
+      "execution_authority": false,
+      "depends_on": [
+        "A01",
+        "A11"
+      ]
+    },
+    {
+      "id": "A13",
+      "priority": "P1",
+      "finding": "EXE, CLI, MSI e ZIP já existem; a lacuna de distribuição não é ausência desses formatos. O perfil empacotado é local, não inclui todo o runtime PostgreSQL/laboratórios.",
+      "evidence_and_acceptance": "`packaging/windows/README.md`, `dist/`. O README declara ausência de assinatura de editor, atualização automática, SSO e multitenancy nesse perfil. Exigir testes em máquina limpa, integridade/assinatura, atualização/rollback e matriz de perfis antes de distribuição produtiva. Binários e MSI não foram instalados ou executados nesta auditoria.",
+      "state": "OPEN",
+      "next_step": "Validar instalação/backup/restauração/upgrade em máquina limpa; selecionar identidade de editor e atualizar distribuição com rollback.",
+      "execution_authority": false,
+      "depends_on": []
+    },
+    {
+      "id": "A14",
+      "priority": "P2",
+      "finding": "A camada completa de sharding, réplicas com LSN, service mesh, discovery atestado, CDN e armazenamento S3 endereçado por conteúdo não foi evidenciada como sistema operacional integrado.",
+      "evidence_and_acceptance": "Compose e fontes ativas inspecionados. Tratar como opções de implantação; cada capacidade precisa de contrato, implementação e teste. Evitar colocá-las como pré-requisito para o aplicativo local.",
+      "state": "OPEN",
+      "next_step": "Selecionar infraestrutura a partir de carga medida e implementar um componente por vez com testes de falha.",
+      "execution_authority": false,
+      "depends_on": []
+    },
+    {
+      "id": "A15",
+      "priority": "P2",
+      "finding": "A proposta comercial mistura gratuidade, revenue share e metadata de licença sem vínculo implementado. O workspace declara `Apache-2.0 OR MIT`, mas não há os dois textos de licença propostos na raiz.",
+      "evidence_and_acceptance": "`Cargo.toml` e inventário da raiz. Não foi verificada licença Community Source que imponha 10%. Formalizar separadamente, sem alterar licenças automaticamente. Os valores de nuvem e preços do anexo não têm fontes verificáveis, região/data/SKU ou medição de carga anexadas; são hipóteses comerciais, não orçamento validado.",
+      "state": "OPEN",
+      "next_step": "Definir política comercial e textos de licença com os responsáveis; medir custos antes de publicar preços.",
+      "execution_authority": false,
+      "depends_on": []
+    }
+  ]
+}

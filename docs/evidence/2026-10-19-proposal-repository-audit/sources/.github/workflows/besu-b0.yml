@@ -1,0 +1,60 @@
+name: bugbounty-persistence-and-besu-b0
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  persistent-bugbounty-and-b0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: arkhe
+          POSTGRES_PASSWORD: arkhe_ci_local_only
+        ports: ["55432:5432"]
+        options: >-
+          --label io.arkhe.environment=live-v1
+          --health-cmd "pg_isready -U postgres -d arkhe"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      ARKHE_ADMIN_DATABASE_URL: postgresql://postgres:arkhe_ci_local_only@127.0.0.1:55432/arkhe
+      DATABASE_URL: postgresql://arkhe_ci:arkhe_ci_local_only@127.0.0.1:55432/arkhe
+      ARKHE_TEST_DATABASE_URL: postgresql://arkhe_ci:arkhe_ci_local_only@127.0.0.1:55432/arkhe
+      ARKHE_TENANT_ID: bugbounty-b0-ci
+      ARKHE_B0_TENANT: bugbounty-b0-ci
+      ARKHE_EVIDENCE_DIR: docs/evidence/ci/${{ github.run_id }}/bugbounty-b0
+      NODE_PATH: ${{ github.workspace }}/ops/local/besu-tools/node_modules
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+        with: { targets: wasm32-unknown-unknown }
+      - uses: actions/setup-node@v4
+        with: { node-version: "24" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: cargo build -p arkhe-runtime -p arkhe-bugbounty --locked
+      - name: Migrate and provision isolated runtime role
+        run: |
+          DATABASE_URL="$ARKHE_ADMIN_DATABASE_URL" target/debug/arkhe-runtime migrate
+          psql "$ARKHE_ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -c "CREATE ROLE arkhe_ci LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE INHERIT PASSWORD 'arkhe_ci_local_only'; GRANT arkhe_append,arkhe_read,arkhe_operations TO arkhe_ci;"
+      - run: python scripts/record_gate.py postgres-bugbounty -- cargo test -p arkhe-bugbounty -p arkhe-core -p arkhe-kernel -p arkhe-sql --features arkhe-bugbounty/postgres-integration,arkhe-sql/postgres-integration --locked
+      - run: cargo build -p arkhe-bugbounty --example persistence_probe --locked
+      - run: python scripts/record_gate.py real-restart-durability -- python scripts/bugbounty_restart_probe.py --engine docker --container "${{ job.services.postgres.id }}"
+      - run: cargo install wasm-pack --locked
+      - run: wasm-pack build verification/crates/arkhe-verify-wasm --target nodejs --out-dir pkg --locked
+      - run: npm install --prefix ops/local/besu-tools --no-save --package-lock=false ethers@6.16.0 solc@0.8.30
+      - run: python scripts/record_gate.py besu-version-and-qbft -- python scripts/besu_b0.py up --engine docker
+      - run: target/debug/export_checkpoint ops/local/besu-b0/checkpoint.json
+      - run: python scripts/record_gate.py besu-anchor-and-offline-proof -- python scripts/besu_b0.py anchor --engine docker --checkpoint ops/local/besu-b0/checkpoint.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bugbounty-b0-${{ github.run_attempt }}
+          path: |
+            docs/evidence/ci/${{ github.run_id }}/bugbounty-b0/
+            ops/local/besu-b0/checkpoint.json
+            ops/local/besu-b0/result.json
+          if-no-files-found: warn
+      - if: always()
+        run: python scripts/besu_b0.py stop --engine docker

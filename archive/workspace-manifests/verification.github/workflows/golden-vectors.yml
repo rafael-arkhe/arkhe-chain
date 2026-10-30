@@ -1,0 +1,11 @@
+name: golden-vectors
+on: [push, pull_request]
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert generator is not executed
+        run: |
+          ! grep -R "generate-vectors.py" .github/workflows --exclude=golden-vectors.yml
+      - run: python3 scripts/verify-vectors.py

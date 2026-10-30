@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "report_id": "origin-vulnerable",
+  "severity": "High",
+  "title": "Origin check permits phishing drain",
+  "report_body": "Wallet code: address owner; function pay(address payable to,uint amount) external {require(tx.origin==owner); (bool ok,)=to.call{value:amount}(\"\");require(ok);} No other authorization exists. An owner calls an attacker contract believing it is a game; that contract calls wallet.pay(attacker, walletBalance). Local transaction trace shows tx.origin remains owner while msg.sender is attacker contract, draining all 8 ETH. The owner did not approve that transfer.",
+  "submitted_at": 1,
+  "affected_assets": []
+}

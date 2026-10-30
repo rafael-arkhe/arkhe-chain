@@ -1,0 +1,28 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+import {DatabaseSync} from 'node:sqlite';
+import {createBackup,restoreBackup} from '../scripts/recovery.mjs';
+const directory=mkdtempSync(join(tmpdir(),'arkhe-recovery-test-')),source=join(directory,'source');
+process.env.ARKHE_INTRA_DATA_DIR=source;
+execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/setup.mjs',import.meta.url))],{env:process.env,stdio:'pipe'});
+const {db,appendEvent}=await import('../lib/store.mjs');
+db().prepare('INSERT INTO sessions VALUES(?,?,?)').run('synthetic-token','author',Date.now()+100000);appendEvent('author','synthetic-test','fixture');
+test('encrypted backup restores isolated SQLite, preserves trust and invalidates sessions',async()=>{
+ const archive=join(directory,'encrypted.backup'),key=join(directory,'backup.key'),target=join(directory,'restored');
+ const result=await createBackup(source,archive,key,30999);assert.equal(result.status,'PASS');
+ assert.equal(readFileSync(archive,'utf8').includes('BEGIN PRIVATE KEY'),false);
+ const restored=await restoreBackup(archive,key,target,30999);assert.equal(restored.sessionsAndPendingAccess,'INVALIDATED');
+ const database=new DatabaseSync(join(target,'intra.sqlite'));assert.equal(database.prepare('SELECT count(*) AS n FROM sessions').get().n,0);assert.equal(database.prepare('SELECT count(*) AS n FROM events').get().n,2);database.close();
+ assert.deepEqual(readFileSync(join(source,'accounts.json')),readFileSync(join(target,'accounts.json')));
+ assert.equal(db().prepare('SELECT count(*) AS n FROM sessions').get().n,1);
+ await assert.rejects(restoreBackup(archive,key,target,30999),/new directory/);
+ const wrong=join(directory,'wrong.key');writeFileSync(wrong,Buffer.alloc(32));
+ await assert.rejects(restoreBackup(archive,wrong,join(directory,'wrong-target'),30999));assert.equal(existsSync(join(directory,'wrong-target')),false);
+ const changed=JSON.parse(readFileSync(archive));changed.tag='00'.repeat(16);const bad=join(directory,'bad.backup');writeFileSync(bad,JSON.stringify(changed));
+ await assert.rejects(restoreBackup(bad,key,join(directory,'bad-target'),30999));assert.equal(existsSync(join(directory,'bad-target')),false);
+});

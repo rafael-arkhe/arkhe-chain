@@ -1,0 +1,77 @@
+{
+  "scope": "Local execution only; no remote CI, protocol freeze or production attestation",
+  "context": {},
+  "attempts": [
+    {
+      "gate": "operation-identity",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--test",
+        "triage",
+        "operation_id_excludes_parameters_and_timestamp_but_binds_request",
+        "--locked",
+        "--",
+        "--exact"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:55:28.601549+00:00",
+      "duration_seconds": 24.13,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "444688c5efa6796b66c24fc5007ca56404e03867aa4adfaeb3451ae4f5c79b53",
+      "source_after_sha256": "444688c5efa6796b66c24fc5007ca56404e03867aa4adfaeb3451ae4f5c79b53",
+      "source_changed_during_execution": false,
+      "log": "01-operation-identity.log",
+      "log_sha256": "a4555d19fdf21dc053dd7fede025cf0eed461fe4ea695b4adb69922a5d826df4",
+      "inputs": "01-operation-identity.inputs.json"
+    },
+    {
+      "gate": "parameter-conflict",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--test",
+        "triage",
+        "same_request_different_parameters_conflicts_without_second_write",
+        "--locked",
+        "--",
+        "--exact"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:55:53.254788+00:00",
+      "duration_seconds": 1.689,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "444688c5efa6796b66c24fc5007ca56404e03867aa4adfaeb3451ae4f5c79b53",
+      "source_after_sha256": "444688c5efa6796b66c24fc5007ca56404e03867aa4adfaeb3451ae4f5c79b53",
+      "source_changed_during_execution": false,
+      "log": "02-parameter-conflict.log",
+      "log_sha256": "ab8e63cb868ae4f913af97d664af39f62213fa72bd2ee786294958e0a2f0f3ba",
+      "inputs": "02-parameter-conflict.inputs.json"
+    },
+    {
+      "gate": "review-package-integrity",
+      "command": [
+        "python",
+        "scripts/prepare_triage_review.py",
+        "--verify"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-17T23:56:20.494557+00:00",
+      "duration_seconds": 0.471,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "444688c5efa6796b66c24fc5007ca56404e03867aa4adfaeb3451ae4f5c79b53",
+      "source_after_sha256": "444688c5efa6796b66c24fc5007ca56404e03867aa4adfaeb3451ae4f5c79b53",
+      "source_changed_during_execution": false,
+      "log": "03-review-package-integrity.log",
+      "log_sha256": "08b0f5f1302b7fe6e96c40e5f9ad4dfb992033a6fe0d89404144f07969ca6e9e",
+      "inputs": "03-review-package-integrity.inputs.json"
+    }
+  ]
+}

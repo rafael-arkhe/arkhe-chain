@@ -1,0 +1,21 @@
+{
+  "_registo": "🔴 ISTO É A FICHA DO MOTOR, e é DADO — não é código. É lida no arranque e nada é escrito à mão depois do primeiro boot. O ficheiro que a máquina de um cliente edita é o de DADOS; este é a referência do que a Safe Core põe por omissão.",
+
+  "_o_que_o_D8_descobriu": "🔴 O que restava do D8 **não era integração**: o `opencode` é motor NATIVO do upstream (`server/drivers/acp/opencode-go.ts`, driver `opencode`, `spawnArgs [\"acp\"]`, catálogo por `opencode models --verbose`). 🔴 O que faltava era o pino — o `driver`, o rótulo e o registo do MCP — e o plano dizia «nada descoberto à mão», que é uma frase sobre um ficheiro. 🔴 E o `customAcp` que eu escrevi aqui na primeira versão era o caminho mais longo para o mesmo sítio, e um caminho que o upstream não testa: a prova `ferramentas/motor.sh --morde` planta `customAcp` e confirma que a folha reprova.",
+
+  "instances": {
+    "aip": {
+      "driver": "opencode",
+      "displayName": "AIP",
+      "_porque": "🔴 O rótulo é AIP e não o nome de um terceiro: é a regra do CLAUDE.md da casa, e a casa encontrou o defeito numa tela de cliente onde o motor aparecia com o nome da casa que o fornece. A verdade técnica continua na config: quem chama o binário chama o binário.",
+      "_o_que_este_ficheiro_faz": "Escolhe WHICH motor, COMO se chama, e onde ele trabalha. Nada mais — e nada de segredo.",
+
+      "enabled": true,
+      "config": {
+        "_cwd": "🔴 A pasta de trabalho é o `cwd` do motor, e por omissão é a pasta do operador: o AIP trabalha no projeto dele, não num directório do produto. 🔴 O dado do produto (vertical, ilha, licença) chega pelo MCP e não pelo `cwd` — e é por isso que o `cwd` é o único campo que aqui aponta para fora do produto.",
+        "cwd": "${AEGIS_CWD_OPERADOR}"
+      },
+      "_provider": "🔴 **O provider é do opencode, e não nosso.** O CLI tem a sua própria autenticação (`opencode auth login`) e o fork não a copia nem a reescreve — o `docs/opencode-go.md` do upstream diz isso em duas linhas e está certo. 🔴 Pinar o provider aqui seria guardar uma credencial num ficheiro de configuração do produto, e a casa mediu o que isso custa (o PAT mestre que viajava em toda a cópia do exe do Bridge). O que este fork faz é **não** guardar: quem entra, entra pelo `opencode` dele."
+    }
+  }
+}

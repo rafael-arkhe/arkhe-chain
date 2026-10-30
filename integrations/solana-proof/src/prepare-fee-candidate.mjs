@@ -1,0 +1,14 @@
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+const base = JSON.parse(readFileSync('output/prelaunch/devnet/profile.json', 'utf8'));
+const key = new PublicKey('A8gMrEPJkacWkcb3DGwtJwTe16HktSEfvwtuDh2MCtck');
+const connection = new Connection('https://api.devnet.solana.com', 'finalized');
+const account = await connection.getAccountInfoAndContext(key);
+if (account.value.owner.toBase58() !== base.fixtures[1].program) throw Error('unexpected DAMM config owner');
+const directory = resolve('output/prelaunch/fee125'); mkdirSync(directory, { recursive: true });
+const configFile = `${directory}/config.json`;
+writeFileSync(configFile, JSON.stringify({ pubkey: key.toBase58(), account: { lamports: account.value.lamports, owner: account.value.owner.toBase58(), executable: false, rentEpoch: 0, data: [account.value.data.toString('base64'), 'base64'] } }, null, 2));
+writeFileSync(`${directory}/profile.json`, JSON.stringify({ ...base, configAddress: key.toBase58(), configFile, configSha256: createHash('sha256').update(account.value.data).digest('hex'), configObservedSlot: account.context.slot, curveFeeBps: 125, migratedPoolFeeBps: 125 }, null, 2));
+console.log('Candidate profile prepared: 125 bps DBC and DAMM v2; separate from 60/20/15/5 allocation test.');

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "receipt": {
+      "$ref": "../agent-integrity-record.schema.json"
+    },
+    "context": {
+      "$ref": "wasm-context.schema.json"
+    },
+    "status": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "status-envelope.schema.json"
+        }
+      ]
+    },
+    "policy": {
+      "$ref": "verifier-policy.schema.json"
+    }
+  },
+  "required": [
+    "receipt",
+    "context",
+    "status",
+    "policy"
+  ]
+}

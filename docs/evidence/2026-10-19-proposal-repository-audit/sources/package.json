@@ -1,0 +1,39 @@
+{
+  "name": "@arkhe/environment",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "check:architecture": "python scripts/check_architecture.py",
+    "check:rust": "cargo check --workspace --locked",
+    "test:rust": "cargo nextest run --workspace --locked",
+    "build:apps": "pnpm --filter @arkhe/preflight-ui --filter @arkhe/melodic-lab --filter @arkhe/intra build",
+    "build:adapters": "pnpm --filter @arkhe/mcp-server build",
+    "verify:wasm": "python scripts/build_verifier.py",
+    "verify:vectors": "python verification/scripts/verify-vectors.py",
+    "dev:preflight": "pnpm --filter @arkhe/preflight-ui dev",
+    "dev:melodic": "pnpm --filter @arkhe/melodic-lab dev",
+    "mcp:verify": "pnpm --filter @arkhe/mcp-server start",
+    "runtime:up": "python scripts/live_runtime.py up",
+    "runtime:verify": "python scripts/live_runtime.py verify",
+    "runtime:status": "python scripts/live_runtime.py status",
+    "runtime:down": "python scripts/live_runtime.py down",
+    "test:adapters": "pnpm --filter @arkhe/mcp-server test",
+    "stack:up": "python scripts/full_stack.py",
+    "stack:verify": "python scripts/full_stack.py --verify",
+    "dev:chladni": "pnpm --filter @arkhe/chladni-dashboard dev",
+    "inspect:ports": "python scripts/inspect_ports.py",
+    "ollama:status": "python scripts/ollama.py status",
+    "ollama:chat": "python scripts/ollama.py chat",
+    "ollama:triage": "python scripts/ollama.py triage",
+    "dev:intra": "pnpm --filter @arkhe/intra dev",
+    "intra:setup": "pnpm --filter @arkhe/intra run setup",
+    "build:intra": "pnpm --filter @arkhe/intra build",
+    "test:intra": "pnpm --filter @arkhe/intra test",
+    "start:intra": "pnpm --filter @arkhe/intra start",
+    "intra:prepare": "python scripts/prepare_intra.py"
+  }
+}

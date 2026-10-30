@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Enterprise - Executive Board Pack Dashboard</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Inter & JetBrains Mono Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface": "#0f131c",
+            "surface-container-lowest": "#0a0e16",
+            "tertiary-container": "#1bbd85",
+            "on-surface": "#dfe2ee",
+            "outline-variant": "#3d494c",
+            "on-primary": "#003640",
+            "inverse-surface": "#dfe2ee",
+            "surface-dim": "#0f131c",
+            "on-tertiary": "#003824",
+            "surface-container-highest": "#31353e",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "surface-container-low": "#181c24",
+            "primary-container": "#06b6d4",
+            "on-primary-container": "#00424f",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container-high": "#262a33",
+            "secondary": "#b4c5ff",
+            "secondary-fixed": "#dbe1ff",
+            "secondary-fixed-dim": "#b4c5ff",
+            "primary": "#4cd7f6",
+            "tertiary-fixed-dim": "#4edea3",
+            "primary-fixed-dim": "#4cd7f6",
+            "on-background": "#dfe2ee",
+            "on-primary-fixed-variant": "#004e5c",
+            "outline": "#869397",
+            "on-tertiary-fixed": "#002113",
+            "tertiary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#2c3039",
+            "surface-variant": "#31353e",
+            "on-secondary-fixed-variant": "#003ea8",
+            "on-secondary-container": "#cdd7ff",
+            "surface-container": "#1c2028",
+            "on-surface-variant": "#bcc9cd",
+            "surface-bright": "#353942",
+            "secondary-container": "#0053db",
+            "inverse-primary": "#00687a",
+            "error": "#ffb4ab",
+            "on-primary-fixed": "#001f26",
+            "on-secondary-fixed": "#00174b",
+            "tertiary": "#4edea3",
+            "primary-fixed": "#acedff",
+            "error-container": "#93000a",
+            "on-tertiary-container": "#00452e",
+            "surface-tint": "#4cd7f6",
+            "on-secondary": "#002a78",
+            "background": "#0f131c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter-mobile": "0.75rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "margin": "2rem",
+            "margin-mobile": "1rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "label-badge": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "mono-sm": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "mono-md": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "headline-sm": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-badge": ["10px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased font-body-md text-body-md min-h-screen pb-24 selection:bg-primary-container selection:text-on-primary-container">
+<!-- TOP APP BAR (Shared Component Anchor) -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-md py-space-xs border-b border-outline-variant/30 bg-surface-container-lowest/85 backdrop-blur-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="shield">shield</span>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">Arkhe Enterprise</span>
+<span class="font-label-badge text-label-badge uppercase px-1.5 py-0.5 rounded border border-primary/40 bg-primary/10 text-primary">SOVEREIGN GOVERNANCE</span>
+</div>
+<p class="font-mono-sm text-mono-sm text-on-surface-variant flex items-center gap-1">
+<span>Persona:</span>
+<span class="text-primary font-medium">Executivo / Board Pack</span>
+</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-badge text-label-badge uppercase px-2 py-1 rounded bg-surface-container border border-outline-variant/50 text-tertiary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+        BACEN Tier 1
+      </span>
+</div>
+</header>
+<!-- MAIN SCROLLABLE CONTENT CANVAS (Optimized for Mobile Inspection) -->
+<main class="pt-16 px-gutter-mobile space-y-space-md max-w-lg mx-auto">
+<!-- PERSONA HORIZONTAL SCROLLER -->
+<section class="space-y-1.5 pt-1">
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+<button class="shrink-0 px-3 py-1.5 rounded bg-surface-container-low border border-outline-variant/40 text-on-surface-variant font-mono-sm text-mono-sm hover:text-primary transition-colors">
+          Jurídico
+        </button>
+<button class="shrink-0 px-3 py-1.5 rounded bg-surface-container-low border border-outline-variant/40 text-on-surface-variant font-mono-sm text-mono-sm hover:text-primary transition-colors">
+          Financeiro
+        </button>
+<button class="shrink-0 px-3 py-1.5 rounded bg-surface-container-low border border-outline-variant/40 text-on-surface-variant font-mono-sm text-mono-sm hover:text-primary transition-colors">
+          Compliance
+        </button>
+<button class="shrink-0 px-3 py-1.5 rounded bg-surface-container-low border border-outline-variant/40 text-on-surface-variant font-mono-sm text-mono-sm hover:text-primary transition-colors">
+          Engenharia
+        </button>
+<button class="shrink-0 px-3 py-1.5 rounded bg-primary/15 border border-primary text-primary font-mono-sm text-mono-sm font-semibold flex items-center gap-1.5 shadow-[0_0_8px_rgba(6,182,212,0.2)]">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+          Executivo (Ativa)
+        </button>
+</div>
+<!-- CANONICAL ARCHITECTURE REMINDER (ADR-008) -->
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant/30 flex items-start gap-2">
+<span class="material-symbols-outlined text-outline text-sm mt-0.5" data-icon="terminal">terminal</span>
+<p class="font-mono-sm text-mono-sm text-outline leading-tight">
+<span class="text-on-surface-variant font-medium">ADR-008:</span> A persona é apresentação, não autorização. O RBAC reside na API.
+        </p>
+</div>
+</section>
+<!-- EXECUTIVE VOCABULARY LEXICON (C-Level Translation Layer) -->
+<section class="rounded-xl border border-outline-variant/50 bg-surface-container-low p-space-sm space-y-2">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-base" data-icon="translate">translate</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Léxico C-Level &amp; Tradução Notarial</h2>
+</div>
+<span class="font-label-badge text-label-badge uppercase text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">Canonical</span>
+</div>
+<div class="grid grid-cols-1 gap-1.5 font-mono-sm text-mono-sm">
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="text-outline font-mono-sm">mmr.root</span>
+<span class="text-on-surface font-body-sm text-body-sm font-medium text-right flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="arrow_forward">arrow_forward</span>
+            Índice de Governança e Risco Residual
+          </span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="text-outline font-mono-sm">mmr.proof</span>
+<span class="text-on-surface font-body-sm text-body-sm font-medium text-right flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="arrow_forward">arrow_forward</span>
+            Certificado de Conformidade Regulatória
+          </span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="text-outline font-mono-sm">anchor.rbb</span>
+<span class="text-on-surface font-body-sm text-body-sm font-medium text-right flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="arrow_forward">arrow_forward</span>
+            Chancela Pública Institucional
+          </span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest border border-outline-variant/20">
+<span class="text-outline font-mono-sm">evidence.hash</span>
+<span class="text-on-surface font-body-sm text-body-sm font-medium text-right flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="arrow_forward">arrow_forward</span>
+            Selo de Autoria e Integridade Corporativa
+          </span>
+</div>
+</div>
+</section>
+<!-- MACRO GOVERNANCE & COMPLIANCE ROI PANEL (Bento Grid) -->
+<section class="space-y-2">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary text-lg" data-icon="monitoring">monitoring</span>
+          Painel Macro Executivo &amp; ROI
+        </h2>
+<span class="font-label-badge text-label-badge uppercase text-tertiary bg-tertiary/10 border border-tertiary/30 px-1.5 py-0.5 rounded">
+          Q3 Audit Finalizado
+        </span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<!-- Card 1: Cobertura de Prova -->
+<div class="col-span-2 p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-mono-sm text-mono-sm text-on-surface-variant uppercase tracking-wider">Cobertura Total de Prova</span>
+<span class="font-label-badge text-label-badge uppercase px-1.5 py-0.5 rounded bg-tertiary/10 border border-tertiary/30 text-tertiary">VERIFIED</span>
+</div>
+<div class="flex items-baseline justify-between">
+<span class="font-headline-md text-headline-md font-bold text-on-surface">98.6%</span>
+<span class="font-mono-sm text-mono-sm text-on-surface-variant">1.420 / 1.440 ativos blindados</span>
+</div>
+<!-- Micro Bar -->
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 98.6%"></div>
+</div>
+</div>
+<!-- Card 2: Risco Residual Mitigado -->
+<div class="col-span-1 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-1">
+<div class="flex items-center gap-1 text-tertiary">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span class="font-mono-sm text-mono-sm uppercase">Risco Mitigado</span>
+</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">R$ 142 M</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Contingências cíveis e fiscais evitadas em litígios.</p>
+</div>
+<!-- Card 3: Custo Médio por Prova -->
+<div class="col-span-1 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-1">
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="savings">savings</span>
+<span class="font-mono-sm text-mono-sm uppercase">Custo Unitário</span>
+</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">R$ 0,004</div>
+<p class="font-body-sm text-body-sm text-primary font-medium leading-tight">Economia de 99.9% vs cartório físico (R$ 42,00).</p>
+</div>
+<!-- Card 4: Exposição Regulatória -->
+<div class="col-span-2 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 flex items-center justify-between">
+<div class="space-y-0.5">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-mono-sm text-mono-sm text-on-surface uppercase font-medium">Exposição Regulatória</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">BACEN • CVM • ANPD</p>
+</div>
+<div class="text-right">
+<span class="font-headline-sm text-headline-sm font-bold text-tertiary">ZERO</span>
+<p class="font-label-badge text-label-badge uppercase text-outline">Passivos apontados</p>
+</div>
+</div>
+</div>
+</section>
+<!-- HIGH-IMPACT EXECUTIVE ACTIONS -->
+<section class="space-y-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="bolt">bolt</span>
+        Ações Executivas de Alto Impacto
+      </h2>
+<div class="space-y-2">
+<!-- Action 1: Export Board Pack -->
+<button class="w-full flex items-center justify-between p-3.5 rounded-xl bg-primary-container text-on-primary-container font-body-md font-semibold hover:brightness-110 active:scale-[0.99] transition-all shadow-md">
+<div class="flex items-center gap-2.5 text-left">
+<span class="material-symbols-outlined text-2xl text-on-primary" data-icon="picture_as_pdf">picture_as_pdf</span>
+<div>
+<div class="text-on-primary font-bold">Exportar Board Pack</div>
+<div class="font-mono-sm text-mono-sm text-on-primary-container font-normal">PDF Executivo + Sumário C-Level Assinado</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-primary" data-icon="download">download</span>
+</button>
+<!-- Action 2: Aprovar Atualização de Política Regulatória -->
+<button class="w-full flex items-center justify-between p-3 rounded-xl bg-surface-container border border-outline-variant/50 text-on-surface hover:border-primary active:scale-[0.99] transition-all text-left">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded bg-secondary-container/30 border border-secondary/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-base" data-icon="policy">policy</span>
+</div>
+<div>
+<div class="font-body-md font-medium text-on-surface">Aprovar Atualização de Política Regulatória</div>
+<div class="font-mono-sm text-mono-sm text-on-surface-variant">Quórum Pendente: 3/5 Assinaturas HSM</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Action 3: Ver Trilha de Contingências e Litígios -->
+<button class="w-full flex items-center justify-between p-3 rounded-xl bg-surface-container border border-outline-variant/50 text-on-surface hover:border-primary active:scale-[0.99] transition-all text-left">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-base" data-icon="gavel">gavel</span>
+</div>
+<div>
+<div class="font-body-md font-medium text-on-surface">Ver Trilha de Contingências e Litígios</div>
+<div class="font-mono-sm text-mono-sm text-on-surface-variant">Dossiê probatório pronto para defesa judicial</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- BOARD OF DIRECTORS HIGHLIGHTS FEED -->
+<section class="space-y-2">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-lg" data-icon="feed">feed</span>
+          Destaques para o Conselho de Administração
+        </h2>
+<span class="font-mono-sm text-mono-sm text-outline">Real-time</span>
+</div>
+<div class="space-y-2.5">
+<!-- Feed Item 1: M&A Contract -->
+<article class="p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-badge text-label-badge uppercase text-secondary bg-secondary/10 border border-secondary/30 px-1.5 py-0.5 rounded">
+              ANCHORED • RBB
+            </span>
+<span class="font-mono-sm text-mono-sm text-outline">Hoje, 14:32</span>
+</div>
+<div>
+<h3 class="font-body-md font-semibold text-on-surface">Fechamento de M&amp;A Contrato #DOC-8921</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              Ancoragem 100% concluída na Rede Blockchain Brasil. Cobertura de firma digital quórum 4/4 com carimbo de tempo irreversível.
+            </p>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant/20 font-mono-sm text-mono-sm text-outline">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-tertiary" data-icon="check_circle">check_circle</span>
+              Merkle Root #89F2A...
+            </span>
+<span class="text-primary hover:underline cursor-pointer">Verificar Prova</span>
+</div>
+</article>
+<!-- Feed Item 2: Bacen Res. 85 -->
+<article class="p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-badge text-label-badge uppercase text-tertiary bg-tertiary/10 border border-tertiary/30 px-1.5 py-0.5 rounded">
+              VERIFIED • ICP-BRASIL
+            </span>
+<span class="font-mono-sm text-mono-sm text-outline">Ontem, 19:10</span>
+</div>
+<div>
+<h3 class="font-body-md font-semibold text-on-surface">Auditoria Bacen Res. 85 / Prevenção a Fraude</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              99.4% de aderência contínua com carimbo atômico TSA ICP-Brasil e log transparente auditável via Rekor.
+            </p>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant/20 font-mono-sm text-mono-sm text-outline">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-tertiary" data-icon="task_alt">task_alt</span>
+              Conformidade Contínua
+            </span>
+<span class="text-primary hover:underline cursor-pointer">Dossiê Técnico</span>
+</div>
+</article>
+<!-- Feed Item 3: INPI AI Software -->
+<article class="p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-badge text-label-badge uppercase text-primary bg-primary/10 border border-primary/30 px-1.5 py-0.5 rounded">
+              LEMMA • REGISTRO INPI
+            </span>
+<span class="font-mono-sm text-mono-sm text-outline">22 Out, 09:14</span>
+</div>
+<div>
+<h3 class="font-body-md font-semibold text-on-surface">Certificação de Direitos Autorais e Código IA</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              INPI e-Software: 842 builds e checkpoints proprietários validados deterministicamente com hash SHA-256 e custódia HSM.
+            </p>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant/20 font-mono-sm text-mono-sm text-outline">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="memory">memory</span>
+              842 Builds Blindados
+            </span>
+<span class="text-primary hover:underline cursor-pointer">Certificado</span>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Shared Component Anchor - 'Evidências' Active) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs border-t border-outline-variant/30 bg-surface-container-lowest/90 backdrop-blur-md">
+<!-- Tab 1: Evidências (ACTIVE) -->
+<button class="flex flex-col items-center justify-center text-primary bg-primary/10 rounded-lg px-space-sm py-space-xs active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-xl" data-icon="fingerprint">fingerprint</span>
+<span class="font-mono-sm text-mono-sm mt-0.5 font-semibold">Evidências</span>
+</button>
+<!-- Tab 2: Perfis -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs active:scale-95 transition-transform duration-150 hover:text-primary">
+<span class="material-symbols-outlined text-xl" data-icon="domain">domain</span>
+<span class="font-mono-sm text-mono-sm mt-0.5">Perfis</span>
+</button>
+<!-- Tab 3: Verificar -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs active:scale-95 transition-transform duration-150 hover:text-primary">
+<span class="material-symbols-outlined text-xl" data-icon="verified">verified</span>
+<span class="font-mono-sm text-mono-sm mt-0.5">Verificar</span>
+</button>
+<!-- Tab 4: Custódia -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs active:scale-95 transition-transform duration-150 hover:text-primary">
+<span class="material-symbols-outlined text-xl" data-icon="account_tree">account_tree</span>
+<span class="font-mono-sm text-mono-sm mt-0.5">Custódia</span>
+</button>
+</nav>
+</body></html>

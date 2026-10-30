@@ -1,0 +1,308 @@
+[
+  {
+    "gate": "architecture",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "scripts/check_architecture.py"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 0.729,
+    "log": "architecture.log",
+    "log_sha256": "b25715a7da0eacb1c58941751fa71f3be4c3ed005c84e03de4f4c95c18b0b56d",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "backlog",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "scripts/check_feature_backlog.py"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 0.565,
+    "log": "backlog.log",
+    "log_sha256": "95e5f07ff4b61c0b1806ba62d770de97afda28178bb191804366c8f26e247adb",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "work-vectors",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "scripts/generate_work_vectors.py",
+      "--check"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 0.241,
+    "log": "work-vectors.log",
+    "log_sha256": "c7921f350e872cd0c1c4c0cb0a8b6b0febfb9874c83ff685bc1b06b905aadaf0",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "artifact-vectors",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "verification/scripts/verify-vectors.py"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 0.195,
+    "log": "artifact-vectors.log",
+    "log_sha256": "63b3159f6a6bdc95602dd83ac80c4abb9cd7616243aa29f7fb62c336d75af4a8",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "root-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--check"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 1.454,
+    "log": "root-format.log",
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "agi-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "agi-coder/Cargo.toml",
+      "--all",
+      "--check"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 0.757,
+    "log": "agi-format.log",
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "root-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 18.324,
+    "log": "root-clippy.log",
+    "log_sha256": "38729262b9d3b8482579523eae9951a40ed02bd3e50daaee42471e129479ebb9",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "broker-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "arkhe-kernel",
+      "--features",
+      "sqlite-broker",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 4.243,
+    "log": "broker-clippy.log",
+    "log_sha256": "9d2d0b080e39b084c7bb5444c45c41983f3260cd6533a34f154af6807b9358cc",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "root-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--workspace",
+      "--locked"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 233.238,
+    "log": "root-tests.log",
+    "log_sha256": "c31a96a2a1446e9fc85e0005c1f45e185d8d1eadcb9cbae11a8f0d9f258cff6c",
+    "rust_passed": 266,
+    "rust_ignored": 2
+  },
+  {
+    "gate": "broker-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "arkhe-kernel",
+      "--features",
+      "sqlite-broker",
+      "--test",
+      "formal_predicates",
+      "--test",
+      "broker_durable",
+      "--test",
+      "action_broker",
+      "--test",
+      "budget_pco"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 12.101,
+    "log": "broker-tests.log",
+    "log_sha256": "c2f0a0c8726b5c8921fb209eefa33ec3932c00589e327ce98f821dbf13d8c2ef",
+    "rust_passed": 22,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "agi-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "agi-coder/Cargo.toml",
+      "--workspace",
+      "--locked"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 9.224,
+    "log": "agi-tests.log",
+    "log_sha256": "caf289ec7a3a389de9efca0e98761fb76a686f322088b423b784ce5fa04ae637",
+    "rust_passed": 38,
+    "rust_ignored": 3
+  },
+  {
+    "gate": "agi-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "agi-coder/Cargo.toml",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 1.888,
+    "log": "agi-clippy.log",
+    "log_sha256": "c26fc98f6f64995340caf779475a92ed32f9659b7703e0dba2bc9d55342c0be1",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "wasm-build",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "scripts/build_verifier.py"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 23.974,
+    "log": "wasm-build.log",
+    "log_sha256": "064163a6834b31a822ed356937f5cba680a454ee299f79259601050f6e7e0b6f",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "adapter-build",
+    "command": [
+      "C:\\Users\\Lemes\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+      "integrations/verify-mcp/node_modules/typescript/bin/tsc",
+      "-p",
+      "integrations/verify-mcp/tsconfig.json"
+    ],
+    "cwd": ".",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 8.413,
+    "log": "adapter-build.log",
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "adapter-tests",
+    "command": [
+      "C:\\Users\\Lemes\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+      "--test"
+    ],
+    "cwd": "integrations/verify-mcp",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 1.938,
+    "log": "adapter-tests.log",
+    "log_sha256": "5fdb76428e9add4fe6af942ebe27143f8bb0207fac6ed4aea3f110524ca37e01",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "agi-sdk-tests",
+    "command": [
+      "C:\\Users\\Lemes\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+      "--test"
+    ],
+    "cwd": "agi-coder/packages/sdk-ts",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 0.378,
+    "log": "agi-sdk-tests.log",
+    "log_sha256": "65f3c1e3ec64ee04360ccae6afb4cf23651cbff8697af382772dd4718a1cb3eb",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  },
+  {
+    "gate": "sigstore-tests",
+    "command": [
+      "C:\\Users\\Lemes\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+      "--test"
+    ],
+    "cwd": "integrations/cosign",
+    "exit_code": 0,
+    "status": "PASS",
+    "duration_seconds": 1.352,
+    "log": "sigstore-tests.log",
+    "log_sha256": "72e7d69b624c24c67c1f8c1574a2a157b3d6a07f40f118909caac1d0f39d0167",
+    "rust_passed": 0,
+    "rust_ignored": 0
+  }
+]

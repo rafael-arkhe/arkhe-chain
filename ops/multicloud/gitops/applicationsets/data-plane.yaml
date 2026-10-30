@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: arkhe-data-plane
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: [missingkey=error]
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            arkhe.io/plane: data
+          matchExpressions:
+            - key: arkhe.io/cloud
+              operator: In
+              values: [aws, azure]
+  template:
+    metadata:
+      name: 'arkhe-{{ .nameNormalized }}'
+    spec:
+      project: arkhe
+      source:
+        repoURL: '{{ index .metadata.annotations "arkhe.io/repo-url" }}'
+        targetRevision: '{{ index .metadata.annotations "arkhe.io/revision" }}'
+        path: ops/multicloud/charts/arkhe-service
+        helm:
+          valueFiles:
+            - values.yaml
+            - 'values-{{ index .metadata.labels "arkhe.io/cloud" }}.yaml'
+          parameters:
+            - name: image.repository
+              value: '{{ index .metadata.annotations "arkhe.io/image-repository" }}'
+            - name: image.digest
+              value: '{{ index .metadata.annotations "arkhe.io/image-digest" }}'
+            - name: configSecret
+              value: '{{ index .metadata.annotations "arkhe.io/config-secret" }}'
+      destination:
+        server: '{{ .server }}'
+        namespace: arkhe-system
+      syncPolicy:
+        automated: { prune: true, selfHeal: true }
+        syncOptions: [CreateNamespace=true]

@@ -1,0 +1,62 @@
+{
+  "scope": "Local execution only; no remote CI, protocol freeze or production attestation",
+  "context": {},
+  "attempts": [
+    {
+      "gate": "signed-postgres-ollama",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "ollama-integration,postgres-integration",
+        "--test",
+        "triage",
+        "actual_ollama_signed_postgres_gate_survives_reconnect_and_rejects_unauthorized_module",
+        "--locked",
+        "--",
+        "--nocapture"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T11:07:40.485866+00:00",
+      "duration_seconds": 82.882,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_after_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_changed_during_execution": false,
+      "log": "01-signed-postgres-ollama.log",
+      "log_sha256": "fbb9a0a66ea8960d43afdc61425d04aa1962af94bb5c93d3e24c959cce957954",
+      "inputs": "01-signed-postgres-ollama.inputs.json"
+    },
+    {
+      "gate": "retained-signature-db-verification",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-bugbounty",
+        "--features",
+        "ollama-integration,postgres-integration",
+        "--test",
+        "triage",
+        "retained_capture_verifies_signatures_and_exact_failure_graph_after_reconnect",
+        "--locked",
+        "--",
+        "--nocapture"
+      ],
+      "cwd": ".",
+      "started_at_utc": "2026-10-18T11:09:08.363421+00:00",
+      "duration_seconds": 2.703,
+      "exit_code": 0,
+      "status": "PASS",
+      "source_before_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_after_sha256": "7dc74fde8e4d8a67449ba39aa81f79d544b4c42efd0493208245b82fc36e34f4",
+      "source_changed_during_execution": false,
+      "log": "02-retained-signature-db-verification.log",
+      "log_sha256": "cd609edf3e98f6bf3f080b1f07810073f6a04756727ef5fe4bc55bb04cc49b4f",
+      "inputs": "02-retained-signature-db-verification.inputs.json"
+    }
+  ]
+}

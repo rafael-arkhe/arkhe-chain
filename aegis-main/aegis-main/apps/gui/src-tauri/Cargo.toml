@@ -1,0 +1,31 @@
+[package]
+name = "aegis-gui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "A janela do AEGIS: a MESMA biblioteca que a casca da CLI, mostrada em vez de impressa."
+
+[lib]
+name = "aegis_gui_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "aegis-gui"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+aegis-produto = { workspace = true }
+aegis-vertical = { workspace = true }
+tauri = { version = "2" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

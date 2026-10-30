@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "kind": "descriptive-capability-registry",
+  "authority": false,
+  "global_architecture_state": "CANDIDATE_NOT_FROZEN",
+  "capabilities": [
+    {
+      "id": "artifact-digest",
+      "status": "IMPLEMENTED",
+      "source": "integrations/verify-mcp/src/tools/verify-artifact.ts",
+      "claim": "BLAKE3 digest calculation only"
+    },
+    {
+      "id": "c2pa-claim",
+      "status": "CANONICALIZATION_ONLY",
+      "source": "verification/crates/arkhe-verify-core/src/c2pa/claim.rs",
+      "claim": "No C2PA signature/certificate/provenance verification"
+    },
+    {
+      "id": "gguf-metadata",
+      "status": "CANONICALIZATION_ONLY",
+      "source": "verification/crates/arkhe-verify-core/src/gguf/canonical.rs",
+      "claim": "No full binary model verification"
+    },
+    {
+      "id": "mmr-inclusion-mcp",
+      "status": "OFFLINE_VECTORS_AND_MCP_TESTED",
+      "source": "integrations/verify-mcp/src/tools/verify-mmr.ts",
+      "profile": "verification/docs/MMR-PROFILE.md",
+      "claim": "Inclusion relative to supplied root; checkpoint authentication not performed",
+      "validation_reference": "docs/evidence/2026-10-19T124124Z-remaining-elements-batch1/results.json"
+    },
+    {
+      "id": "cognition-sdk",
+      "status": "INTERFACE_CONTRACT_TESTED",
+      "source": "cognition/arkhe-cognition-sdk/src/lib.rs",
+      "claim": "Host authenticates snapshots; types do not contain runtime syscalls"
+    },
+    {
+      "id": "intra-documents",
+      "status": "LOCAL_APPLICATION_PROFILE",
+      "source": "apps/arkhe-intra/lib/documents.mjs",
+      "claim": "Application evidence; not native WormGraph admission"
+    },
+    {
+      "id": "candidate-runtime",
+      "status": "INCOMPLETE",
+      "source": "config/runtime-unified-contract.json",
+      "evidence": "docs/evidence/2026-10-19T121632Z-unified-trial-summary/results.json",
+      "claim": "No sealed runtime; no transfer to gVisor/WASM"
+    },
+    {
+      "id": "rsi-general",
+      "status": "NOT_DEMONSTRATED",
+      "source": "cognition/arkhe-learning/src/lib.rs",
+      "claim": "Proposal interface and bounded evaluation are not proof of general self-improvement"
+    },
+    {
+      "id": "historical-calibration",
+      "status": "SYNTHETIC_CONTRACT_TESTED",
+      "source": "cognition/arkhe-metacognition/src/self_model.rs",
+      "specification": "docs/METACOGNITION-CALIBRATION.md",
+      "claim": "Descriptive Brier/ECE for host-authenticated resolved cohorts; no prospective confidence, host ingestion or demonstrated RSI",
+      "validation": "cognition/arkhe-metacognition/tests/calibration.rs"
+    }
+  ]
+}

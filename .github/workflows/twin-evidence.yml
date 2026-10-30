@@ -1,0 +1,60 @@
+name: twin-career-evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      module:
+        description: Workspace crate to test and record
+        required: true
+        type: choice
+        options:
+          - arkhe-kernel
+          - arkhe-wormgraph
+          - arkhe-verify-core
+          - arkhe-verify-wasm
+          - arkhe-twin
+
+permissions:
+  contents: read
+
+jobs:
+  signed-evidence:
+    # Signing is restricted to manually dispatched runs of the default branch.
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: Build recorder before making signing material available
+        run: cargo build --locked -p arkhe-twin
+      - name: Snapshot tracked source
+        run: |
+          mkdir -p twin-evidence
+          git archive --format=tar HEAD > twin-evidence/source.tar
+      - name: Record test execution
+        env:
+          TWIN_SIGNING_SEED: ${{ secrets.ARKHE_TWIN_CI_SEED }}
+          TWIN_MODULE: ${{ inputs.module }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          seed_file=$(mktemp)
+          trap 'rm -f -- "$seed_file"' EXIT
+          test -n "$TWIN_SIGNING_SEED" || { echo 'Configure ARKHE_TWIN_CI_SEED first'; exit 1; }
+          printf '%s' "$TWIN_SIGNING_SEED" > "$seed_file"
+          unset TWIN_SIGNING_SEED
+          target/debug/arkhe-twin record \
+            --module "$TWIN_MODULE" \
+            --key "$seed_file" \
+            --input twin-evidence/source.tar \
+            --output twin-evidence/source.tar \
+            --out twin-evidence/record.json \
+            -- cargo test --locked -p "$TWIN_MODULE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: twin-evidence-${{ inputs.module }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: twin-evidence/
+          if-no-files-found: error
+          retention-days: 30

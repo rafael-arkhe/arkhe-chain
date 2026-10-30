@@ -1,0 +1,76 @@
+# Workflow de referência.
+#
+# Assume que este diretório (`nixpkgs-arkhe/`) está na raiz do monorepo Arkhe,
+# que é o layout usado neste workspace. Para publicar como repositório
+# standalone, ajuste o checkout e fixe `src` em `default.nix` (ver README).
+name: nix
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    name: eval
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Avaliar sem construir
+        working-directory: nixpkgs-arkhe
+        run: nix flake check --no-build -L
+
+      - name: Listar saídas
+        working-directory: nixpkgs-arkhe
+        run: nix flake show --all-systems
+
+  build:
+    name: build e reprodutibilidade
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Permissões dos scripts
+        working-directory: nixpkgs-arkhe
+        run: chmod +x scripts/*.sh
+
+      - name: Build dos pacotes leves
+        working-directory: nixpkgs-arkhe
+        run: nix build .#arkhe-verify .#arkhe-sql-migrate --print-build-logs
+
+      - name: Reprodutibilidade de arkhe-verify
+        working-directory: nixpkgs-arkhe
+        run: ./scripts/check-reproducibility.sh arkhe-verify
+
+  ca:
+    name: conteúdo endereçado
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes ca-derivations
+
+      - name: Instalar jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Build CA
+        working-directory: nixpkgs-arkhe
+        run: ./scripts/verify-content-addressing.sh arkhe-verify

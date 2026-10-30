@@ -1,0 +1,12 @@
+name: wasm-build
+on: [push, pull_request]
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: cargo build -p arkhe-verify-wasm --target wasm32-unknown-unknown --release
+      - run: echo "Cross-runtime parity adapter must execute against tests/golden_vectors.json"

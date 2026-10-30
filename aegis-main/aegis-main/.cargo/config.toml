@@ -1,0 +1,42 @@
+# 🔴 O que esta máquina precisa, e o que a CI **já** fazia.
+#
+# A CI punha `CARGO_BUILD_JOBS: "2"` numa variável de ambiente desde o
+# primeiro arranque (`.github/workflows/nucleo.yml:21`). Aqui isso vivia só no
+# que eu me lembrava de exportar a cada sessão, e a consequência foi o que
+# aconteceu a 29/09/2026: com o `reqwest` + `rustls` da face agêntica a
+# entrar, o `rustc` morreu com
+#
+#     rustc-LLVM ERROR: out of memory
+#     failed to spawn work thread: The paging file is too small
+#
+# — e a mensagem **não parece falta de memória**. Parecia uma build avariada, e
+# o sintoma aponta para o `rustc` e não para a máquina. Perdemos tempo a
+# procurar um defeito no código antes de olhar para a RAM.
+#
+# Isto vai para o repo **de propósito**, ao contrário do `CARGO_TARGET_DIR`:
+# o alvo da build é um caminho absoluto que **parte a CI** (que corre noutro
+# sítio) e por isso continua a ser ambiente. O número de threads não tem
+# caminho nenhum, e é o que a CI já fixava — versioná-lo é tornar o que a CI
+# fazia uma coisa do produto em vez de um segredo do runner.
+#
+# 🔴 Se um dia esta máquina passar a ter RAM para mais, o número sobe **aqui**
+# e não na CI — e a CI deixa de depender de uma variável que ninguém lê.
+
+[build]
+# 🔴 Dois, e não "o que der". A máquina tem 16 GB e o `rustl` sozinho leva
+# alguns; a 4+ jobs com o `rustls` a compilar em paralelo, o pagefile estoura.
+# Uma build mais lenta que acaba é melhor do que uma build rápida que não
+# acaba — e a casa já tem o precedente: o `CARGO_TARGET_DIR` no `E:` pelo
+# mesmo motivo, com o `C:` a encher.
+jobs = 2
+
+# 🔴 E o alvo **não** se fixa aqui, por um motivo concreto: um caminho
+# absoluto parte a CI, que corre noutro sítio. Fica no ambiente, que a CI e a
+# bancada exportam. 🔴 Mas um config que resolve a RAM e deixa o `target`
+# cair no `C:` resolve metade do problema — e a casa já pagou por isso a
+# 29/09 (1,7 GB num build de prova, e o `C:` com 849 MB). A verificação de que
+# a variável está posta fica em `aegis/CLAUDE.md`; o CI **exige** que não
+# esteja, porque lá não há outro disco.
+#
+# target-dir = "E:/aegis-target"   # ← descomentar SÓ nesta máquina
+

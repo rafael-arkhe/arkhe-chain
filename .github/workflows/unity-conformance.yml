@@ -1,0 +1,35 @@
+name: Unity desktop native conformance
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  desktop-nunit:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build native desktop conformance adapter
+        run: cargo build --locked --manifest-path apps/arkhe-shmup-unity/Tests/Conformance/native/Cargo.toml --target-dir target/unity-conformance
+      - name: Restore locked NUnit dependencies
+        run: dotnet restore apps/arkhe-shmup-unity/Tests/Conformance/Conformance.csproj --locked-mode
+      - name: Run all vectors and large payload gate
+        shell: pwsh
+        run: |
+          $library = if ($IsWindows) { 'arkhe_unity_conformance.dll' } else { 'libarkhe_unity_conformance.so' }
+          $env:ARKHE_CONFORMANCE_LIBRARY = Join-Path $PWD "target/unity-conformance/debug/$library"
+          dotnet test apps/arkhe-shmup-unity/Tests/Conformance/Conformance.csproj --configuration Release --no-restore --logger "trx;LogFileName=desktop-conformance.trx" --results-directory TestResults/desktop-conformance
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-conformance-${{ matrix.os }}
+          path: TestResults/desktop-conformance/
+          if-no-files-found: error

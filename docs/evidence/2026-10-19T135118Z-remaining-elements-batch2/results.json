@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "status": "PASS",
+  "scope": "A05 partial: historical calibration API and removal of fixed confidence",
+  "checks": [
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "-p",
+        "arkhe-metacognition",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "check-1.log"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "arkhe-metacognition",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "log": "check-2.log"
+    },
+    {
+      "command": [
+        "python",
+        "scripts/cognition_conformance.py"
+      ],
+      "exit_code": 0,
+      "log": "check-3.log"
+    },
+    {
+      "command": [
+        "python",
+        "scripts/check_architecture.py"
+      ],
+      "exit_code": 0,
+      "log": "check-4.log"
+    }
+  ],
+  "new_calibration_tests": 10,
+  "sdk_tests": 13,
+  "runtime_integration_tests": 1,
+  "references": [
+    {
+      "path": "C:\\Users\\Lemes\\Downloads\\Arkhe_Computational_Fiduciary_Layer.pdf",
+      "sha256": "bad3747fe117d1abc0a1d963e61acf691e249ad275c36c1cb1bb1c340f77d687",
+      "pages_or_slides": 15,
+      "role": "reference_only",
+      "inspection": "raster pages/slides inspected through rendered contact sheets; no document edits"
+    },
+    {
+      "path": "C:\\Users\\Lemes\\Downloads\\Arkhe_Computational_Fiduciary_Layer.pptx",
+      "sha256": "2b8ce75909cb33653bf247518b4feab3c7e02eebd970545c382ae0069d5fa231",
+      "pages_or_slides": 15,
+      "role": "reference_only",
+      "inspection": "raster pages/slides inspected through rendered contact sheets; no document edits"
+    },
+    {
+      "path": "C:\\Users\\Lemes\\Downloads\\Arkhe_Institutional_Pitch_Deck.pptx",
+      "sha256": "92f84164cf6530049aeae57edf56856f17851f35f4b238cc78464ed7129ffccc",
+      "pages_or_slides": 15,
+      "role": "reference_only",
+      "inspection": "raster pages/slides inspected through rendered contact sheets; no document edits"
+    }
+  ],
+  "runtime_verified": false,
+  "sealed": false,
+  "rsi_demonstrated": false,
+  "synthetic_history_only": true,
+  "host_ingestion_integrated": false
+}

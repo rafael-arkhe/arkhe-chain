@@ -1,0 +1,66 @@
+{
+  "scope": "second-cycle local controls; no native CIN/CMS or hardware qualification",
+  "userDecisions": {
+    "governmentProfiles": "prepare both, keep real validation pending",
+    "tee": "platform unselected, promotion blocked"
+  },
+  "governmentCredentialValidation": "NOT_PERFORMED",
+  "nativeRevocationOcspCrlCin": "NOT_PERFORMED",
+  "syntheticLifecycle": {
+    "status": "PASS",
+    "checks": [
+      "expiry",
+      "not-before",
+      "authenticated Good/Revoked/Unknown status",
+      "status freshness",
+      "receipt freshness",
+      "credential/issuer/policy binding",
+      "audience/challenge binding",
+      "reject unsupported native qualification"
+    ],
+    "rustTests": 4,
+    "wasmNodeAndBrowser": "PASS"
+  },
+  "tee": "BLOCKED_PLATFORM_UNSELECTED",
+  "publicRekor": {
+    "status": "PREPARED_NOT_PUBLISHED",
+    "networkRequests": 0,
+    "proposal": "rekor-proposal.json"
+  },
+  "workerDifferential": {
+    "cases": 4096,
+    "mismatches": 0,
+    "report": "worker-differential.json",
+    "sourceHashesVerified": true
+  },
+  "otherChecks": {
+    "provenanceAndWorkloadTests": 8,
+    "govWasmTests": 7,
+    "mcpTests": 12,
+    "releasePolicyTests": 2,
+    "architecture": "PASS",
+    "workflowYaml": "PASS"
+  },
+  "pending": [
+    "official/native CMS and CIN verifiers, trust roots and authorized test vectors",
+    "TEE platform selection and vendor-backed qualification",
+    "public publication if explicitly selected",
+    "remote CI and branch protection enforcement",
+    "coverage-guided fuzzing"
+  ],
+  "sha256": {
+    "config/gov-security.json": "12e819a13a8beb4a20aaabccc56abda3b9e54af63d6a990e498bad36d13d62f3",
+    "scripts/check_gov_release.py": "1f1789d23341e8c941e572f101039f4d844f3cd91ae597a4dcce4d9df629a27c",
+    "scripts/tests/test_gov_release.py": "8e11d0f78f67494c8c0feec444dd129cf8ec25d99b906eb8defee19a4815a8bd",
+    "verification/crates/arkhe-verify-core/src/gov_lifecycle.rs": "25ba2ffbc488274566af711b78576ecf97a9189347945643f9c18c39618c8f4d",
+    "verification/crates/arkhe-verify-core/tests/gov_lifecycle.rs": "cf61b31f7dea6ecbe39e849ae96fb04241d71eb13d7c210c0fd6fc27d8a732d1",
+    "verification/crates/arkhe-verify-core/examples/gov_lifecycle_fixture.rs": "37df33dd1936fe107875a4bca80b899b7d533450e5842abd4d831c679720b6a0",
+    "verification/crates/arkhe-verify-wasm/src/lib.rs": "a6882f48a38d1507ce3df34e50da8f0b43cfff4ed2d4a80632e966002ef90d70",
+    "integration/arkhe-gov/lifecycle.test.mjs": "b93380f641dc640927df9c44e0f1c6dcc79d19c1c5a86785dcc6af9c0ba25087",
+    "integration/arkhe-gov/prepare-rekor.mjs": "6c66d677144d1cbb5ebdd5be1a97026d6c89822564978bcf009b72e4a80239fc",
+    "integration/arkhe-gov/rekor.test.mjs": "b289bce22d0c17852e03d10b29dda81f6bbfb82962892aab8c3ac2843bd60211",
+    "integration/arkhe-gov/BRIDGE-CONTRACTS.md": "a24b53ea87c239b406a4dbbe840bf173941da4d7edfae7f0c3e4d7e37ccfef96",
+    "integration/arkhe-bugbounty/tests/workload_real_receipts.rs": "0eabe2d6dba4af9fe9755888ae17299b049657a1e8cf47d8cb65829968b935f7",
+    ".github/workflows/security.yml": "26ffc78ddf0964db01111637b5f6559c88343f904ef550bc3a593b65c3f59723"
+  }
+}

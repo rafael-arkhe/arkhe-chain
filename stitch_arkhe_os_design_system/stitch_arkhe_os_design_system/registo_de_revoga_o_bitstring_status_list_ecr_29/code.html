@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+
+<html lang="pt"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Registo de Revogação Bitstring Status List v1.0 (Ecrã 29) | Arkhe Protocol Engine</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface": "#fcf8fa",
+            "status-fail-bg": "#FFF1F2",
+            "surface-variant": "#e4e2e4",
+            "border-subtle": "#E5E7EB",
+            "background": "#fcf8fa",
+            "surface-container-highest": "#e4e2e4",
+            "status-warning-text": "#B45309",
+            "on-primary-container": "#7c839b",
+            "status-pass-bg": "#ECFDF5",
+            "inverse-primary": "#bec6e0",
+            "inverse-on-surface": "#f3f0f2",
+            "on-surface-variant": "#45464d",
+            "inverse-surface": "#303032",
+            "outline": "#76777d",
+            "surface-container-low": "#f6f3f5",
+            "tertiary": "#000000",
+            "tertiary-fixed": "#fcdeb5",
+            "status-pending-text": "#334155",
+            "on-tertiary-container": "#98805d",
+            "on-tertiary-fixed": "#271901",
+            "primary-fixed": "#dae2fd",
+            "on-secondary-container": "#fefcff",
+            "on-tertiary": "#ffffff",
+            "surface-dim": "#dcd9db",
+            "status-pending-border": "#CBD5E1",
+            "border-muted": "#E2E8F0",
+            "text-secondary": "#4B5563",
+            "secondary-fixed-dim": "#b4c5ff",
+            "error-container": "#ffdad6",
+            "surface-container": "#f0edef",
+            "on-error-container": "#93000a",
+            "tertiary-container": "#271901",
+            "on-primary": "#ffffff",
+            "status-pass-border": "#A7F3D0",
+            "on-secondary-fixed": "#00174b",
+            "primary-container": "#131b2e",
+            "tertiary-fixed-dim": "#dec29a",
+            "secondary-fixed": "#dbe1ff",
+            "on-primary-fixed": "#131b2e",
+            "on-background": "#1b1b1d",
+            "status-pass-text": "#047857",
+            "secondary": "#0051d5",
+            "surface-container-high": "#eae7e9",
+            "on-surface": "#1b1b1d",
+            "text-primary": "#111827",
+            "canvas-base": "#FFFFFF",
+            "surface-bright": "#fcf8fa",
+            "primary-fixed-dim": "#bec6e0",
+            "outline-variant": "#c6c6cd",
+            "error": "#ba1a1a",
+            "text-tertiary": "#6B7280",
+            "canvas-subtle": "#F9FAFB",
+            "on-primary-fixed-variant": "#3f465c",
+            "status-pending-bg": "#F1F5F9",
+            "surface-tint": "#565e74",
+            "primary": "#000000",
+            "surface-container-lowest": "#ffffff",
+            "status-fail-border": "#FECDD3",
+            "on-secondary": "#ffffff",
+            "status-fail-text": "#BE123C",
+            "on-tertiary-fixed-variant": "#574425",
+            "status-warning-bg": "#FFFBEB",
+            "on-secondary-fixed-variant": "#003ea8",
+            "status-warning-border": "#FDE68A",
+            "secondary-container": "#316bf3",
+            "on-error": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "0.75rem",
+            "space-2xl": "2rem",
+            "space-xs": "0.25rem",
+            "space-xl": "1.5rem",
+            "margin-compact": "1rem",
+            "space-sm": "0.5rem",
+            "gutter-dense": "0.5rem",
+            "gutter": "1rem",
+            "space-lg": "1rem",
+            "margin": "1.5rem"
+          },
+          "fontFamily": {
+            "label-md": ["JetBrains Mono"],
+            "code-inline": ["JetBrains Mono"],
+            "headline-xl": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-sm": ["JetBrains Mono"],
+            "body-md": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-sm": ["Inter"]
+          },
+          "fontSize": {
+            "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "code-inline": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-text-primary antialiased min-h-screen flex flex-col font-body-md select-text">
+<!-- TOP APP BAR (Shared Component) -->
+<header class="w-full px-6 h-14 flex items-center justify-between border-b border-border-subtle bg-canvas-base max-w-full fixed top-0 left-0 right-0 z-50">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 bg-primary rounded-none"></span>
+<span class="text-headline-sm font-headline-sm font-semibold tracking-tight text-primary">Arkhe Protocol Engine</span>
+</div>
+<div class="hidden lg:flex items-center pl-4 border-l border-border-subtle">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined text-text-tertiary absolute left-2.5 text-[18px]">search</span>
+<input class="bg-canvas-subtle border border-border-subtle pl-8 pr-3 py-1 text-code-inline font-code-inline text-text-primary w-80 focus:outline-none focus:border-primary placeholder:text-text-tertiary rounded" placeholder="Filtrar por Merkle Leaf, Hash BLAKE3 ou DID..." type="text"/>
+</div>
+</div>
+</div>
+<!-- Active Navigation Logic: "Revocation Registry" Active -->
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150 text-body-sm font-body-sm" href="#">Audit Trail</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150 text-body-sm font-body-sm" href="#">Inclusion Proofs</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150 text-body-sm font-body-sm" href="#">WormGraph</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150 text-body-sm font-body-sm" href="#">Hardware Enclaves</a>
+<a class="text-text-primary font-semibold border-b-2 border-primary h-full flex items-center pt-0.5 text-body-sm font-body-sm" href="#">Revocation Registry</a>
+</nav>
+<div class="flex items-center gap-3">
+<button class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 border border-border-muted text-text-primary bg-canvas-base hover:bg-canvas-subtle font-label-sm text-label-sm rounded transition-colors duration-150">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+<span>Exportar JCS</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-on-primary font-label-sm text-label-sm rounded hover:bg-text-secondary transition-colors duration-150">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span>Verificar Offline WASM</span>
+</button>
+<div class="flex items-center gap-1 pl-2 border-l border-border-subtle">
+<button class="p-1.5 text-text-secondary hover:text-text-primary hover:bg-canvas-subtle rounded transition-colors duration-150" title="content_copy">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="p-1.5 text-text-secondary hover:text-text-primary hover:bg-canvas-subtle rounded transition-colors duration-150" title="download">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+<div class="w-7 h-7 bg-surface-container flex items-center justify-center border border-border-subtle rounded text-text-primary font-label-sm text-label-sm" title="Operador Criptográfico Credenciado">
+        OP
+      </div>
+</div>
+</header>
+<!-- SIDE AUDIT NAV (Shared Component) -->
+<aside class="fixed top-14 left-0 bottom-0 w-64 flex flex-col justify-between p-3 border-r border-border-subtle bg-canvas-subtle z-40">
+<div class="flex flex-col gap-4">
+<!-- Nav Header / Node State -->
+<div class="px-2 py-2 border-b border-border-subtle pb-3">
+<div class="flex items-center justify-between">
+<span class="text-headline-sm font-headline-sm font-bold text-text-primary">ARKHE KERNEL v4.2</span>
+<span class="w-2 h-2 rounded-full bg-status-pass-text" title="Sync ativo"></span>
+</div>
+<p class="text-code-inline font-code-inline text-text-tertiary mt-0.5">MMR Checkpoint #849,204</p>
+<div class="mt-2.5 flex items-center justify-between text-label-sm font-label-sm bg-canvas-base border border-border-subtle px-2 py-1 rounded">
+<span class="text-text-secondary">W3C Recommendation</span>
+<span class="text-status-pass-text font-semibold">VALIDATED</span>
+</div>
+</div>
+<!-- Main Navigation Tabs: 'Status List v1.0' matches Active intent -->
+<nav class="flex flex-col gap-0.5">
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm font-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span>Proof Explorer</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm font-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+<span>Enclave Attestation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm font-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-[18px]">hub</span>
+<span>Rekor Anchor</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-primary bg-canvas-base border-l-2 border-primary font-medium text-body-sm font-body-sm rounded shadow-[0_1px_2px_rgba(0,0,0,0.02)]" href="#">
+<span class="material-symbols-outlined text-[18px]">fact_check</span>
+<span>Status List v1.0</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm font-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-[18px]">key</span>
+<span>Ed25519 Keys</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-surface-container-high hover:text-text-primary text-body-sm font-body-sm transition-colors duration-150 rounded" href="#">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span>Epoch Root Log</span>
+</a>
+</nav>
+</div>
+<!-- Nav Footer -->
+<div class="border-t border-border-subtle pt-3 flex flex-col gap-2">
+<button class="w-full py-1.5 px-3 bg-canvas-base border border-border-subtle hover:bg-surface-container-high text-text-primary text-label-sm font-label-sm rounded transition-colors duration-150 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+<span>Anchor State</span>
+</button>
+<div class="flex flex-col gap-0.5">
+<a class="flex items-center gap-3 px-3 py-1.5 text-text-secondary hover:text-text-primary text-body-sm font-body-sm transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+<span>System Diagnostics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-1.5 text-text-secondary hover:text-text-primary text-body-sm font-body-sm transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span>API Documentation</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- MAIN VIEWPORT CANVAS -->
+<main class="ml-64 mt-14 p-6 bg-surface min-h-[calc(100vh-3.5rem)] flex flex-col gap-6">
+<!-- Screen Institutional Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border-subtle">
+<div>
+<div class="flex items-center gap-2 text-text-tertiary text-label-sm font-label-sm">
+<span>FASE F3</span>
+<span>/</span>
+<span>REPOSITÓRIO DE ATTESTAÇÃO CANÓNICA</span>
+<span>/</span>
+<span class="text-text-primary">ECRÃ 29</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-text-primary mt-1">Registo de Revogação Bitstring Status List v1.0 (Ecrã 29)</h1>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5">
+          Especificação formal W3C Recommendation • Sincronizado com WormGraph Epoch #849,204 • Mecanismo Zero-Knowledge Offline Proof
+        </p>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-canvas-base border border-border-subtle rounded text-label-sm font-label-sm">
+<span class="text-text-tertiary">ESTADO CANÓNICO:</span>
+<span class="inline-flex items-center gap-1.5 text-status-pass-text font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pass-text"></span>
+            SYNC COM CHECKPOINT
+          </span>
+</div>
+<button class="px-3 py-1.5 bg-canvas-base border border-border-subtle hover:bg-canvas-subtle text-text-primary text-label-sm font-label-sm rounded transition-colors duration-150 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">refresh</span>
+<span>Recarregar Estado do Nó</span>
+</button>
+</div>
+</div>
+<!-- METRICS CARDS (Section 3: High density institutional cards) -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Metric 1: Total Índices Alocados -->
+<div class="bg-canvas-base border border-border-subtle p-4 rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-text-secondary">
+<span class="text-label-sm font-label-sm">TOTAL DE ÍNDICES ALOCADOS</span>
+<span class="material-symbols-outlined text-[18px] text-text-tertiary">memory</span>
+</div>
+<div class="mt-2">
+<div class="text-headline-lg font-headline-lg text-text-primary tracking-tight">1,048,576 bits</div>
+<div class="text-code-inline font-code-inline text-text-secondary mt-0.5">Lista Compactada gzip de 128 KB</div>
+</div>
+<div class="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-tertiary">Compressão: GZIP Level 9</span>
+<span class="text-label-sm font-label-sm text-text-primary">131,072 octetos</span>
+</div>
+</div>
+<!-- Metric 2: Credenciais Válidas (Bit 0) -->
+<div class="bg-canvas-base border border-border-subtle p-4 rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-text-secondary">
+<span class="text-label-sm font-label-sm">CREDENCIAIS VÁLIDAS (BIT 0)</span>
+<span class="material-symbols-outlined text-[18px] text-status-pass-text">check_circle</span>
+</div>
+<div class="mt-2">
+<div class="text-headline-lg font-headline-lg text-text-primary tracking-tight">1,047,932</div>
+<div class="text-code-inline font-code-inline text-status-pass-text font-medium mt-0.5">99.94% em estado nominal</div>
+</div>
+<div class="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-tertiary">Entropia do Vetor</span>
+<span class="text-label-sm font-label-sm text-text-primary">H = 0.00642</span>
+</div>
+</div>
+<!-- Metric 3: Credenciais Revogadas (Bit 1) -->
+<div class="bg-canvas-base border border-border-subtle p-4 rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-text-secondary">
+<span class="text-label-sm font-label-sm">CREDENCIAIS REVOGADAS (BIT 1)</span>
+<span class="material-symbols-outlined text-[18px] text-status-fail-text">block</span>
+</div>
+<div class="mt-2">
+<div class="text-headline-lg font-headline-lg text-status-fail-text tracking-tight">644</div>
+<div class="text-code-inline font-code-inline text-text-secondary mt-0.5">revogações ativas permanentes</div>
+</div>
+<div class="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-tertiary">Última Revogação</span>
+<span class="text-label-sm font-label-sm text-text-primary">há 14 min (Epoch #849,204)</span>
+</div>
+</div>
+<!-- Metric 4: Prova de Integridade Causal (BLAKE3) -->
+<div class="bg-canvas-base border border-border-subtle p-4 rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-text-secondary">
+<span class="text-label-sm font-label-sm">PROVA DE INTEGRIDADE CAUSAL</span>
+<span class="material-symbols-outlined text-[18px] text-text-tertiary">fingerprint</span>
+</div>
+<div class="mt-2">
+<div class="text-body-sm font-body-sm text-text-secondary">Hash Canónico BLAKE3:</div>
+<div class="font-code-inline text-code-inline text-text-primary font-medium tracking-tight bg-canvas-subtle p-1.5 border border-border-subtle rounded mt-1 truncate" title="b3:08f921e3c88019ab7d391c4d4400a98b1ecf4591a27e31b79872e4129bca0199">
+            b3:08f921e3c88019ab...bca0199
+          </div>
+</div>
+<div class="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-tertiary">MMR Leaf #849,204</span>
+<button class="text-label-sm font-label-sm text-primary underline hover:text-text-secondary">Ver Inclusão</button>
+</div>
+</div>
+</section>
+<!-- SECTION 4: BIT INSPECTOR (Consulta e Inspeção por Índice ou DID) -->
+<section class="bg-canvas-base border border-border-subtle rounded p-5">
+<div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-border-subtle gap-3">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Ferramenta de Consulta e Inspeção por Índice ou DID (Bit Inspector)</h2>
+<p class="text-body-sm font-body-sm text-text-secondary">Avaliação determinística da Bitstring Status List v1.0 com desembalamento do byte correspondente e offset de bit.</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 bg-status-pending-bg text-status-pending-text border border-status-pending-border rounded text-label-sm font-label-sm">
+            StatusPurpose: revocation
+          </span>
+<span class="px-2 py-0.5 bg-canvas-subtle border border-border-subtle text-text-secondary rounded text-label-sm font-label-sm">
+            encodedList: base64url(gzip)
+          </span>
+</div>
+</div>
+<!-- Search Input Toolbar -->
+<div class="mt-4 flex flex-col md:flex-row gap-3">
+<div class="relative flex-1">
+<span class="material-symbols-outlined text-text-tertiary absolute left-3 top-2.5 text-[20px]">search</span>
+<input class="w-full bg-canvas-subtle border border-border-subtle pl-10 pr-32 py-2 text-body-md font-body-md text-text-primary rounded focus:outline-none focus:border-primary font-code-inline text-code-inline" placeholder="Insira o DID (did:arkhe:...) ou Índice da Status List (#1 a #1048576)" type="text" value="did:arkhe:ag-0044"/>
+<div class="absolute right-2 top-2 flex items-center gap-1">
+<span class="px-1.5 py-0.5 text-label-sm font-label-sm bg-surface-container border border-border-subtle rounded text-text-tertiary">Enter</span>
+<button class="px-2.5 py-1 bg-primary text-on-primary text-label-sm font-label-sm rounded hover:bg-text-secondary">
+              Auditar
+            </button>
+</div>
+</div>
+<button class="px-3 py-2 bg-canvas-subtle border border-border-subtle hover:bg-surface-container text-text-primary text-label-sm font-label-sm rounded flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">qr_code_scanner</span>
+<span>Carregar Credencial JSON-LD</span>
+</button>
+</div>
+<!-- Real-Time Inspection Result Panel -->
+<div class="mt-4 bg-canvas-subtle border border-border-subtle rounded p-4">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-border-subtle">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-status-fail-bg border border-status-fail-border text-status-fail-text flex items-center justify-center font-bold text-headline-sm rounded">
+              1
+            </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-headline-sm font-headline-sm text-text-primary">Índice Consultado: #4,912</span>
+<span class="px-2 py-0.5 bg-status-fail-bg border border-status-fail-border text-status-fail-text font-label-sm text-label-sm font-semibold rounded">
+                  REVOGADO
+                </span>
+<span class="text-label-sm font-label-sm text-text-tertiary">Byte Offset: 614 | Bit Offset: 0</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5">
+                Associado a: <code class="font-code-inline text-code-inline text-text-primary">Legacy CSV Batch Importer - did:arkhe:ag-0044</code>
+</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 bg-canvas-base border border-border-subtle hover:bg-surface-container text-text-primary text-label-sm font-label-sm rounded flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">data_object</span>
+<span>Extrair Sub-Vetor JCS</span>
+</button>
+<button class="px-3 py-1.5 bg-canvas-base border border-border-subtle hover:bg-surface-container text-text-primary text-label-sm font-label-sm rounded flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span>Copiar Asserção Canónica</span>
+</button>
+</div>
+</div>
+<div class="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-body-sm font-body-sm">
+<div>
+<span class="text-label-sm font-label-sm text-text-tertiary block">MOTIVO FORMAL DE REVOGAÇÃO</span>
+<span class="text-text-primary font-medium mt-1 block">
+              Depreciação de módulo inseguro não atestado em enclave TEE
+            </span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-text-tertiary block">AUTORIDADE REVOGADORA &amp; QUÓRUM</span>
+<span class="text-text-primary font-medium mt-1 block">
+              Arkhe Security Board (3/5 Multi-Sig)
+            </span>
+<span class="text-code-inline font-code-inline text-text-tertiary">did:arkhe:sec-board#sec-key-9</span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-text-tertiary block">CARIMBO TEMPORAL REGISTADO</span>
+<span class="text-text-primary font-medium mt-1 block">
+              2025-02-24 16:38:12.042 UTC
+            </span>
+<span class="text-label-sm font-label-sm text-text-tertiary">WormGraph Epoch #849,198</span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-text-tertiary block">HASH DE INCLUSÃO (WORMGRAPH)</span>
+<div class="mt-1 flex items-center justify-between bg-canvas-base border border-border-subtle px-2 py-1 rounded">
+<span class="font-code-inline text-code-inline text-text-primary truncate" title="0x4a8f9021cbe419827a419d883bca90124991acbc9910e82">
+                0x4a8f...0e82
+              </span>
+<button class="text-text-secondary hover:text-text-primary ml-1" title="Copiar Hash">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 5: BITSTRING CHUNK GRID (Visualizador Gráfico / Grelha Densa de Mapa de Bits) -->
+<section class="bg-canvas-base border border-border-subtle rounded p-5">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-subtle">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Visualizador Gráfico: Bitstring Chunk Grid (W3C RFC Matrix)</h2>
+<p class="text-body-sm font-body-sm text-text-secondary">Segmentação dos 1,048,576 bits em blocos alinhados de 1,024 bits. Densidade calculada por hamming weight.</p>
+</div>
+<div class="flex items-center gap-4 text-label-sm font-label-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 bg-status-pass-bg border border-status-pass-border"></span>
+<span class="text-text-secondary">0 Revogações (100% Válido)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 bg-status-warning-bg border border-status-warning-border"></span>
+<span class="text-text-secondary">1-4 Revogações</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 bg-status-fail-bg border border-status-fail-border"></span>
+<span class="text-text-secondary">≥ 5 Revogações</span>
+</div>
+</div>
+</div>
+<!-- Controls & Chunk Navigator -->
+<div class="mt-3 flex items-center justify-between text-body-sm font-body-sm text-text-secondary">
+<div class="flex items-center gap-2">
+<span>Amostragem:</span>
+<span class="font-code-inline text-code-inline text-text-primary font-medium bg-canvas-subtle px-2 py-0.5 border border-border-subtle rounded">Bloco 0x0000 a 0x03FF (Índices #000,001 - #065,536)</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-2 py-1 border border-border-subtle rounded bg-canvas-base hover:bg-canvas-subtle text-label-sm font-label-sm">Anterior 64K</button>
+<span class="text-label-sm font-label-sm text-text-primary">Janela 1 de 16</span>
+<button class="px-2 py-1 border border-border-subtle rounded bg-canvas-base hover:bg-canvas-subtle text-label-sm font-label-sm">Próximo 64K</button>
+</div>
+</div>
+<!-- Dense Matrix Rendering (64 Chunks) -->
+<div class="mt-3 grid grid-cols-8 sm:grid-cols-16 md:grid-cols-32 gap-1.5 p-3 bg-canvas-subtle border border-border-subtle rounded overflow-x-auto">
+<!-- 64 Chunks representation -->
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0000 (0 rev)">00</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0001 (0 rev)">01</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-warning-bg border border-status-warning-border text-status-warning-text cursor-pointer hover:border-primary font-bold" title="Chunk 0x0002 (1 rev)">02</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0003 (0 rev)">03</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-fail-bg border border-status-fail-border text-status-fail-text cursor-pointer ring-1 ring-status-fail-text font-bold" title="Chunk 0x0004 (7 rev: Depreciação TEE)">04</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0005 (0 rev)">05</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0006 (0 rev)">06</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0007 (0 rev)">07</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-warning-bg border border-status-warning-border text-status-warning-text cursor-pointer hover:border-primary" title="Chunk 0x0008 (2 rev)">08</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0009 (0 rev)">09</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x000A (0 rev)">0A</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x000B (0 rev)">0B</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x000C (0 rev)">0C</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x000D (0 rev)">0D</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x000E (0 rev)">0E</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x000F (0 rev)">0F</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0010 (0 rev)">10</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0011 (0 rev)">11</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0012 (0 rev)">12</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-warning-bg border border-status-warning-border text-status-warning-text cursor-pointer hover:border-primary" title="Chunk 0x0013 (1 rev)">13</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0014 (0 rev)">14</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0015 (0 rev)">15</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0016 (0 rev)">16</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0017 (0 rev)">17</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0018 (0 rev)">18</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x0019 (0 rev)">19</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x001A (0 rev)">1A</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x001B (0 rev)">1B</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-warning-bg border border-status-warning-border text-status-warning-text cursor-pointer hover:border-primary" title="Chunk 0x001C (3 rev)">1C</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x001D (0 rev)">1D</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x001E (0 rev)">1E</div>
+<div class="h-6 flex items-center justify-center text-[10px] font-code-inline bg-status-pass-bg border border-status-pass-border text-status-pass-text cursor-pointer hover:border-primary" title="Chunk 0x001F (0 rev)">1F</div>
+</div>
+<div class="mt-2 text-right">
+<span class="text-label-sm font-label-sm text-text-tertiary">Cada célula representa 1,024 posições binárias do status list canon</span>
+</div>
+</section>
+<!-- SECTION 6: DENSE TABLE (Últimas Revogações Registadas) -->
+<section class="bg-canvas-base border border-border-subtle rounded overflow-hidden">
+<div class="p-4 border-b border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Últimas Revogações Registadas no Kernel</h2>
+<p class="text-body-sm font-body-sm text-text-secondary">Auditoria forense de transições de bit 0 → 1 assinadas no quórum institucional.</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-2.5 py-1 text-label-sm font-label-sm border border-border-subtle rounded bg-canvas-base hover:bg-canvas-subtle text-text-primary">
+            Filtrar Motivo
+          </button>
+<button class="px-2.5 py-1 text-label-sm font-label-sm border border-border-subtle rounded bg-canvas-base hover:bg-canvas-subtle text-text-primary">
+            Exportar CSV Audit
+          </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-canvas-subtle border-b border-border-subtle text-text-secondary text-label-sm font-label-sm">
+<th class="py-2.5 px-4 font-medium">TIMESTAMP (UTC)</th>
+<th class="py-2.5 px-3 font-medium text-right">ÍNDICE (#)</th>
+<th class="py-2.5 px-4 font-medium">DID DO TITULAR / TIPO</th>
+<th class="py-2.5 px-4 font-medium">MOTIVO REGULATÓRIO</th>
+<th class="py-2.5 px-3 font-medium">QUÓRUM</th>
+<th class="py-2.5 px-4 font-medium">WORMGRAPH HASH</th>
+<th class="py-2.5 px-4 font-medium text-right">AÇÃO</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle text-body-sm font-body-sm">
+<!-- Row 1: Target row queried -->
+<tr class="hover:bg-status-fail-bg/30 transition-colors duration-150">
+<td class="py-2.5 px-4 font-code-inline text-code-inline text-text-primary whitespace-nowrap">
+                2025-02-24 16:38:12
+              </td>
+<td class="py-2.5 px-3 text-right font-code-inline text-code-inline text-text-primary font-bold">
+                #4,912
+              </td>
+<td class="py-2.5 px-4">
+<div class="font-code-inline text-code-inline text-text-primary font-medium">did:arkhe:ag-0044</div>
+<div class="text-text-tertiary text-label-sm font-label-sm">Agente de Integração CSV Batch</div>
+</td>
+<td class="py-2.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-fail-bg border border-status-fail-border text-status-fail-text font-medium">
+                  Depreciação de módulo TEE
+                </span>
+</td>
+<td class="py-2.5 px-3 font-code-inline text-code-inline text-text-secondary">
+                3/5 Ed25519
+              </td>
+<td class="py-2.5 px-4 font-code-inline text-code-inline text-text-tertiary">
+<span class="truncate block max-w-[120px]" title="0x4a8f9021cbe419827a419d883bca90124991acbc9910e82">0x4a8f...0e82</span>
+</td>
+<td class="py-2.5 px-4 text-right">
+<button class="px-2 py-1 text-label-sm font-label-sm text-text-primary border border-border-muted rounded bg-canvas-base hover:bg-canvas-subtle">
+                  Ver Prova JCS
+                </button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-canvas-subtle transition-colors duration-150">
+<td class="py-2.5 px-4 font-code-inline text-code-inline text-text-primary whitespace-nowrap">
+                2025-02-24 15:10:04
+              </td>
+<td class="py-2.5 px-3 text-right font-code-inline text-code-inline text-text-primary">
+                #4,911
+              </td>
+<td class="py-2.5 px-4">
+<div class="font-code-inline text-code-inline text-text-primary font-medium">did:arkhe:kya-node-918</div>
+<div class="text-text-tertiary text-label-sm font-label-sm">Passaporte Validador KYA Nível 3</div>
+</td>
+<td class="py-2.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-warning-bg border border-status-warning-border text-status-warning-text font-medium">
+                  Chave Comprometida (Key Rollover)
+                </span>
+</td>
+<td class="py-2.5 px-3 font-code-inline text-code-inline text-text-secondary">
+                4/5 Ed25519
+              </td>
+<td class="py-2.5 px-4 font-code-inline text-code-inline text-text-tertiary">
+<span class="truncate block max-w-[120px]" title="0x91c01bb7291a27e31b79872e4129bca0199afb21901">0x91c0...901</span>
+</td>
+<td class="py-2.5 px-4 text-right">
+<button class="px-2 py-1 text-label-sm font-label-sm text-text-primary border border-border-muted rounded bg-canvas-base hover:bg-canvas-subtle">
+                  Ver Prova JCS
+                </button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-canvas-subtle transition-colors duration-150">
+<td class="py-2.5 px-4 font-code-inline text-code-inline text-text-primary whitespace-nowrap">
+                2025-02-24 14:02:49
+              </td>
+<td class="py-2.5 px-3 text-right font-code-inline text-code-inline text-text-primary">
+                #2,804
+              </td>
+<td class="py-2.5 px-4">
+<div class="font-code-inline text-code-inline text-text-primary font-medium">did:arkhe:enclave-sp-01</div>
+<div class="text-text-tertiary text-label-sm font-label-sm">Enclave TEE Nitro Provider</div>
+</td>
+<td class="py-2.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-fail-bg border border-status-fail-border text-status-fail-text font-medium">
+                  Falha de Atestação Remota
+                </span>
+</td>
+<td class="py-2.5 px-3 font-code-inline text-code-inline text-text-secondary">
+                5/5 Consensus
+              </td>
+<td class="py-2.5 px-4 font-code-inline text-code-inline text-text-tertiary">
+<span class="truncate block max-w-[120px]" title="0x12a9bc4129bca019927e31b7987019ab7d391c4d440">0x12a9...d440</span>
+</td>
+<td class="py-2.5 px-4 text-right">
+<button class="px-2 py-1 text-label-sm font-label-sm text-text-primary border border-border-muted rounded bg-canvas-base hover:bg-canvas-subtle">
+                  Ver Prova JCS
+                </button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-canvas-subtle transition-colors duration-150">
+<td class="py-2.5 px-4 font-code-inline text-code-inline text-text-primary whitespace-nowrap">
+                2025-02-23 22:45:11
+              </td>
+<td class="py-2.5 px-3 text-right font-code-inline text-code-inline text-text-primary">
+                #1,192
+              </td>
+<td class="py-2.5 px-4">
+<div class="font-code-inline text-code-inline text-text-primary font-medium">did:arkhe:vc-auditor-10</div>
+<div class="text-text-tertiary text-label-sm font-label-sm">Certificado de Perito Forense</div>
+</td>
+<td class="py-2.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm bg-status-pending-bg border border-status-pending-border text-status-pending-text font-medium">
+                  Expiração Administrativa Periódica
+                </span>
+</td>
+<td class="py-2.5 px-3 font-code-inline text-code-inline text-text-secondary">
+                2/3 Registrar
+              </td>
+<td class="py-2.5 px-4 font-code-inline text-code-inline text-text-tertiary">
+<span class="truncate block max-w-[120px]" title="0xfe89a0199ab7d391c4d4400a98b1ecf4591a27e31b7">0xfe89...31b7</span>
+</td>
+<td class="py-2.5 px-4 text-right">
+<button class="px-2 py-1 text-label-sm font-label-sm text-text-primary border border-border-muted rounded bg-canvas-base hover:bg-canvas-subtle">
+                  Ver Prova JCS
+                </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination / Footer -->
+<div class="p-3 bg-canvas-subtle border-t border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between text-body-sm font-body-sm text-text-secondary gap-2">
+<div class="text-label-sm font-label-sm">
+          A exibir 4 de 644 registos revogados • Resolução de tempo nominal: 1 ms
+        </div>
+<div class="flex items-center gap-1">
+<button class="px-2 py-1 border border-border-subtle rounded bg-canvas-base text-label-sm font-label-sm text-text-tertiary cursor-not-allowed">Anterior</button>
+<span class="px-2 py-1 text-label-sm font-label-sm font-medium text-text-primary">1 de 161</span>
+<button class="px-2 py-1 border border-border-subtle rounded bg-canvas-base hover:bg-surface-container text-label-sm font-label-sm text-text-primary">Seguinte</button>
+</div>
+</div>
+</section>
+<!-- SECTION 7: ACTION FOOTER (Ações Periciais) -->
+<footer class="mt-auto pt-4 pb-2 border-t border-border-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-2 text-label-sm font-label-sm text-text-secondary">
+<span class="material-symbols-outlined text-[16px] text-text-tertiary">shield</span>
+<span>Padronização Técnica: W3C Bitstring Status List v1.0 • Formato Canónico RFC 8785 (JCS)</span>
+</div>
+<div class="flex flex-wrap items-center gap-2.5">
+<button class="px-3 py-1.5 bg-canvas-base border border-border-subtle hover:bg-canvas-subtle text-text-primary text-label-sm font-label-sm rounded transition-colors duration-150 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+<span>Exportar Bitstring Canónica (RFC 8785)</span>
+</button>
+<button class="px-3 py-1.5 bg-canvas-base border border-border-subtle hover:bg-canvas-subtle text-text-primary text-label-sm font-label-sm rounded transition-colors duration-150 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span>Verificar Assinatura Ed25519 da Lista</span>
+</button>
+<button class="px-3 py-1.5 bg-primary text-on-primary hover:bg-text-secondary text-label-sm font-label-sm rounded transition-colors duration-150 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">autorenew</span>
+<span>Recarregar Estado do Nó</span>
+</button>
+</div>
+</footer>
+</main>
+</body></html>

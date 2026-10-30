@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+members = [
+  "kernel/arkhe-core",
+  "kernel/arkhe-kernel",
+  "evidence/arkhe-wormgraph",
+  "evidence/arkhe-memory",
+  "governance/arkhe-governance",
+  "work/arkhe-work",
+  "work/arkhe-work-channels",
+  "cognition/arkhe-perception",
+  "cognition/arkhe-rag",
+  "cognition/arkhe-metacognition",
+  "cognition/arkhe-world-model",
+  "cognition/arkhe-learning",
+  "cognition/arkhe-agent",
+  "orchestration/arkhe-runtime",
+]
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+version = "0.1.0"
+
+[workspace.dependencies]
+anyhow = "1"
+async-trait = "0.1"
+blake3 = "1.5"
+chrono = { version = "0.4", features = ["serde"] }
+hex = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros","rt-multi-thread","sync","time"] }
+uuid = { version = "1", features = ["v4","serde"] }
+
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio-rustls", "postgres", "json", "migrate", "macros"] }
+axum = "0.8"

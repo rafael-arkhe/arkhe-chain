@@ -1,0 +1,18 @@
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+const input = new URL('../dist/plugin.mjs', import.meta.url);
+const output = new URL('../dist/large/plugin.mjs', import.meta.url);
+const target = 7 * 1024 * 1024;
+const original = await readFile(input);
+const header = Buffer.from('\n/* ARKHE UPLOAD-SIZE FIXTURE BEGIN\n');
+const footer = Buffer.from('\nARKHE UPLOAD-SIZE FIXTURE END */\n');
+const budget = target - original.length - header.length - footer.length;
+if (budget < 1 || original.includes(header)) throw new Error('Input is too large or already padded.');
+const seed = createHash('sha256').update(original).digest('base64');
+const padding = Buffer.from(seed.repeat(Math.ceil(budget / seed.length)).slice(0, budget));
+const padded = Buffer.concat([original, header, padding, footer]);
+if (padded.length !== target || padded.length > 10 * 1024 * 1024) throw new Error('Invalid final bundle size.');
+if (padding.includes(Buffer.from('*/'))) throw new Error('Unexpected comment terminator.');
+await mkdir(new URL('../dist/large/',import.meta.url),{recursive:true});
+await writeFile(output,padded);
+console.log(JSON.stringify({file:'dist/large/plugin.mjs',bytes:padded.length,sha256:createHash('sha256').update(padded).digest('hex'),purpose:'Optional upload-size fixture; adds download, parsing and memory overhead.'}));

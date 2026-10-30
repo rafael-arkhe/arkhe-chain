@@ -1,0 +1,22 @@
+{
+  "notice": "Open only after committing the analysis-only verdict.",
+  "artifact_type": "historical CLI normalized assessment, not raw provider response",
+  "assessment": {
+    "confidence_bps": 10000,
+    "reason": "The report describes a wallet contract with a pay function that checks require(msg.sender == owner). It states there are no meta-transactions, delegatecall, or alternate auth path. The attacker intermediary calling pay has msg.sender equal to attacker contract, not owner. The local trace reverts before transfer. The claim is that tx.origin authorizes this code; there is no tx.origin use. The evidence shows the function only checks msg.sender, not tx.origin, and the attack fails because msg.sender is not owner. Therefore the proposed severity High and state Triaged are supported by the facts. The affected_assets list is empty but that does not contradict the severity. The report is consistent with a vulnerability that is triaged as high severity. So supports_proposal should be true.",
+    "supports_proposal": true
+  },
+  "historical_result": {
+    "id": "origin-corrected",
+    "expected_support": false,
+    "family": "tx-origin",
+    "rationale": "Actual msg.sender check contradicts alleged origin-based bypass.",
+    "outcome": "FP",
+    "exit_code": 0,
+    "predicted_support": true,
+    "reason": "The report describes a wallet contract with a pay function that checks require(msg.sender == owner). It states there are no meta-transactions, delegatecall, or alternate auth path. The attacker intermediary calling pay has msg.sender equal to attacker contract, not owner. The local trace reverts before transfer. The claim is that tx.origin authorizes this code; there is no tx.origin use. The evidence shows the function only checks msg.sender, not tx.origin, and the attack fails because msg.sender is not owner. Therefore the proposed severity High and state Triaged are supported by the facts. The affected_assets list is empty but that does not contradict the severity. The report is consistent with a vulnerability that is triaged as high severity. So supports_proposal should be true.",
+    "confidence_bps": 10000,
+    "elapsed_seconds": 20.694
+  },
+  "source_stdout_sha256": "ee42cad21c02f1971fcc3354705228f1a51ca246dc6dcb94683f2e48a0bf119a"
+}

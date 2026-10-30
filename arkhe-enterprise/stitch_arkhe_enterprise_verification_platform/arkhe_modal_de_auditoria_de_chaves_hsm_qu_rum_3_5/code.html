@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Enterprise - Auditoria de Chaves HSM &amp; Chancelas Notariais</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface": "#0f131c",
+            "surface-container-lowest": "#0a0e16",
+            "tertiary-container": "#1bbd85",
+            "on-surface": "#dfe2ee",
+            "outline-variant": "#3d494c",
+            "on-primary": "#003640",
+            "inverse-surface": "#dfe2ee",
+            "surface-dim": "#0f131c",
+            "on-tertiary": "#003824",
+            "surface-container-highest": "#31353e",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "surface-container-low": "#181c24",
+            "primary-container": "#06b6d4",
+            "on-primary-container": "#00424f",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container-high": "#262a33",
+            "secondary": "#b4c5ff",
+            "secondary-fixed": "#dbe1ff",
+            "secondary-fixed-dim": "#b4c5ff",
+            "primary": "#4cd7f6",
+            "tertiary-fixed-dim": "#4edea3",
+            "primary-fixed-dim": "#4cd7f6",
+            "on-background": "#dfe2ee",
+            "on-primary-fixed-variant": "#004e5c",
+            "outline": "#869397",
+            "on-tertiary-fixed": "#002113",
+            "tertiary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#2c3039",
+            "surface-variant": "#31353e",
+            "on-secondary-fixed-variant": "#003ea8",
+            "on-secondary-container": "#cdd7ff",
+            "surface-container": "#1c2028",
+            "on-surface-variant": "#bcc9cd",
+            "surface-bright": "#353942",
+            "secondary-container": "#0053db",
+            "inverse-primary": "#00687a",
+            "error": "#ffb4ab",
+            "on-primary-fixed": "#001f26",
+            "on-secondary-fixed": "#00174b",
+            "tertiary": "#4edea3",
+            "primary-fixed": "#acedff",
+            "error-container": "#93000a",
+            "on-tertiary-container": "#00452e",
+            "surface-tint": "#4cd7f6",
+            "on-secondary": "#002a78",
+            "background": "#0f131c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter-mobile": "0.75rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "margin": "2rem",
+            "margin-mobile": "1rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "label-badge": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "mono-sm": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "mono-md": ["JetBrains Mono"],
+            "mono-lg": ["JetBrains Mono"],
+            "headline-sm": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-badge": ["10px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen relative overflow-x-hidden font-body-md text-body-md select-none">
+<!-- ======================================================== -->
+<!-- BACKGROUND DASHBOARD (Obsfucated / Backdrop Blur Canvas) -->
+<!-- ======================================================== -->
+<div class="filter blur-sm brightness-40 pointer-events-none select-none transition-all duration-300 min-h-screen bg-surface-container-lowest flex flex-col">
+<!-- TopAppBar from Shared Components JSON -->
+<header class="fixed top-0 left-0 w-full z-10 flex items-center justify-between px-space-md py-space-xs bg-surface-container-lowest/85 backdrop-blur-md border-b border-outline-variant/40">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary" data-icon="shield">shield</span>
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface tracking-tight">Arkhe Enterprise</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="text-label-badge font-label-badge uppercase px-space-xs py-0.5 rounded border border-outline-variant text-on-surface-variant">BACEN Tier 1</span>
+<span class="text-label-badge font-label-badge uppercase px-space-xs py-0.5 rounded border border-secondary text-secondary">ICP-Brasil</span>
+</div>
+</header>
+<!-- Synthetic Background Ledger Layout -->
+<main class="pt-20 px-space-xl pb-16 max-w-7xl mx-auto w-full grid grid-cols-12 gap-space-md opacity-35">
+<div class="col-span-12 flex justify-between items-center py-space-sm border-b border-outline-variant/30">
+<div>
+<h2 class="text-headline-md font-headline-md text-on-surface">Console de Ancoragem RBB &amp; Chancelas Notariais</h2>
+<p class="text-mono-sm font-mono-sm text-on-surface-variant">Merkle Root: 0x93f2c918a472c914e7b89d41c9a0... | Sincronizado</p>
+</div>
+<div class="flex gap-space-xs">
+<span class="px-space-sm py-1 bg-surface-container border border-outline-variant/40 text-mono-sm font-mono-sm text-tertiary">REKOR SYNCED</span>
+<span class="px-space-sm py-1 bg-surface-container border border-outline-variant/40 text-mono-sm font-mono-sm text-primary">HSM POOL: 4/4</span>
+</div>
+</div>
+<div class="col-span-8 space-y-space-md">
+<div class="p-space-lg bg-surface-container-low border border-outline-variant/30 rounded-xl">
+<div class="h-4 bg-outline-variant/20 rounded w-1/4 mb-4"></div>
+<div class="h-28 bg-surface-container rounded-lg border border-outline-variant/20"></div>
+</div>
+<div class="grid grid-cols-2 gap-space-md">
+<div class="h-40 bg-surface-container-low border border-outline-variant/30 rounded-xl p-space-md"></div>
+<div class="h-40 bg-surface-container-low border border-outline-variant/30 rounded-xl p-space-md"></div>
+</div>
+</div>
+<div class="col-span-4 space-y-space-md">
+<div class="h-96 bg-surface-container-low border border-outline-variant/30 rounded-xl p-space-md"></div>
+</div>
+</main>
+</div>
+<!-- ======================================================== -->
+<!-- MODAL BACKDROP OVERLAY                                   -->
+<!-- ======================================================== -->
+<div class="fixed inset-0 z-40 bg-surface-container-lowest/80 backdrop-blur-md transition-opacity"></div>
+<!-- ======================================================== -->
+<!-- BOTTOM SHEET MODAL (Occupies ~85% viewport height)       -->
+<!-- ======================================================== -->
+<div class="fixed inset-x-0 bottom-0 z-50 flex flex-col h-[751px] max-w-5xl mx-auto bg-surface-container-lowest border-t border-x border-outline-variant/50 rounded-t-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-300">
+<!-- Drag Handle Indicator -->
+<div class="w-full flex justify-center pt-space-xs pb-1 cursor-grab active:cursor-grabbing">
+<div class="w-12 h-1 bg-outline-variant/60 rounded-full"></div>
+</div>
+<!-- Header do Modal -->
+<div class="px-space-lg py-space-sm border-b border-outline-variant/40 flex items-start justify-between bg-surface-container-low/70">
+<div class="space-y-1">
+<div class="flex items-center gap-space-sm flex-wrap">
+<h1 class="text-headline-sm font-headline-sm text-on-surface tracking-tight font-bold">
+            Auditoria de Chaves HSM &amp; Chancelas Notariais
+          </h1>
+<!-- Badge status: ONLINE & ATTESTED (verde com pulso) -->
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-tertiary/40 bg-tertiary-container/10">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span>
+</span>
+<span class="text-label-badge font-label-badge text-tertiary tracking-wider font-semibold">ONLINE &amp; ATTESTED</span>
+</div>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+          Cluster Criptográfico PKCS#11 FIPS 140-2 Level 4 e Quórum Threshold 3-de-5
+        </p>
+</div>
+<!-- Botão Fechar (X) -->
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" onclick="document.body.classList.toggle('modal-closed')" title="Fechar Auditoria">
+<span class="material-symbols-outlined text-lg" data-icon="close">close</span>
+</button>
+</div>
+<!-- Conteúdo Rolável do Modal -->
+<div class="flex-1 overflow-y-auto px-space-lg py-space-md space-y-space-lg">
+<!-- ======================================================== -->
+<!-- SEÇÃO 1: Status do Cluster de Hardware de Segurança (HSM) -->
+<!-- ======================================================== -->
+<section class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-base" data-icon="memory">memory</span>
+<h2 class="text-mono-md font-mono-md uppercase tracking-wider text-on-surface font-semibold">
+              01. Cluster de Hardware de Segurança (HSM Core)
+            </h2>
+</div>
+<span class="text-label-badge font-label-badge text-primary border border-primary/30 px-2 py-0.5 rounded bg-primary/10">
+            FIPS 140-2 L4
+          </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+<!-- Slot Ativo #01-A -->
+<div class="p-space-md bg-surface-container-low border border-outline-variant/40 rounded-lg flex flex-col justify-between hover:border-outline transition-colors">
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-label-badge font-label-badge text-tertiary uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Slot Ativo #01-A
+                </span>
+<span class="text-label-badge font-label-badge text-on-surface-variant">SLOT_ID: 0x8001</span>
+</div>
+<h3 class="text-body-md font-body-md font-semibold text-on-surface">
+                SafeNet Luna HSM e-CNPJ Titular
+              </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+                Chancela principal da instituição certificada ICP-Brasil A3 corporativo sob partição inviolável.
+              </p>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-outline-variant/30 flex items-center justify-between text-mono-sm font-mono-sm text-on-surface-variant">
+<span class="text-primary font-medium">Hardware Bound</span>
+<span class="text-label-badge font-label-badge bg-surface-container px-1.5 py-0.5 rounded text-outline">ZERO-EXTRACT</span>
+</div>
+</div>
+<!-- Slot Secundário #02-B -->
+<div class="p-space-md bg-surface-container-low border border-outline-variant/40 rounded-lg flex flex-col justify-between hover:border-outline transition-colors">
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-label-badge font-label-badge text-secondary uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Slot Secundário #02-B
+                </span>
+<span class="text-label-badge font-label-badge text-on-surface-variant">SLOT_ID: 0x8002</span>
+</div>
+<h3 class="text-body-md font-body-md font-semibold text-on-surface">
+                Chave Efêmera MPC / Quórum Institucional
+              </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+                Sub-chaves compartilhadas via Multi-Party Computation para validação assíncrona de chancelas.
+              </p>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-outline-variant/30 flex items-center justify-between text-mono-sm font-mono-sm text-on-surface-variant">
+<span class="text-secondary font-medium">MPC Ephemeral</span>
+<span class="text-label-badge font-label-badge bg-surface-container px-1.5 py-0.5 rounded text-outline">SHAMIR T=3</span>
+</div>
+</div>
+</div>
+<!-- Política de Autenticação -->
+<div class="p-space-sm bg-surface-container border border-outline-variant/30 rounded flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="verified_user">verified_user</span>
+<span class="text-body-sm font-body-sm text-on-surface">Política de Autenticação Ativa:</span>
+<span class="text-mono-sm font-mono-sm text-on-surface-variant">mTLS com certificados ICP-Brasil A3 corporativos</span>
+</div>
+<span class="text-label-badge font-label-badge uppercase text-tertiary">STRICT ENFORCED</span>
+</div>
+</section>
+<!-- ======================================================== -->
+<!-- SEÇÃO 2: Quórum de Ancoragem Soberana (3-de-5)           -->
+<!-- ======================================================== -->
+<section class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-base" data-icon="account_tree">account_tree</span>
+<h2 class="text-mono-md font-mono-md uppercase tracking-wider text-on-surface font-semibold">
+              02. Quórum de Ancoragem Soberana (Multi-Signature Threshold 3-de-5)
+            </h2>
+</div>
+<!-- Status Resumido do Quórum -->
+<div class="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 border border-primary/40 rounded">
+<span class="text-mono-sm font-mono-sm font-semibold text-primary">3 / 5 Chaves Coletadas</span>
+<span class="text-label-badge font-label-badge text-tertiary uppercase">(Válido p/ Ancoragem)</span>
+</div>
+</div>
+<!-- Barra de Progresso do Quórum -->
+<div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden flex">
+<div class="bg-tertiary h-full w-[60%] transition-all duration-500"></div>
+<div class="bg-outline-variant/30 h-full w-[40%]"></div>
+</div>
+<!-- Lista dos 5 Signatários -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-space-xs">
+<!-- Signatário 1 -->
+<div class="p-space-sm bg-surface-container-low border border-tertiary/40 rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-badge font-label-badge text-on-surface-variant">NÓ #01</span>
+<span class="text-label-badge font-label-badge text-tertiary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs" data-icon="check_circle">check_circle</span> ASSINADO
+                </span>
+</div>
+<p class="text-body-sm font-body-sm font-semibold text-on-surface">Arkhe Ops</p>
+<p class="text-mono-sm font-mono-sm text-on-surface-variant">KMS Node Core</p>
+</div>
+<div class="mt-2 pt-1 border-t border-outline-variant/20 text-mono-sm font-mono-sm text-tertiary">
+              RBB #19.842.102
+            </div>
+</div>
+<!-- Signatário 2 -->
+<div class="p-space-sm bg-surface-container-low border border-tertiary/40 rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-badge font-label-badge text-on-surface-variant">NÓ #02</span>
+<span class="text-label-badge font-label-badge text-tertiary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs" data-icon="check_circle">check_circle</span> ASSINADO
+                </span>
+</div>
+<p class="text-body-sm font-body-sm font-semibold text-on-surface">Institucional</p>
+<p class="text-mono-sm font-mono-sm text-on-surface-variant">Chave Titular</p>
+</div>
+<div class="mt-2 pt-1 border-t border-outline-variant/20 text-mono-sm font-mono-sm text-tertiary">
+              e-CNPJ A3 Luna
+            </div>
+</div>
+<!-- Signatário 3 -->
+<div class="p-space-sm bg-surface-container-low border border-tertiary/40 rounded flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-badge font-label-badge text-on-surface-variant">NÓ #03</span>
+<span class="text-label-badge font-label-badge text-tertiary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs" data-icon="check_circle">check_circle</span> ASSINADO
+                </span>
+</div>
+<p class="text-body-sm font-body-sm font-semibold text-on-surface">Validador Indep.</p>
+<p class="text-mono-sm font-mono-sm text-on-surface-variant">Auditor Bacen</p>
+</div>
+<div class="mt-2 pt-1 border-t border-outline-variant/20 text-mono-sm font-mono-sm text-tertiary">
+              Cert Bacen-T1
+            </div>
+</div>
+<!-- Signatário 4 -->
+<div class="p-space-sm bg-surface-container-low border border-outline-variant/30 rounded flex flex-col justify-between opacity-75">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-badge font-label-badge text-on-surface-variant">NÓ #04</span>
+<span class="text-label-badge font-label-badge text-outline flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs" data-icon="hourglass_empty">hourglass_empty</span> PENDENTE
+                </span>
+</div>
+<p class="text-body-sm font-body-sm font-semibold text-on-surface-variant">Custódia Fria</p>
+<p class="text-mono-sm font-mono-sm text-on-surface-variant">Enclave TEE</p>
+</div>
+<div class="mt-2 pt-1 border-t border-outline-variant/20 text-mono-sm font-mono-sm text-outline">
+              Aguardando trigger
+            </div>
+</div>
+<!-- Signatário 5 -->
+<div class="p-space-sm bg-surface-container-low border border-outline-variant/30 rounded flex flex-col justify-between opacity-75">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-badge font-label-badge text-on-surface-variant">NÓ #05</span>
+<span class="text-label-badge font-label-badge text-outline flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs" data-icon="hourglass_empty">hourglass_empty</span> PENDENTE
+                </span>
+</div>
+<p class="text-body-sm font-body-sm font-semibold text-on-surface-variant">Cold Storage</p>
+<p class="text-mono-sm font-mono-sm text-on-surface-variant">HSM Notarial</p>
+</div>
+<div class="mt-2 pt-1 border-t border-outline-variant/20 text-mono-sm font-mono-sm text-outline">
+              Offline Standby
+            </div>
+</div>
+</div>
+</section>
+<!-- ======================================================== -->
+<!-- SEÇÃO 3: Informações Técnicas e Validação Criptográfica   -->
+<!-- ======================================================== -->
+<section class="space-y-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-base" data-icon="terminal">terminal</span>
+<h2 class="text-mono-md font-mono-md uppercase tracking-wider text-on-surface font-semibold">
+            03. Telemetria Criptográfica &amp; Registro em Transparência
+          </h2>
+</div>
+<div class="p-space-md bg-surface-container-lowest border border-outline-variant/50 rounded-lg space-y-space-sm">
+<!-- Curva Elíptica e Parâmetros -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm pb-space-sm border-b border-outline-variant/30">
+<div>
+<span class="text-label-badge font-label-badge uppercase text-on-surface-variant block">Curva Elíptica Sovereign</span>
+<span class="text-mono-sm font-mono-sm text-primary font-medium">secp256k1 &amp; ed25519</span>
+<span class="text-label-badge font-label-badge text-outline block mt-0.5">Hybrid Sovereign Mode</span>
+</div>
+<div>
+<span class="text-label-badge font-label-badge uppercase text-on-surface-variant block">Algoritmo de Digest</span>
+<span class="text-mono-sm font-mono-sm text-on-surface font-medium">BLAKE3 (256-bit Tree Hash)</span>
+<span class="text-label-badge font-label-badge text-tertiary block mt-0.5">Verificação O(1) Paralela</span>
+</div>
+<div>
+<span class="text-label-badge font-label-badge uppercase text-on-surface-variant block">Log de Transparência</span>
+<span class="text-mono-sm font-mono-sm text-secondary font-medium">Rekor Entry #948.102</span>
+<span class="text-label-badge font-label-badge text-outline block mt-0.5">Assinado via Cosign v2.2</span>
+</div>
+</div>
+<!-- Hash Canônico de Entrada com Botão Copiar -->
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-badge font-label-badge uppercase text-on-surface-variant">Hash Canônico de Entrada (Digest BLAKE3)</span>
+<span class="text-label-badge font-label-badge text-tertiary">CONFERIDO &amp; REGISTRADO</span>
+</div>
+<div class="flex items-center gap-2 p-2 bg-surface-container rounded border border-outline-variant/30">
+<code class="text-mono-sm font-mono-sm text-on-surface flex-1 truncate select-all">
+                7f8a9e21bc4d90e812f8a554c03de149b1a7392c0fe8b209c1583d47ad901ef4
+              </code>
+<button class="px-2 py-1 bg-surface-container-high hover:bg-surface-bright text-mono-sm font-mono-sm rounded text-primary flex items-center gap-1 transition-colors" title="Copiar Hash">
+<span class="material-symbols-outlined text-xs" data-icon="content_copy">content_copy</span> Copiar
+              </button>
+</div>
+</div>
+<!-- Rekor Verification Payload snippet -->
+<div class="text-mono-sm font-mono-sm p-2 bg-surface-container-low rounded border border-outline-variant/20 text-on-surface-variant flex items-center justify-between">
+<span>rekor.sigstore.dev/api/v1/log/entries/948102?inclusionProof=true</span>
+<span class="text-label-badge font-label-badge text-tertiary uppercase">PROOFS VALIDATED</span>
+</div>
+</div>
+</section>
+</div>
+<!-- ======================================================== -->
+<!-- AÇÕES DO MODAL NO RODAPÉ                                 -->
+<!-- ======================================================== -->
+<div class="px-space-lg py-space-sm border-t border-outline-variant/40 bg-surface-container-lowest/95 backdrop-blur flex items-center justify-between gap-space-md">
+<!-- Metadados de integridade no rodapé -->
+<div class="hidden sm:flex items-center gap-2 text-mono-sm font-mono-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="lock">lock</span>
+<span>Sessão HSM PKCS#11 ativa: ID_SESSION_9841</span>
+</div>
+<!-- Cluster de Ações -->
+<div class="flex items-center gap-space-sm w-full sm:w-auto justify-end">
+<!-- Botão Secundário de Contorno: Fechar Auditoria -->
+<button class="px-space-md py-2 rounded-lg border border-outline-variant text-body-md font-body-md text-on-surface hover:border-primary hover:text-primary active:opacity-80 transition-all duration-150">
+          Fechar Auditoria
+        </button>
+<!-- Botão Primário com Destaque: Exportar Atestado Criptográfico HSM -->
+<button class="px-space-md py-2 rounded-lg bg-primary-container text-on-primary-container font-semibold text-body-md font-body-md hover:bg-primary active:scale-[0.98] transition-all duration-150 flex items-center gap-2 shadow-lg shadow-primary-container/20">
+<span class="material-symbols-outlined text-base" data-icon="download">download</span>
+          Exportar Atestado Criptográfico HSM (.attest)
+        </button>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,16 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import assert from 'node:assert/strict';
+const fixture=JSON.parse(readFileSync('ops/local/evaluation-smoke/fixture.json'));
+process.env.ARKHE_INTRA_DATA_DIR=fixture.data;
+const user=JSON.parse(readFileSync(join(fixture.data,'accounts.json'))).find(row=>row.role==='owner');
+const {replayBaseline,readEvaluation}=await import('../../apps/arkhe-intra/lib/evaluations.mjs');
+const {artifactManifest}=await import('../../apps/arkhe-intra/lib/evaluation-artifacts.mjs');
+const {hash}=await import('../../apps/arkhe-intra/lib/evaluation-core.mjs');
+const before=readEvaluation(user,fixture.studyId),result=await replayBaseline(user,{studyId:fixture.studyId});
+assert.equal(result.status,'PASS');const after=readEvaluation(user,fixture.studyId);
+assert.equal(before.study.baselineReportDigest,after.study.baselineReportDigest);
+assert.deepEqual(before.study.baselineReport,after.study.baselineReport);
+for(const [path,digest] of Object.entries(artifactManifest(after.study.baseline)))assert.equal(hash(readFileSync(path)),digest,'Live source changed: '+path);
+writeFileSync('docs/evidence/local/2026-10-18/capability-evaluation/replay.json',JSON.stringify({status:'PASS',result,originalWorkspaceUnchanged:true,baselineReportUnchanged:true},null,2));
+console.log('PASS original baseline reproduced in 2 fresh sandboxes; frozen report and live source unchanged');

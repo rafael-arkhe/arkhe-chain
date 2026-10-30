@@ -1,0 +1,414 @@
+{
+  "phase": "POSTHOC_CONTOUR_CONTEXT_PROBE",
+  "train_prefix": 2500,
+  "new_arc_actions": 0,
+  "model": "action + color/shape + eight-neighbor contour palette/boundary; all regions require support",
+  "min_support": 2,
+  "target": "entire last render",
+  "test_updates": false,
+  "policy_changed": false,
+  "source_sha256": "bfeca5d2f463c2b30d8876f2876fa06944226b2ee1546d0da567124b8ca4e52c",
+  "inputs": {
+    "output\\arc3-budget-matrix-20261027\\seed-0-budget-5000\\frontier-ls20.jsonl": "24e5568ea208f985554a70ed2dca3a0ae3b91789e109f26c61e0bd23806dfcf7",
+    "output\\arc3-budget-matrix-20261027\\seed-0-budget-5000\\frontier-vc33.jsonl": "54f214e91289873604bf8eab147169bfa74bd556fb4039c39bee5f7d21472f85",
+    "output\\arc3-budget-matrix-20261027\\seed-0-budget-5000\\random-ls20.jsonl": "84f66d96981766a9a16476b4d3faa91e7050797ec2097f18e2ed35a7ab8d7e25",
+    "output\\arc3-budget-matrix-20261027\\seed-0-budget-5000\\random-vc33.jsonl": "26502ba64d6ff6051107ed23123be28f02dedc95b8e5321601a36ecb90d67858"
+  },
+  "controls": {
+    "status": "PASS",
+    "positive_train": {
+      "status": "PASS",
+      "criterion": "all training queries answered and whole last render exact",
+      "scope": "historical consistency only; not future validity",
+      "metrics": {
+        "queries": 16,
+        "issued": 16,
+        "correct": 16,
+        "abstained": 0,
+        "coverage": 1.0,
+        "correct_coverage": 1.0,
+        "hit_rate": 1.0,
+        "conditional_error": 0.0,
+        "abstention_rate": 0.0,
+        "reasons": {
+          "PREDICTED_CONTEXT_TRANSITION": 16
+        }
+      }
+    },
+    "positive_unseen_positions": {
+      "queries": 4,
+      "issued": 4,
+      "correct": 4,
+      "abstained": 0,
+      "coverage": 1.0,
+      "correct_coverage": 1.0,
+      "hit_rate": 1.0,
+      "conditional_error": 0.0,
+      "abstention_rate": 0.0,
+      "reasons": {
+        "PREDICTED_CONTEXT_TRANSITION": 4
+      }
+    },
+    "context_free_same_queries": {
+      "queries": 4,
+      "issued": 0,
+      "correct": 0,
+      "abstained": 4,
+      "coverage": 0.0,
+      "correct_coverage": 0.0,
+      "hit_rate": null,
+      "conditional_error": null,
+      "abstention_rate": 1.0,
+      "reasons": {
+        "NO_SUPPORTED_NONZERO_TRANSLATION": 4
+      }
+    },
+    "hidden_mode_negative": {
+      "queries": 1,
+      "issued": 0,
+      "correct": 0,
+      "abstained": 1,
+      "coverage": 0.0,
+      "correct_coverage": 0.0,
+      "hit_rate": null,
+      "conditional_error": null,
+      "abstention_rate": 1.0,
+      "reasons": {
+        "CONFLICTING_CONTEXT": 1
+      }
+    },
+    "empty_model_gate": "FAIL"
+  },
+  "fragmentation_rate": null,
+  "runs": [
+    {
+      "trace": "frontier-ls20.jsonl",
+      "model_sha256": "0b2469731851d8410db9a2569f1c73b61e3efb1115f45796ecc4f93537f00be0",
+      "training_gate": {
+        "status": "FAIL",
+        "criterion": "all training queries answered and whole last render exact",
+        "scope": "historical consistency only; not future validity",
+        "metrics": {
+          "queries": 2481,
+          "issued": 0,
+          "correct": 0,
+          "abstained": 2481,
+          "coverage": 0.0,
+          "correct_coverage": 0.0,
+          "hit_rate": null,
+          "conditional_error": null,
+          "abstention_rate": 1.0,
+          "reasons": {
+            "AMBIGUOUS_OR_EMPTY_SCENE": 2481
+          }
+        }
+      },
+      "test": {
+        "seen": {
+          "context_model": {
+            "queries": 133,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 133,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0,
+            "reasons": {
+              "AMBIGUOUS_OR_EMPTY_SCENE": 133
+            }
+          },
+          "lookup": {
+            "queries": 133,
+            "issued": 133,
+            "correct": 133,
+            "abstained": 0,
+            "coverage": 1.0,
+            "correct_coverage": 1.0,
+            "hit_rate": 1.0,
+            "conditional_error": 0.0,
+            "abstention_rate": 0.0
+          }
+        },
+        "unseen": {
+          "context_model": {
+            "queries": 2348,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 2348,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0,
+            "reasons": {
+              "AMBIGUOUS_OR_EMPTY_SCENE": 2348
+            }
+          },
+          "lookup": {
+            "queries": 2348,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 2348,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0
+          }
+        }
+      },
+      "frozen_hash_unchanged": true,
+      "admitted_model": false,
+      "test_scope": "diagnostic even if training gate fails; no admitted capability claim"
+    },
+    {
+      "trace": "frontier-vc33.jsonl",
+      "model_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "training_gate": {
+        "status": "FAIL",
+        "criterion": "all training queries answered and whole last render exact",
+        "scope": "historical consistency only; not future validity",
+        "metrics": {
+          "queries": 2452,
+          "issued": 0,
+          "correct": 0,
+          "abstained": 2452,
+          "coverage": 0.0,
+          "correct_coverage": 0.0,
+          "hit_rate": null,
+          "conditional_error": null,
+          "abstention_rate": 1.0,
+          "reasons": {
+            "UNSUPPORTED_ACTION": 2452
+          }
+        }
+      },
+      "test": {
+        "seen": {
+          "context_model": {
+            "queries": 49,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 49,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0,
+            "reasons": {
+              "UNSUPPORTED_ACTION": 49
+            }
+          },
+          "lookup": {
+            "queries": 49,
+            "issued": 49,
+            "correct": 49,
+            "abstained": 0,
+            "coverage": 1.0,
+            "correct_coverage": 1.0,
+            "hit_rate": 1.0,
+            "conditional_error": 0.0,
+            "abstention_rate": 0.0
+          }
+        },
+        "unseen": {
+          "context_model": {
+            "queries": 2402,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 2402,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0,
+            "reasons": {
+              "UNSUPPORTED_ACTION": 2402
+            }
+          },
+          "lookup": {
+            "queries": 2402,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 2402,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0
+          }
+        }
+      },
+      "frozen_hash_unchanged": true,
+      "admitted_model": false,
+      "test_scope": "diagnostic even if training gate fails; no admitted capability claim"
+    },
+    {
+      "trace": "random-ls20.jsonl",
+      "model_sha256": "eb9c612463e632e9ab2a9b027d0dd1b33335286a0b805cda14a1a609d9da4581",
+      "training_gate": {
+        "status": "FAIL",
+        "criterion": "all training queries answered and whole last render exact",
+        "scope": "historical consistency only; not future validity",
+        "metrics": {
+          "queries": 2481,
+          "issued": 0,
+          "correct": 0,
+          "abstained": 2481,
+          "coverage": 0.0,
+          "correct_coverage": 0.0,
+          "hit_rate": null,
+          "conditional_error": null,
+          "abstention_rate": 1.0,
+          "reasons": {
+            "AMBIGUOUS_OR_EMPTY_SCENE": 2481
+          }
+        }
+      },
+      "test": {
+        "seen": {
+          "context_model": {
+            "queries": 585,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 585,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0,
+            "reasons": {
+              "AMBIGUOUS_OR_EMPTY_SCENE": 585
+            }
+          },
+          "lookup": {
+            "queries": 585,
+            "issued": 585,
+            "correct": 585,
+            "abstained": 0,
+            "coverage": 1.0,
+            "correct_coverage": 1.0,
+            "hit_rate": 1.0,
+            "conditional_error": 0.0,
+            "abstention_rate": 0.0
+          }
+        },
+        "unseen": {
+          "context_model": {
+            "queries": 1896,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 1896,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0,
+            "reasons": {
+              "AMBIGUOUS_OR_EMPTY_SCENE": 1896
+            }
+          },
+          "lookup": {
+            "queries": 1896,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 1896,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0
+          }
+        }
+      },
+      "frozen_hash_unchanged": true,
+      "admitted_model": false,
+      "test_scope": "diagnostic even if training gate fails; no admitted capability claim"
+    },
+    {
+      "trace": "random-vc33.jsonl",
+      "model_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "training_gate": {
+        "status": "FAIL",
+        "criterion": "all training queries answered and whole last render exact",
+        "scope": "historical consistency only; not future validity",
+        "metrics": {
+          "queries": 2452,
+          "issued": 0,
+          "correct": 0,
+          "abstained": 2452,
+          "coverage": 0.0,
+          "correct_coverage": 0.0,
+          "hit_rate": null,
+          "conditional_error": null,
+          "abstention_rate": 1.0,
+          "reasons": {
+            "UNSUPPORTED_ACTION": 2452
+          }
+        }
+      },
+      "test": {
+        "seen": {
+          "context_model": {
+            "queries": 410,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 410,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0,
+            "reasons": {
+              "UNSUPPORTED_ACTION": 410
+            }
+          },
+          "lookup": {
+            "queries": 410,
+            "issued": 410,
+            "correct": 410,
+            "abstained": 0,
+            "coverage": 1.0,
+            "correct_coverage": 1.0,
+            "hit_rate": 1.0,
+            "conditional_error": 0.0,
+            "abstention_rate": 0.0
+          }
+        },
+        "unseen": {
+          "context_model": {
+            "queries": 2041,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 2041,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0,
+            "reasons": {
+              "UNSUPPORTED_ACTION": 2041
+            }
+          },
+          "lookup": {
+            "queries": 2041,
+            "issued": 0,
+            "correct": 0,
+            "abstained": 2041,
+            "coverage": 0.0,
+            "correct_coverage": 0.0,
+            "hit_rate": null,
+            "conditional_error": null,
+            "abstention_rate": 1.0
+          }
+        }
+      },
+      "frozen_hash_unchanged": true,
+      "admitted_model": false,
+      "test_scope": "diagnostic even if training gate fails; no admitted capability claim"
+    }
+  ],
+  "complete": true
+}

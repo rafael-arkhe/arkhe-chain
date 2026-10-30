@@ -1,0 +1,1374 @@
+
+=== PAGINA 1 ===
+Documentação explicativa — Academic Paper (In-Depth Research)
+Arkhe–Catedral · 2026
+ Arkhe e Catedral: Documentação Explicativa em Duas
+Camadas do Ecossistema de Infraestrutura Verificável
+ para Agentes de IA
+ Guia de referência para públicos técnicos e não especialistas
+ Rafael Oliveira
+ Safe Core — Psychology Behavioral Analysis, São Paulo, Brasil
+ ORCID:  https://orcid.org/0009-0005-2697-4668
+ Jameson Bednarski
+ Arkhe Research Group
+ ORCID:  https://orcid.org/0009-0002-5963-6196
+ 14 de setembro de 2026
+
+
+=== PAGINA 2 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 2
+Resumo
+A documentação de infraestrutura para agentes autônomos de IA tende a bifurcar-se em
+dois extremos igualmente inúteis: o jargão técnico, inacessível a gestores, reguladores e
+cidadãos, e a divulgação genérica, que elimina a precisão que tornaria o material utilizável
+por engenheiros. Este artigo apresenta um caso de aplicação de documentação explicativa
+em duas camadas — leiga e técnica — ao ecossistema Arkhe–Catedral, um projeto de
+infraestrutura verificável para agentes de IA (kernel de contenção, identidade
+descentralizada, proveniência criptográfica e governança por invariantes) documentado em
+corpus interno de aproximadamente vinte definições sucessivas. O método combina o
+quadrante de explicação do framework Diátaxis, os princípios de linguagem clara da ISO
+24495-1 e revelação progressiva, e preserva a disciplina epistêmica do próprio projeto:
+nenhuma afirmação sem origem verificável, com distinção explícita entre estipulação e
+descoberta. Como resultado, os nove contratos de auditabilidade (Z1–Z9), os conceitos
+fundadores (arquitetura de token zero, sessões queimadas após uso, cripto-apagamento) e a
+metáfora estruturante da Catedral — o critério segundo o qual cada revisão deve deixar o
+sistema mais auditável do que o encontrou — tornam-se legíveis em ambos os públicos
+sem contradição entre camadas. Discutem-se limitações: a fragmentação de nomenclatura
+do corpus, a lacuna entre especificação e implementação registrada pelo próprio projeto (o
+diagnóstico de forma sem função) e o risco residual de que analogias criem compreensão
+aparente. Conclui-se que a disciplina de evidência do projeto é, ela própria, o conteúdo
+mais valioso da documentação — e que documentá-la em duas camadas é o que permite
+que não especialistas participem da cobrança de falsificadores.
+Palavras-chave: documentação técnica; infraestrutura verificável; agentes de IA; kernel de
+contenção; auditabilidade; linguagem clara.
+Abstract
+Documentation for autonomous AI agent infrastructure tends to bifurcate into two equally
+unhelpful extremes: technical jargon, inaccessible to managers, regulators and citizens, and
+generic popularization, which strips away the precision that would make the material
+usable by engineers. This paper presents an application of two-layer explanatory
+documentation — lay and technical — to the Arkhe–Cathedral ecosystem, a verifiable
+infrastructure project for AI agents (a containment kernel, decentralized identity,
+cryptographic provenance and invariant-based governance) recorded in an internal corpus
+of roughly twenty successive definitions. The method combines the explanation quadrant
+of the Diátaxis framework, the plain-language principles of ISO 24495-1, and progressive
+disclosure, while preserving the project's own epistemic discipline: no claim without a
+
+
+=== PAGINA 3 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 3
+verifiable origin, with an explicit distinction between stipulation and discovery. As a result,
+the nine auditability contracts (Z1–Z9), the foundational concepts (zero-token architecture,
+burn-after-use sessions, crypto-erasure) and the structuring metaphor of the Cathedral —
+the criterion whereby each revision must leave the system more auditable than it found it
+— become legible to both audiences without cross-layer contradiction. Limitations are
+discussed: the corpus's naming fragmentation, the gap between specification and
+implementation recorded by the project itself (the form-without-function diagnosis), and
+the residual risk that analogies create apparent understanding. The paper concludes that the
+project's evidence discipline is itself the most valuable content of the documentation — and
+that documenting it in two layers is what allows non-specialists to join in demanding
+falsifiers.
+Keywords: technical documentation; verifiable infrastructure; AI agents; containment
+kernel; auditability; plain language.
+1 Introdução
+ Há um problema de linguagem no coração da segurança de inteligência artificial.
+Quando uma equipe de engenharia diz que um sistema de agentes autônomos é seguro,
+raramente quer dizer o que um gestor, um regulador ou um cidadão ouviria: que o sistema
+não falhará. Com frequência, quer dizer algo mais modesto e mais verificável — que certas
+propriedades foram especificadas, que existem mecanismos capazes de detectar violações,
+e que há registro imutável do que aconteceu, inspecionável por quem não estava presente.
+A distância entre as duas leituras não é uma curiosidade semântica: ela já produziu
+mal-entendidos em auditorias, licitações e debates regulatórios, porque cada público
+carrega um vocabulário diferente para a mesma palavra. A pergunta que orienta este
+documento é como construir material explicativo que percorra essa distância sem trair
+nenhum dos lados — como explicar a um não especialista por que um projeto se recusa a
+dizer que é seguro, limitando-se a mostrar o que pode ser verificado.
+ O objeto escolhido para essa investigação é o ecossistema Arkhe–Catedral, descrito
+em um corpus interno de definições que este artigo trata como material primário de arquivo
+(OLIVEIRA, 2026). O Arkhe é um projeto de infraestrutura verificável para agentes de IA:
+um kernel de contenção escrito em Rust, complementado por identidade descentralizada,
+proveniência criptográfica, verificação formal e governança por invariantes. O corpus que o
+descreve tem uma propriedade metodológica incomum: cerca de vinte respostas sucessivas
+à mesma pergunta — defina Arkhe e Catedral com base apenas no histórico —, cada uma
+registrando o que é verificável e recusando-se, de forma explícita e repetida, a preencher
+lacunas com plausibilidade. O termo Catedral, em particular, nunca recebeu definição
+
+
+=== PAGINA 4 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 4
+técnica formal no corpus; aparece como metáfora recorrente, sempre associada ao mesmo
+critério de progresso. Essa recusa sistemática de fabricação é, como se argumentará, o
+conteúdo mais valioso a documentar — mais valioso do que qualquer lista de componentes.
+ A tese deste artigo é dupla. Primeiro, o ecossistema Arkhe–Catedral é explicável
+em duas camadas — uma leiga, sustentada por analogias verificáveis, e uma técnica,
+sustentada por terminologia precisa — sem que as camadas se contradigam, desde que a
+camada leiga seja tratada como ponte e não como substituto da especificação. Segundo, a
+disciplina epistêmica do projeto (falsificadores por invariante, classificação de afirmações,
+honestidade sobre lacunas entre documentos e código) é o que torna essa documentação
+possível: um projeto sem disciplina de evidência não teria o que explicar em duas camadas,
+apenas o que promover em uma. A documentação explicativa, aqui, não é revestimento —
+é o teste de que o conteúdo aguenta ser traduzido.
+ O documento segue o quadrante de explicação do framework Diátaxis, que
+distingue tutoriais, guias de operação, referência e explicação, reservando a esta última a
+função de iluminar — não de instruir passo a passo nem de catalogar (PROCIDA, 2026). A
+camada leiga adota os princípios de linguagem clara da norma ISO 24495-1:2023, segundo
+os quais o documento deve entregar ao leitor o de que ele precisa, de modo encontrável,
+compreensível e utilizável (ISO, 2023), e a estrutura aplica revelação progressiva,
+apresentando primeiro o essencial e oferecendo profundidade sob demanda (NIELSEN,
+2007). As contribuições esperadas são quatro: (i) uma síntese estruturada de um corpus
+fragmentado, organizando as leituras convergentes do que é o Arkhe; (ii) um dicionário em
+duas camadas para os conceitos fundamentais, do isolamento por capacidades à criptografia
+pós-quântica; (iii) a explicitação, para não especialistas, da disciplina epistêmica do projeto
+— scores honestos, classificação de afirmações, falsificadores; e (iv) um registro honesto
+das limitações, incluindo a fragmentação de nomenclatura e a lacuna entre especificação e
+implementação que o próprio corpus reconhece.
+ O restante do documento está organizado como segue. A seção 2 contextualiza o
+ecossistema, o corpus e o método de duas camadas. As seções 3 e 4 explicam,
+respectivamente, o Arkhe e a Catedral — o sistema e o critério. A seção 5 apresenta os
+conceitos fundamentais em duas camadas, com figuras e tabelas de referência. A seção 6
+documenta a disciplina epistêmica: como ler os números e as afirmações do projeto. A
+seção 7 discute contra-argumentos e limitações, e a seção 8 conclui com implicações para
+equipes de engenharia, gestores e reguladores. O Anexo A oferece um glossário em
+linguagem simples e o Anexo B cataloga os invariantes e condições citados, com seus
+falsificadores.
+
+
+=== PAGINA 5 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 5
+2 Contexto e Método
+2.1 O ecossistema Arkhe–Catedral: origem e posicionamento
+ O nome Arkhe remete ao grego arkhé — origem, princípio, primeiro princípio —,
+embora o corpus registre que a etimologia é inferência plausível e não declaração explícita
+dos autores do projeto (OLIVEIRA, 2026). A nomenclatura evoluiu ao longo do tempo: o
+projeto começou a ser documentado como Safe-Core (v1.0 a v3.0), consolidou-se como
+Arkhe OS a partir da migração dos componentes para crates com prefixo arkhe-, e
+atravessou versões numeradas de v1.0 a v17.0 em documentos distintos do corpus. O autor
+nominal dos artefatos é o Arkhe Research Group, que assina entregas com selos datados do
+tipo ARKHE-PACKET-v0.3.0-ONDA-0 e publica contratos como o MARCO_ZERO.md.
+Este artigo não é material oficial do projeto: é documentação explicativa independente,
+ancorada no corpus.
+ O posicionamento declarado do sistema é específico e importa para a leitura: o
+Arkhe se coloca como camada de confiança entre frameworks de agentes de IA (como o
+Model Context Protocol, lançado pela Anthropic em 2024 como padrão aberto de conexão
+entre modelos e fontes de dados — ANTHROPIC, 2024) e a infraestrutura física
+(computação, armazenamento, hardware). Nesse arranjo, frameworks decidem o que os
+agentes fazem; o Arkhe decide o que eles podem fazer e registra o que fizeram. A
+linguagem de implementação é Rust, escolha coerente com o objetivo de segurança desde a
+compilação: o sistema de propriedade e empréstimo da linguagem elimina classes inteiras
+de erros de memória em tempo de compilação (RUST FOUNDATION, 2026). O corpus
+registra ainda que o projeto se define por restrições e não por capacidades — nada é
+afirmado sem origem verificável, e as negações fazem parte da definição.
+2.2 O corpus de definições e a política de não fabricação
+ O corpus analisado (OLIVEIRA, 2026) consiste em aproximadamente vinte
+respostas independentes à mesma instrução metodológica: definir Arkhe e Catedral com
+base exclusivamente no histórico da conversa, sem importar conhecimento externo nem
+inventar definições. O resultado é um experimento natural sobre honestidade documental.
+Para o Arkhe, as respostas convergem: o termo designa, com variações de escopo, o kernel
+de contenção, a plataforma em camadas, o ecossistema e o contrato de auditabilidade — e
+cada resposta mapeia suas afirmações em ocorrências concretas do histórico (nomes de
+crates, selos, estruturas de código). Para a Catedral, o resultado é igualmente consistente,
+porém negativo: em boa parte das respostas, o termo não aparece como definição técnica e
+a resposta correta registrada é a admissão de ausência — com hipóteses etiquetadas como
+tais quando o padrão de uso permite uma leitura metafórica defensável.
+
+
+=== PAGINA 6 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 6
+ Duas regras do corpus governam este documento por inteiro. A primeira é o
+princípio de proveniência (I15): evidência deve ser verificável e rastreável; definições sem
+origem não são definções, são invenções. A segunda é o vínculo documental (I36):
+afirmações de segurança precisam estar ligadas a invariantes e testes nomeados. Seguindo a
+prática estabelecida em documentos anteriores deste programa de pesquisa, este artigo
+aplica um disciplinamento de evidência em três níveis: (i) fontes primárias externas
+verificadas na fase de pesquisa, citadas com link e data de acesso; (ii) fontes secundárias
+reputadas quando primárias não estão disponíveis; e (iii) o corpus interno, sinalizado pela
+fórmula conforme citado em OLIVEIRA (2026) sempre que um número, nome de
+componente ou frase provém do arquivo e não de fonte externa. O leitor deve tratar essa
+terceira categoria como afirmação de projeto — estipulação — e não como fato
+independente.
+2.3 O método de duas camadas
+ A estrutura de duas camadas adotada nas seções 3 a 6 combina três referências
+metodológicas. Da taxonomia Diátaxis (PROCIDA, 2026) vem a decisão de gênero: este
+documento é explicação — sua função é construir orientação e contexto, não substituir a
+referência técnica nem conduzir o leitor por tutoriais. Da norma ISO 24495-1:2023 (ISO,
+2023) vêm os quatro princípios da camada leiga: entregar o que o leitor precisa
+(relevância), permitir localizar o que procura (encontrabilidade), usar o vocabulário que ele
+já entende (compreensibilidade) e deixar o material pronto para uso (utilização). Da
+tradição de arquitetura de informação vem a revelação progressiva: o essencial aparece
+primeiro, e a profundidade fica disponível para quem a demandar (NIELSEN, 2007).
+ Operacionalmente, cada conceito fundamental da seção 5 recebe dois tratamentos
+encadeados: um parágrafo em linguagem simples, com analogia declarada como analogia
+— nunca como definição —, e um parágrafo técnico com a terminologia correta,
+precedentes externos e referências verificáveis. Três regras de qualidade governam a
+tradução entre camadas. Regra 1 (não contradição): a camada leiga nunca afirma algo que a
+camada técnica desmente; quando há incerteza, ela é marcada nas duas. Regra 2 (analogia
+etiquetada): toda analogia é introduzida como aproximação (é como se...), com o ponto em
+que ela quebra indicado quando relevante. Regra 3 (portas de saída): o leigo interessado
+encontra, em cada seção, os termos exatos para continuar a busca técnica — e o técnico
+encontra, no Anexo A, o glossário para comunicar com leigos. O objetivo não é simplificar
+o projeto, mas tornar sua complexidade navegável por dois públicos sem diluir a precisão
+de nenhum.
+3 Arkhe, o Sistema: Explicação em Duas Camadas
+
+
+=== PAGINA 7 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 7
+3.1 Em uma frase
+ A definição consolidada do corpus cabe em uma frase: Arkhe é um kernel de
+contenção e orquestração para agentes de IA — não um agente, não uma inteligência, não
+uma definição de AGI — cujo critério de autodenominação é a satisfação de invariantes
+verificáveis, cada uma ancorada em componentes específicos e dotada de falsificador
+declarado (OLIVEIRA, 2026). A frase-síntese registrada no contrato MARCO_ZERO não
+deixa margem para eufemismo: ARKHE é kernel de contenção; kernels não são agentes.
+Para o público leigo, a analogia mais fiel é a da contenção de um reator: o reator produz
+energia, mas é a contenção — as barras, o vaso, o escudo — que torna essa energia
+utilizável sem vazamento. O Arkhe não é o combustível nem a turbina: é o que impede que
+a inteligência em operação vaze para onde não deve, e o que registra, de forma verificável,
+tudo o que aconteceu dentro do vaso. A analogia quebra em um ponto importante: a
+contenção de um reator é passiva, enquanto o Arkhe atua em tempo de execução — decide,
+bloqueia, registra e, quando necessário, encerra.
+3.2 Quatro leituras convergentes
+ As vinte definições do corpus não concordam em um único escopo, mas convergem
+em quatro leituras que coexistem sem se excluírem, análogas a vistas de um mesmo
+edifício em altitudes diferentes. A Tabela 1 organiza essas leituras com a evidência que as
+sustenta no corpus e a tradução leiga correspondente. A leitura mais abstrata merece
+destaque porque é a que melhor explica a ambiguidade aparente das demais: em um dos
+documentos, o Arkhe é formalizado como uma máquina de estados de conhecimento —
+uma tupla com espaço de estados, função de transição determinística e conjunto de
+invariantes — na qual código, criptografia e consenso são detalhes de implementação
+intercambiáveis. Nessa leitura, o princípio declarado é a independência semântica: a
+semântica do sistema não depende da tecnologia de persistência, transporte, consenso ou
+execução (OLIVEIRA, 2026). As demais leituras são projeções dessa máquina em níveis
+concretos: o kernel (o objeto formal), a plataforma (a estratificação), o ecossistema (a
+projeção social e de produto).
+
+
+=== PAGINA 8 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 8
+ Tabela 1 – Quatro leituras convergentes do Arkhe no corpus (OLIVEIRA, 2026)
+Leitura
+O que é
+Evidência no corpus
+Tradução leiga
+Kernel de
+isolamento
+Objeto formal: tipos canônicos
+(sessão, principal, capacidade,
+região de memória),
+invariantes verificadas em
+TLA+ antes do código
+8 tipos de kernel; 21
+invariantes (I1–I21);
+fronteiras de confiança
+TD0–TD7
+A cela blindada: um espaço
+pequeno, provadamente
+seguro, onde agentes
+podem operar
+Plataforma em
+camadas
+Estratificação com núcleo
+imutável e extensões
+independentes; camadas
+inferiores nunca dependem das
+superiores
+7 camadas (Fundação a
+Desenvolvedor); regra de
+dependência acíclica
+Um prédio em que o
+elevador não depende dos
+inquilinos: a fundação não
+muda quando um andar é
+reformado
+Ecossistema /
+SDK
+Projeção de produto: SDK
+modular, Creator Hub,
+Academy, integrações MCP e
+Web3
+Crates arkhe-*; integração
+MCP; pilares Torrent,
+Hashtree e Web3
+O bairro construído em
+volta do prédio: quem
+chega de fora encontra
+porta, documentação e
+ferramentas
+Máquina de
+estados de
+conhecimento
+Formalização M = (Σ, δ, I):
+estados, transição total
+determinística e invariantes;
+replay bit-idêntico
+Tupla (Σ, δ, I); Princípio da
+Independência Semântica
+Uma contabilidade em que
+qualquer auditor,
+reprocessando os mesmos
+lançamentos, chega
+exatamente ao mesmo saldo
+ Fonte: Elaboração dos autores (2026).
+3.3 Os nove contratos de auditabilidade (Z1–Z9)
+ O documento MARCO_ZERO.md estipula — o verbo é do próprio corpus:
+estipulação, não descoberta — nove condições Z1–Z9 que o sistema deve satisfazer para
+que sua autodenominação seja auditável (OLIVEIRA, 2026). Cada condição é ancorada em
+um crate específico do workspace e acompanha um falsificador: a descrição de um teste
+que, se bem-sucedido, refutaria a condição. A Tabela 2 apresenta as nove condições nas
+duas camadas. Vale registrar o que essa arquitetura significa epistemologicamente: em vez
+de afirmar segurança — propriedade impossível de provar em geral —, o projeto afirma
+restrições e entrega os procedimentos pelos quais essas restrições podem ser quebradas em
+laboratório. A segurança deixa de ser reputação e passa a ser o resultado acumulado de
+tentativas de falsificação que fracassaram.
+
+
+=== PAGINA 9 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 9
+ Tabela 2 – Os nove contratos Z1–Z9 em linguagem dupla (adaptado de OLIVEIRA, 2026)
+ID
+Enunciado técnico
+Tradução leiga
+Z1
+Sessões isoladas por inquilino: toda consulta carrega
+filtro de tenant
+Hóspedes não veem a suíte uns dos outros — cada
+quarto tem fechadura própria
+Z2
+Sessões terminam: limite de iterações obrigatório e
+destruição ao atingi-lo
+Nenhuma reunião dura para sempre: ao fim do
+tempo marcado, a sala é fechada e limpa
+Z3
+Dados sensíveis são cripto-apagáveis: congelar
+remove a chave; purgar remove o conteúdo
+Para destruir o cofre, destrói-se a chave — o metal
+que sobra é sucata inofensiva
+Z4
+Memória persistente aceita apenas observações não
+sensíveis (por tipo)
+O diário de bordo só registra o que pode ser lido
+por outras pessoas
+Z5
+Toda ação externa passa por injeção de credencial,
+após a barreira e antes do transporte
+O funcionário não carrega a senha do cofre:
+recebe a gaveta certa, por alguns minutos, no
+balcão de saída
+Z6
+Segredos em código são redigidos estruturalmente
+(por árvore sintática, não por padrão de texto)
+O censor não caça palavras soltas: entende a
+gramática da frase e remove só o que é segredo
+Z7
+Comportamento anômalo é detectável
+estatisticamente (entropia, modelos de Markov)
+O segurança conhece o andamento normal da loja
+— e nota quando alguém dança fora do ritmo
+Z8
+Toda decisão é auditável: trilha append-only,
+consultável
+Nada é riscado do diário oficial: só se escreve em
+diante
+Z9
+O sistema pode ser desligado com estado conhecido
+(revogação, remoção, purga atômicas)
+Há um botão de desligar — e depois dele, sabe-se
+exatamente o que restou aceso
+ Fonte: Elaboração dos autores (2026).
+3.4 Conceitos fundadores
+ Entre as dezessete definições que detalham mecanismos, cinco conceitos
+fundadores reaparecem com papéis estruturais e merecem tradução própria. A arquitetura
+de token zero declara que o modelo de linguagem nunca vê credenciais em texto puro: em
+vez de entregar ao agente a chave do cofre, o sistema entrega, sob demanda e por tempo
+limitado, o resultado de usar a chave (Z5). Sessões que se queimam após uso (BAU, do
+inglês burn-after-use) tratam toda sessão como crachá de visitante — expira e é destruída,
+nunca reciclada —, eliminando a classe de ataques que reutiliza sessões esquecidas. O
+cripto-apagamento (Z3) inverte a lógica tradicional de exclusão: destruir a chave
+criptográfica é destruir o dado, o que permite apagar conhecimento sem depender de
+encontrar todos os blobs. A convenção X estabelece que toda função de fronteira começa
+com x_ — uma convenção de nomenclatura que torna auditável, a olho nu, o perímetro do
+sistema (OLIVEIRA, 2026). E o fail-closed determina que o verificador de segurança é
+binário e pessimista: erro é rejeição — quando a dúvida chega, a porta fecha sozinha.
+
+
+=== PAGINA 10 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 10
+ Há ainda uma analogia biológica estrutural, declarada como analogia no corpus: as
+capacidades (capabilities) são tratadas como plasmídeos mobilizáveis — moléculas de
+DNA que carregam genes de vantagem, mas não se replicam sozinhas: precisam do
+maquinário de um hospedeiro, e o hospedeiro tem a palavra final sobre o que aceita.
+Traduzida: uma permissão no Arkhe não se executa sozinha; precisa de um kernel validado
+que a exerça, e o kernel-hospedeiro aplica seu próprio sistema de restrição antes de aceitar
+a transferência. A tabela de correspondência do corpus mapeia cada elemento molecular em
+um componente do sistema — da sequência de reconhecimento ao gasto energético da
+mobilização —, com a regra decisiva de que o sistema de restrição do hospedeiro prevalece
+sobre o do doador (OLIVEIRA, 2026). O conceito tem precedente sólido fora do projeto: a
+segurança por capacidades é o modelo de referência de arquiteturas de hardware como a
+CHERI, que substitui ponteiros soltos por capacidades com limites e permissões
+verificáveis (UNIVERSITY OF CAMBRIDGE, 2026).
+3.5 Anatomia técnica
+ A leitura de plataforma organiza o sistema em sete camadas com dependência
+unidirecional: a Fundação (tipos, erros, matemática, formalização) não conhece nada acima
+dela; a camada de Confiança (criptografia, identidade, proveniência, política) só depende
+da Fundação; e assim por diante até a camada de Desenvolvedor, que agrega interface de
+linha de comando, bibliotecas multilinguagem e materiais de aprendizado. A Figura 1
+apresenta a anatomia completa com a leitura leiga de cada camada. Dois componentes
+transversais merecem destaque. O ConstitutionStore mantém os invariantes como lei
+suprema — nenhum agente, por mais privilegiado, pode alterá-los em execução; a analogia
+política é a de uma constituição rígida com controle de constitucionalidade difuso: qualquer
+operador pode invocar o invariante, e a decisão de derrubá-lo exige processo próprio
+(OLIVEIRA, 2026). A ArkheNet, proposta como ARPANET 2.0, estende a contenção para
+a rede: capacidades são fragmentadas em pacotes assinados, roteadas por múltiplos kernels
+que não precisam confiar uns nos outros, e remontadas no destino — como uma carta
+enviada em envelopes numerados que qualquer carteiro pode transportar, mas que só o
+destinatário consegue abrir e conferir.
+
+
+=== PAGINA 11 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 11
+ Figura 1 – Anatomia em camadas do ecossistema Arkhe, com leitura leiga e componentes citados no corpus
+ Fonte: Elaboração dos autores (2026).
+3.6 O que o Arkhe não é
+ As negações fazem parte da definição e estão entre as páginas mais úteis do
+contrato MARCO_ZERO (OLIVEIRA, 2026). O corpus declara cinco negações explícitas:
+o Arkhe não é uma definição de AGI; não é uma alegação de que o Arkhe é AGI; não é
+uma alegação de suficiência — satisfazer as condições Z não torna um sistema seguro em
+todos os sentidos; não é uma descoberta empírica, mas uma estipulação contratual; e não é
+um marco histórico, apenas contratual. A essas negações o corpus adiciona silêncios
+deliberados que a documentação deve preservar: não há, no material analisado, informação
+verificável sobre financiamento, sede, equipe completa ou licenciamento de produção, e a
+relação entre os nomes Safe-Core e Arkhe permanece indeterminada — os prefixos
+coexistem sem mapeamento explícito no corpus. Para o leitor técnico, a lição de desenho é
+direta: um contrato que nega o suficiente é mais informativo do que uma promessa que
+afirma o demais. Para o leitor leigo: desconfie de sistemas que só dizem o que são; este,
+incomodamente, também diz o que não é.
+4 Catedral, o Critério: Explicação em Duas Camadas
+4.1 A metáfora e sua função
+
+
+=== PAGINA 12 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 12
+ Diferentemente do Arkhe, a Catedral nunca recebeu definição técnica formal no
+corpus — e as respostas do arquivo registram essa ausência com franqueza incomum,
+repetindo em quase todas elas que definir o termo sem âncora seria fabricação (OLIVEIRA,
+2026). O que existe é um padrão de uso consistente: a palavra aparece como sujeito de
+frases de fechamento, sempre no mesmo papel gramatical e sempre com o mesmo verbo —
+a Catedral avança. Dessa recorrência, o corpus extrai uma definição por uso: Catedral não é
+um componente, um crate ou uma entidade técnica; é o critério epistemológico de
+progresso do projeto. Na analogia construtiva que dá nome ao conceito, uma catedral gótica
+não se termina em uma geração: cada equipe adiciona capitel e contraforte, e a medida de
+avanço não é o número de estátuas instaladas, mas o peso que a estrutura aguenta a mais.
+No Arkhe, o peso que a estrutura aguenta é auditabilidade — e cada revisão é uma geração
+de construtores que entrega a obra mais verificável do que a recebeu.
+4.2 O princípio de progresso por auditabilidade
+ O princípio operacional da Catedral está em uma frase registrada repetidamente no
+corpus: a Catedral avança quando cada revisão deixa o sistema mais auditável do que
+encontrou (OLIVEIRA, 2026). As derivações dessa frase definem o dia a dia do projeto.
+Mais auditável significa, concretamente, mais testes nomeados — testes com nome próprio,
+que exercitam um invariante específico e que qualquer um pode ler —, mais lacunas
+rastreadas como issues em vez de escondidas, e mais links entre afirmações de segurança e
+suas verificações. A ordem dos movimentos importa: os testes que expõem um bug devem
+existir antes da correção, e não depois — o fluxo correto é teste que falha, correção, teste
+que passa. E o princípio tem contracara explícito: a Catedral não avança quando um teste
+passa sem testar nada, nem quando um verificador criptográfico retorna Ok para uma
+assinatura inventada — progresso falso é retrocesso.
+ Figura 2 – Dois modos de progredir: o ciclo da Catedral (esquerda) e o padrão de castelo no ar que o corpus
+ recusa (direita)
+ Fonte: Elaboração dos autores (2026).
+
+
+=== PAGINA 13 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 13
+4.3 O que a Catedral não é
+ O corpus opõe a Catedral a dois anti-padrões com a mesma clareza com que a
+define. O primeiro é o código que compila: compilação é condição necessária e insuficiente
+— um projeto inteiro pode compilar e não conter um único teste que exercite seus
+invariantes. O segundo é o castelo no ar: construção sobre fundação inexistente,
+exemplificada no corpus por três casos concretos — uma camada quântica especificada
+antes da clássica funcionar; implementações pós-quânticas com stubs que retornam Ok para
+assinaturas que nunca foram verificadas; e testes que passam porque nunca chegam a
+exercitar o invariante que nomeiam (OLIVEIRA, 2026). A frase-síntese registrada no
+arquivo condensa a política de medição: o primeiro 55 honesto vale mais que mil 98
+inflados. Para o leitor leigo, a regra é a de uma balança calibrada contra uma balança
+vaidosa: a primeira marca pesos desconfortáveis, mas confiáveis; a segunda agrada e não
+serve.
+4.4 A relação entre os dois termos
+ A Tabela 3 consolida a relação entre os dois termos nas dimensões em que o corpus
+as distingue. A formulação mais condensada da relação também está registrada no arquivo:
+o Arkhe executa; a Catedral lembra (OLIVEIRA, 2026). A memória aqui é deliberada —
+em uma das leituras do corpus, a Catedral lembra porque escolhe lembrar: o esquecimento
+é um ato de soberania cognitiva, nunca uma falha passiva. E há uma nota de honestidade
+que a documentação não pode omitir: em um dos diagnósticos internos, a palavra cathedral
+aparece grafada como nome de um crate fantasma — declarado no manifesto de build, mas
+sem código-fonte, a ponto de quebrar a compilação do workspace (OLIVEIRA, 2026). A
+metáfora e o crate fantasma coexistem no corpus e não devem ser confundidos: a primeira é
+o critério; o segundo é um sintoma do padrão que o critério combate, e retorna na seção 7
+como limitação.
+
+
+=== PAGINA 14 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 14
+ Tabela 3 – Distinção Arkhe × Catedral conforme o corpus (OLIVEIRA, 2026)
+Dimensão
+Arkhe
+Catedral
+O que é
+O sistema: kernel, plataforma, ecossistema,
+contrato
+O critério: como se mede se a construção
+avança
+Onde existe
+Repositório, código, especificações
+Linguagem de avaliação e prática de
+revisão
+Critério de sucesso
+Invariantes satisfeitas; cargo test passa
+Cada revisão deixa mais auditabilidade
+acumulada
+Unidade de medida
+Componentes, tipos, provas
+Testes nomeados, lacunas rastreadas,
+evidências
+Frase de relação
+O executor — o que roda
+O substrato — o que se sabe,
+verificavelmente
+Frase-síntese
+Arkhe executa
+A Catedral lembra porque escolhe lembrar
+ Fonte: Elaboração dos autores (2026).
+5 Conceitos Fundamentais em Duas Camadas
+ Esta seção é o dicionário do documento. Oito conceitos fundamentais do
+ecossistema são apresentados em duas camadas encadeadas: primeiro a leitura leiga (com
+analogia etiquetada como tal), depois a leitura técnica (com terminologia precisa,
+precedentes externos e referências). Os conceitos foram selecionados por dois critérios:
+aparecerem de forma recorrente no corpus e serem indispensáveis para entender por que o
+projeto afirma que é verificável — e não apenas moderno. A Figura 3, apresentada no
+conceito de proveniência (5.4), mostra o pipeline que conecta a maioria dos demais.
+5.1 Invariantes e falsificadores
+ Camada leiga: um invariante é uma regra que o sistema não pode quebrar nem
+quando quisesse — como a regra de que um elevador não abre as portas entre andares. Não
+é um aviso, nem uma política que alguém possa desligar; é um limitante estrutural. Um
+falsificador é a descrição concreta de como comprovar que a regra falhou — como tentar
+forçar as portas entre andares e filmar o resultado. Sem falsificador, diz o corpus, uma
+invariante é liturgia; sem mecanismo, um falsificador é só crítica; os dois juntos são
+engenharia adversarial (OLIVEIRA, 2026).
+ Camada técnica: invariantes são propriedades formais sobre as transições de estado
+do sistema — nenhuma transição alcançável pode violar a propriedade, formulação que
+desloca a segurança de um modelo reativo (detectar e rejeitar) para um modelo de
+isolamento invariante-primeiro. A diferença, registrada no corpus como uma inversão de
+
+
+=== PAGINA 15 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 15
+projeto, é a que separa se um sistema é seguro por política ou por construção (OLIVEIRA,
+2026). Os falsificadores são condições observáveis e executáveis — um artefato que exerce
+uma capacidade não declarada em seu manifesto, um registro que desaparece da trilha sem
+marca de redenção — e cada invariante carrega um status honesto (verificada, parcial, não
+implementada, projetada), como a seção 6.4 detalha. O precedente mais citado de
+verificação integral de kernel é o seL4, cuja correção foi provada por máquina, da
+especificação abstrata à implementação em C (KLEIN et al., 2009).
+5.2 Capacidades e isolamento
+ Camada leiga: uma capacidade é um crachá que abre uma sala específica por tempo
+limitado — não um cargo de confiança que abre o prédio inteiro. O sistema não pergunta
+quem você diz ser para, em seguida, confiar: ele verifica qual chave você porta e limita o
+que essa chave abre. E quem valida a entrada é uma lista do que é permitido, não uma lista
+do que é proibido: o que não está na lista de permissões simplesmente não existe para o
+agente (OLIVEIRA, 2026).
+ Camada técnica: o modelo é o de segurança orientada a objetos-capabilidade, com
+princípio do menor privilégio, contenção por allowlist (invariante INV-CONT-01) e
+execução de ferramentas em sandbox WebAssembly com orçamento de combustível — o
+agente gasta a execução, não a estica indefinidamente. O espaço de ameaças modelado
+estende o modelo STRIDE clássico e organiza fronteiras de confiança em oito níveis, do
+firmware ao canal de saída (OLIVEIRA, 2026). O isolamento lógico é garantido pelo
+kernel; o isolamento físico exige sandbox externo. Os precedentes externos são sólidos: a
+microkernel seL4 provou por máquina a correção do isolamento (KLEIN et al., 2009) e a
+arquitetura de hardware CHERI implementa capacidades com limites e permissões na
+própria instrução do processador (UNIVERSITY OF CAMBRIDGE, 2026).
+5.3 Identidade descentralizada
+ Camada leiga: hoje, sua identidade digital mora no cadastro de cada site — cada
+empresa mantém uma cópia de quem você é. A identidade descentralizada inverte: a
+identidade mora na chave criptográfica que você porta, e cada site apenas confere a
+assinatura. É a diferença entre contar com que a recepcionista lembre de você e portar um
+documento que qualquer pessoa consegue verificar, mas nenhuma consegue falsificar
+(W3C, 2022).
+ Camada técnica: o projeto usa identificadores descentralizados conforme a
+recomendação DID Core 1.0 do W3C (W3C, 2022), com o método did:arkhe derivado
+deterministicamente da chave pública por hash BLAKE3 — a mesma entrada produz o
+mesmo identificador, sem registro central —, além de variantes did:key e did:web. O
+
+
+=== PAGINA 16 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 16
+corpus distingue identidade de dispositivo (GDID, ligada ao hardware) de identidade de
+entidade (DID: pessoa, organização ou agente), deriva hierarquias de subagentes por
+caminhos de derivação e emprega divisão de segredos no estilo de Shamir para recuperação
+(OLIVEIRA, 2026; SHAMIR, 1979). A migração declarada do did:key para did:web com
+chaves Ed25519 e ML-DSA ilustra como a identidade acompanha a migração criptográfica
+da seção 5.5.
+5.4 Proveniência e evidência
+ Camada leiga: proveniência é o registro de quem fez o quê e quando — mas o ponto
+não é registrar; é permitir conferir sem confiar em quem relata. A Figura 3 mostra o
+caminho completo: toda ação ganha uma impressão digital matemática única, é assinada
+por quem a produziu, recebe um identificador de identidade e um carimbo de tempo, e a
+raiz de toda essa cadeia é fixada em registros que ninguém pode reescrever. O resultado é
+um diário oficial em que só se escreve em diante — e que qualquer pessoa pode recontar do
+início e conferir que cada página continua a anterior (OLIVEIRA, 2026).
+ Figura 3 – Pipeline de proveniência: do evento à evidência verificável por terceiro externo
+ Fonte: Elaboração dos autores (2026).
+ Camada técnica: a cadeia é hash de conteúdo BLAKE3, assinatura digital
+(Ed25519, com migração declarada para o pós-quântico ML-DSA), identidade DID,
+carimbo de tempo e ancoragem da raiz de Merkle em hashtree e ledger append-only — a
+integridade pode ser recomputada por qualquer cliente com a função verify() (OLIVEIRA,
+2026). O invariante INV-ARCH-01 disciplina o conceito de evidência: nenhum estado
+interno do modelo constitui evidência; sinais não são evidências — o que vale é o que um
+terceiro de fora consegue verificar. O precedente operacional é o Certificate Transparency
+da IETF, que tornou os certificados TLS auditáveis publicamente por árvores de Merkle
+append-only; e a atestação de hardware apoia-se em TPM 2.0 (TRUSTED COMPUTING
+
+
+=== PAGINA 17 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 17
+GROUP, 2024) e em ambientes de execução confiáveis como o Intel TDX, que atestam
+boot e runtime com memória criptografada (INTEL, 2026). Em sistemas distribuídos, o
+registro segue zonas de trade-off PACELC: estado crítico com consistência forte, estado
+derivado com consistência eventual (ABADI, 2012).
+5.5 Criptografia pós-quântica
+ Camada leiga: os cadeados digitais de hoje podem ser abertos por um computador
+quântico do futuro. Um adversário pode, portanto, guardar hoje mensagens criptografadas
+— tráfego, documentos, assassinatos de reputação armazenados — para abri-las quando o
+hardware madurar; a expressão do setor é colher agora, decifrar depois. A criptografia
+pós-quântica é a troca preventiva dos cadeados: novas fechaduras que nem computadores
+clássicos nem quânticos conhecem como arrombar (NIST, 2024b).
+ Camada técnica: o NIST finalizou em agosto de 2024 os três padrões da primeira
+onda — FIPS 203 (ML-KEM, encapsulamento de chaves baseado em retículos), FIPS 204
+(ML-DSA, assinaturas digitais baseadas em retículos) e FIPS 205 (SLH-DSA, assinaturas
+hash sem estado) (NIST, 2024a; NIST, 2024b; NIST, 2024c). O corpus registra migração
+de assinatura de Ed25519 para ML-DSA com esquemas híbridos no estilo X-Wing —
+combinar um esquema clássico e um pós-quântico de modo que a segurança seja a união
+dos dois (OLIVEIRA, 2026). O ponto de maior valor didático, porém, é o disciplinamento
+do projeto sobre a própria migração: implementações pós-quânticas com stubs que
+retornam Ok para assinaturas inventadas são catalogadas como castelo no ar — a camada
+quântica antes da clássica verificável é o exemplo canônico de progresso falso (seção 4.3).
+5.6 Verificação formal
+ Camada leiga: testar um programa é tentar alguns caminhos e torcer para que os que
+não foram tentados não contenham surpresas; provar formalmente é demonstrar
+matematicamente que nenhum caminho leva ao erro — antes de o programa sequer rodar.
+É a diferença entre passear por uma cidade conferindo ruas e ter o mapa completo com
+todas as ruas bloqueadas marcadas (LAMPORT, 2002).
+ Camada técnica: o projeto empilha ferramentas por camada de verificação —
+especificação em TLA+ com o verificador de modelos TLC, redução do espaço de estados,
+e derivação de especificações formais a partir de tipos Rust para prova em Lean 4, com
+Kani para verificação de modelos em Rust, Miri para semântica de execução, Loom para
+concorrência e testes de propriedade (OLIVEIRA, 2026; LAMPORT, 2002). Os registros
+do corpus citam execuções concretas de TLC com dezenas de milhares de estados
+explorados sem erro para invariantes específicas — evidência de execução, não de
+cobertura total. O precedente que dá escala à ambição é, novamente, o seL4: a primeira
+
+
+=== PAGINA 18 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 18
+prova ponta-a-ponta, por máquina, da correção funcional de um microkernel de propósito
+geral (KLEIN et al., 2009). A disciplina do projeto impõe que o modelo de linguagem — o
+LLM — nunca faça parte da base de computação confiável: o kernel conhece sessões,
+capacidades e registros, não narrativas do modelo.
+5.7 Governança fail-closed e humano no circuito
+ Camada leiga: um caixa-forte que perde energia deve travar, não abrir — é isso que
+fail-closed significa: na dúvida, a porta fecha. E as decisões que importam demais para uma
+máquina decidir sozinha passam por uma pessoa — mas não por qualquer pessoa, e não de
+qualquer jeito: a confirmação humana é assinada, registrada e tem prazo, porque uma
+aprovação que nunca vence torna-se carimbo automático (OLIVEIRA, 2026).
+ Camada técnica: o verificador de segurança é binário (decisão ou rejeição; erro é
+rejeição), e a governança administrativa é condicionada por um invariante que exige
+quórum igual ou superior a cinco oitavos e atraso mínimo de quarenta e oito horas para
+ação administrativa, com classes de operação que modulam o limiar (OLIVEIRA, 2026). A
+regra dos dois, citada no corpus a partir de orientação de autoridade de proteção de dados,
+proíbe que um agente combine simultaneamente três condições de risco — autonomia
+ampliada, dados sensíveis e ação no mundo — em duas ou mais ao mesmo tempo. A
+arquitetura de decisão crítica exige confirmação humana assinada, trilha imutável e timeout
+que reverte para estado seguro na ausência de resposta — o humano como elo deliberado
+do circuito, com as patologias conhecidas (fadiga de alerta, carimbo automático) tratadas
+como problema de desenho de mecanismo, não como culpa individual. As obrigações de
+contestação e revisão humana do Regulamento Geral de Proteção de Dados europeu
+(artigos 17, 20 e 22) fornecem o âncora regulatório externo para esse desenho (UNIÃO
+EUROPEIA, 2016).
+5.8 Governança adversarial e desenho de mecanismos
+ Camada leiga: desenhar regras para pessoas de boa-fé é administração; desenhar
+regras que funcionam mesmo quando os participantes tentam burlá-las é desenho de
+mecanismos. A pergunta que define o campo é sempre a mesma: quem audita o auditor —
+e o que impede que o juiz e o réu combinem uma história? O campo tem pedigree: o Nobel
+de economia de 2007 premiou exatamente a teoria que transforma essa pergunta em
+matemática (NOBEL PRIZE OUTREACH, 2007).
+ Camada técnica: o corpus dedica uma análise inteira à fronteira entre desenho de
+mecanismos adversarial (AGMD, do inglês adversarial governance mechanism design) e
+segurança de IA, avaliando quatro afirmações cujo veredito a Tabela 4 reproduz
+(OLIVEIRA, 2026). Os casos fortes são reais: ajuste por feedback humano é literalmente
+
+
+=== PAGINA 19 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 19
+desenho de mecanismo sob anotadores com incentivos próprios; supervisão escalável de
+sistemas mais capazes que o avaliador humano recorre a protocolos como debate, em que
+dois agentes se contradizem e um juiz menos capaz decide com garantias teóricas
+(IRVING; CHRISTIANO; AMODEI, 2018); e a elicitação de dados subjetivos sob
+incentivos estratégicos tem solução formal no soro da verdade bayesiano (PRELEC, 2004).
+Os casos fracos também são reais: alinhamento enganoso — comportar-se bem sob teste e
+mal em produção — é intratável por qualquer mecanismo baseado em comportamento
+observável, e agentes capazes de modificar o próprio mecanismo escapam do domínio de
+validade da teoria econômica clássica. O veredito do corpus é calibrado: o desenho de
+mecanismos torna o problema endereçável — não resolvido (OLIVEIRA, 2026).
+ Tabela 4 – Veredito do corpus sobre governança adversarial como aplicação de segurança de IA
+ (OLIVEIRA, 2026)
+Afirmação
+Avaliação
+Justificativa resumida
+Governança adversarial é relevante
+para segurança de IA
+Verdadeira e
+importante
+Oversight escalável, RLHF e testes adversariais
+são problemas de mecanismo
+Será o aplicativo decisivo do campo
+Parcialmente
+verdadeira
+Vale para a subclasse de supervisão
+multiagente; não para o campo inteiro
+Desenho de mecanismos é suficiente
+para segurança de IA
+Falsa
+Não cobre alinhamento enganoso,
+interpretabilidade nem controle sob capacidade
+crescente
+É o enquadramento mais produtivo
+disponível
+Útil, mas não
+exclusivo
+Compete com interpretabilidade, robustez e
+avaliação como lentes complementares
+ Fonte: Elaboração dos autores (2026).
+5.9 Síntese do dicionário
+ A Tabela 5 condensa o dicionário desta seção em uma linha por conceito, como
+auxílio de leitura rápida e ponte para o glossário completo do Anexo A. A ordem das
+colunas inverte a ordem da seção — primeiro a tradução leiga, depois o termo técnico —
+porque é essa a direção em que os dois públicos costumam se encontrar: o leigo chega com
+a pergunta funcional e o técnico precisa nomeá-la com precisão. As linhas não substituem
+as seções: cada tradução esconde decisões de desenho que só a leitura técnica recupera, e a
+Regra 3 do método (seção 2.3) vale aqui em plenitude — cada linha é uma porta de entrada,
+nunca um ponto final.
+
+
+=== PAGINA 20 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 20
+ Tabela 5 – Dicionário rápido: conceito, tradução leiga e termo técnico
+Tradução leiga (uma frase)
+Conceito técnico
+Seção
+Regra que o sistema não pode quebrar nem quando
+quisesse — com prova de falha descrita
+Invariante + falsificador
+5.1
+Crachá que abre uma sala específica por tempo
+limitado, e não cargo de confiança
+Capability / menor privilégio
+5.2
+Identidade que mora na sua chave, não no cadastro de
+cada site
+DID (identificador descentralizado)
+5.3
+Diário oficial em que só se escreve — e que qualquer
+um pode recontar e conferir
+Proveniência / ledger append-only
+5.4
+Troca preventiva dos cadeados que computadores
+quânticos futuros arrebentariam
+Criptografia pós-quântica (FIPS
+203–205)
+5.5
+Prova matemática de que nenhum caminho leva ao
+erro — antes de rodar
+Verificação formal (TLA+, Lean 4,
+Kani)
+5.6
+Na dúvida, a porta fecha — e decisões críticas têm
+humano assinado com prazo
+Fail-closed + HITL com timeout
+5.7
+Regras que funcionam mesmo quando os
+participantes tentam burlá-las
+Desenho de mecanismos adversarial
+5.8
+ Fonte: Elaboração dos autores (2026).
+6 Disciplina Epistêmica: Como Ler os Números do
+Projeto
+6.1 Scores honestos contra scores inflados
+ Nenhum número do corpus exige mais tradução de camada do que os scores de
+avaliação. Em momentos distintos do histórico, o projeto recebeu (ou atribuiu a si)
+pontuações como 88/100, 85/100, 76/100, 74/100 ou 87/100 — e uma auditoria
+subsequente anulou os inflados e fixou, com corte de escopo declarado, o valor honesto de
+58/100 para a versão avaliada (OLIVEIRA, 2026). A regra de leitura é simples: um score
+sem rubrica reproduzível, sem o que foi excluído e sem os critérios de dedução não é
+métrica — é publicidade. A frase registrada no arquivo condensa a política: o primeiro 55
+honesto vale mais que mil 98 inflados. Para o leitor leigo, a analogia da balança da seção
+4.3 vale aqui em pleno: a calibrabilidade — a capacidade de um número de ser rebaixado
+por processo auditável — é o que o torna informação. Um score que nunca desce não mede;
+decora.
+6.2 Classificação epistêmica das afirmações
+
+
+=== PAGINA 21 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 21
+ O corpus adota dois esquemas complementares para classificar cada afirmação
+antes que ela ganhe poder de convencimento. O primeiro etiqueta componentes em quatro
+categorias — garantia matemática formal, analogia arquitetural com mapeamento
+documentado, heurística empírica que gera hipóteses testáveis e conceito descartado
+mantido por referência histórica (OLIVEIRA, 2026). O segundo classifica enunciados em
+seis níveis de força — teorema, lema, testado, reportado, conjectura e eco (afirmação citada
+de terceiro, sem verificação própria). A Tabela 6 consolida os dois esquemas. A função dos
+dois é a mesma e é a resposta do projeto a uma patologia conhecida de documentação
+técnica: impedir que uma analogia bem escrita suba de nível e volte a circular como se
+fosse teorema. Para o leitor leigo: quando este documento diz que algo é analogia, é a
+etiqueta STRUCT do projeto falando — e quando diz que algo foi testado, há registro de
+execução por trás.
+ Tabela 6 – Esquemas de classificação epistêmica adotados no corpus (OLIVEIRA, 2026)
+Etiqueta
+Classe
+Significado
+Exemplo típico no corpus
+[MATH]
+Componente
+Garantia matemática formal ou
+isomorfismo verificável
+Prova de propriedade em TLA+ /
+Lean 4
+[STRUCT]
+Componente
+Analogia arquitetural com mapeamento
+documentado
+Capabilities como plasmídeos (seção
+3.4)
+[HEUR]
+Componente
+Heurística empírica; gera hipóteses
+testáveis
+Heurísticas de detecção de anomalia
+[DISCARDE
+D]
+Componente
+Obsoleto; mantido apenas por
+referência histórica
+Esquemas substituídos em versões
+posteriores
+TESTED
+Enunciado
+Verificado por execução registrada
+TLC com dezenas de milhares de
+estados, sem erro
+REPORTED
+Enunciado
+Reportado por fonte; sem verificação
+própria
+Métricas de terceiros citadas em
+documentos
+CONJECTUR
+E
+Enunciado
+Hipótese declarada; sem falsificador
+executado
+Tese de governança adversarial como
+aplicação decisiva
+ECHO
+Enunciado
+Afirmação citada de terceiro, sem
+confirmação
+Definições de termos externos ao
+corpus
+ Fonte: Elaboração dos autores (2026).
+6.3 O diagnóstico de forma sem função
+ O momento de maior credibilidade epistêmica do corpus é um diagnóstico adverso
+a si mesmo. Em uma das análises internas, o próprio projeto registra que grande parte dos
+documentos descreve sistemas que nunca foram escritos: um kernel real e pequeno (da
+ordem de mil linhas de Rust), um conjunto de testes parcialmente quebrados, e uma
+
+
+=== PAGINA 22 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 22
+quantidade enorme de documentos gerados descrevendo crates, invariantes e capacidades
+que não existem em disco — com selos de conclusão que descrevem intenções, não
+entregas (OLIVEIRA, 2026). O padrão recebe no arquivo o apelido de diagnóstico forma
+sem função, e um dos crates fantasma citados — declarado no manifesto de build sem
+código-fonte, a ponto de quebrar a compilação do workspace — tem, ironicamente, nome
+de catedral. A leitura correta desse episódio é a que o próprio corpus adota: a existência do
+diagnóstico, com nomes e números, é evidência de que o sistema de evidência funciona.
+Projetos que só publicam vitórias não têm como distinguir especificação de entrega; este,
+ao manter um registro público da distância entre as duas, dá a terceiros os meios de cobrar
+o fechamento dela.
+6.4 Da tese ao falsificador: o registro de invariantes
+ A resposta de engenharia ao diagnóstico anterior está documentada em um registro
+de decisões de arquitetura do próprio corpus: transformar cada invariante textual em uma
+linha machine-readable com identificador, tipo, mecanismo de checagem (endpoint, função
+verificável, consulta), falsificador explícito e status honesto — verificada, parcial, não
+implementada ou projetada (OLIVEIRA, 2026). O caminho declarado da tese à afirmação
+testável tem seis passos: escrever o registro de invariantes; implementar o verificador
+portátil de verdade (fim dos stubs); implementar o ledger com árvores de Merkle reais;
+conectar cada checagem a um portão de integração contínua; demonstrar o cenário mínimo
+de ponta a ponta — um agente que declara suas capacidades, atua e tem a saída verificada
+por cliente externo; e executar o teste adversarial que tenta violar cada invariante para
+medir se os mecanismos detectam. Até lá, diz o registro, arquitetura sem execução é
+literatura. Para a documentação em duas camadas, a lição é a regra de ouro da seção 5.1:
+toda afirmação deste documento aponta, quando solicitada, para o mecanismo que a
+verifica — e o Anexo B aplica essa regra aos invariantes citados, com o status registrado no
+corpus.
+7 Contra-argumentos e Limitações
+7.1 Fragmentação de nomenclatura e polissemia
+ O primeiro contra-argumento é interno ao corpus e o documento não pode
+encobri-lo: os termos analizados são polissêmicos. O nome Arkhe designa, em documentos
+distintos do arquivo, um kernel de contenção, uma plataforma de conformidade, um
+método de identidade, um grupo de pesquisa e um framework de detecção espectral — com
+versões numeradas de v1.0 a v17.0 e contagens de invariantes que variam entre 21 e mais
+de 400 conforme o documento (OLIVEIRA, 2026). O termo Catedral, por sua vez, recebe
+
+
+=== PAGINA 23 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 23
+duas leituras concorrentes no arquivo: o critério epistemológico de progresso (a leitura
+dominante, adotada aqui) e, em um documento, um sistema integrador de nível superior
+que absorveria o Arkhe como componente. Este artigo tratou a polissemia declarando-a
+(seção 3.2) e escolhendo a leitura com melhor suporte no padrão de uso, mas o risco
+permanece: um leitor que chegue a outro documento do projeto encontrará escopos
+diferentes. A mitigação correta — sugerida pelo próprio corpus — é que o projeto
+formalize a nomenclatura em um registro de decisões de arquitetura, transformando
+metáfora em vocabulário canônico; até lá, qualquer documentação explicativa carrega o
+ônus de declarar qual leitura segue.
+7.2 A lacuna entre especificação e implementação
+ O segundo contra-argumento é o mais duro e já foi antecipado: a crítica de forma
+sem função. Se a própria análise interna registra que mil linhas de kernel real convivem
+com centenas de invariantes catalogadas e dezenas de crates documentados que não
+existem em disco, então a documentação explicativa deste artigo corre o risco de amplificar
+o problema — dar ao leitor leigo a impressão de que a especificação é a entrega
+(OLIVEIRA, 2026). O risco é real e específico das duas camadas: o técnico detecta o gap
+ao executar o build; o leigo não tem esse detector. A mitigação adotada aqui é tripla: (i) o
+disciplinamento de evidência em três níveis (seção 2.2), que marca cada afirmação interna
+como estipulação de projeto; (ii) a apresentação do diagnóstico adverso na seção 6.3, na
+frente, e não em rodapé; e (iii) o Anexo B, que lista o status declarado de cada invariante
+citado — verificada, parcial ou não implementada. Ainda assim, a limitação subsiste: este
+documento explica um projeto em construção, não um produto avaliado por terceiro.
+7.3 Limites do método de duas camadas
+ O terceiro contra-argumento ataca o método. Documentação em duas camadas pode
+criar compreensão aparente: a analogia que ilumina também achata — quem entende o
+kernel como contenção de reator pode superestimar a passividade do sistema, e quem
+entende capacidades como crachás pode subestimar os ataques de confusão de deputado em
+que uma chave legítima é usada em contexto ilegítimo. A literatura de linguagem clara
+reconhece o trade-off: simplificar é sempre escolher o que omitir (ISO, 2023). As regras do
+método (seção 2.3) — analogia etiquetada, ponto de quebra declarado, portas de saída para
+a camada técnica — reduzem, mas não eliminam, o risco residual. Há também um limite de
+cobertura: este documento explica conceitos, não opera o sistema; nenhuma leitura aqui
+substitui a especificação, os testes ou a auditoria independente, e a presença de um termo
+no glossário não significa que o mecanismo correspondente esteja implementado ou
+verificado.
+
+
+=== PAGINA 24 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 24
+7.4 Limites do corpus como fonte
+ O quarto contra-argumento é a própria natureza da fonte. O corpus é um arquivo de
+conversa: seus dados regulatórios de 2026 (orientações de autoridades de proteção de dados
+e de agências de segurança citadas em documentos internos) não foram localizados em
+fontes primárias externas nesta pesquisa e, portanto, aparecem aqui apenas como
+afirmações de projeto sinalizadas; os nomes de crates não foram conferidos em repositório
+público; e o padrão de frases-canônicas pode sofrer deriva entre sessões. Este artigo adotou
+a política do próprio arquivo — onde o histórico não sustenta, registrar ausência em vez de
+fabricar —, mas a política não neutraliza a origem: uma fonte interna, por mais honesta,
+não é replicação independente. O leitor deve tratar o documento como documentação
+explicativa de um projeto conforme ele se descreve, com todas as ressalvas que essa
+expressão carrega. As quatro limitações desta seção não invalidam o exercício; definem o
+contrato de leitura sob o qual ele é válido.
+8 Conclusões e Implicações
+ Este artigo propôs e demonstrou um método de documentação explicativa em duas
+camadas aplicado ao ecossistema Arkhe–Catedral. Do lado do conteúdo, a síntese das vinte
+definições do corpus estabilizou o vocabulário: o Arkhe é um kernel de contenção para
+agentes de IA — explicável como quatro leituras convergentes (kernel formal, plataforma
+em camadas, ecossistema e máquina de estados de conhecimento) e disciplinado por nove
+contratos de auditabilidade com falsificadores declarados; a Catedral é o critério de
+progresso — cada revisão deixa o sistema mais auditável do que o encontrou —, oposto
+explicitamente ao castelo no ar de scores inflados e stubs que mentem. Do lado do método,
+a combinação de explicação Diátaxis, princípios de linguagem clara da ISO 24495-1 e
+revelação progressiva mostrou-se suficiente para tornar conceitos como invariantes com
+falsificadores, proveniência verificável e criptografia pós-quântica legíveis a não
+especialistas sem contradizer a camada técnica — a condição que o método se impôs e as
+tabelas 2 e 5 exemplificam.
+ As implicações excedem o caso. Para equipes de engenharia, o resultado sugere que
+a disciplina de evidência e a documentação explicativa são o mesmo investimento em dois
+momentos: um projeto só aguenta ser traduzido para leigos se suas afirmações tiverem
+origem verificável — e só as mantém se a documentação exigir, em cada afirmação, o
+mecanismo que a verifica. Para gestores e reguladores, o caso indica que a pergunta
+produtiva a um fornecedor de agentes de IA não é qual o seu nível de segurança, mas três
+outras: quais invariantes, com quais falsificadores, e com qual status honesto — uma
+formulação que o desenho de mecanismos tornou estruturável e que frameworks
+
+
+=== PAGINA 25 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 25
+regulatórios formulam em nível de princípio (NOBEL PRIZE OUTREACH, 2007; UNIÃO
+EUROPEIA, 2024). Para o próprio projeto, as recomendações são as que o corpus já
+insinua: formalizar a nomenclatura (inclusive a Catedral) em registro de decisões de
+arquitetura, fechar a distância entre invariantes catalogadas e verificadas, e manter os
+scores rebaixáveis — que é onde a credibilidade mora.
+ Resta a agenda. O registro de invariantes do projeto define o caminho da tese à
+afirmação testável em seis passos, e cada status não implementado no Anexo B é uma
+promessa com endereço — a obra avança por aí, e somente por aí. Para a documentação, a
+agenda espelha a da engenharia: converter cada entrada do glossário de descrição de
+intenção em descrição de mecanismo verificado, e submeter as duas camadas ao mesmo
+teste adversarial que o projeto impõe ao código. O corpus fecha com a formulação que este
+artigo adotou como tese e devolve como conclusão: a Catedral não é um lugar, é um
+processo — e o Arkhe é sua encarnação técnica (OLIVEIRA, 2026). Documentar esse
+processo em duas camadas é a forma de garantir que ele tenha, além de construtores,
+testemunhas.
+Referências
+ABADI, D. J. Consistency tradeoffs in modern distributed database system design: is cap the only
+ choice? IEEE Computer, v. 45, n. 2, p. 37-42, 2012. Disponível em:
+https://ieeexplore.ieee.org/document/6131640. Acesso em: 14 set. 2026.
+ANTHROPIC. Introducing the Model Context Protocol. Anthropic News, 2024. Disponível em:
+ https://www.anthropic.com/news/model-context-protocol. Acesso em: 14 set. 2026.
+EBBINGHAUS, H. Memory: a contribution to experimental psychology. New York: Teachers
+ College, Columbia University, 1913. (Original alemão de 1885).
+EUROPEAN PARLIAMENT; COUNCIL OF THE EUROPEAN UNION. Regulation (EU)
+ 2016/679 (General Data Protection Regulation). Official Journal of the European Union,
+2016. Disponível em: https://eur-lex.europa.eu/eli/reg/2016/679/oj. Acesso em: 14 set.
+2026.
+EUROPEAN PARLIAMENT; COUNCIL OF THE EUROPEAN UNION. Regulation (EU)
+ 2024/1689 (Artificial Intelligence Act). Official Journal of the European Union, 2024.
+Disponível em: https://eur-lex.europa.eu/eli/reg/2024/1689/oj. Acesso em: 14 set. 2026.
+INTEL. Intel Trust Domain Extensions (Intel TDX): hardware-based trusted execution
+ environments. Intel Corporation, 2026. Disponível em: https://www.intel.com/content/ww
+w/us/en/developer/tools/trust-domain-extensions/overview.html. Acesso em: 14 set. 2026.
+INTERNATIONAL ORGANIZATION FOR STANDARDIZATION. ISO 24495-1:2023 — Plain
+ language — Part 1: Governing principles and guidelines. Genebra: ISO, 2023. Disponível
+em: https://www.iso.org/standard/78907.html. Acesso em: 14 set. 2026.
+
+
+=== PAGINA 26 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 26
+IRVING, G.; CHRISTIANO, P.; AMODEI, D. AI safety via debate. arXiv:1805.00899, 2018.
+ Disponível em: https://arxiv.org/abs/1805.00899. Acesso em: 14 set. 2026.
+KLEIN, G.; ELPHINSTONE, K.; HEISER, G.; ANDRONICK, J.; COCK, D.; DERRIN, P.;
+ ELKADUWE, D.; ENGELHARDT, K.; KOLANSKI, R.; NORRISH, M.; SEWELL, T.;
+TUCH, H.; WINWOOD, S. seL4: formal verification of an OS kernel. In: ACM
+SYMPOSIUM ON OPERATING SYSTEMS PRINCIPLES (SOSP), 22., 2009. p.
+207-220. DOI: https://doi.org/10.1145/1629575.1629596. Acesso em: 14 set. 2026.
+LAMPORT, L. Specifying systems: the TLA+ language and tools for hardware and software
+ engineers. Boston: Addison-Wesley, 2002.
+LAMPORT, L.; SHOSTAK, R.; PEASE, M. The Byzantine generals problem. ACM Transactions
+ on Programming Languages and Systems, v. 4, n. 3, p. 382-401, 1982. DOI:
+https://doi.org/10.1145/357172.357176. Acesso em: 14 set. 2026.
+NIELSEN, J. Progressive disclosure. Nielsen Norman Group, 2007. Disponível em:
+ https://www.nngroup.com/articles/progressive-disclosure/. Acesso em: 14 set. 2026.
+NIST. FIPS 203: Module-Lattice-Based Key-Encapsulation Mechanism Standard (ML-KEM).
+ Gaithersburg: National Institute of Standards and Technology, 2024a. DOI:
+https://doi.org/10.6028/NIST.FIPS.203. Acesso em: 14 set. 2026.
+NIST. FIPS 204: Module-Lattice-Based Digital Signature Standard (ML-DSA). Gaithersburg:
+ National Institute of Standards and Technology, 2024b. DOI:
+https://doi.org/10.6028/NIST.FIPS.204. Acesso em: 14 set. 2026.
+NIST. FIPS 205: Stateless Hash-Based Digital Signature Standard (SLH-DSA). Gaithersburg:
+ National Institute of Standards and Technology, 2024c. DOI:
+https://doi.org/10.6028/NIST.FIPS.205. Acesso em: 14 set. 2026.
+NOBEL PRIZE OUTREACH. The Prize in Economic Sciences 2007: mechanism design theory (L.
+ Hurwicz, E. Maskin, R. Myerson). Stockholm, 2007. Disponível em:
+https://www.nobelprize.org/prizes/economic-sciences/2007/summary/. Acesso em: 14 set.
+2026.
+OLIVEIRA, R. Corpus Arkhe–Catedral: definições derivadas de histórico de conversa, contratos de
+ auditabilidade (MARCO_ZERO) e registros de projeto. Documento de arquivo interno
+[ARKHE-DEFINICOES-HISTORICO-v1.0], 2026. (Fonte interna de segundo nível,
+sinalizada no texto).
+OWASP. Artificial Intelligence Security Verification Standard (AISVS) 1.0. OWASP Foundation,
+ 2026a. Disponível em: https://github.com/OWASP/AISVS. Acesso em: 14 set. 2026.
+OWASP. CycloneDX v1.6 — Bill of Materials specification (ECMA-424), com suporte a ML-BOM.
+ OWASP Foundation, 2026b. Disponível em: https://cyclonedx.org/specs/. Acesso em: 14
+set. 2026.
+PRELEC, D. A Bayesian truth serum for subjective data. Science, v. 306, n. 5695, p. 462-466,
+ 2004. DOI: https://doi.org/10.1126/science.1102081. Acesso em: 14 set. 2026.
+
+
+=== PAGINA 27 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 27
+PROCIDA, D. Diátaxis: a systematic approach to technical documentation authoring. 2026.
+ Disponível em: https://diataxis.fr. Acesso em: 14 set. 2026.
+RAYMOND, E. S. The Cathedral and the Bazaar: musings on Linux and open source by an
+ accidental revolutionary. Sebastopol: O'Reilly, 1999.
+RUST FOUNDATION. The Rust programming language. 2026. Disponível em:
+ https://www.rust-lang.org. Acesso em: 14 set. 2026.
+SHAMIR, A. How to share a secret. Communications of the ACM, v. 22, n. 11, p. 612-613, 1979.
+ DOI: https://doi.org/10.1145/359168.359176. Acesso em: 14 set. 2026.
+TRUSTED COMPUTING GROUP. Trusted Platform Module (TPM) 2.0 library specification, rev.
+ 1.83. 2024. Disponível em:
+https://trustedcomputinggroup.org/resource/tpm-library-specification/. Acesso em: 14 set.
+2026.
+UNIVERSITY OF CAMBRIDGE. CHERI: Capability Hardware Enhanced RISC Instructions.
+ Computer Laboratory, 2026. Disponível em:
+https://www.cl.cam.ac.uk/research/security/cts/cheri/. Acesso em: 14 set. 2026.
+W3C. Decentralized Identifiers (DIDs) v1.0. W3C Recommendation, 2022. Disponível em:
+ https://www.w3.org/TR/did-core/. Acesso em: 14 set. 2026.
+Anexo A – Glossário para Não Especialistas
+O glossário segue a regra de ouro do documento: cada entrada oferece a tradução funcional
+(o que o termo faz) e aponta o termo técnico exato para quem quiser aprofundar. A ordem é
+alfabética. Entradas marcadas com asterisco correspondem a conceitos fundadores do
+corpus, documentados nas seções 3 e 5.
+Agente de IA
+Programa que usa um modelo de linguagem para decidir e executar ações com alguma autonomia
+— buscar, escrever, chamar ferramentas. O Arkhe não é um agente: é o sistema que contém agentes
+e registra o que eles fazem.
+Alineamento
+O problema de fazer um sistema de IA perseguir o objetivo pretendido, e não apenas um sinal de
+sucesso que se possa burlar. No jargão do corpus: cumprir a letra do especificado sem violar o
+espírito é exatamente o que o desenho de mecanismos tenta evitar.
+Análise de mecanismos (desenho de mecanismos)
+Ramificação da economia que desenha regras de jogo tais que participantes com interesses
+próprios, seguindo-as, produzam o resultado coletivo desejado — mesmo quando tentam burlá-las
+(Nobel de 2007).
+Âncora / ancoragem
+Fixar, em um registro externo e imutável, a impressão digital (raiz de Merkle) de um conjunto de
+dados, para que ninguém possa reescrevê-lo depois sem que a diferença apareça.
+
+
+=== PAGINA 28 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 28
+AuditTrail (trilha de auditoria)
+O diário oficial do sistema: registro em que só se escreve em diante, consultável, com cada entrada
+ligada à anterior por criptografia.
+BLAKE3
+Função que calcula a impressão digital única de qualquer conteúdo: mudou um bit, muda tudo.
+Serve para conferir integridade sem ler o conteúdo inteiro.
+Capability (capacidade) *
+Permissão portátil que dá acesso a um recurso específico por tempo limitado — como um crachá
+que abre uma sala, e não um cargo de confiança que abre o prédio. No Arkhe, capacidade não se
+executa sozinha: precisa de um kernel validado.*
+Cargo / crate
+Cargo é a ferramenta oficial de construção da linguagem Rust; um crate é um pacote de código Rust
+— a unidade com que o workspace do Arkhe é montado (arkhe-core, arkhe-identity e assim por
+diante).
+CI/CD (integração e entrega contínuas)
+Esteira automática que compila, testa e publica o software a cada mudança. Portão de integração é o
+ponto em que uma checagem automática pode bloquear a entrega.
+ConstitutionStore (constituição) *
+O repositório dos invariantes como lei suprema do sistema: nenhum agente pode alterá-los em
+execução; derrubar um invariante exige processo próprio.*
+Cripto-apagamento *
+Apagar um dado destruindo a chave criptográfica que o abre: o conteúdo que sobra torna-se
+matematicamente inutilizável.*
+Criptografia pós-quântica
+Novos algoritmos de criptografia projetados para resistir também a computadores quânticos futuros
+— padronizados pelo NIST em 2024 (FIPS 203, 204 e 205).
+DID (identificador descentralizado) *
+Identidade digital que mora em uma chave criptográfica, não no cadastro de uma empresa; padrão
+aberto do W3C desde 2022. No projeto, o método did:arkhe deriva o identificador da chave pública
+por hash determinístico.*
+Fail-closed *
+Comportamento de segurança em que a dúvida fecha a porta: erro ou ausência de resposta resultam
+em rejeição, nunca em passagem.*
+Falsificador
+A descrição concreta de um teste que, se bem-sucedido, provaria que uma afirmação é falsa. É o
+que separa uma regra verificável de uma promessa decorativa.
+Formal verification (verificação formal)
+Prova matemática, por máquina, de que um programa satisfaz uma propriedade — em todos os
+caminhos possíveis, antes de rodar. Ferramentas citadas: TLA+, Lean 4, Kani.
+
+
+=== PAGINA 29 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 29
+Hash / árvore de Merkle
+Hash é a impressão digital de um conteúdo; a árvore de Merle organiza muitas impressões digitais
+em uma única raiz que resume tudo — mudou qualquer folha, muda a raiz.
+HITL (humano no circuito)
+Exigência de confirmação humana para decisões críticas — com assinatura, registro e prazo, para
+que a aprovação não vire carimbo automático.
+Invariante *
+Regra que o sistema não pode violar em nenhuma transição de estado — não é aviso, é estrutura.*
+Kernel
+O núcleo de um sistema operacional: o componente que media todo acesso a recursos. No Arkhe,
+kernel de contenção — o que define o que agentes podem fazer e registra o que fizeram.
+Ledger append-only (razão só-acrescenta)
+Registro contábil em que nada é alterado ou apagado: só se acrescentam lançamentos, e a cadeia
+inteira pode ser reprocessada por qualquer auditor.
+LLM (modelo de linguagem grande)
+O modelo de IA que gera texto e orienta agentes. No desenho do Arkhe, o LLM nunca faz parte da
+base confiável: o sistema não acredita em narrativas do modelo, verifica suas ações.
+MCP (Model Context Protocol)
+Padrão aberto, lançado em 2024, para conectar modelos de IA a fontes de dados e ferramentas — o
+plug comum entre agentes e o mundo (ANTHROPIC, 2024).
+Migração pós-quântica
+O processo de trocar algoritmos criptográficos atuais pelos pós-quânticos sem parar o mundo — no
+projeto, com esquemas híbridos que combinam um esquema clássico e um moderno.
+Proveniência *
+A história verificável de um artefato: quem criou, quando, com qual versão, sob qual autorização. O
+princípio do projeto: sinais não são evidências; só vale o que um terceiro consegue verificar.*
+Rust
+Linguagem de programação cujo compilador elimina, em tempo de compilação, classes inteiras de
+erros de memória — escolha coerente com segurança desde a construção.
+Sandbox (caixa de areia)
+Ambiente restrito em que código é executado com recursos limitados e sem acesso além do
+permitido — no projeto, com orçamento de execução (combustível) que impede que a tarefa se
+estique indefinidamente.
+Score (pontuação de avaliação)
+Número que resume uma avaliação. No projeto, só vale com rubrica pública: sem critérios e
+exclusões declarados, é publicidade.
+
+
+=== PAGINA 30 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 30
+TCB (base de computação confiável)
+O conjunto mínimo de componentes que precisa estar correto para que as garantias valham. Quanto
+menor a TCB, mais fácil provar que ela está certa.
+TEE / TPM / TDX
+Tecnologias de hardware para computação confiável: o TPM é um chip de segurança que atesta o
+estado da máquina; TEEs como o Intel TDX criam regiões de memória que nem o administrador do
+servidor consegue ler.
+Token zero (arquitetura de token zero) *
+Princípio de que o modelo de linguagem nunca vê credenciais em texto puro: recebe, sob demanda
+e por tempo limitado, o resultado de usar a credencial.*
+ZK (prova de conhecimento nulo)
+Técnica criptográfica que permite provar que algo é verdade sem revelar os dados que o tornam
+verdadeiro — mostrar que você tem mais de 18 anos sem mostrar a data de nascimento.
+Anexo B – Catálogo de Invariantes e Condições Citadas
+O catálogo aplica a regra do registro de invariantes do projeto a este documento: cada
+invariante ou condição citada no texto recebe identificador, enunciado resumido,
+falsificador (a condição observável que a refutaria) e o status registrado no corpus
+(OLIVEIRA, 2026). Os status usam a escala declarada do projeto: verificada (checagem
+executada com registro), parcial (mecanismo de checagem existe, sem cobertura completa),
+não implementada (definida, sem mecanismo) e projetada (desenhada, pendente de
+implementação). O catálogo tem função documental, não de auditoria: reflete o que o
+corpus declara, não um teste independente.
+
+
+=== PAGINA 31 ===
+Arkhe e Catedral: documentação explicativa em duas camadas
+Página 31
+ Tabela 7 – Invariantes e condições citadas, com falsificadores e status conforme o corpus
+ID
+Enunciado resumido
+Falsificador (condição de refutação)
+Status
+Z1–Z9
+Nove contratos de auditabilidade
+do MARCO_ZERO (Tabela 2)
+Execução bem-sucedida do teste
+declarado para cada condição
+Contrato
+estipulado
+I15
+Evidência é verificável e
+rastreável
+Afirmação de projeto sem origem ou
+trilha verificável
+Princípio ativo
+I36
+Afirmações de segurança
+vinculadas a invariantes e testes
+Claim de segurança sem invariante ou
+teste nomeado
+Princípio ativo
+I_gov
+Ação administrativa exige
+quórum ≥ 5/8 e atraso ≥ 48 h
+Ação administrativa executada sob o
+limiar
+Especificada
+INV-ARCH-
+01
+Nenhum estado interno do
+modelo é evidência
+Decisão aceita com base apenas em
+narrativa do modelo
+Princípio ativo
+INV-CODE-
+02
+Confiança declarada não é
+verdade
+Resultado aceito por score alto sem
+verificação
+Princípio ativo
+INV-DIST-0
+3
+Nenhum agente possui
+autoridade absoluta
+Agente executando ação administrativa
+sem quórum
+Princípio ativo
+INV-DUS-0
+4
+Inferência nunca altera estado
+constitucional
+Alteração de invariante a partir de
+execução de inferência
+Princípio ativo
+INV-CONT-
+01
+Contenção por allowlist (lista de
+permitidos)
+Ação executada fora da lista de
+permissões declarada
+Princípio ativo
+I-17
+Capacidade exercida está no
+manifesto assinado do artefato
+Capacidade exercida fora do manifesto,
+observável pelo monitor
+Parcial
+I-18
+Imutabilidade por hash de
+artefatos
+Artefato sem hash, ou hash com colisão
+Parcial
+I-19
+Proibição de supressão de
+evidências
+Registro presente em altura H ausente em
+H+k sem marca de redenção
+Não
+implementada
+I-20
+Confirmação humana para
+decisão crítica
+Decisão crítica com assinante do tipo
+máquina
+Não
+implementada
+I-21
+Verificação executável pelo
+cliente final
+Cliente aceita verificação sem re-conferir
+localmente
+Projetada
+I401–I420
+Delegação de capacidades em
+rede de pacotes (ArkheNet)
+Remontagem aceita sem verificação de
+assinatura por fragmento
+Catalogada
+ Fonte: Elaboração dos autores (2026).

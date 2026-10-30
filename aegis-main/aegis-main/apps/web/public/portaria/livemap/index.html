@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Favicon + preview de link PADRAO: logo light + cor de destaque do AEGIS
+       (dinamico, mesma origem /api). Um padrao em toda superficie. -->
+  <link rel="icon" type="image/svg+xml" href="/api/brand/favicon">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/api/brand/og">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="/api/brand/og">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content="Mapa ao vivo — acompanhamento em tempo real">
+  <title>Mapa ao vivo</title>
+  <script>
+    // Título segue o NOME DA MARCA setado no painel do AEGIS (company_name).
+    (async () => { try {
+      const r = await fetch(location.origin + '/api/styles/brand/public', { cache: 'no-store' });
+      if (!r.ok) return; const b = await r.json();
+      if (b && typeof b.company_name === 'string' && b.company_name.trim())
+        document.title = b.company_name.trim() + ' · Mapa ao vivo';
+    } catch (e) {} })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=f31f736ae7">
+  <!-- Onda 3 Safe Tag: backend AEGIS (sem Firebase, sem JWT-na-URL, sem
+       analytics externo). A portaria loga no AEGIS; um EventSource same-origin
+       (cookie httpOnly) recebe o push. Google Maps mantido (D8). app.js é módulo. -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAf015vyZY1dKf0PM9Ehp047QR6PWjPlsk"></script>
+  <script type="module" src="js/app.js?v=f31f736ae7"></script>
+</head>
+
+<body>
+  <!-- Loading indicator -->
+  <div id="loading" class="loading">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- Error message -->
+  <div id="error-message" class="error-message"></div>
+
+  <!-- Map container -->
+  <div id="map"></div>
+</body>
+
+</html>

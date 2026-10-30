@@ -1,0 +1,156 @@
+# Hotelaria — o vertical de prova do tijolo 1.
+#
+# Este ficheiro É o produto. Não há `seed_hotelaria.py` com 400 linhas ao
+# lado: o que um hotel tem — as suas unidades, os seus quartos, as suas
+# relações — está aqui, em dado legível.
+#
+# Para acrescentar um quarto: acrescente uma linha em `dados`. Nada mais.
+
+id: hotelaria
+versao: 1
+titulo: Operação Hoteleira
+
+licenca:
+  # A licença tem de declarar este vertical para a ilha poder ser instalada.
+  exige: hotelaria
+  node_locked: true
+
+brand:
+  nome: Operação Hoteleira
+  cor_primaria: '#2D77BE'
+
+ontologia:
+  tipos:
+    - nome: unidade
+      rotulo: Unidade
+      propriedade_titulo: nome
+      reforco: strict
+      propriedades:
+        - { nome: nome,   rotulo: Nome,  tipo: texto }
+        - { nome: andares, rotulo: Andares, tipo: numero }
+
+    - nome: quarto
+      rotulo: Quarto
+      propriedade_titulo: nome
+      reforco: strict
+      propriedades:
+        - nome: nome
+          rotulo: Quarto
+          tipo: texto
+        - nome: situacao
+          rotulo: Situação
+          tipo: texto
+        - nome: andar
+          rotulo: Andar
+          tipo: numero
+        - nome: cama
+          rotulo: Camas
+          tipo: numero
+
+    - nome: hospede
+      rotulo: Hóspede
+      propriedade_titulo: nome
+      reforco: strict
+      propriedades:
+        - { nome: nome,     rotulo: Nome,      tipo: texto }
+        - { nome: documento, rotulo: Documento, tipo: texto }
+        - { nome: telefone,  rotulo: Telefone,  tipo: texto }
+
+    - nome: reserva
+      rotulo: Reserva
+      propriedade_titulo: codigo
+      reforco: strict
+      propriedades:
+        - { nome: codigo,   rotulo: Código,    tipo: texto }
+        - { nome: entrada,  rotulo: Entrada,   tipo: data }
+        - { nome: saida,    rotulo: Saída,     tipo: data }
+        - { nome: situacao, rotulo: Situação,  tipo: texto }
+
+  links:
+    - { nome: quarto_da_unidade, de: quarto,   para: unidade,  cardinalidade: many_to_one }
+    - { nome: hospedado_em,     de: hospede,  para: unidade,  cardinalidade: many_to_one }
+    - nome: reserva_de_hospede
+      de: hospede
+      para: reserva
+      cardinalidade: one_to_many
+      rotulo: Reservas do hóspede
+    - { nome: reserva_no_quarto, de: reserva,  para: quarto,   cardinalidade: many_to_one }
+
+  acoes:
+    - { nome: criar_reserva,    rotulo: Criar reserva,   alvo: reserva, regra: criar_objeto }
+    - { nome: encerrar_reserva, rotulo: Encerrar reserva, alvo: reserva, regra: modificar_objeto }
+    - { nome: check_in,         rotulo: Check-in,       alvo: reserva, regra: modificar_objeto }
+    - { nome: check_out,        rotulo: Check-out,      alvo: reserva, regra: modificar_objeto }
+
+paginas:
+  - slug: operacao-ao-vivo
+    rotulo: Operação ao vivo
+    ficheiro: paginas/operacao-ao-vivo.json
+
+menu:
+  home: operacao-ao-vivo
+  # 🔴 Este placeholder só é escrito quando o atual está vazio ou é o de
+  # fábrica. Texto do operador é sagrado.
+  busca_placeholder: Buscar reservas, quartos e hóspedes…
+
+saude:
+  # 🔴 As duas formas, como o greenboot já faz. `@` é **embutida** — a ilha
+  # confere sem depender de ferramenta nenhuma. `saude.d/` é **drop-in** — o
+  # que só este vertical sabe, e que a ilha não pode saber por conta própria.
+  #
+  # `@banco` e `@catalogo` existem porque cada um fecha um sintoma que já
+  # custou: "declarar não implanta" (o vertical aceite e o gate a zeros) e
+  # "instalada com o tenant vazio" (tudo 200, nada na tela).
+  #
+  # Uma checagem embutida com nome que ninguém implementou é **inconclusiva**,
+  # nunca verde: o vertical pediu uma verificação e a plataforma não pode
+  # responder "passou" sem a ter corrido.
+  exigido:
+    - "@banco"
+    - "@catalogo"
+    - "@isolamento"
+  opcional:
+    # Vira `exigido` numa imagem que traga `psql`. Aqui é opcional porque
+    # "não deu para verificar" reprovaria a instalação numa bancada sem o
+    # cliente — e reprovar por ambiente é o que ensina a ignorar o vermelho.
+    - saude.d/exigido/psql.sh
+    - saude.d/opcional/vision.sh
+
+# O catálogo do hotel. Isto era, no núcleo anterior, um `seed_hotelaria.py`.
+dados:
+  - { tipo: unidade, chave: U-A, propriedades: { nome: Bloco A, andares: 3 } }
+  - { tipo: unidade, chave: U-B, propriedades: { nome: Bloco B, andares: 2 } }
+
+  - { tipo: quarto, chave: Q-101, propriedades: { nome: "Quarto 101", situacao: livre,      andar: 1, cama: 2 } }
+  - { tipo: quarto, chave: Q-102, propriedades: { nome: "Quarto 102", situacao: ocupado,    andar: 1, cama: 2 } }
+  - { tipo: quarto, chave: Q-103, propriedades: { nome: "Quarto 103", situacao: livre,      andar: 1, cama: 1 } }
+  - { tipo: quarto, chave: Q-201, propriedades: { nome: "Quarto 201", situacao: manutencao, andar: 2, cama: 3 } }
+
+  - { tipo: hospede, chave: H-1, propriedades: { nome: "Maria Souza",   documento: "123.456.789-00", telefone: "5511999990001" } }
+  - { tipo: hospede, chave: H-2, propriedades: { nome: "João Pereira", documento: "987.654.321-00", telefone: "5511999990002" } }
+
+  - { tipo: reserva, chave: R-2026-0001, propriedades: { codigo: "R-2026-0001", entrada: "2026-09-28", saida: "2026-10-02", situacao: confirmada } }
+  - { tipo: reserva, chave: R-2026-0002, propriedades: { codigo: "R-2026-0002", entrada: "2026-09-30", saida: "2026-10-05", situacao: pendente } }
+
+# As arestas. 🔴 Sem esta secção, o vertical declara quatro `links` e o banco
+# fica com **zero** arestas: o grafo do contrato descrevia uma coisa e o dado
+# não a confirmava.
+#
+# O dado é coerente com elas — a reserva 0001 aponta para o Q-102, que é o
+# quarto `ocupado`; a 0002 aponta para o Q-101, que está `livre`. Um catálogo
+# em que a reserva aponta para um quarto livre não é um detalhe: é a tela
+# errada com dados certainos.
+ligacoes:
+  - { nome: quarto_da_unidade, de: { tipo: quarto, chave: Q-101 }, para: { tipo: unidade, chave: U-A } }
+  - { nome: quarto_da_unidade, de: { tipo: quarto, chave: Q-102 }, para: { tipo: unidade, chave: U-A } }
+  - { nome: quarto_da_unidade, de: { tipo: quarto, chave: Q-103 }, para: { tipo: unidade, chave: U-B } }
+  - { nome: quarto_da_unidade, de: { tipo: quarto, chave: Q-201 }, para: { tipo: unidade, chave: U-B } }
+
+  - { nome: hospedado_em, de: { tipo: hospede, chave: H-1 }, para: { tipo: unidade, chave: U-A } }
+  - { nome: hospedado_em, de: { tipo: hospede, chave: H-2 }, para: { tipo: unidade, chave: U-B } }
+
+  - { nome: reserva_de_hospede, de: { tipo: hospede, chave: H-1 }, para: { tipo: reserva, chave: R-2026-0001 } }
+  - { nome: reserva_de_hospede, de: { tipo: hospede, chave: H-2 }, para: { tipo: reserva, chave: R-2026-0002 } }
+
+  - { nome: reserva_no_quarto, de: { tipo: reserva, chave: R-2026-0001 }, para: { tipo: quarto, chave: Q-102 } }
+  - { nome: reserva_no_quarto, de: { tipo: reserva, chave: R-2026-0002 }, para: { tipo: quarto, chave: Q-101 } }

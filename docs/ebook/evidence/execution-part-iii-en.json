@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-22",
+  "scope": "Local targeted reproduction for editorial Part III",
+  "runs": [
+    {
+      "command": "cargo test --locked -p arkhe-kernel --features sqlite-broker --test rejection_gates --test budget_pco --test action_broker --test broker_durable",
+      "scope": "Complete returned tool output",
+      "result": {
+        "chunk_id": "cc7f3e",
+        "wall_time_seconds": 3.8890438,
+        "exit_code": 0,
+        "original_token_count": 580,
+        "output": "   Compiling arkhe-kernel v0.1.0 (D:\\arkhe\\kernel\\arkhe-kernel)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.74s\n     Running tests\\action_broker.rs (target\\debug\\deps\\action_broker-f6037c99bc46370e.exe)\n\nrunning 3 tests\ntest checkpoint_is_independently_trusted_and_strictly_before_dispatch ... ok\ntest mandate_rejects_tampering_in_every_signed_field_and_signature ... ok\ntest broker_requires_admission_and_never_redispatches_success_or_uncertainty ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s\n\n     Running tests\\broker_durable.rs (target\\debug\\deps\\broker_durable-504ab7f18f8f2957.exe)\n\nrunning 2 tests\ntest reopen_preserves_success_uncertainty_conflict_and_closed_consumption ... ok\ntest independent_connections_cannot_reserve_the_same_slot_twice ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s\n\n     Running tests\\budget_pco.rs (target\\debug\\deps\\budget_pco-a2e724a0eec947cd.exe)\n\nrunning 9 tests\ntest producer_has_bounded_fail_closed_domain ... ok\ntest checker_rejects_false_arithmetic_and_over_budget_conclusion_without_producer ... ok\ntest specification_change_during_evidence_lookup_rejects_old_certificate ... ok\ntest all_gate_entry_points_reject_proof_bypass_and_review_still_applies ... ok\ntest generated_certificate_roundtrips_and_authorizes_only_after_admission ... ok\ntest valid_human_review_and_budget_proof_are_both_required ... ok\ntest proof_cannot_override_denial_stop_or_transfer_between_requests ... ok\ntest missing_offline_or_wrong_proof_provenance_fails_closed ... ok\ntest malicious_certificates_are_rejected_even_when_admitted ... ok\n\ntest result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n\n     Running tests\\rejection_gates.rs (target\\debug\\deps\\rejection_gates-6d9ce591a3b2994b.exe)\n\nrunning 5 tests\ntest no_evidence_missing_wer_rejects_before_policy ... ok\ntest emergency_stop_rejects_before_policy ... ok\ntest policy_denied_rejects_even_with_worker_evidence ... ok\ntest unprotected_intents_still_follow_governance_without_worker_evidence ... ok\ntest every_protected_intent_requires_admitted_evidence_before_policy ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+      }
+    },
+    {
+      "command": "pnpm verify:wasm",
+      "scope": "Final completion output only; initial output not duplicated here",
+      "result": {
+        "chunk_id": "554c1d",
+        "wall_time_seconds": 0.000011,
+        "exit_code": 0,
+        "original_token_count": 145,
+        "output": "[INFO]: Checking for the Wasm target...\n[INFO]: Compiling to Wasm...\n    Finished `release` profile [optimized] target(s) in 0.72s\n[INFO]: Installing wasm-bindgen...\n[INFO]: Optimizing wasm binaries with `wasm-opt`...\n[INFO]: Optional fields missing from Cargo.toml: 'description', 'repository'. These are not necessary, but recommended\n[INFO]: License key is set in Cargo.toml but no LICENSE file(s) were found; Please add the LICENSE file(s) to your project directory\n[INFO]: :-) Done in 4.77s\n[INFO]: :-) Your wasm pkg is ready to publish at apps\\arkhe-intra\\public\\verifier.\n"
+      }
+    },
+    {
+      "command": "pnpm --filter @arkhe/mcp-server build",
+      "scope": "Complete returned tool output",
+      "result": {
+        "chunk_id": "f47cf0",
+        "wall_time_seconds": 4.4564439,
+        "exit_code": 0,
+        "original_token_count": 6,
+        "output": "$ tsc -p tsconfig.json\n"
+      }
+    },
+    {
+      "command": "pnpm --filter @arkhe/mcp-server test",
+      "scope": "Complete returned tool output",
+      "result": {
+        "chunk_id": "5d584f",
+        "wall_time_seconds": 4.4726661,
+        "exit_code": 0,
+        "original_token_count": 288,
+        "output": "$ node --test\n✔ valid Arkhe claim signature verifies without claiming C2PA or authority (11.4024ms)\n✔ tampered claim, rogue key and revoked root cannot verify (1.9275ms)\n✔ malformed envelopes and oversized tool input are rejected (3.1207ms)\n✔ real MCP stdio tool delegates to WASM and rejects malformed payloads (697.5387ms)\n✔ canonicalization of a claim with a bogus signature never declares verification (15.2282ms)\n✔ malformed claims and unsupported verification requests fail (3.0585ms)\n✔ real WASM verifies every committed MMR inclusion vector without authenticating its root (5.0733ms)\n✔ changed leaf, root or proof hash cannot pass the original inclusion proof (0.5538ms)\n✔ leaf count and peak/bag shape must agree, even when a hash path matches (0.2674ms)\n✔ MMR rejects malformed and oversized inputs before accepting an inclusion claim (1.8062ms)\n✔ relocated MCP adapter loads the workspace WASM and matches ready vectors (16.5364ms)\n✔ adapter rejects malformed hex rather than truncating it (1.1042ms)\nℹ tests 12\nℹ suites 0\nℹ pass 12\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1426.0621\n"
+      }
+    }
+  ]
+}

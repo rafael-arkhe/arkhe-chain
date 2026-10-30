@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // COMPUTATIONAL FIDUCIARY RUNTIME - SEÇÃO 5 CI/CD GATES</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-tint": "#4edea3",
+            "on-background": "#e1e2ea",
+            "on-primary": "#003824",
+            "on-error-container": "#ffdad6",
+            "on-primary-fixed-variant": "#005236",
+            "on-primary-fixed": "#002113",
+            "inverse-primary": "#006c49",
+            "on-surface-variant": "#bbcabf",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-container-lowest": "#0b0e13",
+            "inverse-on-surface": "#2e3036",
+            "on-tertiary-fixed": "#2a1700",
+            "error-container": "#93000a",
+            "surface-variant": "#32353b",
+            "secondary": "#7bd0ff",
+            "outline-variant": "#3c4a42",
+            "on-tertiary": "#472a00",
+            "tertiary-fixed": "#ffddb8",
+            "on-secondary-fixed-variant": "#004c69",
+            "on-error": "#690005",
+            "on-secondary": "#00354a",
+            "surface-dim": "#111319",
+            "primary-container": "#10b981",
+            "primary-fixed": "#6ffbbe",
+            "surface-bright": "#36393f",
+            "surface-container": "#1d2025",
+            "tertiary-fixed-dim": "#ffb95f",
+            "secondary-fixed-dim": "#7bd0ff",
+            "on-secondary-container": "#00374d",
+            "surface-container-low": "#191c21",
+            "secondary-fixed": "#c4e7ff",
+            "primary-fixed-dim": "#4edea3",
+            "surface-container-high": "#272a30",
+            "tertiary": "#ffb95f",
+            "on-secondary-fixed": "#001e2c",
+            "surface": "#111319",
+            "on-surface": "#e1e2ea",
+            "surface-container-highest": "#32353b",
+            "background": "#111319",
+            "outline": "#86948a",
+            "tertiary-container": "#e29100",
+            "on-tertiary-container": "#523200",
+            "secondary-container": "#00a6e0",
+            "inverse-surface": "#e1e2ea",
+            "on-primary-container": "#00422b",
+            "error": "#ffb4ab",
+            "primary": "#4edea3"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xl": "2rem",
+            "space-2xl": "3rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "margin": "1rem",
+            "margin-desktop": "2rem",
+            "space-xs": "0.25rem",
+            "gutter-desktop": "1.5rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "headline-xl": ["Inter"],
+            "body-sm": ["Inter"],
+            "display-lg": ["Inter"],
+            "headline-xl-mobile": ["Inter"],
+            "label-caps": ["JetBrains Mono"],
+            "code-sm": ["JetBrains Mono"],
+            "code-lg": ["JetBrains Mono"],
+            "headline-sm": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "code-md": ["JetBrains Mono"],
+            "title-md": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-caps": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "code-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "code-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "code-md": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "title-md": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0b0e13;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #243044;
+      border-radius: 2px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #3c4a42;
+    }
+    .glow-border-active {
+      box-shadow: inset 0 0 0 1px rgba(78, 222, 163, 0.25);
+    }
+    .glow-border-err {
+      box-shadow: inset 0 0 0 1px rgba(255, 180, 171, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased font-body-md select-none overflow-x-hidden min-h-screen flex flex-col">
+<!-- TOP APP BAR -->
+<header class="flex justify-between items-center w-full px-space-lg h-12 bg-surface-container-lowest border-b border-outline-variant fixed top-0 left-0 right-0 z-50">
+<div class="flex items-center gap-space-md">
+<span class="text-title-md font-title-md font-code-md tracking-wider text-primary">ARKHE // COMPUTATIONAL FIDUCIARY RUNTIME</span>
+<div class="h-4 w-px bg-outline-variant hidden sm:block"></div>
+<div class="relative items-center hidden md:flex">
+<span class="material-symbols-outlined text-outline absolute left-2 text-sm leading-none" data-icon="search">search</span>
+<input class="bg-surface-container-low text-on-surface text-code-sm font-code-sm pl-7 pr-3 py-1 border border-outline-variant focus:border-secondary focus:outline-none w-72 rounded-none placeholder:text-outline" placeholder="Search gate invariants, BLAKE3 MMR or CVEs..." type="text"/>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden lg:flex items-center gap-space-lg text-code-sm font-code-sm">
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-150" href="#">TCB Ledger</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-150" href="#">Workspaces</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-150" href="#">Contracts</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-150" href="#">Causal DB</a>
+<a class="text-primary border-b-2 border-primary pb-1 font-semibold" href="#">CI/CD Gates</a>
+</nav>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-space-sm">
+<button class="hidden sm:inline-flex items-center gap-1 bg-surface-container border border-outline-variant px-space-sm py-1 text-code-sm font-code-sm text-secondary hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+<span>FAIL-CLOSED AUDIT</span>
+</button>
+<button class="inline-flex items-center gap-1 bg-primary-container text-on-primary-container font-semibold px-space-sm py-1 text-code-sm font-code-sm hover:bg-surface-tint transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span>VERIFY PROOFS</span>
+</button>
+<div class="h-4 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="p-1 hover:text-primary transition-colors" title="Subsystem lock state">
+<span class="material-symbols-outlined text-base" data-icon="lock">lock</span>
+</button>
+<button class="p-1 hover:text-primary transition-colors" title="Sync MMR">
+<span class="material-symbols-outlined text-base" data-icon="sync">sync</span>
+</button>
+</div>
+<div class="w-6 h-6 rounded-none bg-surface-container-high border border-outline-variant flex items-center justify-center text-code-sm font-code-sm text-primary" title="Security Architect Key Identity">
+        K
+      </div>
+</div>
+</header>
+<!-- BODY WRAPPER WITH FIXED SIDEBAR -->
+<div class="flex pt-12 min-h-screen w-full">
+<!-- SIDE NAV BAR -->
+<aside class="fixed left-0 top-12 bottom-0 w-64 flex flex-col justify-between p-space-sm z-40 bg-surface-container-low border-r border-outline-variant custom-scrollbar overflow-y-auto">
+<div class="flex flex-col gap-space-md">
+<!-- Kernel Beacon -->
+<div class="p-space-sm bg-surface-container border border-outline-variant">
+<div class="flex items-center justify-between mb-1">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface">ARKHE MONOREPO</span>
+<span class="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" title="Kernel Subsystem Beacon"></span>
+</div>
+<p class="text-code-sm font-code-sm text-primary tracking-tight">v0.9.4-PROD // BLAKE3-VERIFIED</p>
+</div>
+<button class="w-full flex items-center justify-center gap-1.5 py-1.5 bg-surface-container-high hover:bg-surface-bright border border-outline-variant text-code-sm font-code-sm text-on-surface tracking-wider transition-colors duration-150">
+<span class="material-symbols-outlined text-sm" data-icon="sync">sync</span>
+          SYNC CANONICAL MMR
+        </button>
+<!-- Navigation Tabs List -->
+<nav class="flex flex-col gap-1 text-code-sm font-code-sm">
+<a class="text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="shield_person">shield_person</span>
+<span>Authority Separation</span>
+</a>
+<a class="text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="folder_data">folder_data</span>
+<span>Workspace Crates</span>
+</a>
+<a class="text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+<span>AKG-CBOR-v1 Contracts</span>
+</a>
+<a class="text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="database">database</span>
+<span>Causal &amp; Append-Only SQL</span>
+</a>
+<!-- Active Nav Tab -->
+<a class="text-primary bg-surface-container border-l-2 border-primary px-space-md py-space-sm font-medium flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span>CI/CD &amp; Sandboxes</span>
+</a>
+<a class="text-on-surface-variant px-space-md py-space-sm hover:bg-surface-container-high hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="security">security</span>
+<span>Vulnerability Matrix</span>
+</a>
+</nav>
+</div>
+<!-- Footer Tabs & Diagnostics -->
+<div class="border-t border-outline-variant pt-space-sm flex flex-col gap-1 text-code-sm font-code-sm">
+<a class="text-on-surface-variant px-space-md py-1.5 hover:bg-surface-container-high hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="developer_board">developer_board</span>
+<span>Diagnostic Terminal</span>
+</a>
+<a class="text-on-surface-variant px-space-md py-1.5 hover:bg-surface-container-high hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="query_stats">query_stats</span>
+<span>Kernel Telemetry</span>
+</a>
+<div class="mt-2 px-space-md py-1 bg-surface-container-lowest text-label-caps font-label-caps text-outline flex items-center justify-between">
+<span>MMR ROOT ACCORD:</span>
+<span class="text-primary">0x9e8a..12</span>
+</div>
+</div>
+</aside>
+<!-- MAIN ENGINEERING WORKSPACE CANVAS -->
+<main class="flex-1 ml-64 p-space-md lg:p-space-lg flex flex-col gap-space-lg bg-background min-w-0">
+<!-- CABEÇALHO DA SEÇÃO (Seção 5) -->
+<section class="border border-outline-variant bg-surface-container-lowest p-space-md lg:p-space-lg flex flex-col gap-space-sm relative overflow-hidden">
+<div class="absolute right-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex items-center gap-2">
+<span class="text-label-caps font-label-caps text-secondary bg-surface-container px-2 py-0.5 border border-outline-variant tracking-wider">
+            SEÇÃO 5 // INTEGRIDADE DE CI/CD &amp; ISOLAMENTO DE EXECUÇÃO
+          </span>
+<span class="text-label-caps font-label-caps text-outline">TCB-GATE-SPEC // CANONICAL PIPELINE</span>
+</div>
+<div class="flex flex-col xl:flex-row xl:items-end justify-between gap-space-md">
+<div class="flex flex-col gap-1 max-w-4xl">
+<h1 class="text-headline-lg font-headline-lg font-bold text-on-surface tracking-tight">
+              Gates Invioláveis de CI/CD, Matriz de Vulnerabilidades e Perfis de Sandbox
+            </h1>
+<p class="text-body-md font-body-md text-on-surface-variant leading-relaxed">
+              Verificação formal de invariantes em compilação e teste: prevenção ativa contra escapes de sandbox (<span class="text-secondary font-code-sm">gVisor CVE-2026-95702</span>, <span class="text-secondary font-code-sm">runwasi CVE-2026-47218</span>), garantia de paridade bit-a-bit WASM e auditoria contínua de imutabilidade relacional.
+            </p>
+</div>
+<!-- Status Badges Bar -->
+<div class="flex flex-wrap items-center gap-2 shrink-0">
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-low border border-primary/40 text-primary text-label-caps font-label-caps">
+<span class="material-symbols-outlined text-xs" data-icon="verified">verified</span>
+              FAIL-CLOSED GATES ARMED
+            </div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-low border border-primary/40 text-primary text-label-caps font-label-caps">
+<span class="material-symbols-outlined text-xs" data-icon="memory">memory</span>
+              PARIDADE RUST/WASM: 100%
+            </div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-low border border-secondary/40 text-secondary text-label-caps font-label-caps">
+<span class="material-symbols-outlined text-xs" data-icon="shield">shield</span>
+              GVISOR: &gt;=20260831.0
+            </div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-low border border-tertiary/40 text-tertiary text-label-caps font-label-caps">
+<span class="material-symbols-outlined text-xs" data-icon="deployed_code">deployed_code</span>
+              RUNWASI: &gt;=0.6.1
+            </div>
+</div>
+</div>
+</section>
+<!-- PAINEL 1: OS 6 WORKFLOWS DE CI/CD E INVARIANTES INEGIOCIAVEIS -->
+<section class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-base" data-icon="gavel">gavel</span>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-on-surface">Os 6 Workflows de CI/CD e Invariantes Inegociáveis</h2>
+</div>
+<span class="text-code-sm font-code-sm text-outline">STRICT RUNTIME ENFORCEMENT // 0 BYPASS ACCEPTED</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+<!-- Card 1: golden-vectors.yml -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/60">
+<span class="text-code-sm font-code-sm text-secondary font-medium">golden-vectors.yml</span>
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary">PASS (Fail-Closed)</span>
+</div>
+<div class="mt-space-sm flex flex-col gap-1.5">
+<div class="text-body-sm font-body-sm text-on-surface">Testes estáticos contra <code class="text-code-sm font-code-sm text-primary">tests/golden_vectors.json</code> sem geradores dinâmicos.</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant bg-surface-container-low p-1.5 border border-outline-variant/40">
+                  INVARIANT: Falha incondicional se houver discrepância no payload de decodificação AKG-CBOR-v1.
+                </div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm text-outline">
+<span>TARGET: CBOR Wire Format</span>
+<span class="text-primary flex items-center gap-1"><span class="material-symbols-outlined text-xs" data-icon="check_circle">check_circle</span> 1,024/1,024</span>
+</div>
+</div>
+<!-- Card 2: wasm-parity.yml -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/60">
+<span class="text-code-sm font-code-sm text-secondary font-medium">wasm-parity.yml</span>
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary">PASS (0 Divergences)</span>
+</div>
+<div class="mt-space-sm flex flex-col gap-1.5">
+<div class="text-body-sm font-body-sm text-on-surface">Paridade bit-a-bit exata entre <code class="text-code-sm font-code-sm text-secondary">arkhe-verify-core</code> nativo e <code class="text-code-sm font-code-sm text-secondary">arkhe-verify-wasm</code>.</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant bg-surface-container-low p-1.5 border border-outline-variant/40">
+                  INVARIANT: Interrompe compilação se qualquer hash BLAKE3 ou veredicto de autorização divergir.
+                </div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm text-outline">
+<span>TARGET: x86_64 vs wasm32</span>
+<span class="text-primary flex items-center gap-1"><span class="material-symbols-outlined text-xs" data-icon="difference">difference</span> 0 Bit Delta</span>
+</div>
+</div>
+<!-- Card 3: gvisor-version-gate.yml -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/60">
+<span class="text-code-sm font-code-sm text-secondary font-medium">gvisor-version-gate.yml</span>
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 bg-secondary/10 border border-secondary/30 text-secondary">ENFORCED</span>
+</div>
+<div class="mt-space-sm flex flex-col gap-1.5">
+<div class="text-body-sm font-body-sm text-on-surface">Verificação forçada de release do gVisor runsc &gt;= 20260831.0.</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant bg-surface-container-low p-1.5 border border-outline-variant/40">
+                  INVARIANT: Mitiga Use-After-Free no VFS (CVE-2026-95702 / GHSA-3CHR-J932-Q9PC) impedindo escape do host.
+                </div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm text-outline">
+<span>SECURITY: CVE-2026-95702</span>
+<span class="text-secondary flex items-center gap-1"><span class="material-symbols-outlined text-xs" data-icon="lock">lock</span> RELEASE &gt;= 20260831.0</span>
+</div>
+</div>
+<!-- Card 4: runwasi-version-gate.yml -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/60">
+<span class="text-code-sm font-code-sm text-secondary font-medium">runwasi-version-gate.yml</span>
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 bg-secondary/10 border border-secondary/30 text-secondary">ENFORCED</span>
+</div>
+<div class="mt-space-sm flex flex-col gap-1.5">
+<div class="text-body-sm font-body-sm text-on-surface">Verificação forçada de versão do runwasi OCI shim &gt;= 0.6.1.</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant bg-surface-container-low p-1.5 border border-outline-variant/40">
+                  INVARIANT: Bloqueia evasão de sandbox WASI disparada por camadas OCI pré-compiladas maliciosas (CVE-2026-47218).
+                </div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm text-outline">
+<span>SECURITY: CVE-2026-47218</span>
+<span class="text-secondary flex items-center gap-1"><span class="material-symbols-outlined text-xs" data-icon="verified">verified</span> SHIM v0.6.1 LOCKED</span>
+</div>
+</div>
+<!-- Card 5: rls-audit.yml & append-only-audit.yml -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/60">
+<span class="text-code-sm font-code-sm text-secondary font-medium">rls-audit.yml &amp; append-only.yml</span>
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary">VERIFIED</span>
+</div>
+<div class="mt-space-sm flex flex-col gap-1.5">
+<div class="text-body-sm font-body-sm text-on-surface">Auditoria rigorosa do catálogo relacional Causal DB em CI.</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant bg-surface-container-low p-1.5 border border-outline-variant/40">
+                  INVARIANT: Assert se qualquer tabela carece de <code class="text-primary">FORCE ROW LEVEL SECURITY</code> ou role <code class="text-secondary">arkhe_append</code> detém UPDATE/DELETE.
+                </div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm text-outline">
+<span>CATALOG: Immutable Roles</span>
+<span class="text-primary flex items-center gap-1"><span class="material-symbols-outlined text-xs" data-icon="policy">policy</span> 0 Perm Violations</span>
+</div>
+</div>
+<!-- Card 6: mmr-checkpoint-test.yml -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/60">
+<span class="text-code-sm font-code-sm text-secondary font-medium">mmr-checkpoint-test.yml</span>
+<span class="text-label-caps font-label-caps px-1.5 py-0.5 bg-primary/10 border border-primary/30 text-primary">VERIFIED</span>
+</div>
+<div class="mt-space-sm flex flex-col gap-1.5">
+<div class="text-body-sm font-body-sm text-on-surface">Teste incremental de integridade dos picos da Merkle Mountain Range.</div>
+<div class="text-code-sm font-code-sm text-on-surface-variant bg-surface-container-low p-1.5 border border-outline-variant/40">
+                  INVARIANT: Reconstrução dos picos MMR validada bit-a-bit contra o histórico do WormGraph de 100k blocos.
+                </div>
+</div>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant/60 flex items-center justify-between text-code-sm font-code-sm text-outline">
+<span>ALGORITHM: BLAKE3 Peaks</span>
+<span class="text-primary flex items-center gap-1"><span class="material-symbols-outlined text-xs" data-icon="linear_scale">linear_scale</span> 100% Deterministic</span>
+</div>
+</div>
+</div>
+</section>
+<!-- PAINEL 2: MATRIZ COMPARATIVA DOS 3 PERFIS DE SANDBOX (Wasmtime vs Wasmer vs WaSC) -->
+<section class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-base" data-icon="table_chart">table_chart</span>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-on-surface">Matriz Comparativa Quantitativa dos 3 Perfis de Sandbox</h2>
+</div>
+<span class="text-code-sm font-code-sm text-outline">ISOLATION TIERS &amp; EXECUTION CAPABILITIES</span>
+</div>
+<div class="border border-outline-variant bg-surface-container-lowest overflow-x-auto">
+<table class="w-full text-left border-collapse text-code-sm font-code-sm">
+<thead>
+<tr class="bg-surface-container border-b border-outline-variant text-label-caps font-label-caps text-outline h-8">
+<th class="px-space-md py-1 border-r border-outline-variant/50">PERFIL / RUNTIME</th>
+<th class="px-space-md py-1 border-r border-outline-variant/50">CASO DE USO / NÍVEL DE CONFIANÇA</th>
+<th class="px-space-md py-1 border-r border-outline-variant/50">COLD START LATENCY</th>
+<th class="px-space-md py-1 border-r border-outline-variant/50">MEMORY FOOTPRINT</th>
+<th class="px-space-md py-1 border-r border-outline-variant/50">NÍVEL DE ISOLAMENTO DO HOST</th>
+<th class="px-space-md py-1">MITIGAÇÕES DE ESCAPE</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/40">
+<!-- Tier 1: Performance -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-space-md py-2 border-r border-outline-variant/50 font-medium text-primary">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>Performance (Wasmtime)</span>
+</div>
+</td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-on-surface">
+                  WASI Preview 2, Rust nativo compilado (Módulos TCB de Alta Confiança)
+                </td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-secondary font-mono">
+                  ~0.8 - 1.2 ms
+                </td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-on-surface-variant font-mono">
+                  &lt; 1.5 MB
+                </td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-on-surface">
+                  Isolamento de memória linear, bounds-checking via hardware MMU
+                </td>
+<td class="px-space-md py-2 text-on-surface-variant">
+                  Epoch interruption determinística, exclusão estrita de sockets de rede direta.
+                </td>
+</tr>
+<!-- Tier 2: Portable -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-space-md py-2 border-r border-outline-variant/50 font-medium text-secondary">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Portable (Wasmer)</span>
+</div>
+</td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-on-surface">
+                  Interoperabilidade poliglota e extensões Python/legadas (Média Confiança)
+                </td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-secondary font-mono">
+                  ~1.2 - 2.8 ms
+                </td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-on-surface-variant font-mono">
+                  &gt; 3.2 MB
+                </td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-on-surface">
+                  Compilação JIT dinâmica com restrição de syscalls WASI nativas
+                </td>
+<td class="px-space-md py-2 text-on-surface-variant">
+                  Tabelas de virtual memory guard pages, limites de alocação de heap forçados.
+                </td>
+</tr>
+<!-- Tier 3: Untrusted -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest/60">
+<td class="px-space-md py-2 border-r border-outline-variant/50 font-medium text-tertiary">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>Untrusted (WaSC)</span>
+</div>
+</td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-on-surface">
+                  Código de agentes não auditados e cognição especulativa (Zero Trust)
+                </td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-tertiary font-mono">
+                  P99 ~15.0 ms
+                </td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-on-surface-variant font-mono">
+                  &gt; 8.0 MB
+                </td>
+<td class="px-space-md py-2 border-r border-outline-variant/50 text-on-surface">
+                  Dupla virtualização: camada gVisor (runsc) + runwasi OCI shim blindado
+                </td>
+<td class="px-space-md py-2 text-on-surface-variant">
+                  Interrupção forçada de clock, VFS virtualizado (CVE-2026-95702 fix) e drop total de root caps.
+                </td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- PAINEL 3 & PAINEL 4: WORKFLOW CODE & SIMULADOR DE PIPELINE FAIL-CLOSED -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-md">
+<!-- PAINEL 3: MÓDULO DE CÓDIGO CI & CONFIGURAÇÃO DE DEFESA (xl:col-span-6) -->
+<section class="xl:col-span-6 flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="code">code</span>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-on-surface">Pipeline Security Manifest</h2>
+</div>
+<div class="flex items-center gap-1">
+<span class="text-label-caps font-label-caps px-2 py-0.5 bg-surface-container border border-outline-variant text-outline">ACTIONS WORKFLOW</span>
+<span class="text-label-caps font-label-caps px-2 py-0.5 bg-primary/10 border border-primary/40 text-primary">SIGSTORE SIGNED</span>
+</div>
+</div>
+<!-- Code Viewport Card -->
+<div class="border border-outline-variant bg-surface-container-lowest flex flex-col h-[460px]">
+<div class="flex items-center justify-between px-space-md py-1.5 bg-surface-container border-b border-outline-variant text-code-sm font-code-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-outline" data-icon="folder">folder</span>
+<span class="text-on-surface-variant">.github/workflows/</span>
+<span class="text-primary font-medium">gvisor-and-wasm-gates.yml</span>
+</div>
+<div class="flex items-center gap-2 text-label-caps font-label-caps text-outline">
+<span>HASH: b3:74f0a21</span>
+<button class="text-secondary hover:underline flex items-center gap-0.5" title="Copy Raw Workflow">
+<span class="material-symbols-outlined text-xs" data-icon="content_copy">content_copy</span>
+                  RAW
+                </button>
+</div>
+</div>
+<!-- Syntax Highlighted Code Viewer -->
+<pre class="p-space-md overflow-y-auto text-code-sm font-code-sm text-on-surface-variant flex-1 custom-scrollbar leading-5 selection:bg-primary-container selection:text-on-primary-container"><code><span class="text-outline"># Arkhe Fail-Closed Gate Spec v0.9.4</span>
+<span class="text-secondary">name:</span> <span class="text-on-surface">"Security Gates // Sandbox CVE &amp; WASM Parity"</span>
+<span class="text-secondary">on:</span>
+  <span class="text-secondary">pull_request:</span>
+    <span class="text-secondary">branches:</span> [<span class="text-primary">"canonical-prod"</span>]
+
+<span class="text-secondary">jobs:</span>
+  <span class="text-secondary">enforce-gvisor-version:</span>
+    <span class="text-secondary">runs-on:</span> <span class="text-on-surface">ubuntu-latest</span>
+    <span class="text-secondary">steps:</span>
+      - <span class="text-secondary">name:</span> <span class="text-on-surface">Check gVisor Version (CVE-2026-95702 Mitigation)</span>
+        <span class="text-secondary">run:</span> <span class="text-primary">|
+          REQUIRED="20260831.0"
+          INSTALLED=$(runsc --version | awk '{print $3}')
+          echo "[GATE] Evaluating runsc host binary: $INSTALLED"
+          if dpkg --compare-versions "$INSTALLED" "lt" "$REQUIRED"; then
+            echo "::error::[CRITICAL FAIL-CLOSED] gVisor $INSTALLED is vulnerable to CVE-2026-95702 (VFS UAF Escape)!"
+            exit 1
+          fi</span>
+
+      - <span class="text-secondary">name:</span> <span class="text-on-surface">Verify Cosign Keyless Sigstore Attestations</span>
+        <span class="text-secondary">run:</span> <span class="text-primary">|
+          cosign verify-blob \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+            --certificate-identity-regexp="^https://github.com/arkhe-kernel/*" \
+            --bundle=cosign.bundle ./target/release/arkhe-verify-core
+          echo "[SIGNATURE] Binary BLAKE3 attestation intact."</span>
+
+  <span class="text-secondary">verify-wasm-bit-parity:</span>
+    <span class="text-secondary">runs-on:</span> <span class="text-on-surface">ubuntu-latest</span>
+    <span class="text-secondary">steps:</span>
+      - <span class="text-secondary">name:</span> <span class="text-on-surface">Compile x86_64 vs wasm32-wasi &amp; Diff Output</span>
+        <span class="text-secondary">run:</span> <span class="text-primary">|
+          cargo test -p arkhe-verify-core -- --nocapture
+          cargo build --target wasm32-wasip2 -p arkhe-verify-wasm --release
+          cargo run -p parity-checker -- tests/golden_vectors.json
+          # Exits with 1 on any divergence in state authorization</span></code></pre>
+<div class="px-space-md py-1 bg-surface-container border-t border-outline-variant flex items-center justify-between text-label-caps font-label-caps text-outline">
+<span class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                FAIL_MODE: EXIT_CODE_1 (PIPELINE_BLOCK)
+              </span>
+<span>PARITY SPEC: AKG-CBOR-v1</span>
+</div>
+</div>
+</section>
+<!-- PAINEL 4: SIMULADOR DE EXECUÇÃO DO PIPELINE DE CI/CD (xl:col-span-6) -->
+<section class="xl:col-span-6 flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-base" data-icon="terminal">terminal</span>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-on-surface">Fail-Closed Gate Tester</h2>
+</div>
+<span class="text-code-sm font-code-sm text-outline">INTERACTIVE KERNEL RUNNER</span>
+</div>
+<!-- Simulator Card -->
+<div class="border border-outline-variant bg-surface-container-lowest flex flex-col h-[460px]">
+<!-- Test Scenario Tabs -->
+<div class="flex items-center border-b border-outline-variant bg-surface-container p-1 gap-1">
+<button class="px-space-sm py-1 text-code-sm font-code-sm bg-surface-container-high text-primary border border-primary/40 flex items-center gap-1 transition-all" id="btn-scenario-c" onclick="runScenario('C')">
+<span class="material-symbols-outlined text-xs" data-icon="play_arrow">play_arrow</span>
+<span>Teste C: Execução Canônica</span>
+</button>
+<button class="px-space-sm py-1 text-code-sm font-code-sm text-on-surface-variant hover:text-error hover:bg-surface-container-high border border-transparent transition-all flex items-center gap-1" id="btn-scenario-a" onclick="runScenario('A')">
+<span class="material-symbols-outlined text-xs" data-icon="warning">warning</span>
+<span>Teste A: Injeção de Vetor</span>
+</button>
+<button class="px-space-sm py-1 text-code-sm font-code-sm text-on-surface-variant hover:text-error hover:bg-surface-container-high border border-transparent transition-all flex items-center gap-1" id="btn-scenario-b" onclick="runScenario('B')">
+<span class="material-symbols-outlined text-xs" data-icon="gpp_bad">gpp_bad</span>
+<span>Teste B: Downgrade gVisor</span>
+</button>
+</div>
+<!-- Terminal Screen / Log Stream -->
+<div class="p-space-md overflow-y-auto font-code-sm text-code-sm flex-1 bg-surface-container-lowest text-on-surface custom-scrollbar flex flex-col gap-1" id="terminal-viewport">
+<!-- Logs populated dynamically by script -->
+</div>
+<!-- Terminal Status Strip -->
+<div class="px-space-md py-1.5 bg-surface-container border-t border-outline-variant flex items-center justify-between text-code-sm font-code-sm">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary" id="term-status-dot"></span>
+<span class="text-primary font-semibold" id="term-status-text">ALL 6 GATES GREEN (Execution time: 42s)</span>
+</div>
+<button class="text-outline hover:text-on-surface text-code-sm font-code-sm flex items-center gap-1" onclick="clearTerminalLogs()">
+<span class="material-symbols-outlined text-xs" data-icon="refresh">refresh</span>
+                RERUN
+              </button>
+</div>
+</div>
+</section>
+</div>
+<!-- INVARIANT MONITORING FOOTER BAR -->
+<footer class="mt-space-md p-space-sm bg-surface-container-low border border-outline-variant flex flex-wrap items-center justify-between gap-space-sm text-code-sm font-code-sm">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="shield_with_heart">shield_with_heart</span>
+<span class="text-on-surface">TCB KERNEL INTEGRITY: <strong>SECURE</strong></span>
+</div>
+<div class="h-3 w-px bg-outline-variant hidden sm:block"></div>
+<div class="text-on-surface-variant hidden md:block">
+            ACTIVE CONTRACT: <span class="text-secondary">AKG-CBOR-v1</span>
+</div>
+<div class="h-3 w-px bg-outline-variant hidden sm:block"></div>
+<div class="text-on-surface-variant hidden md:block">
+            LAST MMR PEAK: <span class="text-on-surface font-mono">0x4c2b9a1e09df8c</span>
+</div>
+</div>
+<div class="flex items-center gap-space-md text-label-caps font-label-caps">
+<span class="text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="check_circle">check_circle</span>
+            CONTINUOUS FORMAL PROOFS
+          </span>
+<span class="text-outline">ARKHE FIDUCIARY RUNTIME v0.9.4</span>
+</div>
+</footer>
+</main>
+</div>
+<!-- SCRIPT PARA INTERAÇÕES DO TERMINAL / SIMULADOR DE PIPELINE -->
+<script>
+    const terminalLogs = {
+      C: [
+        { text: "[INIT] Despachando runner de CI/CD para Monorepo Arkhe...", color: "text-outline" },
+        { text: "[GATE 1/6] golden-vectors.yml -> Validando tests/golden_vectors.json...", color: "text-on-surface" },
+        { text: "  -> 1,024 vetores de teste estáticos decodificados sem geradores dinâmicos.", color: "text-outline" },
+        { text: "  -> PASS: 0 discrepâncias com o contrato canônico AKG-CBOR-v1.", color: "text-primary" },
+        { text: "[GATE 2/6] wasm-parity.yml -> Compilando x86_64 nativo e wasm32-wasip2...", color: "text-on-surface" },
+        { text: "  -> Executando cross-validation em memória linear e digests BLAKE3.", color: "text-outline" },
+        { text: "  -> PASS: Paridade bit-a-bit exata confirmada (0 Divergences).", color: "text-primary" },
+        { text: "[GATE 3/6] gvisor-version-gate.yml -> Inspecionando gVisor runsc...", color: "text-on-surface" },
+        { text: "  -> runsc version 20260901.0 detectada. Invariante >= 20260831.0 satisfeita.", color: "text-secondary" },
+        { text: "  -> PASS: CVE-2026-95702 (VFS UAF) mitigações ativas no host.", color: "text-primary" },
+        { text: "[GATE 4/6] runwasi-version-gate.yml -> Avaliando OCI shim...", color: "text-on-surface" },
+        { text: "  -> runwasi v0.6.2 atestado. Limite >= 0.6.1 satisfeito.", color: "text-secondary" },
+        { text: "  -> PASS: Prevenção de evasão de sandbox WASI ativa (CVE-2026-47218 mitigado).", color: "text-primary" },
+        { text: "[GATE 5/6] rls-audit.yml & append-only-audit.yml -> Analisando catálogo Causal DB...", color: "text-on-surface" },
+        { text: "  -> Verificando cláusula FORCE ROW LEVEL SECURITY em 100% das tabelas.", color: "text-outline" },
+        { text: "  -> PASS: Role arkhe_append possui estritamente INSERT/SELECT. UPDATE/DELETE revogados.", color: "text-primary" },
+        { text: "[GATE 6/6] mmr-checkpoint-test.yml -> Reconstruindo picos Merkle Mountain Range...", color: "text-on-surface" },
+        { text: "  -> Calculando 100,000 nós no WormGraph com digest BLAKE3 incremental.", color: "text-outline" },
+        { text: "  -> PASS: Raiz MMR 0x9e8a34b2 coincide perfeitamente com o ledger canônico.", color: "text-primary" },
+        { text: "==================================================================", color: "text-outline" },
+        { text: "[SUCCESS] TODOS OS 6 GATES VERIFICADOS COM SUCESSO. MERGE AUTORIZADO.", color: "text-primary font-bold" }
+      ],
+      A: [
+        { text: "[INJECT] Simulando PR com vetor de teste modificado sem aprovação...", color: "text-tertiary" },
+        { text: "[GATE 1/6] golden-vectors.yml -> Validando tests/golden_vectors.json...", color: "text-on-surface" },
+        { text: "  -> Payload vector ID #0421 divergente da especificação AKG-CBOR-v1:", color: "text-error" },
+        { text: "  -> EXPECTED: 0xa46461757468636f6465... (BLAKE3: c912b7fa)", color: "text-outline" },
+        { text: "  -> FOUND:    0xa46461757468636f6466... (BLAKE3: d841a0e1)", color: "text-error" },
+        { text: "::error::[CRITICAL FAIL-CLOSED] Discrepância de vetor estático detectada!", color: "text-error font-bold" },
+        { text: "[BLOCK] Pipeline abortado com exit code 1. O merge foi bloqueado preventivamente.", color: "text-error" }
+      ],
+      B: [
+        { text: "[INJECT] Simulando runner com gVisor host em versão obsoleta/vulnerável...", color: "text-tertiary" },
+        { text: "[GATE 3/6] gvisor-version-gate.yml -> Inspecionando gVisor runsc...", color: "text-on-surface" },
+        { text: "  -> runsc version 20260715.0 detectada no cluster de execução.", color: "text-error" },
+        { text: "  -> REQUIREMENT: gVisor >= 20260831.0", color: "text-outline" },
+        { text: "::error::[SECURITY ALERT] CVE-2026-95702 / GHSA-3CHR-J932-Q9PC UNMITIGATED!", color: "text-error font-bold" },
+        { text: "  -> Vulnerabilidade crítica de Use-After-Free no subsistema VFS permite escape de container.", color: "text-error" },
+        { text: "[FAIL-CLOSED] Execution aborted immediately. Sandbox node quarantined.", color: "text-error font-bold" }
+      ]
+    };
+
+    let activeScenario = 'C';
+
+    function runScenario(type) {
+      activeScenario = type;
+      const viewport = document.getElementById('terminal-viewport');
+      const statusDot = document.getElementById('term-status-dot');
+      const statusText = document.getElementById('term-status-text');
+
+      // Update button highlights
+      ['a', 'b', 'c'].forEach(sc => {
+        const btn = document.getElementById(`btn-scenario-${sc}`);
+        if (sc === type.toLowerCase()) {
+          btn.className = type === 'C' 
+            ? "px-space-sm py-1 text-code-sm font-code-sm bg-surface-container-high text-primary border border-primary/40 flex items-center gap-1 transition-all"
+            : "px-space-sm py-1 text-code-sm font-code-sm bg-surface-container-high text-error border border-error/40 flex items-center gap-1 transition-all";
+        } else {
+          btn.className = "px-space-sm py-1 text-code-sm font-code-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-transparent transition-all flex items-center gap-1";
+        }
+      });
+
+      // Clear terminal and append lines with typing effect
+      viewport.innerHTML = '';
+      const lines = terminalLogs[type];
+      
+      lines.forEach((l, idx) => {
+        const div = document.createElement('div');
+        div.className = `${l.color} leading-snug`;
+        div.textContent = l.text;
+        viewport.appendChild(div);
+      });
+
+      viewport.scrollTop = viewport.scrollHeight;
+
+      if (type === 'C') {
+        statusDot.className = "w-2 h-2 rounded-full bg-primary";
+        statusText.className = "text-primary font-semibold";
+        statusText.textContent = "ALL 6 GATES GREEN (Execution time: 42s)";
+      } else if (type === 'A') {
+        statusDot.className = "w-2 h-2 rounded-full bg-error";
+        statusText.className = "text-error font-semibold";
+        statusText.textContent = "GATE FAILED: Vector mismatch in golden-vectors.yml";
+      } else if (type === 'B') {
+        statusDot.className = "w-2 h-2 rounded-full bg-error animate-ping";
+        statusText.className = "text-error font-semibold";
+        statusText.textContent = "FAIL-CLOSED: gVisor CVE-2026-95702 detected! Merge blocked.";
+      }
+    }
+
+    function clearTerminalLogs() {
+      runScenario(activeScenario);
+    }
+
+    // Initialize Default Scenario
+    window.addEventListener('DOMContentLoaded', () => {
+      runScenario('C');
+    });
+  </script>
+</body></html>

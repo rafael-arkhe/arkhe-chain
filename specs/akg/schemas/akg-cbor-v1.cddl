@@ -1,0 +1,73 @@
+; AKG-CBOR-v1 — partial CDDL freeze candidate
+; Unresolved semantic value types remain commented as BLOCKED.
+
+policy-ref = {
+  "policy_id" => tstr,
+  "version" => uint
+}
+
+identity-ref = {
+  "scheme" => tstr,
+  "value" => tstr
+}
+
+property-ref = {
+  "name" => tstr,
+  "version" => uint
+}
+
+subject-ref =
+  { "kind" => "digest", "value" => bstr .size 32 } /
+  { "kind" => "id",     "value" => tstr }
+
+finding = {
+  "code" => tstr,
+  "category" => tstr,
+  ? "subject_ref" => subject-ref,
+  "evidence_refs" => [* evidence-ref],
+  ? "details_ref" => bstr .size 32
+}
+
+finding-disposition = {
+  "finding_ref" => bstr .size 32,
+  "disposition" => "INFO" / "WARNING" / "BLOCKING",
+  "policy_ref" => policy-ref,
+  "policy_digest" => bstr .size 32,
+  ? "rationale_ref" => bstr .size 32
+}
+
+dependency-edge = {
+  "source" => bstr .size 32,
+  "target" => bstr .size 32,
+  "kind" => "STRUCTURAL" / "SEMANTIC" / "VERIFICATION"
+}
+
+signature-envelope = {
+  "algorithm_profile" => "AKG-SIG-ED25519-v1",
+  "key_ref" => identity-ref,
+  "signature_bytes" => bstr .size 64
+}
+
+branch-attestation = {
+  "branch_digest" => bstr .size 32,
+  "signer" => identity-ref,
+  "signature" => signature-envelope
+}
+
+evidence-ref = {
+  "evidence_class" => tstr,
+  "content_digest" => bstr .size 32,
+  ? "media_type" => tstr,
+  ? "location_ref" => tstr,
+  ? "producer_ref" => identity-ref
+}
+
+; BLOCKED:
+; profile-ref
+; obligation-ref
+; projection-ref
+; ruleset-ref
+; expected-result
+; actual-result
+; exact ContractualVerifier wire projection
+; exact result_digest preimage

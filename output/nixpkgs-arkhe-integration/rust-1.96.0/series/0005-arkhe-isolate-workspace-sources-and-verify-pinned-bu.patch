@@ -1,0 +1,1581 @@
+From 9c1d848c9b08ff7c9ac9b685c3f586717ed6d082 Mon Sep 17 00:00:00 2001
+From: ARKHE Developer <developer@arkhe.os>
+Date: Thu, 29 Oct 2026 18:02:27 -0300
+Subject: [PATCH 5/5] arkhe: isolate workspace sources and verify pinned builds
+
+---
+ .github/workflows/arkhe-nix.yml               |   8 +-
+ arkhe/README.md                               |  10 +-
+ arkhe/docs/INTEGRATION-REVIEW.md              |   4 +-
+ arkhe/docs/packages.md                        |  12 +-
+ arkhe/docs/reproducibility.md                 | 110 ++++-------
+ .../rust-1.96.0/content-addressing.log        |   5 +
+ .../validation/rust-1.96.0/derivations.json   | 174 +++++++++++++++++
+ .../validation/rust-1.96.0/flake-check.log    | Bin 0 -> 16005 bytes
+ arkhe/docs/validation/rust-1.96.0/hashes.json |   5 +
+ .../rust-1.96.0/loose-copy-flake-check.log    | Bin 0 -> 6875 bytes
+ .../rust-1.96.0/machine-path-scan.json        |  29 +++
+ .../docs/validation/rust-1.96.0/overlay.json  |  17 ++
+ .../rust-1.96.0/rebuild-filtered-wasm.log     | Bin 0 -> 713 bytes
+ arkhe/docs/validation/rust-1.96.0/rebuild.log |  14 ++
+ .../docs/validation/rust-1.96.0/results.json  |  44 +++++
+ .../rust-1.96.0/sdd-parser-smoke.log          |   0
+ .../validation/rust-1.96.0/source-filter.json |  48 +++++
+ .../validation/rust-1.96.0/source-hashes.json |  14 ++
+ .../rust-1.96.0/tests-arkhe-core.log          |  96 ++++++++++
+ .../rust-1.96.0/tests-arkhe-governance.log    | 164 ++++++++++++++++
+ .../rust-1.96.0/tests-arkhe-kernel.log        | 179 ++++++++++++++++++
+ .../validation/rust-1.96.0/tests-clippy.log   | 131 +++++++++++++
+ .../rust-1.96.0/toolchain-version.log         |   1 +
+ .../validation/rust-1.96.0/wasm-smoke.log     |   0
+ arkhe/lib/workspace.nix                       |  33 +++-
+ arkhe/pkgs/arkhe-verify-wasm.nix              |   2 +-
+ arkhe/scripts/check-source-filter.py          |  47 +++++
+ 27 files changed, 1054 insertions(+), 93 deletions(-)
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/content-addressing.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/derivations.json
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/flake-check.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/hashes.json
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/loose-copy-flake-check.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/machine-path-scan.json
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/overlay.json
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/rebuild-filtered-wasm.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/rebuild.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/results.json
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/sdd-parser-smoke.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/source-filter.json
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/source-hashes.json
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/tests-arkhe-core.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/tests-arkhe-governance.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/tests-arkhe-kernel.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/tests-clippy.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/toolchain-version.log
+ create mode 100644 arkhe/docs/validation/rust-1.96.0/wasm-smoke.log
+ create mode 100755 arkhe/scripts/check-source-filter.py
+
+diff --git a/.github/workflows/arkhe-nix.yml b/.github/workflows/arkhe-nix.yml
+index 4bf99dcd8..7d05b937f 100644
+--- a/.github/workflows/arkhe-nix.yml
++++ b/.github/workflows/arkhe-nix.yml
+@@ -25,6 +25,10 @@ jobs:
+       - name: Verificar snapshot
+         run: python3 arkhe/scripts/validate-source.py
+ 
++      - name: Verificar isolamento das fontes
++        working-directory: arkhe
++        run: python3 scripts/check-source-filter.py
++
+       - name: Avaliar sem construir
+         working-directory: arkhe
+         run: nix flake check --no-build --all-systems --no-update-lock-file -L
+@@ -52,9 +56,9 @@ jobs:
+         working-directory: arkhe
+         run: nix flake check --no-update-lock-file --print-build-logs
+ 
+-      - name: Reprodutibilidade de arkhe-verify
++      - name: Reprodutibilidade dos pacotes prioritários
+         working-directory: arkhe
+-        run: bash ./scripts/check-reproducibility.sh arkhe-verify
++        run: bash ./scripts/check-reproducibility.sh arkhe-verify-cli arkhe-verify-wasm arkhe-sdd-parser
+ 
+   ca:
+     name: conteúdo endereçado
+diff --git a/arkhe/README.md b/arkhe/README.md
+index 4299e4bc3..13f74f05c 100644
+--- a/arkhe/README.md
++++ b/arkhe/README.md
+@@ -12,6 +12,7 @@ builds reprodutíveis e suporte opt-in a derivações endereçadas por conteúdo
+ | Reprodutibilidade bit-a-bit | `arkhe-verify`, `arkhe-verify-wasm`, `arkhe-sdd-parser`: `--rebuild` e `reproducible-*` idênticos na mesma máquina (hashes abaixo). A comparação host × VM registrada em [docs/INTEGRATION-REVIEW.md](docs/INTEGRATION-REVIEW.md) é da versão anterior (rustc do nixpkgs) e **não foi repetida** com a toolchain 1.96.0 |
+ | Derivações CA | `arkhe-verify`: build CA com `ca=fixed:r:sha256:…`; mesmo `narHash` do build normal |
+ | `flake.lock` | versionado; `nixpkgs` 31ecbac…, `rust-overlay` afcefd0…; conferir com `nix flake metadata` |
++| `arkhe-mmrd`, `arkhe-journald`, `arkhe-gate`, `arkhe-anchor`, `arkhe-prove` | **não existem como crates** neste monorepo; não há pacote para eles |
+ 
+ `narHash` observados (x86_64-linux, 2026-10-29):
+ 
+@@ -34,9 +35,8 @@ sistema de arquivos Linux, ou compare `narHash`/use as variantes CA.
+ Num checkout git, arquivos novos só entram no flake depois de `git add`;
+ para testar antes disso use `nix flake check path:$PWD`. O `.gitignore`
+ global desta máquina ignora `lib/`: adicione `arkhe/lib` com `git add -f`.
+-| `arkhe-mmrd`, `arkhe-journald`, `arkhe-gate`, `arkhe-anchor`, `arkhe-prove` | **não existem como crates** neste monorepo; não há pacote para eles |
+ 
+-O workflow em `../.github/workflows/arkhe-nix.yml` repete os checks de build. As execuções locais no host e na VM, com seus hashes e logs, estão registradas em [docs/INTEGRATION-REVIEW.md](docs/INTEGRATION-REVIEW.md).
++O workflow em `../.github/workflows/arkhe-nix.yml` repete os checks de build. A rodada atual Rust 1.96.0 está registrada em [docs/validation/rust-1.96.0/results.json](docs/validation/rust-1.96.0/results.json). A rodada anterior com Rust 1.99.0 e VM está preservada em [docs/INTEGRATION-REVIEW.md](docs/INTEGRATION-REVIEW.md).
+ 
+ ## O que este repositório entrega
+ 
+@@ -142,9 +142,11 @@ cd arkhe
+ 
+ # 1. Snapshot confere com o manifesto SHA-256
+ python3 scripts/validate-source.py
++python3 scripts/check-source-filter.py
+ 
+ # 2. Todos os pacotes, suítes de teste, clippy e as segundas construções
+-nix flake check -L
++nix build .#arkhe-verify-cli .#arkhe-verify-wasm .#arkhe-sdd-parser
++nix flake check --no-update-lock-file -L
+ 
+ # 3. Rebuild contra a saída já registrada no store (bit a bit)
+ ./scripts/check-reproducibility.sh arkhe-verify arkhe-verify-wasm arkhe-sdd-parser
+@@ -274,3 +276,5 @@ Apache-2.0. Ver [LICENSE](LICENSE).
+ Veja [docs/INTEGRATION-REVIEW.md](docs/INTEGRATION-REVIEW.md). A raiz do fork Nixpkgs permanece independente.
+ 
+ O pacote WASM usa `lld` e `wasm-bindgen-cli` do mesmo nixpkgs fixado. Inclui o módulo bruto `lib/arkhe-verify.wasm` e bindings Node.js `lib/arkhe_verify.js`. A nomenclatura não implica habilitação da camada PQC.
++
++A verificação do overlay consumidor e o teste de isolamento de fontes estão registrados em `docs/validation/rust-1.96.0/`. O probe altera apenas uma cópia temporária do snapshot; o checkout original permanece intacto. Também cobre projetos Cargo não declarados e arquivos gerados de wasm-bindgen.
+diff --git a/arkhe/docs/INTEGRATION-REVIEW.md b/arkhe/docs/INTEGRATION-REVIEW.md
+index 5017b8ba3..e9ed27e2e 100644
+--- a/arkhe/docs/INTEGRATION-REVIEW.md
++++ b/arkhe/docs/INTEGRATION-REVIEW.md
+@@ -1,4 +1,6 @@
+-# Revisão e integração — 2026-10-29
++# Revisão histórica: Rust 1.99.0 — 2026-10-29
++
++Esta rodada corresponde ao commit `c52d666f1`, anterior à pinagem Rust 1.96.0 e ao parser SDD. Os resultados de VM abaixo são históricos. Para a configuração atual, veja [resultados Rust 1.96.0](validation/rust-1.96.0/results.json) e [como verificar](reproducibility.md). A reprodução em VM não foi repetida com Rust 1.96.0.
+ 
+ A camada Arkhe reside em `arkhe/`, preservando o flake e os pacotes Nixpkgs na raiz. Use `nix build ./arkhe#arkhe-verify` ou `github:rafael-arkhe/nixpkgs-arkhe?dir=arkhe` após integrar a branch.
+ 
+diff --git a/arkhe/docs/packages.md b/arkhe/docs/packages.md
+index 8afe2f10b..279781c31 100644
+--- a/arkhe/docs/packages.md
++++ b/arkhe/docs/packages.md
+@@ -11,6 +11,16 @@ Todos os pacotes usam `lib/mk-arkhe-package.nix`, que fixa `--locked`,
+ - É o pacote mais leve e o único com smoke test (`--help`) em `checks`.
+ - Candidato natural à submissão no nixpkgs (`nixpkgs/by-name/ar/arkhe-verify`).
+ 
++## `arkhe-sdd-parser`
++
++- Crate: `governance/arkhe-sdd-parser`; binário: `arkhe-sdd-parser`.
++- Testes próprios em `checkPhase` e smoke test SDD para dois outputs CBOR idênticos.
++- Mesma toolchain Rust 1.96.0 fixada dos demais pacotes.
++
++## Bibliotecas como checks
++
++`tests-arkhe-core`, `tests-arkhe-kernel` e `tests-arkhe-governance` executam suas suítes com a toolchain fixada. O check de core exige execução não vazia de `golden_vectors`. `arkhe-verify-cli` é alias do pacote `arkhe-verify`.
++
+ ## `arkhe-runtime`
+ 
+ - Crate: `orchestration/arkhe-runtime`
+@@ -75,7 +85,7 @@ Todos os pacotes usam `lib/mk-arkhe-package.nix`, que fixa `--locked`,
+ 
+ ## `arkhe`
+ 
+-- Metapacote `symlinkJoin` com os oito CLIs.
++- Metapacote `symlinkJoin` com os nove CLIs.
+ - Não inclui o artefato WASM.
+ 
+ ## O que não está aqui
+diff --git a/arkhe/docs/reproducibility.md b/arkhe/docs/reproducibility.md
+index 378bacd2b..38ea186b3 100644
+--- a/arkhe/docs/reproducibility.md
++++ b/arkhe/docs/reproducibility.md
+@@ -1,102 +1,56 @@
+ # Reprodutibilidade e endereçamento por conteúdo
+ 
+-Este documento separa o que foi **implementado**, o que foi **observado** e o
+-que **ainda não foi verificado**.
++## Configuração atual: Rust 1.96.0
+ 
+-## Mecanismos aplicados
++`flake.lock` fixa nixpkgs e rust-overlay por revisão e narHash. O rust-overlay fornece tarballs oficiais do compilador e das bibliotecas padrão, cada um com SHA-256 fixo. `lib/toolchain.nix` lê o canal exato de `source/rust-toolchain.toml` (1.96.0); o snapshot coincide com o arquivo do workspace original. A variante WASM usa o mesmo compilador com std de `wasm32-unknown-unknown`. O devShell e clippy usam os componentes declarados nesse arquivo.
+ 
+-| Mecanismo | O que fixa | Onde |
+-|---|---|---|
+-| `inputs.nixpkgs` | versão do nixpkgs, rustc, binutils, stdenv | `flake.nix` + `flake.lock` versionado |
+-| `cargoLock.lockFile` | cada crate por checksum registrado no `Cargo.lock` | `lib/mk-arkhe-package.nix` |
+-| `cargoLock.allowBuiltinFetchGit = false` | impede dependência git não fixada | idem |
+-| `--locked` | impede o Cargo de resolver versões novas | idem |
+-| sandbox do Nix + `CARGO_NET_OFFLINE=true` | nenhuma rede durante o build | idem |
+-| `SOURCE_DATE_EPOCH = 315532800` | timestamps embutidos | idem |
+-| `RUSTFLAGS` com `--remap-path-prefix` | remove caminhos absolutos do binário | idem |
+-| `CARGO_INCREMENTAL=0` | evita artefatos incrementais não determinísticos | idem |
+-| `TZ=UTC`, `LC_ALL=C` | locale e fuso | idem |
++Os pacotes usam `rustPlatform.buildRustPackage`, `cargoLock.lockFile` do snapshot e os checksums do `Cargo.lock` original. A compilação usa `--locked`, `--offline`, `CARGO_NET_OFFLINE=true` e sandbox. O download prévio de insumos fixados é separado da fase de compilação.
+ 
+-Além disso, o `src` local é filtrado (`default.nix`): `target/`, `node_modules/`,
+-snapshots e binários de release não entram no store. Quando `src` é uma
+-derivação (`fetchFromGitHub`/`fetchgit`), o filtro não se aplica — a fonte já é
+-fixada por hash.
++`SOURCE_DATE_EPOCH=315532800`, `CARGO_INCREMENTAL=0`, `TZ=UTC`, `LC_ALL=C` e remapeamento de caminhos mantêm o ambiente explícito. Uma inspeção dos três artefatos prioritários confirmou ausência dos prefixos locais `/mnt/d/arkhe`, `/home/arkhen` e `D:\arkhe`.
+ 
+-## O que isso garante
++## Fonte por pacote
+ 
+-- Que o build não depende de rede, de versões flutuantes de crates ou de
+-  caminhos da máquina.
+-- Que o mesmo `flake.lock` + mesmo `src` produzem o mesmo derivado.
+-- Que cada dependência de crate é verificada pelo checksum do `Cargo.lock`.
++`lib/workspace.nix` calcula o fecho de dependências `path`, incluindo build-dependencies e as dev-dependencies dos crates testados. Só o código desse fecho e fixtures de compilação declaradas entram no `src`. A descoberta parte dos membros explícitos do workspace e de suas dependências por caminho; projetos Cargo avulsos abaixo da raiz não são descobertos. Diretórios de build/ambiente e o `pkg/` gerado de wasm-bindgen são excluídos. Manifestos dos demais crates e o `Cargo.lock` compartilhado permanecem disponíveis para o resolver Cargo; alvos vazios desses crates são criados em `postPatch`, sem compilá-los.
+ 
+-## O que isso **não** garante
++Mudanças no lock ou nos manifestos podem alterar o hash, pois afetam a resolução de dependências. Edições no código de um crate não usado não alteram o `src` nem a derivação do pacote. `scripts/check-source-filter.py` verifica isso alterando apenas uma cópia temporária de `arkhe-ask`: verifier, WASM e SDD permanecem idênticos, enquanto o controle positivo `arkhe-ask` muda. O probe também adiciona um projeto Cargo não declarado e altera um arquivo gerado do WASM, sem alterar os três alvos prioritários. O CI repete o probe.
+ 
+-- Igualdade bit-a-bit entre versões diferentes de `rustc`, `binutils`, `gcc` ou
+-  `nixpkgs`. Reprodutibilidade é sempre **relativa a um lock**.
+-- Que o resultado é idêntico entre `x86_64-linux` e `aarch64-linux` (não é, e
+-  não se espera que seja).
+-- Que o conteúdo é "prova de segurança". Reprodutibilidade prova consistência
+-  de build, não ausência de vulnerabilidade.
++## Como verificar em WSL/Linux
+ 
+-## Como verificar
++Abra o Ubuntu WSL e execute:
+ 
+ ```bash
+-# 1. Reconstrói e compara o conteúdo produzido
+-./scripts/check-reproducibility.sh arkhe-verify
+-
+-# 2. Emite proveniência (versão do Nix, locked rev, hash por pacote)
+-./scripts/provenance.sh . arkhe-verify arkhe-sql-migrate
+-
+-# 3. Verifica o caminho endereçado por conteúdo (requer ca-derivations)
+-./scripts/verify-content-addressing.sh arkhe-verify
++source ~/.nix-profile/etc/profile.d/nix.sh
++cd /mnt/d/arkhe/work/nixpkgs-arkhe-integration/arkhe
++export NIX_CONFIG='experimental-features = nix-command flakes'
++python3 scripts/validate-source.py
++python3 scripts/check-source-filter.py
++nix build .#arkhe-verify-cli .#arkhe-verify-wasm .#arkhe-sdd-parser --no-update-lock-file
++nix flake check --no-update-lock-file -L
++./scripts/check-reproducibility.sh arkhe-verify-cli arkhe-verify-wasm arkhe-sdd-parser
+ ```
+ 
+-Para uma afirmação forte, o mínimo é: `flake.lock` versionado, build em duas
+-máquinas independentes, `nix hash path` igual nas duas, e o mesmo
+-`nix path-info --json` para o fecho de dependências.
++`arkhe-verify` executa as suítes CLI/core/verifier em `checkPhase`. Os alvos `arkhe-core --test golden_vectors` e `arkhe-verify-core --test golden_contract` são obrigatórios e precisam executar pelo menos um teste aprovado. Os checks `tests-arkhe-core`, `tests-arkhe-kernel` e `tests-arkhe-governance` exercitam as bibliotecas; o primeiro exige novamente o alvo golden_vectors.
+ 
+-## Derivações endereçadas por conteúdo (CA)
++Os checks `reproducible-*` fazem uma segunda construção com variável de ambiente adicional e comparam as saídas com `diff -r`. O script acima é complementar: usa `nix build --rebuild`, desativa substituição e compara a mesma derivação com a saída já registrada. Uma diferença provoca falha; `--keep-failed` permite inspecionar a saída com diffoscope.
+ 
+-`contentAddressed = true` adiciona `__contentAddressed = true;` e
+-`outputHashMode = "recursive";` ao derivado. Com a feature experimental
+-`ca-derivations`, o caminho no store passa a ser derivado do conteúdo produzido,
+-e não do hash das entradas.
++O smoke test SDD executa o CLI e compara `constitution.cbor` e `tasks.cbor` de duas execuções. O smoke WASM executa provas MMR válidas e adulteradas via bindings Node.js. Clippy tem duas exceções documentadas no README; não é uma alegação de ausência de todos os lints.
+ 
+-Consequências práticas:
++## Endereçamento por conteúdo
+ 
+-- O endereço reflete o conteúdo produzido. A verificação de determinismo exige
+-  reconstrução e comparação separadas.
+-- Ainda é experimental no Nix; não é o modo padrão.
+-- As variantes CA ficam em `legacyPackages.<system>.ca` para que
+-  `nix flake check` não tente instanciá-las em instalações sem a feature.
++CA é opt-in: `__contentAddressed=true`, `outputHashMode="recursive"` e `outputHashAlgo="sha256"`. As variantes ficam em `legacyPackages.<system>.ca`. Isso permite o endereço final depender do conteúdo produzido, mas exige a feature experimental `ca-derivations` nos avaliadores/builders e suporte às realisations no cache utilizado. Não substitui a comparação de builds nem torna uma compilação não determinística em determinística.
+ 
+-## Estado da evidência
++```bash
++nix build .#legacyPackages.x86_64-linux.ca.arkhe-verify-cli \
++  --extra-experimental-features 'nix-command flakes ca-derivations'
++bash scripts/verify-content-addressing.sh arkhe-verify-cli
++```
+ 
+-| Afirmação | Estado |
+-|---|---|
+-| As expressões Nix existem e referenciam crates reais do monorepo | observado (inspeção dos arquivos e dos `Cargo.toml`) |
+-| Avaliação `nix flake check --no-build --all-systems` | **PASS** em WSL/Nix 2.35.4 |
+-| `arkhe-verify` constrói | **PASS** em x86_64-linux |
+-| Dez outputs reproduzidos em VM com store próprio | **PASS**; hashes e derivações idênticos ao host |
+-| `arkhe-verify` CA tem endereço de conteúdo | **PASS** |
+-| Todos os pacotes, incluindo `arkhe-ask` e WASM, constroem | **PASS** em x86_64-linux |
++A variante CA do verificador foi construída e inspecionada nesta rodada. O modo comum continua como padrão para manter compatibilidade. Os insumos já são fixados: fontes Git pelo lock do consumidor/commit e pelo manifesto SHA-256 do snapshot, crates pelos checksums do Cargo.lock, compilador/std pelos hashes do rust-overlay.
+ 
+-Nenhuma linha acima deve ser lida como "passou". O CI é quem produz essa
+-evidência.
++## Evidências e limites
+ 
+-## Riscos conhecidos
++[Resultados Rust 1.96.0](validation/rust-1.96.0/results.json) registram 24 checks válidos em x86_64-linux, três reconstruções reais bit-idênticas, hashes, versão do compilador, isolamento de fonte e inspeção de caminhos. Os logs das suítes e do toolchain estão no mesmo diretório. A verificação usa insumos fixados; não afirma igualdade entre arquiteturas ou versões diferentes.
+ 
+-1. **`arkhe-ask`**: `opentelemetry`, `rskafka`, `axum-keycloak-auth` e
+-   `pgvector` aumentam muito o tempo de build e a superfície de falha.
+-2. **`arkhe-crm-bridge`**: `rusqlite` com `bundled` compila SQLite; exige
+-   compilador C no stdenv (disponível), mas aumenta o tempo de build.
+-3. **`arkhe-verify-wasm`**: depende de toolchain com std para
+-   `wasm32-unknown-unknown`.
+-4. **Workspace compartilhado**: `cargoLock.lockFile` resolve os pacotes do
+-   `Cargo.lock` para cada pacote. O cache do Nix amortiza, mas o primeiro build
+-   baixa e verifica tudo.
+-5. **Toolchain efetivo**: estes builds usam Rust 1.99.0 do nixpkgs fixado pelo `flake.lock`, independentemente do arquivo `rust-toolchain.toml` do workspace original.
++O bit executável do checkout participa do hash do `src`. DrvFS e um checkout Git em ext4 podem produzir fontes/derivações com caminhos distintos mesmo quando o conteúdo compilado coincide. Para comparar ambientes, confira o narHash das saídas; CA também pode normalizar o endereço final quando o conteúdo coincide. O README preserva a observação entre checkouts registrada na revisão 5cf45f52f.
+ 
+-## Ensaio em VM concluído
+-
+-Oito executáveis, o WASM e o metapacote foram compilados em uma VM QEMU/KVM com kernel e discos próprios, sem montagem do store do host. O seed excluiu todos os outputs Arkhe, verificados ausentes no início. Os dez hashes e derivações coincidiram com o host. Dependências e toolchain foram fornecidos como insumos fixados comuns; host e VM usam o mesmo equipamento físico. Veja [comparação](validation/vm/comparison.json) e [procedimento](vm-reproduction.md).
++A [rodada de VM anterior](INTEGRATION-REVIEW.md) usava Rust 1.99.0 do nixpkgs. Seus resultados permanecem históricos; a reprodução em VM não foi repetida para Rust 1.96.0. Nesta rodada, aarch64 foi declarado no flake mas seus builds não foram executados.
+diff --git a/arkhe/docs/validation/rust-1.96.0/content-addressing.log b/arkhe/docs/validation/rust-1.96.0/content-addressing.log
+new file mode 100644
+index 000000000..c83699de3
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/content-addressing.log
+@@ -0,0 +1,5 @@
++== build CA: path:/mnt/d/arkhe/work/nixpkgs-arkhe-integration/arkhe#legacyPackages.x86_64-linux.ca.arkhe-verify-cli
++waiting for another Nix process to finish fetching input 'github:oxalica/rust-overlay/afcefd09c71e63663a46e4ce5e09968584f2c709?narHash=sha256-fAvtOccUXHVAH5wXK%2BABYUUC47W2qTb9T9EefLcS9ME%3D'...
++this derivation will be built:
++  /nix/store/ln74l6nnpfxnmi3gy5f30x1q17h9zksn-arkhe-verify-0.1.0.drv
++CONTEUDO ENDERECADO: arkhe-verify-cli ca=fixed:r:sha256:0b812x254kjfvmhan1wj81fv13m0gh83xj127ma3y4xb5ah87ygs path=/nix/store/3p3haixpcli6z2f8wavrvbfghwrdpkha-arkhe-verify-0.1.0
+diff --git a/arkhe/docs/validation/rust-1.96.0/derivations.json b/arkhe/docs/validation/rust-1.96.0/derivations.json
+new file mode 100644
+index 000000000..92cee3d81
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/derivations.json
+@@ -0,0 +1,174 @@
++{
++  "checks": {
++    "arkhe": {
++      "drv": "/nix/store/ywa5rqz21454xhzr42azqiisjv6m1g4c-arkhe-0.1.0.drv",
++      "out": "/nix/store/k8011lzr8gk2v67bpvhffy94zcn000pk-arkhe-0.1.0"
++    },
++    "arkhe-ask": {
++      "drv": "/nix/store/n56xdy46k849cq81746a5ggmlw2spzc9-arkhe-ask-0.1.0.drv",
++      "out": "/nix/store/bd6sf96d6snn73i9lgbz3cmlxx58dnmc-arkhe-ask-0.1.0"
++    },
++    "arkhe-crm-bridge": {
++      "drv": "/nix/store/nvbc0889nv2finh984438y2nchqbf05r-arkhe-crm-bridge-0.1.0.drv",
++      "out": "/nix/store/wm8ak3vyp1g8vc80nhdgp931am0lnr6g-arkhe-crm-bridge-0.1.0"
++    },
++    "arkhe-ollama": {
++      "drv": "/nix/store/dqg62ac8ag0i381isc9bklhddbzcfndv-arkhe-ollama-0.1.0.drv",
++      "out": "/nix/store/08wcw9hfw0ifkjq0njn1crabn4snkfdf-arkhe-ollama-0.1.0"
++    },
++    "arkhe-python-gate": {
++      "drv": "/nix/store/ybq9a069k6y5lbyfwchiimlw0k10hgss-arkhe-python-gate-0.1.0.drv",
++      "out": "/nix/store/fmhd8jzz46d0m1m8mw1pbhwh9haqqh7v-arkhe-python-gate-0.1.0"
++    },
++    "arkhe-runtime": {
++      "drv": "/nix/store/cdnymwg57qyksfq59965yjaxs4amkcfv-arkhe-runtime-0.1.0.drv",
++      "out": "/nix/store/3wpw98705pjhkp4vbw2mnr9rvmbkvr89-arkhe-runtime-0.1.0"
++    },
++    "arkhe-sdd-parser": {
++      "drv": "/nix/store/kx3z9yqdygjmlakzq0n23cd6dlx2yhjr-arkhe-sdd-parser-0.1.0.drv",
++      "out": "/nix/store/6dg870pqnby6hv7xdh6y4bjr7jqvbkdi-arkhe-sdd-parser-0.1.0"
++    },
++    "arkhe-sql-migrate": {
++      "drv": "/nix/store/awbfrxps9ycr058f1793dbxf5bk3wj2p-arkhe-sql-migrate-0.1.0.drv",
++      "out": "/nix/store/130sc4wkayb32k9arvdaq8kxc0fdizdg-arkhe-sql-migrate-0.1.0"
++    },
++    "arkhe-twin": {
++      "drv": "/nix/store/8dri0c98jill66d3qdhd8p7c7gb5kz4s-arkhe-twin-0.1.0.drv",
++      "out": "/nix/store/rz1m20aqjfb31sh2j9hzsd8ji8g0xjsa-arkhe-twin-0.1.0"
++    },
++    "arkhe-verify": {
++      "drv": "/nix/store/bdsa06s2q4mr3m5y18ys2s1lafab4z68-arkhe-verify-0.1.0.drv",
++      "out": "/nix/store/nyc4i7vdxj2vy0vipcz55izyadkvpxvw-arkhe-verify-0.1.0"
++    },
++    "arkhe-verify-wasm": {
++      "drv": "/nix/store/s9mfy25h9xgk90c89ygsxz8g9smgxi33-arkhe-verify-wasm-0.1.0.drv",
++      "out": "/nix/store/rj1iiaisbr9c7xy8q7qxx1g3iyvf0add-arkhe-verify-wasm-0.1.0"
++    },
++    "modules": {
++      "drv": "/nix/store/d3i69hr3lclj6mla3fk2c0a7yxla742i-arkhe-modules-eval.drv",
++      "out": "/nix/store/xz5440n38h8niwzgxj0zhwywwlp4031h-arkhe-modules-eval"
++    },
++    "reproducible-arkhe-sdd-parser": {
++      "drv": "/nix/store/lhz8k6mgvpvlpnbk4h8s7sq2m11h95vf-arkhe-reproducible-arkhe-sdd-parser.drv",
++      "out": "/nix/store/rq6i147wb5yn5d5xh8ns651gbjhsvjmr-arkhe-reproducible-arkhe-sdd-parser"
++    },
++    "reproducible-arkhe-verify": {
++      "drv": "/nix/store/b9h5xrmf60y0pc0yf1djnc3v79nnzg6w-arkhe-reproducible-arkhe-verify.drv",
++      "out": "/nix/store/ly62vziyg6r1pzfpa2r1zbwya5445mzm-arkhe-reproducible-arkhe-verify"
++    },
++    "reproducible-arkhe-verify-wasm": {
++      "drv": "/nix/store/8qcq4s5a8c1zgq3is3j1hs225lanqvr5-arkhe-reproducible-arkhe-verify-wasm.drv",
++      "out": "/nix/store/vga8v3jvp4npl3kafshmf5wwva2i0vvw-arkhe-reproducible-arkhe-verify-wasm"
++    },
++    "sdd-parser-smoke": {
++      "drv": "/nix/store/7kwwkmqda8gpg34f69qwaknj2pv8cqs6-arkhe-sdd-parser-smoke.drv",
++      "out": "/nix/store/cvh5a67s5vr4lg4mw5av87yp2zbmq77b-arkhe-sdd-parser-smoke",
++      "valid": true
++    },
++    "smoke": {
++      "drv": "/nix/store/kn64pnn0b8shfxhwrji6fflaln2ab4k8-arkhe-verify-smoke.drv",
++      "out": "/nix/store/hl18rbzgilaqvz7ils2cnyl6qh54azp8-arkhe-verify-smoke"
++    },
++    "source-manifest": {
++      "drv": "/nix/store/n0nzygq3ahr0p2rqm1q9bfrh0r2p8w88-arkhe-source-manifest.drv",
++      "out": "/nix/store/zdj4i0949k0bjl957f31r5zvhmjifdvy-arkhe-source-manifest"
++    },
++    "tests-arkhe-core": {
++      "drv": "/nix/store/xlc7zl7qf5i854jiq27pjwfihr1ghmbs-arkhe-core-tests-0.1.0.drv",
++      "out": "/nix/store/f851llcgy0qmhr9q6kb5jhab8gfskfgz-arkhe-core-tests-0.1.0",
++      "valid": true
++    },
++    "tests-arkhe-governance": {
++      "drv": "/nix/store/mcljw92bl2hkh4fwsv22z9xncmhvl5gv-arkhe-governance-tests-0.1.0.drv",
++      "out": "/nix/store/a3jlk080vkxv0wxj3r802d9csx8ibbjn-arkhe-governance-tests-0.1.0",
++      "valid": true
++    },
++    "tests-arkhe-kernel": {
++      "drv": "/nix/store/b734l891391wk9hqfydifd8zsnc1glfk-arkhe-kernel-tests-0.1.0.drv",
++      "out": "/nix/store/abg7i8zrc99k2wi7jca18kd2x7cn048s-arkhe-kernel-tests-0.1.0",
++      "valid": true
++    },
++    "tests-clippy": {
++      "drv": "/nix/store/yii9y70wswacgwfaaakp8yrx06anq1lb-arkhe-clippy-0.1.0.drv",
++      "out": "/nix/store/ndkn6d0laazmzi61k1596bcbzm0w62ml-arkhe-clippy-0.1.0",
++      "valid": true
++    },
++    "toolchain-version": {
++      "drv": "/nix/store/6g5ij4krdp4fz26bfyazbgpcp6aj5lp2-arkhe-toolchain-version.drv",
++      "out": "/nix/store/64m3kmgjsa0004jipwcmip58rg20pi5n-arkhe-toolchain-version",
++      "valid": true
++    },
++    "wasm-smoke": {
++      "drv": "/nix/store/fla27g1zyma39kgri9zqdgc59byqwmky-arkhe-wasm-smoke.drv",
++      "out": "/nix/store/wqv5ip3lln6xi4jlbnvp5nwfd8lq0m6m-arkhe-wasm-smoke",
++      "valid": true
++    }
++  },
++  "packages": {
++    "arkhe": {
++      "drv": "/nix/store/ywa5rqz21454xhzr42azqiisjv6m1g4c-arkhe-0.1.0.drv",
++      "out": "/nix/store/k8011lzr8gk2v67bpvhffy94zcn000pk-arkhe-0.1.0",
++      "src": null
++    },
++    "arkhe-ask": {
++      "drv": "/nix/store/n56xdy46k849cq81746a5ggmlw2spzc9-arkhe-ask-0.1.0.drv",
++      "out": "/nix/store/bd6sf96d6snn73i9lgbz3cmlxx58dnmc-arkhe-ask-0.1.0",
++      "src": "/nix/store/gafnid6n52vjwkb3rgx3fzfpn8qnaj9b-source"
++    },
++    "arkhe-crm-bridge": {
++      "drv": "/nix/store/nvbc0889nv2finh984438y2nchqbf05r-arkhe-crm-bridge-0.1.0.drv",
++      "out": "/nix/store/wm8ak3vyp1g8vc80nhdgp931am0lnr6g-arkhe-crm-bridge-0.1.0",
++      "src": "/nix/store/n4axfyl3amjdwzfn844z5glw279iwggc-source"
++    },
++    "arkhe-ollama": {
++      "drv": "/nix/store/dqg62ac8ag0i381isc9bklhddbzcfndv-arkhe-ollama-0.1.0.drv",
++      "out": "/nix/store/08wcw9hfw0ifkjq0njn1crabn4snkfdf-arkhe-ollama-0.1.0",
++      "src": "/nix/store/49z22z90kz5kxszsw9q820l8hb271kxh-source"
++    },
++    "arkhe-python-gate": {
++      "drv": "/nix/store/ybq9a069k6y5lbyfwchiimlw0k10hgss-arkhe-python-gate-0.1.0.drv",
++      "out": "/nix/store/fmhd8jzz46d0m1m8mw1pbhwh9haqqh7v-arkhe-python-gate-0.1.0",
++      "src": "/nix/store/58kq4iysanpkfkmdwxypgv2ixh6xid7y-source"
++    },
++    "arkhe-runtime": {
++      "drv": "/nix/store/cdnymwg57qyksfq59965yjaxs4amkcfv-arkhe-runtime-0.1.0.drv",
++      "out": "/nix/store/3wpw98705pjhkp4vbw2mnr9rvmbkvr89-arkhe-runtime-0.1.0",
++      "src": "/nix/store/cj75n2i0x5ybriby132lgisva96nnaqc-source"
++    },
++    "arkhe-sdd-parser": {
++      "drv": "/nix/store/kx3z9yqdygjmlakzq0n23cd6dlx2yhjr-arkhe-sdd-parser-0.1.0.drv",
++      "out": "/nix/store/6dg870pqnby6hv7xdh6y4bjr7jqvbkdi-arkhe-sdd-parser-0.1.0",
++      "src": "/nix/store/8mg36x2mw8jxf1pcyrz681bafl6jqbk8-source"
++    },
++    "arkhe-sql-migrate": {
++      "drv": "/nix/store/awbfrxps9ycr058f1793dbxf5bk3wj2p-arkhe-sql-migrate-0.1.0.drv",
++      "out": "/nix/store/130sc4wkayb32k9arvdaq8kxc0fdizdg-arkhe-sql-migrate-0.1.0",
++      "src": "/nix/store/600hwn7m504g8qq69s87f2sw9qwbbdbg-source"
++    },
++    "arkhe-twin": {
++      "drv": "/nix/store/8dri0c98jill66d3qdhd8p7c7gb5kz4s-arkhe-twin-0.1.0.drv",
++      "out": "/nix/store/rz1m20aqjfb31sh2j9hzsd8ji8g0xjsa-arkhe-twin-0.1.0",
++      "src": "/nix/store/v5vrx63qqa32hzshzcydkbsddy5hw0dy-source"
++    },
++    "arkhe-verify": {
++      "drv": "/nix/store/bdsa06s2q4mr3m5y18ys2s1lafab4z68-arkhe-verify-0.1.0.drv",
++      "out": "/nix/store/nyc4i7vdxj2vy0vipcz55izyadkvpxvw-arkhe-verify-0.1.0",
++      "src": "/nix/store/axw7gxnaip6hvfbw8cpgalzhipmwdcy2-source"
++    },
++    "arkhe-verify-cli": {
++      "drv": "/nix/store/bdsa06s2q4mr3m5y18ys2s1lafab4z68-arkhe-verify-0.1.0.drv",
++      "out": "/nix/store/nyc4i7vdxj2vy0vipcz55izyadkvpxvw-arkhe-verify-0.1.0",
++      "src": "/nix/store/axw7gxnaip6hvfbw8cpgalzhipmwdcy2-source"
++    },
++    "arkhe-verify-wasm": {
++      "drv": "/nix/store/s9mfy25h9xgk90c89ygsxz8g9smgxi33-arkhe-verify-wasm-0.1.0.drv",
++      "out": "/nix/store/rj1iiaisbr9c7xy8q7qxx1g3iyvf0add-arkhe-verify-wasm-0.1.0",
++      "src": "/nix/store/xvbbx06b2jfpxw5kyskx7v8hlghkvdax-source"
++    },
++    "default": {
++      "drv": "/nix/store/bdsa06s2q4mr3m5y18ys2s1lafab4z68-arkhe-verify-0.1.0.drv",
++      "out": "/nix/store/nyc4i7vdxj2vy0vipcz55izyadkvpxvw-arkhe-verify-0.1.0",
++      "src": "/nix/store/axw7gxnaip6hvfbw8cpgalzhipmwdcy2-source"
++    }
++  }
++}
+diff --git a/arkhe/docs/validation/rust-1.96.0/flake-check.log b/arkhe/docs/validation/rust-1.96.0/flake-check.log
+new file mode 100644
+index 0000000000000000000000000000000000000000..04ebc667625be0b32afe78e44b3ac4cff0cc3bbc
+GIT binary patch
+literal 16005
+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
+R;Yzl=R}N`l2T#{`{|78-!RG(~
+
+literal 0
+HcmV?d00001
+
+diff --git a/arkhe/docs/validation/rust-1.96.0/hashes.json b/arkhe/docs/validation/rust-1.96.0/hashes.json
+new file mode 100644
+index 000000000..0d79f5315
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/hashes.json
+@@ -0,0 +1,5 @@
++{
++  "arkhe-verify-cli": "sha256-+vmDoCqrEz9UPSLIPhB8oI6wXUCSB6tg3U5OUkQXAS0=",
++  "arkhe-verify-wasm": "sha256-UQi2HohdpttuenoFcZ22EZVw8FW+GaN3aYFNRngIgn4=",
++  "arkhe-sdd-parser": "sha256-MG84KZNsiV1eEVbbwiit4dWBlrM2EO7e3R5xwzyvChU="
++}
+diff --git a/arkhe/docs/validation/rust-1.96.0/loose-copy-flake-check.log b/arkhe/docs/validation/rust-1.96.0/loose-copy-flake-check.log
+new file mode 100644
+index 0000000000000000000000000000000000000000..0c6ab44aafaae43d5ba188f21d988538e231843c
+GIT binary patch
+literal 6875
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/arkhe/docs/validation/rust-1.96.0/machine-path-scan.json b/arkhe/docs/validation/rust-1.96.0/machine-path-scan.json
+new file mode 100644
+index 000000000..c56d93ea4
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/machine-path-scan.json
+@@ -0,0 +1,29 @@
++{
++  "arkhe-verify-cli": {
++    "status": "PASS",
++    "file": "/nix/store/nyc4i7vdxj2vy0vipcz55izyadkvpxvw-arkhe-verify-0.1.0/bin/arkhe-verify",
++    "excluded_prefixes": [
++      "/mnt/d/arkhe",
++      "/home/arkhen",
++      "D:\\arkhe"
++    ]
++  },
++  "arkhe-verify-wasm": {
++    "status": "PASS",
++    "file": "/nix/store/rj1iiaisbr9c7xy8q7qxx1g3iyvf0add-arkhe-verify-wasm-0.1.0/lib/arkhe-verify.wasm",
++    "excluded_prefixes": [
++      "/mnt/d/arkhe",
++      "/home/arkhen",
++      "D:\\arkhe"
++    ]
++  },
++  "arkhe-sdd-parser": {
++    "status": "PASS",
++    "file": "/nix/store/6dg870pqnby6hv7xdh6y4bjr7jqvbkdi-arkhe-sdd-parser-0.1.0/bin/arkhe-sdd-parser",
++    "excluded_prefixes": [
++      "/mnt/d/arkhe",
++      "/home/arkhen",
++      "D:\\arkhe"
++    ]
++  }
++}
+diff --git a/arkhe/docs/validation/rust-1.96.0/overlay.json b/arkhe/docs/validation/rust-1.96.0/overlay.json
+new file mode 100644
+index 000000000..a526148f0
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/overlay.json
+@@ -0,0 +1,17 @@
++{
++  "status": "PASS",
++  "packages": {
++    "arkhe-sdd-parser": {
++      "flake": "/nix/store/kx3z9yqdygjmlakzq0n23cd6dlx2yhjr-arkhe-sdd-parser-0.1.0.drv",
++      "overlay": "/nix/store/kx3z9yqdygjmlakzq0n23cd6dlx2yhjr-arkhe-sdd-parser-0.1.0.drv"
++    },
++    "arkhe-verify-cli": {
++      "flake": "/nix/store/bdsa06s2q4mr3m5y18ys2s1lafab4z68-arkhe-verify-0.1.0.drv",
++      "overlay": "/nix/store/bdsa06s2q4mr3m5y18ys2s1lafab4z68-arkhe-verify-0.1.0.drv"
++    },
++    "arkhe-verify-wasm": {
++      "flake": "/nix/store/xywk38zryzy51vlijrzyc4npkhqqa2r9-arkhe-verify-wasm-0.1.0.drv",
++      "overlay": "/nix/store/xywk38zryzy51vlijrzyc4npkhqqa2r9-arkhe-verify-wasm-0.1.0.drv"
++    }
++  }
++}
+diff --git a/arkhe/docs/validation/rust-1.96.0/rebuild-filtered-wasm.log b/arkhe/docs/validation/rust-1.96.0/rebuild-filtered-wasm.log
+new file mode 100644
+index 0000000000000000000000000000000000000000..46d30c3b9be583a21bed36d12406320b7fd8e3af
+GIT binary patch
+literal 713
+zcmb_X!EW0y4CUEhL12d*2HT0Vu5o}I1}xqR4BeKY9hRGF$+Bu&N+mhA_iw{KslQNK
+z-J!s++YWl9$oC$}0UWfj1%!9>N-&_I0tFI!u)yH)_pk5_b%(&sAR&bzE~8je=D<Ti
+z(Gr6Za?)#ZK*Cu+Ydr|)C<<~H)c2vv0`}xE>oEK}LLM?sOr*M?|C|Zpoe1ZtEN~)-
+zU~ugg3#MAZ(HnH0S&zOJ=qBey$FX<9q7%+3qp>m;7tA)b(2E4W34!;fx0<!3Z$q;)
+zRv;Ii3|$iKc6egG-lm=QDNlni9gJ;Kt;SO$T^vfW(q2f*JdJoJy?U;ng;muQ56pF2
+zyz5oVQE62w*8X4XIJP3#M`bO_Mrnzr_ov=FG!-u9ZByszwAAHYHDwodKFTIvmYaN%
+zZv45Cx$ESp*6Tk9y;wY6CaYwbaC=@PNfI6QUk;z&-yE-Q_n+{uE78>~yLcPld{x;;
+zQ}dJez0js8k6E@q-VU4M`|A(vdd+?m*9R@Hq<*u*7wg&kl~PQ(JDZo6<Ft9Wd>F@-
+PT&w9^Eg9$kS}%G6dsW{M
+
+literal 0
+HcmV?d00001
+
+diff --git a/arkhe/docs/validation/rust-1.96.0/rebuild.log b/arkhe/docs/validation/rust-1.96.0/rebuild.log
+new file mode 100644
+index 000000000..80cb28136
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/rebuild.log
+@@ -0,0 +1,14 @@
++wsl: Failed to start the systemd user session for 'arkhen'. See journalctl for more details.
++== path:/mnt/d/arkhe/work/nixpkgs-arkhe-integration/arkhe#arkhe-verify-cli: build inicial
++waiting for another Nix process to finish fetching input 'github:oxalica/rust-overlay/afcefd09c71e63663a46e4ce5e09968584f2c709?narHash=sha256-fAvtOccUXHVAH5wXK%2BABYUUC47W2qTb9T9EefLcS9ME%3D'...
++== path:/mnt/d/arkhe/work/nixpkgs-arkhe-integration/arkhe#arkhe-verify-cli: --rebuild
++checking outputs of '/nix/store/bdsa06s2q4mr3m5y18ys2s1lafab4z68-arkhe-verify-0.1.0.drv'...
++REPRODUZIVEL arkhe-verify-cli sha256-+vmDoCqrEz9UPSLIPhB8oI6wXUCSB6tg3U5OUkQXAS0= /nix/store/nyc4i7vdxj2vy0vipcz55izyadkvpxvw-arkhe-verify-0.1.0
++== path:/mnt/d/arkhe/work/nixpkgs-arkhe-integration/arkhe#arkhe-verify-wasm: build inicial
++== path:/mnt/d/arkhe/work/nixpkgs-arkhe-integration/arkhe#arkhe-verify-wasm: --rebuild
++checking outputs of '/nix/store/xywk38zryzy51vlijrzyc4npkhqqa2r9-arkhe-verify-wasm-0.1.0.drv'...
++REPRODUZIVEL arkhe-verify-wasm sha256-UQi2HohdpttuenoFcZ22EZVw8FW+GaN3aYFNRngIgn4= /nix/store/pfzb0rk8zhdpffjnb2sbbsbjf3b470zz-arkhe-verify-wasm-0.1.0
++== path:/mnt/d/arkhe/work/nixpkgs-arkhe-integration/arkhe#arkhe-sdd-parser: build inicial
++== path:/mnt/d/arkhe/work/nixpkgs-arkhe-integration/arkhe#arkhe-sdd-parser: --rebuild
++checking outputs of '/nix/store/kx3z9yqdygjmlakzq0n23cd6dlx2yhjr-arkhe-sdd-parser-0.1.0.drv'...
++REPRODUZIVEL arkhe-sdd-parser sha256-MG84KZNsiV1eEVbbwiit4dWBlrM2EO7e3R5xwzyvChU= /nix/store/6dg870pqnby6hv7xdh6y4bjr7jqvbkdi-arkhe-sdd-parser-0.1.0
+diff --git a/arkhe/docs/validation/rust-1.96.0/results.json b/arkhe/docs/validation/rust-1.96.0/results.json
+new file mode 100644
+index 000000000..6553e7d84
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/results.json
+@@ -0,0 +1,44 @@
++{
++  "date": "2026-10-29",
++  "host": "Ubuntu WSL x86_64-linux",
++  "nix": "2.35.4",
++  "rust": "1.96.0 (ac68faa20 2026-05-25)",
++  "nixpkgs_rev": "31ecbaca1bdefa45dffc409f0250bd8039ea0010",
++  "rust_overlay_rev": "afcefd09c71e63663a46e4ce5e09968584f2c709",
++  "snapshot_files": 598,
++  "snapshot_matches_workspace": true,
++  "flake_check": "PASS",
++  "flake_check_count": 24,
++  "checks_use_cached_valid_outputs": true,
++  "fresh_rebuild": {
++    "status": "PASS",
++    "packages": {
++      "arkhe-verify-cli": "sha256-+vmDoCqrEz9UPSLIPhB8oI6wXUCSB6tg3U5OUkQXAS0=",
++      "arkhe-verify-wasm": "sha256-UQi2HohdpttuenoFcZ22EZVw8FW+GaN3aYFNRngIgn4=",
++      "arkhe-sdd-parser": "sha256-MG84KZNsiV1eEVbbwiit4dWBlrM2EO7e3R5xwzyvChU="
++    }
++  },
++  "source_isolation": "PASS: unrelated crate edits, undeclared Cargo projects and generated WASM pkg files do not affect priority src/drv hashes",
++  "host_path_scan": "PASS for /mnt/d/arkhe, /home/arkhen and D:\\arkhe",
++  "content_addressing": "PASS: verifier variant has a fixed recursive SHA-256 content address",
++  "rust_196_vm_reproduction": "NOT_RUN",
++  "aarch64_builds": "NOT_RUN",
++  "consumer_overlay": "PASS: same pinned derivations as flake packages",
++  "local_entrypoint_builds": {
++    "D:/arkhe/nixpkgs-arkhe": "PASS",
++    "D:/arkhe/work/nixpkgs-arkhe-integration/arkhe": "PASS"
++  },
++  "source_manifest_sha256": "055e776d1e29789c3d4269796f0db4046ddedc9b4316a6e14fc6702b1bd7dda4",
++  "sandbox": true,
++  "rebuild_log_map": {
++    "arkhe-verify-cli": "rebuild.log",
++    "arkhe-sdd-parser": "rebuild.log",
++    "arkhe-verify-wasm": "rebuild-filtered-wasm.log"
++  },
++  "loose_copy_backup": "D:/arkhe/work/nixpkgs-arkhe-before-196-refresh-20261029-173030",
++  "local_entrypoint_checks": {
++    "D:/arkhe/nixpkgs-arkhe": "PASS",
++    "integration/arkhe": "PASS"
++  },
++  "fixed_source_hashes": "source-hashes.json"
++}
+diff --git a/arkhe/docs/validation/rust-1.96.0/sdd-parser-smoke.log b/arkhe/docs/validation/rust-1.96.0/sdd-parser-smoke.log
+new file mode 100644
+index 000000000..e69de29bb
+diff --git a/arkhe/docs/validation/rust-1.96.0/source-filter.json b/arkhe/docs/validation/rust-1.96.0/source-filter.json
+new file mode 100644
+index 000000000..249c12596
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/source-filter.json
+@@ -0,0 +1,48 @@
++{
++  "status": "PASS",
++  "mutation": "apps/arkhe-ask/src/main.rs comment",
++  "unaffected": [
++    "arkhe-verify-cli",
++    "arkhe-verify-wasm",
++    "arkhe-sdd-parser"
++  ],
++  "ignored_undeclared_project": true,
++  "ignored_wasm_pkg_output": true,
++  "positive_control_changed": "arkhe-ask",
++  "before": {
++    "arkhe-ask": {
++      "drv": "/nix/store/n56xdy46k849cq81746a5ggmlw2spzc9-arkhe-ask-0.1.0.drv",
++      "src": "/nix/store/gafnid6n52vjwkb3rgx3fzfpn8qnaj9b-source"
++    },
++    "arkhe-sdd-parser": {
++      "drv": "/nix/store/kx3z9yqdygjmlakzq0n23cd6dlx2yhjr-arkhe-sdd-parser-0.1.0.drv",
++      "src": "/nix/store/8mg36x2mw8jxf1pcyrz681bafl6jqbk8-source"
++    },
++    "arkhe-verify-cli": {
++      "drv": "/nix/store/bdsa06s2q4mr3m5y18ys2s1lafab4z68-arkhe-verify-0.1.0.drv",
++      "src": "/nix/store/axw7gxnaip6hvfbw8cpgalzhipmwdcy2-source"
++    },
++    "arkhe-verify-wasm": {
++      "drv": "/nix/store/s9mfy25h9xgk90c89ygsxz8g9smgxi33-arkhe-verify-wasm-0.1.0.drv",
++      "src": "/nix/store/xvbbx06b2jfpxw5kyskx7v8hlghkvdax-source"
++    }
++  },
++  "after": {
++    "arkhe-ask": {
++      "drv": "/nix/store/2n8xnaml6vxln8kw1dajv8fwvx4gw8mc-arkhe-ask-0.1.0.drv",
++      "src": "/nix/store/2h22a16chdabsr9q6v8r8p5qf91r9wbi-source"
++    },
++    "arkhe-sdd-parser": {
++      "drv": "/nix/store/kx3z9yqdygjmlakzq0n23cd6dlx2yhjr-arkhe-sdd-parser-0.1.0.drv",
++      "src": "/nix/store/8mg36x2mw8jxf1pcyrz681bafl6jqbk8-source"
++    },
++    "arkhe-verify-cli": {
++      "drv": "/nix/store/bdsa06s2q4mr3m5y18ys2s1lafab4z68-arkhe-verify-0.1.0.drv",
++      "src": "/nix/store/axw7gxnaip6hvfbw8cpgalzhipmwdcy2-source"
++    },
++    "arkhe-verify-wasm": {
++      "drv": "/nix/store/s9mfy25h9xgk90c89ygsxz8g9smgxi33-arkhe-verify-wasm-0.1.0.drv",
++      "src": "/nix/store/xvbbx06b2jfpxw5kyskx7v8hlghkvdax-source"
++    }
++  }
++}
+diff --git a/arkhe/docs/validation/rust-1.96.0/source-hashes.json b/arkhe/docs/validation/rust-1.96.0/source-hashes.json
+new file mode 100644
+index 000000000..38ca09b98
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/source-hashes.json
+@@ -0,0 +1,14 @@
++{
++  "arkhe-verify-cli": {
++    "path": "/nix/store/axw7gxnaip6hvfbw8cpgalzhipmwdcy2-source",
++    "narHash": "sha256-QA/dwdFAIF7++E/OMlk3TWhPeALbm03+d2ZVQKqwPco="
++  },
++  "arkhe-verify-wasm": {
++    "path": "/nix/store/xvbbx06b2jfpxw5kyskx7v8hlghkvdax-source",
++    "narHash": "sha256-dWtyo5x9k1Q7enDxV1v9R9eIoqMu9WWZFhY1FYQHLJg="
++  },
++  "arkhe-sdd-parser": {
++    "path": "/nix/store/8mg36x2mw8jxf1pcyrz681bafl6jqbk8-source",
++    "narHash": "sha256-Db3+aPmpPxP4fdwvl0l2w/5gi/+dh/iM1dVSfgpIwyo="
++  }
++}
+diff --git a/arkhe/docs/validation/rust-1.96.0/tests-arkhe-core.log b/arkhe/docs/validation/rust-1.96.0/tests-arkhe-core.log
+new file mode 100644
+index 000000000..6c692ff5d
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/tests-arkhe-core.log
+@@ -0,0 +1,96 @@
++Running phase: unpackPhase
++@nix { "action": "setPhase", "phase": "unpackPhase" }
++unpacking source archive /nix/store/fchdjfjkfy9wqw50qlm5csn9qx75p582-source
++source root is source
++Executing cargoSetupPostUnpackHook
++Finished cargoSetupPostUnpackHook
++unpackPhase completed in 1 minutes 36 seconds
++Running phase: patchPhase
++@nix { "action": "setPhase", "phase": "patchPhase" }
++Executing cargoSetupPostPatchHook
++Validating consistency between /build/source/Cargo.lock and /build/cargo-vendor-dir/Cargo.lock
++Finished cargoSetupPostPatchHook
++Running phase: updateAutotoolsGnuConfigScriptsPhase
++@nix { "action": "setPhase", "phase": "updateAutotoolsGnuConfigScriptsPhase" }
++Running phase: configurePhase
++@nix { "action": "setPhase", "phase": "configurePhase" }
++Running phase: buildPhase
++@nix { "action": "setPhase", "phase": "buildPhase" }
++no Makefile or custom buildPhase, doing nothing
++Running phase: checkPhase
++@nix { "action": "setPhase", "phase": "checkPhase" }
++   Compiling proc-macro2 v1.0.107
++   Compiling quote v1.0.47
++   Compiling unicode-ident v1.0.27
++   Compiling serde_core v1.0.229
++   Compiling shlex v2.0.1
++   Compiling find-msvc-tools v0.1.14
++   Compiling zmij v1.0.23
++   Compiling serde_json v1.0.154
++   Compiling serde v1.0.229
++   Compiling thiserror v2.0.21
++   Compiling memchr v2.8.3
++   Compiling constant_time_eq v0.4.2
++   Compiling cfg-if v1.0.5
++   Compiling cpufeatures v0.3.1
++   Compiling cc v1.8.0
++   Compiling arrayvec v0.7.8
++   Compiling itoa v1.0.18
++   Compiling syn v3.0.9
++   Compiling blake3 v1.8.7
++   Compiling thiserror-impl v2.0.21
++   Compiling serde_derive v1.0.229
++   Compiling async-trait v0.1.92
++   Compiling arkhe-core v0.1.0 (/build/source/kernel/arkhe-core)
++    Finished `test` profile [unoptimized + debuginfo] target(s) in 46.08s
++     Running unittests src/lib.rs (target/debug/deps/arkhe_core-60399d95b3c9fcbe)
++
++running 0 tests
++
++test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
++
++     Running tests/canonical_bytes.rs (target/debug/deps/canonical_bytes-77b68afde476fee5)
++
++running 3 tests
++test byte_string_length_headers_use_shortest_encoding ... ok
++test duplicate_keys_cannot_create_ambiguous_cbor ... ok
++test typed_bytes_match_literal_cbor_and_maps_ignore_insertion_order ... ok
++
++test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
++
++     Running tests/golden_vectors.rs (target/debug/deps/golden_vectors-4d95939f77f7e654)
++
++running 4 tests
++test optional_classification_matches_independent_python_vectors ... ok
++test canonical_booleans_for_opt_in_formal_predicates ... ok
++test worker_unsigned_fields_and_reference_order_are_digest_bound ... ok
++test independent_python_vectors ... ok
++
++test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
++
++   Doc-tests arkhe_core
++
++running 0 tests
++
++test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
++
++== teste obrigatório: arkhe-core --test golden_vectors
++    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.33s
++     Running tests/golden_vectors.rs (target/debug/deps/golden_vectors-4d95939f77f7e654)
++
++running 4 tests
++test optional_classification_matches_independent_python_vectors ... ok
++test worker_unsigned_fields_and_reference_order_are_digest_bound ... ok
++test canonical_booleans_for_opt_in_formal_predicates ... ok
++test independent_python_vectors ... ok
++
++test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
++
++checkPhase completed in 51 seconds
++Running phase: installPhase
++@nix { "action": "setPhase", "phase": "installPhase" }
++Running phase: fixupPhase
++@nix { "action": "setPhase", "phase": "fixupPhase" }
++shrinking RPATHs of ELF executables and libraries in /nix/store/f851llcgy0qmhr9q6kb5jhab8gfskfgz-arkhe-core-tests-0.1.0
++checking for references to /build/ in /nix/store/f851llcgy0qmhr9q6kb5jhab8gfskfgz-arkhe-core-tests-0.1.0...
++patching script interpreter paths in /nix/store/f851llcgy0qmhr9q6kb5jhab8gfskfgz-arkhe-core-tests-0.1.0
+diff --git a/arkhe/docs/validation/rust-1.96.0/tests-arkhe-governance.log b/arkhe/docs/validation/rust-1.96.0/tests-arkhe-governance.log
+new file mode 100644
+index 000000000..a2a4d1195
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/tests-arkhe-governance.log
+@@ -0,0 +1,164 @@
++Running phase: unpackPhase
++@nix { "action": "setPhase", "phase": "unpackPhase" }
++unpacking source archive /nix/store/3qn6ap9aci9vsr1ydyixg7h9r58sw1w9-source
++source root is source
++Executing cargoSetupPostUnpackHook
++Finished cargoSetupPostUnpackHook
++unpackPhase completed in 2 minutes 42 seconds
++Running phase: patchPhase
++@nix { "action": "setPhase", "phase": "patchPhase" }
++Executing cargoSetupPostPatchHook
++Validating consistency between /build/source/Cargo.lock and /build/cargo-vendor-dir/Cargo.lock
++Finished cargoSetupPostPatchHook
++Running phase: updateAutotoolsGnuConfigScriptsPhase
++@nix { "action": "setPhase", "phase": "updateAutotoolsGnuConfigScriptsPhase" }
++Running phase: configurePhase
++@nix { "action": "setPhase", "phase": "configurePhase" }
++Running phase: buildPhase
++@nix { "action": "setPhase", "phase": "buildPhase" }
++no Makefile or custom buildPhase, doing nothing
++Running phase: checkPhase
++@nix { "action": "setPhase", "phase": "checkPhase" }
++   Compiling proc-macro2 v1.0.107
++   Compiling unicode-ident v1.0.27
++   Compiling quote v1.0.47
++   Compiling version_check v0.9.5
++   Compiling typenum v1.20.1
++   Compiling find-msvc-tools v0.1.14
++   Compiling semver v1.0.28
++   Compiling shlex v2.0.1
++   Compiling serde_core v1.0.229
++   Compiling cfg-if v1.0.5
++   Compiling zmij v1.0.23
++   Compiling serde_json v1.0.154
++   Compiling serde v1.0.229
++   Compiling cpufeatures v0.2.17
++   Compiling thiserror v2.0.21
++   Compiling zeroize v1.9.0
++   Compiling rustc_version v0.4.1
++   Compiling cc v1.8.0
++   Compiling constant_time_eq v0.4.2
++   Compiling generic-array v0.14.9
++   Compiling arrayvec v0.7.8
++   Compiling subtle v2.6.1
++   Compiling itoa v1.0.18
++   Compiling signature v2.2.0
++   Compiling cpufeatures v0.3.1
++   Compiling memchr v2.8.3
++   Compiling keccak v0.1.6
++   Compiling smallvec v1.16.2
++   Compiling hex v0.4.3
++   Compiling curve25519-dalek v4.1.3
++   Compiling ed25519 v2.2.3
++   Compiling spdx v0.13.5
++   Compiling block-buffer v0.10.4
++   Compiling crypto-common v0.1.6
++   Compiling digest v0.10.7
++   Compiling syn v3.0.9
++   Compiling syn v2.0.119
++   Compiling sha2 v0.10.9
++   Compiling sha3 v0.10.8
++   Compiling blake3 v1.8.7
++   Compiling curve25519-dalek-derive v0.1.1
++   Compiling thiserror-impl v2.0.21
++   Compiling serde_derive v1.0.229
++   Compiling async-trait v0.1.92
++   Compiling ed25519-dalek v2.2.0
++   Compiling arkhe-core v0.1.0 (/build/source/kernel/arkhe-core)
++   Compiling arkhe-verify-core v0.1.0 (/build/source/verification/crates/arkhe-verify-core)
++   Compiling arkhe-governance v0.1.0 (/build/source/governance/arkhe-governance)
++    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 08s
++     Running unittests src/lib.rs (target/debug/deps/arkhe_governance-201b00414257e18c)
++
++running 15 tests
++test fellegi_sunter::tests::default_probability_and_empty_training ... ok
++test invariant_resolver::tests::model_cache_includes_em_configuration_and_comparisons ... ok
++test fellegi_sunter::tests::smoothing_keeps_degenerate_corpora_finite ... ok
++test policy_bundle::tests::tampered_signature_is_rejected ... ok
++test policy_bundle::tests::required_without_trust_store_is_rejected ... ok
++test policy_bundle::tests::malformed_versions_and_windows_are_refused ... ok
++test policy_bundle::tests::torsion_anchor_never_verifies ... ok
++test policy_bundle::tests::trust_store_admission_is_strict ... ok
++test policy_bundle::tests::unknown_key_is_rejected ... ok
++test policy_bundle::tests::unsigned_bundle_is_dev_only ... ok
++test policy_bundle::tests::tampered_payload_is_rejected ... ok
++test policy_bundle::tests::expired_and_not_yet_valid_are_rejected ... ok
++test policy_bundle::tests::rollback_is_rejected ... ok
++test policy_bundle::tests::valid_bundle_verifies_and_binds ... ok
++test policy_bundle::tests::corrupted_bundles_are_refused ... ok
++
++test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.86s
++
++     Running tests/invariant_resolver.rs (target/debug/deps/invariant_resolver-309d3ca59f73ce49)
++
++running 20 tests
++test cold_start_single_existing_same_action_is_novel ... ok
++test candidate_and_other_actions_never_enter_training ... ok
++test different_action_same_condition_modality_not_duplicate_with_variance ... ok
++test cold_start_does_not_score_even_at_zero_thresholds ... ok
++test duplicate_is_detected_and_anchored ... ok
++test cold_start_and_conflict_never_invoke_comparisons ... ok
++test conflict_detected_even_with_single_existing_same_action ... ok
++test different_action_is_novel ... ok
++test opposite_modality_is_conflict ... ok
++test no_cross_action_matches_even_for_homogeneous_corpus ... ok
++test existing_refines_candidate_when_less_specific ... ok
++test invalid_parameters_and_repeated_ids_fail_before_logging ... ok
++test multiple_conflicts_report_one_stable_witness_without_semantic_priority ... ok
++test all_weak_permission_combinations ... ok
++test candidate_refines_existing_when_more_specific ... ok
++test specification_small_corpora_do_not_prove_a_match ... ok
++test refinement_band_does_not_duplicate_equal_specificity ... ok
++test optional_impermissible_is_conflict ... ok
++test blocking_cache_survives_reorder_and_invalidates_on_membership_change ... ok
++test log_failures_hide_every_computed_verdict_and_keep_record_digest ... ok
++
++test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
++
++     Running tests/ontology_snapshot.rs (target/debug/deps/ontology_snapshot-4701e335c103a1d0)
++
++running 8 tests
++test permutation_preserves_snapshot_identity_and_canonical_corpus ... ok
++test snapshot_owns_its_content_and_canonicalization_preserves_text ... ok
++test independent_cbor_vectors_fix_profile_text_byte_ids_and_integer_widths ... ok
++test duplicate_identity_is_rejected_even_for_identical_records ... ok
++test verified_loading_rejects_tampering_and_accepts_reordered_content ... ok
++test every_stored_invariant_field_is_bound_to_both_digests ... ok
++test corpus_digest_binds_selected_content_not_candidate_scoring_fields ... ok
++test snapshot_adapter_preserves_scoring_and_records_under_permutation ... ok
++
++test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
++
++     Running tests/resolution_binding.rs (target/debug/deps/resolution_binding-47aff82d5508174d)
++
++running 11 tests
++test params_are_validated_and_each_exact_setting_changes_the_digest ... ok
++test algorithm_descriptor_matches_current_model_initialization ... ok
++test preflight_checks_actual_inputs_configuration_and_attached_payload ... ok
++test parameter_cbor_matches_independent_python_ieee754_vector ... ok
++test each_binding_mismatch_is_rejected_without_blocking_scoring_or_logging ... ok
++test zero_tolerance_is_invalid_regardless_of_sign ... ok
++test unknown_backend_versions_fail_closed_without_fabricating_metadata ... ok
++test negative_zero_thresholds_share_parameters_records_and_preflight ... ok
++test slice_and_snapshot_entries_produce_identical_record_identity ... ok
++test all_decision_paths_preserve_the_six_bindings_and_parameter_payload ... ok
++test v2_record_digest_binds_each_input_and_output_field ... ok
++
++test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
++
++   Doc-tests arkhe_governance
++
++running 2 tests
++test governance/arkhe-governance/src/invariant_resolver.rs - invariant_resolver::ComputedVerdict (line 47) - compile fail ... ok
++test governance/arkhe-governance/src/ontology_snapshot.rs - ontology_snapshot::OntologySnapshot (line 53) - compile fail ... ok
++
++test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.81s
++
++checkPhase completed in 3 minutes 38 seconds
++Running phase: installPhase
++@nix { "action": "setPhase", "phase": "installPhase" }
++Running phase: fixupPhase
++@nix { "action": "setPhase", "phase": "fixupPhase" }
++shrinking RPATHs of ELF executables and libraries in /nix/store/a3jlk080vkxv0wxj3r802d9csx8ibbjn-arkhe-governance-tests-0.1.0
++checking for references to /build/ in /nix/store/a3jlk080vkxv0wxj3r802d9csx8ibbjn-arkhe-governance-tests-0.1.0...
++patching script interpreter paths in /nix/store/a3jlk080vkxv0wxj3r802d9csx8ibbjn-arkhe-governance-tests-0.1.0
+diff --git a/arkhe/docs/validation/rust-1.96.0/tests-arkhe-kernel.log b/arkhe/docs/validation/rust-1.96.0/tests-arkhe-kernel.log
+new file mode 100644
+index 000000000..3123c9a50
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/tests-arkhe-kernel.log
+@@ -0,0 +1,179 @@
++Running phase: unpackPhase
++@nix { "action": "setPhase", "phase": "unpackPhase" }
++unpacking source archive /nix/store/gpkd04c3xxq8dl3m70rq837x1sdg7cpd-source
++source root is source
++Executing cargoSetupPostUnpackHook
++Finished cargoSetupPostUnpackHook
++unpackPhase completed in 2 minutes 48 seconds
++Running phase: patchPhase
++@nix { "action": "setPhase", "phase": "patchPhase" }
++Executing cargoSetupPostPatchHook
++Validating consistency between /build/source/Cargo.lock and /build/cargo-vendor-dir/Cargo.lock
++Finished cargoSetupPostPatchHook
++Running phase: updateAutotoolsGnuConfigScriptsPhase
++@nix { "action": "setPhase", "phase": "updateAutotoolsGnuConfigScriptsPhase" }
++Running phase: configurePhase
++@nix { "action": "setPhase", "phase": "configurePhase" }
++Running phase: buildPhase
++@nix { "action": "setPhase", "phase": "buildPhase" }
++no Makefile or custom buildPhase, doing nothing
++Running phase: checkPhase
++@nix { "action": "setPhase", "phase": "checkPhase" }
++   Compiling proc-macro2 v1.0.107
++   Compiling quote v1.0.47
++   Compiling unicode-ident v1.0.27
++   Compiling version_check v0.9.5
++   Compiling typenum v1.20.1
++   Compiling shlex v2.0.1
++   Compiling serde_core v1.0.229
++   Compiling find-msvc-tools v0.1.14
++   Compiling cfg-if v1.0.5
++   Compiling zmij v1.0.23
++   Compiling serde_json v1.0.154
++   Compiling serde v1.0.229
++   Compiling semver v1.0.28
++   Compiling thiserror v2.0.21
++   Compiling cc v1.8.0
++   Compiling memchr v2.8.3
++   Compiling generic-array v0.14.9
++   Compiling constant_time_eq v0.4.2
++   Compiling itoa v1.0.18
++   Compiling arrayvec v0.7.8
++   Compiling cpufeatures v0.3.1
++   Compiling rustc_version v0.4.1
++   Compiling cpufeatures v0.2.17
++   Compiling zeroize v1.9.0
++   Compiling signature v2.2.0
++   Compiling subtle v2.6.1
++   Compiling smallvec v1.16.2
++   Compiling ed25519 v2.2.3
++   Compiling keccak v0.1.6
++   Compiling spdx v0.13.5
++   Compiling hex v0.4.3
++   Compiling curve25519-dalek v4.1.3
++   Compiling pin-project-lite v0.2.17
++   Compiling base64 v0.22.1
++   Compiling blake3 v1.8.7
++   Compiling syn v3.0.9
++   Compiling syn v2.0.119
++   Compiling block-buffer v0.10.4
++   Compiling crypto-common v0.1.6
++   Compiling digest v0.10.7
++   Compiling sha2 v0.10.9
++   Compiling sha3 v0.10.8
++   Compiling curve25519-dalek-derive v0.1.1
++   Compiling thiserror-impl v2.0.21
++   Compiling serde_derive v1.0.229
++   Compiling async-trait v0.1.92
++   Compiling tokio-macros v2.7.2
++   Compiling tokio v1.53.3
++   Compiling ed25519-dalek v2.2.0
++   Compiling arkhe-core v0.1.0 (/build/source/kernel/arkhe-core)
++   Compiling arkhe-verify-core v0.1.0 (/build/source/verification/crates/arkhe-verify-core)
++   Compiling arkhe-cognition-sdk v0.1.0 (/build/source/cognition/arkhe-cognition-sdk)
++   Compiling arkhe-agent v0.1.0 (/build/source/cognition/arkhe-agent)
++   Compiling arkhe-governance v0.1.0 (/build/source/governance/arkhe-governance)
++   Compiling arkhe-kernel v0.1.0 (/build/source/kernel/arkhe-kernel)
++    Finished `test` profile [unoptimized + debuginfo] target(s) in 5m 19s
++     Running unittests src/lib.rs (target/debug/deps/arkhe_kernel-ad057df97737871f)
++
++running 0 tests
++
++test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
++
++     Running tests/action_broker.rs (target/debug/deps/action_broker-f123c2b7e6c6fffc)
++
++running 3 tests
++test checkpoint_is_independently_trusted_and_strictly_before_dispatch ... ok
++test broker_requires_admission_and_never_redispatches_success_or_uncertainty ... ok
++test mandate_rejects_tampering_in_every_signed_field_and_signature ... ok
++
++test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
++
++     Running tests/authenticated_dispatch.rs (target/debug/deps/authenticated_dispatch-0700234bcbfd8934)
++
++running 0 tests
++
++test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
++
++     Running tests/broker_durable.rs (target/debug/deps/broker_durable-9dc2c4ad1be8a7bf)
++
++running 0 tests
++
++test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
++
++     Running tests/budget_pco.rs (target/debug/deps/budget_pco-9ed10879381a5505)
++
++running 9 tests
++test checker_rejects_false_arithmetic_and_over_budget_conclusion_without_producer ... ok
++test producer_has_bounded_fail_closed_domain ... ok
++test specification_change_during_evidence_lookup_rejects_old_certificate ... ok
++test valid_human_review_and_budget_proof_are_both_required ... ok
++test all_gate_entry_points_reject_proof_bypass_and_review_still_applies ... ok
++test missing_offline_or_wrong_proof_provenance_fails_closed ... ok
++test proof_cannot_override_denial_stop_or_transfer_between_requests ... ok
++test malicious_certificates_are_rejected_even_when_admitted ... ok
++test generated_certificate_roundtrips_and_authorizes_only_after_admission ... ok
++
++test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
++
++     Running tests/formal_predicates.rs (target/debug/deps/formal_predicates-9b1b85dd40753aa6)
++
++running 7 tests
++test zk_requirement_and_governance_denial_cannot_be_bypassed ... ok
++test absent_unadmitted_or_wrong_kind_formal_proof_never_authorizes ... ok
++test license_tampering_policy_swap_and_replay_are_rejected ... ok
++test spdx_obligations_support_and_or_and_reject_unknown_or_disallowed_terms ... ok
++test ap2_retained_checkpoint_time_and_kind_are_enforced ... ok
++test ap2_direct_and_autonomous_role_results_bind_exact_execution ... ok
++test ap2_tampering_and_false_role_results_fail_closed ... ok
++
++test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
++
++     Running tests/gravit_translation_contract.rs (target/debug/deps/gravit_translation_contract-6457ea20924456e7)
++
++running 16 tests
++test reproduced_success_with_invalid_hash_is_not_admitted_and_gate_rejects ... ok
++test exact_bytes_and_domain_bind_inputs_even_when_external_id_is_unchanged ... ok
++test admitted_translation_cannot_be_replayed_with_changed_parameters ... ok
++test matching_digest_control_passes_only_with_explicit_test_governance ... ok
++test projection_uses_byte_strings_for_captured_bytes_without_normalizing_numbers ... ok
++test signatures::malformed_preimages_and_noncanonical_base64_fail ... ok
++test well_formed_wrong_hash_and_changed_artifact_fail_closed ... ok
++test substitution_of_captured_bytes_cannot_reuse_the_worker_commitment ... ok
++test success_alone_and_a_different_subject_are_not_accepted ... ok
++test signatures::python_preimages_and_both_signature_layers_verify_in_rust ... ok
++test signatures::valid_signatures_do_not_make_a_wrong_content_hash_admissible ... ok
++test signatures::identity_comes_from_registered_key_not_the_unsigned_verifier_label ... ok
++test signatures::signed_content_and_registry_pass_the_real_gate_under_test_policy_only ... ok
++test signatures::record_signatures_do_not_authenticate_a_tampered_decision ... ok
++test signatures::changed_registry_missing_quorum_repeated_signer_and_root_swap_fail ... ok
++test signatures::tampering_each_signed_field_or_signature_fails ... ok
++
++test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
++
++     Running tests/rejection_gates.rs (target/debug/deps/rejection_gates-80bcf8681ab8d053)
++
++running 5 tests
++test emergency_stop_rejects_before_policy ... ok
++test no_evidence_missing_wer_rejects_before_policy ... ok
++test unprotected_intents_still_follow_governance_without_worker_evidence ... ok
++test policy_denied_rejects_even_with_worker_evidence ... ok
++test every_protected_intent_requires_admitted_evidence_before_policy ... ok
++
++test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
++
++   Doc-tests arkhe_kernel
++
++running 0 tests
++
++test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
++
++checkPhase completed in 5 minutes 40 seconds
++Running phase: installPhase
++@nix { "action": "setPhase", "phase": "installPhase" }
++Running phase: fixupPhase
++@nix { "action": "setPhase", "phase": "fixupPhase" }
++shrinking RPATHs of ELF executables and libraries in /nix/store/abg7i8zrc99k2wi7jca18kd2x7cn048s-arkhe-kernel-tests-0.1.0
++checking for references to /build/ in /nix/store/abg7i8zrc99k2wi7jca18kd2x7cn048s-arkhe-kernel-tests-0.1.0...
++patching script interpreter paths in /nix/store/abg7i8zrc99k2wi7jca18kd2x7cn048s-arkhe-kernel-tests-0.1.0
+diff --git a/arkhe/docs/validation/rust-1.96.0/tests-clippy.log b/arkhe/docs/validation/rust-1.96.0/tests-clippy.log
+new file mode 100644
+index 000000000..04a810702
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/tests-clippy.log
+@@ -0,0 +1,131 @@
++Running phase: unpackPhase
++@nix { "action": "setPhase", "phase": "unpackPhase" }
++unpacking source archive /nix/store/qm7lb7v8mgmkm2pyvcwr34zbd43r5v6c-source
++source root is source
++Executing cargoSetupPostUnpackHook
++Finished cargoSetupPostUnpackHook
++Running phase: patchPhase
++@nix { "action": "setPhase", "phase": "patchPhase" }
++Executing cargoSetupPostPatchHook
++Validating consistency between /build/source/Cargo.lock and /build/cargo-vendor-dir/Cargo.lock
++Finished cargoSetupPostPatchHook
++Running phase: updateAutotoolsGnuConfigScriptsPhase
++@nix { "action": "setPhase", "phase": "updateAutotoolsGnuConfigScriptsPhase" }
++Running phase: configurePhase
++@nix { "action": "setPhase", "phase": "configurePhase" }
++Running phase: buildPhase
++@nix { "action": "setPhase", "phase": "buildPhase" }
++no Makefile or custom buildPhase, doing nothing
++Running phase: checkPhase
++@nix { "action": "setPhase", "phase": "checkPhase" }
++   Compiling proc-macro2 v1.0.107
++   Compiling unicode-ident v1.0.27
++   Compiling quote v1.0.47
++    Checking cfg-if v1.0.5
++   Compiling shlex v2.0.1
++   Compiling serde_core v1.0.229
++   Compiling find-msvc-tools v0.1.14
++    Checking memchr v2.8.3
++   Compiling version_check v0.9.5
++   Compiling zmij v1.0.23
++   Compiling serde v1.0.229
++   Compiling thiserror v2.0.21
++   Compiling serde_json v1.0.154
++    Checking constant_time_eq v0.4.2
++   Compiling cc v1.8.0
++    Checking itoa v1.0.18
++    Checking typenum v1.20.1
++    Checking cpufeatures v0.3.1
++    Checking arrayvec v0.7.8
++   Compiling semver v1.0.28
++    Checking cpufeatures v0.2.17
++    Checking keccak v0.1.6
++    Checking subtle v2.6.1
++   Compiling generic-array v0.14.9
++    Checking signature v2.2.0
++    Checking smallvec v1.16.2
++    Checking ed25519 v2.2.3
++    Checking hex v0.4.3
++   Compiling libc v0.2.189
++    Checking regex-syntax v0.8.11
++   Compiling rustc_version v0.4.1
++   Compiling getrandom v0.3.4
++   Compiling rustix v1.1.5
++   Compiling zerocopy v0.8.57
++    Checking spdx v0.13.5
++   Compiling getrandom v0.4.3
++   Compiling curve25519-dalek v4.1.3
++    Checking linux-raw-sys v0.12.1
++    Checking bitflags v2.13.2
++   Compiling autocfg v1.5.1
++    Checking fastrand v2.5.0
++   Compiling syn v3.0.9
++   Compiling syn v2.0.119
++    Checking once_cell v1.21.4
++    Checking quick-error v1.2.3
++    Checking fnv v1.0.7
++    Checking bit-vec v0.8.0
++    Checking rand_core v0.6.4
++   Compiling num-traits v0.2.19
++    Checking unarray v0.1.4
++    Checking bit-set v0.8.0
++    Checking pin-project-lite v0.2.17
++    Checking block-buffer v0.10.4
++    Checking crypto-common v0.1.6
++    Checking base64 v0.22.1
++    Checking aho-corasick v1.1.5
++    Checking digest v0.10.7
++    Checking sha2 v0.10.9
++    Checking sha3 v0.10.8
++    Checking rand_core v0.9.5
++    Checking wait-timeout v0.2.1
++    Checking utf8parse v0.2.2
++    Checking colorchoice v1.0.5
++    Checking rand_xorshift v0.4.0
++    Checking rand v0.9.5
++    Checking anstyle-parse v1.0.0
++    Checking anstyle v1.0.14
++    Checking anstyle-query v1.1.5
++    Checking is_terminal_polyfill v1.70.2
++    Checking strsim v0.11.1
++   Compiling anyhow v1.0.104
++    Checking clap_lex v1.1.1
++    Checking anstream v1.0.0
++   Compiling heck v0.5.0
++   Compiling blake3 v1.8.7
++    Checking regex-automata v0.4.18
++    Checking clap_builder v4.6.7
++    Checking tempfile v3.27.0
++    Checking rusty-fork v0.3.1
++    Checking regex v1.13.1
++   Compiling thiserror-impl v2.0.21
++   Compiling serde_derive v1.0.229
++   Compiling async-trait v0.1.92
++   Compiling tokio-macros v2.7.2
++   Compiling clap_derive v4.6.7
++    Checking tokio v1.53.3
++    Checking ppv-lite86 v0.2.21
++   Compiling zeroize_derive v1.5.0
++   Compiling curve25519-dalek-derive v0.1.1
++    Checking rand_chacha v0.9.0
++    Checking proptest v1.9.0
++    Checking clap v4.6.7
++    Checking zeroize v1.9.0
++    Checking fips204 v0.4.6
++    Checking ed25519-dalek v2.2.0
++    Checking arkhe-core v0.1.0 (/build/source/kernel/arkhe-core)
++    Checking arkhe-verify-core v0.1.0 (/build/source/verification/crates/arkhe-verify-core)
++    Checking arkhe-cognition-sdk v0.1.0 (/build/source/cognition/arkhe-cognition-sdk)
++    Checking arkhe-agent v0.1.0 (/build/source/cognition/arkhe-agent)
++    Checking arkhe-governance v0.1.0 (/build/source/governance/arkhe-governance)
++    Checking arkhe-verify-cli v0.1.0 (/build/source/verification/crates/arkhe-verify-cli)
++    Checking arkhe-kernel v0.1.0 (/build/source/kernel/arkhe-kernel)
++    Checking arkhe-sdd-parser v0.1.0 (/build/source/governance/arkhe-sdd-parser)
++    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.94s
++Running phase: installPhase
++@nix { "action": "setPhase", "phase": "installPhase" }
++Running phase: fixupPhase
++@nix { "action": "setPhase", "phase": "fixupPhase" }
++shrinking RPATHs of ELF executables and libraries in /nix/store/ndkn6d0laazmzi61k1596bcbzm0w62ml-arkhe-clippy-0.1.0
++checking for references to /build/ in /nix/store/ndkn6d0laazmzi61k1596bcbzm0w62ml-arkhe-clippy-0.1.0...
++patching script interpreter paths in /nix/store/ndkn6d0laazmzi61k1596bcbzm0w62ml-arkhe-clippy-0.1.0
+diff --git a/arkhe/docs/validation/rust-1.96.0/toolchain-version.log b/arkhe/docs/validation/rust-1.96.0/toolchain-version.log
+new file mode 100644
+index 000000000..631651bfd
+--- /dev/null
++++ b/arkhe/docs/validation/rust-1.96.0/toolchain-version.log
+@@ -0,0 +1 @@
++rustc 1.96.0 (ac68faa20 2026-05-25)
+diff --git a/arkhe/docs/validation/rust-1.96.0/wasm-smoke.log b/arkhe/docs/validation/rust-1.96.0/wasm-smoke.log
+new file mode 100644
+index 000000000..e69de29bb
+diff --git a/arkhe/lib/workspace.nix b/arkhe/lib/workspace.nix
+index e18107994..37f6719af 100644
+--- a/arkhe/lib/workspace.nix
++++ b/arkhe/lib/workspace.nix
+@@ -21,7 +21,6 @@
+ let
+   fs = lib.fileset;
+ 
+-  rootStr = toString root;
+   rootManifest = lib.importTOML (root + "/Cargo.toml");
+   workspaceDeps = rootManifest.workspace.dependencies or { };
+ 
+@@ -40,14 +39,28 @@ let
+       ) [ ] (lib.splitString "/" path)
+     );
+ 
+-  manifestFiles = fs.fileFilter (file: file.name == "Cargo.toml") root;
++  # Only declared workspace members and their path dependencies belong here.
++  # Scanning every Cargo.toml below root would also discover unrelated copies
++  # in work/, node_modules/, or another packaging snapshot.
++  members = map (
++    member:
++    if lib.any (token: lib.hasInfix token member) [ "*" "?" "[" ] then
++      throw "nixpkgs-arkhe: expand workspace member glob `${member}` into explicit paths"
++    else
++      normalize member
++  ) rootManifest.workspace.members;
+ 
+-  crateDirs = lib.filter (dir: dir != "") (
+-    map (file: lib.removePrefix "/" (lib.removePrefix rootStr (toString (dirOf file)))) (
+-      fs.toList manifestFiles
++  crateDirs = lib.sort builtins.lessThan (
++    map (item: item.key) (
++      builtins.genericClosure {
++        startSet = map (dir: { key = dir; }) members;
++        operator = item: map (dir: { key = dir; }) (pathDepsOf true item.key);
++      }
+     )
+   );
+ 
++  manifestFiles = fs.unions (map (dir: root + "/${dir}/Cargo.toml") crateDirs);
++
+   manifestOf = dir: lib.importTOML (root + "/${dir}/Cargo.toml");
+ 
+   nameOf = dir: (manifestOf dir).package.name;
+@@ -155,7 +168,7 @@ in
+ 
+       src = fs.toSource {
+         inherit root;
+-        fileset = fs.unions (
++        fileset = fs.difference (fs.unions (
+           [
+             (root + "/Cargo.toml")
+             (root + "/Cargo.lock")
+@@ -163,7 +176,13 @@ in
+           ]
+           ++ map (dir: root + "/${dir}") closure
+           ++ map (path: root + "/${path}") extras
+-        );
++        )) (fs.unions (lib.concatMap (
++          dir:
++          map (name: fs.maybeMissing (root + "/${dir}/${name}")) (
++            [ "target" "node_modules" ".git" ".venv" "__pycache__" ]
++            ++ lib.optional (nameOf dir == "arkhe-verify-wasm") "pkg"
++          )
++        ) closure));
+       };
+ 
+       postPatch = lib.concatMapStrings (stub: ''
+diff --git a/arkhe/pkgs/arkhe-verify-wasm.nix b/arkhe/pkgs/arkhe-verify-wasm.nix
+index 577ae6a3a..dafc29ee4 100644
+--- a/arkhe/pkgs/arkhe-verify-wasm.nix
++++ b/arkhe/pkgs/arkhe-verify-wasm.nix
+@@ -57,7 +57,7 @@ mkArkhePackage {
+     description = "Verificador Arkhe compilado para WebAssembly";
+     longDescription = ''
+       Mesmo crate de verificação usado pelo RBB, exportado como
+-      `arkhe-verify-pqc.wasm` para uso em portais e kiosks.
++      `arkhe-verify.wasm` para uso em portais e kiosks.
+     '';
+   };
+ }
+diff --git a/arkhe/scripts/check-source-filter.py b/arkhe/scripts/check-source-filter.py
+new file mode 100755
+index 000000000..db955ee9f
+--- /dev/null
++++ b/arkhe/scripts/check-source-filter.py
+@@ -0,0 +1,47 @@
++#!/usr/bin/env python3
++"""Verify package source isolation using a disposable copy of the real flake."""
++import json
++import pathlib
++import shutil
++import subprocess
++import tempfile
++
++root = pathlib.Path(__file__).resolve().parents[1]
++priorities = ['arkhe-verify-cli', 'arkhe-verify-wasm', 'arkhe-sdd-parser']
++with tempfile.TemporaryDirectory(prefix='arkhe-source-filter-') as directory:
++    copied = pathlib.Path(directory) / 'arkhe'
++    def ignore(directory, names):
++        return [name for name in names if name in {'.git', '__pycache__'}
++            or (pathlib.Path(directory) == root / 'docs' and name == 'validation')]
++
++    shutil.copytree(root, copied, ignore=ignore)
++
++    def evaluate():
++        expr = (
++            f'let p = (builtins.getFlake {json.dumps("path:" + str(copied))}).packages.x86_64-linux; '
++            'in builtins.listToAttrs (map (n: {name=n;value={src=toString p.${n}.src;drv=p.${n}.drvPath;};}) '
++            '["arkhe-verify-cli" "arkhe-verify-wasm" "arkhe-sdd-parser" "arkhe-ask"])'
++        )
++        return json.loads(subprocess.check_output(['nix', 'eval', '--impure', '--json', '--expr', expr]))
++
++    before = evaluate()
++    unrelated = copied / 'source/apps/arkhe-ask/src/main.rs'
++    unrelated.write_bytes(unrelated.read_bytes() + b'\n// Source isolation probe.\n')
++    # An undeclared Cargo project and generated wasm-bindgen output must not
++    # become inputs merely because they exist underneath the source root.
++    stray = copied / 'source/unrelated-project/Cargo.toml'
++    stray.parent.mkdir()
++    stray.write_text('[package]\nname = "unrelated-project"\nversion = "0.0.0"\n')
++    generated = copied / 'source/verification/crates/arkhe-verify-wasm/pkg/package.json'
++    generated.parent.mkdir(exist_ok=True)
++    generated.write_bytes(b'{"generatedProbe":true}\n')
++    after = evaluate()
++    for name in priorities:
++        if before[name] != after[name]:
++            raise SystemExit(f'Unrelated source edit changed {name}: {before[name]} -> {after[name]}')
++    if before['arkhe-ask'] == after['arkhe-ask']:
++        raise SystemExit('Positive control failed: arkhe-ask must change')
++    print(json.dumps({'status': 'PASS', 'mutation': 'apps/arkhe-ask/src/main.rs comment',
++        'unaffected': priorities, 'ignored_undeclared_project': True,
++        'ignored_wasm_pkg_output': True, 'positive_control_changed': 'arkhe-ask',
++        'before': before, 'after': after}, indent=2))
+-- 
+2.53.0.windows.2
+

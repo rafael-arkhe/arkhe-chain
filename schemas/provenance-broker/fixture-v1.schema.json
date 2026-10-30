@@ -1,0 +1,1443 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "fixture_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+    },
+    "profile_id": {
+      "const": "arkhe-broker-local-v1"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "clock_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "candidate": {
+      "$ref": "#/$defs/candidate"
+    },
+    "session": {
+      "$ref": "#/$defs/session"
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "chunks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/chunk"
+      },
+      "maxItems": 32
+    },
+    "anchors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "checkpoint_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "root": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "leaf_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "mmr_profile_digest": {
+          "const": "bcd07a275061ef385fccdd184030c2358fdd0937477cb0ef30cf8148342f2450"
+        },
+        "public_key_hex": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "state_record_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state_root": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state_proof": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "leaf_count": {
+              "const": 1
+            },
+            "leaf_index": {
+              "const": 0
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "maxItems": 0
+            }
+          },
+          "required": [
+            "leaf_count",
+            "leaf_index",
+            "steps"
+          ]
+        }
+      },
+      "required": [
+        "checkpoint_id",
+        "root",
+        "leaf_count",
+        "mmr_profile_digest",
+        "public_key_hex",
+        "key_id",
+        "state_record_hash",
+        "state_root",
+        "state_proof"
+      ]
+    },
+    "observations": {
+      "$ref": "#/$defs/observations"
+    },
+    "delivery": {
+      "$ref": "#/$defs/delivery"
+    },
+    "derivation_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "rule_version": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "premise_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "maxItems": 32
+        },
+        "premise_claim": {
+          "$ref": "#/$defs/claim"
+        },
+        "conclusion": {
+          "$ref": "#/$defs/claim"
+        }
+      },
+      "required": [
+        "rule_id",
+        "rule_version",
+        "premise_refs",
+        "premise_claim",
+        "conclusion"
+      ]
+    },
+    "expected_output": {
+      "$ref": "#/$defs/expected"
+    },
+    "independent_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "pending"
+        }
+      },
+      "required": [
+        "status"
+      ]
+    }
+  },
+  "required": [
+    "fixture_id",
+    "profile_id",
+    "description",
+    "clock_ms",
+    "candidate",
+    "session",
+    "policy",
+    "policy_digest",
+    "chunks",
+    "anchors",
+    "observations",
+    "delivery",
+    "expected_output",
+    "independent_review"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:arkhe:broker:fixture:v1",
+  "$defs": {
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repr_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        }
+      },
+      "required": [
+        "repr_digest",
+        "offset",
+        "length"
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "predicate": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "object": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "polarity": {
+          "enum": [
+            "Positive",
+            "Negative"
+          ]
+        },
+        "modality": {
+          "enum": [
+            "Asserted",
+            "Possible",
+            "Conditional"
+          ]
+        },
+        "qualifiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+              },
+              "value": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+              }
+            },
+            "required": [
+              "kind",
+              "value"
+            ]
+          },
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "subject",
+        "predicate",
+        "object",
+        "polarity",
+        "modality",
+        "qualifiers"
+      ]
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "claim": {
+          "$ref": "#/$defs/claim"
+        },
+        "query": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "purpose": {
+              "enum": [
+                "Assertion",
+                "Analysis"
+              ]
+            },
+            "historical_req": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "requested_instant": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 18446744073709551615
+                }
+              },
+              "required": [
+                "requested_instant"
+              ]
+            }
+          },
+          "required": [
+            "purpose"
+          ]
+        }
+      },
+      "required": [
+        "candidate_id",
+        "claim",
+        "query"
+      ]
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "principal": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "tenant": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "principal",
+        "session_id",
+        "tenant",
+        "scopes"
+      ]
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chunk_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "chunk_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "source_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "text_position": {
+          "$ref": "#/$defs/position"
+        },
+        "transformation_ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "tenant": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "scope": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        }
+      },
+      "required": [
+        "chunk_id",
+        "chunk_digest",
+        "source_digest",
+        "text_position",
+        "transformation_ref",
+        "tenant",
+        "scope"
+      ]
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "node",
+            "bag"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "left",
+            "right"
+          ]
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "kind",
+        "direction",
+        "hash"
+      ]
+    },
+    "chunk": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chunk_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "bytes_hex": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{2})*$",
+          "maxLength": 65536
+        },
+        "source_bytes_hex": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{2})*$",
+          "maxLength": 2097152
+        },
+        "representation_hex": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{2})*$",
+          "maxLength": 2097152
+        },
+        "record": {
+          "$ref": "#/$defs/record"
+        },
+        "record_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "proof": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "profile_digest": {
+              "const": "bcd07a275061ef385fccdd184030c2358fdd0937477cb0ef30cf8148342f2450"
+            },
+            "leaf_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 18446744073709551615
+            },
+            "leaf_index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 18446744073709551615
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "maxItems": 64
+            }
+          },
+          "required": [
+            "profile_digest",
+            "leaf_count",
+            "leaf_index",
+            "steps"
+          ]
+        },
+        "per_chunk": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "integrity": {
+              "enum": [
+                "OK",
+                "Invalid",
+                "Unknown"
+              ]
+            },
+            "access": {
+              "enum": [
+                "Permitted",
+                "Denied",
+                "Unknown"
+              ]
+            },
+            "state": {
+              "enum": [
+                "Current",
+                "Revoked",
+                "Superseded",
+                "Unknown",
+                "Stale"
+              ]
+            },
+            "transform": {
+              "enum": [
+                "Accepted",
+                "Rejected",
+                "Unknown"
+              ]
+            }
+          },
+          "required": [
+            "integrity",
+            "access",
+            "state",
+            "transform"
+          ]
+        }
+      },
+      "required": [
+        "chunk_id",
+        "bytes_hex",
+        "source_bytes_hex",
+        "representation_hex",
+        "record",
+        "record_hash",
+        "proof",
+        "per_chunk"
+      ]
+    },
+    "transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "transformation_ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "verdict": {
+          "enum": [
+            "Accepted",
+            "Rejected",
+            "Unknown"
+          ]
+        }
+      },
+      "required": [
+        "transformation_ref",
+        "verdict"
+      ]
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "policy_version": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "profile_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "purposes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "Analysis",
+              "Assertion"
+            ]
+          },
+          "maxItems": 2
+        },
+        "best_effort_permitted": {
+          "type": "boolean"
+        },
+        "historical_permitted": {
+          "type": "boolean"
+        },
+        "grants_permitted": {
+          "type": "boolean"
+        },
+        "max_state_age_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "max_decision_ttl_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "accepted_interval_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "accepted_evaluator": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "accepted_transforms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        },
+        "rejected_transforms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        },
+        "accepted_rules": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        },
+        "accepted_revision_combinations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "authorization": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+              },
+              "state": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+              },
+              "policy": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+              },
+              "anchor_set": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+              }
+            },
+            "required": [
+              "authorization",
+              "state",
+              "policy",
+              "anchor_set"
+            ]
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "policy_id",
+        "policy_version",
+        "profile_id",
+        "purposes",
+        "best_effort_permitted",
+        "historical_permitted",
+        "grants_permitted",
+        "max_state_age_ms",
+        "max_decision_ttl_ms",
+        "accepted_interval_ms",
+        "accepted_evaluator",
+        "accepted_transforms",
+        "rejected_transforms",
+        "accepted_rules",
+        "accepted_revision_combinations"
+      ]
+    },
+    "revisions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authorization": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "state": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "policy": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "anchor_set": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        }
+      },
+      "required": [
+        "authorization",
+        "state",
+        "policy",
+        "anchor_set"
+      ]
+    },
+    "expirations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authorization": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "state": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "policy": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "anchor_set": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        }
+      },
+      "required": [
+        "authorization",
+        "state",
+        "policy",
+        "anchor_set"
+      ]
+    },
+    "bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authority": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "subject": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        },
+        "revisions": {
+          "$ref": "#/$defs/revisions"
+        },
+        "observed_at": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "expires_at": {
+          "$ref": "#/$defs/expirations"
+        },
+        "access": {
+          "enum": [
+            "Permitted",
+            "Denied",
+            "Unknown"
+          ]
+        },
+        "state": {
+          "enum": [
+            "Current",
+            "Historical",
+            "HistoricalDenied",
+            "Stale",
+            "Revoked",
+            "Superseded",
+            "Unknown"
+          ]
+        },
+        "effective_from": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "effective_to": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "historical_state": {
+          "enum": [
+            "Active",
+            "Unknown"
+          ]
+        }
+      },
+      "required": [
+        "authority",
+        "subject",
+        "resources",
+        "revisions",
+        "observed_at",
+        "expires_at",
+        "access",
+        "state",
+        "effective_from",
+        "effective_to",
+        "historical_state"
+      ]
+    },
+    "grant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "subject": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "access_check",
+              "state_check"
+            ]
+          },
+          "maxItems": 2
+        },
+        "purpose": {
+          "enum": [
+            "Analysis",
+            "Assertion"
+          ]
+        },
+        "not_before": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "valid_until": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "contract_id": {
+          "const": "fixture-lease-v1"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        }
+      },
+      "required": [
+        "issuer",
+        "subject",
+        "resources",
+        "operations",
+        "purpose",
+        "not_before",
+        "valid_until",
+        "contract_id",
+        "conditions",
+        "revision"
+      ]
+    },
+    "semantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claim_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "support_set_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "outcome": {
+          "enum": [
+            "Supported",
+            "Partial",
+            "Contradicted",
+            "Indeterminate",
+            "NotEvaluated"
+          ]
+        },
+        "method": {
+          "enum": [
+            "Human",
+            "None"
+          ]
+        },
+        "evaluator": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "evaluator_version": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "support_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "claim_digest",
+        "support_set_digest",
+        "outcome",
+        "method",
+        "evaluator",
+        "evaluator_version",
+        "support_refs"
+      ]
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "body": {
+          "$ref": "#/$defs/bundle"
+        },
+        "signature_hex": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        }
+      },
+      "required": [
+        "key_id",
+        "body",
+        "signature_hex"
+      ]
+    },
+    "grant_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "body": {
+          "$ref": "#/$defs/grant"
+        },
+        "signature_hex": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        }
+      },
+      "required": [
+        "key_id",
+        "body",
+        "signature_hex"
+      ]
+    },
+    "semantic_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "body": {
+          "$ref": "#/$defs/semantic"
+        },
+        "signature_hex": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        }
+      },
+      "required": [
+        "key_id",
+        "body",
+        "signature_hex"
+      ]
+    },
+    "release_chunk": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chunk_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "bytes_hex": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{2})*$",
+          "maxLength": 65536
+        },
+        "chunk_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "text_position": {
+          "$ref": "#/$defs/position"
+        },
+        "source_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evidence_ref": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "chunk_id",
+        "bytes_hex",
+        "chunk_digest",
+        "text_position",
+        "source_digest",
+        "evidence_ref"
+      ]
+    },
+    "temporal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "Current",
+            "Historical"
+          ]
+        },
+        "requested_instant": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        }
+      },
+      "required": [
+        "mode"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chunks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/release_chunk"
+          },
+          "maxItems": 32
+        },
+        "claim": {
+          "$ref": "#/$defs/claim"
+        },
+        "claim_status": {
+          "enum": [
+            "Omitted",
+            "ForAnalysis",
+            "SupportedByEvaluation"
+          ]
+        },
+        "semantic": {
+          "$ref": "#/$defs/semantic"
+        },
+        "temporal_context": {
+          "$ref": "#/$defs/temporal"
+        },
+        "restrictions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "chunks",
+        "claim_status",
+        "temporal_context",
+        "restrictions"
+      ]
+    },
+    "reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        }
+      },
+      "required": [
+        "rule_id",
+        "code"
+      ]
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        }
+      },
+      "required": [
+        "code",
+        "ref"
+      ]
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evaluated_at": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "valid_until": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "revisions": {
+          "$ref": "#/$defs/revisions"
+        },
+        "policy_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "anchor_set_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "consistency": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "const": "BestEffort"
+            },
+            "profile_id": {
+              "const": "frozen-observations-v1"
+            },
+            "observation_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "mode",
+            "profile_id",
+            "observation_digest"
+          ]
+        },
+        "temporal_guarantee": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "ValidatedAt"
+            },
+            "validated_at": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 18446744073709551615
+            },
+            "accepted_interval_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 18446744073709551615
+            }
+          },
+          "required": [
+            "kind",
+            "validated_at",
+            "accepted_interval_ms"
+          ]
+        }
+      },
+      "required": [
+        "evaluated_at",
+        "valid_until",
+        "revisions",
+        "policy_digest",
+        "anchor_set_digest",
+        "consistency",
+        "temporal_guarantee"
+      ]
+    },
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "integrity": {
+          "enum": [
+            "OK",
+            "Invalid",
+            "Unknown"
+          ]
+        },
+        "transform_items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/transform"
+          },
+          "maxItems": 32
+        },
+        "documental": {
+          "enum": [
+            "Complete",
+            "Incomplete",
+            "Invalid",
+            "NotEvaluated"
+          ]
+        },
+        "mechanism": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "Extracted",
+                "Derived"
+              ]
+            },
+            "predicate_span_valid": {
+              "type": "boolean"
+            },
+            "premise_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "maxItems": 32
+            },
+            "rule_id": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+            },
+            "rule_version": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+            },
+            "derivation_artifact_ref": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "derivation_binding_valid": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        "bundle": {
+          "$ref": "#/$defs/attestation"
+        },
+        "semantic": {
+          "$ref": "#/$defs/semantic_envelope"
+        },
+        "failures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/failure"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "integrity",
+        "transform_items",
+        "documental",
+        "mechanism",
+        "bundle",
+        "semantic",
+        "failures"
+      ]
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attempted_at": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "authorization_source_available": {
+          "type": "boolean"
+        },
+        "other_sources_available": {
+          "type": "boolean"
+        },
+        "observed_revisions": {
+          "$ref": "#/$defs/revisions"
+        },
+        "grant": {
+          "$ref": "#/$defs/grant_envelope"
+        }
+      },
+      "required": [
+        "attempted_at",
+        "authorization_source_available",
+        "other_sources_available",
+        "observed_revisions"
+      ]
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "enum": [
+            "Admit",
+            "AdmitHistorical",
+            "AdmitChunksOnly",
+            "Exclude",
+            "Reject"
+          ]
+        },
+        "applied_rule": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reason"
+          },
+          "maxItems": 32
+        },
+        "released_payload": {
+          "$ref": "#/$defs/payload"
+        },
+        "snapshot": {
+          "$ref": "#/$defs/snapshot"
+        },
+        "delivery": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "outcome": {
+              "enum": [
+                "Release",
+                "Blocked",
+                "Reevaluate"
+              ]
+            },
+            "code": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+            }
+          },
+          "required": [
+            "outcome",
+            "code"
+          ]
+        },
+        "material_errors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,127}$"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "decision",
+        "applied_rule",
+        "flags",
+        "reasons",
+        "released_payload",
+        "snapshot",
+        "delivery",
+        "material_errors"
+      ]
+    }
+  }
+}

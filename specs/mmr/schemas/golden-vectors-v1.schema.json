@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Arkhe Golden Vectors v1",
+  "type": "object",
+  "required": [
+    "version",
+    "generated_by",
+    "vectors",
+    "mmr_profile_ref"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "generated_by": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "mmr_profile_ref": {
+      "type": "object",
+      "required": [
+        "profile_id",
+        "version",
+        "digest_algorithm",
+        "digest_hex"
+      ],
+      "properties": {
+        "profile_id": {
+          "const": "arkhe-mmr"
+        },
+        "version": {
+          "const": 1
+        },
+        "digest_algorithm": {
+          "const": "BLAKE3-256"
+        },
+        "digest_hex": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "vectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "normative_source",
+          "description",
+          "input",
+          "expected_output"
+        ]
+      }
+    }
+  },
+  "additionalProperties": true
+}

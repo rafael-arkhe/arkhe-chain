@@ -1,0 +1,87 @@
+---
+# Source: arkhe-service/templates/workload.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: arkhe-ask
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: arkhe-ask }
+---
+# Source: arkhe-service/templates/workload.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: arkhe-ask
+  annotations:
+    {}
+automountServiceAccountToken: false
+---
+# Source: arkhe-service/templates/workload.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: arkhe-ask
+spec:
+  selector: { app.kubernetes.io/name: arkhe-ask }
+  ports: [{ name: http, port: 80, targetPort: http }]
+---
+# Source: arkhe-service/templates/workload.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arkhe-ask
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app.kubernetes.io/name: arkhe-ask }
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: arkhe-ask
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: arkhe-ask
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile: { type: RuntimeDefault }
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app.kubernetes.io/name: arkhe-ask }
+      containers:
+        - name: service
+          image: "example/arkhe@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          ports: [{ name: http, containerPort: 3000 }]
+          env:
+            - { name: ARKHE_LISTEN, value: "0.0.0.0:3000" }
+            - { name: ARKHE_CLOUD, value: "azure" }
+          envFrom:
+            - secretRef:
+                name: arkhe-runtime
+          readinessProbe:
+            httpGet: { path: "/healthz", port: http }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: "/healthz", port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: {} }]

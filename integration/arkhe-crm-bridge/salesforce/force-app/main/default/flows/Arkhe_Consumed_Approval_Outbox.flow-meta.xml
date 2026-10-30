@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <environments>Default</environments>
+    <interviewLabel>Arkhe consumed approval outbox {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Arkhe Consumed Approval Outbox</label>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>Create_Durable_Delivery</name>
+        <label>Create durable delivery after gate consumption</label>
+        <locationX>176</locationX><locationY>240</locationY>
+        <inputAssignments><field>Approval__c</field><value><elementReference>$Record.Id</elementReference></value></inputAssignments>
+        <inputAssignments><field>Event_Id__c</field><value><elementReference>$Record.Event_Id__c</elementReference></value></inputAssignments>
+        <object>Arkhe_Delivery__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <start>
+        <locationX>50</locationX><locationY>0</locationY>
+        <connector><targetReference>Create_Durable_Delivery</targetReference></connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters><field>Consumed_At__c</field><operator>IsNull</operator><value><booleanValue>false</booleanValue></value></filters>
+        <object>Arkhe_Write_Approval__c</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

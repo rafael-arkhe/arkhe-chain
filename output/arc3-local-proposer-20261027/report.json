@@ -1,0 +1,176 @@
+{
+  "phase": "REAL_LOCAL_MODEL_KNOWN_CONTROL_PROPOSALS",
+  "blind": false,
+  "model_inventory": {
+    "models": [
+      {
+        "name": "north-mini-code-1.0:latest",
+        "model": "north-mini-code-1.0:latest",
+        "modified_at": "2026-06-19T10:35:20.6917999-03:00",
+        "size": 18593967008,
+        "digest": "d8b269ad5c7c7144ce104b83ce93bc3efb85e0f74e01be6be5f5d6f7ca90b60f",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "cohere2moe",
+          "families": [
+            "cohere2moe"
+          ],
+          "parameter_size": "30.5B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 500000,
+          "embedding_length": 2048,
+          "runner": "ggml"
+        },
+        "capabilities": [
+          "completion",
+          "tools",
+          "thinking"
+        ]
+      }
+    ]
+  },
+  "budget": {
+    "calls_per_control": 2,
+    "controls": 2,
+    "max_calls_total": 4,
+    "max_output_tokens_per_call": 1024,
+    "context_tokens": 8192,
+    "timeout_seconds_per_call": 180
+  },
+  "gold_solution_asts_in_prompt": false,
+  "holdout_supplied_to_proposer": false,
+  "new_environment_actions": 0,
+  "runs": {
+    "click": {
+      "phase": "PROPOSAL_TRAIN_REPAIR",
+      "training_sha256": "f4992bfdd259d4fda23ea33bb3e380c95fe7cc276054efc7a6bad765faacbb97",
+      "max_attempts": 2,
+      "attempts": [],
+      "holdout_evaluated": false,
+      "ratification": "NOT_EVALUATED",
+      "new_environment_actions": 0,
+      "status": "PROPOSER_ERROR_RUN_INCOMPLETE",
+      "error_type": "HTTPError",
+      "model_calls": [
+        {
+          "call": 1,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "efec333a66abe84c62ec880514ef4cac7caba7e3aab0cf327464ebd2dc8a42a7",
+          "prompt_bytes": 4850,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "status": "PROVIDER_ERROR",
+          "error_type": "HTTPError",
+          "wall_seconds": 64.31605150000541
+        }
+      ]
+    },
+    "move": {
+      "phase": "PROPOSAL_TRAIN_REPAIR",
+      "training_sha256": "193bd2a5088ba8f1570b22441c9823c52d970a7f5a7a5716e935416c9b44fe1c",
+      "max_attempts": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "request_sha256": "9190f8158d2b72e8e85ff3bbb6b947b5aed1751cf8e45efa7bb397da42ce71c0",
+          "response_sha256": "91e84aecb0fc777ef2088301c09f497294e25d72bb668c2bd4b847bb1aa4dc50",
+          "status": "PARSE_OR_TYPE_REJECTED",
+          "reason": "INVALID_NODE"
+        },
+        {
+          "attempt": 2,
+          "request_sha256": "bf673467bea80806e3905f7d2caedf49ea7bd2cf350a593c9589c8543d075cb7",
+          "response_sha256": "0007da008a97124b665c224bb5bc19c5c34f757cd0a6c970f16da0f42b1b8f9c",
+          "status": "PARSE_OR_TYPE_REJECTED",
+          "reason": "NODE_FIELDS"
+        }
+      ],
+      "holdout_evaluated": false,
+      "ratification": "NOT_EVALUATED",
+      "new_environment_actions": 0,
+      "status": "PROPOSAL_BUDGET_EXHAUSTED",
+      "model_calls": [
+        {
+          "call": 1,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "9ef4b0fd70cb91560e80744273faa4e60998731b480f1d7b5ac9213b912990a0",
+          "prompt_bytes": 4686,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1200,
+          "eval_count": 66,
+          "total_duration": 69590778900,
+          "load_duration": 50211751000,
+          "prompt_eval_duration": 15037210000,
+          "eval_duration": 4303551000,
+          "wall_seconds": 69.66246870000032
+        },
+        {
+          "call": 2,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "2d531bf0827726d219fb322a77b188b23010a6fc83b495a94c2ab70d0ea2a829",
+          "prompt_bytes": 4723,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1209,
+          "eval_count": 216,
+          "total_duration": 31172611000,
+          "load_duration": 20681700,
+          "prompt_eval_duration": 15045973000,
+          "eval_duration": 15940848000,
+          "wall_seconds": 31.18974820000585
+        }
+      ]
+    }
+  },
+  "execution_complete": true,
+  "service_retry": {
+    "reason": "retry previous provider HTTP error after service loaded; same DSL/prompt/settings, within original two calls per control",
+    "click": {
+      "phase": "PROPOSAL_TRAIN_REPAIR",
+      "training_sha256": "f4992bfdd259d4fda23ea33bb3e380c95fe7cc276054efc7a6bad765faacbb97",
+      "max_attempts": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "request_sha256": "e127fdbae5e5969268d5d9e522a1bab48ec222554db2e1384bc92969d66fc6c9",
+          "response_sha256": "c730d437af810db044ecfeb98fd04ded33fa3d46adc4fcf08ef0b2546eef7624",
+          "status": "PARSE_OR_TYPE_REJECTED",
+          "reason": "INVALID_NODE"
+        }
+      ],
+      "holdout_evaluated": false,
+      "ratification": "NOT_EVALUATED",
+      "new_environment_actions": 0,
+      "status": "PROPOSAL_BUDGET_EXHAUSTED",
+      "model_calls": [
+        {
+          "call": 1,
+          "model": "north-mini-code-1.0:latest",
+          "prompt_sha256": "efec333a66abe84c62ec880514ef4cac7caba7e3aab0cf327464ebd2dc8a42a7",
+          "prompt_bytes": 4850,
+          "max_output_tokens": 1024,
+          "context_tokens": 8192,
+          "timeout_seconds": 180,
+          "done": true,
+          "done_reason": "stop",
+          "prompt_eval_count": 1219,
+          "eval_count": 72,
+          "total_duration": 10570025600,
+          "load_duration": 10118500,
+          "prompt_eval_duration": 6287242000,
+          "eval_duration": 3973402000,
+          "wall_seconds": 10.67409270000644
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,980 @@
+{
+  "build": {
+    "binary_sha256": "a03fd8ffc08ffe442012a4e88127a8ddba691e8725e6bc0bdd07ec6c90f59d6d",
+    "container_id": "89b93aa0f6a3ac8314eb2bf27de3ab876cee2bacd0d47dd00c985ae5bd261a95",
+    "exit_code": 0,
+    "policy": [
+      "--connection",
+      "arkhe-containment",
+      "create",
+      "--label",
+      "io.arkhe.containment.run=e0fef985-34ff-421c-a3d8-fdcb1c81c81d",
+      "--name",
+      "arkhe-containment-e0fef985-34ff-421c-a3d8-fdcb1c81c81d-build",
+      "--pull=never",
+      "--network=none",
+      "--read-only",
+      "--cap-drop=ALL",
+      "--security-opt=no-new-privileges",
+      "--user=10001:10001",
+      "--pids-limit=128",
+      "--memory=1536m",
+      "--cpus=2",
+      "--cgroup-parent=/arkhe-sandbox",
+      "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+      "--tmpfs=/tmp:rw,noexec,size=67108864",
+      "--volume",
+      "/mnt/d/arkhe/docs/evidence/2026-10-19T045147Z-syscall-trial/build-input:/input:ro",
+      "--workdir=/work",
+      "--env=CARGO_HOME=/opt/cargo",
+      "--env=CARGO_TARGET_DIR=/work/target",
+      "--env=CARGO_NET_OFFLINE=true",
+      "--entrypoint=/bin/sh",
+      "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+      "-c",
+      "rustc --edition=2021 -C opt-level=s -C strip=symbols /input/probe.rs -o /work/probe && cat /work/probe",
+      "arkhe-containment"
+    ]
+  },
+  "cleanup": [
+    {
+      "absent": true,
+      "container_id": "89b93aa0f6a3ac8314eb2bf27de3ab876cee2bacd0d47dd00c985ae5bd261a95"
+    },
+    {
+      "absent": true,
+      "container_id": "1ee508f45be0718641b24bfde25df82bec70a14b34864dc4268e083e48889177"
+    },
+    {
+      "absent": true,
+      "container_id": "e2749812e65d867fca00bf6ced9b9d400c20d64d86abfe55de29861ba2229c84"
+    },
+    {
+      "absent": true,
+      "container_id": "3082cbb07d116cf0a9b02c9d80b2c6f9cc49669ccd702409335f8b8a47f662a7"
+    },
+    {
+      "absent": true,
+      "container_id": "eb77e18e132389f5e52853db5595447bb9068591cf219ee568aec65f5c04708e"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "info",
+        "--format",
+        "json"
+      ],
+      "duration_seconds": 1.3288,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "289eacbddd46b296d1b67772b73bada419db50673cdc85acdf2f0dce9ef3734e"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "ps",
+        "--all",
+        "--format",
+        "json"
+      ],
+      "duration_seconds": 1.2664,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "image",
+        "inspect",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab"
+      ],
+      "duration_seconds": 1.3353,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "092565db863093c40796335879c7e07f3e8e58560edb26914615e5cfdc368ed0"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "user",
+        "--exec",
+        "python3",
+        "-c",
+        "import json,os\nfrom pathlib import Path\np=Path.home()/'.local/state/arkhe-containment/lease'\np.parent.mkdir(parents=True,exist_ok=True)\np.mkdir()\n(p/'owner.json').write_text(json.dumps({'run_id':'e0fef985-34ff-421c-a3d8-fdcb1c81c81d'}))\nprint('leased')"
+      ],
+      "duration_seconds": 0.2976,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "2fab15fb1a3d16d011b309eef3ba2e32db1cabf25a1e60264d31ca72e2c8aae3"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "-c",
+        "from pathlib import Path\nimport shutil,os,hashlib\nsource=Path('/mnt/d/arkhe/scripts/containment_vm_observer.py');target=Path('/opt/arkhe-containment/observer-518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e.py')\nassert hashlib.sha256(source.read_bytes()).hexdigest()=='518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e'\nassert not target.exists() or (target.stat().st_uid==0 and hashlib.sha256(target.read_bytes()).hexdigest()=='518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e')\ntarget.parent.mkdir(parents=True,exist_ok=True)\nshutil.copyfile(source,target);os.chmod(target,0o500)\nprint('observer staged')"
+      ],
+      "duration_seconds": 0.2714,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "ce4320cec59b19098d59914a73b866c2fbd884368118e2f816f658e37f65e5ce"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "-c",
+        "from pathlib import Path\nimport hashlib,os\nsource=Path('/mnt/d/arkhe/docs/evidence/2026-10-19T045147Z-syscall-trial/seccomp-pinned.json');target=Path('/opt/arkhe-containment/seccomp-ea0c3cc81b8ca939e3bcb222bd4e9d30667191909628dc4a367516e3d030baba.json')\nassert hashlib.sha256(source.read_bytes()).hexdigest()=='ea0c3cc81b8ca939e3bcb222bd4e9d30667191909628dc4a367516e3d030baba'\nif target.exists():assert target.stat().st_uid==0 and hashlib.sha256(target.read_bytes()).hexdigest()=='ea0c3cc81b8ca939e3bcb222bd4e9d30667191909628dc4a367516e3d030baba'\nelse:target.write_bytes(source.read_bytes());os.chmod(target,0o444)\nassert target.stat().st_uid==0 and not target.stat().st_mode & 0o222\nprint('pinned')\n"
+      ],
+      "duration_seconds": 0.2694,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "dbdbfc4eea60c31dfdb68830dcf4393aa7e1fb5b64af6377e444c6c42e909203"
+    },
+    {
+      "command": [
+        "node",
+        "D:\\arkhe\\scripts\\export_sandbox_policy.mjs"
+      ],
+      "duration_seconds": 0.1388,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "e71602732040088fd35ae1ff650bece9b5521a74e415842fe88eaad55a5ca517"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "create",
+        "--label",
+        "io.arkhe.containment.run=e0fef985-34ff-421c-a3d8-fdcb1c81c81d",
+        "--name",
+        "arkhe-containment-e0fef985-34ff-421c-a3d8-fdcb1c81c81d-build",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--user=10001:10001",
+        "--pids-limit=128",
+        "--memory=1536m",
+        "--cpus=2",
+        "--cgroup-parent=/arkhe-sandbox",
+        "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+        "--tmpfs=/tmp:rw,noexec,size=67108864",
+        "--volume",
+        "/mnt/d/arkhe/docs/evidence/2026-10-19T045147Z-syscall-trial/build-input:/input:ro",
+        "--workdir=/work",
+        "--env=CARGO_HOME=/opt/cargo",
+        "--env=CARGO_TARGET_DIR=/work/target",
+        "--env=CARGO_NET_OFFLINE=true",
+        "--entrypoint=/bin/sh",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "-c",
+        "rustc --edition=2021 -C opt-level=s -C strip=symbols /input/probe.rs -o /work/probe && cat /work/probe",
+        "arkhe-containment"
+      ],
+      "duration_seconds": 1.4402,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "c3a33441dbe1a2b81cdd434f3cfea9cd71518b71a95108ca235121573d12323c"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "start",
+        "--attach",
+        "89b93aa0f6a3ac8314eb2bf27de3ab876cee2bacd0d47dd00c985ae5bd261a95"
+      ],
+      "duration_seconds": 2.5977,
+      "exit_code": 0,
+      "stderr": "warning: function `query_nonce` is never used\n  --> /input/network-wire.rs:18:8\n   |\n18 | pub fn query_nonce(packet: &[u8]) -> Option<String> {\n   |        ^^^^^^^^^^^\n   |\n   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\nwarning: 1 warning emitted\n\n",
+      "stdout_sha256": "a03fd8ffc08ffe442012a4e88127a8ddba691e8725e6bc0bdd07ec6c90f59d6d"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "89b93aa0f6a3ac8314eb2bf27de3ab876cee2bacd0d47dd00c985ae5bd261a95"
+      ],
+      "duration_seconds": 1.2425,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "f190cc46b6ebf0274b8f1af557b1e023776feddb7ab1bc7ad6804287e79b8e24"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "rm",
+        "-f",
+        "--time=0",
+        "89b93aa0f6a3ac8314eb2bf27de3ab876cee2bacd0d47dd00c985ae5bd261a95"
+      ],
+      "duration_seconds": 1.332,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "c3a33441dbe1a2b81cdd434f3cfea9cd71518b71a95108ca235121573d12323c"
+    },
+    {
+      "command": [
+        "node",
+        "D:\\arkhe\\scripts\\export_sandbox_policy.mjs"
+      ],
+      "duration_seconds": 0.1162,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "7f54b36f378f24fa13198a05c03203c45405e96e148a2dca5e104cd6302150bc"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "create",
+        "--label",
+        "io.arkhe.containment.run=e0fef985-34ff-421c-a3d8-fdcb1c81c81d",
+        "--name",
+        "arkhe-containment-e0fef985-34ff-421c-a3d8-fdcb1c81c81d-subprocess-control",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--user=10001:10001",
+        "--pids-limit=128",
+        "--memory=1536m",
+        "--cpus=2",
+        "--cgroup-parent=/arkhe-sandbox",
+        "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+        "--tmpfs=/tmp:rw,noexec,size=67108864",
+        "--volume",
+        "/mnt/d/arkhe/docs/evidence/2026-10-19T045147Z-syscall-trial/session/fixtures/subprocess-control:/input:ro",
+        "--workdir=/work",
+        "--env=CARGO_HOME=/opt/cargo",
+        "--env=CARGO_TARGET_DIR=/work/target",
+        "--env=CARGO_NET_OFFLINE=true",
+        "--entrypoint=/bin/sh",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "-c",
+        "cp /input/probe /work/probe && chmod 755 /work/probe && while [ ! -f /input/go ]; do sleep 0.05; done; exec /work/probe \"$1\" \"$2\"",
+        "arkhe-containment",
+        "subprocess-control",
+        "65db51dd83a0f7f894e6fb2a4dde701d1e15f4a61bad7d589dd601ad6060ce06"
+      ],
+      "duration_seconds": 1.4278,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "545dadd15f6bc65f30cd7fd5789df2db9effa8fdf6b0b7a2b57448df6c7cd3d9"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "start",
+        "1ee508f45be0718641b24bfde25df82bec70a14b34864dc4268e083e48889177"
+      ],
+      "duration_seconds": 1.4754,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "545dadd15f6bc65f30cd7fd5789df2db9effa8fdf6b0b7a2b57448df6c7cd3d9"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "1ee508f45be0718641b24bfde25df82bec70a14b34864dc4268e083e48889177"
+      ],
+      "duration_seconds": 1.3566,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "7f0b6a7a047aa7f3e5cf2b4d9120464cdff1d2121da4d179f37996d368df061b"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "/opt/arkhe-containment/observer-518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e.py",
+        "1156",
+        "1ee508f45be0718641b24bfde25df82bec70a14b34864dc4268e083e48889177"
+      ],
+      "duration_seconds": 0.2466,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "f2ed5df71805d3edebc60cd737a6af9ca961e0906f2ce9222e991962cbbc9cfb"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "wait",
+        "1ee508f45be0718641b24bfde25df82bec70a14b34864dc4268e083e48889177"
+      ],
+      "duration_seconds": 1.3662,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "logs",
+        "1ee508f45be0718641b24bfde25df82bec70a14b34864dc4268e083e48889177"
+      ],
+      "duration_seconds": 1.3294,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "95e9dd9504062bb934c626fb52ef4bf39a82feb81bf88c2292215cb509c3d9ce"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "1ee508f45be0718641b24bfde25df82bec70a14b34864dc4268e083e48889177"
+      ],
+      "duration_seconds": 1.274,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "bb7abd75fe93d8a4df0328d4a9e06005564c39556ff41d59bd85a81f03ff90e3"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "rm",
+        "-f",
+        "--time=0",
+        "1ee508f45be0718641b24bfde25df82bec70a14b34864dc4268e083e48889177"
+      ],
+      "duration_seconds": 1.3038,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "545dadd15f6bc65f30cd7fd5789df2db9effa8fdf6b0b7a2b57448df6c7cd3d9"
+    },
+    {
+      "command": [
+        "node",
+        "D:\\arkhe\\scripts\\export_sandbox_policy.mjs"
+      ],
+      "duration_seconds": 0.1034,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "4817653ca3bce0de67085bf98f336ce271c6e6aec2afffe37eecdd602febed26"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "create",
+        "--label",
+        "io.arkhe.containment.run=e0fef985-34ff-421c-a3d8-fdcb1c81c81d",
+        "--name",
+        "arkhe-containment-e0fef985-34ff-421c-a3d8-fdcb1c81c81d-ffi-control",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--user=10001:10001",
+        "--pids-limit=128",
+        "--memory=1536m",
+        "--cpus=2",
+        "--cgroup-parent=/arkhe-sandbox",
+        "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+        "--tmpfs=/tmp:rw,noexec,size=67108864",
+        "--volume",
+        "/mnt/d/arkhe/docs/evidence/2026-10-19T045147Z-syscall-trial/session/fixtures/ffi-control:/input:ro",
+        "--workdir=/work",
+        "--env=CARGO_HOME=/opt/cargo",
+        "--env=CARGO_TARGET_DIR=/work/target",
+        "--env=CARGO_NET_OFFLINE=true",
+        "--entrypoint=/bin/sh",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "-c",
+        "cp /input/probe /work/probe && chmod 755 /work/probe && while [ ! -f /input/go ]; do sleep 0.05; done; exec /work/probe \"$1\" \"$2\"",
+        "arkhe-containment",
+        "ffi-control",
+        "350d4c5969870f56004544f7632736b0ccb86a3eedd0d20e5e9bb3ccdc7580de"
+      ],
+      "duration_seconds": 1.3248,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "052c466406f2404a21166c06c62886275b011ab18abceaa55b6c1d53c04a9c78"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "start",
+        "e2749812e65d867fca00bf6ced9b9d400c20d64d86abfe55de29861ba2229c84"
+      ],
+      "duration_seconds": 1.3022,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "052c466406f2404a21166c06c62886275b011ab18abceaa55b6c1d53c04a9c78"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "e2749812e65d867fca00bf6ced9b9d400c20d64d86abfe55de29861ba2229c84"
+      ],
+      "duration_seconds": 1.2789,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "c17266b5dd2deee42aee89652a97f7c04f6fb7d9e1b85b1d377546c3e5395dd9"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "/opt/arkhe-containment/observer-518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e.py",
+        "1261",
+        "e2749812e65d867fca00bf6ced9b9d400c20d64d86abfe55de29861ba2229c84"
+      ],
+      "duration_seconds": 0.2437,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "cf3792e2c9a8f31c75807cc244b20f13d1ef58d23637f4c63b232660d6fd4b04"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "wait",
+        "e2749812e65d867fca00bf6ced9b9d400c20d64d86abfe55de29861ba2229c84"
+      ],
+      "duration_seconds": 1.2423,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "logs",
+        "e2749812e65d867fca00bf6ced9b9d400c20d64d86abfe55de29861ba2229c84"
+      ],
+      "duration_seconds": 1.2042,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "41212bcd6e5c6e53ada0ee7c247020e254a41dc0126b623e3ba6104df6430dce"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "e2749812e65d867fca00bf6ced9b9d400c20d64d86abfe55de29861ba2229c84"
+      ],
+      "duration_seconds": 1.2302,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "b06a8106047c42950d4fe7f095e84316c815d203178de480e43f2bd613fdbf21"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "rm",
+        "-f",
+        "--time=0",
+        "e2749812e65d867fca00bf6ced9b9d400c20d64d86abfe55de29861ba2229c84"
+      ],
+      "duration_seconds": 1.2612,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "052c466406f2404a21166c06c62886275b011ab18abceaa55b6c1d53c04a9c78"
+    },
+    {
+      "command": [
+        "node",
+        "D:\\arkhe\\scripts\\export_sandbox_policy.mjs"
+      ],
+      "duration_seconds": 0.0935,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "88757deca29fd2d665fdecae7607d6ac50c57ee39f50a81d46f735153f3fd684"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "create",
+        "--label",
+        "io.arkhe.containment.run=e0fef985-34ff-421c-a3d8-fdcb1c81c81d",
+        "--name",
+        "arkhe-containment-e0fef985-34ff-421c-a3d8-fdcb1c81c81d-mount-capability",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--user=10001:10001",
+        "--pids-limit=128",
+        "--memory=1536m",
+        "--cpus=2",
+        "--cgroup-parent=/arkhe-sandbox",
+        "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+        "--tmpfs=/tmp:rw,noexec,size=67108864",
+        "--volume",
+        "/mnt/d/arkhe/docs/evidence/2026-10-19T045147Z-syscall-trial/session/fixtures/mount-capability:/input:ro",
+        "--workdir=/work",
+        "--env=CARGO_HOME=/opt/cargo",
+        "--env=CARGO_TARGET_DIR=/work/target",
+        "--env=CARGO_NET_OFFLINE=true",
+        "--entrypoint=/bin/sh",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "-c",
+        "cp /input/probe /work/probe && chmod 755 /work/probe && while [ ! -f /input/go ]; do sleep 0.05; done; exec /work/probe \"$1\" \"$2\"",
+        "arkhe-containment",
+        "mount-capability",
+        "322623b77adc3769f81b99cfd69f51e74f78c383e39e838c9f6f27118b3ab870"
+      ],
+      "duration_seconds": 1.301,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "4319c1d78b6261becffed2d74748669a074bd68325f6a2f492f3fbdab5b6260f"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "start",
+        "3082cbb07d116cf0a9b02c9d80b2c6f9cc49669ccd702409335f8b8a47f662a7"
+      ],
+      "duration_seconds": 1.3181,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "4319c1d78b6261becffed2d74748669a074bd68325f6a2f492f3fbdab5b6260f"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "3082cbb07d116cf0a9b02c9d80b2c6f9cc49669ccd702409335f8b8a47f662a7"
+      ],
+      "duration_seconds": 1.2165,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "4c08f16843062ad8083c8e84af492001b81cd87014315fc15fe6827fb3a7cb0a"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "/opt/arkhe-containment/observer-518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e.py",
+        "1360",
+        "3082cbb07d116cf0a9b02c9d80b2c6f9cc49669ccd702409335f8b8a47f662a7"
+      ],
+      "duration_seconds": 0.2203,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "b62e9da46e37ffccd352c4b509aa728afe6f0f01d88a3a277ff3ce7ba1028280"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "wait",
+        "3082cbb07d116cf0a9b02c9d80b2c6f9cc49669ccd702409335f8b8a47f662a7"
+      ],
+      "duration_seconds": 1.2482,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "logs",
+        "3082cbb07d116cf0a9b02c9d80b2c6f9cc49669ccd702409335f8b8a47f662a7"
+      ],
+      "duration_seconds": 1.2277,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "67af9b3af773ab5c9d9a6da06908dc138b9e20229acea36190fd2ed689a6c98a"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "3082cbb07d116cf0a9b02c9d80b2c6f9cc49669ccd702409335f8b8a47f662a7"
+      ],
+      "duration_seconds": 1.3331,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "439f22850280430916491a9b984f4e1f3bd0c1f44577501f5cfe9a4e36af3fa6"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "rm",
+        "-f",
+        "--time=0",
+        "3082cbb07d116cf0a9b02c9d80b2c6f9cc49669ccd702409335f8b8a47f662a7"
+      ],
+      "duration_seconds": 1.4025,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "4319c1d78b6261becffed2d74748669a074bd68325f6a2f492f3fbdab5b6260f"
+    },
+    {
+      "command": [
+        "node",
+        "D:\\arkhe\\scripts\\export_sandbox_policy.mjs"
+      ],
+      "duration_seconds": 0.0963,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "a898130ecf24396382208e6cdb57aaf2ffde16d3ed424e2d95821247cf0215e5"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "create",
+        "--label",
+        "io.arkhe.containment.run=e0fef985-34ff-421c-a3d8-fdcb1c81c81d",
+        "--name",
+        "arkhe-containment-e0fef985-34ff-421c-a3d8-fdcb1c81c81d-seccomp-inventory",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--user=10001:10001",
+        "--pids-limit=128",
+        "--memory=1536m",
+        "--cpus=2",
+        "--cgroup-parent=/arkhe-sandbox",
+        "--tmpfs=/work:rw,exec,size=1073741824,mode=1777",
+        "--tmpfs=/tmp:rw,noexec,size=67108864",
+        "--volume",
+        "/mnt/d/arkhe/docs/evidence/2026-10-19T045147Z-syscall-trial/session/fixtures/seccomp-inventory:/input:ro",
+        "--workdir=/work",
+        "--env=CARGO_HOME=/opt/cargo",
+        "--env=CARGO_TARGET_DIR=/work/target",
+        "--env=CARGO_NET_OFFLINE=true",
+        "--entrypoint=/bin/sh",
+        "--security-opt=seccomp=/opt/arkhe-containment/seccomp-ea0c3cc81b8ca939e3bcb222bd4e9d30667191909628dc4a367516e3d030baba.json",
+        "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+        "-c",
+        "cp /input/probe /work/probe && chmod 755 /work/probe && while [ ! -f /input/go ]; do sleep 0.05; done; exec /work/probe \"$1\" \"$2\"",
+        "arkhe-containment",
+        "seccomp-inventory",
+        "ecba4c3b4218db6b33791a17e4206d2f29ba88c36e8d225b082dd0de62cff846"
+      ],
+      "duration_seconds": 1.3199,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "8885b320a45f80410d3a2d773c51ce7a084959bb0990ff977cac4a5154fe71a4"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "start",
+        "eb77e18e132389f5e52853db5595447bb9068591cf219ee568aec65f5c04708e"
+      ],
+      "duration_seconds": 1.2941,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "8885b320a45f80410d3a2d773c51ce7a084959bb0990ff977cac4a5154fe71a4"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "eb77e18e132389f5e52853db5595447bb9068591cf219ee568aec65f5c04708e"
+      ],
+      "duration_seconds": 1.4486,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "0736944a61e94a187ff2f410741e7306f5835eeafda4664a44e9e6c0debdc7bb"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "/opt/arkhe-containment/observer-518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e.py",
+        "1456",
+        "eb77e18e132389f5e52853db5595447bb9068591cf219ee568aec65f5c04708e"
+      ],
+      "duration_seconds": 0.3032,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9bfdd2ed5191a26ac8f3bb7c93c7f4cd2f553f0aa37552a633fe8dc328755f0d"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "wait",
+        "eb77e18e132389f5e52853db5595447bb9068591cf219ee568aec65f5c04708e"
+      ],
+      "duration_seconds": 1.3452,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "logs",
+        "eb77e18e132389f5e52853db5595447bb9068591cf219ee568aec65f5c04708e"
+      ],
+      "duration_seconds": 1.268,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "f3f3535d98c8546c1caa755d27308e2ff618b4d58b40c98f6066cf2b96c46047"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "inspect",
+        "eb77e18e132389f5e52853db5595447bb9068591cf219ee568aec65f5c04708e"
+      ],
+      "duration_seconds": 1.2481,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "23631aa3424eb50c3a0556aba1612b7d1869959a8dc303548caed6b7b03692e5"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "root",
+        "--exec",
+        "python3",
+        "-c",
+        "from pathlib import Path\nimport hashlib,json\np=Path('/opt/arkhe-containment/seccomp-ea0c3cc81b8ca939e3bcb222bd4e9d30667191909628dc4a367516e3d030baba.json')\nprint(json.dumps({'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'uid':p.stat().st_uid,'mode':p.stat().st_mode}))\n"
+      ],
+      "duration_seconds": 0.2148,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "7b7de1777deb518163912d8da7f9463b554f4c93d0e451a9b84b79871dcf9edc"
+    },
+    {
+      "command": [
+        "podman",
+        "--connection",
+        "arkhe-containment",
+        "rm",
+        "-f",
+        "--time=0",
+        "eb77e18e132389f5e52853db5595447bb9068591cf219ee568aec65f5c04708e"
+      ],
+      "duration_seconds": 1.3182,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "8885b320a45f80410d3a2d773c51ce7a084959bb0990ff977cac4a5154fe71a4"
+    },
+    {
+      "command": [
+        "wsl",
+        "-d",
+        "podman-arkhe-containment",
+        "-u",
+        "user",
+        "--exec",
+        "python3",
+        "-c",
+        "from pathlib import Path\nimport json\np=Path.home()/'.local/state/arkhe-containment/lease'\nassert json.loads((p/'owner.json').read_text())['run_id']=='e0fef985-34ff-421c-a3d8-fdcb1c81c81d'\n(p/'owner.json').unlink();p.rmdir()\n"
+      ],
+      "duration_seconds": 0.2395,
+      "exit_code": 0,
+      "stderr": "",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "duration_seconds": 57.437,
+  "errors": [],
+  "image": "sha256:1cc4af95eb5e7d6caf30aefda71f4c8f8de78eae425a1d773c5490f5b66c19ab",
+  "lease_released": true,
+  "machine": "arkhe-containment",
+  "oracle_source_sha256": "518f7207bcdf3cd607fa4a2ee48391c1ebf86e8f66004128090107307d29345e",
+  "policy_source_sha256": "c7b5fb270d6467a8fdc272b92d8fb81164db5aeae328e6ee1d445892dad73317",
+  "preflight": {
+    "arch": "amd64",
+    "cgroupVersion": "v2",
+    "engine_version": {
+      "APIVersion": "5.8.9",
+      "BuildOrigin": "Copr: packit/podman-container-tools-podman-29958",
+      "Built": 1791763200,
+      "BuiltTime": "Sun Oct 11 21:00:00 2026",
+      "GitCommit": "40030f4073bd4e1bf4f2fd9df2f6952b4d9d350a",
+      "GoVersion": "go1.26.9-X:nodwarf5",
+      "Os": "linux",
+      "OsArch": "linux/amd64",
+      "Version": "5.8.9"
+    },
+    "kernel": "6.18.54.1-microsoft-standard-WSL2",
+    "memory_free_bytes": 15014715392,
+    "ociRuntime": {
+      "name": "crun",
+      "package": "crun-1.28-1.fc44.x86_64",
+      "path": "/usr/bin/crun",
+      "version": "crun version 1.28\ncommit: 54f16ffbefcd022bf032af768b5c5ce075c18bfc\nrundir: /run/user/1000/crun\nspec: 1.0.0\n+SYSTEMD +SELINUX +APPARMOR +CAP +SECCOMP +EBPF +CRIU +LIBKRUN +WASM:wasmedge +JSON_C"
+    },
+    "rootless": true
+  },
+  "run_id": "e0fef985-34ff-421c-a3d8-fdcb1c81c81d",
+  "runtime_verified": false,
+  "schema": 1,
+  "scope": "Subprocess/FFI allowed and mount denied on build-current; one paired getppid syscall denied by a separate explicit x86_64 seccomp profile. No full-table verification or default-profile approval.",
+  "seccomp_test_profile": {
+    "baseline_sha256": "ca7996fb16e8875ab7125a1fadd8dfc6fee9c1f711220915c1a101d44bad2dcb",
+    "denied_syscall": "getppid",
+    "errno": 133,
+    "id": "arkhe-seccomp-getppid-x86_64/v1",
+    "runtime_verified": false,
+    "sha256": "ea0c3cc81b8ca939e3bcb222bd4e9d30667191909628dc4a367516e3d030baba"
+  },
+  "suite": {
+    "catalog_vectors": 22,
+    "status": "INCOMPLETE"
+  },
+  "trial": {
+    "execution_state": "COMPLETE",
+    "vectors": [
+      {
+        "cleanup_confirmed": true,
+        "container_id": "1ee508f45be0718641b24bfde25df82bec70a14b34864dc4268e083e48889177",
+        "observation_sha256": "95e9dd9504062bb934c626fb52ef4bf39a82feb81bf88c2292215cb509c3d9ce",
+        "observation_state": "OBSERVED",
+        "oracle_sha256": "e26795669ac44035d3dd997e3f050d9492335c8bbf47a7a9c97aed2ca0936bfe",
+        "profile": "build-current",
+        "sentinel_after_sha256": "1827f12de3a65363dd035c39afbcaaf93dcca893b747d9b3eb8a1d1f08ba989b",
+        "sentinel_before_sha256": "1827f12de3a65363dd035c39afbcaaf93dcca893b747d9b3eb8a1d1f08ba989b",
+        "vector_id": "subprocess-control",
+        "verdict": "PASS"
+      },
+      {
+        "cleanup_confirmed": true,
+        "container_id": "e2749812e65d867fca00bf6ced9b9d400c20d64d86abfe55de29861ba2229c84",
+        "observation_sha256": "41212bcd6e5c6e53ada0ee7c247020e254a41dc0126b623e3ba6104df6430dce",
+        "observation_state": "OBSERVED",
+        "oracle_sha256": "b5e0ab5b912956c6cc09bf7eedbf34dfb0525de43085702087f2b5cb2a432cf6",
+        "profile": "build-current",
+        "sentinel_after_sha256": "17591eba39103a4deb33076a20e9d1bfbd498da74922301ef02aa7cdd7bbc093",
+        "sentinel_before_sha256": "17591eba39103a4deb33076a20e9d1bfbd498da74922301ef02aa7cdd7bbc093",
+        "vector_id": "ffi-control",
+        "verdict": "PASS"
+      },
+      {
+        "cleanup_confirmed": true,
+        "container_id": "3082cbb07d116cf0a9b02c9d80b2c6f9cc49669ccd702409335f8b8a47f662a7",
+        "observation_sha256": "67af9b3af773ab5c9d9a6da06908dc138b9e20229acea36190fd2ed689a6c98a",
+        "observation_state": "OBSERVED",
+        "oracle_sha256": "4a44ac74b783659aada280f8f44c9339820da92f24b972e68b371771995187d9",
+        "profile": "build-current",
+        "sentinel_after_sha256": "f993818b8b1fad22ae7b1eb5564ba12bf66695f1009bbdaba879ac158c5f4de4",
+        "sentinel_before_sha256": "f993818b8b1fad22ae7b1eb5564ba12bf66695f1009bbdaba879ac158c5f4de4",
+        "vector_id": "mount-capability",
+        "verdict": "PASS"
+      },
+      {
+        "cleanup_confirmed": true,
+        "container_id": "eb77e18e132389f5e52853db5595447bb9068591cf219ee568aec65f5c04708e",
+        "observation_sha256": "f3f3535d98c8546c1caa755d27308e2ff618b4d58b40c98f6066cf2b96c46047",
+        "observation_state": "OBSERVED",
+        "oracle_sha256": "62f505530cee41660e8bbb71f5973f1a5a8d949ca2639c87f68a0697fb3d727f",
+        "profile": "arkhe-seccomp-getppid-x86_64/v1",
+        "sentinel_after_sha256": "6d9ce2504ec7b5245c8f90ca82e74efe3932e171dff1942c8687ea861998c075",
+        "sentinel_before_sha256": "6d9ce2504ec7b5245c8f90ca82e74efe3932e171dff1942c8687ea861998c075",
+        "vector_id": "seccomp-inventory",
+        "verdict": "PASS"
+      }
+    ],
+    "verdict": "OBSERVATIONS_COLLECTED"
+  }
+}

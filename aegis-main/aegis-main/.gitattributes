@@ -1,0 +1,21 @@
+# 🔴 A árvore vendorizada entra **byte a byte**, e é por aqui que fica.
+#
+# Medido a 30/09/2026: com `core.autocrlf=true` nesta máquina (que é o padrão
+# do Windows e veio do sistema), o `git show` que repõe um ficheiro do
+# upstream **devolve-o com CRLF**. O `git hash-object` dizia "igual" — porque
+# reaplica o filtro de limpeza ao medir, e mede uma coisa diferente da que está
+# no disco. Um ficheiro de 2551 bytes chegou a 3040.
+#
+# 🔴 Isto não era teórico: a prova de divergência contou **268 linhas** numa
+# alteração de **uma**, e a causa foi um fim de linha. O número que o portão
+# prometia medir era o número que o fim de linha estava a fabricar.
+#
+# `-text` diz ao git: não normalizes, não converta, não toque. O que está no
+# disco é o que está no upstream, e o que está no upstream é o que o
+# `.arvore-upstream` promete.
+apps/console/** -text
+
+# 🔴 E o mesmo para a lista que diz o que é intacto: um ficheiro de 3031
+# linhas de nomes mudado de fim de linha passa a ter 3031 linhas diferentes, e
+# o portão diria que o fork divergiu sem ninguém ter mexido em nada.
+apps/console/.arvore-upstream -text

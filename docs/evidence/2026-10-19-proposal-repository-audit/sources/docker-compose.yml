@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:16
+    container_name: arkhe-live-postgres
+    labels: {io.arkhe.environment: live-v1}
+    environment:
+      POSTGRES_DB: arkhe
+      POSTGRES_PASSWORD: ${ARKHE_POSTGRES_PASSWORD:?Run scripts/full_stack.py}
+    ports: ["127.0.0.1:55432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "arkhe"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    networks:
+      default:
+        aliases: [postgres]
+  runtime:
+    image: localhost/arkhe-runtime:dev
+    build: {context: ., dockerfile: ops/runtime/Dockerfile}
+    container_name: arkhe-live-runtime
+    labels: {io.arkhe.environment: live-v1}
+    environment:
+      DATABASE_URL: ${ARKHE_RUNTIME_DATABASE_URL:?Run scripts/full_stack.py}
+      ARKHE_API_TOKEN: ${ARKHE_API_TOKEN:?Run scripts/full_stack.py}
+      ARKHE_ACTOR: local-operator
+      ARKHE_TENANT_ID: local
+      ARKHE_LISTEN: 0.0.0.0:8080
+    ports: ["127.0.0.1:8788:8080"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  redis:
+    image: docker.io/library/redis:7-alpine
+    container_name: arkhe-live-redis
+    labels: {io.arkhe.environment: live-v1}
+    ports: ["127.0.0.1:6379:6379"]
+  mcp:
+    image: localhost/arkhe-mcp-health:dev
+    build: {context: ., dockerfile: ops/mcp/Dockerfile}
+    container_name: arkhe-live-mcp
+    labels: {io.arkhe.environment: live-v1}
+    ports: ["127.0.0.1:8787:8787"]
+  prometheus:
+    image: docker.io/prom/prometheus:v2.55.1
+    container_name: arkhe-live-prometheus
+    labels: {io.arkhe.environment: live-v1}
+    ports: ["127.0.0.1:9090:9090"]
+    volumes: ["./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+  grafana:
+    image: docker.io/grafana/grafana:11.3.0
+    container_name: arkhe-live-grafana
+    labels: {io.arkhe.environment: live-v1}
+    environment:
+      GF_SECURITY_ADMIN_USER: arkhe-admin
+      GF_SECURITY_ADMIN_PASSWORD: ${ARKHE_GRAFANA_PASSWORD:?Run scripts/full_stack.py}
+    ports: ["127.0.0.1:3002:3000"]
+    volumes:
+      - ./ops/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+networks:
+  default:
+    external: true
+    name: arkhe-live
+volumes:
+  pgdata:
+    external: true
+    name: arkhe-live-pgdata
+  grafana-data:

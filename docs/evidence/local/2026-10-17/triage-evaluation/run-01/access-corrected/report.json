@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "report_id": "access-corrected",
+  "severity": "High",
+  "title": "Claim anyone can sweep treasury",
+  "report_body": "All relevant treasury code: address payable immutable owner; constructor(){owner=payable(msg.sender);} function sweep(address payable to) external { require(msg.sender==owner); to.transfer(address(this).balance); } No delegatecall, owner mutation or alternate transfer paths exist. Unprivileged sweep reverts at require, balances unchanged. Report offers no owner compromise and still claims anyone can sweep. Assess that claim.",
+  "submitted_at": 1,
+  "affected_assets": []
+}

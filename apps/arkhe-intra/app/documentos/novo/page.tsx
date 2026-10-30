@@ -1,0 +1,14 @@
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import { Save, FilePlus2 } from 'lucide-react';
+import { api } from '@/lib/client';
+import type { Document } from '@/lib/types';
+import { PageTitle, Notice } from '@/components/ui';
+export default function NewDocument() {
+  const router = useRouter(), client = useQueryClient();
+  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [body, setBody] = useState('');
+  return <><PageTitle eyebrow="BIBLIOTECA / NOVO DOCUMENTO" title="Uma nova minuta"><Link href="/documentos" className="button secondary">Voltar à biblioteca</Link></PageTitle><div className="editor-layout"><form className="panel editor" onSubmit={async event => { event.preventDefault(); setBusy(true); setError(''); const form = new FormData(event.currentTarget); try { const doc = await api<Document>('documents', Object.fromEntries(form)); await client.invalidateQueries({ queryKey: ['dashboard'] }); router.push('/documentos/' + doc.id); } catch (error) { setError((error as Error).message); } finally { setBusy(false); } }}><label>Título do documento<input disabled={busy} name="title" maxLength={180} required placeholder="Ex.: Política de uso de inteligência artificial" /></label><label>Departamento<select disabled={busy} name="department"><option>Jurídico & Compliance</option><option>Governança</option><option>Tecnologia</option><option>Recursos Humanos</option><option>Comunicação</option></select></label><label>Conteúdo<textarea name="body" value={body} onChange={event => setBody(event.target.value)} disabled={busy} rows={17} required maxLength={50000} placeholder="Escreva o conteúdo da minuta. O texto é tratado como conteúdo, sem execução de HTML." /><span className="field-help"><span>Texto simples · edição disponível enquanto for rascunho</span><span>{body.length.toLocaleString('pt-BR')} / 50.000</span></span></label>{error ? <Notice error>{error}</Notice> : null}<div className="editor-actions"><small>Salvar cria um rascunho. Nenhuma assinatura ou publicação será realizada nesta etapa.</small><button className="button" disabled={busy || !body.trim()}><Save size={17} />{busy ? 'Salvando…' : 'Salvar rascunho'}</button></div></form><aside className="panel"><FilePlus2 size={30} className="text-primary" /><h2>Do conteúdo à evidência</h2><ol className="flow-list"><li>Crie e revise o rascunho.</li><li>Assine o envio para revisão.</li><li>Uma pessoa revisora valida e assina.</li><li>A governança aprova e assina.</li><li>Publique após validar o recibo Rekor.</li></ol><Notice>O digest identifica esta versão exata. Qualquer edição do rascunho gera uma nova revisão.</Notice></aside></div></>;
+}

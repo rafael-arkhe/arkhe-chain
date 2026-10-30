@@ -1,0 +1,111 @@
+name: frontend — imagem
+
+# 🔴 A tag é **`web-v*`**, e não `v*`.
+#
+# Este workflow vinha do repo `Safe-Core/security-app`, onde o repo inteiro era
+# o frontend e `v*` não era de ninguém. Num repo que tem também o núcleo Rust,
+# `v*` passa a ser um espaço **disputado** — e o dia em que o núcleo ganhar a
+# sua primeira tag é o dia em que uma tag do núcleo passa a publicar uma
+# imagem do frontend. É a mesma razão pela qual a casa usa `desktop-v` e
+# `bridge-v`: a tag é o **namespace** do produto, e cada produto tem o seu.
+on:
+  push:
+    tags: ["web-v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version, for example v1.0.3-rc1
+        required: true
+        type: string
+
+concurrency:
+  group: frontend-image-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    name: Frontend image and digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive release metadata
+        id: meta
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/web-v* ]]; then
+            version="${GITHUB_REF#refs/tags/web-v}"
+          elif [[ -n "${{ inputs.version }}" ]]; then
+            version="${{ inputs.version }}"
+          else
+            echo "erro: release manual exige inputs.version" >&2
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and publish
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          # 🔴 O contexto é `apps/web/` e não `.` — o repo deixou de ser o
+          # frontend. A consequence que importa está no `Dockerfile`: ele
+          # **recusa** build com um `.env` no contexto, e o contexto passou a
+          # ser a pasta do frontend e não a raiz do repo, o que é o que
+          # mantém essa recusa a valer.
+          context: apps/web
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/safe-core/aegis-security-app-edge:${{ steps.meta.outputs.version }}
+            ghcr.io/safe-core/aegis-security-app-edge:sha-${{ github.sha }}
+          build-args: |
+            AEGIS_VERSION=${{ steps.meta.outputs.version }}
+            GIT_SHA=${{ github.sha }}
+          provenance: false
+          sbom: true
+          cache-from: type=gha,scope=security-app-edge
+          cache-to: type=gha,mode=max,scope=security-app-edge
+
+      - name: Smoke test the published image
+        env:
+          IMAGE: ghcr.io/safe-core/aegis-security-app-edge:sha-${{ github.sha }}
+        run: |
+          docker pull "$IMAGE"
+          docker run --rm -d --name security-app-smoke -p 13002:3002 "$IMAGE"
+          trap 'docker rm -f security-app-smoke >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:13002/api/config >/dev/null; then
+              curl -fsS http://127.0.0.1:13002/login >/dev/null
+              echo "ok: security-app /api/config and /login"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs security-app-smoke
+          exit 1
+
+      - name: Write digest artifact
+        run: |
+          mkdir -p digests
+          jq -n \
+            --arg ref "ghcr.io/safe-core/aegis-security-app-edge:${{ steps.meta.outputs.version }}" \
+            --arg digest "${{ steps.build.outputs.digest }}" \
+            '{ref:$ref, digest:$digest}' > digests/frontend.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digest-frontend-${{ github.sha }}
+          path: digests/frontend.json
