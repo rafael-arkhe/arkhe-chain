@@ -1,0 +1,27 @@
+$ cargo test --locked -p arkhe-verify-core --test memo_reconciliation changed_raw_memo_id_cannot_substitute_committed_evidence -- --exact
+   Compiling arkhe-verify-core v0.1.0 (D:\arkhe\verification\crates\arkhe-verify-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.39s
+     Running tests\memo_reconciliation.rs (target\debug\deps\memo_reconciliation-8a0e24cebd3d374b.exe)
+
+running 1 test
+test changed_raw_memo_id_cannot_substitute_committed_evidence ... FAILED
+
+failures:
+
+---- changed_raw_memo_id_cannot_substitute_committed_evidence stdout ----
+
+thread 'changed_raw_memo_id_cannot_substitute_committed_evidence' (43928) panicked at verification\crates\arkhe-verify-core\tests\memo_reconciliation.rs:74:5:
+assertion `left == right` failed
+  left: Ok(Decision { input_digest: Digest32([205, 155, 181, 96, 236, 93, 48, 10, 9, 247, 174, 168, 147, 219, 3, 121, 166, 244, 255, 63, 139, 33, 217, 105, 195, 90, 224, 80, 134, 177, 171, 233]), status: Matched, invoice_ids: ["synthetic-memo-invoice"] })
+ right: Err("memo evidence does not derive the exact reconciliation transfer")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    changed_raw_memo_id_cannot_substitute_committed_evidence
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p arkhe-verify-core --test memo_reconciliation`
+
+exit_code=101

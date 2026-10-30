@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Cockpit // L9 Outer Boundary &amp; Observador Público</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with configuration -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-container": "#10b981",
+            "border-subtle": "#1e293b",
+            "secondary": "#89ceff",
+            "border-grid": "#1f2937",
+            "surface-bright": "#36393f",
+            "on-tertiary-fixed-variant": "#653e00",
+            "text-subtle": "#475569",
+            "primary": "#4edea3",
+            "on-error": "#690005",
+            "outline": "#86948a",
+            "error-container": "#93000a",
+            "secondary-fixed": "#c9e6ff",
+            "text-muted": "#64748b",
+            "surface-elevated": "#182230",
+            "on-primary-fixed": "#002113",
+            "on-surface": "#e0e2ea",
+            "on-primary-container": "#00422b",
+            "surface-container-low": "#181c21",
+            "surface-container-lowest": "#0a0e13",
+            "tertiary-container": "#e29100",
+            "surface-container": "#121820",
+            "surface": "#101419",
+            "on-secondary": "#00344d",
+            "status-pending": "#0ea5e9",
+            "on-background": "#e0e2ea",
+            "surface-container-highest": "#31353b",
+            "on-secondary-container": "#00344e",
+            "on-primary-fixed-variant": "#005236",
+            "on-secondary-fixed": "#001e2f",
+            "inverse-on-surface": "#2d3136",
+            "surface-tint": "#4edea3",
+            "on-primary": "#003824",
+            "status-conjecture": "#f59e0b",
+            "status-verified": "#10b981",
+            "on-surface-variant": "#bbcabf",
+            "tertiary": "#ffb95f",
+            "on-error-container": "#ffdad6",
+            "tertiary-fixed": "#ffddb8",
+            "background": "#101419",
+            "primary-fixed": "#6ffbbe",
+            "inverse-surface": "#e0e2ea",
+            "status-refuted": "#f43f5e",
+            "on-secondary-fixed-variant": "#004c6e",
+            "outline-variant": "#3c4a42",
+            "on-tertiary": "#472a00",
+            "error": "#ffb4ab",
+            "tertiary-fixed-dim": "#ffb95f",
+            "surface-container-high": "#262a30",
+            "inverse-primary": "#006c49",
+            "surface-variant": "#31353b",
+            "on-tertiary-fixed": "#2a1700",
+            "surface-base": "#0b0f14",
+            "secondary-fixed-dim": "#89ceff",
+            "surface-dim": "#101419",
+            "secondary-container": "#00a2e6",
+            "primary-fixed-dim": "#4edea3",
+            "on-tertiary-container": "#523200"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter-dense": "0.5rem",
+            "margin-sm": "1rem",
+            "space-lg": "1rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "margin": "1.5rem",
+            "gutter": "1rem",
+            "space-xl": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Inter"],
+            "label-mono-sm": ["JetBrains Mono"],
+            "code-dense": ["JetBrains Mono"],
+            "body-md": ["Inter"],
+            "label-mono-md": ["JetBrains Mono"],
+            "headline-xl": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-mono-lg": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Inter"]
+          },
+          "fontSize": {
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "label-mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "code-dense": ["10px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .glow-emerald {
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.28);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 12px rgba(14, 165, 233, 0.22);
+    }
+    .scanline {
+      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="bg-surface-base text-on-surface antialiased flex flex-col h-screen overflow-hidden select-none">
+<!-- ========================================================================= -->
+<!-- 1. TOP APP BAR (Shared Component: TopNavBar with exact JSON bindings)    -->
+<!-- ========================================================================= -->
+<header class="flex justify-between items-center w-full px-space-lg h-14 bg-surface-container border-b border-border-subtle z-50 shrink-0">
+<!-- Brand Anchor & Stratum Status -->
+<div class="flex items-center space-x-space-md">
+<div class="flex items-center space-x-space-sm">
+<span class="text-label-mono-lg font-label-mono-lg font-bold tracking-wider text-primary">ARKHE // COCKPIT</span>
+<span class="bg-surface-elevated text-primary border border-border-subtle px-1.5 py-0.5 text-label-mono-sm font-label-mono-sm rounded-[2px] glow-emerald">
+          [L9_SENTINEL]
+        </span>
+</div>
+<div class="h-4 w-[1px] bg-border-subtle hidden md:block"></div>
+<div class="hidden xl:flex items-center space-x-2 text-label-mono-sm font-label-mono-sm text-text-muted">
+<span class="text-on-surface">STRATUM: L9 OUTER BOUNDARY // PUBLIC TRANSPARENCY</span>
+<span class="text-text-subtle">|</span>
+<span class="text-secondary">EPOCH: 0x4F92 :: CONSENSUS SEALED &amp; OBSERVED</span>
+</div>
+</div>
+<!-- Top Navigation Links (Desktop Shell) -->
+<nav class="hidden lg:flex items-center space-x-space-lg">
+<a class="text-on-surface-variant font-label-mono-md hover:text-on-surface transition-colors duration-150 cursor-pointer" href="#telemetry">
+        Telemetry
+      </a>
+<a class="text-primary border-b-2 border-primary font-label-mono-md pb-1 cursor-pointer" href="#stratum">
+        Stratum L0-L9
+      </a>
+<a class="text-on-surface-variant font-label-mono-md hover:text-on-surface transition-colors duration-150 cursor-pointer" href="#triad">
+        Triad Triangulation
+      </a>
+<a class="text-on-surface-variant font-label-mono-md hover:text-on-surface transition-colors duration-150 cursor-pointer" href="#audit-proofs">
+        Audit Proofs
+      </a>
+</nav>
+<!-- Trailing Actions & Icons -->
+<div class="flex items-center space-x-space-md">
+<!-- Trailing Action Icons from JSON -->
+<div class="flex items-center space-x-1 border-r border-border-subtle pr-space-md hidden sm:flex">
+<button class="p-1.5 text-text-muted hover:text-primary hover:bg-surface-elevated rounded transition-colors duration-150" title="Verified User Anchor">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</button>
+<button class="p-1.5 text-text-muted hover:text-primary hover:bg-surface-elevated rounded transition-colors duration-150" title="Sealed Vaults Guard">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</button>
+<button class="p-1.5 text-text-muted hover:text-primary hover:bg-surface-elevated rounded transition-colors duration-150" title="Distributed Sensors">
+<span class="material-symbols-outlined text-[18px]">sensors</span>
+</button>
+<button class="p-1.5 text-text-muted hover:text-primary hover:bg-surface-elevated rounded transition-colors duration-150" title="Terminal Shell">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+</button>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center space-x-space-sm">
+<button class="bg-surface-container border border-border-subtle text-on-surface hover:border-secondary hover:text-secondary text-label-mono-sm font-label-mono-sm px-space-md py-1.5 rounded transition-all duration-150 cursor-pointer">
+          Propose Patch
+        </button>
+<button class="bg-surface-elevated border border-primary text-primary hover:bg-primary hover:text-on-primary text-label-mono-sm font-label-mono-sm px-space-md py-1.5 rounded transition-all duration-150 glow-emerald cursor-pointer">
+          Sign ReleaseManifest
+        </button>
+</div>
+<!-- Avatar / Fingerprint key -->
+<div class="flex items-center pl-1" title="Operator cryptographic key fingerprint avatar">
+<div class="w-8 h-8 rounded border border-border-subtle bg-surface-container-high flex items-center justify-center font-label-mono-sm text-primary text-xs font-bold ring-1 ring-border-subtle">
+          0x4F
+        </div>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- 2. COCKPIT SHELL (SideNav + Main Canvas)                                   -->
+<!-- ========================================================================= -->
+<div class="flex flex-1 overflow-hidden relative">
+<!-- SIDEBAR NAV (Shared Component: SideNavBar) -->
+<aside class="flex flex-col justify-between w-64 h-full border-r border-border-subtle bg-surface-base py-space-md px-space-sm shrink-0 select-none">
+<!-- Stratum Navigator Header -->
+<div>
+<div class="px-space-md pb-space-md border-b border-border-subtle">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]">layers</span>
+<h2 class="text-label-mono-md font-label-mono-md text-primary uppercase tracking-widest">STRATUM L0-L9</h2>
+</div>
+<div class="flex items-center justify-between mt-1 text-label-mono-sm font-label-mono-sm text-text-muted">
+<span>EPOCH 0x4F92 :: SYNCED</span>
+<span class="w-2 h-2 rounded-full bg-status-verified animate-pulse"></span>
+</div>
+</div>
+<!-- Layer Items (Tabs) -->
+<nav class="flex flex-col space-y-1 mt-space-md">
+<!-- L0-L1 Foundation -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container rounded cursor-pointer transition-all duration-150">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">deployed_code</span>
+<span>L0-L1 Foundation</span>
+</div>
+<span class="text-status-verified text-[10px] font-bold">[LEMMA]</span>
+</div>
+<!-- L2-L3 Sealed Vaults -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container rounded cursor-pointer transition-all duration-150">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">lock</span>
+<span>L2-L3 Sealed Vaults</span>
+</div>
+<span class="text-status-verified text-[10px] font-bold">[LEMMA]</span>
+</div>
+<!-- L4-L7 Protocol Strata -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container rounded cursor-pointer transition-all duration-150">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">layers</span>
+<span>L4-L7 Protocol Strata</span>
+</div>
+<span class="text-status-verified text-[10px] font-bold">[LEMMA]</span>
+</div>
+<!-- L8 Consensus Beacon -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container rounded cursor-pointer transition-all duration-150">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">hub</span>
+<span>L8 Consensus Beacon</span>
+</div>
+<span class="text-status-verified text-[10px] font-bold">[LEMMA]</span>
+</div>
+<!-- L9 Outer Boundary (ACTIVE STRATUM) -->
+<div class="flex items-center justify-between bg-surface-elevated text-primary border-l-2 border-primary font-label-mono-sm px-space-md py-space-sm rounded-r cursor-pointer transition-transform duration-100 glow-emerald">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary">shield</span>
+<span class="font-bold">L9 Outer Boundary</span>
+</div>
+<span class="bg-primary/20 text-primary border border-primary/40 px-1 py-0.2 text-[9px] font-bold uppercase rounded">
+              CANONICAL
+            </span>
+</div>
+<!-- Checkpoint Ledger -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container rounded cursor-pointer transition-all duration-150">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">account_tree</span>
+<span>Checkpoint Ledger</span>
+</div>
+<span class="text-secondary text-[10px] font-label-mono-sm font-semibold">#14,029</span>
+</div>
+</nav>
+<!-- CTA Fail-Closed Action: Anchor Checkpoint (Locked in Epoch Sealed) -->
+<div class="mt-space-lg px-space-sm">
+<button class="w-full bg-surface-container border border-border-subtle text-text-muted/60 flex items-center justify-center space-x-2 py-2 text-label-mono-sm font-label-mono-sm rounded cursor-not-allowed opacity-50" disabled="">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span>Anchor Checkpoint</span>
+</button>
+<div class="mt-1 text-center text-code-dense font-code-dense text-text-subtle">
+            [Epoch 0x4F92 Sealed :: Read-Only]
+          </div>
+</div>
+</div>
+<!-- Footer Stratum Tabs -->
+<div class="pt-space-md border-t border-border-subtle flex flex-col space-y-1">
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-1.5 hover:text-on-surface hover:bg-surface-container rounded cursor-pointer transition-all duration-150">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Diagnostics</span>
+</div>
+<span class="text-status-verified text-[10px] font-bold">0 FAULTS</span>
+</div>
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-1.5 hover:text-on-surface hover:bg-surface-container rounded cursor-pointer transition-all duration-150">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+<span>Terminal Shell</span>
+</div>
+<span class="text-text-subtle text-[10px] font-bold">TTY0</span>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- MAIN OBSERVATION CANVAS (Dense Telemetry Dashboard)                       -->
+<!-- ========================================================================= -->
+<main class="flex-1 flex flex-col overflow-y-auto bg-surface p-space-lg space-y-space-lg">
+<!-- SECTION 1: TOP BANNER / STATUS EPISTÊMICO L9 -->
+<section class="bg-surface-container border border-border-subtle rounded p-space-md relative overflow-hidden">
+<div class="absolute right-0 top-0 bottom-0 w-96 bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div>
+<div class="flex items-center space-x-2 text-label-mono-sm font-label-mono-sm text-text-muted">
+<span class="text-primary font-bold">STRATUM L9:</span>
+<span class="text-on-surface">OUTER BOUNDARY &amp; PUBLIC VERIFICATION GATEWAY</span>
+</div>
+<!-- Badges Cluster -->
+<div class="flex flex-wrap items-center gap-2 mt-2">
+<!-- LEMMA Badge -->
+<span class="bg-primary/10 text-status-verified border border-status-verified/40 px-2 py-0.5 text-label-mono-sm font-label-mono-sm uppercase rounded-[2px] glow-emerald">
+                τ: LEMMA / IMMUTABLE CHECKPOINT
+              </span>
+<!-- Sinks Synced Badge -->
+<span class="bg-status-pending/10 text-status-pending border border-status-pending/40 px-2 py-0.5 text-label-mono-sm font-label-mono-sm uppercase rounded-[2px]">
+                4/4 INDEPENDENT TRANSPARENCY ENGINES SYNCED
+              </span>
+<!-- Split View Badge -->
+<span class="bg-primary/10 text-status-verified border border-status-verified/40 px-2 py-0.5 text-label-mono-sm font-label-mono-sm uppercase rounded-[2px]">
+                SPLIT-VIEW DETECTOR: 0 DIVERGENCE (FAIL-CLOSED ARMED)
+              </span>
+<!-- Release Version -->
+<span class="bg-surface-elevated text-secondary border border-border-subtle px-2 py-0.5 text-label-mono-sm font-label-mono-sm uppercase rounded-[2px]">
+                CANONICAL RELEASE: v1.4.2-cat4
+              </span>
+</div>
+</div>
+<!-- Quick Telemetry summary indicators -->
+<div class="flex items-center space-x-space-md shrink-0 bg-surface-base border border-border-subtle p-2 rounded">
+<div class="text-right">
+<div class="text-code-dense font-code-dense text-text-subtle">PROVABILITY STATE</div>
+<div class="text-label-mono-sm font-label-mono-sm text-status-verified font-bold">MATHEMATICALLY SOUND</div>
+</div>
+<div class="w-8 h-8 rounded border border-status-verified/40 bg-status-verified/10 flex items-center justify-center text-status-verified">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+</div>
+</div>
+<!-- Rust Lemma Formal Spec Block -->
+<div class="mt-space-md bg-surface-base border border-border-grid p-2.5 rounded text-code-dense font-code-dense relative group">
+<div class="flex items-center justify-between text-text-subtle mb-1">
+<span class="uppercase tracking-wider">FORMAL VERIFICATION LEMMA CONSTRUCT</span>
+<button class="text-text-muted hover:text-primary transition-colors flex items-center space-x-1" onclick="navigator.clipboard.writeText('Lemma{OuterBoundaryImmutableAttained(epoch=0x4F92, checkpoint_seq=14029, rekor_leaf=1409281, ots_btc_block=843912, nostr_event=\x22nevent1qqs...\x22, split_view_delta=0.000000000%, verification_tier=PUBLIC_OBSERVER_UNRESTRICTED)}')">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+<span>COPY SPEC</span>
+</button>
+</div>
+<div class="text-primary break-all select-all">
+<span class="text-status-pending">Lemma</span>{<span class="text-on-surface">OuterBoundaryImmutableAttained</span>(<span class="text-secondary">epoch</span>=0x4F92, <span class="text-secondary">checkpoint_seq</span>=14029, <span class="text-secondary">rekor_leaf</span>=1409281, <span class="text-secondary">ots_btc_block</span>=843912, <span class="text-secondary">nostr_event</span>=<span class="text-tertiary">"nevent1qqs8a9244fd82910..."</span>, <span class="text-secondary">split_view_delta</span>=0.000000000%, <span class="text-secondary">verification_tier</span>=<span class="text-status-verified">PUBLIC_OBSERVER_UNRESTRICTED</span>)}
+          </div>
+</div>
+</section>
+<!-- SECTION 2: TWO-COLUMN CORE ARCHITECTURE -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg flex-1">
+<!-- ============================================================== -->
+<!-- LEFT COLUMN (Box A & Box B) - 7 cols (approx 58-60%)          -->
+<!-- ============================================================== -->
+<div class="xl:col-span-7 flex flex-col space-y-space-lg">
+<!-- BOX A: 4 INDEPENDENT TRANSPARENCY ANCHORS -->
+<div class="bg-surface-container border border-border-subtle rounded p-space-md">
+<div class="flex items-center justify-between pb-space-sm border-b border-border-subtle mb-space-md">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">hub</span>
+<h3 class="text-label-mono-md font-label-mono-md text-on-surface font-semibold uppercase tracking-wider">
+                  Public Transparency Anchors &amp; Multi-Witness Verification
+                </h3>
+</div>
+<span class="text-code-dense font-code-dense text-status-verified bg-status-verified/10 border border-status-verified/30 px-1.5 py-0.5 rounded">
+                4/4 IMMUTABLE SINK ACK
+              </span>
+</div>
+<!-- 4 Grid Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- 1. Rekor Transparency Log -->
+<div class="bg-surface-base border border-border-subtle p-space-md rounded flex flex-col justify-between hover:border-secondary transition-colors duration-150">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-mono-sm font-label-mono-sm font-bold text-on-surface flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-secondary text-[16px]">account_tree</span>
+<span>Rekor Transparency (Sigstore)</span>
+</span>
+<span class="text-status-verified text-[10px] font-label-mono-sm font-semibold">[PROVED]</span>
+</div>
+<div class="space-y-1 text-code-dense font-code-dense text-text-muted">
+<div class="flex justify-between">
+<span>Leaf Index:</span>
+<span class="text-secondary font-semibold">#1,409,281</span>
+</div>
+<div class="flex justify-between">
+<span>Tree Size:</span>
+<span class="text-on-surface">84,912,042</span>
+</div>
+<div class="flex flex-col mt-1">
+<span class="text-text-subtle">MMR Root:</span>
+<span class="text-text-muted break-all select-all font-mono">0x9a834b68e98b049382103fca9183b028491039840294bca9103849f82109a</span>
+</div>
+</div>
+</div>
+<div class="mt-3 pt-2 border-t border-border-grid flex items-center justify-between">
+<span class="bg-primary/10 text-status-verified text-[10px] font-label-mono-sm px-1.5 py-0.5 rounded">
+                    OFFLINE MMR INCLUSION PROVEN
+                  </span>
+<a class="text-text-subtle hover:text-secondary text-[11px] flex items-center" href="#rekor-explorer">
+<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- 2. Bitcoin OTS -->
+<div class="bg-surface-base border border-border-subtle p-space-md rounded flex flex-col justify-between hover:border-tertiary transition-colors duration-150">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-mono-sm font-label-mono-sm font-bold text-on-surface flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-tertiary text-[16px]">currency_bitcoin</span>
+<span>Decentralized Bitcoin OTS</span>
+</span>
+<span class="text-status-verified text-[10px] font-label-mono-sm font-semibold">[ANCHORED]</span>
+</div>
+<div class="space-y-1 text-code-dense font-code-dense text-text-muted">
+<div class="flex justify-between">
+<span>Block Height:</span>
+<span class="text-tertiary font-semibold">#843,912</span>
+</div>
+<div class="flex justify-between">
+<span>Confirmations:</span>
+<span class="text-status-verified font-semibold">128 Proof Blocks</span>
+</div>
+<div class="flex flex-col mt-1">
+<span class="text-text-subtle">Attestation OP_RETURN:</span>
+<span class="text-text-muted break-all select-all font-mono">0x92fca10293b0a234857...11b84920</span>
+</div>
+</div>
+</div>
+<div class="mt-3 pt-2 border-t border-border-grid flex items-center justify-between">
+<span class="bg-tertiary/10 text-tertiary text-[10px] font-label-mono-sm px-1.5 py-0.5 rounded">
+                    CALENDAR ANCHORED (OTS)
+                  </span>
+<span class="text-text-subtle text-[10px] font-label-mono-sm">BIP-113 Verified</span>
+</div>
+</div>
+<!-- 3. Nostr Relay Mesh -->
+<div class="bg-surface-base border border-border-subtle p-space-md rounded flex flex-col justify-between hover:border-secondary transition-colors duration-150">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-mono-sm font-label-mono-sm font-bold text-on-surface flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-secondary text-[16px]">cell_tower</span>
+<span>Nostr Relay Gossip Mesh</span>
+</span>
+<span class="text-status-verified text-[10px] font-label-mono-sm font-semibold">[12/12 ACK]</span>
+</div>
+<div class="space-y-1 text-code-dense font-code-dense text-text-muted">
+<div class="flex justify-between">
+<span>Event Kind:</span>
+<span class="text-on-surface">30048 (Schnorr BIP-340)</span>
+</div>
+<div class="flex justify-between">
+<span>Relay Sync:</span>
+<span class="text-primary">damus, nos.lol, leg-node</span>
+</div>
+<div class="flex flex-col mt-1">
+<span class="text-text-subtle">Nostr Identifier:</span>
+<span class="text-text-muted break-all select-all font-mono">nevent1qqs8a9244fd82910...4e2098bc</span>
+</div>
+</div>
+</div>
+<div class="mt-3 pt-2 border-t border-border-grid flex items-center justify-between">
+<span class="bg-primary/10 text-status-verified text-[10px] font-label-mono-sm px-1.5 py-0.5 rounded">
+                    GLOBAL GOSSIP WITNESSED
+                  </span>
+<span class="text-text-subtle text-[10px] font-label-mono-sm">Multi-Relay Ack</span>
+</div>
+</div>
+<!-- 4. RBB Academic Witness Beacon -->
+<div class="bg-surface-base border border-border-subtle p-space-md rounded flex flex-col justify-between hover:border-primary transition-colors duration-150">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-mono-sm font-label-mono-sm font-bold text-on-surface flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-primary text-[16px]">school</span>
+<span>RBB / Academic Witness</span>
+</span>
+<span class="text-status-verified text-[10px] font-label-mono-sm font-semibold">[CO-SIGNED]</span>
+</div>
+<div class="space-y-1 text-code-dense font-code-dense text-text-muted">
+<div class="flex justify-between">
+<span>Randomness Round:</span>
+<span class="text-secondary font-semibold">#28,190 (NIST 800-90B)</span>
+</div>
+<div class="flex justify-between">
+<span>PQC Algorithm:</span>
+<span class="text-primary font-semibold">ML-DSA-87 + Dilithium3</span>
+</div>
+<div class="flex flex-col mt-1">
+<span class="text-text-subtle">Attestation Root:</span>
+<span class="text-text-muted break-all select-all font-mono">pqc_sig:0x41f92e88...a9b34c01f4</span>
+</div>
+</div>
+</div>
+<div class="mt-3 pt-2 border-t border-border-grid flex items-center justify-between">
+<span class="bg-primary/10 text-status-verified text-[10px] font-label-mono-sm px-1.5 py-0.5 rounded">
+                    PQC CO-SIGNATURE VALID
+                  </span>
+<span class="text-text-subtle text-[10px] font-label-mono-sm">FIPS 204</span>
+</div>
+</div>
+</div>
+</div>
+<!-- BOX B: OBSERVER TOPOLOGY & BYZANTINE WATCHDOG -->
+<div class="bg-surface-container border border-border-subtle rounded p-space-md flex flex-col flex-1">
+<div class="flex items-center justify-between pb-space-sm border-b border-border-subtle mb-space-md">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]">public</span>
+<h3 class="text-label-mono-md font-label-mono-md text-on-surface font-semibold uppercase tracking-wider">
+                  World Observer Mesh &amp; Byzantine Split-View Watchdog
+                </h3>
+</div>
+<div class="flex items-center space-x-2 text-label-mono-sm font-label-mono-sm text-text-muted">
+<span>ACTIVE SENTINELS:</span>
+<span class="text-primary font-bold">48/48</span>
+</div>
+</div>
+<!-- Equirectangular SVG Topology Map (Stylized Dark Brutalist) -->
+<div class="relative bg-surface-base border border-border-grid rounded h-56 overflow-hidden flex items-center justify-center p-2">
+<div class="absolute inset-0 scanline opacity-40"></div>
+<!-- Subtle Vector Grid Lines -->
+<svg class="absolute inset-0 w-full h-full stroke-border-subtle/50" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<pattern height="32" id="grid-pattern" patternunits="userSpaceOnUse" width="32">
+<path d="M 32 0 L 0 0 0 32" fill="none" stroke="currentColor" stroke-width="0.5"></path>
+</pattern>
+</defs>
+<rect fill="url(#grid-pattern)" height="100%" width="100%"></rect>
+<!-- Equator & Greenwich Lines -->
+<line stroke="#1e293b" stroke-dasharray="4,4" stroke-width="1" x1="0" x2="100%" y1="50%" y2="50%"></line>
+<line stroke="#1e293b" stroke-dasharray="4,4" stroke-width="1" x1="48%" x2="48%" y1="0" y2="100%"></line>
+</svg>
+<!-- Node 1: Brasilia (Interlegis Federal) -->
+<div class="absolute top-[68%] left-[32%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group cursor-pointer z-10">
+<div class="w-2.5 h-2.5 rounded-full bg-status-verified ring-4 ring-status-verified/20 animate-pulse"></div>
+<div class="bg-surface-elevated border border-border-subtle text-[10px] font-label-mono-sm px-1.5 py-0.5 rounded mt-1 text-on-surface whitespace-nowrap shadow-md">
+                  Brasília, BR (18ms) <span class="text-status-verified">[VAL]</span>
+</div>
+</div>
+<!-- Node 2: Lisboa (Universidade X) -->
+<div class="absolute top-[42%] left-[45%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group cursor-pointer z-10">
+<div class="w-2.5 h-2.5 rounded-full bg-status-verified ring-4 ring-status-verified/20"></div>
+<div class="bg-surface-elevated border border-border-subtle text-[10px] font-label-mono-sm px-1.5 py-0.5 rounded mt-1 text-on-surface whitespace-nowrap shadow-md">
+                  Lisboa, PT (24ms) <span class="text-status-verified">[VAL]</span>
+</div>
+</div>
+<!-- Node 3: Zürich (Open Privacy CH) -->
+<div class="absolute top-[36%] left-[51%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group cursor-pointer z-10">
+<div class="w-2.5 h-2.5 rounded-full bg-status-verified ring-4 ring-status-verified/20"></div>
+<div class="bg-surface-elevated border border-border-subtle text-[10px] font-label-mono-sm px-1.5 py-0.5 rounded mt-1 text-on-surface whitespace-nowrap shadow-md">
+                  Zürich, CH (32ms) <span class="text-status-verified">[VAL]</span>
+</div>
+</div>
+<!-- Node 4: Reykjavik (Community Beacon) -->
+<div class="absolute top-[22%] left-[41%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group cursor-pointer z-10">
+<div class="w-2.5 h-2.5 rounded-full bg-status-verified ring-4 ring-status-verified/20"></div>
+<div class="bg-surface-elevated border border-border-subtle text-[10px] font-label-mono-sm px-1.5 py-0.5 rounded mt-1 text-on-surface whitespace-nowrap shadow-md">
+                  Reykjavik, IS (45ms) <span class="text-status-verified">[VAL]</span>
+</div>
+</div>
+<!-- Node 5: Tokyo (Research Sentinel) -->
+<div class="absolute top-[44%] left-[82%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group cursor-pointer z-10">
+<div class="w-2.5 h-2.5 rounded-full bg-status-verified ring-4 ring-status-verified/20"></div>
+<div class="bg-surface-elevated border border-border-subtle text-[10px] font-label-mono-sm px-1.5 py-0.5 rounded mt-1 text-on-surface whitespace-nowrap shadow-md">
+                  Tokyo, JP (110ms) <span class="text-status-verified">[VAL]</span>
+</div>
+</div>
+<!-- Real-time HUD overlay on map -->
+<div class="absolute bottom-2 left-2 bg-surface-container/90 border border-border-subtle px-2 py-1 rounded text-code-dense font-code-dense text-text-muted">
+                COORDINATION PROTOCOL: <span class="text-primary">GOSSIP-P2P-v2</span> | DELAY T99: <span class="text-on-surface">118ms</span>
+</div>
+</div>
+<!-- Sentinel Telemetry Probe Bar -->
+<div class="mt-space-md p-space-sm bg-surface-base border border-border-subtle rounded flex items-center justify-between text-code-dense font-code-dense">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-status-verified text-[16px]">security</span>
+<span class="text-on-surface font-semibold">ANTI-EQUIVOCATION MONITOR:</span>
+<span class="text-text-muted">Probing 48 public nodes across 14 geographic zones. Conflicting checkpoint roots: <strong class="text-status-verified">0 (Zero Divergence)</strong></span>
+</div>
+<div class="text-status-verified font-bold uppercase tracking-wider bg-status-verified/10 px-2 py-0.5 rounded border border-status-verified/30">
+                [FAIL-CLOSED ARMED]
+              </div>
+</div>
+</div>
+</div>
+<!-- ============================================================== -->
+<!-- RIGHT COLUMN (Box C & Box D) - 5 cols (approx 40-42%)         -->
+<!-- ============================================================== -->
+<div class="xl:col-span-5 flex flex-col space-y-space-lg">
+<!-- BOX C: INDEPENDENT VERIFIER TERMINAL (CLI / WASM STEPPER) -->
+<div class="bg-surface-container border border-border-subtle rounded p-space-md flex flex-col">
+<div class="flex items-center justify-between pb-space-sm border-b border-border-subtle mb-space-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]">terminal</span>
+<div>
+<h3 class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">arkhe-verify Public Verifier</h3>
+<div class="text-code-dense font-code-dense text-text-muted">Zero-trust standalone execution engine (WASM / CLI)</div>
+</div>
+</div>
+<span class="bg-primary/10 text-primary border border-primary/30 px-1.5 py-0.5 text-code-dense font-code-dense rounded">
+                v1.4.2
+              </span>
+</div>
+<!-- Terminal CLI Snippet with Interactive Copy -->
+<div class="bg-surface-base border border-border-grid p-2.5 rounded text-code-dense font-code-dense mb-space-md">
+<div class="flex items-center justify-between text-text-subtle mb-1">
+<span>REPRODUCIBLE TERMINAL VERIFICATION COMMAND</span>
+<button class="text-text-muted hover:text-primary transition-colors flex items-center space-x-1 cursor-pointer" id="copy-btn" onclick="navigator.clipboard.writeText('arkhe-verify --checkpoint 0x4F92 --rekor-index 1409281 --pqc-hybrid --strict-fail-closed'); document.getElementById('copy-indicator').innerText='COPIED'; setTimeout(()=&gt;document.getElementById('copy-indicator').innerText='COPY', 1500)">
+<span class="material-symbols-outlined text-[13px]">content_copy</span>
+<span id="copy-indicator">COPY</span>
+</button>
+</div>
+<div class="text-primary break-all select-all font-mono">
+<span class="text-secondary">$</span> arkhe-verify --checkpoint 0x4F92 --rekor-index 1409281 --pqc-hybrid --strict-fail-closed
+              </div>
+</div>
+<!-- Interactive 7-Step Verification Stepper -->
+<div class="space-y-1.5 bg-surface-base/60 border border-border-grid p-2.5 rounded">
+<div class="text-[10px] font-label-mono-sm uppercase text-text-subtle tracking-wider mb-1 flex justify-between">
+<span>7-GATE CRYPTOGRAPHIC INCLUSION PROOF</span>
+<span class="text-status-verified font-bold">7/7 VERIFIED</span>
+</div>
+<!-- Step 1 -->
+<div class="flex items-center justify-between text-code-dense font-code-dense p-1 bg-surface-container rounded border border-border-subtle">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="text-status-verified font-bold text-[12px]">[✔]</span>
+<span class="text-on-surface">Step 1: 4 sinks fetched (Rekor, OTS, Nostr, RBB)</span>
+</div>
+<span class="text-text-muted shrink-0 text-[9px]">4/4 SYNC</span>
+</div>
+<!-- Step 2 -->
+<div class="flex items-center justify-between text-code-dense font-code-dense p-1 bg-surface-container rounded border border-border-subtle">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="text-status-verified font-bold text-[12px]">[✔]</span>
+<span class="text-on-surface">Step 2: PQC Hybrid ML-DSA-87 + Ed25519 Validated</span>
+</div>
+<span class="text-status-verified shrink-0 text-[9px]">VALID</span>
+</div>
+<!-- Step 3 -->
+<div class="flex items-center justify-between text-code-dense font-code-dense p-1 bg-surface-container rounded border border-border-subtle">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="text-status-verified font-bold text-[12px]">[✔]</span>
+<span class="text-on-surface">Step 3: Offline Merkle Mountain Range (MMR) Included</span>
+</div>
+<span class="text-status-verified shrink-0 text-[9px]">INCLUDED</span>
+</div>
+<!-- Step 4 -->
+<div class="flex items-center justify-between text-code-dense font-code-dense p-1 bg-surface-container rounded border border-border-subtle">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="text-status-verified font-bold text-[12px]">[✔]</span>
+<span class="text-on-surface">Step 4: Quorum k=2/2 active signers on WormGraph</span>
+</div>
+<span class="text-status-verified shrink-0 text-[9px]">2/2 QUORUM</span>
+</div>
+<!-- Step 5 -->
+<div class="flex items-center justify-between text-code-dense font-code-dense p-1 bg-surface-container rounded border border-border-subtle">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="text-status-verified font-bold text-[12px]">[✔]</span>
+<span class="text-on-surface">Step 5: Bao IBLT Chunk Stream matched nhash:0x89ab...</span>
+</div>
+<span class="text-status-verified shrink-0 text-[9px]">MATCHED</span>
+</div>
+<!-- Step 6 -->
+<div class="flex items-center justify-between text-code-dense font-code-dense p-1 bg-surface-container rounded border border-border-subtle">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="text-status-verified font-bold text-[12px]">[✔]</span>
+<span class="text-on-surface">Step 6: Bitwise BLAKE3 binary identity matched</span>
+</div>
+<span class="text-status-verified shrink-0 text-[9px]">0 DRIFT</span>
+</div>
+<!-- Step 7 -->
+<div class="flex items-center justify-between text-code-dense font-code-dense p-1 bg-surface-container rounded border border-border-subtle">
+<div class="flex items-center space-x-1.5 truncate">
+<span class="text-status-verified font-bold text-[12px]">[✔]</span>
+<span class="text-on-surface">Step 7: Nix Deterministic Derivation golden match</span>
+</div>
+<span class="text-status-verified shrink-0 text-[9px]">BIT-STABLE</span>
+</div>
+</div>
+<!-- Final Verification Seal Banner -->
+<div class="mt-space-md p-2 bg-primary/10 border border-primary/40 rounded flex items-center justify-between glow-emerald">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]">verified</span>
+<div>
+<div class="text-label-mono-sm font-label-mono-sm text-primary font-bold">VERIFIED RELEASE [τ: LEMMA]</div>
+<div class="text-code-dense font-code-dense text-on-surface">Canonical zero-trust consensus established</div>
+</div>
+</div>
+<span class="text-code-dense font-code-dense bg-primary text-on-primary font-bold px-2 py-0.5 rounded">
+                CANONICAL
+              </span>
+</div>
+</div>
+<!-- BOX D: OPERATOR & PUBLIC ACTIONS / DISTRIBUTED REPOSITORIES -->
+<div class="bg-surface-container border border-border-subtle rounded p-space-md flex flex-col justify-between flex-1">
+<div>
+<div class="flex items-center space-x-2 pb-space-sm border-b border-border-subtle mb-space-md">
+<span class="material-symbols-outlined text-secondary text-[20px]">inventory_2</span>
+<h3 class="text-label-mono-md font-label-mono-md text-on-surface font-semibold uppercase tracking-wider">
+                  Verification Artifacts &amp; Distribution
+                </h3>
+</div>
+<!-- Download Primary Action -->
+<button class="w-full bg-primary/10 hover:bg-primary text-primary hover:text-on-primary border border-primary/50 font-label-mono-md py-2.5 px-space-md rounded flex items-center justify-center space-x-2 transition-all duration-150 glow-emerald cursor-pointer mb-space-md">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span class="font-bold">Download Proof Bundle (.cbor + .spdm)</span>
+</button>
+<!-- Secondary Verification Triggers -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-space-md">
+<button class="bg-surface-base hover:bg-surface-elevated border border-border-subtle text-on-surface hover:text-secondary text-label-mono-sm font-label-mono-sm py-2 px-2 rounded flex items-center justify-center space-x-1.5 transition-colors duration-150 cursor-pointer text-left">
+<span class="material-symbols-outlined text-[16px] text-secondary">rate_review</span>
+<span class="truncate">Submit Attestation</span>
+</button>
+<button class="bg-surface-base hover:bg-surface-elevated border border-border-subtle text-on-surface hover:text-secondary text-label-mono-sm font-label-mono-sm py-2 px-2 rounded flex items-center justify-center space-x-1.5 transition-colors duration-150 cursor-pointer text-left">
+<span class="material-symbols-outlined text-[16px] text-secondary">play_arrow</span>
+<span class="truncate">Run WASM Worker</span>
+</button>
+</div>
+<!-- Release Distribution Checkpoints -->
+<div class="bg-surface-base border border-border-grid p-2.5 rounded space-y-1.5 text-code-dense font-code-dense">
+<div class="text-[10px] font-label-mono-sm uppercase text-text-subtle tracking-wider mb-1">
+                  DISTRIBUTED SEED REPOSITORIES
+                </div>
+<div class="flex items-center justify-between text-text-muted">
+<span class="text-text-subtle">Radicle Seed:</span>
+<span class="text-secondary select-all font-mono truncate max-w-[210px]">rad:z4V9Nkj2X...w8p012</span>
+</div>
+<div class="flex items-center justify-between text-text-muted">
+<span class="text-text-subtle">Hashtree Root:</span>
+<span class="text-on-surface select-all font-mono truncate max-w-[210px]">nhash:0x89abf42c8d19e0712c</span>
+</div>
+<div class="flex items-center justify-between text-text-muted">
+<span class="text-text-subtle">Blossom SHA256:</span>
+<span class="text-primary select-all font-mono truncate max-w-[210px]">47DEQpj8HBSa+/TimW+5JC...</span>
+</div>
+</div>
+</div>
+<!-- Fail-closed Safe guarantee tag -->
+<div class="mt-space-md pt-2 border-t border-border-subtle flex items-center justify-between text-code-dense font-code-dense text-text-muted">
+<span>SECURITY LEVEL: <strong>SLSA-4 DETERMINISTIC</strong></span>
+<span class="text-status-verified flex items-center space-x-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified"></span>
+<span>ZERO DRIFT DETECTED</span>
+</span>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 3: BOTTOM TELEMETRY & LIVE AUDIT STREAM -->
+<section class="bg-surface-container border border-border-subtle rounded p-space-sm flex items-center space-x-space-md shrink-0">
+<div class="flex items-center space-x-2 text-label-mono-sm font-label-mono-sm text-status-verified shrink-0 pl-1">
+<span class="w-2 h-2 rounded-full bg-status-verified animate-ping"></span>
+<span class="font-bold">AUDIT STREAM</span>
+</div>
+<div class="h-4 w-[1px] bg-border-subtle shrink-0"></div>
+<div class="flex-1 overflow-hidden whitespace-nowrap text-code-dense font-code-dense">
+<span class="text-text-subtle font-mono">[0x4F92:0048]</span>
+<span class="text-status-verified font-bold ml-1">[✔] L9_OUTER_BOUNDARY:</span>
+<span class="text-on-surface ml-1">Checkpoint published and sealed to Rekor, OTS, Nostr &amp; RBB academic witness. Zero split-view detected across 48 global sentinels. Finality: CANONICAL IMMUTABLE.</span>
+</div>
+<div class="shrink-0 text-code-dense font-code-dense text-text-subtle pr-1 hidden sm:block">
+          LATENCY: 12ms // BUFFER: 100%
+        </div>
+</section>
+</main>
+</div>
+<!-- ========================================================================= -->
+<!-- 3. FOOTER BAR (Compliance, Audit ID & System Guarantees)                  -->
+<!-- ========================================================================= -->
+<footer class="h-8 bg-surface-container-lowest border-t border-border-subtle px-space-lg flex items-center justify-between text-code-dense font-code-dense text-text-muted shrink-0 z-50">
+<div class="flex items-center space-x-space-md">
+<div class="flex items-center space-x-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified"></span>
+<span class="text-on-surface font-semibold">L9 OUTER BOUNDARY IMMUTABLE</span>
+<span class="text-text-subtle">::</span>
+<span class="text-status-verified">PUBLIC VERIFICATION ACTIVE</span>
+</div>
+<span class="text-text-subtle hidden sm:inline">|</span>
+<span class="hidden sm:inline">AUDIT_ID: <span class="text-secondary select-all font-mono">0x9F1A-L9-OUTER-IMMUTABLE</span></span>
+</div>
+<div class="flex items-center space-x-space-md">
+<span class="hidden md:inline">COMPLIANCE: <span class="text-on-surface">ISO/IEC 29128 CAT-4 // SLSA LEVEL 4 // FIPS 204</span></span>
+<span class="text-text-subtle hidden md:inline">|</span>
+<span class="text-status-verified font-bold bg-status-verified/10 px-1.5 py-0.5 rounded border border-status-verified/20">
+        7/7 CANONICAL // ZERO DIVERGENCE
+      </span>
+</div>
+</footer>
+</body></html>

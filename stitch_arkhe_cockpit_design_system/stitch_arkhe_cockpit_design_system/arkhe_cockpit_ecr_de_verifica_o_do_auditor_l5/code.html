@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // COCKPIT - AUDITOR VERIFICATION SUITE</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "background": "#101419",
+            "surface-container": "#121820",
+            "text-subtle": "#475569",
+            "secondary-fixed": "#c9e6ff",
+            "surface-bright": "#36393f",
+            "surface-dim": "#101419",
+            "text-muted": "#64748b",
+            "on-primary-fixed-variant": "#005236",
+            "on-primary": "#003824",
+            "on-secondary-fixed-variant": "#004c6e",
+            "secondary-fixed-dim": "#89ceff",
+            "tertiary": "#ffb95f",
+            "on-surface": "#e0e2ea",
+            "secondary": "#89ceff",
+            "on-tertiary-fixed": "#2a1700",
+            "border-subtle": "#1e293b",
+            "error-container": "#93000a",
+            "on-secondary-container": "#00344e",
+            "on-tertiary-container": "#523200",
+            "on-secondary": "#00344d",
+            "surface-container-high": "#262a30",
+            "surface-container-low": "#181c21",
+            "outline-variant": "#3c4a42",
+            "status-verified": "#10b981",
+            "primary-fixed-dim": "#4edea3",
+            "on-tertiary-fixed-variant": "#653e00",
+            "status-pending": "#0ea5e9",
+            "on-error-container": "#ffdad6",
+            "on-primary-container": "#00422b",
+            "inverse-primary": "#006c49",
+            "on-tertiary": "#472a00",
+            "surface": "#101419",
+            "surface-variant": "#31353b",
+            "surface-base": "#0b0f14",
+            "surface-elevated": "#182230",
+            "on-secondary-fixed": "#001e2f",
+            "tertiary-fixed-dim": "#ffb95f",
+            "error": "#ffb4ab",
+            "tertiary-container": "#e29100",
+            "status-refuted": "#f43f5e",
+            "on-background": "#e0e2ea",
+            "inverse-surface": "#e0e2ea",
+            "secondary-container": "#00a2e6",
+            "on-surface-variant": "#bbcabf",
+            "on-primary-fixed": "#002113",
+            "primary": "#4edea3",
+            "inverse-on-surface": "#2d3136",
+            "on-error": "#690005",
+            "surface-container-highest": "#31353b",
+            "border-grid": "#1f2937",
+            "status-conjecture": "#f59e0b",
+            "tertiary-fixed": "#ffddb8",
+            "primary-container": "#10b981",
+            "surface-container-lowest": "#0a0e13",
+            "primary-fixed": "#6ffbbe",
+            "surface-tint": "#4edea3",
+            "outline": "#86948a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-lg": "1rem",
+            "space-sm": "0.5rem",
+            "margin": "1.5rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "gutter-dense": "0.5rem",
+            "margin-sm": "1rem",
+            "space-xl": "1.5rem",
+            "gutter": "1rem"
+          },
+          "fontFamily": {
+            "body-sm": ["Inter"],
+            "headline-lg": ["Inter"],
+            "label-mono-md": ["JetBrains Mono"],
+            "label-mono-sm": ["JetBrains Mono"],
+            "label-mono-lg": ["JetBrains Mono"],
+            "code-dense": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-xl": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "label-mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "label-mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "code-dense": ["10px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0b0f14;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #1e293b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #4edea3;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body-md select-none">
+<!-- ================= TOP NAVIGATION BAR (Cockpit Header) ================= -->
+<header class="flex justify-between items-center w-full px-space-lg h-14 bg-surface-container border-b border-border-subtle shrink-0 sticky top-0 z-50">
+<!-- Brand / Left Group -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-2">
+<span class="text-label-mono-lg font-label-mono-lg font-bold tracking-wider text-primary">ARKHE // COCKPIT</span>
+<span class="bg-surface-elevated text-primary text-code-dense font-code-dense px-1.5 py-0.5 border border-primary/30">L5 VERIFY</span>
+</div>
+<!-- Top Nav Links with Semantic Active State mapping to 'Audit Proofs' -->
+<nav class="hidden md:flex items-center gap-space-lg">
+<a class="text-on-surface-variant font-label-mono-md hover:text-on-surface transition-colors duration-150" href="#">Telemetry</a>
+<a class="text-on-surface-variant font-label-mono-md hover:text-on-surface transition-colors duration-150" href="#">Stratum L0-L9</a>
+<a class="text-on-surface-variant font-label-mono-md hover:text-on-surface transition-colors duration-150" href="#">Triad Triangulation</a>
+<a class="text-primary border-b-2 border-primary font-label-mono-md pb-1 flex items-center gap-1.5" href="#">
+<span>Audit Proofs</span>
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-status-verified shadow-[0_0_8px_#10b981]"></span>
+</a>
+</nav>
+</div>
+<!-- Epistemic Telemetry Status Strip -->
+<div class="hidden lg:flex items-center gap-space-md border-x border-border-subtle px-space-md py-1 bg-surface-base/60">
+<div class="flex items-center gap-1.5">
+<span class="text-text-muted font-label-mono-sm">EPOCH:</span>
+<span class="font-label-mono-sm text-on-surface font-semibold">0x4F92</span>
+</div>
+<span class="text-border-subtle">|</span>
+<div class="flex items-center gap-1.5">
+<span class="text-text-muted font-label-mono-sm">INVARIANTS:</span>
+<span class="font-label-mono-sm text-status-verified flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="check_circle">check_circle</span>PASS
+        </span>
+</div>
+<span class="text-border-subtle">|</span>
+<div class="flex items-center gap-1.5">
+<span class="text-text-muted font-label-mono-sm">CORE:</span>
+<span class="font-label-mono-sm text-secondary">arkhe-verify-core v1.4.2-wasm</span>
+</div>
+</div>
+<!-- Trailing Actions & Cryptographic Avatar -->
+<div class="flex items-center gap-space-sm">
+<button class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-label-mono-sm font-label-mono-sm text-on-surface-variant bg-surface-elevated hover:bg-surface-bright hover:text-primary transition-colors border border-border-subtle">
+<span class="material-symbols-outlined text-sm" data-icon="file_open">file_open</span>
+<span>Load Sample Manifest</span>
+</button>
+<button class="hidden xl:inline-flex items-center gap-1 px-2.5 py-1 text-label-mono-sm font-label-mono-sm text-on-surface-variant bg-surface-elevated hover:bg-surface-bright hover:text-primary transition-colors border border-border-subtle">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+<span>Export Proof Bundle (.cbor)</span>
+</button>
+<button class="inline-flex items-center gap-1 px-3 py-1 text-label-mono-sm font-label-mono-sm text-on-primary bg-primary hover:bg-primary-fixed transition-colors font-semibold">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span>Sign ReleaseManifest</span>
+</button>
+<!-- Trailing Icon Actions -->
+<div class="flex items-center border-l border-border-subtle ml-2 pl-2 gap-1 text-text-muted">
+<button class="p-1 hover:text-primary transition-colors" title="Lock State"><span class="material-symbols-outlined" data-icon="lock">lock</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="Sensor Mesh"><span class="material-symbols-outlined" data-icon="sensors">sensors</span></button>
+<button class="p-1 hover:text-primary transition-colors" title="Terminal"><span class="material-symbols-outlined" data-icon="terminal">terminal</span></button>
+<div class="w-6 h-6 ml-1.5 border border-primary/50 bg-surface-container-high flex items-center justify-center" title="Operator cryptographic key fingerprint avatar">
+<span class="material-symbols-outlined text-primary text-xs" data-icon="fingerprint">fingerprint</span>
+</div>
+</div>
+</div>
+</header>
+<!-- ================= MAIN WORKSPACE (SideNav + Auditor Body) ================= -->
+<div class="flex flex-1 overflow-hidden">
+<!-- ================= STRATUM L0-L9 SIDENAV ================= -->
+<aside class="hidden xl:flex flex-col justify-between w-64 h-full border-r border-border-subtle bg-surface-base py-space-md px-space-sm shrink-0">
+<div>
+<!-- Stratum Header -->
+<div class="px-space-md pb-space-md border-b border-border-subtle mb-space-sm">
+<div class="text-label-mono-md font-label-mono-md text-primary uppercase tracking-widest flex items-center justify-between">
+<span>STRATUM L0-L9</span>
+<span class="material-symbols-outlined text-sm text-status-verified" data-icon="shield">shield</span>
+</div>
+<div class="text-code-dense font-code-dense text-text-muted mt-0.5">EPOCH 0x4F92 :: SYNCED</div>
+</div>
+<!-- Layer Stack Navigation Links -->
+<nav class="space-y-1">
+<a class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:bg-surface-container hover:text-on-surface transition-all" href="#">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="deployed_code">deployed_code</span>
+<span>L0-L1 Foundation</span>
+</span>
+<span class="material-symbols-outlined text-xs text-status-verified" data-icon="check_circle">check_circle</span>
+</a>
+<a class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:bg-surface-container hover:text-on-surface transition-all" href="#">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="lock">lock</span>
+<span>L2-L3 Sealed Vaults</span>
+</span>
+<span class="material-symbols-outlined text-xs text-status-verified" data-icon="lock">lock</span>
+</a>
+<!-- Active Layer: L4-L7 Protocol Strata (L5 Verifier) -->
+<a class="flex items-center justify-between bg-surface-elevated text-primary border-l-2 border-primary font-label-mono-sm px-space-md py-space-sm transition-all" href="#">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="layers">layers</span>
+<span>L4-L7 Protocol Strata</span>
+</span>
+<span class="text-code-dense font-code-dense bg-primary/20 text-primary px-1">L5 AUDIT</span>
+</a>
+<a class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:bg-surface-container hover:text-on-surface transition-all" href="#">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="hub">hub</span>
+<span>L8 Consensus Beacon</span>
+</span>
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending animate-pulse"></span>
+</a>
+<a class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:bg-surface-container hover:text-on-surface transition-all" href="#">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="shield">shield</span>
+<span>L9 Outer Boundary</span>
+</span>
+<span class="material-symbols-outlined text-xs text-text-muted" data-icon="key">key</span>
+</a>
+<a class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:bg-surface-container hover:text-on-surface transition-all" href="#">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="account_tree">account_tree</span>
+<span>Checkpoint Ledger</span>
+</span>
+<span class="text-code-dense font-code-dense text-text-muted">#14,029</span>
+</a>
+</nav>
+</div>
+<!-- Action & Bottom Diagnostic Links -->
+<div class="pt-space-md border-t border-border-subtle space-y-2">
+<button class="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-surface-container hover:bg-surface-bright text-primary border border-primary/30 text-label-mono-sm font-label-mono-sm transition-all duration-150 active:scale-[0.99]">
+<span class="material-symbols-outlined text-xs" data-icon="anchor">anchor</span>
+<span>Anchor Checkpoint</span>
+</button>
+<div class="pt-2 space-y-1">
+<a class="flex items-center gap-2 text-text-muted hover:text-on-surface font-label-mono-sm px-space-md py-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-xs" data-icon="tune">tune</span>
+<span>Diagnostics</span>
+</a>
+<a class="flex items-center gap-2 text-text-muted hover:text-on-surface font-label-mono-sm px-space-md py-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-xs" data-icon="terminal">terminal</span>
+<span>Terminal Shell</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- ================= AUDITOR VERIFICATION CANVAS ================= -->
+<main class="flex-1 overflow-y-auto custom-scrollbar p-space-md lg:p-space-lg space-y-space-md">
+<!-- ================= SECTION 1: DOSSIER INPUT & WASM EXECUTOR BAR ================= -->
+<section class="bg-surface-container border border-border-subtle p-space-md">
+<div class="flex items-center justify-between pb-space-sm border-b border-border-subtle mb-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-base" data-icon="fingerprint">fingerprint</span>
+<h2 class="text-label-mono-md font-label-mono-md font-bold tracking-wider text-on-surface">AUDITOR DOSSIER INGESTION // OFFLINE PIPELINE</h2>
+</div>
+<div class="flex items-center gap-3">
+<label class="flex items-center gap-1.5 cursor-pointer text-code-dense font-code-dense text-text-muted hover:text-on-surface">
+<input checked="" class="w-3.5 h-3.5 bg-surface-base border-border-subtle text-primary rounded-none focus:ring-0 focus:ring-offset-0" type="checkbox"/>
+<span>AIR-GAPPED VERIFICATION (0 NETWORK CALLS)</span>
+</label>
+<span class="inline-block w-2 h-2 rounded-full bg-status-verified shadow-[0_0_8px_#10b981]"></span>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+<!-- Field 1: ReleaseManifest Input -->
+<div class="lg:col-span-6 space-y-1.5">
+<div class="flex items-center justify-between text-label-mono-sm font-label-mono-sm">
+<label class="text-text-muted flex items-center gap-1">
+<span>RELEASE MANIFEST (RFC 8949 CBOR / BASE64)</span>
+<span class="text-status-verified text-code-dense">[VERIFIED PAYLOAD]</span>
+</label>
+<button class="text-secondary hover:underline text-code-dense font-code-dense">Paste Hex Dump</button>
+</div>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-base border border-border-subtle px-3 py-2 text-label-mono-sm font-label-mono-sm text-on-surface font-mono tracking-tight focus:border-secondary focus:ring-0 outline-none" readonly="" type="text" value="d8184541524b48455f4d414e49464553545f56312e342e32...a301684c352d434f5245"/>
+<div class="absolute right-2 flex items-center gap-1">
+<span class="bg-surface-elevated text-primary text-code-dense font-code-dense px-2 py-0.5 border border-primary/20 flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]" data-icon="description">description</span>
+<span>manifest_v1.4.2_release.cbor (4,812 B)</span>
+</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-code-dense font-code-dense text-text-muted">
+<span>MIME: application/cbor; canonical=strict</span>
+<span>SHA-256: 7f4a...d901 [PRE-HASHED]</span>
+</div>
+</div>
+<!-- Field 2: Release Keyset Root Commitment -->
+<div class="lg:col-span-6 space-y-1.5">
+<div class="flex items-center justify-between text-label-mono-sm font-label-mono-sm">
+<label class="text-text-muted">RELEASE KEYSET ROOT COMMITMENT (ON-CHAIN ANCHOR)</label>
+<span class="text-status-verified text-code-dense flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]" data-icon="check">check</span>
+<span>MATCHES ON-CHAIN EPOCH KEYSET</span>
+</span>
+</div>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-base border border-border-subtle px-3 py-2 text-label-mono-sm font-label-mono-sm text-status-verified font-mono tracking-tight focus:border-secondary focus:ring-0 outline-none" readonly="" type="text" value="0x7d1b38f82a91c045b102efb09c11874da82845c810d7a6418b762512999e102a"/>
+<button class="absolute right-2 text-text-muted hover:text-primary transition-colors p-1" title="Copy commitment">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+<div class="flex items-center justify-between text-code-dense font-code-dense text-text-muted">
+<span>Beacon: Nostr + Rekor sync L8</span>
+<span>Authority: 0x4F92-ArkheQuorum-Cat4</span>
+</div>
+</div>
+</div>
+<!-- WASM Execution Trigger Bar -->
+<div class="mt-space-md pt-space-md border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-space-sm bg-surface-base/40 p-2.5">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-none bg-primary animate-pulse"></span>
+<span class="font-label-mono-sm text-on-surface">SANDBOX: WebWorker Memory [Active]</span>
+</div>
+<span class="text-text-muted hidden md:inline">|</span>
+<div class="font-code-dense text-text-muted hidden md:flex items-center gap-2">
+<span>WASM Instruction Budget: 450,000 ops</span>
+<span>Heap Allocation: 18.4 MB</span>
+</div>
+</div>
+<div class="flex items-center gap-2 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none px-4 py-2 bg-primary/10 hover:bg-primary text-primary hover:text-on-primary border border-primary/40 text-label-mono-sm font-label-mono-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+<span class="material-symbols-outlined text-base" data-icon="memory">memory</span>
+<span>EXECUTE LOCAL OFFLINE VERIFICATION (WASM)</span>
+</button>
+</div>
+</div>
+</section>
+<!-- ================= SECTION 2: VERDICT & PROOF ARTIFACT BANNER ================= -->
+<section class="bg-surface-container border-2 border-primary/40 p-space-md relative overflow-hidden">
+<!-- Ambient photonic glow -->
+<div class="absolute -right-16 -top-16 w-64 h-64 bg-status-verified/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="bg-status-verified text-on-primary font-label-mono-md font-bold px-2 py-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm font-bold" data-icon="verified">verified</span>
+<span>VERDICT: VerifiedRelease</span>
+</span>
+<span class="text-label-mono-sm font-label-mono-sm text-primary tracking-wider uppercase">DETERMINISTIC FORMAL CERTIFICATE</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant max-w-3xl">
+              Audit Certificate issued under <strong class="text-on-surface">ISO/IEC 29128 CAT-4 Compliant Epistemic Protocol</strong>. Cryptographic evidence tree compiled strictly in browser memory without network egress.
+            </p>
+</div>
+<!-- Quick Action CTAs -->
+<div class="flex flex-wrap items-center gap-2 shrink-0">
+<button class="px-3 py-1.5 bg-surface-elevated hover:bg-surface-bright text-on-surface border border-border-subtle text-label-mono-sm font-label-mono-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="download">download</span>
+<span>Export Proof (.cbor)</span>
+</button>
+<button class="px-3 py-1.5 bg-surface-elevated hover:bg-surface-bright text-on-surface border border-border-subtle text-label-mono-sm font-label-mono-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span>Auditor PDF Report</span>
+</button>
+<button class="px-3 py-1.5 bg-primary/20 hover:bg-primary text-primary hover:text-on-primary border border-primary text-label-mono-sm font-label-mono-sm flex items-center gap-1.5 transition-colors font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="share">share</span>
+<span>Publish to Witness Mesh</span>
+</button>
+</div>
+</div>
+<!-- Digest Box -->
+<div class="mt-space-md grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 pt-space-md border-t border-border-subtle bg-surface-base p-space-sm font-code-dense text-code-dense">
+<div class="p-2 border border-border-subtle bg-surface-container/60">
+<div class="text-text-muted flex items-center justify-between">
+<span>CANONICAL CBOR SHA-256</span>
+<button class="hover:text-primary"><span class="material-symbols-outlined text-xs" data-icon="content_copy">content_copy</span></button>
+</div>
+<div class="text-on-surface font-mono mt-1 break-all">e3b0c44298fc1c149afbf4c8996fb924...27ae41e4649b934ca495991b7852b855</div>
+</div>
+<div class="p-2 border border-border-subtle bg-surface-container/60">
+<div class="text-text-muted flex items-center justify-between">
+<span>BLAKE3 ROOT DIGEST</span>
+<button class="hover:text-primary"><span class="material-symbols-outlined text-xs" data-icon="content_copy">content_copy</span></button>
+</div>
+<div class="text-status-verified font-mono mt-1 break-all">b3_8f29c01824ef78d910a34b9281c72f...91823abce0411fa023</div>
+</div>
+<div class="p-2 border border-border-subtle bg-surface-container/60">
+<div class="text-text-muted flex items-center justify-between">
+<span>MMR LEAF INDEX</span>
+<button class="hover:text-primary"><span class="material-symbols-outlined text-xs" data-icon="content_copy">content_copy</span></button>
+</div>
+<div class="text-secondary font-mono mt-1">LEAF_POS #14,029 (DEPTH: 14)</div>
+</div>
+<div class="p-2 border border-border-subtle bg-surface-container/60">
+<div class="text-text-muted flex items-center justify-between">
+<span>WITNESS QUORUM ATTESTATION</span>
+<span class="text-status-verified">[2/3 VALID]</span>
+</div>
+<div class="text-on-surface font-mono mt-1">INTERLEGIS + UNIVERSIDADE X</div>
+</div>
+</div>
+</section>
+<!-- ================= SECTION 3: 7-STEP VERIFICATION TREE + SIDE DIAGNOSTIC INSPECTOR ================= -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+<!-- ================= LEFT COLUMN: THE 7-STEP VERIFICATION TREE (8 COLS) ================= -->
+<div class="lg:col-span-8 space-y-space-md">
+<div class="bg-surface-container border border-border-subtle p-space-md">
+<div class="flex items-center justify-between pb-space-sm border-b border-border-subtle mb-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="account_tree">account_tree</span>
+<h3 class="text-label-mono-md font-label-mono-md font-bold tracking-wider text-on-surface">THE 7-STEP VERIFICATION TREE (SECTION 4.6)</h3>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-code-dense font-code-dense text-text-muted">6/6 LEMMAS PROVED</span>
+<span class="text-code-dense font-code-dense text-status-conjecture">1 CONJECTURE</span>
+</div>
+</div>
+<!-- Verification Tree Node Sequence -->
+<div class="relative pl-6 space-y-space-md before:absolute before:left-3 before:top-3 before:bottom-3 before:w-px before:bg-border-subtle">
+<!-- Passo 1 -->
+<div class="relative bg-surface-base border border-border-subtle p-space-sm space-y-1.5 transition-all hover:border-primary/40">
+<div class="absolute -left-[30px] top-3 w-4 h-4 rounded-full bg-status-verified/20 border border-status-verified flex items-center justify-center text-status-verified text-[10px]">
+<span class="material-symbols-outlined text-[10px]" data-icon="check">check</span>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">[✔] Passo 1: Checkpoint obtido de 3 fontes independentes</span>
+</div>
+<span class="text-code-dense font-code-dense px-2 py-0.5 bg-status-verified/10 text-status-verified border border-status-verified/30 uppercase">
+                    [τ=LEMMA: CONSENSUS_ROOT_PROVED]
+                  </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-muted">
+                  Nostr relays (<code class="text-secondary font-code-dense">wss://relay.damus.io</code> + 2 others), Rekor entry <code class="text-on-surface font-code-dense">#8921049</code>, RBB distributed beacon. All roots coincide deterministically.
+                </p>
+<div class="bg-surface-container-low border border-border-grid p-2 font-code-dense text-code-dense text-text-muted space-y-0.5">
+<div>Rekor Log ID: <span class="text-on-surface font-mono">c66c3c54848d7083...f021e102</span> | Nostr Event ID: <span class="text-on-surface font-mono">note189f72c...88a1</span></div>
+<div class="text-status-verified">[✔] 3/3 Independent Root Hash Agreement: <span class="font-mono">0x9a834b68ef21...b820</span></div>
+</div>
+</div>
+<!-- Passo 2 -->
+<div class="relative bg-surface-base border border-border-subtle p-space-sm space-y-1.5 transition-all hover:border-primary/40">
+<div class="absolute -left-[30px] top-3 w-4 h-4 rounded-full bg-status-verified/20 border border-status-verified flex items-center justify-center text-status-verified text-[10px]">
+<span class="material-symbols-outlined text-[10px]" data-icon="check">check</span>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">[✔] Passo 2: Assinatura híbrida Ed25519 + ML-DSA válida</span>
+</div>
+<span class="text-code-dense font-code-dense px-2 py-0.5 bg-status-verified/10 text-status-verified border border-status-verified/30 uppercase">
+                    [τ=LEMMA: WITNESS_QUORUM_OK]
+                  </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-muted">
+                  ML-DSA post-quantum envelope verified in 4.2ms. 2/3 cossinaturas de testemunhas confirmadas.
+                </p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-2 bg-surface-container-low border border-border-grid p-2 font-code-dense text-code-dense">
+<div>
+<span class="text-primary font-semibold">Witness 1:</span> Interlegis Federal Node
+                    <div class="text-text-muted font-mono mt-0.5 break-all">sig: ed25519:6b4a...9ff2e (FIPS 186-5)</div>
+</div>
+<div>
+<span class="text-primary font-semibold">Witness 2:</span> Universidade X Sentinel
+                    <div class="text-text-muted font-mono mt-0.5 break-all">sig: ed25519:1a8c...77db0 (FIPS 186-5)</div>
+</div>
+</div>
+</div>
+<!-- Passo 3 -->
+<div class="relative bg-surface-base border border-border-subtle p-space-sm space-y-1.5 transition-all hover:border-primary/40">
+<div class="absolute -left-[30px] top-3 w-4 h-4 rounded-full bg-status-verified/20 border border-status-verified flex items-center justify-center text-status-verified text-[10px]">
+<span class="material-symbols-outlined text-[10px]" data-icon="check">check</span>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">[✔] Passo 3: Inclusão MMR provada offline (arkhe-verify-core)</span>
+</div>
+<span class="text-code-dense font-code-dense px-2 py-0.5 bg-status-verified/10 text-status-verified border border-status-verified/30 uppercase">
+                    [τ=LEMMA: MMR_INCLUSION_VERIFIED]
+                  </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-muted">
+                  Merkle Mountain Range Leaf #14,029 inclusion proof against Peak Bagging root <code class="text-secondary font-code-dense">0x9a834b68e...</code>. Peak proof depth: 14 leaves, 0 drift.
+                </p>
+<div class="bg-surface-container-low border border-border-grid p-2 font-code-dense text-code-dense text-status-verified flex items-center justify-between">
+<span>Bagged Peaks: [P0: 0x41ab..., P1: 0x98ef...]</span>
+<span class="text-text-muted">Verification overhead: 0.8ms</span>
+</div>
+</div>
+<!-- Passo 4 -->
+<div class="relative bg-surface-base border border-border-subtle p-space-sm space-y-1.5 transition-all hover:border-primary/40">
+<div class="absolute -left-[30px] top-3 w-4 h-4 rounded-full bg-status-verified/20 border border-status-verified flex items-center justify-center text-status-verified text-[10px]">
+<span class="material-symbols-outlined text-[10px]" data-icon="check">check</span>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">[✔] Passo 4: k-de-n (2 de 3) assinaturas do manifesto conferem com o keyset</span>
+</div>
+<span class="text-code-dense font-code-dense px-2 py-0.5 bg-status-verified/10 text-status-verified border border-status-verified/30 uppercase">
+                    [τ=LEMMA: THRESHOLD_MET]
+                  </span>
+</div>
+<div class="bg-surface-container-low border border-border-grid p-2 font-code-dense text-code-dense space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-text-muted">Key A (Lead Architect): <span class="text-on-surface font-mono">did:key:z6Mkq5vD9...4A21</span></span>
+<span class="text-status-verified">[VALID]</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-text-muted">Key B (SecOps Custodian): <span class="text-on-surface font-mono">did:key:z6Mkn8qK2...98c1</span></span>
+<span class="text-status-verified">[VALID]</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-text-muted">Key C (Hardware Enclave): <span class="text-on-surface font-mono">did:key:z6Mkw9xZ1...11a0</span></span>
+<span class="text-status-conjecture">[PENDING_ESCROW]</span>
+</div>
+</div>
+</div>
+<!-- Passo 5 -->
+<div class="relative bg-surface-base border border-border-subtle p-space-sm space-y-1.5 transition-all hover:border-primary/40">
+<div class="absolute -left-[30px] top-3 w-4 h-4 rounded-full bg-status-verified/20 border border-status-verified flex items-center justify-center text-status-verified text-[10px]">
+<span class="material-symbols-outlined text-[10px]" data-icon="check">check</span>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">[✔] Passo 5: Bytes obtidos via Hashtree (nhash: 0x8f2ab1...9cd01)</span>
+</div>
+<span class="text-code-dense font-code-dense px-2 py-0.5 bg-status-verified/10 text-status-verified border border-status-verified/30 uppercase">
+                    [τ=LEMMA: BLOB_AVAILABLE]
+                  </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-muted">
+                  Content-addressed logical package downloaded across 12 distributed mirror pins. Bitstream size: 287.8 MB. Integrity verified chunk-by-chunk.
+                </p>
+</div>
+<!-- Passo 6 -->
+<div class="relative bg-surface-base border border-border-subtle p-space-sm space-y-1.5 transition-all hover:border-primary/40">
+<div class="absolute -left-[30px] top-3 w-4 h-4 rounded-full bg-status-verified/20 border border-status-verified flex items-center justify-center text-status-verified text-[10px]">
+<span class="material-symbols-outlined text-[10px]" data-icon="check">check</span>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">[✔] Passo 6: BLAKE3 dos bytes lógicos confere</span>
+</div>
+<span class="text-code-dense font-code-dense px-2 py-0.5 bg-status-verified/10 text-status-verified border border-status-verified/30 uppercase">
+                    [τ=LEMMA: BIT_EQUIVALENCE_PROVED]
+                  </span>
+</div>
+<div class="bg-surface-container-low border border-border-grid p-2 font-code-dense text-code-dense space-y-1">
+<div class="text-text-muted">Expected BLAKE3: <span class="text-status-verified font-mono">b3_8f29c01824ef78d910a34b9281c72f91823abce0411fa023</span></div>
+<div class="text-text-muted">Computed Hash:   <span class="text-status-verified font-mono">b3_8f29c01824ef78d910a34b9281c72f91823abce0411fa023</span></div>
+<div class="text-primary font-semibold">[Delta: 0 bytes divergence // 100% bitwise parity]</div>
+</div>
+</div>
+<!-- Passo 7 (Opcional) -->
+<div class="relative bg-surface-base border border-status-conjecture/30 p-space-sm space-y-1.5 transition-all hover:border-status-conjecture">
+<div class="absolute -left-[30px] top-3 w-4 h-4 rounded-full bg-status-conjecture/20 border border-status-conjecture flex items-center justify-center text-status-conjecture text-[10px]">
+<span class="material-symbols-outlined text-[10px]" data-icon="priority_high">priority_high</span>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">[!] Passo 7 (Opcional): Rebuild Nix não executado</span>
+</div>
+<span class="text-code-dense font-code-dense px-2 py-0.5 bg-status-conjecture/10 text-status-conjecture border border-status-conjecture/30 uppercase">
+                    [τ=CONJECTURE: LOCAL_REBUILD_SKIPPED]
+                  </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-muted">
+                  Auditor não tem ambiente Nix local. Sandboxed Nix-daemon check bypassed on browser client; remote builder attestation bundle available from Builders A &amp; B.
+                </p>
+<div class="bg-surface-container-low border border-border-grid p-2 font-code-dense text-code-dense text-status-conjecture flex items-center justify-between">
+<span>Remote Attestation: Builder-Alpha [SHA256: e821...] + Builder-Beta [SHA256: e821...]</span>
+<span class="text-text-muted">Bypassed non-fatal</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ================= RIGHT COLUMN: OFFLINE INSPECTOR & DIAGNOSTIC TRACE (4 COLS) ================= -->
+<div class="lg:col-span-4 space-y-space-md">
+<!-- Diagnostic Sub-panel 1: Hybrid Signature Decomposition -->
+<div class="bg-surface-container border border-border-subtle p-space-md space-y-space-sm">
+<div class="flex items-center justify-between border-b border-border-subtle pb-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="vpn_key">vpn_key</span>
+<span class="text-label-mono-md font-label-mono-md font-semibold text-on-surface">SIGNATURE DECOMPOSITION</span>
+</div>
+<span class="text-code-dense font-code-dense text-status-verified">[PQC-DUAL]</span>
+</div>
+<div class="space-y-2 text-code-dense font-code-dense">
+<div class="p-2 bg-surface-base border border-border-subtle">
+<div class="flex items-center justify-between text-text-muted mb-1">
+<span>CLASSICAL: Ed25519</span>
+<span class="text-status-verified">VALID (0.4ms)</span>
+</div>
+<div class="text-on-surface font-mono truncate">pub: ed25519:8e03a9f029cba4...</div>
+<div class="text-text-muted font-mono truncate">sig: 4f9812ba9c832104192b...</div>
+</div>
+<div class="p-2 bg-surface-base border border-border-subtle">
+<div class="flex items-center justify-between text-text-muted mb-1">
+<span>POST-QUANTUM: ML-DSA (Dilithium-3)</span>
+<span class="text-status-verified">VALID (3.8ms)</span>
+</div>
+<div class="text-on-surface font-mono truncate">pub: mldsa3:01a4e98b71...</div>
+<div class="text-text-muted font-mono truncate">sig: 994a00f28127be10c... (3,293 B)</div>
+</div>
+</div>
+</div>
+<!-- Diagnostic Sub-panel 2: MMR Peak Diagram / Tree Path Inspector -->
+<div class="bg-surface-container border border-border-subtle p-space-md space-y-space-sm">
+<div class="flex items-center justify-between border-b border-border-subtle pb-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="account_tree">account_tree</span>
+<span class="text-label-mono-md font-label-mono-md font-semibold text-on-surface">MMR PEAK GRAPH (LEAF #14,029)</span>
+</div>
+<span class="text-code-dense font-code-dense text-text-muted">PEAKS: 2</span>
+</div>
+<div class="bg-surface-base border border-border-subtle p-3 space-y-3">
+<!-- Visual Simplified MMR Peak Structure -->
+<div class="flex items-center justify-center gap-4 py-2">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-none bg-surface-elevated border border-primary flex items-center justify-center text-primary font-code-dense text-code-dense font-bold shadow-[0_0_8px_rgba(78,222,163,0.3)]">
+                    P0
+                  </div>
+<span class="text-[9px] font-code-dense text-text-muted mt-1">Height 13</span>
+</div>
+<div class="text-text-muted font-code-dense text-xs">+</div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-none bg-surface-elevated border border-primary flex items-center justify-center text-primary font-code-dense text-code-dense font-bold shadow-[0_0_8px_rgba(78,222,163,0.3)]">
+                    P1
+                  </div>
+<span class="text-[9px] font-code-dense text-text-muted mt-1">Height 4</span>
+</div>
+<div class="text-text-muted font-code-dense text-xs">=</div>
+<div class="flex flex-col items-center">
+<div class="px-2 h-8 rounded-none bg-primary/20 border border-status-verified flex items-center justify-center text-status-verified font-code-dense text-code-dense font-bold">
+                    ROOT
+                  </div>
+<span class="text-[9px] font-code-dense text-status-verified mt-1">0x9a834...</span>
+</div>
+</div>
+<div class="text-code-dense font-code-dense text-text-muted border-t border-border-subtle pt-2 space-y-1">
+<div class="flex justify-between">
+<span>Peak Bagging Hash:</span>
+<span class="text-on-surface font-mono">0x9a834b68e...</span>
+</div>
+<div class="flex justify-between">
+<span>Sibling Path Count:</span>
+<span class="text-on-surface">14 nodes</span>
+</div>
+<div class="flex justify-between">
+<span>Pruning State:</span>
+<span class="text-status-verified">Deterministic Match</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Diagnostic Sub-panel 3: Fail-Closed Policy Enforcement & WASM Sandbox -->
+<div class="bg-surface-container border border-border-subtle p-space-md space-y-space-sm">
+<div class="flex items-center justify-between border-b border-border-subtle pb-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-status-verified" data-icon="gavel">gavel</span>
+<span class="text-label-mono-md font-label-mono-md font-semibold text-on-surface">FAIL-CLOSED INVARIANTS</span>
+</div>
+<span class="text-code-dense font-code-dense text-status-verified">PASS</span>
+</div>
+<div class="space-y-1.5 text-code-dense font-code-dense">
+<div class="flex items-center justify-between p-1.5 bg-surface-base border border-border-subtle">
+<span class="text-text-muted">Satisfied Lemmas:</span>
+<span class="text-status-verified font-bold">6 of 6 REQUIRED</span>
+</div>
+<div class="flex items-center justify-between p-1.5 bg-surface-base border border-border-subtle">
+<span class="text-text-muted">Refuted Axioms:</span>
+<span class="text-status-verified font-bold">0 (ZERO TOLERANCE)</span>
+</div>
+<div class="flex items-center justify-between p-1.5 bg-surface-base border border-border-subtle">
+<span class="text-text-muted">Unverified Conjectures:</span>
+<span class="text-status-conjecture font-bold">1 (NON-FATAL OPTIONAL)</span>
+</div>
+</div>
+<div class="mt-space-sm pt-space-sm border-t border-border-subtle">
+<div class="text-label-mono-sm font-label-mono-sm text-text-muted mb-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="data_usage">data_usage</span>
+<span>WASM SANDBOX TELEMETRY</span>
+</div>
+<p class="text-code-dense font-code-dense text-text-muted bg-surface-base p-2 border border-border-subtle">
+<code>arkhe-verify-core</code> ran in isolated WebWorker memory sandbox (<strong class="text-on-surface">18.4 MB heap</strong>, <strong class="text-status-verified">34ms total execution time</strong>). Network sockets disabled by Content Security Policy.
+              </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- ================= PERSISTENT BOTTOM COCKPIT STATUS RIBBON ================= -->
+<footer class="h-8 bg-surface-container-low border-t border-border-subtle px-space-md flex items-center justify-between text-code-dense font-code-dense text-text-muted shrink-0">
+<div class="flex items-center gap-space-md">
+<span class="flex items-center gap-1 text-status-verified">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-status-verified"></span>
+<span>ARKHE-NODE: ONLINE</span>
+</span>
+<span class="hidden md:inline text-border-subtle">|</span>
+<span class="hidden md:inline">PEER CONNECTIVITY: 14 MESH WITNESSES</span>
+<span class="hidden md:inline text-border-subtle">|</span>
+<span class="hidden lg:inline">CBOR STRICT MODE: ENFORCED (RFC 8949)</span>
+</div>
+<div class="flex items-center gap-space-md">
+<span>WASM ENGINE: READY</span>
+<span class="text-border-subtle">|</span>
+<span class="text-primary font-semibold">ISO/IEC 29128 CAT-4 AUDITED</span>
+</div>
+</footer>
+</body></html>

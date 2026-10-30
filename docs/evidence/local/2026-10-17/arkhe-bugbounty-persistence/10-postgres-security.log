@@ -1,0 +1,205 @@
+CREATE DATABASE
+Isolated test database: arkhe_conformance_2d6410445b164660b93d1be3972cc37e
+Applying 20261017000001_init_roles.sql
+DO
+Applying 20261017000002_core_tables.sql
+CREATE EXTENSION
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+Applying 20261017000003_append_only.sql
+CREATE FUNCTION
+DO
+Applying 20261017000004_rls.sql
+CREATE FUNCTION
+DO
+Applying 20261017000005_privileges.sql
+REVOKE
+REVOKE
+GRANT
+GRANT
+GRANT
+REVOKE
+Applying 20261017000006_indexes.sql
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+Applying 20261017000007_projections.sql
+SELECT 0
+CREATE INDEX
+SELECT 0
+REVOKE
+GRANT
+Applying 20261017000008_wormgraph.sql
+CREATE TABLE
+CREATE TABLE
+DO
+Applying 20261017000009_bugbounty.sql
+DO
+CREATE TABLE
+CREATE FUNCTION
+CREATE TRIGGER
+CREATE TRIGGER
+CREATE TABLE
+CREATE INDEX
+CREATE TRIGGER
+DO
+GRANT
+GRANT
+Applying 20261017000010_wormgraph_sequence.sql
+ALTER TABLE
+CREATE INDEX
+GRANT
+Applying phase1_security_gates.sql
+=== Arkhe SQL Phase-1 PostgreSQL 16 security gates ===
+CREATE TABLE
+GRANT
+CREATE FUNCTION
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+BEGIN
+SET
+ set_config 
+------------
+ tenant-a
+(1 row)
+
+INSERT 0 1
+COMMIT
+BEGIN
+SET
+ set_config 
+------------
+ tenant-b
+(1 row)
+
+INSERT 0 1
+COMMIT
+BEGIN
+SET
+ set_config 
+------------
+ tenant-a
+(1 row)
+
+DO
+COMMIT
+BEGIN
+SET
+ set_config 
+------------
+ tenant-b
+(1 row)
+
+DO
+COMMIT
+BEGIN
+SET
+ expect_failure 
+----------------
+ 
+(1 row)
+
+COMMIT
+BEGIN
+SET
+ set_config 
+------------
+ tenant-a
+(1 row)
+
+ expect_failure 
+----------------
+ 
+(1 row)
+
+COMMIT
+BEGIN
+SET
+ set_config 
+------------
+ tenant-a
+(1 row)
+
+ expect_failure 
+----------------
+ 
+(1 row)
+
+ expect_failure 
+----------------
+ 
+(1 row)
+
+ expect_failure 
+----------------
+ 
+(1 row)
+
+COMMIT
+ expect_failure 
+----------------
+ 
+(1 row)
+
+ expect_failure 
+----------------
+ 
+(1 row)
+
+INSERT 0 1
+=== RESULTS ===
+                gate                | status |                                detail                                 
+------------------------------------+--------+-----------------------------------------------------------------------
+ APPEND-DELETE-PRIVILEGE-REJECTED   | PASS   | 42501: permission denied for table intents
+ APPEND-NO-TRUNCATE-GRANT           | PASS   | has_table_privilege(TRUNCATE)=false
+ APPEND-TRUNCATE-PRIVILEGE-REJECTED | PASS   | 42501: permission denied for table intents
+ APPEND-UPDATE-PRIVILEGE-REJECTED   | PASS   | 42501: permission denied for table intents
+ BACKSTOP-SUPERUSER-DELETE-REJECTED | PASS   | 23514: table intents is append-only; DELETE is forbidden
+ BACKSTOP-SUPERUSER-UPDATE-REJECTED | PASS   | 23514: table intents is append-only; UPDATE is forbidden
+ RLS-ALL-TABLES-FORCED              | PASS   | forced=9/9
+ RLS-CROSS-TENANT-INSERT-REJECTED   | PASS   | 42501: new row violates row-level security policy for table "intents"
+ RLS-MISSING-TENANT-ERROR           | PASS   | 42501: app.tenant_id is not set
+ RLS-TENANT-A-ISOLATION             | PASS   | tenant_a=1 tenant_b_visible=0
+ RLS-TENANT-B-ISOLATION             | PASS   | tenant_a_visible=0 tenant_b=1
+ ROLE-APPEND-NO-BYPASS              | PASS   | rolsuper=f rolbypassrls=f
+ ROLE-READ-NO-BYPASS                | PASS   | rolsuper=f rolbypassrls=f
+(13 rows)
+
+=== FAIL COUNT ===
+ failed_gates 
+--------------
+            0
+(1 row)
+
+DO
+Applying bugbounty_security_gates.sql
+DO
+BEGIN
+SET
+      set_config      
+----------------------
+ bugbounty-security-a
+(1 row)
+
+INSERT 0 1
+DO
+UPDATE 1
+COMMIT
+BEGIN
+SET
+      set_config      
+----------------------
+ bugbounty-security-b
+(1 row)
+
+DO
+ROLLBACK
+PASS bugbounty operational RLS, privileges and journal transitions
+PASS PostgreSQL 16: arkhe-sql migrations + real RLS/append-only gates

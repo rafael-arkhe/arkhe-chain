@@ -1,0 +1,177 @@
+   Compiling arkhe-rag v0.1.0 (D:\arkhe\cognition\arkhe-rag)
+   Compiling arkhe-ask v0.1.0 (D:\arkhe\apps\arkhe-ask)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 28.18s
+     Running unittests src\lib.rs (target\debug\deps\arkhe_ask-282c125ade16736c.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\arkhe_ask-9847a79cf77585fa.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\ask_e2e.rs (target\debug\deps\ask_e2e-c2c881dc49121d6b.exe)
+
+running 6 tests
+test pipeline_refuses_a_store_that_returns_another_tenants_chunk ... ok
+test tenant_scoping_changes_proof_digest_even_for_identical_claims ... ok
+test hallucinated_entity_is_refused_with_nothing ... ok
+test empty_query_is_bad_request ... ok
+test missing_tenant_is_unauthorized ... ok
+test grounded_answer_returns_with_citation_proof ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\auth.rs (target\debug\deps\auth-f2bfcdb7b834cd4e.exe)
+
+running 3 tests
+test jwt_tenant_scopes_real_pgvector_evidence_despite_spoofed_header ... ignored, requires a live pgvector Postgres
+test jwt_tenant_overrides_untrusted_header_and_health_is_public ... ok
+test invalid_tokens_never_reach_the_pipeline ... ok
+
+test result: ok. 2 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests\crash_recovery.rs (target\debug\deps\crash_recovery-60e16ddab8dc554d.exe)
+
+running 1 test
+test crash_between_enqueue_and_publish_keeps_trace_context ... ignored, requires Postgres, real Kafka and a fresh KAFKA_CRASH_TEST_TOPIC; terminates only its own helper subprocess
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\events.rs (target\debug\deps\events-cb902eecb6f25386.exe)
+
+running 4 tests
+test durable_trace_context_survives_journal_restart_and_kafka ... ignored, requires Postgres and a fresh KAFKA_TRACE_TEST_TOPIC
+test kafka_replays_lost_ack_once_and_rehydrates_wormgraph ... ignored, requires Postgres and a provisioned single-partition Kafka topic in KAFKA_TEST_TOPIC
+test outbox_survives_publication_failure_and_detects_event_id_conflicts ... ignored, requires Postgres
+test only_verified_responses_are_journaled_and_storage_failure_withholds_answer ... ok
+
+test result: ok. 1 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\hybrid_retrieval.rs (target\debug\deps\hybrid_retrieval-9c75e8625662af2a.exe)
+
+running 5 tests
+test pgvector_hybrid_question_returns_verified_snapshot_evidence ... ignored, requires live pgvector PostgreSQL via DATABASE_URL; uses an isolated temporary schema
+test snapshot_identity_is_order_independent_and_tenant_bound ... ok
+test pipeline_rejects_tampered_inclusion_before_generation ... ok
+test dense_outage_is_lexical_fallback_but_forged_evidence_is_rejected ... ok
+test question_through_http_hybrid_reranking_citations_and_inclusion ... ok
+
+test result: ok. 4 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests\providers.rs (target\debug\deps\providers-a6fd32514cce4b71.exe)
+
+running 15 tests
+test azure_generate_returns_text ... ignored, requires Azure OpenAI credentials
+test full_pipeline_real_llm_rejects_hallucination ... ignored, requires Azure OpenAI credentials and pgvector; adversarial model behavior is not guaranteed
+test pgvector_concurrent_retrievals_agree ... ignored, requires a live pgvector Postgres
+test pgvector_concurrent_upserts_keep_one_consistent_row ... ignored, requires a live pgvector Postgres
+test pgvector_insert_is_idempotent ... ignored, needs a live pgvector Postgres (see module docs)
+test pgvector_iterative_scan_fills_small_tenant_results_without_pool_leak ... ignored, requires pgvector >= 0.8 with HNSW
+test pgvector_legacy_migration_preserves_unassigned_rows_without_exposing_them ... ignored, requires a live pgvector Postgres
+test pgvector_local_search_setting_does_not_leak ... ignored, requires a live pgvector Postgres
+test pgvector_retrieve_returns_nearest ... ignored, needs a live pgvector Postgres (see module docs)
+test pgvector_tenant_scope_blocks_reads_and_cross_tenant_overwrites ... ignored, requires a live pgvector Postgres
+test azure_provider_answers_and_sends_the_api_key_header ... ok
+test azure_provider_fails_closed_on_error_status ... ok
+test azure_provider_refuses_claimless_answers ... ok
+test azure_provider_embeds ... ok
+test azure_provider_rejects_wrong_embedding_dimension ... ok
+
+test result: ok. 5 passed; 0 failed; 10 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\telemetry.rs (target\debug\deps\telemetry-90afb56ed8a5e363.exe)
+
+running 1 test
+test metrics_and_spans_include_failures_and_pipeline_without_sensitive_labels ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (target\debug\deps\arkhe_rag-5a7e9a4cdcb065eb.exe)
+
+running 3 tests
+test vq_tokenv::tests::eos_is_synthetic_and_last ... ok
+test vq_tokenv::tests::greedy_tokenization_uses_longest_codes ... ok
+test vq_tokenv::tests::llguidance_matches_codes_against_the_schema ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\adversarial.rs (target\debug\deps\adversarial-42eac18fd3364747.exe)
+
+running 2 tests
+test adversarial_cross_tenant_and_forged_instructions_cannot_grant_access ... ok
+test revoked_access_poisoning_and_resource_abuse_fail_closed ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\citation_entity_mismatch.rs (target\debug\deps\citation_entity_mismatch-ff5871c0b18811f7.exe)
+
+running 9 tests
+test extract_entities_classifies_kinds ... ok
+test entity_present_in_evidence_passes ... ok
+test generic_claim_without_entity_passes ... ok
+test keyword_overlap_is_jaccard ... ok
+test lowercased_entity_is_matched_by_overlap_not_by_the_exact_layer ... ok
+test numeral_mismatch_is_rejected ... ok
+test sydney_not_melbourne ... ok
+test unknown_evidence_id_is_rejected ... ok
+test corrupted_entities_are_always_rejected ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\decoder_shared_prefix.rs (target\debug\deps\decoder_shared_prefix-13337edb3d58b2d7.exe)
+
+running 6 tests
+test nested_anyof_is_detected ... ok
+test shared_prefix_advisory_matches_the_schema_shape ... ok
+test llguidance_accepts_1_5_for_anyof_integer_number ... ok
+test plain_object_schema_selects_llguidance_in_default_build ... ok
+test llguidance_rejects_invalid_input_loudly ... ok
+test anyof_integer_number_is_llguidance_on_both_targets ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests\e2e_xsum.rs (target\debug\deps\e2e_xsum-15991cac71c51454.exe)
+
+running 2 tests
+test invalid_policies_never_reach_the_harness ... ok
+test xsum_full_cycle_policy_structure_support_execution ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests\hybrid_retrieval.rs (target\debug\deps\hybrid_retrieval-2acdb4ff7d8ace78.exe)
+
+running 5 tests
+test bm25_synthetic_recall_at_one_and_tokenization ... ok
+test rrf_preserves_surviving_ranker_order_and_rejects_total_failure ... ok
+test hybrid_recovers_lexical_hit_and_rejects_unknown_dense_ids ... ok
+test overlap_improves_synthetic_mrr_and_ndcg_when_dense_ranks_wrong_pair_first ... ok
+test bm25_formula_parameters_and_stable_identity ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\ncm_e2e.rs (target\debug\deps\ncm_e2e-af105c8ba003099f.exe)
+
+running 4 tests
+test record_hash_binds_policy_and_levels ... ok
+test generate_verify_anchor_rejects_wrong_entity ... ok
+test tampered_digest_is_rejected_before_citation ... ok
+test generate_verify_anchor_happy_path ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arkhe_ask
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arkhe_rag
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,225 @@
+STEP 1/12: FROM docker.io/library/rust:1.96-bookworm
+STEP 2/12: RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv && rm -rf /var/lib/apt/lists/*
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [357 kB]
+Fetched 9395 kB in 1s (6614 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+python3 is already the newest version (3.11.2-1+b1).
+python3 set to manually installed.
+The following additional packages will be installed:
+  libpython3.11-minimal libpython3.11-stdlib python3-pip-whl
+  python3-setuptools-whl python3.11 python3.11-minimal python3.11-venv
+Suggested packages:
+  python3.11-doc binfmt-support
+The following NEW packages will be installed:
+  python3-pip-whl python3-setuptools-whl python3-venv python3.11-venv
+The following packages will be upgraded:
+  libpython3.11-minimal libpython3.11-stdlib python3.11 python3.11-minimal
+4 upgraded, 4 newly installed, 0 to remove and 62 not upgraded.
+Need to get 8086 kB of archives.
+After this operation, 3173 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian-security bookworm-security/main amd64 python3.11 amd64 3.11.2-6+deb12u9 [575 kB]
+Get:2 http://deb.debian.org/debian-security bookworm-security/main amd64 libpython3.11-stdlib amd64 3.11.2-6+deb12u9 [1798 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security/main amd64 python3.11-minimal amd64 3.11.2-6+deb12u9 [2055 kB]
+Get:4 http://deb.debian.org/debian-security bookworm-security/main amd64 libpython3.11-minimal amd64 3.11.2-6+deb12u9 [821 kB]
+Get:5 http://deb.debian.org/debian bookworm/main amd64 python3-pip-whl all 23.0.1+dfsg-1 [1717 kB]
+Get:6 http://deb.debian.org/debian bookworm/main amd64 python3-setuptools-whl all 66.1.1-1+deb12u2 [1112 kB]
+Get:7 http://deb.debian.org/debian-security bookworm-security/main amd64 python3.11-venv amd64 3.11.2-6+deb12u9 [5896 B]
+Get:8 http://deb.debian.org/debian bookworm/main amd64 python3-venv amd64 3.11.2-1+b1 [1200 B]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 8086 kB in 0s (64.3 MB/s)
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 23256 files and directories currently installed.)
+Preparing to unpack .../0-python3.11_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking python3.11 (3.11.2-6+deb12u9) over (3.11.2-6+deb12u7) ...
+Preparing to unpack .../1-libpython3.11-stdlib_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking libpython3.11-stdlib:amd64 (3.11.2-6+deb12u9) over (3.11.2-6+deb12u7) ...
+Preparing to unpack .../2-python3.11-minimal_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking python3.11-minimal (3.11.2-6+deb12u9) over (3.11.2-6+deb12u7) ...
+Preparing to unpack .../3-libpython3.11-minimal_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking libpython3.11-minimal:amd64 (3.11.2-6+deb12u9) over (3.11.2-6+deb12u7) ...
+Selecting previously unselected package python3-pip-whl.
+Preparing to unpack .../4-python3-pip-whl_23.0.1+dfsg-1_all.deb ...
+Unpacking python3-pip-whl (23.0.1+dfsg-1) ...
+Selecting previously unselected package python3-setuptools-whl.
+Preparing to unpack .../5-python3-setuptools-whl_66.1.1-1+deb12u2_all.deb ...
+Unpacking python3-setuptools-whl (66.1.1-1+deb12u2) ...
+Selecting previously unselected package python3.11-venv.
+Preparing to unpack .../6-python3.11-venv_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking python3.11-venv (3.11.2-6+deb12u9) ...
+Selecting previously unselected package python3-venv.
+Preparing to unpack .../7-python3-venv_3.11.2-1+b1_amd64.deb ...
+Unpacking python3-venv (3.11.2-1+b1) ...
+Setting up python3-setuptools-whl (66.1.1-1+deb12u2) ...
+Setting up python3-pip-whl (23.0.1+dfsg-1) ...
+Setting up libpython3.11-minimal:amd64 (3.11.2-6+deb12u9) ...
+Setting up python3.11-minimal (3.11.2-6+deb12u9) ...
+Setting up libpython3.11-stdlib:amd64 (3.11.2-6+deb12u9) ...
+Setting up python3.11 (3.11.2-6+deb12u9) ...
+Setting up python3.11-venv (3.11.2-6+deb12u9) ...
+Setting up python3-venv (3.11.2-1+b1) ...
+--> 723f283cb05b
+STEP 3/12: RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install --no-cache-dir pyyaml cryptography numpy scipy scikit-learn pytest jsonschema
+Collecting pyyaml
+  Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 12.0 MB/s eta 0:00:00
+Collecting cryptography
+  Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 58.7 MB/s eta 0:00:00
+Collecting numpy
+  Downloading numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.9 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.9/16.9 MB 92.9 MB/s eta 0:00:00
+Collecting scipy
+  Downloading scipy-1.17.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.3/35.3 MB 91.8 MB/s eta 0:00:00
+Collecting scikit-learn
+  Downloading scikit_learn-1.9.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (9.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.3/9.3 MB 100.2 MB/s eta 0:00:00
+Collecting pytest
+  Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 386.5/386.5 kB 160.7 MB/s eta 0:00:00
+Collecting jsonschema
+  Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 90.6/90.6 kB 108.1 MB/s eta 0:00:00
+Collecting cffi>=2.0.0
+  Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (217 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 217.8/217.8 kB 308.6 MB/s eta 0:00:00
+Collecting joblib>=1.4.0
+  Downloading joblib-1.6.0-py3-none-any.whl (306 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 306.1/306.1 kB 147.3 MB/s eta 0:00:00
+Collecting narwhals>=2.0.1
+  Downloading narwhals-2.27.1-py3-none-any.whl (483 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 483.2/483.2 kB 169.6 MB/s eta 0:00:00
+Collecting threadpoolctl>=3.5.0
+  Downloading threadpoolctl-3.7.0-py3-none-any.whl (26 kB)
+Collecting iniconfig>=1.0.1
+  Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+Collecting packaging>=22
+  Downloading packaging-26.3-py3-none-any.whl (129 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.0/130.0 kB 123.2 MB/s eta 0:00:00
+Collecting pluggy<2,>=1.5
+  Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+Collecting pygments>=2.7.2
+  Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 130.8 MB/s eta 0:00:00
+Collecting attrs>=22.2.0
+  Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 67.5/67.5 kB 327.8 MB/s eta 0:00:00
+Collecting jsonschema-specifications>=2023.03.6
+  Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+Collecting referencing>=0.28.4
+  Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+Collecting rpds-py>=0.25.0
+  Downloading rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (375 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 375.4/375.4 kB 215.8 MB/s eta 0:00:00
+Collecting pycparser
+  Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 62.6/62.6 kB 304.1 MB/s eta 0:00:00
+Collecting cloudpickle>=3.0
+  Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+Collecting typing-extensions>=4.4.0
+  Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB 274.3 MB/s eta 0:00:00
+Installing collected packages: typing-extensions, threadpoolctl, rpds-py, pyyaml, pygments, pycparser, pluggy, packaging, numpy, narwhals, iniconfig, cloudpickle, attrs, scipy, referencing, pytest, joblib, cffi, scikit-learn, jsonschema-specifications, cryptography, jsonschema
+Successfully installed attrs-26.1.0 cffi-2.1.1 cloudpickle-3.1.2 cryptography-50.0.2 iniconfig-2.3.1 joblib-1.6.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 narwhals-2.27.1 numpy-2.4.6 packaging-26.3 pluggy-1.7.0 pycparser-3.12 pygments-2.21.0 pytest-9.1.1 pyyaml-6.0.3 referencing-0.37.0 rpds-py-2026.9.1 scikit-learn-1.9.1 scipy-1.17.1 threadpoolctl-3.7.0 typing-extensions-4.16.0
+--> 976cf2180eee
+STEP 4/12: COPY verifier /opt/input/verifier
+--> 76c9d0fe4ea0
+STEP 5/12: COPY grover /opt/input/grover
+--> 46004c5c5c6b
+STEP 6/12: COPY eval-pack /opt/input/eval-pack
+--> 4f872ab81252
+STEP 7/12: COPY run_review.py /opt/review/run_review.py
+--> 0ea2a9f221f2
+STEP 8/12: RUN cd /opt/input/verifier/rust && CARGO_HOME=/opt/cargo-cache cargo generate-lockfile && CARGO_HOME=/opt/cargo-cache cargo fetch --locked
+    Updating crates.io index
+     Locking 43 packages to latest compatible versions
+      Adding base64 v0.22.1 (available: v0.23.1)
+      Adding ed25519-dalek v2.2.0 (available: v3.0.0)
+      Adding generic-array v0.14.7 (available: v0.14.9)
+      Adding sha2 v0.10.9 (available: v0.11.1)
+      Adding sha3 v0.10.9 (available: v0.12.0)
+ Downloading crates ...
+  Downloaded keccak v0.1.6
+  Downloaded rustc_version v0.4.1
+  Downloaded cfg-if v1.0.5
+  Downloaded curve25519-dalek-derive v0.1.1
+  Downloaded signature v2.2.0
+  Downloaded version_check v0.9.5
+  Downloaded itoa v1.0.18
+  Downloaded generic-array v0.14.7
+  Downloaded base64ct v1.8.3
+  Downloaded spki v0.7.3
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded zmij v1.0.23
+  Downloaded sha2 v0.10.9
+  Downloaded semver v1.0.28
+  Downloaded const-oid v0.9.6
+  Downloaded serde_derive v1.0.229
+  Downloaded getrandom v0.2.17
+  Downloaded serde_core v1.0.229
+  Downloaded base64 v0.22.1
+  Downloaded der v0.7.10
+  Downloaded typenum v1.20.1
+  Downloaded memchr v2.8.3
+  Downloaded ed25519-dalek v2.2.0
+  Downloaded serde_json v1.0.154
+  Downloaded serde v1.0.229
+  Downloaded proc-macro2 v1.0.107
+  Downloaded unicode-ident v1.0.27
+  Downloaded digest v0.10.7
+  Downloaded subtle v2.6.1
+  Downloaded syn v2.0.119
+  Downloaded quote v1.0.47
+  Downloaded curve25519-dalek v4.1.3
+  Downloaded syn v3.0.9
+  Downloaded pkcs8 v0.10.2
+  Downloaded rand_core v0.6.4
+  Downloaded ed25519 v2.2.3
+  Downloaded zeroize v1.9.1
+  Downloaded cpufeatures v0.2.17
+  Downloaded crypto-common v0.1.7
+  Downloaded block-buffer v0.10.4
+  Downloaded fiat-crypto v0.2.9
+  Downloaded libc v0.2.191
+  Downloaded sha3 v0.10.9
+--> 3a02a1470d11
+STEP 9/12: ENV PATH="/opt/venv/bin:${PATH}" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 HOME=/work
+--> 9ab21b6818b7
+STEP 10/12: USER 10001:10001
+--> b68d79daef1c
+STEP 11/12: WORKDIR /work
+--> 909241b4fb03
+STEP 12/12: CMD ["python", "/opt/review/run_review.py"]
+COMMIT localhost/arkhe-gravit-review:20261024
+--> dd03106a45eb
+Successfully tagged localhost/arkhe-gravit-review:20261024
+dd03106a45eb3ca086b45baace239e546665d4f8a4e6d57901f4cf0687264a4c
+exit_code: 0

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // COCKPIT - Maintainer View</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#00344d",
+            "on-primary-fixed-variant": "#005236",
+            "surface-base": "#0b0f14",
+            "tertiary-fixed": "#ffddb8",
+            "secondary-fixed-dim": "#89ceff",
+            "background": "#101419",
+            "surface-container": "#121820",
+            "surface-tint": "#4edea3",
+            "outline-variant": "#3c4a42",
+            "primary": "#4edea3",
+            "secondary": "#89ceff",
+            "on-surface-variant": "#bbcabf",
+            "text-subtle": "#475569",
+            "on-tertiary": "#472a00",
+            "surface-bright": "#36393f",
+            "on-surface": "#e0e2ea",
+            "text-muted": "#64748b",
+            "surface-elevated": "#182230",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-dim": "#101419",
+            "surface-variant": "#31353b",
+            "surface-container-high": "#262a30",
+            "border-subtle": "#1e293b",
+            "tertiary-container": "#e29100",
+            "primary-container": "#10b981",
+            "on-error": "#690005",
+            "surface-container-low": "#181c21",
+            "on-secondary-fixed-variant": "#004c6e",
+            "on-secondary-fixed": "#001e2f",
+            "tertiary": "#ffb95f",
+            "error-container": "#93000a",
+            "on-tertiary-fixed": "#2a1700",
+            "error": "#ffb4ab",
+            "primary-fixed": "#6ffbbe",
+            "on-primary": "#003824",
+            "status-pending": "#0ea5e9",
+            "on-primary-fixed": "#002113",
+            "outline": "#86948a",
+            "status-refuted": "#f43f5e",
+            "on-error-container": "#ffdad6",
+            "on-background": "#e0e2ea",
+            "on-primary-container": "#00422b",
+            "status-conjecture": "#f59e0b",
+            "primary-fixed-dim": "#4edea3",
+            "surface": "#101419",
+            "inverse-on-surface": "#2d3136",
+            "secondary-container": "#00a2e6",
+            "inverse-primary": "#006c49",
+            "on-secondary-container": "#00344e",
+            "status-verified": "#10b981",
+            "surface-container-highest": "#31353b",
+            "tertiary-fixed-dim": "#ffb95f",
+            "surface-container-lowest": "#0a0e13",
+            "inverse-surface": "#e0e2ea",
+            "border-grid": "#1f2937",
+            "secondary-fixed": "#c9e6ff",
+            "on-tertiary-container": "#523200"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "margin": "1.5rem",
+            "space-lg": "1rem",
+            "gutter-dense": "0.5rem",
+            "margin-sm": "1rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "space-sm": "0.5rem",
+            "space-xl": "1.5rem"
+          },
+          "fontFamily": {
+            "code-dense": ["JetBrains Mono"],
+            "headline-lg": ["Inter"],
+            "headline-xl": ["Inter"],
+            "label-mono-md": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "label-mono-lg": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-md": ["Inter"],
+            "label-mono-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "code-dense": ["10px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-size: 16px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    /* Ambient Glow Utilities matching design specs */
+    .glow-verified {
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+    }
+    .glow-conjecture {
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.22);
+    }
+    .glow-pending {
+      box-shadow: 0 0 12px rgba(14, 165, 233, 0.22);
+    }
+    .pulse-subtle {
+      animation: pulseSubtle 2.5s infinite ease-in-out;
+    }
+    @keyframes pulseSubtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+  </style>
+</head>
+<body class="bg-surface-base text-on-surface antialiased overflow-x-hidden min-h-screen flex flex-col font-body-md select-none">
+<!-- TOP NAV BAR (Shared Component: Cockpit Header) -->
+<header class="flex justify-between items-center w-full px-space-lg h-14 bg-surface-container border-b border-border-subtle z-50 sticky top-0">
+<!-- Brand / Status Anchor -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="text-label-mono-lg font-label-mono-lg font-bold tracking-wider text-primary">ARKHE // COCKPIT</span>
+<span class="bg-surface-elevated text-primary border border-border-subtle text-code-dense font-code-dense px-space-xs py-0.5 rounded">
+          MAINTAINER VIEW
+        </span>
+</div>
+<div class="h-4 w-px bg-border-subtle hidden md:block"></div>
+<!-- Epoch / Sync Status -->
+<div class="hidden sm:flex items-center gap-1.5 text-code-dense font-code-dense text-text-muted">
+<span class="inline-block w-2 h-2 rounded-full bg-status-verified pulse-subtle"></span>
+<span class="text-on-surface">EPOCH 0x4F92</span>
+<span class="text-text-subtle">::</span>
+<span class="text-status-verified font-medium">SYNCED</span>
+</div>
+<!-- Quick Mesh Status Badges -->
+<div class="hidden lg:flex items-center gap-space-xs text-code-dense font-code-dense ml-2">
+<div class="flex items-center gap-1 bg-surface-base px-2 py-0.5 border border-border-subtle rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified"></span>
+<span class="text-text-muted">Hashtree</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-base px-2 py-0.5 border border-border-subtle rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified"></span>
+<span class="text-text-muted">Radicle</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-base px-2 py-0.5 border border-border-subtle rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span>
+<span class="text-text-muted">Blossom (Sync)</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-elevated text-status-conjecture px-2 py-0.5 border border-border-subtle rounded">
+<span class="material-symbols-outlined text-[13px]">verified_user</span>
+<span>Witnesses 2/3</span>
+</div>
+</div>
+</div>
+<!-- Center Navigation Links (Shared Component) -->
+<nav class="hidden xl:flex items-center gap-space-lg text-label-mono-md font-label-mono-md">
+<a class="text-primary border-b-2 border-primary pb-1 cursor-pointer" href="#">Telemetry</a>
+<a class="text-on-surface-variant hover:text-on-surface cursor-pointer transition-colors duration-150" href="#">Stratum L0-L9</a>
+<a class="text-on-surface-variant hover:text-on-surface cursor-pointer transition-colors duration-150" href="#">Triad Triangulation</a>
+<a class="text-on-surface-variant hover:text-on-surface cursor-pointer transition-colors duration-150" href="#">Audit Proofs</a>
+</nav>
+<!-- Header Actions (Maintainer Primary Trailing Triggers) -->
+<div class="flex items-center gap-space-sm">
+<button class="bg-primary/10 border border-primary/40 text-primary hover:bg-primary hover:text-on-primary transition-all duration-150 text-label-mono-sm font-label-mono-sm px-space-md py-1.5 rounded flex items-center gap-1.5 glow-verified active:scale-[0.98]">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span>Sign ReleaseManifest</span>
+<span class="bg-primary/20 text-primary hover:text-on-primary px-1 text-[9px] rounded font-code-dense font-bold ml-0.5">k=2/3</span>
+</button>
+<button class="bg-surface-elevated border border-border-subtle text-on-surface hover:text-primary hover:border-primary/50 transition-all duration-150 text-label-mono-sm font-label-mono-sm px-space-sm py-1.5 rounded hidden sm:flex items-center gap-1 active:scale-[0.98]">
+<span class="material-symbols-outlined text-[14px]">terminal</span>
+<span>Propose Patch</span>
+</button>
+<!-- Maintainer Key Identity Avatar -->
+<div class="h-8 w-8 rounded bg-surface-elevated border border-border-subtle flex items-center justify-center text-status-verified font-code-dense text-[11px] font-bold ml-1 cursor-pointer" title="Operator Cryptographic Key :: did:key:z6Mku...">
+        0x4F
+      </div>
+</div>
+</header>
+<!-- MAIN COCKPIT VIEWPORT (GRID 12-COLUMNS) -->
+<div class="flex-1 flex overflow-hidden">
+<!-- VERTICAL LAYER NAVIGATOR (SideNavBar Shared Component) -->
+<aside class="flex flex-col justify-between w-64 h-[calc(100vh-3.5rem)] border-r border-border-subtle bg-surface-base py-space-md px-space-sm hidden md:flex shrink-0">
+<div>
+<!-- SideNav Header with Synchronous Badge -->
+<div class="px-space-md pb-space-md mb-space-sm border-b border-border-subtle">
+<div class="text-label-mono-md font-label-mono-md text-primary uppercase tracking-widest flex items-center justify-between">
+<span>STRATUM L0-L9</span>
+<span class="material-symbols-outlined text-primary text-[14px]">sensors</span>
+</div>
+<div class="text-code-dense font-code-dense text-text-muted mt-1 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified"></span>
+<span>EPOCH 0x4F92 :: SYNCED</span>
+</div>
+</div>
+<!-- Vertical Stratum Layer Anchors -->
+<nav class="space-y-1">
+<button class="w-full flex items-center justify-between bg-surface-elevated text-primary border-l-2 border-primary font-label-mono-sm px-space-md py-space-sm text-left transition-transform active:scale-[0.99]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">deployed_code</span>
+<span>L0-L1 Foundation</span>
+</div>
+<span class="text-status-verified text-[10px] font-code-dense">VERIFIED</span>
+</button>
+<button class="w-full flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container transition-all text-left">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span>L2-L3 Sealed Vaults</span>
+</div>
+<span class="text-text-subtle text-[10px] font-code-dense">[LOCKED]</span>
+</button>
+<button class="w-full flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container transition-all text-left">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">layers</span>
+<span>L4-L7 Protocol Strata</span>
+</div>
+<span class="text-status-conjecture text-[10px] font-code-dense">k=2/3</span>
+</button>
+<button class="w-full flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container transition-all text-left">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">hub</span>
+<span>L8 Consensus Beacon</span>
+</div>
+<span class="text-status-pending text-[10px] font-code-dense">P2P:3</span>
+</button>
+<button class="w-full flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container transition-all text-left">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">shield</span>
+<span>L9 Outer Boundary</span>
+</div>
+<span class="text-status-verified text-[10px] font-code-dense">OK</span>
+</button>
+<button class="w-full flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm hover:text-on-surface hover:bg-surface-container transition-all text-left">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">account_tree</span>
+<span>Checkpoint Ledger</span>
+</div>
+<span class="text-text-muted text-[10px] font-code-dense">0x8f2a</span>
+</button>
+</nav>
+</div>
+<!-- SideNav Footer Actions & Diagnostics -->
+<div class="space-y-space-sm pt-space-sm border-t border-border-subtle">
+<button class="w-full bg-surface-container hover:bg-surface-elevated border border-border-subtle text-primary font-label-mono-sm py-2 px-space-md rounded flex items-center justify-center gap-1.5 active:scale-[0.99] transition-all">
+<span class="material-symbols-outlined text-[14px]">anchor</span>
+<span>Anchor Checkpoint</span>
+</button>
+<div class="flex items-center justify-between px-space-md text-code-dense font-code-dense text-text-muted">
+<div class="flex items-center gap-1 hover:text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[13px]">tune</span>
+<span>Diagnostics</span>
+</div>
+<div class="flex items-center gap-1 hover:text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[13px]">terminal</span>
+<span>Terminal Shell</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- MAIN SCROLLABLE DASHBOARD CANVAS -->
+<main class="flex-1 overflow-y-auto bg-surface-base p-space-lg lg:p-space-xl space-y-space-xl">
+<!-- FAIL-CLOSED SECURITY GUARANTEE BANNER -->
+<div class="border border-border-subtle bg-surface-container px-space-md py-2.5 rounded flex flex-wrap items-center justify-between gap-2 text-code-dense font-code-dense">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="inline-flex items-center justify-center w-5 h-5 bg-status-verified/10 text-status-verified border border-status-verified/30 rounded">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+</span>
+<span class="text-text-muted">MATHEMATICAL INVARIANT:</span>
+<span class="text-status-verified font-medium">Fail-Closed Boundary Active.</span>
+<span class="text-text-muted hidden sm:inline">If L0 (Deterministic Build) or L2 (Kernel Containment) diverges, all parent strata (L3–L9) will instantly freeze state.</span>
+</div>
+<div class="flex items-center gap-3 text-text-muted">
+<span>BLAKE3 ROOT: <span class="text-on-surface text-code-dense">e7d1...09ac</span></span>
+<span class="text-status-verified bg-status-verified/10 px-1.5 py-0.5 rounded border border-status-verified/30">L0+L2 LOCKED</span>
+</div>
+</div>
+<!-- SECTION: A TRÍADE (THE TRIAD GAUGES - STRICT THREE-WAY SEPARATION) -->
+<section>
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-2">
+<h2 class="text-headline-md font-headline-md text-on-surface">Cryptographic Triad Verification</h2>
+<span class="text-code-dense font-code-dense text-text-muted tracking-wider">[INDEPENDENT VECTOR TRIANGULATION]</span>
+</div>
+<span class="text-code-dense font-code-dense text-text-muted">ISO/IEC 29128 CAT-4 COMPLIANT</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+<!-- TRIAD 1: INTEGRITY (VERDE #10b981 - LEMMA) -->
+<div class="bg-surface-container border border-border-subtle p-space-lg rounded flex flex-col justify-between relative overflow-hidden group hover:border-status-verified/40 transition-colors">
+<div class="flex items-center justify-between mb-space-md">
+<span class="text-label-mono-sm font-label-mono-sm text-text-muted uppercase tracking-wider">TRIAD 01 // COMMITMENT</span>
+<span class="bg-status-verified/10 text-status-verified border border-status-verified/30 text-code-dense font-code-dense px-2 py-0.5 rounded font-bold">
+                τ: LEMMA (VERIFIED)
+              </span>
+</div>
+<div class="flex items-center gap-space-lg py-2">
+<!-- Circular SVG Ring Gauge -->
+<div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<!-- Track -->
+<path class="text-surface-elevated stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3"></path>
+<!-- Emerald Stroke (100% Verified) -->
+<path class="text-status-verified stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="100, 100" stroke-linecap="round" stroke-width="3.2"></path>
+</svg>
+<div class="absolute flex flex-col items-center justify-center text-center">
+<span class="text-headline-md font-label-mono-lg font-bold text-status-verified leading-none">100%</span>
+<span class="text-[9px] font-code-dense text-text-muted mt-0.5">MATCH</span>
+</div>
+</div>
+<!-- Metrics & Guarantee -->
+<div class="space-y-1 text-code-dense font-code-dense">
+<div class="text-headline-md font-headline-md text-on-surface font-semibold">INTEGRITY</div>
+<div class="text-status-verified">Bytes match commitment</div>
+<div class="text-text-muted text-[10px]">BLAKE3 Root verified in memory.</div>
+<div class="text-text-muted text-[10px] flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-status-verified text-[12px]">check_circle</span>
+<span>Zero divergence detected</span>
+</div>
+</div>
+</div>
+<!-- Guarantee Footer Details -->
+<div class="mt-space-md pt-space-sm border-t border-border-subtle flex items-center justify-between text-code-dense font-code-dense text-text-muted">
+<span>ROOT: <span class="text-on-surface">b3_8f29c...aa4</span></span>
+<span class="text-status-verified">2 Builders Coincide</span>
+</div>
+</div>
+<!-- TRIAD 2: AUTHORITY (AMARELO #f59e0b - CONJECTURE / ESCALATE) -->
+<div class="bg-surface-container border border-border-subtle p-space-lg rounded flex flex-col justify-between relative overflow-hidden group hover:border-status-conjecture/40 transition-colors">
+<div class="flex items-center justify-between mb-space-md">
+<span class="text-label-mono-sm font-label-mono-sm text-text-muted uppercase tracking-wider">TRIAD 02 // GOVERNANCE</span>
+<span class="bg-status-conjecture/10 text-status-conjecture border border-status-conjecture/30 text-code-dense font-code-dense px-2 py-0.5 rounded font-bold">
+                τ: CONJECTURE (2/3)
+              </span>
+</div>
+<div class="flex items-center gap-space-lg py-2">
+<!-- Circular SVG Ring Gauge (66% = 2/3) -->
+<div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<!-- Track -->
+<path class="text-surface-elevated stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3"></path>
+<!-- Amber Stroke (66.6% k=2/3) -->
+<path class="text-status-conjecture stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="66.6, 100" stroke-linecap="round" stroke-width="3.2"></path>
+</svg>
+<div class="absolute flex flex-col items-center justify-center text-center">
+<span class="text-headline-md font-label-mono-lg font-bold text-status-conjecture leading-none">2/3</span>
+<span class="text-[9px] font-code-dense text-text-muted mt-0.5">QUORUM</span>
+</div>
+</div>
+<!-- Metrics & Delegates State -->
+<div class="space-y-1 text-code-dense font-code-dense">
+<div class="text-headline-md font-headline-md text-on-surface font-semibold">AUTHORITY</div>
+<div class="text-status-conjecture">Awaiting keyset threshold</div>
+<div class="text-[10px] space-y-0.5 mt-1">
+<div class="text-text-muted flex items-center gap-1"><span class="text-status-verified">[✔]</span> Del. A: <span class="text-on-surface">Signed</span></div>
+<div class="text-text-muted flex items-center gap-1"><span class="text-status-verified">[✔]</span> Del. B: <span class="text-on-surface">Signed</span></div>
+<div class="text-text-muted flex items-center gap-1"><span class="text-status-conjecture">[!]</span> Del. C: <span class="text-status-conjecture">Pending did:key:z6Mku...</span></div>
+</div>
+</div>
+</div>
+<!-- Guarantee Footer Details -->
+<div class="mt-space-md pt-space-sm border-t border-border-subtle flex items-center justify-between text-code-dense font-code-dense text-text-muted">
+<span>WORMGRAPH #892</span>
+<span class="text-status-conjecture">Awaiting Final Delegate</span>
+</div>
+</div>
+<!-- TRIAD 3: AVAILABILITY (AZUL #0ea5e9 - PENDING / IDENTITY BINDING) -->
+<div class="bg-surface-container border border-border-subtle p-space-lg rounded flex flex-col justify-between relative overflow-hidden group hover:border-status-pending/40 transition-colors">
+<div class="flex items-center justify-between mb-space-md">
+<span class="text-label-mono-sm font-label-mono-sm text-text-muted uppercase tracking-wider">TRIAD 03 // PROPAGATION</span>
+<span class="bg-status-pending/10 text-status-pending border border-status-pending/30 text-code-dense font-code-dense px-2 py-0.5 rounded font-bold">
+                τ: PENDING (MIRRORS)
+              </span>
+</div>
+<div class="flex items-center gap-space-lg py-2">
+<!-- Circular SVG Ring Gauge (75% Availability) -->
+<div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<!-- Track -->
+<path class="text-surface-elevated stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3"></path>
+<!-- Cyan Stroke (78%) -->
+<path class="text-status-pending stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="78, 100" stroke-linecap="round" stroke-width="3.2"></path>
+</svg>
+<div class="absolute flex flex-col items-center justify-center text-center">
+<span class="text-headline-md font-label-mono-lg font-bold text-status-pending leading-none">2/3</span>
+<span class="text-[9px] font-code-dense text-text-muted mt-0.5">NODES</span>
+</div>
+</div>
+<!-- Nodes Telemetry -->
+<div class="space-y-1 text-code-dense font-code-dense">
+<div class="text-headline-md font-headline-md text-on-surface font-semibold">AVAILABILITY</div>
+<div class="text-status-pending">Distributed across mirrors</div>
+<div class="text-[10px] space-y-0.5 mt-1">
+<div class="text-text-muted flex items-center gap-1"><span class="text-status-verified">[✔]</span> Hashtree: <span class="text-on-surface">100% pinned</span></div>
+<div class="text-text-muted flex items-center gap-1"><span class="text-status-verified">[✔]</span> Radicle: <span class="text-on-surface">OK (Seed node #1)</span></div>
+<div class="text-text-muted flex items-center gap-1"><span class="text-status-pending">[⟳]</span> Blossom: <span class="text-status-pending">Sincronizando (64%)</span></div>
+</div>
+</div>
+</div>
+<!-- Guarantee Footer Details -->
+<div class="mt-space-md pt-space-sm border-t border-border-subtle flex items-center justify-between text-code-dense font-code-dense text-text-muted">
+<span>PEERS: 18 CONNECTED</span>
+<span class="text-status-pending">DHT Sync in Progress</span>
+</div>
+</div>
+</div>
+</section>
+<!-- TWO-COLUMN WORKBENCH: L0-L9 VERTICAL STRATA STACK (LEFT) + TELEMETRY / AUDIT LEDGER (RIGHT) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT WORKBENCH (7 COLS): A PILHA DE CAMADAS L0–L9 (VERTICAL STACK) -->
+<div class="lg:col-span-7 bg-surface-container border border-border-subtle rounded overflow-hidden">
+<div class="px-space-md py-space-sm bg-surface-elevated border-b border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]">layers</span>
+<span class="text-label-mono-md font-label-mono-md text-on-surface">PROTOCOL LAYER STACK (STRATA L0–L9)</span>
+</div>
+<div class="flex items-center gap-2 text-code-dense font-code-dense text-text-muted">
+<span class="w-2 h-2 rounded-full bg-status-verified"></span>
+<span>STATE: VERIFIED FAIL-CLOSED</span>
+</div>
+</div>
+<!-- Vertical Stratum Stack Rows (Descendente: L9 até L0) -->
+<div class="divide-y divide-border-subtle font-code-dense text-code-dense">
+<!-- L9: Outer Boundary -->
+<div class="p-space-sm hover:bg-surface-elevated/50 transition-colors flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-surface-base text-text-muted border border-border-subtle rounded font-bold">L9</span>
+<div>
+<div class="font-medium text-on-surface flex items-center gap-1.5">
+<span>Outer Boundary (Observer Gateway)</span>
+<span class="text-text-muted text-[10px]">· Reverse Proxy TLS 1.3</span>
+</div>
+<div class="text-text-muted text-[10px]">All egress channels quarantined behind signed enclave attestations.</div>
+</div>
+</div>
+<span class="bg-status-verified/10 text-status-verified border border-status-verified/30 px-2 py-0.5 rounded text-[10px]">
+                NOMINAL
+              </span>
+</div>
+<!-- L8: Distribution & Blobs -->
+<div class="p-space-sm hover:bg-surface-elevated/50 transition-colors flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-surface-base text-text-muted border border-border-subtle rounded font-bold">L8</span>
+<div>
+<div class="font-medium text-on-surface flex items-center gap-1.5">
+<span>Distribution &amp; Blobs</span>
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending pulse-subtle inline-block"></span>
+</div>
+<div class="text-text-muted text-[10px]">
+                    Hashtree <span class="text-status-pending">nhash:0x8f2a...d01</span> · Radicle (OK) · Blossom (Sync 64%)
+                  </div>
+</div>
+</div>
+<span class="bg-status-pending/10 text-status-pending border border-status-pending/30 px-2 py-0.5 rounded text-[10px]">
+                REPLICATING (2/3)
+              </span>
+</div>
+<!-- L7: Packaging & Release Pipeline -->
+<div class="p-space-sm hover:bg-surface-elevated/50 transition-colors flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-surface-base text-text-muted border border-border-subtle rounded font-bold">L7</span>
+<div>
+<div class="font-medium text-on-surface">Packaging &amp; Release Pipeline</div>
+<div class="text-text-muted text-[10px]">v1.4.2 in staging: Tarball reproducible hash calculated across 4 artifacts.</div>
+</div>
+</div>
+<span class="bg-surface-base text-on-surface border border-border-subtle px-2 py-0.5 rounded text-[10px]">
+                v1.4.2 [STAGING]
+              </span>
+</div>
+<!-- L6: Cognition / Proof Synthesis -->
+<div class="p-space-sm hover:bg-surface-elevated/50 transition-colors flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-surface-base text-text-muted border border-border-subtle rounded font-bold">L6</span>
+<div>
+<div class="font-medium text-on-surface">Cognition / Proof Synthesis</div>
+<div class="text-text-muted text-[10px]">Formal synthesis evaluation: Verified trace logic with zero axiomatic gaps.</div>
+</div>
+</div>
+<!-- Selo Amarelo 'EVIDENCE, NOT APPROVAL' requerido -->
+<span class="bg-status-conjecture/15 text-status-conjecture border border-status-conjecture/40 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider">
+                EVIDENCE, NOT APPROVAL
+              </span>
+</div>
+<!-- L5: Audit Verification -->
+<div class="p-space-sm hover:bg-surface-elevated/50 transition-colors flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-surface-base text-text-muted border border-border-subtle rounded font-bold">L5</span>
+<div>
+<div class="font-medium text-on-surface">Audit Verification</div>
+<div class="text-text-muted text-[10px]">MMR inclusion confirmed &amp; BLAKE3 logical check: zero path discrepancies.</div>
+</div>
+</div>
+<span class="bg-status-verified/10 text-status-verified border border-status-verified/30 px-2 py-0.5 rounded text-[10px]">
+                MMR CONFIRMED
+              </span>
+</div>
+<!-- L4: Witness Co-signing -->
+<div class="p-space-sm hover:bg-surface-elevated/50 transition-colors flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-surface-base text-text-muted border border-border-subtle rounded font-bold">L4</span>
+<div>
+<div class="font-medium text-on-surface">Witness Co-signing</div>
+<div class="text-text-muted text-[10px]">Interlegis &amp; Universidade X confirmed signatures over MMR leaf 14,029.</div>
+</div>
+</div>
+<span class="bg-status-verified/10 text-status-verified border border-status-verified/30 px-2 py-0.5 rounded text-[10px]">
+                2/2 WITNESSES OK
+              </span>
+</div>
+<!-- L3: Governance / Keyset - FIXED & LOCKED -->
+<div class="p-space-sm bg-surface-base/60 border-l-2 border-status-verified flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-status-verified/20 text-status-verified border border-status-verified/40 rounded font-bold">L3</span>
+<div>
+<div class="font-medium text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[13px] text-status-verified">lock</span>
+<span class="text-status-verified">Governance / Keyset</span>
+<span class="text-[10px] text-text-muted">· CADEADO FIXO &amp; BLOQUEADO</span>
+</div>
+<div class="text-text-muted text-[10px]">WormGraph folha #892: Ratchet state locked at transition index 0x90.</div>
+</div>
+</div>
+<span class="bg-surface-elevated text-status-verified border border-border-subtle px-2 py-0.5 rounded text-[10px] font-bold">
+                [LOCKED WORMGRAPH #892]
+              </span>
+</div>
+<!-- L2: Kernel / Containment - FIXED & LOCKED -->
+<div class="p-space-sm bg-surface-base/60 border-l-2 border-status-verified flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-status-verified/20 text-status-verified border border-status-verified/40 rounded font-bold">L2</span>
+<div>
+<div class="font-medium text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[13px] text-status-verified">lock</span>
+<span class="text-status-verified">Kernel / Containment</span>
+<span class="text-[10px] text-text-muted">· CADEADO FIXO &amp; BLOQUEADO</span>
+</div>
+<div class="text-text-muted text-[10px]">Invariantes V1-V4 intactos. Wasm sandbox hypervisor isolation validado.</div>
+</div>
+</div>
+<span class="bg-surface-elevated text-status-verified border border-border-subtle px-2 py-0.5 rounded text-[10px] font-bold">
+                [INVARIANTS V1–V4 INTACT]
+              </span>
+</div>
+<!-- L1: Content Addressing & Merkle Trees -->
+<div class="p-space-sm hover:bg-surface-elevated/50 transition-colors flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-surface-base text-text-muted border border-border-subtle rounded font-bold">L1</span>
+<div>
+<div class="font-medium text-on-surface">Content Addressing &amp; Merkle Trees</div>
+<div class="text-text-muted text-[10px]">DAG depth 14, 131.072 leaves verified without cycle or collision.</div>
+</div>
+</div>
+<span class="bg-status-verified/10 text-status-verified border border-status-verified/30 px-2 py-0.5 rounded text-[10px]">
+                DAG INTACT
+              </span>
+</div>
+<!-- L0: Deterministic Build -->
+<div class="p-space-sm hover:bg-surface-elevated/50 transition-colors flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-1.5 py-0.5 bg-surface-base text-text-muted border border-border-subtle rounded font-bold">L0</span>
+<div>
+<div class="font-medium text-on-surface flex items-center gap-1.5">
+<span>Deterministic Build (Root Foundation)</span>
+<span class="text-status-verified text-[10px]">[Nix Flake]</span>
+</div>
+<div class="text-text-muted text-[10px]">narHash verificado e idêntico em 2 builders independentes (x86_64 + aarch64).</div>
+</div>
+</div>
+<span class="bg-status-verified/10 text-status-verified border border-status-verified/30 px-2 py-0.5 rounded text-[10px]">
+                BIT-FOR-BIT MATCH
+              </span>
+</div>
+</div>
+<!-- Fail-Closed Cascade Principle Note (Footer do card) -->
+<div class="p-space-sm bg-surface-base border-t border-border-subtle text-code-dense font-code-dense text-text-subtle flex items-center justify-between">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-text-muted">shield</span>
+<span>Continuous Integrity Watchdog: Poll 500ms</span>
+</span>
+<span class="text-text-muted">Sub-stratum fail-closed enforcement enabled</span>
+</div>
+</div>
+<!-- RIGHT WORKBENCH (5 COLS): HASH INSPECTOR & LIVE VERIFICATION LEDGER -->
+<div class="lg:col-span-5 space-y-space-lg">
+<!-- HASH & CRYPTOGRAPHIC COMMITMENT INSPECTOR -->
+<div class="bg-surface-container border border-border-subtle rounded p-space-md space-y-space-sm">
+<div class="flex items-center justify-between border-b border-border-subtle pb-space-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[15px]">key</span>
+<span class="text-label-mono-sm font-label-mono-sm text-on-surface">CRYPTOGRAPHIC PROOF COMMITMENTS</span>
+</div>
+<span class="text-code-dense font-code-dense text-text-muted">READ-ONLY</span>
+</div>
+<!-- Hashes com botão interativo de cópia -->
+<div class="space-y-space-xs font-code-dense text-code-dense">
+<!-- BLAKE3 Root -->
+<div class="bg-surface-base p-2 border border-border-subtle rounded">
+<div class="flex items-center justify-between text-text-muted mb-0.5">
+<span class="text-[10px] text-primary">BLAKE3 RELEASE ROOT:</span>
+<button class="text-text-muted hover:text-primary transition-colors flex items-center gap-0.5 text-[10px]" onclick="navigator.clipboard.writeText('b3_8f29c01824ef78d9b1a039f824e8912ba09e13d98a87b64f9812904cf72'); alert('BLAKE3 Hash Copied');">
+<span class="material-symbols-outlined text-[12px]">content_copy</span>
+<span>Copy</span>
+</button>
+</div>
+<div class="text-on-surface truncate">b3_8f29c01824ef78d9b1a039f824e8912ba09e13d98a87b64f9812904cf72</div>
+</div>
+<!-- narHash -->
+<div class="bg-surface-base p-2 border border-border-subtle rounded">
+<div class="flex items-center justify-between text-text-muted mb-0.5">
+<span class="text-[10px] text-primary">NIX narHash (L0 VERIFIED):</span>
+<button class="text-text-muted hover:text-primary transition-colors flex items-center gap-0.5 text-[10px]" onclick="navigator.clipboard.writeText('sha256-4Yt9y+6yQfQ9zP4rZ5W2pX5h8pE3gK8vK9vR8f7fB0='); alert('narHash Copied');">
+<span class="material-symbols-outlined text-[12px]">content_copy</span>
+<span>Copy</span>
+</button>
+</div>
+<div class="text-on-surface truncate">sha256-4Yt9y+6yQfQ9zP4rZ5W2pX5h8pE3gK8vK9vR8f7fB0=</div>
+</div>
+<!-- MMR Root -->
+<div class="bg-surface-base p-2 border border-border-subtle rounded">
+<div class="flex items-center justify-between text-text-muted mb-0.5">
+<span class="text-[10px] text-primary">MMR ROOT (LEAF 14,029):</span>
+<button class="text-text-muted hover:text-primary transition-colors flex items-center gap-0.5 text-[10px]" onclick="navigator.clipboard.writeText('0x9a834b68e98b049382103fca9183b028491039840294bca910384910283'); alert('MMR Root Copied');">
+<span class="material-symbols-outlined text-[12px]">content_copy</span>
+<span>Copy</span>
+</button>
+</div>
+<div class="text-on-surface truncate">0x9a834b68e98b049382103fca9183b028491039840294bca910384910283</div>
+</div>
+</div>
+</div>
+<!-- LIVE VERIFICATION LEDGER (TEMPO REAL COM BADGES EPISTÊMICOS) -->
+<div class="bg-surface-container border border-border-subtle rounded p-space-md space-y-space-sm">
+<div class="flex items-center justify-between border-b border-border-subtle pb-space-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[15px]">list_alt</span>
+<span class="text-label-mono-sm font-label-mono-sm text-on-surface">LIVE VERIFICATION LEDGER</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified pulse-subtle"></span>
+<span class="text-code-dense font-code-dense text-text-muted">STREAMING</span>
+</div>
+</div>
+<!-- Ledger Feed Items -->
+<div class="space-y-2 font-code-dense text-code-dense max-h-72 overflow-y-auto pr-1">
+<!-- Ledger Event 1 -->
+<div class="p-2 bg-surface-base border border-border-subtle rounded space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-text-muted text-[10px]">14:22:09.112 UTC</span>
+<span class="bg-status-verified/10 text-status-verified border border-status-verified/30 text-[10px] px-1.5 py-0.2 rounded font-bold">
+                    τ: LEMMA
+                  </span>
+</div>
+<div class="text-on-surface font-medium">[✔] Interlegis witness signature committed to MMR block #14029.</div>
+<div class="text-text-muted text-[10px] truncate">sig: ed25519:0x892a0e4... verified by anchor key.</div>
+</div>
+<!-- Ledger Event 2 -->
+<div class="p-2 bg-surface-base border border-border-subtle rounded space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-text-muted text-[10px]">14:20:44.890 UTC</span>
+<span class="bg-status-conjecture/10 text-status-conjecture border border-status-conjecture/30 text-[10px] px-1.5 py-0.2 rounded font-bold">
+                    τ: CONJECTURE
+                  </span>
+</div>
+<div class="text-on-surface font-medium">[!] Delegate Keyset signature threshold evaluated (2 of 3 met).</div>
+<div class="text-status-conjecture text-[10px]">Waiting for did:key:z6Mku... Escrow timeout in 42m.</div>
+</div>
+<!-- Ledger Event 3 -->
+<div class="p-2 bg-surface-base border border-border-subtle rounded space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-text-muted text-[10px]">14:18:12.301 UTC</span>
+<span class="bg-status-pending/10 text-status-pending border border-status-pending/30 text-[10px] px-1.5 py-0.2 rounded font-bold">
+                    τ: PENDING
+                  </span>
+</div>
+<div class="text-on-surface font-medium">[⟳] Blossom blob replication chunk 0x14 dispatched.</div>
+<div class="text-text-muted text-[10px]">Peer blossom.node-04: acknowledgment received (64%).</div>
+</div>
+<!-- Ledger Event 4 -->
+<div class="p-2 bg-surface-base border border-border-subtle rounded space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-text-muted text-[10px]">14:12:00.001 UTC</span>
+<span class="bg-status-verified/10 text-status-verified border border-status-verified/30 text-[10px] px-1.5 py-0.2 rounded font-bold">
+                    τ: LEMMA
+                  </span>
+</div>
+<div class="text-on-surface font-medium">[✔] L0 Nix Flake narHash matched builder-arm64 and builder-x86_64.</div>
+<div class="text-text-muted text-[10px]">Determinism delta: 0 bytes. Strict hermetic sandbox clean.</div>
+</div>
+</div>
+</div>
+<!-- MAINTAINER QUICK ACTION TRAY (FAIL-CLOSED GATES) -->
+<div class="bg-surface-container border border-border-subtle rounded p-space-md space-y-space-sm">
+<div class="text-label-mono-sm font-label-mono-sm text-on-surface flex items-center justify-between border-b border-border-subtle pb-space-sm">
+<span>MAINTAINER ACTION DISPATCH</span>
+<span class="text-code-dense font-code-dense text-status-verified">FAIL-CLOSED PROTOCOL</span>
+</div>
+<div class="space-y-2">
+<!-- Action 1: Sign Ready Release -->
+<button class="w-full bg-surface-elevated hover:bg-primary/10 border border-primary/40 hover:border-primary text-primary transition-all p-2 rounded flex items-center justify-between text-label-mono-sm font-label-mono-sm active:scale-[0.99]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span>Authorize ReleaseManifest v1.4.2</span>
+</div>
+<span class="text-code-dense font-code-dense bg-primary/20 text-primary px-1.5 py-0.5 rounded">Ready (k=2/3)</span>
+</button>
+<!-- Action 2: Trigger Witness Poll -->
+<button class="w-full bg-surface-base hover:bg-surface-elevated border border-border-subtle text-on-surface-variant hover:text-on-surface transition-all p-2 rounded flex items-center justify-between text-label-mono-sm font-label-mono-sm active:scale-[0.99]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">sensors</span>
+<span>Poll Offline Delegate (did:key:z6Mku...)</span>
+</div>
+<span class="text-code-dense font-code-dense text-text-muted">Retry #3</span>
+</button>
+<!-- Action 3: Inviolable / Fail-closed Gateway (Simulated Locked State) -->
+<button class="w-full bg-surface-base/50 border border-border-subtle/50 text-text-muted cursor-not-allowed opacity-50 p-2 rounded flex items-center justify-between text-label-mono-sm font-label-mono-sm" disabled="">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">lock_clock</span>
+<span>Bypass Consensus Quorum</span>
+</div>
+<span class="text-code-dense font-code-dense text-status-refuted bg-status-refuted/10 px-1 rounded">FAIL-CLOSED [LOCKED]</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- BOTTOM AUDIT PROOF TELEMETRY STRIP -->
+<footer class="border-t border-border-subtle pt-space-md pb-space-sm flex flex-wrap items-center justify-between gap-4 text-code-dense font-code-dense text-text-muted">
+<div class="flex items-center gap-4">
+<span class="text-on-surface font-semibold">ARKHE PROTOCOL SENTINEL v4.19</span>
+<span>EPOCH: <span class="text-on-surface">0x4F92</span></span>
+<span>WORMGRAPH HEIGHT: <span class="text-on-surface">#14,029</span></span>
+<span>ENTROPY POOL: <span class="text-status-verified">256-bit CONSTANT</span></span>
+</div>
+<div class="flex items-center gap-3">
+<span class="flex items-center gap-1 text-status-verified">
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified"></span>
+<span>SYSTEM AUDIT PASSED</span>
+</span>
+<span class="text-text-subtle">|</span>
+<span class="text-on-surface-variant hover:text-primary cursor-pointer transition-colors">Download Signed Audit Bundle (.tar.gz)</span>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

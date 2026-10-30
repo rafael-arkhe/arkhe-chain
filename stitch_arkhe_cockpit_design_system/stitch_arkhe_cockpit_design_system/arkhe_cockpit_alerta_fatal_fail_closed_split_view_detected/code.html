@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Cockpit - Alerta Fatal (Fail-Closed: Split View Detected)</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface-variant": "#bbcabf",
+            "border-grid": "#1f2937",
+            "on-surface": "#e0e2ea",
+            "tertiary": "#ffb95f",
+            "status-pending": "#0ea5e9",
+            "surface-base": "#0b0f14",
+            "inverse-surface": "#e0e2ea",
+            "on-tertiary-fixed-variant": "#653e00",
+            "text-subtle": "#475569",
+            "error-container": "#93000a",
+            "on-background": "#e0e2ea",
+            "surface-container-low": "#181c21",
+            "tertiary-container": "#e29100",
+            "on-primary-fixed": "#002113",
+            "primary-container": "#10b981",
+            "background": "#101419",
+            "on-primary-container": "#00422b",
+            "inverse-on-surface": "#2d3136",
+            "secondary-container": "#00a2e6",
+            "surface-tint": "#4edea3",
+            "status-conjecture": "#f59e0b",
+            "on-secondary-fixed-variant": "#004c6e",
+            "surface-dim": "#101419",
+            "surface-elevated": "#182230",
+            "primary-fixed-dim": "#4edea3",
+            "on-secondary-container": "#00344e",
+            "surface-container": "#1c2025",
+            "surface-bright": "#36393f",
+            "border-subtle": "#1e293b",
+            "on-secondary": "#00344d",
+            "tertiary-fixed": "#ffddb8",
+            "outline-variant": "#3c4a42",
+            "on-error-container": "#ffdad6",
+            "surface": "#101419",
+            "on-tertiary-fixed": "#2a1700",
+            "surface-container-lowest": "#0a0e13",
+            "inverse-primary": "#006c49",
+            "on-error": "#690005",
+            "on-tertiary-container": "#523200",
+            "secondary-fixed": "#c9e6ff",
+            "secondary-fixed-dim": "#89ceff",
+            "error": "#ffb4ab",
+            "on-secondary-fixed": "#001e2f",
+            "surface-variant": "#31353b",
+            "outline": "#86948a",
+            "text-muted": "#64748b",
+            "surface-container-highest": "#31353b",
+            "primary-fixed": "#6ffbbe",
+            "secondary": "#89ceff",
+            "status-refuted": "#f43f5e",
+            "on-tertiary": "#472a00",
+            "primary": "#4edea3",
+            "on-primary-fixed-variant": "#005236",
+            "tertiary-fixed-dim": "#ffb95f",
+            "on-primary": "#003824",
+            "status-verified": "#10b981",
+            "surface-container-high": "#262a30"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "gutter-dense": "0.5rem",
+            "space-sm": "0.5rem",
+            "margin-sm": "1rem",
+            "space-xl": "1.5rem",
+            "gutter": "1rem",
+            "margin": "1.5rem",
+            "space-md": "0.75rem",
+            "space-lg": "1rem"
+          },
+          "fontFamily": {
+            "code-dense": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "body-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Inter"],
+            "label-mono-md": ["JetBrains Mono"],
+            "label-mono-lg": ["JetBrains Mono"],
+            "label-mono-sm": ["JetBrains Mono"],
+            "headline-xl": ["Inter"]
+          },
+          "fontSize": {
+            "code-dense": ["10px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "label-mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "label-mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 18px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    @keyframes alert-pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 15px rgba(244, 63, 94, 0.45); }
+      50% { opacity: 0.65; box-shadow: 0 0 4px rgba(244, 63, 94, 0.15); }
+    }
+    .animate-fatal-pulse {
+      animation: alert-pulse 1.8s infinite ease-in-out;
+    }
+
+    /* Surgical Scanline Overlay */
+    .failclosed-scanlines {
+      background: linear-gradient(
+        rgba(244, 63, 94, 0.03) 50%, 
+        rgba(11, 15, 20, 0.25) 50%
+      );
+      background-size: 100% 4px;
+    }
+  </style>
+</head>
+<body class="bg-surface-base text-on-surface antialiased overflow-x-hidden min-h-screen flex flex-col font-body-md select-none">
+<!-- ========================================================================= -->
+<!-- TOP APP BAR (ARKHE // COCKPIT - CRITICAL FAIL-CLOSED ALARM STATE)        -->
+<!-- ========================================================================= -->
+<header class="flex justify-between items-center w-full px-space-lg h-14 bg-surface-container border-b border-status-refuted sticky top-0 z-50 shadow-[0_0_20px_rgba(244,63,94,0.3)]">
+<!-- Brand / Status Indicators -->
+<div class="flex items-center space-x-space-md">
+<div class="flex items-center space-x-space-sm">
+<span class="material-symbols-outlined text-status-refuted animate-bounce" data-icon="gpp_maybe">gpp_maybe</span>
+<span class="text-label-mono-lg font-label-mono-lg font-bold tracking-wider text-status-refuted">ARKHE // COCKPIT</span>
+</div>
+<div class="h-4 w-[1px] bg-border-grid"></div>
+<!-- Emergency Badges -->
+<span class="bg-status-refuted/20 border border-status-refuted/60 text-status-refuted text-label-mono-sm font-label-mono-sm px-2 py-0.5 rounded uppercase tracking-wider font-semibold animate-fatal-pulse">
+        FATAL PROTOCOL LOCKOUT
+      </span>
+<span class="bg-status-refuted/15 border border-status-refuted/40 text-status-refuted text-label-mono-sm font-label-mono-sm px-2 py-0.5 rounded tracking-wide hidden lg:inline-flex items-center space-x-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-refuted animate-ping mr-1"></span>
+        EMERGENCY FAIL-CLOSED ACTIVE
+      </span>
+</div>
+<!-- Central Telemetry Status Linkages -->
+<div class="hidden xl:flex items-center space-x-space-lg text-label-mono-md font-label-mono-md">
+<div class="flex items-center space-x-1 text-status-refuted">
+<span class="material-symbols-outlined text-sm" data-icon="error">error</span>
+<span>INVARIANTS: REFUTED [AXIOM VIOLATION]</span>
+</div>
+<div class="h-3 w-[1px] bg-border-grid"></div>
+<div class="text-status-conjecture flex items-center space-x-1">
+<span class="material-symbols-outlined text-sm" data-icon="pause_circle">pause_circle</span>
+<span>EPOCH 0x4F92 :: FROZEN AT RATIO DIVERGENCE</span>
+</div>
+</div>
+<!-- Trailing Actions & Lockdown Override Shield -->
+<div class="flex items-center space-x-space-sm">
+<div class="flex items-center space-x-1 text-text-muted mr-space-sm">
+<span class="material-symbols-outlined p-1 border border-border-subtle bg-surface-base" data-icon="verified_user" title="Security Enclave">verified_user</span>
+<span class="material-symbols-outlined p-1 border border-border-subtle bg-surface-base text-status-refuted" data-icon="lock" style="font-variation-settings: 'FILL' 1;" title="Lockout active">lock</span>
+<span class="material-symbols-outlined p-1 border border-border-subtle bg-surface-base" data-icon="sensors" title="Hardware sensors">sensors</span>
+<span class="material-symbols-outlined p-1 border border-border-subtle bg-surface-base" data-icon="terminal" title="Quarantine Terminal">terminal</span>
+</div>
+<!-- Frozen Actions strictly disabled per fail-closed invariant -->
+<button class="opacity-40 cursor-not-allowed border border-border-subtle bg-surface-container-low text-text-muted text-label-mono-sm font-label-mono-sm px-3 py-1.5 rounded flex items-center space-x-1" disabled="">
+<span class="material-symbols-outlined text-xs" data-icon="edit_document">edit_document</span>
+<span>Propose Patch [LOCKED]</span>
+</button>
+<button class="opacity-45 cursor-not-allowed border border-status-refuted/50 bg-status-refuted/10 text-status-refuted text-label-mono-sm font-label-mono-sm px-3 py-1.5 rounded flex items-center space-x-1" disabled="">
+<span class="material-symbols-outlined text-xs" data-icon="lock">lock</span>
+<span>Sign ReleaseManifest [DISABLED]</span>
+</button>
+<div class="w-8 h-8 rounded border border-status-refuted/70 bg-surface-elevated flex items-center justify-center text-status-refuted ml-2" title="Operator cryptographic key fingerprint avatar">
+<span class="material-symbols-outlined text-sm" data-icon="fingerprint">fingerprint</span>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE: SIDE NAV (L0-L9 FROZEN) + COCKPIT EMERGENCY CANVAS        -->
+<!-- ========================================================================= -->
+<div class="flex flex-1 w-full overflow-hidden">
+<!-- SIDEBAR: Stratum L0-L9 (Vertical Layer Navigator locked in red quarantine) -->
+<aside class="flex flex-col justify-between w-64 h-[calc(100vh-3.5rem)] border-r border-border-subtle bg-surface-base py-space-md px-space-sm shrink-0">
+<div>
+<!-- Stratum Header -->
+<div class="px-space-md mb-4 pb-3 border-b border-border-grid">
+<div class="text-label-mono-sm font-label-mono-sm text-status-refuted uppercase tracking-widest flex items-center justify-between">
+<span>STRATUM L0-L9</span>
+<span class="w-2 h-2 rounded-full bg-status-refuted animate-ping"></span>
+</div>
+<div class="text-code-dense font-code-dense text-status-conjecture mt-1 flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs" data-icon="lock_clock">lock_clock</span>
+<span>EPOCH 0x4F92 :: SYNC HALTED</span>
+</div>
+</div>
+<!-- Layer Stack Navigation -->
+<nav class="space-y-1">
+<!-- L0-L1 Foundation -->
+<div class="flex items-center justify-between px-space-md py-space-sm text-label-mono-sm font-label-mono-sm text-text-muted bg-surface-container/40 border-l-2 border-text-subtle opacity-70">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm" data-icon="deployed_code">deployed_code</span>
+<span>L0-L1 Foundation</span>
+</div>
+<span class="material-symbols-outlined text-xs text-text-subtle" data-icon="lock">lock</span>
+</div>
+<!-- L2-L3 Sealed Vaults -->
+<div class="flex items-center justify-between px-space-md py-space-sm text-label-mono-sm font-label-mono-sm text-text-muted bg-surface-container/40 border-l-2 border-text-subtle opacity-70">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm" data-icon="lock">lock</span>
+<span>L2-L3 Sealed Vaults</span>
+</div>
+<span class="material-symbols-outlined text-xs text-text-subtle" data-icon="shield">shield</span>
+</div>
+<!-- L4-L7 Protocol Strata -->
+<div class="flex items-center justify-between px-space-md py-space-sm text-label-mono-sm font-label-mono-sm text-text-muted bg-surface-container/40 border-l-2 border-text-subtle opacity-70">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm" data-icon="layers">layers</span>
+<span>L4-L7 Protocol Strata</span>
+</div>
+<span class="material-symbols-outlined text-xs text-status-conjecture" data-icon="pause">pause</span>
+</div>
+<!-- L8 Consensus Beacon -->
+<div class="flex items-center justify-between px-space-md py-space-sm text-label-mono-sm font-label-mono-sm text-status-conjecture bg-surface-container-high/40 border-l-2 border-status-conjecture">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm text-status-conjecture" data-icon="hub">hub</span>
+<span>L8 Consensus Beacon</span>
+</div>
+<span class="text-code-dense font-code-dense text-status-conjecture bg-status-conjecture/10 px-1 py-0.5 rounded">FROZEN</span>
+</div>
+<!-- L9 Outer Boundary -->
+<div class="flex items-center justify-between px-space-md py-space-sm text-label-mono-sm font-label-mono-sm text-status-refuted bg-surface-elevated border-l-2 border-status-refuted shadow-[inset_0_0_8px_rgba(244,63,94,0.15)]">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm text-status-refuted" data-icon="shield">shield</span>
+<span class="font-bold">L9 Outer Boundary</span>
+</div>
+<span class="text-code-dense font-code-dense text-status-refuted bg-status-refuted/15 px-1 py-0.5 rounded font-bold">BREACH</span>
+</div>
+<!-- Checkpoint Ledger - ACTIVE CRITICAL FAILURE FOCUS -->
+<div class="flex flex-col px-space-md py-space-sm text-label-mono-sm font-label-mono-sm bg-status-refuted/10 border-l-4 border-status-refuted my-2">
+<div class="flex items-center justify-between text-status-refuted font-bold">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm text-status-refuted animate-pulse" data-icon="account_tree">account_tree</span>
+<span>Checkpoint Ledger</span>
+</div>
+<span class="material-symbols-outlined text-xs text-status-refuted" data-icon="warning">warning</span>
+</div>
+<span class="text-code-dense font-code-dense text-status-refuted mt-1 tracking-tight font-semibold">
+              VIOLATION: SPLIT VIEW ACTIVE
+            </span>
+</div>
+</nav>
+</div>
+<!-- Action & Bottom Diagnostics -->
+<div class="pt-4 border-t border-border-grid space-y-3">
+<button class="w-full py-2 px-space-md bg-surface-container-low border border-status-refuted/30 text-text-muted text-label-mono-sm font-label-mono-sm rounded flex items-center justify-center space-x-2 cursor-not-allowed opacity-60" disabled="">
+<span class="material-symbols-outlined text-xs text-status-refuted" data-icon="lock_reset">lock_reset</span>
+<span>Anchor Checkpoint [FROZEN]</span>
+</button>
+<div class="space-y-1">
+<div class="flex items-center justify-between text-text-muted hover:text-on-surface px-space-md py-1 text-label-mono-sm font-label-mono-sm cursor-pointer">
+<span class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-xs" data-icon="tune">tune</span>
+<span>Diagnostics</span>
+</span>
+<span class="text-code-dense font-code-dense text-status-refuted">FATAL</span>
+</div>
+<div class="flex items-center justify-between text-text-muted hover:text-on-surface px-space-md py-1 text-label-mono-sm font-label-mono-sm cursor-pointer">
+<span class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-xs" data-icon="terminal">terminal</span>
+<span>Terminal Shell</span>
+</span>
+<span class="text-code-dense font-code-dense text-status-pending">AIR-GAPPED</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- CENTRAL FORENSIC CANVAS (HIGH-DENSITY EMERGENCY COCKPIT)                  -->
+<!-- ========================================================================= -->
+<main class="flex-1 overflow-y-auto p-space-lg bg-surface-base space-y-4 failclosed-scanlines">
+<!-- 1. ZERO-LEVEL CRYPTOGRAPHIC ALARM BANNER (CRITICAL FAIL-CLOSED) -->
+<section class="border-2 border-status-refuted bg-surface-container-lowest p-space-md rounded shadow-[0_0_25px_rgba(244,63,94,0.22)] relative overflow-hidden">
+<div class="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-32 h-32 bg-status-refuted/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start space-x-space-md">
+<div class="p-3 bg-status-refuted/20 border border-status-refuted text-status-refuted rounded shrink-0 animate-fatal-pulse">
+<span class="material-symbols-outlined text-3xl" data-icon="gpp_bad" style="font-variation-settings: 'FILL' 1;">gpp_bad</span>
+</div>
+<div class="flex-1 space-y-1">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<h1 class="text-headline-md font-headline-md font-bold text-status-refuted flex items-center space-x-2">
+<span>CRITICAL FAIL-CLOSED LOCKDOWN :: EQUIVOCATION ATTACK / SPLIT-VIEW DETECTED</span>
+</h1>
+<div class="flex items-center space-x-2">
+<span class="bg-status-refuted text-surface-base font-label-mono-sm font-label-mono-sm font-bold px-2 py-0.5 rounded tracking-wider">
+                  τ: REFUTED
+                </span>
+<span class="bg-surface-elevated text-on-surface border border-border-subtle text-code-dense font-code-dense px-2 py-0.5 rounded">
+                  HALT_CODE: 0xDEAD_SPLIT_09
+                </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface leading-snug">
+              O operador do log apresentou duas vistas incompatíveis para o Checkpoint da Época <strong class="font-code-dense text-status-conjecture">0x4F92</strong>. O protocolo fail-closed foi acionado automaticamente às <span class="font-code-dense text-status-refuted font-semibold">14:26:08 UTC</span>. Todas as operações de release, ancoragem e gossip foram <span class="text-status-refuted font-semibold underline decoration-status-refuted">IMEDIATAMENTE CONGELADAS</span> para impedir contaminação do estado distribuído.
+            </p>
+<!-- Typed Reason Box (Surgical Strict Syntax) -->
+<div class="mt-2 pt-2 border-t border-status-refuted/30 flex items-center space-x-2 bg-status-refuted/5 p-2 rounded">
+<span class="text-label-mono-sm font-label-mono-sm text-status-refuted font-bold uppercase tracking-wide shrink-0">Motivo Tipado:</span>
+<code class="text-code-dense font-code-dense text-status-refuted font-bold bg-surface-base px-2 py-1 rounded border border-status-refuted/40 break-all select-text">
+                Refuted{SplitViewEquivocation(tree_size=14029, root_A!=root_B, proof=CryptographicEquivocationProof, log_seq=14029)}
+              </code>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. BIFURCATED FORENSIC COMPARATOR (SIDE-BY-SIDE SPLIT VIEW FORENSICS) -->
+<section class="grid grid-cols-1 xl:grid-cols-2 gap-space-md">
+<!-- VISTA A: Rekor / Interlegis -->
+<article class="bg-surface-container border border-status-refuted/60 rounded p-space-md space-y-3 relative overflow-hidden">
+<div class="flex items-center justify-between pb-2 border-b border-border-grid">
+<div class="flex items-center space-x-2">
+<span class="w-3 h-3 rounded-full bg-status-pending inline-block"></span>
+<h2 class="text-label-mono-lg font-label-mono-lg font-bold text-on-surface tracking-wide">
+                VISTA A <span class="text-text-muted text-xs">(Apresentada ao Sentinela Rekor / Interlegis)</span>
+</h2>
+</div>
+<span class="bg-status-pending/15 text-status-pending border border-status-pending/30 text-label-mono-sm font-label-mono-sm px-2 py-0.5 rounded font-mono">
+              BRANCH_ID: #A_REKOR_77
+            </span>
+</div>
+<div class="space-y-2 text-code-dense font-code-dense">
+<!-- MMR Root A -->
+<div class="bg-surface-base p-2 border border-border-grid rounded">
+<div class="text-text-muted text-xs mb-0.5 flex justify-between">
+<span>Merkle Mountain Range (MMR) Root:</span>
+<span class="text-status-refuted font-mono font-bold">SHA-256</span>
+</div>
+<p class="text-on-surface select-text break-all font-mono font-medium text-xs">
+                0x9a834b68e98b049382103fca9183b028491039840294bca9103849f82109a
+              </p>
+</div>
+<!-- BLAKE3 Leaf Commit -->
+<div class="bg-surface-base p-2 border border-border-grid rounded">
+<div class="text-text-muted text-xs mb-0.5 flex justify-between">
+<span>BLAKE3 Leaf Commit:</span>
+<span class="text-text-subtle font-mono">tree_size=14029</span>
+</div>
+<p class="text-on-surface select-text break-all font-mono text-xs">
+                0xb3_8f29c01824ef78d910a34b9281c72f91823abce0411fa023a10984cfb902
+              </p>
+</div>
+<!-- Operator Signature -->
+<div class="bg-surface-base p-2 border border-border-grid rounded">
+<div class="text-text-muted text-xs mb-0.5 flex justify-between">
+<span>Assinatura do Operador:</span>
+<span class="text-status-verified font-bold">Ed25519 Válida [Vista A]</span>
+</div>
+<p class="text-status-verified font-mono text-xs select-text break-all">
+                sig:ed25519:7c4a180ff910c2839d012480391abf81039284102938471920384102939bf
+              </p>
+</div>
+<!-- Metadata & Peers -->
+<div class="grid grid-cols-2 gap-2 text-xs">
+<div class="bg-surface-base p-2 border border-border-grid rounded">
+<span class="text-text-muted block text-xs">Timestamp Sentinela:</span>
+<span class="text-on-surface font-mono font-semibold">14:26:01.104 UTC</span>
+</div>
+<div class="bg-surface-base p-2 border border-border-grid rounded">
+<span class="text-text-muted block text-xs">Peers Receptoras:</span>
+<span class="text-status-pending font-mono font-semibold truncate block" title="Rekor Transparency Log, Interlegis Federal Node">
+                  Rekor Log, Interlegis
+                </span>
+</div>
+</div>
+</div>
+</article>
+<!-- VISTA B: Nostr / Universidade X -->
+<article class="bg-surface-container border-2 border-status-refuted rounded p-space-md space-y-3 relative overflow-hidden shadow-[0_0_15px_rgba(244,63,94,0.18)]">
+<!-- Critical marker banner -->
+<div class="flex items-center justify-between pb-2 border-b border-status-refuted/40">
+<div class="flex items-center space-x-2">
+<span class="w-3 h-3 rounded-full bg-status-refuted animate-ping inline-block"></span>
+<h2 class="text-label-mono-lg font-label-mono-lg font-bold text-status-refuted tracking-wide">
+                VISTA B <span class="text-status-refuted/80 text-xs">(Apresentada ao Sentinela Nostr / Univ. X)</span>
+</h2>
+</div>
+<span class="bg-status-refuted text-surface-base font-label-mono-sm font-label-mono-sm px-2 py-0.5 rounded font-mono font-bold">
+              100% MERKLE MISMATCH
+            </span>
+</div>
+<div class="space-y-2 text-code-dense font-code-dense">
+<!-- MMR Root B (DIVERGENTE) -->
+<div class="bg-surface-base p-2 border border-status-refuted/80 rounded bg-status-refuted/5">
+<div class="text-status-refuted text-xs mb-0.5 flex justify-between font-bold">
+<span>Merkle Mountain Range (MMR) Root:</span>
+<span>DIVERGENTE (COLLISION/FORK)</span>
+</div>
+<p class="text-status-refuted select-text break-all font-mono font-bold text-xs">
+                0x7e29f10a8c4309bca184719d8031e4ab7891240182903ce891048291038ba
+              </p>
+</div>
+<!-- BLAKE3 Leaf Commit B (DIVERGENTE) -->
+<div class="bg-surface-base p-2 border border-status-refuted/60 rounded bg-status-refuted/5">
+<div class="text-status-refuted text-xs mb-0.5 flex justify-between font-semibold">
+<span>BLAKE3 Leaf Commit:</span>
+<span>DIVERGENTE [DIFF ROOT]</span>
+</div>
+<p class="text-status-refuted select-text break-all font-mono text-xs font-semibold">
+                0xd4_1892bfca819034aa8910381029381029381029381029381029381029381029
+              </p>
+</div>
+<!-- Operator Signature B (SAME SIGNER KEY) -->
+<div class="bg-surface-base p-2 border border-status-refuted rounded bg-status-refuted/10">
+<div class="text-status-refuted text-xs mb-0.5 flex justify-between font-bold">
+<span>Assinatura do Operador:</span>
+<span>VÁLIDA SOB A MESMA CHAVE! (EQUIVOCATION)</span>
+</div>
+<p class="text-status-refuted font-mono text-xs select-text break-all font-bold">
+                sig:ed25519:e4190cbb1904a821038ca918301293847192038410293847192038812
+              </p>
+</div>
+<!-- Metadata & Peers -->
+<div class="grid grid-cols-2 gap-2 text-xs">
+<div class="bg-surface-base p-2 border border-border-grid rounded">
+<span class="text-text-muted block text-xs">Timestamp Sentinela:</span>
+<span class="text-on-surface font-mono font-semibold">14:26:01.118 UTC <span class="text-status-conjecture">(+14ms)</span></span>
+</div>
+<div class="bg-surface-base p-2 border border-border-grid rounded">
+<span class="text-text-muted block text-xs">Peers Receptoras:</span>
+<span class="text-status-conjecture font-mono font-semibold truncate block" title="Nostr Relay damus, Universidade X Sentinel">
+                  Nostr damus, Univ. X
+                </span>
+</div>
+</div>
+</div>
+</article>
+</section>
+<!-- Equivocation Proof Strip (Irrefutable Mathematical Breach) -->
+<div class="bg-surface-container-high border border-status-refuted/60 p-space-sm rounded flex flex-col md:flex-row items-center justify-between text-code-dense font-code-dense gap-2">
+<div class="flex items-center space-x-2 text-status-refuted">
+<span class="material-symbols-outlined text-base" data-icon="verified">verified</span>
+<span class="font-bold tracking-wide">DUAL-SIGNATURE EQUIVOCATION CERTIFICATE GENERATED:</span>
+<span class="text-on-surface text-xs font-mono">hash:0xequiv_981a...d91c</span>
+</div>
+<div class="text-text-muted text-xs text-right">
+          O mesmo operador assinou dois estados de checkpoints diferentes para a mesma época/tamanho de árvore. Prova irrefutável de chave comprometida ou traição bizantina.
+        </div>
+</div>
+<!-- ========================================================================= -->
+<!-- 3. PAINEL DE INTERVENÇÃO MANUAL DOS DELEGADOS (M-de-N 2 de 3 QUORUM)      -->
+<!-- ========================================================================= -->
+<section class="bg-surface-container border border-border-subtle rounded p-space-md space-y-space-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between border-b border-border-grid pb-space-sm gap-2">
+<div class="space-y-0.5">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-status-conjecture" data-icon="policy">policy</span>
+<h2 class="text-label-mono-lg font-label-mono-lg font-bold text-on-surface">
+                PAINEL DE INTERVENÇÃO MANUAL DOS DELEGADOS (QUÓRUM DE GOVERNANÇA L3)
+              </h2>
+</div>
+<p class="text-body-sm font-body-sm text-text-muted">
+              A UI BLOQUEIA TODAS AS OPERAÇÕES AUTOMÁTICAS. EXIGE-SE INTERVENÇÃO MANUAL DOS 3 DELEGADOS DE GOVERNANÇA L3.
+            </p>
+</div>
+<div class="flex items-center space-x-2 bg-surface-base px-space-md py-1 border border-border-grid rounded">
+<span class="text-code-dense font-code-dense text-text-muted uppercase">Quórum Requerido:</span>
+<span class="text-label-mono-md font-label-mono-md text-status-conjecture font-bold">0 / 2 ATTESTAÇÕES</span>
+</div>
+</div>
+<!-- Status dos 3 Delegados -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<!-- Delegado A -->
+<div class="bg-surface-base p-space-sm border border-border-grid rounded space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-label-mono-sm font-label-mono-sm text-on-surface font-semibold flex items-center space-x-1">
+<span class="material-symbols-outlined text-sm text-text-muted" data-icon="person">person</span>
+<span>Delegado A (Lead Architect)</span>
+</span>
+<span class="w-2 h-2 rounded-full bg-status-conjecture animate-pulse"></span>
+</div>
+<div class="text-code-dense font-code-dense text-text-muted font-mono truncate" title="did:key:z6Mkq5...Lead Architect">
+              did:key:z6Mkq5yG8f...942ab
+            </div>
+<div class="bg-status-conjecture/10 border border-status-conjecture/30 text-status-conjecture text-code-dense font-code-dense px-2 py-1 rounded text-center font-medium">
+              [AGUARDANDO ATTESTAÇÃO OFFLINE]
+            </div>
+</div>
+<!-- Delegado B -->
+<div class="bg-surface-base p-space-sm border border-border-grid rounded space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-label-mono-sm font-label-mono-sm text-on-surface font-semibold flex items-center space-x-1">
+<span class="material-symbols-outlined text-sm text-text-muted" data-icon="security">security</span>
+<span>Delegado B (SecOps Custodian)</span>
+</span>
+<span class="w-2 h-2 rounded-full bg-status-conjecture animate-pulse"></span>
+</div>
+<div class="text-code-dense font-code-dense text-text-muted font-mono truncate" title="did:key:z6Mkn8...SecOps Custodian">
+              did:key:z6Mkn8uL9v...813fe
+            </div>
+<div class="bg-status-conjecture/10 border border-status-conjecture/30 text-status-conjecture text-code-dense font-code-dense px-2 py-1 rounded text-center font-medium">
+              [AGUARDANDO ATTESTAÇÃO OFFLINE]
+            </div>
+</div>
+<!-- Delegado C -->
+<div class="bg-surface-base p-space-sm border border-border-grid rounded space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-label-mono-sm font-label-mono-sm text-on-surface font-semibold flex items-center space-x-1">
+<span class="material-symbols-outlined text-sm text-text-muted" data-icon="memory">memory</span>
+<span>Delegado C (Hardware Enclave)</span>
+</span>
+<span class="w-2 h-2 rounded-full bg-status-conjecture animate-pulse"></span>
+</div>
+<div class="text-code-dense font-code-dense text-text-muted font-mono truncate" title="did:key:z6Mkw9...Hardware Enclave">
+              did:key:z6Mkw9xZ1a...009fa
+            </div>
+<div class="bg-status-conjecture/10 border border-status-conjecture/30 text-status-conjecture text-code-dense font-code-dense px-2 py-1 rounded text-center font-medium">
+              [AGUARDANDO ATTESTAÇÃO OFFLINE]
+            </div>
+</div>
+</div>
+<!-- Strict Governance Fail-Closed Resolution Actions -->
+<div class="space-y-2">
+<div class="text-label-mono-sm font-label-mono-sm text-text-muted uppercase tracking-wider flex items-center justify-between">
+<span>Ações Estritas de Governança Fail-Closed (Assinaturas M-de-N 2/3 necessárias):</span>
+<span class="text-status-refuted flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs" data-icon="lock">lock</span>
+<span>GATEWAY BLOQUEADO ATÉ CARREGAMENTO DE ASSINATURA AIR-GAPPED</span>
+</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-sm">
+<!-- Botão 1: Perigo Máximo Slashing Proof -->
+<button class="p-3 bg-surface-container-low border border-status-refuted/60 hover:bg-status-refuted/10 text-status-refuted rounded text-left transition-all duration-150 relative group cursor-pointer">
+<div class="flex items-center space-x-2 font-label-mono-md font-label-mono-md font-bold text-status-refuted mb-1">
+<span class="material-symbols-outlined text-base" data-icon="bolt">bolt</span>
+<span>Emitir Prova de Equivocação Pública</span>
+</div>
+<p class="text-code-dense font-code-dense text-text-muted leading-tight">
+                Gera arquivo binário .cbor assinado e submete Slashing Proof irrevogável na rede Rekor global.
+              </p>
+<div class="mt-2 text-code-dense font-code-dense text-status-refuted/80 font-mono">
+                [EXIGE 2 ASSINATURAS CUSTÓDIA]
+              </div>
+</button>
+<!-- Botão 2: Isolar Enclave & Revogar Chave -->
+<button class="p-3 bg-surface-container-low border border-status-conjecture/60 hover:bg-status-conjecture/10 text-status-conjecture rounded text-left transition-all duration-150 relative group cursor-pointer">
+<div class="flex items-center space-x-2 font-label-mono-md font-label-mono-md font-bold text-status-conjecture mb-1">
+<span class="material-symbols-outlined text-base" data-icon="vpn_key_off">vpn_key_off</span>
+<span>Isolar Enclave &amp; Revogar Chave</span>
+</div>
+<p class="text-code-dense font-code-dense text-text-muted leading-tight">
+                Marca a chave do operador como traidora no WormGraph. Isola imediatamente o enclave de hardware.
+              </p>
+<div class="mt-2 text-code-dense font-code-dense text-status-conjecture/80 font-mono">
+                [EXIGE 2 ASSINATURAS CUSTÓDIA]
+              </div>
+</button>
+<!-- Botão 3: Rollback para Último Checkpoint Consensual -->
+<button class="p-3 bg-surface-container-low border border-status-verified/60 hover:bg-status-verified/10 text-status-verified rounded text-left transition-all duration-150 relative group cursor-pointer">
+<div class="flex items-center space-x-2 font-label-mono-md font-label-mono-md font-bold text-status-verified mb-1">
+<span class="material-symbols-outlined text-base" data-icon="history">history</span>
+<span>Rollback para Checkpoint Imutável</span>
+</div>
+<p class="text-code-dense font-code-dense text-text-muted leading-tight">
+                Regride o estado global para a Época 0x4F91 (seq=14028) confirmada por consenso bizantino.
+              </p>
+<div class="mt-2 text-code-dense font-code-dense text-status-verified/80 font-mono">
+                [EXIGE 2 ASSINATURAS CUSTÓDIA]
+              </div>
+</button>
+</div>
+<!-- Quarantine Warning Box -->
+<div class="bg-status-refuted/10 border-l-4 border-status-refuted p-space-sm rounded text-body-sm font-body-sm text-on-surface flex items-start space-x-2">
+<span class="material-symbols-outlined text-status-refuted text-base shrink-0 mt-0.5" data-icon="shield_lock">shield_lock</span>
+<div>
+<strong class="text-status-refuted font-mono">Invariante Fail-Closed:</strong> Nenhuma ação de recuperação pode ser executada por um único operador. M-de-N (2 de 3) atestações criptográficas geradas em dispositivos físicos air-gapped são estritamente exigidas para submeter a resolução e destravar a interface.
+            </div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- 4. REAL-TIME TELEMETRY LOCKDOWN LOG CONSOLE (TERMINAL CIRÚRGICO)           -->
+<!-- ========================================================================= -->
+<section class="bg-surface-base border border-border-subtle rounded p-space-md space-y-2">
+<div class="flex items-center justify-between pb-2 border-b border-border-grid">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-status-refuted text-base" data-icon="terminal">terminal</span>
+<span class="text-label-mono-sm font-label-mono-sm text-on-surface font-bold uppercase tracking-wider">
+              Console de Telemetria de Bloqueio em Tempo Real [KERNEL AUDIT STREAM]
+            </span>
+</div>
+<div class="flex items-center space-x-2 text-code-dense font-code-dense">
+<span class="inline-block w-2 h-2 rounded-full bg-status-refuted animate-ping"></span>
+<span class="text-status-refuted font-mono font-bold">STREAM FROZEN (FAIL-CLOSED)</span>
+</div>
+</div>
+<!-- Terminal Output Area -->
+<div class="bg-surface-container-lowest border border-border-grid p-space-sm rounded font-code-dense text-code-dense text-on-surface space-y-1.5 overflow-x-auto select-text max-h-48 overflow-y-auto">
+<div class="text-text-muted flex items-start space-x-2">
+<span class="text-status-pending shrink-0">[14:26:07.891Z]</span>
+<span class="text-on-surface-variant shrink-0 font-bold">OBSERVER_MESH:</span>
+<span>Received checkpoint #14029 from Rekor (root=0x9a834b68e98b049382103fca...)</span>
+</div>
+<div class="text-text-muted flex items-start space-x-2">
+<span class="text-status-pending shrink-0">[14:26:07.905Z]</span>
+<span class="text-on-surface-variant shrink-0 font-bold">OBSERVER_MESH:</span>
+<span>Received checkpoint #14029 from Nostr/damus (root=0x7e29f10a8c4309bca184...)</span>
+</div>
+<div class="text-status-refuted font-bold flex items-start space-x-2 bg-status-refuted/10 p-1 rounded">
+<span class="shrink-0">[14:26:08.012Z]</span>
+<span class="shrink-0 font-bold">FAIL_CLOSED_SENTINEL:</span>
+<span>[✖] EQUIVOCATION DETECTED! Two distinct MMR roots for seq=14029 under matching operator pubkey!</span>
+</div>
+<div class="text-status-refuted flex items-start space-x-2">
+<span class="shrink-0 font-bold">[14:26:08.014Z]</span>
+<span class="shrink-0 font-bold">KERNEL_HALT:</span>
+<span>Triggering L0-L9 protocol freeze. All release channels, gossips, and anchor syncs terminated.</span>
+</div>
+<div class="text-status-conjecture flex items-start space-x-2">
+<span class="shrink-0 font-mono">[14:26:08.020Z]</span>
+<span class="shrink-0 font-bold">WORMGRAPH:</span>
+<span>Quarantine leaf emitted: EquivocationLockout(Epoch=0x4F92, OperatorKey=0xed25519_traitor)</span>
+</div>
+<div class="text-status-refuted flex items-start space-x-2 font-bold">
+<span class="shrink-0">[14:26:08.050Z]</span>
+<span class="shrink-0 font-bold">UI_LOCKDOWN:</span>
+<span>Engaged fail-closed interface shield. Operator override impossible. Waiting for L3 M-of-N hardware signers...</span>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- ========================================================================= -->
+<!-- BOTTOM STATUS RIBBON (PERSISTENT FAIL-CLOSED BARRIER)                     -->
+<!-- ========================================================================= -->
+<footer class="h-8 bg-surface-container-lowest border-t border-status-refuted px-space-md flex items-center justify-between text-code-dense font-code-dense text-status-refuted shrink-0 select-none">
+<div class="flex items-center space-x-space-md">
+<span class="flex items-center space-x-1 font-bold">
+<span class="material-symbols-outlined text-xs" data-icon="block">block</span>
+<span>OVERRIDE STATUS: STRICTLY IMPOSSIBLE</span>
+</span>
+<span class="text-border-grid">|</span>
+<span class="text-text-muted hidden md:inline">SYSTEM STATE: DIVERGENT MERKLE SPLIT VIEW (AIR-GAPPED HALT)</span>
+</div>
+<div class="flex items-center space-x-4">
+<span class="text-status-conjecture flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs" data-icon="lock">lock</span>
+<span>GATEWAY CLOSED</span>
+</span>
+<span class="text-text-subtle font-mono">ARKHE-CORE v4.19-PROV-VERIFIED</span>
+</div>
+</footer>
+</body></html>

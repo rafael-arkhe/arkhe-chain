@@ -1,0 +1,17 @@
+versions: PASS (exit 0)
+python-golden: PASS (exit 0)
+python-tests: PASS (exit 0)
+rust-tests: PASS (exit 0)
+evaluation-pack: PASS (exit 0)
+python-canary: PASS (exit 1)
+rust-canary: PASS (exit 101)
+Traceback (most recent call last):
+  File "/opt/review/run_review.py", line 160, in <module>
+    shutil.copytree(WORK / 'eval-pack/results', OUT / 'eval-results', dirs_exist_ok=True)
+  File "/usr/lib/python3.11/shutil.py", line 561, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/shutil.py", line 515, in _copytree
+    raise Error(errors)
+shutil.Error: [('/work/eval-pack/results/grover/theta-calibration-summary.json', '/out/eval-results/grover/theta-calibration-summary.json', '[Errno 1] Operation not permitted'), ('/work/eval-pack/results/grover/sybil-10x-g1.5.json', '/out/eval-results/grover/sybil-10x-g1.5.json', '[Errno 1] Operation not permitted'), (<DirEntry 'grover'>, '/out/eval-results/grover', '[Errno 1] Operation not permitted'), ('/work/eval-pack/results/grover.json', '/out/eval-results/grover.json', '[Errno 1] Operation not permitted'), ('/work/eval-pack/results/verifier-vectors.json', '/out/eval-results/verifier-vectors.json', '[Errno 1] Operation not permitted'), (PosixPath('/work/eval-pack/results'), PosixPath('/out/eval-results'), '[Errno 1] Operation not permitted')]
+exit_code: 1

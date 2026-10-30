@@ -1,0 +1,71 @@
+{
+  "profile": "AKG-CBOR-v1",
+  "status": "candidate",
+  "scope": "Release distribution and identity binding (L8). Separate from the AKG-RFC-0002 B.0.2 freeze-candidate registry, which is not modified.",
+  "domains": [
+    {
+      "object": "ReleaseManifest",
+      "symbol": "DomainRelease",
+      "ascii_literal": "AKG:RELEASE:v1\\0",
+      "hex": "414b473a52454c454153453a763100",
+      "length": 15,
+      "preimage": "DomainRelease || CanonicalBytes(ReleaseManifest)",
+      "implementation": "kernel/arkhe-core/src/release.rs",
+      "vectors": "tests/release_manifest_vectors.json"
+    },
+    {
+      "object": "IdentityBinding",
+      "symbol": "DomainIdBind",
+      "ascii_literal": "AKG:IDBIND:v1\\0",
+      "hex": "414b473a494442494e443a763100",
+      "length": 14,
+      "preimage": "DomainIdBind || CanonicalBytes(IdentityBinding)",
+      "implementation": "evidence/arkhe-wormgraph/src/binding.rs",
+      "vectors": "tests/identity_binding_vectors.json"
+    },
+    {
+      "object": "IdentityBindingRevocation",
+      "symbol": "DomainIdBindRevoke",
+      "ascii_literal": "AKG:IDBIND-REVOKE:v1\\0",
+      "hex": "414b473a494442494e442d5245564f4b453a763100",
+      "length": 21,
+      "preimage": "DomainIdBindRevoke || CanonicalBytes(RevocationCore)",
+      "implementation": "evidence/arkhe-wormgraph/src/binding.rs",
+      "vectors": "tests/identity_binding_vectors.json"
+    },
+    {
+      "object": "SignedIdentityBinding",
+      "symbol": "DomainIdBindSigned",
+      "ascii_literal": "AKG:IDBIND-SIGNED:v1\\0",
+      "hex": "414b473a494442494e442d5349474e45443a763100",
+      "length": 21,
+      "preimage": "DomainIdBindSigned || CanonicalBytes(SignedBinding)",
+      "implementation": "evidence/arkhe-wormgraph/src/binding.rs",
+      "vectors": "tests/identity_binding_vectors.json"
+    }
+  ],
+  "reserved_not_defined": [
+    "AKG:WITNESS:COSIG:v1\\0",
+    "AKG:LOCATOR:v1\\0"
+  ],
+  "signature_domains": [
+    {
+      "object": "IdentityBinding (Arkhe side)",
+      "ascii_literal": "AKG:IDBIND-SIG:v1\\0",
+      "hex": "414b473a494442494e442d5349473a763100",
+      "length": 18
+    },
+    {
+      "object": "IdentityBinding (Radicle side)",
+      "ascii_literal": "AKG:IDBIND-EXT:v1\\0",
+      "hex": "414b473a494442494e442d4558543a763100",
+      "length": 18
+    },
+    {
+      "object": "IdentityBindingRevocation",
+      "ascii_literal": "AKG:IDBIND-REVOKE-SIG:v1\\0",
+      "hex": "414b473a494442494e442d5245564f4b452d5349473a763100",
+      "length": 25
+    }
+  ]
+}

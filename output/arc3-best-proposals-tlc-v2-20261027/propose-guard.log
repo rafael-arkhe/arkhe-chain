@@ -1,0 +1,79 @@
+TLC2 Version 2.19 of 08 August 2024 (rev: 5a47802)
+Running breadth-first search Model-Checking with fp 88 and seed -3685181517848542883 with 1 worker on 12 cores with 910MB heap and 64MB offheap memory [pid: 34312] (Windows 11 10.0 amd64, Eclipse Adoptium 21.0.11 x86_64, MSBDiskFPSet, DiskStateQueue).
+Parsing file D:\arkhe\work\arc-agi-3\formal\matrix-v3\LaneProposeGuard.tla
+Parsing file D:\arkhe\work\arc-agi-3\formal\matrix-v3\LaneIsolation.tla
+Parsing file C:\Users\Lemes\AppData\Local\Temp\Naturals.tla
+Parsing file C:\Users\Lemes\AppData\Local\Temp\FiniteSets.tla
+Parsing file C:\Users\Lemes\AppData\Local\Temp\Sequences.tla
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module LaneIsolation
+Semantic processing of module LaneProposeGuard
+Starting... (2026-10-27 15:33:04)
+Implied-temporal checking--satisfiability problem has 1 branches.
+Computing initial states...
+Computed 2 initial states...
+Computed 4 initial states...
+Computed 8 initial states...
+Computed 16 initial states...
+Computed 32 initial states...
+Computed 64 initial states...
+Computed 128 initial states...
+Computed 256 initial states...
+Finished computing initial states: 512 distinct states generated at 2026-10-27 15:33:04.
+Progress(13) at 2026-10-27 15:33:05: 6.769 states generated, 4.700 distinct states found, 0 states left on queue.
+Checking temporal properties for the complete state space with 4700 total distinct states at (2026-10-27 15:33:05)
+Error: Temporal properties were violated.
+
+Error: The following behavior constitutes a counter-example:
+
+State 1: <Initial predicate>
+/\ gateVer = 0
+/\ verdict = << [typ |-> FALSE, dev |-> FALSE, hold |-> FALSE],
+   [typ |-> TRUE, dev |-> TRUE, hold |-> TRUE],
+   [typ |-> FALSE, dev |-> FALSE, hold |-> FALSE] >>
+/\ effects = {}
+/\ admittedSet = {}
+/\ repairReads = {}
+/\ ver = 0
+/\ stage = "NONE"
+
+State 2: <GuardedPropose line 4, col 19 to line 4, col 41 of module LaneProposeGuard>
+/\ gateVer = 0
+/\ verdict = << [typ |-> FALSE, dev |-> FALSE, hold |-> FALSE],
+   [typ |-> TRUE, dev |-> TRUE, hold |-> TRUE],
+   [typ |-> FALSE, dev |-> FALSE, hold |-> FALSE] >>
+/\ effects = {}
+/\ admittedSet = {}
+/\ repairReads = {}
+/\ ver = 1
+/\ stage = "CANDIDATE"
+
+State 3: <Repair line 73, col 5 to line 75, col 46 of module LaneIsolation>
+/\ gateVer = 0
+/\ verdict = << [typ |-> FALSE, dev |-> FALSE, hold |-> FALSE],
+   [typ |-> TRUE, dev |-> TRUE, hold |-> TRUE],
+   [typ |-> FALSE, dev |-> FALSE, hold |-> FALSE] >>
+/\ effects = {}
+/\ admittedSet = {}
+/\ repairReads = {"dev"}
+/\ ver = 2
+/\ stage = "CANDIDATE"
+
+State 4: <Repair line 73, col 5 to line 75, col 46 of module LaneIsolation>
+/\ gateVer = 0
+/\ verdict = << [typ |-> FALSE, dev |-> FALSE, hold |-> FALSE],
+   [typ |-> TRUE, dev |-> TRUE, hold |-> TRUE],
+   [typ |-> FALSE, dev |-> FALSE, hold |-> FALSE] >>
+/\ effects = {}
+/\ admittedSet = {}
+/\ repairReads = {"dev"}
+/\ ver = 3
+/\ stage = "CANDIDATE"
+
+State 5: Stuttering
+Finished checking temporal properties in 00s at 2026-10-27 15:33:05
+6769 states generated, 4700 distinct states found, 0 states left on queue.
+Finished in 01s at (2026-10-27 15:33:05)
+

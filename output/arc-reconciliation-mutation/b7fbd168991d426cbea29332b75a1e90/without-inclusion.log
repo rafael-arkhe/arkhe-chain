@@ -1,0 +1,27 @@
+$ cargo test --locked -p arkhe-verify-core --test arc_reconciliation untrusted_checkpoint_rejected -- --exact
+   Compiling arkhe-verify-core v0.1.0 (D:\arkhe\verification\crates\arkhe-verify-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.11s
+     Running tests\arc_reconciliation.rs (target\debug\deps\arc_reconciliation-212ed5f44b64c60e.exe)
+
+running 1 test
+test untrusted_checkpoint_rejected ... FAILED
+
+failures:
+
+---- untrusted_checkpoint_rejected stdout ----
+
+thread 'untrusted_checkpoint_rejected' (33888) panicked at verification\crates\arkhe-verify-core\tests\arc_reconciliation.rs:66:5:
+assertion `left == right` failed
+  left: Ok(Decision { input_digest: Digest32([194, 137, 133, 89, 122, 71, 60, 57, 232, 74, 72, 70, 98, 1, 59, 235, 7, 161, 119, 55, 181, 112, 11, 112, 219, 111, 81, 66, 210, 6, 179, 228]), status: Matched, invoice_ids: ["invoice-1"] })
+ right: Err("record absent from trusted checkpoint")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    untrusted_checkpoint_rejected
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p arkhe-verify-core --test arc_reconciliation`
+
+exit_code=101

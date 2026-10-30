@@ -1,0 +1,29 @@
+/* Arkhe cockpit theme, scoped to .cockpit. Values are RGB channels for Tailwind's
+   ck-* colors. Adjusted from DESIGN.md for WCAG AA on every surface:
+   muted #64748b -> #94a3b8; text-subtle #475569 is `faint`, decorative only;
+   refuted lightened to #fb7185 so it stays AA on the elevated surface. */
+.cockpit {
+  --ck-canvas: 11 15 20;      /* #0b0f14 */
+  --ck-surface: 18 24 32;     /* #121820 */
+  --ck-elevated: 24 34 48;    /* #182230 */
+  --ck-border: 31 41 55;      /* #1f2937 */
+  --ck-text: 224 226 234;     /* #e0e2ea */
+  --ck-text-2: 187 202 191;   /* #bbcabf */
+  --ck-muted: 148 163 184;    /* #94a3b8 */
+  --ck-faint: 71 85 105;      /* #475569 decorative only */
+  --ck-lemma: 16 185 129;     /* #10b981 */
+  --ck-refuted: 251 113 133;  /* #fb7185 */
+  --ck-conjecture: 245 158 11;/* #f59e0b */
+  --ck-pending: 14 165 233;   /* #0ea5e9 */
+  background: rgb(var(--ck-canvas));
+  color: rgb(var(--ck-text));
+  font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  border-radius: 12px;
+}
+.cockpit p { color: rgb(var(--ck-text-2)); }
+.cockpit :focus-visible { outline: 2px solid rgb(var(--ck-pending)); outline-offset: 2px; }
+.cockpit button:disabled { cursor: not-allowed; opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .cockpit .ck-pulse { animation: ck-pulse 2s ease-in-out infinite; }
+}
+@keyframes ck-pulse { 50% { opacity: .45; } }

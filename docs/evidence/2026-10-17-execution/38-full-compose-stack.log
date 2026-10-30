@@ -1,0 +1,95 @@
+STEP 1/8: FROM docker.io/library/node:24-alpine
+[1/2] STEP 1/5: FROM docker.io/library/rust:1.96-bookworm AS build
+STEP 2/8: WORKDIR /app
+--> Using cache 3dae10e70fe45ce472fa7793d343fc0db3ce5429511b1037a53d49de3dae5a08
+--> 3dae10e70fe4
+STEP 3/8: COPY integrations/mcp-server/package.json ./package.json
+--> Using cache 53a232ece06b98f4a474ca69a39e9342f5bae65cc6c134c173992714c80ca6ac
+--> 53a232ece06b
+STEP 4/8: COPY integrations/mcp-server/src ./src
+--> Using cache 8fdc51099163d128fb1e67268b120de3f7a790457a5f51dae6f6820f312e7eb7
+--> 8fdc51099163
+STEP 5/8: USER node
+--> Using cache 14bd717cc383061fc4571e31a7df3abe661e12ca298df9b5d2a1b62ff5cef93f
+--> 14bd717cc383
+STEP 6/8: ENV MCP_PORT=8787
+--> Using cache 9554fd92475f2b5459f1f0387d34ac19b27f8d66c828ac8cb0aaa106fc6bc563
+--> 9554fd92475f
+STEP 7/8: EXPOSE 8787
+--> Using cache 32d8dc542655182f71879d723f774f7dc42a802f5a3ae6d7a93d681abf335458
+--> 32d8dc542655
+STEP 8/8: CMD ["node", "src/index.js"]
+[1/2] STEP 2/5: WORKDIR /src
+--> Using cache 15194e3de7618d76d9bcf869afd5a57bd0833705ee0feb1ae70877700a35d623
+COMMIT localhost/arkhe-mcp-health:dev
+--> Using cache b4cd3aad9135fd50f4602920eb869fee5a826c136360aedf682489841db1eb87
+--> b4cd3aad9135
+[1/2] STEP 3/5: ENV CARGO_BUILD_JOBS=2
+--> 15194e3de761
+Successfully tagged localhost/arkhe-mcp-health:dev
+15194e3de7618d76d9bcf869afd5a57bd0833705ee0feb1ae70877700a35d623
+--> Using cache 2a995c425888de4c67ef8e4889d8848c7e2d8b4a90a888cece8739d14a8b6410
+--> 2a995c425888
+[1/2] STEP 4/5: COPY . /src
+--> Using cache be11ed8e82cf43148bf14a40476f1e293ea3f1a87324606c43b38fd7d9c20b55
+--> be11ed8e82cf
+[1/2] STEP 5/5: RUN cargo build --release --locked -p arkhe-runtime
+--> Using cache fe1a018916af167b910317db113ee8da372b86015574f3bc8235f4cf12e36ad2
+--> fe1a018916af
+[2/2] STEP 1/6: FROM docker.io/library/debian:bookworm-slim
+[2/2] STEP 2/6: COPY --from=build /src/target/release/arkhe-runtime /usr/local/bin/arkhe-runtime
+--> Using cache 71f80867e8568c8b098ecae696db2d39cc77ee93ab12a8e7a587a0069b009762
+--> 71f80867e856
+[2/2] STEP 3/6: USER 10001:10001
+--> Using cache cb0b3faca3b4c954cc4f831e7c081f0443499c661bf583b6b1318e4f8b72fd67
+--> cb0b3faca3b4
+[2/2] STEP 4/6: ENV ARKHE_LISTEN=0.0.0.0:8080
+--> Using cache 998c80b6d8e2d0736fa3440507b0514d614b581406a07adbcbf5bd60c7311568
+--> 998c80b6d8e2
+[2/2] STEP 5/6: EXPOSE 8080
+--> Using cache 3b3dad2272455689d004cc2206943bff8d3022589dba93d38c5a307395d14838
+--> 3b3dad227245
+[2/2] STEP 6/6: ENTRYPOINT ["/usr/local/bin/arkhe-runtime"]
+--> Using cache 04bc23e5d3b54659e08f93aa91aa98d7a3d67ed5c2666e1d502537e17e769148
+[2/2] COMMIT localhost/arkhe-runtime:dev
+--> 04bc23e5d3b5
+Successfully tagged localhost/arkhe-runtime:dev
+04bc23e5d3b54659e08f93aa91aa98d7a3d67ed5c2666e1d502537e17e769148
+arkhe-live-runtime
+arkhe-live-prometheus
+arkhe-live-grafana
+arkhe-live-redis
+arkhe-live-postgres
+arkhe-live-mcp
+arkhe-live-runtime
+arkhe-live-grafana
+arkhe-live-prometheus
+arkhe-live-mcp
+arkhe-live-redis
+arkhe-live-postgres
+3f16ecf08ce9537821e8eaf7753b31bf4bd1946f5c98d988c8e3e1db094c1275
+f1837c0c4c16e5eb1897ea0c603c00daebdbeab778127ae4d6c4999b245d4da2
+078a4dafcdfee7d8b9bc6121b0f1b78a9394ac828b8d622fe36eea350f4d482e
+cb2b6cfdc64434e04ace26262da6b4817253884eb2ec2f219b3d51397455e427
+c55d5c943428acbb9feb46faabf0d169a1809e1b63a2760036b23bcd5dba2c1b
+cd872edd0313bee3fdba9e017a0be4d52c50f8478470d279476e115ccd907ae1
+f8089606a3f9905181386725a1b2f821dd77fee5b048031dad26798b15fe71ad
+076138e7d19c40cb23daa3ecebf82534a44ef7546fd427cacaa57809c59f38b7
+arkhe-live-postgres
+arkhe-live-redis
+arkhe-live-mcp
+arkhe-live-prometheus
+arkhe-live-grafana
+arkhe-live-runtime
+PASS HTTP: independent CBOR/hash parity, commit/read, parent links, replay, authentication, actor binding, protected rejection, restart durability, real DB outage fail-closed
+arkhe-live-postgres Up 1 second (healthy)
+arkhe-live-redis Up 29 seconds
+arkhe-live-mcp Up 27 seconds
+arkhe-live-prometheus Up 25 seconds
+arkhe-live-grafana Up 24 seconds
+arkhe-live-runtime Up 5 seconds
+PASS service health localhost:8788
+PASS service health localhost:8787
+PASS service health localhost:9090
+PASS service health localhost:3002
+PASS Redis PING; Prometheus scraped MCP; Grafana datasource proxy queried Prometheus

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARKHE // COCKPIT - L1-L2 Hardware Enclave &amp; Sealed Vaults</title>
+<!-- Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary": "#4edea3",
+            "on-primary": "#003824",
+            "outline-variant": "#3c4a42",
+            "surface-container": "#1c2025",
+            "tertiary-fixed": "#ffddb8",
+            "surface-dim": "#101419",
+            "outline": "#86948a",
+            "surface-elevated": "#182230",
+            "surface-container-lowest": "#0a0e13",
+            "error-container": "#93000a",
+            "status-conjecture": "#f59e0b",
+            "tertiary-container": "#e29100",
+            "on-secondary-container": "#00344e",
+            "on-surface": "#e0e2ea",
+            "on-secondary-fixed-variant": "#004c6e",
+            "on-error": "#690005",
+            "on-primary-fixed": "#002113",
+            "surface-container-highest": "#31353b",
+            "secondary": "#89ceff",
+            "inverse-surface": "#e0e2ea",
+            "on-tertiary-fixed-variant": "#653e00",
+            "error": "#ffb4ab",
+            "secondary-fixed-dim": "#89ceff",
+            "tertiary-fixed-dim": "#ffb95f",
+            "background": "#101419",
+            "text-muted": "#64748b",
+            "on-background": "#e0e2ea",
+            "surface-bright": "#36393f",
+            "on-error-container": "#ffdad6",
+            "surface-tint": "#4edea3",
+            "on-tertiary": "#472a00",
+            "status-refuted": "#f43f5e",
+            "surface-base": "#0b0f14",
+            "status-pending": "#0ea5e9",
+            "primary-fixed-dim": "#4edea3",
+            "surface": "#101419",
+            "on-secondary-fixed": "#001e2f",
+            "surface-container-high": "#262a30",
+            "status-verified": "#10b981",
+            "border-grid": "#1f2937",
+            "inverse-primary": "#006c49",
+            "secondary-fixed": "#c9e6ff",
+            "on-secondary": "#00344d",
+            "on-surface-variant": "#bbcabf",
+            "tertiary": "#ffb95f",
+            "text-subtle": "#475569",
+            "on-primary-container": "#00422b",
+            "primary-container": "#10b981",
+            "on-tertiary-fixed": "#2a1700",
+            "surface-variant": "#31353b",
+            "primary-fixed": "#6ffbbe",
+            "on-tertiary-container": "#523200",
+            "surface-container-low": "#181c21",
+            "inverse-on-surface": "#2d3136",
+            "border-subtle": "#1e293b",
+            "secondary-container": "#00a2e6",
+            "on-primary-fixed-variant": "#005236"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-lg": "1rem",
+            "space-md": "0.75rem",
+            "margin-sm": "1rem",
+            "space-xl": "1.5rem",
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "margin": "1.5rem",
+            "gutter-dense": "0.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "code-dense": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "label-mono-lg": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "label-mono-md": ["JetBrains Mono"],
+            "headline-xl": ["Inter"],
+            "label-mono-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "code-dense": ["10px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "label-mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      vertical-align: middle;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #0b0f14;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 2px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+    .hairline-grid {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(31, 41, 55, 0.4) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(31, 41, 55, 0.4) 1px, transparent 1px);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.22);
+    }
+  </style>
+</head>
+<body class="bg-surface-base text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col font-body-md overflow-x-hidden">
+<!-- TOP NAVIGATION BAR (Shared Component: TopNavBar with JSON parameters) -->
+<header class="flex justify-between items-center w-full px-space-lg h-14 bg-surface-container border-b border-border-subtle docked full-width top rounded-none z-50 sticky top-0">
+<div class="flex items-center space-x-space-md">
+<!-- Product Logo & Stratum Anchor -->
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">security</span>
+<span class="text-label-mono-lg font-label-mono-lg font-bold tracking-wider text-primary">ARKHE // COCKPIT</span>
+</div>
+<span class="text-border-subtle">|</span>
+<span class="text-label-mono-sm font-label-mono-sm px-2 py-0.5 bg-surface-elevated text-secondary border border-border-subtle rounded-DEFAULT tracking-wider">
+        [L1-L2 HARDWARE ENCLAVE &amp; SEALED VAULTS]
+      </span>
+<div class="hidden xl:flex items-center space-x-1.5 text-label-mono-sm font-label-mono-sm text-text-muted">
+<span>STRATUM:</span>
+<span class="text-on-surface font-semibold">L1-L2 SEALED VAULTS // HARDWARE ATTESTATION</span>
+</div>
+</div>
+<!-- Live Stratum & Triad Status Ribbon -->
+<div class="hidden lg:flex items-center space-x-space-md">
+<div class="flex items-center space-x-2 px-2.5 py-1 bg-surface-base border border-border-subtle rounded-DEFAULT">
+<span class="w-2 h-2 rounded-full bg-status-verified animate-pulse"></span>
+<span class="text-label-mono-sm font-label-mono-sm text-on-surface">
+          ENCLAVE ATTESTED :: HARDWARE QUORUM 2/3 :: VAULTS SEALED
+        </span>
+<span class="text-label-mono-sm font-label-mono-sm text-status-verified font-bold">[τ: LEMMA]</span>
+</div>
+<!-- Top Navigation Tabs from Shared JSON -->
+<nav class="flex items-center space-x-4">
+<a class="text-on-surface-variant font-label-mono-md hover:text-on-surface hover:bg-surface-elevated transition-colors duration-150 px-2 py-1" href="#">Telemetry</a>
+<a class="text-primary border-b-2 border-primary font-label-mono-md pb-1 px-2" href="#">Stratum L0-L9</a>
+<a class="text-on-surface-variant font-label-mono-md hover:text-on-surface hover:bg-surface-elevated transition-colors duration-150 px-2 py-1" href="#">Triad Triangulation</a>
+<a class="text-on-surface-variant font-label-mono-md hover:text-on-surface hover:bg-surface-elevated transition-colors duration-150 px-2 py-1" href="#">Audit Proofs</a>
+</nav>
+</div>
+<!-- Actions & Operator Fingerprint -->
+<div class="flex items-center space-x-2.5">
+<button class="hidden sm:inline-flex items-center space-x-1 px-2.5 py-1 text-label-mono-sm font-label-mono-sm bg-surface-base border border-border-subtle text-text-muted hover:text-on-surface hover:bg-surface-elevated transition-colors duration-150">
+<span class="material-symbols-outlined text-sm">commit</span>
+<span>Propose Patch</span>
+</button>
+<button class="hidden sm:inline-flex items-center space-x-1 px-2.5 py-1 text-label-mono-sm font-label-mono-sm bg-surface-base border border-border-subtle text-secondary hover:border-secondary transition-colors duration-150">
+<span class="material-symbols-outlined text-sm">file_download</span>
+<span>Export PCR Quotes</span>
+</button>
+<button class="inline-flex items-center space-x-1.5 px-3 py-1 text-label-mono-sm font-label-mono-sm bg-primary/10 border border-primary/40 text-primary hover:bg-primary hover:text-on-primary glow-emerald transition-all duration-150">
+<span class="material-symbols-outlined text-sm">lock_person</span>
+<span class="font-bold">Seal Vault &amp; Proceed to L3 Governança</span>
+</button>
+<!-- Icon Actions from JSON -->
+<div class="flex items-center space-x-1 border-l border-border-subtle pl-2">
+<button class="p-1 text-text-muted hover:text-primary transition-colors" title="Verified User">
+<span class="material-symbols-outlined">verified_user</span>
+</button>
+<button class="p-1 text-text-muted hover:text-primary transition-colors" title="Lock">
+<span class="material-symbols-outlined">lock</span>
+</button>
+<button class="p-1 text-text-muted hover:text-primary transition-colors" title="Sensors">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+<button class="p-1 text-text-muted hover:text-primary transition-colors" title="Terminal">
+<span class="material-symbols-outlined">terminal</span>
+</button>
+</div>
+<!-- Avatar Hash Fingerprint -->
+<div class="w-7 h-7 rounded-DEFAULT bg-surface-elevated border border-border-subtle flex items-center justify-center text-primary font-code-dense text-code-dense font-bold ml-1 cursor-pointer" title="Operator cryptographic key fingerprint avatar: 0x8F92..A4">
+        8F
+      </div>
+</div>
+</header>
+<!-- BODY CONTENT WRAPPER -->
+<div class="flex flex-1 w-full overflow-hidden">
+<!-- VERTICAL LAYER NAVIGATOR (Shared Component: SideNavBar) -->
+<aside class="w-64 flex-shrink-0 border-r border-border-subtle bg-surface-base flex flex-col justify-between py-space-md px-space-sm hidden md:flex z-40 select-none">
+<div class="flex flex-col space-y-space-md">
+<!-- Strata Header -->
+<div class="px-space-md pb-space-sm border-b border-border-subtle">
+<div class="flex items-center justify-between">
+<span class="text-label-mono-md font-label-mono-md text-primary uppercase tracking-widest">STRATUM L0-L9</span>
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified"></span>
+</div>
+<div class="text-code-dense font-code-dense text-text-muted mt-0.5">EPOCH 0x4F92 :: SYNCED</div>
+</div>
+<!-- Layer Stack Navigation Tabs -->
+<nav class="flex flex-col space-y-1">
+<!-- L0-L1 Foundation (Resolved in previous PR #409) -->
+<a class="flex items-center justify-between px-space-md py-space-sm rounded-DEFAULT text-text-muted font-label-mono-sm hover:text-on-surface hover:bg-surface-container transition-all duration-150 group" href="#">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm text-status-verified">deployed_code</span>
+<span class="group-hover:text-on-surface">L0-L1 Foundation</span>
+</div>
+<span class="text-code-dense font-code-dense px-1 py-0.2 text-status-verified bg-status-verified/10 border border-status-verified/30 rounded-DEFAULT">✓ LEMMA</span>
+</a>
+<!-- L2-L3 Sealed Vaults (ACTIVE TARGET) -->
+<a class="flex items-center justify-between bg-surface-elevated text-primary border-l-2 border-primary font-label-mono-sm px-space-md py-space-sm rounded-DEFAULT transition-transform duration-100 glow-emerald" href="#">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm text-primary">lock</span>
+<span class="font-semibold text-primary">L2-L3 Sealed Vaults</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+</a>
+<!-- L4-L7 Protocol Strata -->
+<a class="flex items-center justify-between px-space-md py-space-sm rounded-DEFAULT text-text-muted font-label-mono-sm hover:text-on-surface hover:bg-surface-container transition-all duration-150" href="#">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm">layers</span>
+<span>L4-L7 Protocol Strata</span>
+</div>
+<span class="text-code-dense font-code-dense text-text-subtle">STANDBY</span>
+</a>
+<!-- L8 Consensus Beacon -->
+<a class="flex items-center justify-between px-space-md py-space-sm rounded-DEFAULT text-text-muted font-label-mono-sm hover:text-on-surface hover:bg-surface-container transition-all duration-150" href="#">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm text-secondary">hub</span>
+<span>L8 Consensus Beacon</span>
+</div>
+<span class="text-code-dense font-code-dense text-secondary">ONLINE</span>
+</a>
+<!-- L9 Outer Boundary -->
+<a class="flex items-center justify-between px-space-md py-space-sm rounded-DEFAULT text-text-muted font-label-mono-sm hover:text-on-surface hover:bg-surface-container transition-all duration-150" href="#">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm">shield</span>
+<span>L9 Outer Boundary</span>
+</div>
+<span class="text-code-dense font-code-dense text-text-subtle">STANDBY</span>
+</a>
+<!-- Checkpoint Ledger -->
+<a class="flex items-center justify-between px-space-md py-space-sm rounded-DEFAULT text-text-muted font-label-mono-sm hover:text-on-surface hover:bg-surface-container transition-all duration-150" href="#">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm">account_tree</span>
+<span>Checkpoint Ledger</span>
+</div>
+<span class="text-code-dense font-code-dense text-on-surface-variant font-mono">0x4F92</span>
+</a>
+</nav>
+<!-- CTA from JSON Blueprint -->
+<div class="pt-space-sm px-space-xs">
+<button class="w-full flex items-center justify-center space-x-1.5 py-1.5 px-space-sm bg-surface-container border border-border-subtle text-text-muted hover:text-primary hover:border-primary/40 rounded-DEFAULT text-label-mono-sm font-label-mono-sm transition-all">
+<span class="material-symbols-outlined text-sm">anchor</span>
+<span>Anchor Checkpoint</span>
+</button>
+</div>
+</div>
+<!-- Footer Diagnostics from Shared JSON -->
+<div class="border-t border-border-subtle pt-space-sm flex flex-col space-y-1">
+<div class="flex items-center justify-between px-space-md py-1 text-text-muted hover:text-on-surface cursor-pointer text-label-mono-sm font-label-mono-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm">tune</span>
+<span>Diagnostics</span>
+</div>
+<span class="text-code-dense font-code-dense text-status-verified">0 FAULTS</span>
+</div>
+<div class="flex items-center justify-between px-space-md py-1 text-text-muted hover:text-on-surface cursor-pointer text-label-mono-sm font-label-mono-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span>Terminal Shell</span>
+</div>
+<span class="text-code-dense font-code-dense text-text-subtle">TTY0</span>
+</div>
+</div>
+</aside>
+<!-- MAIN FORENSIC COCKPIT CANVAS -->
+<main class="flex-1 flex flex-col overflow-y-auto custom-scroll hairline-grid p-space-md lg:p-space-lg space-y-space-md">
+<!-- BANNER PRINCIPAL DE STATUS EPISTÉMICO (L1-L2) -->
+<section class="bg-surface-container border border-border-subtle p-space-md relative overflow-hidden">
+<div class="absolute -right-16 -top-16 w-64 h-64 bg-status-verified/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md pb-space-md border-b border-border-subtle">
+<div>
+<div class="flex flex-wrap items-center gap-2 mb-1.5">
+<span class="px-2 py-0.5 bg-status-verified/10 text-status-verified border border-status-verified/30 text-label-mono-sm font-label-mono-sm font-bold tracking-wider rounded-DEFAULT">
+                [τ: LEMMA / VERIFIED]
+              </span>
+<span class="px-2 py-0.5 bg-surface-elevated text-secondary border border-border-subtle text-label-mono-sm font-label-mono-sm rounded-DEFAULT">
+                PCR QUOTE MATCH :: DETERMINISTIC DERIVATION
+              </span>
+<span class="text-code-dense font-code-dense text-text-muted">
+                PREVIOUS: PR #409 (0 BYTES DRIFT)
+              </span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">
+              Atestação de Hardware Enclave L1 &amp; Selamento de Cofres de Chaves L2
+            </h1>
+<p class="text-body-sm font-body-sm text-text-muted mt-0.5">
+              Camada de isolamento microarquitetural e derivação determinística de chaves criptográficas em memória hermética blindada contra transbordamento.
+            </p>
+</div>
+<!-- Quick Metrics Bar -->
+<div class="grid grid-cols-3 gap-2 flex-shrink-0">
+<div class="bg-surface-base border border-border-subtle p-2 flex flex-col justify-center">
+<div class="text-code-dense font-code-dense text-text-muted uppercase">PCR0-PCR8 State</div>
+<div class="text-label-mono-md font-label-mono-md text-status-verified font-bold mt-0.5">100% CANONICAL</div>
+<div class="text-code-dense font-code-dense text-text-subtle">SHA256 GOLDEN</div>
+</div>
+<div class="bg-surface-base border border-border-subtle p-2 flex flex-col justify-center">
+<div class="text-code-dense font-code-dense text-text-muted uppercase">Enclave Assurance</div>
+<div class="text-label-mono-md font-label-mono-md text-primary font-bold mt-0.5">FIPS 140-3 L4</div>
+<div class="text-code-dense font-code-dense text-text-subtle">CC EAL6+ COMPLIANT</div>
+</div>
+<div class="bg-surface-base border border-border-subtle p-2 flex flex-col justify-center">
+<div class="text-code-dense font-code-dense text-text-muted uppercase">Vault Isolation</div>
+<div class="text-label-mono-md font-label-mono-md text-secondary font-bold mt-0.5">3/3 REGIONS</div>
+<div class="text-code-dense font-code-dense text-text-subtle">SEV-SNP / TDX / HSM</div>
+</div>
+</div>
+</div>
+<!-- Formal Epistemic Payload Assertion -->
+<div class="mt-space-md bg-surface-base border border-border-grid p-2.5 rounded-DEFAULT font-code-dense text-code-dense text-on-surface-variant flex items-start space-x-2 overflow-x-auto">
+<span class="text-status-verified font-bold select-none">[✔_LEMMA]</span>
+<code class="text-primary-fixed-dim whitespace-nowrap">
+            Lemma{HardwareEnclaveSealed(pcr_root="0x9f8a23bc87e14f92d47aa00189bce41c", mrenclave="0x4d89a200fc4e98129acb77fa", vault_id="vault-kernel-l2-master", key_derivation="HKDF-BLAKE3-256", status=SEALED_AIR_GAPPED)}
+          </code>
+</div>
+</section>
+<!-- PAINEL CENTRAL DIVIDIDO EM DUAS COLUNAS FORENSES -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+<!-- COLUNA ESQUERDA: L1 Hardware Enclaves & Quórum Físico de HSMs (2-de-3 M-de-N) -->
+<section class="lg:col-span-6 bg-surface-container border border-border-subtle p-space-md flex flex-col space-y-space-md">
+<div class="flex items-center justify-between border-b border-border-subtle pb-space-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-base">developer_board</span>
+<h2 class="text-headline-md font-headline-md text-on-surface">
+                L1: Hardware Enclaves &amp; Quórum Físico de HSMs
+              </h2>
+</div>
+<span class="px-2 py-0.5 text-code-dense font-code-dense bg-primary/10 text-primary border border-primary/30 rounded-DEFAULT">
+              QUORUM: 2-DE-3 SATISFEITO
+            </span>
+</div>
+<!-- HSM Node 1: YubiHSM 2 -->
+<div class="bg-surface-base border border-border-subtle p-3 rounded-DEFAULT hover:border-primary/40 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-status-verified">verified_user</span>
+<div>
+<div class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">Enclave A: YubiHSM 2 (Primary Operator)</div>
+<div class="text-code-dense font-code-dense text-text-muted">did:key:z6Mka8F92CanonicalRootNode001</div>
+</div>
+</div>
+<span class="px-2 py-0.5 bg-status-verified/10 text-status-verified border border-status-verified/30 text-label-mono-sm font-label-mono-sm rounded-DEFAULT font-bold">
+                ✓ ATTESTED
+              </span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-border-grid text-code-dense font-code-dense">
+<div>
+<span class="text-text-muted">Hardware Key ID:</span>
+<span class="text-on-surface font-mono"> YHSM-0x892A</span>
+</div>
+<div>
+<span class="text-text-muted">Attestation Type:</span>
+<span class="text-on-surface"> TPM2_Quote valid</span>
+</div>
+<div class="col-span-2 text-text-muted truncate">
+                PCR-0 Hash: <span class="text-status-verified font-mono">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+</div>
+</div>
+</div>
+<!-- HSM Node 2: NitroKey HSM 2 -->
+<div class="bg-surface-base border border-border-subtle p-3 rounded-DEFAULT hover:border-primary/40 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-status-verified">lock_clock</span>
+<div>
+<div class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">Enclave B: NitroKey HSM 2 (SecOps Air-Gap)</div>
+<div class="text-code-dense font-code-dense text-text-muted">did:key:z6Mkb41F9AirGapSecOpsNode002</div>
+</div>
+</div>
+<span class="px-2 py-0.5 bg-status-verified/10 text-status-verified border border-status-verified/30 text-label-mono-sm font-label-mono-sm rounded-DEFAULT font-bold">
+                ✓ ATTESTED
+              </span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-border-grid text-code-dense font-code-dense">
+<div>
+<span class="text-text-muted">Hardware Key ID:</span>
+<span class="text-on-surface font-mono"> NK-0x41F9</span>
+</div>
+<div>
+<span class="text-text-muted">Attestation Type:</span>
+<span class="text-on-surface"> Ed25519-SK Valid</span>
+</div>
+<div class="col-span-2 text-text-muted truncate">
+                Physical Port: <span class="text-primary font-mono">Isolated Air-Gapped USB Matrix Bus /dev/ttyACM0</span>
+</div>
+</div>
+</div>
+<!-- HSM Node 3: AWS Nitro TEE / Cloud Enclave -->
+<div class="bg-surface-base border border-border-subtle p-3 rounded-DEFAULT border-dashed">
+<div class="flex items-start justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-status-conjecture">sync</span>
+<div>
+<div class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">Enclave C: Hardware Enclave Cloud-Isolated</div>
+<div class="text-code-dense font-code-dense text-text-muted">did:key:z6MkcTEECloudWitnessNode003 (AWS Nitro TEE)</div>
+</div>
+</div>
+<span class="px-2 py-0.5 bg-status-conjecture/10 text-status-conjecture border border-status-conjecture/30 text-label-mono-sm font-label-mono-sm rounded-DEFAULT font-bold">
+                ⚡ AWAITING PIN
+              </span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-border-grid text-code-dense font-code-dense">
+<div>
+<span class="text-text-muted">Attestation Status:</span>
+<span class="text-status-conjecture"> PIN Handshake Pending</span>
+</div>
+<div>
+<span class="text-text-muted">Quorum Evaluation:</span>
+<span class="text-status-verified font-semibold">ATTAINED (2/3 BY LAW)</span>
+</div>
+<div class="col-span-2 text-text-subtle">
+                Nota: O quórum criptográfico M-de-N (2-de-3) já foi atingido pelos nós locais Enclave A e Enclave B.
+              </div>
+</div>
+</div>
+<!-- Visual Triad Gauge for Hardware Enclave Trust -->
+<div class="bg-surface-base border border-border-subtle p-3 rounded-DEFAULT flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<!-- SVG Radial Gauge -->
+<div class="relative w-14 h-14 flex items-center justify-center">
+<svg class="w-14 h-14 -rotate-90" viewbox="0 0 36 36">
+<path class="text-border-subtle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-status-verified" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="94, 100" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<span class="absolute text-code-dense font-code-dense font-bold text-primary">94%</span>
+</div>
+<div>
+<div class="text-label-mono-sm font-label-mono-sm text-on-surface font-semibold">Hardware Trust Confidence Gauge</div>
+<div class="text-code-dense font-code-dense text-text-muted">Root-of-Trust medido contra especificação NIST SP 800-193</div>
+</div>
+</div>
+<div class="text-right">
+<span class="text-code-dense font-code-dense text-status-verified block font-bold">BOOT MEDIÇÕES: OK</span>
+<span class="text-code-dense font-code-dense text-text-subtle block">PCR[0..7] MATCH L0</span>
+</div>
+</div>
+</section>
+<!-- COLUNA DIREITA: L2 Sealed Vaults & Derivação Criptográfica de Chaves -->
+<section class="lg:col-span-6 bg-surface-container border border-border-subtle p-space-md flex flex-col space-y-space-md">
+<div class="flex items-center justify-between border-b border-border-subtle pb-space-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-secondary text-base">vpn_key</span>
+<h2 class="text-headline-md font-headline-md text-on-surface">
+                L2: Sealed Vaults &amp; Derivação Criptográfica
+              </h2>
+</div>
+<span class="px-2 py-0.5 text-code-dense font-code-dense bg-secondary/10 text-secondary border border-secondary/30 rounded-DEFAULT">
+              ZERO-KNOWLEDGE MEMORY
+            </span>
+</div>
+<!-- Sealed Vault Memory Map Structure -->
+<div class="space-y-2">
+<div class="text-label-mono-sm font-label-mono-sm text-text-muted flex justify-between">
+<span>SEALED VAULT MEMORY MAP (0x7FFF00000000 - 0x7FFF0000FFFF)</span>
+<span class="text-status-verified font-mono">mlock() ENGAGED</span>
+</div>
+<!-- Vault Master Root -->
+<div class="bg-surface-base border border-border-subtle p-2.5 rounded-DEFAULT">
+<div class="flex items-center justify-between mb-1">
+<span class="text-code-dense font-code-dense text-primary font-bold">ROOT: Vault Master Root</span>
+<span class="text-code-dense font-code-dense px-1 bg-surface-elevated text-text-muted border border-border-subtle">0x0000..0x00FF</span>
+</div>
+<p class="text-code-dense font-code-dense text-text-muted">
+                Derivado via HKDF-BLAKE3 a partir do segredo raiz do enclave selado sob medições PCR de L0. Imutável após derivação.
+              </p>
+</div>
+<!-- Slot 01: Signing Keypair L7 ReleaseManifest -->
+<div class="bg-surface-base border border-border-subtle p-2.5 rounded-DEFAULT">
+<div class="flex items-center justify-between mb-1">
+<span class="text-code-dense font-code-dense text-on-surface font-semibold">SLOT 01: Signing Keypair L7 ReleaseManifest</span>
+<span class="text-code-dense font-code-dense text-status-verified bg-status-verified/10 px-1 border border-status-verified/20">PR_SET_DUMPABLE=0</span>
+</div>
+<p class="text-code-dense font-code-dense text-text-muted">
+                Derivação ephemeral. Anti-core dump ativado, proteção estrita contra vazamento de pilha em swap. Chave pronta para assinatura.
+              </p>
+</div>
+<!-- Slot 02: WormGraph Ratchet State Key -->
+<div class="bg-surface-base border border-border-subtle p-2.5 rounded-DEFAULT">
+<div class="flex items-center justify-between mb-1">
+<span class="text-code-dense font-code-dense text-on-surface font-semibold">SLOT 02: WormGraph Ratchet State Key</span>
+<span class="text-code-dense font-code-dense text-secondary bg-secondary/10 px-1 border border-secondary/20">MONOTONIC SEQ: 0x4F92</span>
+</div>
+<p class="text-code-dense font-code-dense text-text-muted">
+                Protegido por chave de ratcheting com contador monotónico anti-replay em hardware. Bloqueio automático de chave em caso de recuo.
+              </p>
+</div>
+<!-- Slot 03: GossipSub Authenticated Sync Key -->
+<div class="bg-surface-base border border-border-subtle p-2.5 rounded-DEFAULT">
+<div class="flex items-center justify-between mb-1">
+<span class="text-code-dense font-code-dense text-on-surface font-semibold">SLOT 03: GossipSub Authenticated Sync Key</span>
+<span class="text-code-dense font-code-dense text-primary-fixed-dim bg-primary/10 px-1 border border-primary/20">READY FOR L4/L8</span>
+</div>
+<p class="text-code-dense font-code-dense text-text-muted">
+                Chave de transporte autenticada para difusão na malha P2P. Selada para liberação condicional quando o Beacon L8 for acoplado.
+              </p>
+</div>
+</div>
+<!-- Kernel Sandboxing & Isolation Proof Panel -->
+<div class="bg-surface-base border border-border-subtle p-3 rounded-DEFAULT">
+<div class="text-label-mono-sm font-label-mono-sm text-on-surface font-semibold mb-2 flex items-center justify-between">
+<span>Kernel Vault Sandboxing &amp; Process Isolation</span>
+<span class="text-status-verified text-code-dense font-code-dense">BPF_PROG_TYPE_SECCOMP ACTIVE</span>
+</div>
+<div class="grid grid-cols-2 gap-2 text-code-dense font-code-dense">
+<div class="bg-surface-elevated p-2 border border-border-grid">
+<span class="text-text-muted block">cgroups-v2 Memory:</span>
+<span class="text-on-surface font-mono">memory.kmem.limit = 64M</span>
+<span class="text-status-verified block mt-0.5">Swap memory limit = 0B</span>
+</div>
+<div class="bg-surface-elevated p-2 border border-border-grid">
+<span class="text-text-muted block">SECCOMP Syscall Filter:</span>
+<span class="text-on-surface font-mono">NETWORK_CALLS: DENIED</span>
+<span class="text-status-verified block mt-0.5">zero network egress allowed</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- PAINEL DE INVARIANTES DE SEGURANÇA L1-L2 (Containment & Anti-Tamper Matrix) -->
+<section class="bg-surface-container border border-border-subtle p-space-md">
+<div class="flex items-center justify-between border-b border-border-subtle pb-space-sm mb-space-md">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-base">verified</span>
+<h2 class="text-headline-md font-headline-md text-on-surface">
+              Matriz de Invariantes Criptográficas L1-L2 (Containment &amp; Anti-Tamper)
+            </h2>
+</div>
+<span class="text-label-mono-sm font-label-mono-sm text-status-verified font-mono">
+            3/3 INVARIANTES SATISFEITAS
+          </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Invariante V2.1 -->
+<div class="bg-surface-base border border-border-subtle p-3 rounded-DEFAULT">
+<div class="flex items-center justify-between mb-1.5">
+<span class="text-label-mono-sm font-label-mono-sm text-primary font-bold">INVARIANTE V2.1</span>
+<span class="text-code-dense font-code-dense text-status-verified bg-status-verified/10 px-1 border border-status-verified/30">SATISFEITO</span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface font-semibold mb-1">
+              Enclave Memory Hermeticity
+            </div>
+<p class="text-code-dense font-code-dense text-text-muted">
+              Páginas de memória do cofre criptografadas por hardware via AMD SEV-SNP e Intel TDX. Leitura por hypervisor host resulta em dados indecifráveis.
+            </p>
+</div>
+<!-- Invariante V2.2 -->
+<div class="bg-surface-base border border-border-subtle p-3 rounded-DEFAULT">
+<div class="flex items-center justify-between mb-1.5">
+<span class="text-label-mono-sm font-label-mono-sm text-primary font-bold">INVARIANTE V2.2</span>
+<span class="text-code-dense font-code-dense text-status-verified bg-status-verified/10 px-1 border border-status-verified/30">SATISFEITO</span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface font-semibold mb-1">
+              Zero Plaintext Key Leaks
+            </div>
+<p class="text-code-dense font-code-dense text-text-muted">
+              Material criptográfico em claro nunca toca armazenamento magnético/SSD ou espaço de paginação swap. Swap de kernel globalmente desabilitado.
+            </p>
+</div>
+<!-- Invariante V2.3 -->
+<div class="bg-surface-base border border-border-subtle p-3 rounded-DEFAULT">
+<div class="flex items-center justify-between mb-1.5">
+<span class="text-label-mono-sm font-label-mono-sm text-primary font-bold">INVARIANTE V2.3</span>
+<span class="text-code-dense font-code-dense text-status-verified bg-status-verified/10 px-1 border border-status-verified/30">SATISFEITO</span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface font-semibold mb-1">
+              Anti-Rollback Monotonic Counter
+            </div>
+<p class="text-code-dense font-code-dense text-text-muted">
+              Hardware monotonic counter travado em 0x00004F92. Impossível restaurar snapshots ou imagens de memória antigas sem invalidar o selamento.
+            </p>
+</div>
+</div>
+</section>
+<!-- AUDIT STREAM LIVE LOG (AUDIT TRAIL DE INICIALIZAÇÃO DO VAULT) -->
+<section class="bg-surface-base border border-border-grid p-space-md">
+<div class="flex items-center justify-between pb-2 border-b border-border-grid mb-2">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-text-muted text-sm">subject</span>
+<span class="text-label-mono-sm font-label-mono-sm text-text-muted uppercase">Audit Stream Live Log :: L1-L2 Enclave &amp; Vault Initialization</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified animate-ping"></span>
+<span class="text-code-dense font-code-dense text-text-muted">STREAM: LIVE /dev/kmsg_crypto</span>
+</div>
+</div>
+<div class="font-code-dense text-code-dense space-y-1 overflow-x-auto text-on-surface-variant max-h-36 custom-scroll">
+<div class="flex space-x-2">
+<span class="text-text-subtle select-none">[14:38:02.109Z]</span>
+<span class="text-secondary font-semibold">L1_ENCLAVE_INIT:</span>
+<span>Hardware Enclave YubiHSM2 connected via physical USB bus /sys/bus/usb/devices/1-2.</span>
+</div>
+<div class="flex space-x-2">
+<span class="text-text-subtle select-none">[14:38:03.412Z]</span>
+<span class="text-status-verified font-semibold">TPM_QUOTE:</span>
+<span>PCR[0..8] measurement digest matches Canonical Golden L0 derivation sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=.</span>
+</div>
+<div class="flex space-x-2">
+<span class="text-text-subtle select-none">[14:38:04.098Z]</span>
+<span class="text-primary font-semibold">L2_VAULT_SEAL:</span>
+<span>Binding master secret to PCR policy. Sealed payload generated via HKDF-BLAKE3-256.</span>
+</div>
+<div class="flex space-x-2">
+<span class="text-text-subtle select-none">[14:38:04.551Z]</span>
+<span class="text-secondary font-semibold">MEMORY_LOCK:</span>
+<span>mlockall(MCL_CURRENT | MCL_FUTURE) engaged. Zero swap spillover. PR_SET_DUMPABLE=0 confirmed.</span>
+</div>
+<div class="flex space-x-2">
+<span class="text-text-subtle select-none">[14:38:05.004Z]</span>
+<span class="text-status-verified font-bold">GATE_STATUS:</span>
+<span class="text-status-verified">L1-L2 sealed successfully. Quorum 2/3 verified. Permission granted to transition to L3 Authority Graph.</span>
+</div>
+</div>
+</section>
+<!-- AÇÕES DE AVANÇO DO COCKPIT (Workflow Gate L2 -> L3) -->
+<section class="bg-surface-container border border-border-subtle p-space-md flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div>
+<div class="text-label-mono-md font-label-mono-md text-on-surface font-semibold">
+            Workflow Gate L2 → L3: Grafo de Governança &amp; Autoridade
+          </div>
+<div class="text-body-sm font-body-sm text-text-muted mt-0.5">
+            Todos os cofres criptográficos de chaves estão selados e vinculados à raiz de hardware com atestação formal.
+          </div>
+</div>
+<div class="flex flex-wrap items-center gap-2">
+<!-- Ação Terciária -->
+<button class="px-3 py-1.5 text-label-mono-sm font-label-mono-sm bg-surface-base border border-border-subtle text-text-muted hover:text-on-surface hover:bg-surface-elevated transition-colors">
+<span class="material-symbols-outlined text-sm align-middle mr-1">bug_report</span>
+            Auditoria de Memória em Sandbox
+          </button>
+<!-- Ação Secundária -->
+<button class="px-3 py-1.5 text-label-mono-sm font-label-mono-sm bg-surface-base border border-border-subtle text-secondary hover:border-secondary transition-colors">
+<span class="material-symbols-outlined text-sm align-middle mr-1">download</span>
+            Descarregar Certificado PCR (.spdm/.attest)
+          </button>
+<!-- Ação Primária -->
+<button class="px-4 py-1.5 text-label-mono-sm font-label-mono-sm bg-primary/10 border border-primary text-primary hover:bg-primary hover:text-on-primary glow-emerald transition-all font-bold flex items-center space-x-1.5">
+<span>Avançar para L3: Grafo de Governança &amp; Autoridade</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</section>
+</main>
+</div>
+<!-- RODAPÉ DE TELEMETRIA GLOBAL -->
+<footer class="h-8 border-t border-border-subtle bg-surface-base px-space-lg flex items-center justify-between text-code-dense font-code-dense text-text-muted select-none">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-status-verified"></span>
+<span class="text-on-surface font-semibold">SYSTEM STATE:</span>
+<span class="text-status-verified">L1-L2 SEALED (NORMAL RUNTIME) :: STRATUM L2</span>
+</div>
+<span class="text-border-subtle">|</span>
+<div>AUDIT ID: <span class="text-on-surface font-mono">0x9F1A-ENCLAVE-SEALED-PASS</span></div>
+</div>
+<div class="flex items-center space-x-4">
+<div class="hidden sm:inline">COMPLIANCE: <span class="text-on-surface">ISO/IEC 29128 CAT-4 | FIPS 140-3 LEVEL 4</span></div>
+<span class="text-border-subtle hidden sm:inline">|</span>
+<div class="text-primary font-semibold">HARDWARE TRUST ROOT: 100% VERIFIED (LEMMA)</div>
+</div>
+</footer>
+</body></html>

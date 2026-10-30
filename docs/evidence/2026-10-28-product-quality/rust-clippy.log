@@ -1,0 +1,62 @@
+{"argv": ["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"], "cwd": "D:\\arkhe"}
+    Checking arkhe-core v0.1.0 (D:\arkhe\kernel\arkhe-core)
+    Checking tokio v1.53.3
+   Compiling arkhe-wormgraph v0.1.0 (D:\arkhe\evidence\arkhe-wormgraph)
+    Checking anstyle-query v1.1.5
+    Checking anstyle-wincon v3.0.11
+    Checking fastrand v2.5.0
+    Checking wait-timeout v0.2.1
+    Checking fnv v1.0.7
+    Checking quick-error v1.2.3
+    Checking bit-vec v0.8.0
+    Checking rand_xorshift v0.4.0
+    Checking unarray v0.1.4
+   Compiling arkhe-runtime v0.1.0 (D:\arkhe\orchestration\arkhe-runtime)
+    Checking bit-set v0.8.0
+    Checking tempfile v3.27.0
+   Compiling libsqlite3-sys v0.30.1
+    Checking hashbrown v0.14.5
+   Compiling arkhe-sql-migrate v0.1.0 (D:\arkhe\storage\sql\crates\arkhe-sql-migrate)
+    Checking anstream v1.0.0
+    Checking rusty-fork v0.3.1
+    Checking clap_builder v4.6.7
+    Checking proptest v1.9.0
+    Checking arkhe-verify-core v0.1.0 (D:\arkhe\verification\crates\arkhe-verify-core)
+    Checking arkhe-cognition-sdk v0.1.0 (D:\arkhe\cognition\arkhe-cognition-sdk)
+    Checking arkhe-auth-md v0.1.0 (D:\arkhe\integration\auth-md)
+    Checking arkhe-work v0.1.0 (D:\arkhe\work\arkhe-work)
+    Checking hashlink v0.9.1
+    Checking arkhe-work-channels v0.1.0 (D:\arkhe\work\arkhe-work-channels)
+    Checking arkhe-rag v0.1.0 (D:\arkhe\cognition\arkhe-rag)
+    Checking arkhe-agent v0.1.0 (D:\arkhe\cognition\arkhe-agent)
+    Checking arkhe-metacognition v0.1.0 (D:\arkhe\cognition\arkhe-metacognition)
+    Checking arkhe-learning v0.1.0 (D:\arkhe\cognition\arkhe-learning)
+    Checking arkhe-perception v0.1.0 (D:\arkhe\cognition\arkhe-perception)
+    Checking arkhe-world-model v0.1.0 (D:\arkhe\cognition\arkhe-world-model)
+    Checking clap v4.6.7
+    Checking arkhe-twin v0.1.0 (D:\arkhe\work\arkhe-twin)
+error: large size difference between variants
+  --> cognition\arkhe-rag\src\decoder.rs:46:1
+   |
+46 | / pub enum ConstrainedDecoder {
+47 | |     LlGuidance(llguidance::Matcher),
+   | |     ------------------------------- the largest variant contains at least 1448 bytes
+48 | |     #[cfg(feature = "server")]
+49 | |     XGrammar(xgrammar::GrammarMatcher),
+50 | |     /// Test fallback: no constraint is applied.
+51 | |     NoOp,
+   | |     ---- the second-largest variant carries no data at all
+52 | | }
+   | |_^ the entire enum is at least 1448 bytes
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.96.0/index.html#large_enum_variant
+   = note: `-D clippy::large-enum-variant` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::large_enum_variant)]`
+help: consider boxing the large fields or introducing indirection in some other way to reduce the total size of the enum
+   |
+47 -     LlGuidance(llguidance::Matcher),
+47 +     LlGuidance(Box<llguidance::Matcher>),
+   |
+
+error: could not compile `arkhe-rag` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

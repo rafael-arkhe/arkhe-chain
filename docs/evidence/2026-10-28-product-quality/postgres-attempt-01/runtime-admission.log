@@ -1,0 +1,15 @@
+   Compiling arkhe-runtime v0.1.0 (D:\arkhe\orchestration\arkhe-runtime)
+error[E0308]: mismatched types
+  --> orchestration\arkhe-runtime\tests\postgres_live.rs:21:27
+   |
+21 |         request_identity: Digest32::blake3(b"test", uuid::Uuid::new_v4().as_bytes()),
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `RequestIdentity`, found `Digest32`
+   |
+help: try wrapping the expression in `arkhe_core::work::RequestIdentity`
+   |
+21 |         request_identity: arkhe_core::work::RequestIdentity(Digest32::blake3(b"test", uuid::Uuid::new_v4().as_bytes())),
+   |                           ++++++++++++++++++++++++++++++++++                                                          +
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `arkhe-runtime` (test "postgres_live") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

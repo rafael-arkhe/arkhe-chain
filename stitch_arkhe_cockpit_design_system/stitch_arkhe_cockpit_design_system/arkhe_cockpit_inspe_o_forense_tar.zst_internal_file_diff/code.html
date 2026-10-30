@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkhe Cockpit - Análise Forense de Divergência de Build (L0 Nix)</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "status-pending": "#0ea5e9",
+            "on-error": "#690005",
+            "border-subtle": "#1e293b",
+            "inverse-surface": "#e0e2ea",
+            "surface-container": "#121820",
+            "secondary-container": "#00a2e6",
+            "error": "#ffb4ab",
+            "on-tertiary-fixed": "#2a1700",
+            "surface-dim": "#101419",
+            "on-primary": "#003824",
+            "secondary-fixed": "#c9e6ff",
+            "on-background": "#e0e2ea",
+            "primary-container": "#10b981",
+            "secondary-fixed-dim": "#89ceff",
+            "text-muted": "#64748b",
+            "background": "#101419",
+            "on-tertiary-container": "#523200",
+            "tertiary-fixed-dim": "#ffb95f",
+            "tertiary": "#ffb95f",
+            "on-primary-fixed-variant": "#005236",
+            "on-error-container": "#ffdad6",
+            "text-subtle": "#475569",
+            "inverse-primary": "#006c49",
+            "status-verified": "#10b981",
+            "surface": "#101419",
+            "surface-elevated": "#182230",
+            "surface-variant": "#31353b",
+            "surface-tint": "#4edea3",
+            "on-tertiary": "#472a00",
+            "primary-fixed-dim": "#4edea3",
+            "status-refuted": "#f43f5e",
+            "on-surface": "#e0e2ea",
+            "on-secondary": "#00344d",
+            "tertiary-container": "#e29100",
+            "error-container": "#93000a",
+            "secondary": "#89ceff",
+            "inverse-on-surface": "#2d3136",
+            "on-primary-container": "#00422b",
+            "surface-container-low": "#181c21",
+            "primary-fixed": "#6ffbbe",
+            "surface-container-highest": "#31353b",
+            "on-tertiary-fixed-variant": "#653e00",
+            "surface-base": "#0b0f14",
+            "surface-bright": "#36393f",
+            "outline": "#86948a",
+            "on-primary-fixed": "#002113",
+            "surface-container-high": "#262a30",
+            "on-secondary-fixed-variant": "#004c6e",
+            "border-grid": "#1f2937",
+            "on-surface-variant": "#bbcabf",
+            "surface-container-lowest": "#0a0e13",
+            "on-secondary-container": "#00344e",
+            "tertiary-fixed": "#ffddb8",
+            "outline-variant": "#3c4a42",
+            "status-conjecture": "#f59e0b",
+            "primary": "#4edea3",
+            "on-secondary-fixed": "#001e2f"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xl": "1.5rem",
+            "margin": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "margin-sm": "1rem",
+            "space-lg": "1rem",
+            "space-md": "0.75rem",
+            "gutter-dense": "0.5rem"
+          },
+          "fontFamily": {
+            "body-md": ["Inter"],
+            "label-mono-md": ["JetBrains Mono"],
+            "label-mono-sm": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-xl": ["Inter"],
+            "code-dense": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "label-mono-lg": ["JetBrains Mono"],
+            "headline-lg": ["Inter"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "label-mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "code-dense": ["10px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "label-mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0b0f14;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #1e293b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="bg-surface-base text-on-surface min-h-screen flex flex-col font-body-md antialiased select-none overflow-x-hidden">
+<!-- ================= TOP NAV BAR (COCKPIT HEADER) ================= -->
+<header class="flex justify-between items-center w-full px-space-lg h-14 bg-surface-container border-b border-border-subtle z-50 shrink-0">
+<!-- Brand Anchor & Strata Location -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="text-label-mono-lg font-label-mono-lg font-bold tracking-wider text-primary">ARKHE // COCKPIT</span>
+<span class="px-1.5 py-0.5 bg-status-refuted/10 border border-status-refuted/40 text-status-refuted font-label-mono-sm text-[10px] tracking-widest font-semibold uppercase">
+          [L0 FORENSIC ENGINE]
+        </span>
+</div>
+<div class="h-4 w-px bg-border-subtle hidden lg:block"></div>
+<div class="hidden lg:flex items-center gap-2 font-label-mono-sm text-text-muted">
+<span class="text-on-surface-variant">STRATUM:</span>
+<span class="text-on-surface font-semibold">L0-L1 Foundation</span>
+<span class="text-text-subtle">//</span>
+<span>REPRODUCIBILITY VERIFICATION</span>
+</div>
+</div>
+<!-- Center Telemetry Alert Strip -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-space-md py-1 bg-surface-base border border-status-refuted/40 text-status-refuted rounded-DEFAULT shadow-[0_0_12px_rgba(244,63,94,0.15)]">
+<span class="w-2 h-2 rounded-full bg-status-refuted animate-pulse"></span>
+<span class="font-label-mono-sm font-semibold tracking-wider">FAIL-CLOSED: BUILD DIVERGENCE DETECTED [τ: REFUTED]</span>
+</div>
+<div class="hidden xl:flex items-center px-2 py-1 bg-surface-elevated border border-border-subtle font-label-mono-sm text-text-muted">
+<span>EPOCH 0x4F92 :: HALTED AT L0 BUILD</span>
+</div>
+</div>
+<!-- Trailing Action Controls -->
+<div class="flex items-center gap-2">
+<!-- Locked Action: Sign ReleaseManifest -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-elevated/40 border border-border-subtle text-text-subtle font-label-mono-sm cursor-not-allowed opacity-50" disabled="" title="Fail-Closed active: Release signing blocked">
+<span class="material-symbols-outlined text-text-subtle text-[14px]">lock</span>
+<span>Sign ReleaseManifest</span>
+<span class="text-[9px] px-1 bg-status-refuted/20 text-status-refuted font-mono uppercase">LOCKED</span>
+</button>
+<!-- Locked Action: Propose Patch -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-elevated/40 border border-border-subtle text-text-subtle font-label-mono-sm cursor-not-allowed opacity-50" disabled="" title="Direct patching frozen until DrvDump consensus">
+<span class="material-symbols-outlined text-text-subtle text-[14px]">shield</span>
+<span>Propose Patch</span>
+<span class="text-[9px] px-1 bg-status-refuted/20 text-status-refuted font-mono uppercase">LOCKED</span>
+</button>
+<!-- Primary Permitted Diagnostic Action -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-status-pending/10 hover:bg-status-pending/20 border border-status-pending/40 text-status-pending font-label-mono-sm cursor-pointer transition-colors duration-150 active:scale-[0.99]">
+<span class="material-symbols-outlined text-status-pending text-[14px]">file_download</span>
+<span>Export Diff (.drvdump)</span>
+</button>
+<div class="h-4 w-px bg-border-subtle mx-1"></div>
+<!-- Operator Key Fingerprint -->
+<div class="flex items-center gap-1.5 px-2 py-1 bg-surface-base border border-border-subtle" title="Operator cryptographic key fingerprint avatar">
+<span class="material-symbols-outlined text-primary text-[16px]">verified_user</span>
+<span class="font-code-dense text-text-muted">0x4F..E92A</span>
+</div>
+</div>
+</header>
+<!-- ================= MAIN BODY CONTAINER ================= -->
+<div class="flex flex-1 overflow-hidden relative">
+<!-- ================= SIDE NAV BAR (VERTICAL LAYER NAVIGATOR) ================= -->
+<aside class="flex flex-col justify-between w-64 shrink-0 border-r border-border-subtle bg-surface-base py-space-md px-space-sm z-40 overflow-y-auto custom-scrollbar">
+<div class="flex flex-col gap-space-md">
+<!-- Strata Header -->
+<div class="px-space-md py-space-sm border-b border-border-subtle pb-space-sm">
+<div class="flex items-center justify-between">
+<span class="text-label-mono-md font-label-mono-md text-primary uppercase tracking-widest font-bold">STRATUM L0-L9</span>
+<span class="material-symbols-outlined text-status-refuted text-[16px]">warning</span>
+</div>
+<div class="mt-1 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-status-refuted animate-ping"></span>
+<span class="font-code-dense text-status-refuted tracking-wider font-semibold">EPOCH 0x4F92 :: L0 REFUTED</span>
+</div>
+</div>
+<!-- Strata List -->
+<nav class="flex flex-col space-y-1">
+<!-- L0-L1 Foundation (Active Divergent View) -->
+<div class="flex items-center justify-between bg-surface-elevated text-status-refuted border-l-2 border-status-refuted font-label-mono-sm px-space-md py-space-sm cursor-pointer shadow-[inset_0_0_12px_rgba(244,63,94,0.06)]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-refuted text-[16px]">deployed_code</span>
+<span class="font-bold">L0-L1 Foundation</span>
+</div>
+<span class="text-[9px] px-1 bg-status-refuted/20 text-status-refuted border border-status-refuted/30 uppercase">REFUTED</span>
+</div>
+<!-- L2-L3 Sealed Vaults -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm opacity-60 cursor-not-allowed">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-subtle text-[16px]">lock</span>
+<span>L2-L3 Sealed Vaults</span>
+</div>
+<span class="text-[8px] text-text-subtle uppercase">FROZEN</span>
+</div>
+<!-- L4-L7 Protocol Strata -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm opacity-60 cursor-not-allowed">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-subtle text-[16px]">layers</span>
+<span>L4-L7 Protocol Strata</span>
+</div>
+<span class="text-[8px] text-text-subtle uppercase">BLOCKED</span>
+</div>
+<!-- L8 Consensus Beacon -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm opacity-60 cursor-not-allowed">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-subtle text-[16px]">hub</span>
+<span>L8 Consensus Beacon</span>
+</div>
+<span class="text-[8px] text-text-subtle uppercase">BLOCKED</span>
+</div>
+<!-- L9 Outer Boundary -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm opacity-60 cursor-not-allowed">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-subtle text-[16px]">shield</span>
+<span>L9 Outer Boundary</span>
+</div>
+<span class="text-[8px] text-text-subtle uppercase">BLOCKED</span>
+</div>
+<!-- Checkpoint Ledger -->
+<div class="flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-space-sm opacity-60 cursor-not-allowed">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-subtle text-[16px]">account_tree</span>
+<span>Checkpoint Ledger</span>
+</div>
+<span class="text-[8px] text-text-subtle uppercase">WAITING</span>
+</div>
+</nav>
+</div>
+<!-- SideNav Action & Footer -->
+<div class="flex flex-col gap-space-sm pt-space-md border-t border-border-subtle">
+<!-- Disabled CTA Anchor -->
+<button class="w-full py-1.5 px-2 bg-surface-elevated border border-border-subtle text-text-subtle font-label-mono-sm flex items-center justify-center gap-1 cursor-not-allowed opacity-40" disabled="">
+<span class="material-symbols-outlined text-[14px]">anchor</span>
+<span>Anchor Checkpoint</span>
+</button>
+<!-- Footer Diagnostic Tabs -->
+<div class="flex flex-col space-y-1">
+<button class="w-full flex items-center justify-between text-status-refuted font-label-mono-sm px-space-md py-1.5 hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px]">tune</span>
+<span>Diagnostics</span>
+</div>
+<span class="text-[9px] font-mono text-status-refuted">[FAIL-CLOSED]</span>
+</button>
+<button class="w-full flex items-center justify-between text-text-muted font-label-mono-sm px-space-md py-1.5 hover:bg-surface-container hover:text-on-surface transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px]">terminal</span>
+<span>Terminal Shell</span>
+</div>
+<span class="text-[9px] font-mono text-text-subtle">[AIR-GAP]</span>
+</button>
+</div>
+<div class="px-space-md pt-2 border-t border-border-subtle/50">
+<div class="text-[9px] font-code-dense text-text-subtle leading-tight">
+            NIX_DAEMON: v2.18.1<br/>
+            ISOLATION: chroot-cgroups-v2<br/>
+            AWARENESS: Strict Fail-Closed
+          </div>
+</div>
+</div>
+</aside>
+<!-- ================= MAIN FORENSIC CANVAS WORKSPACE ================= -->
+<main class="flex-1 overflow-y-auto bg-surface-base p-space-lg space-y-space-md custom-scrollbar">
+<!-- ================= A. ALERT HEADER BANNER ================= -->
+<section class="bg-surface-container border border-status-refuted/50 p-space-md shadow-[0_0_16px_rgba(244,63,94,0.12)]">
+<div class="flex flex-col lg:flex-row lg:items-start justify-between gap-space-md">
+<div class="space-y-1.5 flex-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 bg-status-refuted text-surface-base font-label-mono-sm font-bold tracking-widest text-[11px] uppercase">
+                CRITICAL L0 INVARIANT REFUTED
+              </span>
+<span class="text-status-refuted font-label-mono-sm font-bold tracking-wider">
+                :: NON-DETERMINISTIC BUILD DIVERGENCE
+              </span>
+<span class="px-1.5 py-0.2 bg-status-refuted/10 border border-status-refuted/40 text-status-refuted font-label-mono-sm text-[10px]">
+                τ: REFUTED
+              </span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-5xl leading-relaxed">
+              Dois builders independentes herméticos executaram a mesma derivação Nix (<code class="font-code-dense text-on-surface bg-surface-base px-1.5 py-0.5 border border-border-subtle">/nix/store/...arkhe-core.drv</code>) em ambientes isolados e produziram saídas divergentes. O pipeline de release foi imediatamente interrompido para impedir binários contaminados.
+            </p>
+</div>
+<div class="flex items-center gap-3 shrink-0">
+<div class="px-3 py-2 bg-surface-base border border-border-subtle text-right">
+<div class="text-label-mono-sm text-text-muted">STATUS DO PIPELINE</div>
+<div class="text-label-mono-md font-bold text-status-refuted flex items-center gap-1.5 justify-end">
+<span class="w-2 h-2 rounded-full bg-status-refuted"></span>
+                HARD LOCKOUT (L0)
+              </div>
+</div>
+</div>
+</div>
+<!-- Golden Rule: Typed Error Box -->
+<div class="mt-3 p-space-md bg-surface-base border border-border-grid font-code-dense text-status-refuted text-[12px] leading-relaxed overflow-x-auto whitespace-pre-wrap select-text">
+<span class="text-text-muted">// Golden Rule Verification Failure Payload:</span>
+<span class="font-bold text-status-refuted">Refuted{BuildDivergence(</span>drv="<span class="text-on-surface">/nix/store/9f1a28cb4081efbc9a28-arkhe-core-v1.4.2.drv</span>", builder_A="<span class="text-primary">Alpha-x86_64</span>", narHash_A="<span class="text-primary">sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=</span>", builder_B="<span class="text-status-refuted">Beta-aarch64</span>", narHash_B="<span class="text-status-refuted">sha256-7x90PQm3ZKLc-/RUmX+1ABceQeRkm5NMpJWZG8hTqZA=</span>", byte_offset=<span class="text-status-conjecture">0x0041F9A0</span>, diff_type="<span class="text-status-conjecture">Timestamps_or_Inlined_Pointer_Drift</span>", delta_bytes=<span class="text-status-refuted">184</span>, nar_hash_mismatch=<span class="text-status-refuted font-bold">true</span>, status=<span class="text-status-refuted font-bold">HALTED</span><span class="font-bold text-status-refuted">)}</span>
+</div>
+</section>
+<!-- ================= B. SIDE-BY-SIDE BUILDER COMPARISON MATRIX ================= -->
+<section class="grid grid-cols-1 xl:grid-cols-11 gap-space-md items-stretch">
+<!-- Card Builder Alpha -->
+<div class="xl:col-span-5 bg-surface-container border border-primary/40 flex flex-col justify-between shadow-[0_0_12px_rgba(16,185,129,0.08)]">
+<div class="p-space-md border-b border-border-subtle flex justify-between items-center bg-surface-elevated/40">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">dns</span>
+<div>
+<span class="font-label-mono-md font-bold text-primary">BUILDER ALPHA</span>
+<span class="font-code-dense text-text-muted ml-2">[builder-alpha.nix-community.org]</span>
+</div>
+</div>
+<span class="px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary font-label-mono-sm text-[10px] uppercase">
+              VALID DETERMINISM A
+            </span>
+</div>
+<div class="p-space-md space-y-space-sm text-body-sm font-body-sm flex-1">
+<!-- Hardware / Environment specs -->
+<div class="grid grid-cols-3 gap-2 pb-2 border-b border-border-subtle text-[11px] font-label-mono-sm">
+<div>
+<span class="text-text-muted block">ARCH:</span>
+<span class="text-on-surface font-semibold">x86_64-linux</span>
+</div>
+<div>
+<span class="text-text-muted block">SANDBOX:</span>
+<span class="text-on-surface">cgroups-v2 hermetic</span>
+</div>
+<div>
+<span class="text-text-muted block">BUILD TIME:</span>
+<span class="text-on-surface">4m 12s (32 Cores)</span>
+</div>
+</div>
+<!-- Hash & Output Path -->
+<div class="space-y-1.5 pt-1">
+<div class="flex flex-col">
+<span class="text-[10px] font-label-mono-sm text-text-muted uppercase">narHash (Nix Archive Checksum):</span>
+<div class="flex items-center justify-between p-1.5 bg-surface-base border border-primary/30 font-code-dense text-primary text-[11px] break-all">
+<span>sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=</span>
+<span class="material-symbols-outlined text-primary text-[14px] ml-1">check_circle</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label-mono-sm text-text-muted uppercase">Output Path:</span>
+<div class="p-1.5 bg-surface-base border border-border-subtle font-code-dense text-on-surface text-[11px] break-all">
+                  /nix/store/1a7b889e4c029dfa189f-arkhe-core-v1.4.2
+                </div>
+</div>
+</div>
+<!-- Attestation and Purity -->
+<div class="pt-2 flex justify-between items-center text-[11px] font-label-mono-sm border-t border-border-subtle">
+<span class="text-text-muted">Purity Metric:</span>
+<span class="text-primary font-bold">100% Hermetic / Bit-Stable</span>
+</div>
+<div class="flex justify-between items-center text-[11px] font-label-mono-sm">
+<span class="text-text-muted">Hardware Key:</span>
+<span class="text-on-surface font-code-dense">did:key:z6MkaAlphaHardware92F (Signed)</span>
+</div>
+</div>
+<div class="p-2 bg-surface-base border-t border-border-subtle flex items-center justify-between font-label-mono-sm text-[10px] text-text-muted">
+<span>EPOCH=1 COMPLIANT</span>
+<span class="text-primary">NO HOST CONTAMINATION</span>
+</div>
+</div>
+<!-- Center Divider & Metric Drift -->
+<div class="xl:col-span-1 flex flex-col justify-center items-center py-2 px-1 bg-surface-container border border-border-subtle text-center">
+<div class="w-8 h-8 rounded-full bg-status-refuted/10 border border-status-refuted flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-status-refuted text-[18px]">compare_arrows</span>
+</div>
+<div class="font-label-mono-sm font-bold text-status-refuted text-[11px] leading-tight mb-2 uppercase">
+            NARHASH MISMATCH
+          </div>
+<div class="w-full h-px bg-status-refuted/30 my-2"></div>
+<div class="text-[10px] font-label-mono-sm text-text-muted">BIT DRIFT:</div>
+<div class="text-label-mono-md font-bold text-status-refuted">0.002%</div>
+<div class="w-full h-px bg-border-subtle my-2"></div>
+<div class="text-[9px] font-code-dense text-on-surface-variant leading-tight">
+<span class="text-status-refuted font-bold">184 bytes</span><br/>divergentes em 42.8 MB
+          </div>
+<div class="w-full h-px bg-border-subtle my-2"></div>
+<div class="text-[9px] font-code-dense text-text-muted">FIRST OFFSET:</div>
+<div class="text-[10px] font-code-dense text-status-conjecture font-semibold">0x0041F9A0</div>
+<div class="text-[8px] font-code-dense text-text-subtle">ELF .rodata</div>
+</div>
+<!-- Card Builder Beta -->
+<div class="xl:col-span-5 bg-surface-container border border-status-refuted/40 flex flex-col justify-between shadow-[0_0_12px_rgba(244,63,94,0.08)]">
+<div class="p-space-md border-b border-border-subtle flex justify-between items-center bg-surface-elevated/40">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-refuted text-[18px]">dns</span>
+<div>
+<span class="font-label-mono-md font-bold text-status-refuted">BUILDER BETA</span>
+<span class="font-code-dense text-text-muted ml-2">[builder-beta.infra.arkhe.io]</span>
+</div>
+</div>
+<span class="px-2 py-0.5 bg-status-refuted/10 border border-status-refuted/40 text-status-refuted font-label-mono-sm text-[10px] uppercase">
+              DIVERGENT OUTPUT B
+            </span>
+</div>
+<div class="p-space-md space-y-space-sm text-body-sm font-body-sm flex-1">
+<!-- Hardware / Environment specs -->
+<div class="grid grid-cols-3 gap-2 pb-2 border-b border-border-subtle text-[11px] font-label-mono-sm">
+<div>
+<span class="text-text-muted block">ARCH:</span>
+<span class="text-on-surface font-semibold">aarch64-linux-darwin</span>
+</div>
+<div>
+<span class="text-text-muted block">SANDBOX:</span>
+<span class="text-on-surface">microVM isolated</span>
+</div>
+<div>
+<span class="text-text-muted block">BUILD TIME:</span>
+<span class="text-on-surface">4m 38s (16 Cores)</span>
+</div>
+</div>
+<!-- Hash & Output Path -->
+<div class="space-y-1.5 pt-1">
+<div class="flex flex-col">
+<span class="text-[10px] font-label-mono-sm text-text-muted uppercase">narHash (Nix Archive Checksum):</span>
+<div class="flex items-center justify-between p-1.5 bg-surface-base border border-status-refuted/40 font-code-dense text-status-refuted text-[11px] break-all">
+<span>sha256-7x90PQm3ZKLc-/RUmX+1ABceQeRkm5NMpJWZG8hTqZA=</span>
+<span class="material-symbols-outlined text-status-refuted text-[14px] ml-1">cancel</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label-mono-sm text-text-muted uppercase">Output Path:</span>
+<div class="p-1.5 bg-surface-base border border-border-subtle font-code-dense text-on-surface text-[11px] break-all">
+                  /nix/store/9k8c291fa04812be40aa-arkhe-core-v1.4.2
+                </div>
+</div>
+</div>
+<!-- Attestation and Purity -->
+<div class="pt-2 flex justify-between items-center text-[11px] font-label-mono-sm border-t border-border-subtle">
+<span class="text-text-muted">Purity Metric:</span>
+<span class="text-status-refuted font-bold">Unreproducible Output</span>
+</div>
+<div class="flex justify-between items-center text-[11px] font-label-mono-sm">
+<span class="text-text-muted">Hardware Key:</span>
+<span class="text-on-surface font-code-dense">did:key:z6MkbBetaHardware11K (Signed)</span>
+</div>
+</div>
+<div class="p-2 bg-surface-base border-t border-border-subtle flex items-center justify-between font-label-mono-sm text-[10px] text-text-muted">
+<span class="text-status-refuted">SUSPECT TIMESTAMP CONTAMINATION</span>
+<span class="text-status-refuted">QUARANTINE CANDIDATE</span>
+</div>
+</div>
+</section>
+<!-- ================= C. HEXDUMP & DIFF INSPECTION PANEL ================= -->
+<section class="bg-surface-container border border-border-subtle flex flex-col">
+<!-- Diff Header & Tab Navigation -->
+<div class="p-space-md border-b border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface-elevated/30">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-conjecture text-[18px]">terminal</span>
+<span class="font-label-mono-md font-bold text-on-surface tracking-wider">DIFFOSCOPE DEEP INSPECTION ENGINE</span>
+<span class="text-code-dense text-text-muted">[Offset: 0x0041F9A0]</span>
+</div>
+<!-- Filter Navigation Tabs -->
+<div class="flex items-center gap-1 font-label-mono-sm"><button class="px-2.5 py-1 text-text-muted hover:text-on-surface hover:bg-surface-elevated transition-colors">Diffoscope Unified</button><button class="px-2.5 py-1 text-text-muted hover:text-on-surface hover:bg-surface-elevated transition-colors">ELF Headers (.rodata)</button><button class="px-2.5 py-1 bg-surface-base border-b-2 border-status-refuted text-status-refuted font-semibold flex items-center gap-1.5 shadow-[0_0_8px_rgba(244,63,94,0.2)]"><span class="w-1.5 h-1.5 rounded-full bg-status-refuted animate-ping"></span><span>Archive Tarball (tar.zst)</span><span class="text-[9px] px-1 py-0.2 bg-status-refuted/20 border border-status-refuted/40 uppercase font-mono">Aberto</span></button><button class="px-2.5 py-1 text-text-muted hover:text-on-surface hover:bg-surface-elevated transition-colors">Environment Dump</button></div>
+</div>
+<!-- Split Terminal Hexdump Pane -->
+<div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-border-subtle bg-surface-base font-code-dense text-[11px] overflow-x-auto">
+<!-- Left: Builder Alpha Clean Hermetic Hex Dump -->
+<div class="p-space-md space-y-1">
+<div class="flex items-center justify-between pb-2 border-b border-border-subtle text-primary font-label-mono-sm">
+<span class="font-bold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+                ALPHA: /bin/arkhe-core (HERMETIC EPOCH=1)
+              </span>
+<span class="text-text-muted text-[10px]">SECTION: .rodata</span>
+</div>
+<div class="space-y-0.5 text-on-surface-variant select-text pt-2 leading-tight">
+<div class="text-text-subtle">0x0041F980: 7f45 4c46 0201 0100 0000 0000 0000 0000  .ELF............</div>
+<div class="text-text-subtle">0x0041F990: 0300 3e00 0100 0000 d091 0400 0000 0000  ..&gt;.............</div>
+<!-- Divergence Line 1 (Clean Timestamp) -->
+<div class="bg-primary/10 border-l-2 border-primary px-1 text-on-surface font-semibold py-0.5">
+                0x0041F9A0: <span class="text-primary font-bold">0000 0001</span> 4e49 585f 4255 494c 445f 5449  ....NIX_BUILD_TI
+              </div>
+<div class="bg-primary/10 border-l-2 border-primary px-1 text-on-surface font-semibold py-0.5">
+                0x0041F9B0: 4d45 3d31 3937 302d 3031 2d30 3154 3030  ME=1970-01-01T00
+              </div>
+<div class="bg-primary/10 border-l-2 border-primary px-1 text-on-surface font-semibold py-0.5">
+                0x0041F9C0: 3a30 303a 3031 5a00 0000 0000 0000 0000  :00:01Z.........
+              </div>
+<div class="text-text-subtle">0x0041F9D0: 4883 ec08 e85b ffff ffe8 7600 0000 4883  H....[....v...H.</div>
+<div class="text-text-subtle">0x0041F9E0: c408 c390 9090 9090 9090 9090 9090 9090  ................</div>
+</div>
+<div class="mt-3 p-1.5 bg-surface-elevated border border-primary/20 text-primary text-[10px] flex items-center justify-between">
+<span>Timestamp Assertion: SOURCE_DATE_EPOCH=1 (Deterministic zero)</span>
+<span class="material-symbols-outlined text-primary text-[14px]">verified</span>
+</div>
+</div>
+<!-- Right: Builder Beta Contaminated Hex Dump -->
+<div class="p-space-md space-y-1">
+<div class="flex items-center justify-between pb-2 border-b border-border-subtle text-status-refuted font-label-mono-sm">
+<span class="font-bold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-status-refuted animate-pulse"></span>
+                BETA: /bin/arkhe-core (HOST-LEAK DIVERGENCE)
+              </span>
+<span class="text-status-refuted text-[10px]">SECTION: .rodata [DRIFT DETECTED]</span>
+</div>
+<div class="space-y-0.5 text-on-surface-variant select-text pt-2 leading-tight">
+<div class="text-text-subtle">0x0041F980: 7f45 4c46 0201 0100 0000 0000 0000 0000  .ELF............</div>
+<div class="text-text-subtle">0x0041F990: 0300 3e00 0100 0000 d091 0400 0000 0000  ..&gt;.............</div>
+<!-- Divergent Line 1 (Host Wall-Clock Timestamp Leak) -->
+<div class="bg-status-refuted/15 border-l-2 border-status-refuted px-1 text-on-surface font-semibold py-0.5">
+                0x0041F9A0: <span class="text-status-refuted font-bold">6829 3c4f</span> 4e49 585f 4255 494c 445f 5449  h)&lt;ONIX_BUILD_TI
+              </div>
+<div class="bg-status-refuted/15 border-l-2 border-status-refuted px-1 text-on-surface font-semibold py-0.5">
+                0x0041F9B0: <span class="text-status-refuted font-bold">4d45 3d32 3032 352d 3035 2d31 3854 3134</span>  ME=2025-05-18T14
+              </div>
+<div class="bg-status-refuted/15 border-l-2 border-status-refuted px-1 text-on-surface font-semibold py-0.5">
+                0x0041F9C0: <span class="text-status-refuted font-bold">3a32 363a 3031 5a00</span> 686f 7374 2d62 6574  :26:01Z.host-bet
+              </div>
+<div class="text-text-subtle">0x0041F9D0: 4883 ec08 e85b ffff ffe8 7600 0000 4883  H....[....v...H.</div>
+<div class="text-text-subtle">0x0041F9E0: c408 c390 9090 9090 9090 9090 9090 9090  ................</div>
+</div>
+<div class="mt-3 p-1.5 bg-status-refuted/10 border border-status-refuted/30 text-status-refuted text-[10px] flex items-center justify-between">
+<span>Host Clock Leak: 2025-05-18T14:26:01Z + Hostname leakage detected</span>
+<span class="material-symbols-outlined text-status-refuted text-[14px]">error</span>
+</div>
+</div>
+</div>
+<!-- Diff Summary Bar -->
+<div class="p-2 bg-surface-container-high border-t border-border-subtle flex flex-wrap items-center justify-between font-label-mono-sm text-[11px] px-space-md">
+<div class="flex items-center gap-4 text-text-muted">
+<span>Root Cause: <strong class="text-status-conjecture">Compilador Clang/Rustc capturou gettimeofday() no microVM</strong></span>
+<span>Offset Range: <strong class="text-on-surface">0x0041F9A0 - 0x0041FA58</strong></span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-text-muted">Verdict:</span>
+<span class="text-status-refuted font-bold uppercase">Determinism Violation Verified</span>
+</div>
+</div>
+</section>
+<!-- ================= D. REMEDIATION & FAIL-CLOSED PROTOCOLS ================= -->
+<section class="bg-surface-container border border-border-subtle p-space-md space-y-space-md">
+<div class="flex items-center justify-between border-b border-border-subtle pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-refuted text-[18px]">gavel</span>
+<h2 class="font-label-mono-md font-bold text-on-surface uppercase tracking-wider">
+              REMEDIAÇÃO STRICT FAIL-CLOSED (NENHUM BYPASS PERMITIDO)
+            </h2>
+</div>
+<span class="font-code-dense text-status-refuted text-[11px] font-semibold bg-status-refuted/10 px-2 py-0.5 border border-status-refuted/30">
+            POLICY: ZERO-TOLERANCE NON-REPRODUCIBLE ARTIFACTS
+          </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Action 1: Isolate Builder Beta -->
+<div class="bg-surface-base border border-border-subtle p-space-md flex flex-col justify-between hover:border-status-pending transition-colors group">
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<span class="px-1.5 py-0.5 bg-status-pending/10 text-status-pending font-label-mono-sm text-[10px] font-semibold">
+                  AÇÃO 01 // FORENSICS
+                </span>
+<span class="material-symbols-outlined text-text-muted group-hover:text-status-pending text-[16px]">fingerprint</span>
+</div>
+<h3 class="font-label-mono-md font-bold text-on-surface">Isolar Builder Beta &amp; Coletar DrvDump</h3>
+<p class="text-body-sm text-text-muted leading-relaxed">
+                Exporta o dump forense das variáveis de ambiente, namespace mounts e cgroups do builder divergente para auditoria air-gapped imediata.
+              </p>
+</div>
+<button class="mt-4 w-full py-2 px-3 bg-surface-elevated hover:bg-status-pending/20 border border-border-subtle hover:border-status-pending/50 text-status-pending font-label-mono-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99]">
+<span class="material-symbols-outlined text-[15px]">archive</span>
+<span>Executar Quarentena e DrvDump</span>
+</button>
+</div>
+<!-- Action 2: Enforce SOURCE_DATE_EPOCH Patch -->
+<div class="bg-surface-base border border-border-subtle p-space-md flex flex-col justify-between hover:border-primary transition-colors group">
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<span class="px-1.5 py-0.5 bg-primary/10 text-primary font-label-mono-sm text-[10px] font-semibold">
+                  AÇÃO 02 // SANITIZAÇÃO
+                </span>
+<span class="material-symbols-outlined text-text-muted group-hover:text-primary text-[16px]">build_circle</span>
+</div>
+<h3 class="font-label-mono-md font-bold text-on-surface">Enforce SOURCE_DATE_EPOCH Patch</h3>
+<p class="text-body-sm text-text-muted leading-relaxed">
+                Aplica patch estrito na derivação Nix (<code class="font-code-dense text-on-surface">arkhe-core.drv</code>) para forçar LD_PRELOAD faketime ou sanear metadados de host no toolchain.
+              </p>
+</div>
+<button class="mt-4 w-full py-2 px-3 bg-surface-elevated hover:bg-primary/20 border border-border-subtle hover:border-primary/50 text-primary font-label-mono-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99]">
+<span class="material-symbols-outlined text-[15px]">rebase_edit</span>
+<span>Gerar Patch Determinístico</span>
+</button>
+</div>
+<!-- Action 3: Third Tie-Breaker Builder -->
+<div class="bg-surface-base border border-border-subtle p-space-md flex flex-col justify-between hover:border-status-conjecture transition-colors group">
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<span class="px-1.5 py-0.5 bg-status-conjecture/10 text-status-conjecture font-label-mono-sm text-[10px] font-semibold">
+                  AÇÃO 03 // CONSENSO
+                </span>
+<span class="material-symbols-outlined text-text-muted group-hover:text-status-conjecture text-[16px]">how_to_reg</span>
+</div>
+<h3 class="font-label-mono-md font-bold text-on-surface">Solicitar Builder Gamma (Quórum 2-de-3)</h3>
+<p class="text-body-sm text-text-muted leading-relaxed">
+                Despacha a mesma derivação para builder-gamma em ambiente neutro isolado para validar se o hash de Alpha é a testemunha canônica.
+              </p>
+</div>
+<button class="mt-4 w-full py-2 px-3 bg-surface-elevated hover:bg-status-conjecture/20 border border-border-subtle hover:border-status-conjecture/50 text-status-conjecture font-label-mono-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99]">
+<span class="material-symbols-outlined text-[15px]">send_time_extension</span>
+<span>Despachar Tie-Breaker Build</span>
+</button>
+</div>
+</div>
+</section>
+<!-- ================= E. LIVE NIX BUILD STREAM TELEMETRY ================= -->
+<section class="bg-surface-container border border-border-subtle">
+<div class="p-space-md border-b border-border-subtle flex items-center justify-between bg-surface-elevated/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-pending text-[16px]">sensors</span>
+<span class="font-label-mono-sm font-bold text-on-surface uppercase tracking-wider">
+              NIX_DAEMON REPRODUCIBILITY AUDIT STREAM [AUDIT TRAIL]
+            </span>
+</div>
+<div class="flex items-center gap-3 text-text-muted font-label-mono-sm text-[10px]">
+<span>FILTER: ERROR, INVARIANT, REFUTE</span>
+<span class="w-1.5 h-1.5 rounded-full bg-status-refuted"></span>
+<span>STREAM FROZEN ON HALT</span>
+</div>
+</div>
+<div class="p-space-md bg-surface-base font-code-dense text-[11px] leading-relaxed text-on-surface-variant overflow-x-auto space-y-1 select-text">
+<div class="text-text-subtle">[14:25:58.210Z] <span class="text-status-pending">NIX_SCHEDULER:</span> Dispatched derivation /nix/store/9f1a28cb4081efbc9a28-arkhe-core.drv to nodes [Alpha, Beta]</div>
+<div class="text-text-subtle">[14:26:01.004Z] <span class="text-primary">ALPHA_BUILDER:</span> Build complete. Output: /nix/store/1a7b889e4c029dfa189f-arkhe-core-v1.4.2</div>
+<div class="text-text-subtle">[14:26:04.980Z] <span class="text-status-pending">BETA_BUILDER:</span> Build complete. Output: /nix/store/9k8c291fa04812be40aa-arkhe-core-v1.4.2</div>
+<div class="text-text-muted">[14:26:05.102Z] <span class="text-status-pending font-semibold">NIX_CHECK:</span> Comparing narHash of /nix/store/1a7b... vs /nix/store/9k8c...</div>
+<div class="bg-status-refuted/10 text-status-refuted font-bold px-1 border-l-2 border-status-refuted">
+            [14:26:05.118Z] FAIL_CLOSED_L0: Hash divergence detected! Pipeline halted at stratum L0.
+          </div>
+<div class="text-status-refuted font-semibold px-1">
+            [14:26:05.120Z] INVARIANT_CHECK: Axiom V1 (Deterministic Bitwise Purity) REFUTED.
+          </div>
+<div class="bg-status-refuted text-surface-base font-bold px-1 inline-block">
+            [14:26:05.122Z] GOVERNANCE_LOCK: Auto-aborting Release Candidate v1.4.2. Release Manifest revoked.
+          </div>
+<div class="text-text-subtle pt-1">[14:26:05.125Z] SENTINEL_LOCKOUT: Subsystem enters hard fail-closed lock. Waiting for human cryptographic remediator.</div>
+</div>
+</section>
+</main>
+<div class="fixed inset-0 z-50 flex items-center justify-center p-3 lg:p-6 bg-surface-base/90 backdrop-blur-md" id="archive-inspection-modal"><div class="w-full max-w-6xl max-h-[92vh] flex flex-col bg-surface-container border border-status-refuted/60 shadow-[0_0_32px_rgba(244,63,94,0.18)] rounded-DEFAULT overflow-hidden"><div class="px-space-md py-3 bg-surface-elevated/60 border-b border-border-subtle flex flex-wrap items-center justify-between gap-2"><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-DEFAULT bg-status-refuted/15 border border-status-refuted/50 flex items-center justify-center"><span class="material-symbols-outlined text-status-refuted text-[16px]">folder_zip</span></div><div><div class="flex items-center gap-2"><h3 class="font-label-mono-md font-bold text-on-surface tracking-wider">ARCHIVE DIFFOSCOPE :: /nix/store/...arkhe-core-v1.4.2.tar.zst</h3><span class="px-1.5 py-0.5 bg-status-refuted/20 border border-status-refuted/40 text-status-refuted font-label-mono-sm text-[10px] font-bold">[τ: REFUTED]</span></div><div class="text-[11px] font-code-dense text-text-muted mt-0.5 flex flex-wrap items-center gap-3"><span>COMPRESSION: <strong class="text-secondary">Zstandard (level 19, deterministic frame)</strong></span><span class="text-border-subtle">|</span><span>Tamanho Alpha: <strong class="text-primary">42,810,492 B</strong></span><span class="text-border-subtle">|</span><span>Tamanho Beta: <strong class="text-status-refuted">42,810,676 B</strong></span><span class="text-border-subtle">|</span><span>Delta: <strong class="text-status-refuted font-bold">+184 Bytes</strong></span><span class="text-border-subtle">|</span><span>Arquivos Totais: <strong class="text-on-surface">3,412</strong> (<span class="text-status-refuted font-bold">1 Divergente</span>, 3,411 Bit-Stable)</span></div></div></div><button class="px-2.5 py-1 bg-surface-base hover:bg-status-refuted/20 border border-border-subtle hover:border-status-refuted/50 text-text-muted hover:text-status-refuted font-label-mono-sm text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer" onclick="document.getElementById('archive-inspection-modal').classList.add('hidden')"><span class="material-symbols-outlined text-[14px]">close</span><span>[ESC] FECHAR INSPEÇÃO</span></button></div><div class="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-border-subtle bg-surface-base min-h-[460px]"><div class="lg:col-span-4 flex flex-col bg-surface-container-low border-r border-border-subtle overflow-hidden"><div class="p-2.5 border-b border-border-subtle bg-surface-container"><div class="relative flex items-center"><span class="material-symbols-outlined text-text-subtle text-[15px] absolute left-2 pointer-events-none">filter_alt</span><input class="w-full pl-7 pr-2 py-1 bg-surface-base border border-border-subtle text-[11px] font-code-dense text-on-surface placeholder-text-subtle focus:outline-none focus:border-status-pending" placeholder="Filtrar membros do tar.zst (ex: *.rodata, lib/)..." type="text" value="lib/"/></div><div class="mt-2 flex items-center justify-between text-[10px] font-label-mono-sm text-text-muted"><span>MEMBROS DO ARCHIVE TAR</span><span class="text-status-refuted font-mono font-semibold">1 / 3,412 DIVERGÊNCIAS</span></div></div><div class="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-1 font-code-dense text-[11px]"><div class="p-1.5 bg-surface-base/50 hover:bg-surface-elevated/40 border border-transparent text-text-muted flex items-center justify-between cursor-pointer rounded-DEFAULT"><div class="flex items-center gap-1.5 truncate"><span class="text-primary text-[10px] font-bold">[✓]</span><span class="text-on-surface-variant truncate">bin/arkhe-core</span></div><span class="text-[9px] text-text-subtle font-mono">CRC:0x89A4B12C</span></div><div class="p-2 bg-status-refuted/10 border border-status-refuted text-on-surface flex flex-col gap-1 cursor-pointer rounded-DEFAULT shadow-[0_0_10px_rgba(244,63,94,0.12)]"><div class="flex items-center justify-between"><div class="flex items-center gap-1.5 font-bold text-status-refuted"><span class="text-[11px]">[✗] DIVERGENT</span><span>lib/libarkhe_runtime.so</span></div><span class="px-1 py-0.2 bg-status-refuted text-surface-base font-label-mono-sm text-[9px] font-bold uppercase">+184B</span></div><div class="text-[10px] text-text-muted flex items-center justify-between font-label-mono-sm"><span>Seção: <span class="text-status-conjecture">.rodata.str1.1</span></span><span class="text-status-refuted font-semibold">HOST LEAK DETECTED</span></div></div><div class="p-1.5 bg-surface-base/50 hover:bg-surface-elevated/40 border border-transparent text-text-muted flex items-center justify-between cursor-pointer rounded-DEFAULT"><div class="flex items-center gap-1.5 truncate"><span class="text-primary text-[10px] font-bold">[✓]</span><span class="text-on-surface-variant truncate">share/arkhe/spec-v1.json</span></div><span class="text-[9px] text-primary font-mono">BIT-STABLE</span></div><div class="p-1.5 bg-surface-base/50 hover:bg-surface-elevated/40 border border-transparent text-text-muted flex items-center justify-between cursor-pointer rounded-DEFAULT"><div class="flex items-center gap-1.5 truncate"><span class="text-primary text-[10px] font-bold">[✓]</span><span class="text-on-surface-variant truncate">include/arkhe/invariants.h</span></div><span class="text-[9px] text-primary font-mono">BIT-STABLE</span></div><div class="p-1.5 bg-surface-base/50 hover:bg-surface-elevated/40 border border-transparent text-text-muted flex items-center justify-between cursor-pointer rounded-DEFAULT"><div class="flex items-center gap-1.5 truncate"><span class="text-primary text-[10px] font-bold">[✓]</span><span class="text-on-surface-variant truncate">etc/ssl/certs/arkhe-roots.pem</span></div><span class="text-[9px] text-primary font-mono">BIT-STABLE</span></div><div class="p-1.5 bg-surface-base/50 hover:bg-surface-elevated/40 border border-transparent text-text-muted flex items-center justify-between cursor-pointer rounded-DEFAULT"><div class="flex items-center gap-1.5 truncate"><span class="text-primary text-[10px] font-bold">[✓]</span><span class="text-on-surface-variant truncate">nix-support/propagated-build-inputs</span></div><span class="text-[9px] text-primary font-mono">BIT-STABLE</span></div></div></div><div class="lg:col-span-8 flex flex-col bg-surface-base overflow-hidden"><div class="p-2.5 bg-surface-container border-b border-border-subtle flex flex-wrap items-center justify-between gap-2"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-status-refuted text-[17px]">difference</span><span class="font-label-mono-sm font-bold text-on-surface">ALVO: lib/libarkhe_runtime.so</span><span class="text-[10px] font-code-dense text-text-muted">[ELF Shared Object 64-bit LSB]</span></div><div class="flex items-center gap-1 font-label-mono-sm text-[10px]"><button class="px-2 py-0.5 bg-surface-base border border-border-subtle text-on-surface font-semibold">ELF Headers (.rodata)</button><button class="px-2 py-0.5 text-text-muted hover:text-on-surface transition-colors">String Table (.strtab)</button><button class="px-2 py-0.5 text-text-muted hover:text-on-surface transition-colors">Disassembly (x86_64)</button><button class="px-2 py-0.5 text-text-muted hover:text-on-surface transition-colors">Metadados Tar (mtime, uid)</button></div></div><div class="p-2 bg-surface-container-high/60 border-b border-border-subtle grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] font-code-dense"><div class="p-1.5 bg-surface-base border border-primary/30 flex flex-col gap-0.5"><div class="text-primary font-bold flex items-center justify-between"><span>TAR HEADER (ALPHA CANONICAL):</span><span class="text-[9px]">PASS</span></div><div class="text-text-muted">UID: 0 | GID: 0 | PERMS: 0555 (r-xr-xr-x)</div><div class="text-on-surface-variant">MTIME: <span class="text-primary font-semibold">1</span> (1970-01-01 00:00:01 UTC) [SOURCE_DATE_EPOCH=1]</div></div><div class="p-1.5 bg-surface-base border border-status-refuted/40 flex flex-col gap-0.5"><div class="text-status-refuted font-bold flex items-center justify-between"><span>TAR HEADER (BETA DIVERGENT):</span><span class="text-[9px]">REFUTED</span></div><div class="text-text-muted">UID: 0 | GID: 0 | PERMS: 0555 (r-xr-xr-x)</div><div class="text-on-surface-variant">MTIME: <span class="text-status-refuted font-semibold">1747578361</span> (2025-05-18 14:26:01 UTC) [LEAK HOST TIME]</div></div></div><div class="flex-1 overflow-y-auto custom-scrollbar p-space-md space-y-2 font-code-dense text-[11px] leading-relaxed select-text"><div class="text-text-subtle text-[10px] pb-1 border-b border-border-subtle flex justify-between"><span>--- a/lib/libarkhe_runtime.so [Alpha Builder (Deterministic)]</span><span>+++ b/lib/libarkhe_runtime.so [Beta Builder (Contaminated)]</span></div><div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1"><div class="space-y-1 bg-surface-elevated/30 p-2 border border-primary/20"><div class="text-[10px] text-primary font-bold pb-1 border-b border-border-subtle">ALPHA BUILDER (HERMETIC)</div><div class="text-text-subtle">0041F990: 0000 0000 0000 0000</div><div class="p-1 bg-primary/10 border-l-2 border-primary text-primary"><span class="text-text-muted">0041F9A0:</span> 4f4e 4958 5f42 5549 4c44 5f54 494d 453d 3139 3730<br/><span class="text-[10px] text-on-surface font-semibold">&gt; "ONIX_BUILD_TIME=1970-01-01T00:00:01Z"</span></div><div class="p-1 bg-primary/10 border-l-2 border-primary text-primary mt-1"><span class="text-text-muted">0041F9C0:</span> 4255 494c 445f 484f 5354 3d22 6e69 782d 6865 726d<br/><span class="text-[10px] text-on-surface font-semibold">&gt; BUILD_HOST="nix-hermetic-sandbox"</span></div><div class="text-text-subtle">0041F9E0: 0000 0000 0000 0000 c390 9090 9090</div></div><div class="space-y-1 bg-surface-elevated/30 p-2 border border-status-refuted/30"><div class="text-[10px] text-status-refuted font-bold pb-1 border-b border-border-subtle">BETA BUILDER (HOST DRIFT)</div><div class="text-text-subtle">0041F990: 0000 0000 0000 0000</div><div class="p-1 bg-status-refuted/15 border-l-2 border-status-refuted text-status-refuted"><span class="text-text-muted">0041F9A0:</span> 4f4e 4958 5f42 5549 4c44 5f54 494d 453d 3230 3235<br/><span class="text-[10px] text-on-surface font-semibold">&gt; "ONIX_BUILD_TIME=2025-05-18T14:26:01Z"</span></div><div class="p-1 bg-status-refuted/15 border-l-2 border-status-refuted text-status-refuted mt-1"><span class="text-text-muted">0041F9C0:</span> 4255 494c 445f 484f 5354 3d22 6265 7461 2d64 6172<br/><span class="text-[10px] text-on-surface font-semibold">&gt; BUILD_HOST="beta-darwin-runner-04.infra.arkhe.io"</span></div><div class="text-text-subtle">0041F9E0: 0000 0000 0000 0000 c390 9090 9090</div></div></div><div class="mt-2 p-2 bg-surface-container-high border border-border-subtle text-[11px] font-code-dense text-text-muted flex items-center justify-between"><span>Diff Offset: <strong class="text-status-conjecture">0x0041F9A0 - 0x0041FA58</strong> (+184 bytes em string tables embutidas)</span><span class="text-status-refuted font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">warning</span> HOST LEAKAGE CONFIRMED</span></div></div></div></div><div class="p-space-md bg-surface-container-high border-t border-border-subtle flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-2"><button class="flex items-center gap-1.5 px-3 py-1.5 bg-status-pending/10 hover:bg-status-pending/20 border border-status-pending/40 text-status-pending font-label-mono-sm text-[11px] cursor-pointer transition-colors"><span class="material-symbols-outlined text-[15px]">difference</span><span>Exportar Tar Diff Patch (.patch)</span></button><button class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-base hover:bg-surface-elevated border border-border-subtle text-on-surface font-label-mono-sm text-[11px] cursor-pointer transition-colors"><span class="material-symbols-outlined text-primary text-[15px]">download</span><span>Baixar Archive Dump Alpha (.tar.zst)</span></button><button class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-base hover:bg-surface-elevated border border-border-subtle text-on-surface font-label-mono-sm text-[11px] cursor-pointer transition-colors"><span class="material-symbols-outlined text-status-refuted text-[15px]">download</span><span>Baixar Archive Dump Beta (.tar.zst)</span></button></div><button class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-base hover:bg-surface-elevated border border-border-subtle text-text-muted hover:text-on-surface font-label-mono-sm text-[11px] cursor-pointer transition-colors"><span class="material-symbols-outlined text-[15px]">content_copy</span><span>Copiar Relatório Forense JSON</span></button></div></div></div></div>
+<!-- ================= BOTTOM TELEMETRY STATUS BAR ================= -->
+<footer class="h-9 w-full bg-surface-container border-t border-border-subtle flex items-center justify-between px-space-lg font-label-mono-sm text-[11px] z-50 shrink-0">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 text-status-refuted font-semibold">
+<span class="w-2 h-2 rounded-full bg-status-refuted animate-ping"></span>
+<span>SYSTEM STATE: FAIL-CLOSED ACTIVE :: STRATUM L0 NON-REPRODUCIBLE LOCKOUT</span>
+</div>
+<div class="h-3 w-px bg-border-subtle hidden md:block"></div>
+<span class="text-text-muted hidden md:inline">AUDIT ID: 0x9F1A-DIVERGE-CAT4</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 text-text-muted">
+<span>COMPLIANCE:</span>
+<span class="text-on-surface font-semibold">ISO/IEC 29128 CAT-4 | REPRODUCIBLE BUILDS SPEC v1.0</span>
+</div>
+<div class="h-3 w-px bg-border-subtle"></div>
+<div class="flex items-center gap-1.5 text-status-refuted font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-status-refuted"></span>
+<span>BITWISE PURITY REFUTED</span>
+</div>
+</div>
+</footer>
+</body></html>

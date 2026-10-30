@@ -1,0 +1,42 @@
+$ cargo build -p arkhe-verify-cli --locked && cargo build -p arkhe-wormgraph --example memo_persistence --locked && node --import ./test/deny-network.mjs --test test/*.test.mjs
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.52s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.91s
+✔ Rust inspects the exact stdin GGUF snapshot, and the real Sigstore path rejects a transplanted signature (860.9937ms)
+✔ live Rekor v1 receipt and durable memo verify offline, with distinct global/shard indices (108.3629ms)
+✔ MMR proof tamper passes Rekor layer but fails native durable verification (75.7409ms)
+✔ package byte corruption passes Rekor layer but fails native verification (69.8433ms)
+✔ Rekor layer rejects changed inclusion hash (4.756ms)
+✔ Rekor layer rejects changed signed checkpoint signature (4.0567ms)
+✔ Rekor layer rejects changed SET (2.553ms)
+✔ Rekor layer rejects changed global index (2.1848ms)
+✔ Rekor layer rejects changed shard index (3.4221ms)
+✔ Rekor layer rejects changed integrated time (4.2353ms)
+✔ Rekor layer rejects changed log ID (2.5973ms)
+✔ Rekor layer rejects changed canonical body (2.3494ms)
+✔ Rekor layer rejects changed proof removal despite valid SET (1.6473ms)
+✔ Rekor layer rejects changed SET removal despite valid proof (1.8156ms)
+✔ Rekor layer rejects changed proof tree size metadata (1.8935ms)
+✔ Rekor layer rejects changed proof root metadata (1.9961ms)
+✔ Rekor layer rejects changed artifact signature (6.5645ms)
+✔ external commitment is required even when attacker changes local checkpoint policy pin (2.2081ms)
+✔ root replacement, removed authority, changed signer and invalid time window reject (5.444ms)
+✔ CLI performs complete verification without sockets (967.0077ms)
+✔ real Fulcio certificate, CT SCT, TSA timestamp and Rekor v2 proof verify offline (38.2125ms)
+✔ rejects changed artifact and changed declared message digest (1.0088ms)
+✔ identity is exact, never a regular expression; issuer is mandatory and exact (87.4453ms)
+✔ rejects root replacement, empty trust, untrusted Fulcio CA and wrong CT log (27.2344ms)
+✔ rejects altered certificate, artifact signature and RFC3161 timestamp (32.5846ms)
+✔ requires inclusion proof: no promise-only or missing log/timestamp shortcuts (1.7262ms)
+✔ rejects Rekor body, proof, index, checkpoint and log-key substitution (53.3772ms)
+✔ rejects signing time outside retained policy, malformed bounds and unknown policy fields (16.3721ms)
+✔ does not accept a raw key, DSSE or the custom Stage 10 laboratory bundle (1.1099ms)
+✔ rejects duplicated log entries instead of counting the same proof twice (26.9256ms)
+✔ CLI verifies the public artifact without network and exits nonzero without a success report on tampering (801.3068ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1671.398

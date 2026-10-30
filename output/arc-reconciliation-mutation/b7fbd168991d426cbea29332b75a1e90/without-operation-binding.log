@@ -1,0 +1,27 @@
+$ cargo test --locked -p arkhe-verify-core --test arc_reconciliation foreign_operation_with_consistent_commitments_rejected -- --exact
+   Compiling arkhe-verify-core v0.1.0 (D:\arkhe\verification\crates\arkhe-verify-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.86s
+     Running tests\arc_reconciliation.rs (target\debug\deps\arc_reconciliation-212ed5f44b64c60e.exe)
+
+running 1 test
+test foreign_operation_with_consistent_commitments_rejected ... FAILED
+
+failures:
+
+---- foreign_operation_with_consistent_commitments_rejected stdout ----
+
+thread 'foreign_operation_with_consistent_commitments_rejected' (34348) panicked at verification\crates\arkhe-verify-core\tests\arc_reconciliation.rs:165:5:
+assertion `left == right` failed
+  left: Ok(Decision { input_digest: Digest32([246, 231, 150, 233, 31, 228, 89, 129, 10, 110, 57, 232, 76, 156, 101, 218, 96, 36, 147, 5, 122, 108, 6, 227, 2, 35, 120, 216, 74, 103, 95, 157]), status: Matched, invoice_ids: ["invoice-1"] })
+ right: Err("untrusted profile or mismatched case bindings")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    foreign_operation_with_consistent_commitments_rejected
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p arkhe-verify-core --test arc_reconciliation`
+
+exit_code=101

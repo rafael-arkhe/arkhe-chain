@@ -1,0 +1,58 @@
+[package]
+name = "aegis"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "O executavel unico: instala, serve e diagnostica uma ilha."
+
+[[bin]]
+name = "aegis"
+path = "src/main.rs"
+
+# 🔴 A biblioteca **existe para as provas**, e não há `crate-type` de
+# biblioteca: a integração `quatro_faces.rs` precisa de contar a lista de
+# ferramentas do `mcp`, e essa lista vive dentro do binário.
+#
+# 🔴 E a alternativa seria a prova reescrever a lista — que é a **segunda
+# lista** que a casa mediu que diverge, e a divergência de um `tools/list` só
+# aparece em produção, com um modelo a chamar uma ferramenta que não existe.
+# Compilar o mesmo código duas vezes (uma vez como binário, uma vez como
+# biblioteca para o teste) é o preço, e é um preço honesto: as duas coisas são
+# o **mesmo** código, não duas traduções dele.
+[lib]
+name = "aegis_bin"
+path = "src/lib.rs"
+
+[dependencies]
+aegis-vertical = { workspace = true }
+aegis-ambiente = { workspace = true }
+# 🔴 A ponte entra no MESMO binario. Nao ha `aegis-bridge` a parte: ha
+# `aegis camera`, que e o mesmo programa com outro subcomando.
+aegis-ponte = { workspace = true }
+aegis-ontology = { workspace = true }
+aegis-store = { workspace = true }
+aegis-island = { workspace = true }
+aegis-license = { workspace = true }
+# 🔴 A referência gerada lê o vocabulário de recusa do `aegis-pagina`, que é
+# produção e não prova — por isso vai aqui, e não nos `dev-dependencies`.
+aegis-pagina = { workspace = true }
+aegis-produto = { workspace = true }
+axum = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+# 🔴 `io-std` e `io-util` são do `aegis mcp`: o protocolo JSON-RPC em stdio é
+# linha-delimitada sobre a entrada do processo, e sem estas features o servidor
+# não tem de onde ler. Não são para a CLI, e são as mesmas features que a ilha
+# já usa — dependência partilhada, não nova.
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal", "io-std", "io-util"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+# As provas tocam o banco com o role de runtime, e precisam de o preparar
+# elas proprias -- ver `preparar_para_o_produto`.
+aegis-store = { workspace = true }
+aegis-produto = { workspace = true }

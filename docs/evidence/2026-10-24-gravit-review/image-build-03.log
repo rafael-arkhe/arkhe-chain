@@ -1,0 +1,83 @@
+STEP 1/12: FROM docker.io/library/rust:1.96-bookworm
+STEP 2/12: RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv && rm -rf /var/lib/apt/lists/*
+--> Using cache 723f283cb05b86ca0622f6de2d6dbdad285befaed73670cd10d83806859a8653
+--> 723f283cb05b
+STEP 3/12: RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install --no-cache-dir pyyaml cryptography numpy scipy scikit-learn pytest jsonschema
+--> Using cache 976cf2180eeee5d6c51ae5a784faafdd079cca0810b095a9f8776866f2904fc1
+--> 976cf2180eee
+STEP 4/12: COPY verifier /opt/input/verifier
+--> Using cache 76c9d0fe4ea065a40e7e795bac05cb13107df31abc200fa941c57a5bd374438b
+--> 76c9d0fe4ea0
+STEP 5/12: COPY grover /opt/input/grover
+--> Using cache 46004c5c5c6b5fdd41cd73d69e7b6f933771c1e98233c13ef3080e83f8d1bd6d
+--> 46004c5c5c6b
+STEP 6/12: COPY eval-pack /opt/input/eval-pack
+--> Using cache 4f872ab812522c4568178d4cdc20a3e72fd2c35d10fc1d43377a3a3f0d5201d3
+--> 4f872ab81252
+STEP 7/12: COPY run_review.py /opt/review/run_review.py
+--> 63f018af98fd
+STEP 8/12: RUN cd /opt/input/verifier/rust && CARGO_HOME=/opt/cargo-cache cargo generate-lockfile && CARGO_HOME=/opt/cargo-cache cargo fetch --locked
+    Updating crates.io index
+     Locking 43 packages to latest compatible versions
+      Adding base64 v0.22.1 (available: v0.23.1)
+      Adding ed25519-dalek v2.2.0 (available: v3.0.0)
+      Adding generic-array v0.14.7 (available: v0.14.9)
+      Adding sha2 v0.10.9 (available: v0.11.1)
+      Adding sha3 v0.10.9 (available: v0.12.0)
+ Downloading crates ...
+  Downloaded digest v0.10.7
+  Downloaded curve25519-dalek-derive v0.1.1
+  Downloaded generic-array v0.14.7
+  Downloaded rustc_version v0.4.1
+  Downloaded signature v2.2.0
+  Downloaded semver v1.0.28
+  Downloaded serde v1.0.229
+  Downloaded serde_core v1.0.229
+  Downloaded base64 v0.22.1
+  Downloaded der v0.7.10
+  Downloaded memchr v2.8.3
+  Downloaded typenum v1.20.1
+  Downloaded ed25519-dalek v2.2.0
+  Downloaded serde_derive v1.0.229
+  Downloaded serde_json v1.0.154
+  Downloaded proc-macro2 v1.0.107
+  Downloaded unicode-ident v1.0.27
+  Downloaded base64ct v1.8.3
+  Downloaded const-oid v0.9.6
+  Downloaded spki v0.7.3
+  Downloaded syn v2.0.119
+  Downloaded curve25519-dalek v4.1.3
+  Downloaded syn v3.0.9
+  Downloaded pkcs8 v0.10.2
+  Downloaded wasi v0.11.1+wasi-snapshot-preview1
+  Downloaded getrandom v0.2.17
+  Downloaded rand_core v0.6.4
+  Downloaded ed25519 v2.2.3
+  Downloaded fiat-crypto v0.2.9
+  Downloaded zeroize v1.9.1
+  Downloaded quote v1.0.47
+  Downloaded zmij v1.0.23
+  Downloaded sha2 v0.10.9
+  Downloaded block-buffer v0.10.4
+  Downloaded crypto-common v0.1.7
+  Downloaded cpufeatures v0.2.17
+  Downloaded keccak v0.1.6
+  Downloaded subtle v2.6.1
+  Downloaded itoa v1.0.18
+  Downloaded cfg-if v1.0.5
+  Downloaded version_check v0.9.5
+  Downloaded libc v0.2.191
+  Downloaded sha3 v0.10.9
+--> 502328801170
+STEP 9/12: ENV PATH="/opt/venv/bin:${PATH}" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 HOME=/work
+--> c34c2a71f35a
+STEP 10/12: USER 10001:10001
+--> 5a3af158e937
+STEP 11/12: WORKDIR /work
+--> 46da482c2bf6
+STEP 12/12: CMD ["python", "/opt/review/run_review.py"]
+COMMIT localhost/arkhe-gravit-review:20261024
+--> 0f65c70efd46
+Successfully tagged localhost/arkhe-gravit-review:20261024
+0f65c70efd46927afd01a86aa27d7b49e5e84e1189cce56587e2874c96521979
+exit_code: 0

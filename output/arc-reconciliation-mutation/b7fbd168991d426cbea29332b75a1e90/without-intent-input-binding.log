@@ -1,0 +1,27 @@
+$ cargo test --locked -p arkhe-verify-core --test arc_reconciliation swapped_invoice_with_refreshed_worker_requires_intent_commitment -- --exact
+   Compiling arkhe-verify-core v0.1.0 (D:\arkhe\verification\crates\arkhe-verify-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.82s
+     Running tests\arc_reconciliation.rs (target\debug\deps\arc_reconciliation-212ed5f44b64c60e.exe)
+
+running 1 test
+test swapped_invoice_with_refreshed_worker_requires_intent_commitment ... FAILED
+
+failures:
+
+---- swapped_invoice_with_refreshed_worker_requires_intent_commitment stdout ----
+
+thread 'swapped_invoice_with_refreshed_worker_requires_intent_commitment' (10244) panicked at verification\crates\arkhe-verify-core\tests\arc_reconciliation.rs:149:5:
+assertion `left == right` failed
+  left: Ok(Decision { input_digest: Digest32([210, 109, 110, 186, 14, 10, 131, 247, 144, 234, 113, 227, 109, 249, 196, 67, 216, 64, 167, 180, 155, 81, 51, 253, 37, 215, 96, 186, 173, 92, 84, 59]), status: Matched, invoice_ids: ["invoice-1"] })
+ right: Err("untrusted profile or mismatched case bindings")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    swapped_invoice_with_refreshed_worker_requires_intent_commitment
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p arkhe-verify-core --test arc_reconciliation`
+
+exit_code=101

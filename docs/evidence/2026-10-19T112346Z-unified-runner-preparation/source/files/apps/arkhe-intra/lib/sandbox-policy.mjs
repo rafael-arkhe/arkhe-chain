@@ -1,0 +1,5 @@
+// Pure shared policy: no application data, credentials or process execution.
+export function buildSandboxArguments(image, name, snapshot, module, options = {}) {
+  if (!/^sha256:[a-f0-9]{64}$/.test(image || '')) throw Object.assign(new Error('Configure ARKHE_SANDBOX_IMAGE com o ID sha256 de uma imagem local de desenvolvimento.'), {status:503});
+  return ['--connection', options.connection || 'arkhe-runtime', 'run', '--name', name, '--pull=never', '--network=none', '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges', '--user=10001:10001', '--pids-limit=128', '--memory=1536m', '--cpus=2', '--cgroup-parent=' + (options.cgroupParent || '/arkhe-sandbox'), '--tmpfs=/work:rw,exec,size=1073741824,mode=1777', '--tmpfs=/tmp:rw,noexec,size=67108864', '--volume', snapshot + ':/input:ro', '--workdir=/work', '--env=CARGO_HOME=/opt/cargo', '--env=CARGO_TARGET_DIR=/work/target', '--env=CARGO_NET_OFFLINE=true', '--entrypoint=/bin/sh', image, '-c', 'cp -R /input/. /work/ && cargo test --locked --offline -p "$1"', 'arkhe-test', module.id];
+}

@@ -1,0 +1,128 @@
+[1/2] STEP 1/5: FROM docker.io/library/rust:1.96-bookworm AS build
+STEP 1/8: FROM docker.io/library/node:24-alpine
+Trying to pull docker.io/library/node:24-alpine...
+[1/2] STEP 2/5: WORKDIR /src
+--> Using cache b4cd3aad9135fd50f4602920eb869fee5a826c136360aedf682489841db1eb87
+--> b4cd3aad9135
+[1/2] STEP 3/5: ENV CARGO_BUILD_JOBS=2
+--> Using cache 2a995c425888de4c67ef8e4889d8848c7e2d8b4a90a888cece8739d14a8b6410
+--> 2a995c425888
+[1/2] STEP 4/5: COPY . /src
+Getting image source signatures
+Copying blob sha256:862c5dc468d45e2429239f43ada1e4e4bba2fa8e215f39c3f2dcc558c65007b1
+Copying blob sha256:c3fb422c2ba38fa35c8cca2a7872ca59ca302e4394e8edc96434c39b282b8608
+Copying blob sha256:2af284e0bab394dd343f480c97a8438422f4a8f3aaae795457c6de5dfa89b3dd
+Copying blob sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5
+Copying config sha256:b842533ff06352670de854fcbd6939f01dd0f1a0fe4fd40d8e60a943626ee58b
+Writing manifest to image destination
+STEP 2/8: WORKDIR /app
+--> 3dae10e70fe4
+STEP 3/8: COPY integrations/mcp-server/package.json ./package.json
+--> 53a232ece06b
+STEP 4/8: COPY integrations/mcp-server/src ./src
+--> 8fdc51099163
+STEP 5/8: USER node
+--> Using cache be11ed8e82cf43148bf14a40476f1e293ea3f1a87324606c43b38fd7d9c20b55
+--> be11ed8e82cf
+--> 14bd717cc383
+[1/2] STEP 5/5: RUN cargo build --release --locked -p arkhe-runtime
+--> Using cache fe1a018916af167b910317db113ee8da372b86015574f3bc8235f4cf12e36ad2
+--> fe1a018916af
+STEP 6/8: ENV MCP_PORT=8787
+[2/2] STEP 1/6: FROM docker.io/library/debian:bookworm-slim
+--> 9554fd92475f
+STEP 7/8: EXPOSE 8787
+--> 32d8dc542655
+STEP 8/8: CMD ["node", "src/index.js"]
+COMMIT localhost/arkhe-mcp-health:dev
+--> 15194e3de761
+Successfully tagged localhost/arkhe-mcp-health:dev
+15194e3de7618d76d9bcf869afd5a57bd0833705ee0feb1ae70877700a35d623
+[2/2] STEP 2/6: COPY --from=build /src/target/release/arkhe-runtime /usr/local/bin/arkhe-runtime
+--> Using cache 71f80867e8568c8b098ecae696db2d39cc77ee93ab12a8e7a587a0069b009762
+--> 71f80867e856
+[2/2] STEP 3/6: USER 10001:10001
+--> Using cache cb0b3faca3b4c954cc4f831e7c081f0443499c661bf583b6b1318e4f8b72fd67
+--> cb0b3faca3b4
+[2/2] STEP 4/6: ENV ARKHE_LISTEN=0.0.0.0:8080
+--> Using cache 998c80b6d8e2d0736fa3440507b0514d614b581406a07adbcbf5bd60c7311568
+--> 998c80b6d8e2
+[2/2] STEP 5/6: EXPOSE 8080
+--> Using cache 3b3dad2272455689d004cc2206943bff8d3022589dba93d38c5a307395d14838
+--> 3b3dad227245
+[2/2] STEP 6/6: ENTRYPOINT ["/usr/local/bin/arkhe-runtime"]
+--> Using cache 04bc23e5d3b54659e08f93aa91aa98d7a3d67ed5c2666e1d502537e17e769148
+[2/2] COMMIT localhost/arkhe-runtime:dev
+--> 04bc23e5d3b5
+Successfully tagged localhost/arkhe-runtime:dev
+04bc23e5d3b54659e08f93aa91aa98d7a3d67ed5c2666e1d502537e17e769148
+arkhe-live-runtime
+arkhe-live-runtime
+arkhe-live-postgres
+arkhe-live-postgres
+3f16ecf08ce9537821e8eaf7753b31bf4bd1946f5c98d988c8e3e1db094c1275
+3a8f0cba5e5334b52a28f19389fb3d38fcaa7fdf1d87f3cfaa6699a03867358c
+Trying to pull docker.io/library/redis:7-alpine...
+Getting image source signatures
+Copying blob sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1
+Copying blob sha256:16333ee0c00fc65e025a2a4f839703ad37a74728832977fbdf080984de1b8e5a
+Copying blob sha256:83234986c7428324e1e59b68434e13718be4a88a96ea34aa898664c741020695
+Copying blob sha256:7eb50503c2b0d42823b050116cb96d2cab5491de22b60c75f01da7ee27c8a488
+Copying blob sha256:1522f9c6f45325f36a5c2f1babe090b85387ff0282d9a2b0920d3e75df5f8334
+Copying blob sha256:9928009b15c88bb90632d7cc3f357e303936dc83e12c2a059fbb5789faa49b24
+Copying blob sha256:4eb14bae0e1d3e171076b7dd031bf56aacff57258c41436e3dcecfe5f2243b1a
+Copying config sha256:f84b0c4678011602b9b98c227a4dcd5468bf8b088b02fdd4165cb7758bad8058
+Writing manifest to image destination
+50c1a8867b07ef169cebce8bea1011153801dc5d8894d647510d8d3fb68c8da9
+09b7405620bd1c46235e56e27862dbb652c03e454cef5c80cc2afafa3c1cd1a9
+Trying to pull docker.io/prom/prometheus:v2.55.1...
+Getting image source signatures
+Copying blob sha256:67c7af41f1acf92916839fc1a7b449bd9af9e4cfcd041b8327756bc8f9d7e242
+Copying blob sha256:1617e25568b2231fdd0d5caff63b06f6f7738d8d961f031c80e47d35aaec9733
+Copying blob sha256:9fa9226be034e47923c0457d916aa68474cdfb23af8d4525e9baeebc4760977a
+Copying blob sha256:f6c7e1c85066a2630c8c484e94e42671ac7aebc13d4742944b27e33f15e05c17
+Copying blob sha256:25011dfbfdebc73d3c73039ce0771a2e8c70ee416e2ec3fe6ae2a0007fe088b0
+Copying blob sha256:f925e29e39737b32bac8dab19497943b906f8dd4119a4acca614f89750b89309
+Copying blob sha256:e2015cdcb081d56eca52c0b38888c58b13825711fc7d6af822f687c460971ddb
+Copying blob sha256:d0079b8baf74af6a55829fdeb41527686d53ac1b6db2ce0d750b91e151976bd6
+Copying blob sha256:ba920d0bcda2fa65477832de34a9aaca1085c15f3d354264ba9387304c0ab82b
+Copying blob sha256:04d7bae2d3adc491d4b58183a3e35f66367c539a2437976c2486bb7bd6954a3f
+Copying blob sha256:8b2021cd7028b4cb716e0eddd6b84c60f465ce0bc6fdd1d0d2d592ab81662291
+Copying blob sha256:23133967bfe3fe79124ada87fa9ec8c174c584edc232bf4f6d458524dc29f84f
+Copying config sha256:899b369f202e252dfef80f3999e981a3d7fc7445228aa6098177acaf50349a76
+Writing manifest to image destination
+86b9a8ee15330e65734bcba714c4dd27e71511d56fa912220fc712ac13a40778
+Trying to pull docker.io/grafana/grafana:11.3.0...
+Getting image source signatures
+Copying blob sha256:1f925eb5520530b693c2f20db0a11f4f4e282d84b85823dc631ac20984064def
+Copying blob sha256:43c4264eed91be63b206e17d93e75256a6097070ce643c5e8f0379998b44f170
+Copying blob sha256:6d083c262ef7548b6d71d98b6dfb34c4f646a7804726e842a9173428d1b2024c
+Copying blob sha256:61ad5fa1174ab207ce344c3be1c517388aabed8027d54f50a0fd4f940fbc0e30
+Copying blob sha256:faa25921ada98b2ec2dbeb23c9b5296010c7243934f6a340307289b43d9cc195
+Copying blob sha256:ee380b05b513135a702a1bb2600ea36f122426034d22cd6994984f139b35f486
+Copying blob sha256:90075272e866d4ddebf459bde32dca8a91b18c01a2c449ef853a1632640976ce
+Copying blob sha256:915d19682ac9f230181f4a5f029d739ea69621f15cf6c605ece5cc628fbd815a
+Copying blob sha256:2766b5007f5a18077f30b4f429d7623392fb5d884ae4497fbcdedfc8a4b210ba
+Copying blob sha256:c077747462c3ab0c844e42a281961d7ca6faaf29326debb7ab8c49841c252d48
+Copying config sha256:761b48cb57a024540cb38bfe1c42b121e5c17678eaaf9aa965da77e1b11829de
+Writing manifest to image destination
+d17d0f4e6e5118c2016aa77ec77e6d5c537e7af5f67bec3e3a626ad4a0b40b48
+19ea7235dfb8b477bec7f58db254900455722a9791bc14bf79a3b9b2ce535806
+arkhe-live-postgres
+arkhe-live-redis
+arkhe-live-mcp
+arkhe-live-prometheus
+arkhe-live-grafana
+arkhe-live-runtime
+PASS HTTP: independent CBOR/hash parity, commit/read, parent links, replay, authentication, actor binding, protected rejection, restart durability, real DB outage fail-closed
+arkhe-live-postgres Up 2 seconds
+arkhe-live-redis Up 25 seconds
+arkhe-live-mcp Up 24 seconds
+arkhe-live-prometheus Up 22 seconds
+arkhe-live-grafana Up 21 seconds
+arkhe-live-runtime Up 5 seconds
+PASS service health localhost:8788
+PASS service health localhost:8787
+PASS service health localhost:9090
+PASS service health localhost:3002
+PASS Redis PING; Prometheus scraped MCP; Grafana datasource proxy queried Prometheus
