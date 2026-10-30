@@ -8,6 +8,12 @@
 -- unique-violation. Refuse first and name every conflicting record, so the
 -- operator can decide which branch is canonical before migrating. Choosing a
 -- branch is a governance decision, not something this migration can make.
+--
+-- Assumes writers are stopped while migrating, as for every migration here.
+-- A transfer committed between the pre-flight and CREATE INDEX could still
+-- create a fork the pre-flight did not see; the index build then fails with a
+-- plain unique violation and the migration rolls back. That is not a bug in
+-- the pre-flight: rerun with writers stopped.
 DO $$
 DECLARE
   conflicts text;

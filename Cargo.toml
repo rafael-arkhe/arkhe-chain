@@ -62,3 +62,9 @@ wasm-bindgen = "0.2"
 # job-plan service (apps/arkhe-ask)
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 pgvector = { version = "0.4", features = ["sqlx"] }
+
+# Unoptimized Ed25519 verification made exhaustive signature tests slow: the
+# arkhe-verify-core custody byte-flip test measured ~22 s in debug, ~0.5 s with
+# this. Optimizing only this dependency keeps debug assertions everywhere else.
+[profile.dev.package.curve25519-dalek]
+opt-level = 3
