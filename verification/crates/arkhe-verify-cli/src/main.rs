@@ -25,6 +25,12 @@ enum Command {
     ReleasePolicyDigest {
         trust: String,
     },
+    /// Verify a custody chain for one asset offline: signatures, links,
+    /// custody hand-over and state continuity. Does not verify the asset itself.
+    VerifyCustody {
+        asset_id: String,
+        chain: String,
+    },
     /// Check an AbsenceRecord digest against its expectation and window offline.
     /// This does not re-derive that the window was silent.
     VerifyAbsence {
@@ -99,6 +105,13 @@ fn main() -> anyhow::Result<()> {
                 serde_json::from_slice(&bounded_release_read(&expectation, 32768)?)?;
             let verdict = arkhe_verify_core::absence::verify(&spec, window, &record_hash, now)
                 .map_err(anyhow::Error::msg)?;
+            println!("{}", serde_json::to_string_pretty(&verdict)?);
+        }
+        Command::VerifyCustody { asset_id, chain } => {
+            use arkhe_verify_core::custody::{verify_chain, SignedTransfer, MAX_CHAIN};
+            let chain: Vec<SignedTransfer> =
+                serde_json::from_slice(&bounded_release_read(&chain, MAX_CHAIN * 9000)?)?;
+            let verdict = verify_chain(&asset_id, &chain).map_err(anyhow::Error::msg)?;
             println!("{}", serde_json::to_string_pretty(&verdict)?);
         }
         Command::VerifyRelease {

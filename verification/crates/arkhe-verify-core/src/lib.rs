@@ -2,6 +2,7 @@ pub mod absence;
 pub mod action_proof;
 pub mod c2pa;
 pub mod cbor;
+pub mod custody;
 pub mod entitlement;
 pub mod error;
 pub mod gguf;

@@ -5,12 +5,12 @@
 //! Pure and clock-free: the caller supplies `now` and admission times taken
 //! from the evidence log, never from the worker's own claims.
 use crate::canonical::{decode_canonical, Cbor, DecodeError};
+use crate::fields::{digest, is_id, text, uint, Fields};
 use crate::{worker::WorkerExecutionRecord, CanonicalEncode, Digest32};
 use serde::{Deserialize, Serialize};
 
 pub const EXPECTATION_VERSION: u64 = 1;
 pub const ABSENCE_VERSION: u64 = 1;
-pub const MAX_ID_BYTES: usize = 128;
 /// Bounds one audit call; callers advance `from_window` to catch up further.
 pub const MAX_WINDOWS_PER_AUDIT: u64 = 10_000;
 
@@ -88,6 +88,12 @@ pub enum ExpectationError {
     Overflow,
     #[error("audit spans more than {MAX_WINDOWS_PER_AUDIT} windows")]
     TooManyWindows,
+}
+
+impl From<&'static str> for ExpectationError {
+    fn from(m: &'static str) -> Self {
+        Self::Schema(m)
+    }
 }
 
 impl ExecutionExpectation {
@@ -330,58 +336,4 @@ fn map(pairs: Vec<(&str, Cbor)>) -> Cbor {
 }
 fn bytes(d: Digest32) -> Cbor {
     Cbor::Bytes(d.0.to_vec())
-}
-fn is_id(s: &str) -> bool {
-    !s.is_empty()
-        && s.len() <= MAX_ID_BYTES
-        && s.bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b"._@+-/:".contains(&b))
-}
-
-struct Fields(Vec<(String, Cbor)>);
-
-impl Fields {
-    fn new(value: Cbor) -> Result<Self, ExpectationError> {
-        match value {
-            Cbor::Map(pairs) => Ok(Self(pairs)),
-            _ => Err(ExpectationError::Schema("expected map")),
-        }
-    }
-    fn take(&mut self, key: &'static str) -> Result<Cbor, ExpectationError> {
-        let index = self
-            .0
-            .iter()
-            .position(|(k, _)| k == key)
-            .ok_or(ExpectationError::Schema("missing field"))?;
-        Ok(self.0.swap_remove(index).1)
-    }
-    fn finish(self) -> Result<(), ExpectationError> {
-        if self.0.is_empty() {
-            Ok(())
-        } else {
-            Err(ExpectationError::Schema("unknown field"))
-        }
-    }
-}
-
-fn uint(v: Cbor) -> Result<u64, ExpectationError> {
-    match v {
-        Cbor::Uint(n) => Ok(n),
-        _ => Err(ExpectationError::Schema("expected unsigned integer")),
-    }
-}
-fn text(v: Cbor) -> Result<String, ExpectationError> {
-    match v {
-        Cbor::Text(s) => Ok(s),
-        _ => Err(ExpectationError::Schema("expected text")),
-    }
-}
-fn digest(v: Cbor) -> Result<Digest32, ExpectationError> {
-    match v {
-        Cbor::Bytes(b) => Ok(Digest32(
-            b.try_into()
-                .map_err(|_| ExpectationError::Schema("digest length"))?,
-        )),
-        _ => Err(ExpectationError::Schema("expected byte string")),
-    }
 }
