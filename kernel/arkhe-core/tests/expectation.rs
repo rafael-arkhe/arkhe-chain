@@ -1,5 +1,7 @@
 use arkhe_core::{
-    expectation::{ExecutionExpectation, ExpectationError, EXPECTATION_VERSION},
+    expectation::{
+        AbsenceRecord, Admission, ExecutionExpectation, ExpectationError, EXPECTATION_VERSION,
+    },
     worker::WorkerExecutionRecord,
     CanonicalEncode, Digest32,
 };
@@ -34,17 +36,14 @@ fn wer(module: &str, id: &str) -> WorkerExecutionRecord {
     }
 }
 
+fn run(at: u64) -> Admission {
+    Admission::of(at, &wer("billing-cron", &format!("r{at}")))
+}
+
 #[test]
 fn every_window_with_a_run_yields_no_absence() {
     let e = hourly();
-    let runs: Vec<_> = (0..3)
-        .map(|k| wer("billing-cron", &format!("r{k}")))
-        .collect();
-    let admitted: Vec<_> = runs
-        .iter()
-        .enumerate()
-        .map(|(k, w)| (T0 + k as u64 * HOUR + 10, w))
-        .collect();
+    let admitted: Vec<_> = (0..3).map(|k| run(T0 + k * HOUR + 10)).collect();
     let now = T0 + 3 * HOUR + 300;
     assert_eq!(e.closed_windows(now), 3);
     assert!(e.audit(0, now, &admitted).unwrap().is_empty());
@@ -53,9 +52,8 @@ fn every_window_with_a_run_yields_no_absence() {
 #[test]
 fn silent_window_becomes_an_absence_record() {
     let e = hourly();
-    let (a, c) = (wer("billing-cron", "a"), wer("billing-cron", "c"));
     // Window 1 has no run: the cron died silently.
-    let admitted = [(T0 + 5, &a), (T0 + 2 * HOUR + 600, &c)];
+    let admitted = [run(T0 + 5), run(T0 + 2 * HOUR + 600)];
     let absences = e.audit(0, T0 + 3 * HOUR + 300, &admitted).unwrap();
     assert_eq!(absences.len(), 1);
     let r = &absences[0];
@@ -66,6 +64,7 @@ fn silent_window_becomes_an_absence_record() {
     );
     assert_eq!(r.expectation_digest, e.object_digest());
     assert_eq!(r.module_id, "billing-cron");
+    r.check_bound_to(&e).unwrap();
 }
 
 #[test]
@@ -82,29 +81,26 @@ fn open_window_is_never_judged() {
 #[test]
 fn late_run_within_grace_satisfies_the_window() {
     let e = hourly();
-    let late = wer("billing-cron", "late");
-    let admitted = [(T0 + HOUR + 299, &late)];
+    let admitted = [run(T0 + HOUR + 299)];
     assert!(e.audit(0, T0 + HOUR + 300, &admitted).unwrap().is_empty());
-    let too_late = [(T0 + HOUR + 300, &late)];
+    let too_late = [run(T0 + HOUR + 300)];
     assert_eq!(e.audit(0, T0 + HOUR + 300, &too_late).unwrap().len(), 1);
 }
 
 #[test]
 fn one_run_in_the_grace_overlap_cannot_satisfy_two_windows() {
     let e = hourly();
-    let a = wer("billing-cron", "a");
-    let b = wer("billing-cron", "b");
     // Window 0 is silent; the only later run sits in window 0's grace period,
     // which is also the start of window 1. It is credited to one window only.
-    let one = [(T0 + HOUR + 5, &a)];
+    let one = [run(T0 + HOUR + 5)];
     let absences = e.audit(0, T0 + 2 * HOUR + 300, &one).unwrap();
     assert_eq!(absences.len(), 1);
     assert_eq!(absences[0].window_index, 1);
     // A second run in window 1 means both windows ran.
-    let two = [(T0 + HOUR + 5, &a), (T0 + HOUR + 1800, &b)];
+    let two = [run(T0 + HOUR + 5), run(T0 + HOUR + 1800)];
     assert!(e.audit(0, T0 + 2 * HOUR + 300, &two).unwrap().is_empty());
     // If window 0 ran on time, a run at the start of window 1 is simply window 1's.
-    let on_time = [(T0 + 10, &b), (T0 + HOUR + 5, &a)];
+    let on_time = [run(T0 + 10), run(T0 + HOUR + 5)];
     assert!(e
         .audit(0, T0 + 2 * HOUR + 300, &on_time)
         .unwrap()
@@ -114,8 +110,7 @@ fn one_run_in_the_grace_overlap_cannot_satisfy_two_windows() {
 #[test]
 fn other_modules_do_not_satisfy_the_expectation() {
     let e = hourly();
-    let other = wer("mailer", "m");
-    let admitted = [(T0 + 10, &other)];
+    let admitted = [Admission::of(T0 + 10, &wer("mailer", "m"))];
     assert_eq!(e.audit(0, T0 + HOUR + 300, &admitted).unwrap().len(), 1);
 }
 
@@ -125,14 +120,27 @@ fn reaudit_is_idempotent_and_resumable() {
     let now = T0 + 4 * HOUR + 300;
     let first = e.audit(0, now, &[]).unwrap();
     let again = e.audit(0, now, &[]).unwrap();
-    let digests = |v: &[_]| -> Vec<Digest32> {
-        v.iter()
-            .map(|r: &arkhe_core::expectation::AbsenceRecord| r.object_digest())
-            .collect()
-    };
+    let digests =
+        |v: &[AbsenceRecord]| -> Vec<Digest32> { v.iter().map(|r| r.object_digest()).collect() };
     assert_eq!(digests(&first), digests(&again));
     let resumed = e.audit(2, now, &[]).unwrap();
     assert_eq!(digests(&resumed), digests(&first[2..]));
+}
+
+#[test]
+fn admission_range_covers_the_previous_windows_late_runs() {
+    let e = hourly();
+    assert_eq!(e.admission_range(0, T0 + HOUR + 299).unwrap(), None);
+    assert_eq!(
+        e.admission_range(0, T0 + 2 * HOUR + 300).unwrap(),
+        Some((T0, T0 + 2 * HOUR + 300))
+    );
+    // Resuming at window 2 still reads window 1, whose late runs window 2 excludes.
+    assert_eq!(
+        e.admission_range(2, T0 + 3 * HOUR + 300).unwrap(),
+        Some((T0 + HOUR, T0 + 3 * HOUR + 300))
+    );
+    assert_eq!(e.admission_range(3, T0 + 3 * HOUR + 300).unwrap(), None);
 }
 
 type Mutation = fn(&mut ExecutionExpectation);
@@ -154,6 +162,10 @@ fn invalid_expectations_are_rejected() {
         mutate(&mut e);
         assert_eq!(
             e.audit(0, T0 + 10 * HOUR, &[]),
+            Err(ExpectationError::Schema(msg))
+        );
+        assert_eq!(
+            ExecutionExpectation::from_canonical_bytes(&e.canonical_bytes()),
             Err(ExpectationError::Schema(msg))
         );
     }
@@ -179,4 +191,62 @@ fn digests_are_domain_separated_and_field_sensitive() {
     let mut changed = hourly();
     changed.grace_secs = 301;
     assert_ne!(e.object_digest(), changed.object_digest());
+}
+
+#[test]
+fn canonical_bytes_round_trip_strictly() {
+    let e = hourly();
+    let r = e.audit(0, T0 + HOUR + 300, &[]).unwrap().remove(0);
+    let eb = e.canonical_bytes();
+    let rb = r.canonical_bytes();
+    assert_eq!(ExecutionExpectation::from_canonical_bytes(&eb).unwrap(), e);
+    assert_eq!(AbsenceRecord::from_canonical_bytes(&rb).unwrap(), r);
+    for bytes in [&eb, &rb] {
+        let mut trailing = bytes.clone();
+        trailing.push(0);
+        assert!(ExecutionExpectation::from_canonical_bytes(&trailing).is_err());
+        assert!(AbsenceRecord::from_canonical_bytes(&trailing).is_err());
+    }
+    // Neither type decodes as the other.
+    assert!(ExecutionExpectation::from_canonical_bytes(&rb).is_err());
+    assert!(AbsenceRecord::from_canonical_bytes(&eb).is_err());
+}
+
+#[test]
+fn absence_bound_to_another_expectation_or_window_is_rejected() {
+    let e = hourly();
+    let r = e.audit(0, T0 + HOUR + 300, &[]).unwrap().remove(0);
+    let mut other = hourly();
+    other.grace_secs = 60;
+    assert_eq!(
+        r.check_bound_to(&other),
+        Err(ExpectationError::Mismatch("expectation_digest"))
+    );
+    let mut shifted = r.clone();
+    shifted.window_start_unix += 1;
+    assert_eq!(
+        shifted.check_bound_to(&e),
+        Err(ExpectationError::Mismatch("window bounds"))
+    );
+    let mut renamed = r;
+    renamed.module_id = "mailer".into();
+    assert_eq!(
+        renamed.check_bound_to(&e),
+        Err(ExpectationError::Mismatch("module_id"))
+    );
+}
+
+#[test]
+fn admission_reads_module_id_from_stored_wer_bytes() {
+    let w = wer("billing-cron", "x");
+    assert_eq!(
+        Admission::from_wer_bytes(T0, &w.canonical_bytes()),
+        Some(Admission::of(T0, &w))
+    );
+    assert_eq!(Admission::from_wer_bytes(T0, b"not cbor"), None);
+    assert_eq!(
+        Admission::from_wer_bytes(T0, &hourly().canonical_bytes()).map(|a| a.module_id),
+        Some("billing-cron".into()),
+        "callers must only pass bytes stored as WorkerExecutionRecord"
+    );
 }

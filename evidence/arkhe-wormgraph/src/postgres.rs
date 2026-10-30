@@ -455,6 +455,44 @@ impl EvidenceCommitter for PgWormGraph {
     }
 }
 #[async_trait]
+impl crate::absence::AdmissionLog for PgWormGraph {
+    /// Admission time is `work_objects.created_at`, set by the database. An
+    /// identical WER re-committed later keeps its first admission time.
+    async fn admissions(
+        &self,
+        from_unix: u64,
+        until_unix: u64,
+    ) -> Result<Vec<arkhe_core::expectation::Admission>, String> {
+        let bound = |v: u64| i64::try_from(v).map_err(|_| "admission range out of bounds");
+        let limit = crate::absence::MAX_ADMISSIONS_PER_AUDIT as i64 + 1;
+        let mut tx = self.begin("arkhe_read").await?;
+        let rows: Vec<(i64, Vec<u8>)> = sqlx::query_as(
+            "SELECT floor(EXTRACT(EPOCH FROM created_at))::bigint, canonical_bytes FROM work_objects \
+             WHERE tenant_id=$1 AND object_type='WorkerExecutionRecord' \
+             AND created_at >= to_timestamp($2) AND created_at < to_timestamp($3) \
+             ORDER BY created_at LIMIT $4",
+        )
+        .bind(&self.tenant)
+        .bind(bound(from_unix)?)
+        .bind(bound(until_unix)?)
+        .bind(limit)
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+        tx.commit().await.map_err(|e| e.to_string())?;
+        if rows.len() as i64 >= limit {
+            return Err("admission log exceeds the per-audit bound".into());
+        }
+        rows.into_iter()
+            .map(|(at, bytes)| {
+                let at = u64::try_from(at).map_err(|_| "admission before the Unix epoch")?;
+                arkhe_core::expectation::Admission::from_wer_bytes(at, &bytes)
+                    .ok_or_else(|| "stored WorkerExecutionRecord lacks module_id".to_string())
+            })
+            .collect()
+    }
+}
+#[async_trait]
 impl WorkEvidenceCommitter for PgWormGraph {
     async fn commit_work(
         &self,

@@ -1,3 +1,4 @@
+pub mod absence;
 pub mod action_proof;
 pub mod c2pa;
 pub mod cbor;

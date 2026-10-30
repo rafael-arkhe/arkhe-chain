@@ -7,6 +7,7 @@ pub mod authenticated_dispatch;
 pub mod http_routes;
 pub mod portable_wer;
 pub mod preview;
+pub mod run_report;
 
 pub struct Runtime<R: PolicyResolver> {
     pub gate: ContainmentGate<R>,

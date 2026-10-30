@@ -4,7 +4,7 @@
 //! against admitted WERs turns each silent window into positive evidence.
 //! Pure and clock-free: the caller supplies `now` and admission times taken
 //! from the evidence log, never from the worker's own claims.
-use crate::canonical::Cbor;
+use crate::canonical::{decode_canonical, Cbor, DecodeError};
 use crate::{worker::WorkerExecutionRecord, CanonicalEncode, Digest32};
 use serde::{Deserialize, Serialize};
 
@@ -44,10 +44,46 @@ pub struct AbsenceRecord {
     pub window_end_unix: u64,
 }
 
+/// One WER admission as seen by the evidence log. `admitted_at_unix` is the
+/// log's own admission time; a worker-supplied timestamp must never be used.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Admission {
+    pub admitted_at_unix: u64,
+    pub module_id: String,
+}
+
+impl Admission {
+    pub fn of(admitted_at_unix: u64, wer: &WorkerExecutionRecord) -> Self {
+        Self {
+            admitted_at_unix,
+            module_id: wer.module_id.clone(),
+        }
+    }
+
+    /// Reads `module_id` from stored canonical WER bytes without trusting any
+    /// other field; the bytes come from the store, keyed by their digest.
+    pub fn from_wer_bytes(admitted_at_unix: u64, canonical: &[u8]) -> Option<Self> {
+        match decode_canonical(canonical).ok()? {
+            Cbor::Map(pairs) => pairs.into_iter().find_map(|(k, v)| match (k.as_str(), v) {
+                ("module_id", Cbor::Text(module_id)) => Some(Self {
+                    admitted_at_unix,
+                    module_id,
+                }),
+                _ => None,
+            }),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum ExpectationError {
+    #[error("canonical CBOR: {0}")]
+    Cbor(#[from] DecodeError),
     #[error("schema: {0}")]
     Schema(&'static str),
+    #[error("absence record does not match its expectation: {0}")]
+    Mismatch(&'static str),
     #[error("window arithmetic overflows u64")]
     Overflow,
     #[error("audit spans more than {MAX_WINDOWS_PER_AUDIT} windows")]
@@ -96,14 +132,14 @@ impl ExecutionExpectation {
             .unwrap_or(0)
     }
 
-    /// Audit every closed window from `from_window` on. `admitted` pairs each
-    /// WER with its admission time in the evidence log. Open windows are never
-    /// judged: absence is only asserted once the grace period has passed.
+    /// Audit every closed window from `from_window` on against the WER
+    /// admissions of the evidence log. Open windows are never judged: absence
+    /// is only asserted once the grace period has passed.
     pub fn audit(
         &self,
         from_window: u64,
         now_unix: u64,
-        admitted: &[(u64, &WorkerExecutionRecord)],
+        admitted: &[Admission],
     ) -> Result<Vec<AbsenceRecord>, ExpectationError> {
         self.validate()?;
         let closed = self.closed_windows(now_unix);
@@ -112,8 +148,8 @@ impl ExecutionExpectation {
         }
         let times: Vec<u64> = admitted
             .iter()
-            .filter(|(_, wer)| wer.module_id == self.module_id)
-            .map(|(at, _)| *at)
+            .filter(|a| a.module_id == self.module_id)
+            .map(|a| a.admitted_at_unix)
             .collect();
         let in_range = |from: u64, to: u64| {
             times
@@ -158,6 +194,42 @@ impl ExecutionExpectation {
         Ok(absences)
     }
 
+    /// `[from, until)` of admission times that `audit(from_window, now)` reads,
+    /// including the previous window's late runs. `None` if nothing is closed.
+    pub fn admission_range(
+        &self,
+        from_window: u64,
+        now_unix: u64,
+    ) -> Result<Option<(u64, u64)>, ExpectationError> {
+        let closed = self.closed_windows(now_unix);
+        if closed <= from_window {
+            return Ok(None);
+        }
+        let (from, _) = self.window(from_window.saturating_sub(1))?;
+        let (_, last_end) = self.window(closed - 1)?;
+        let until = last_end
+            .checked_add(self.grace_secs)
+            .ok_or(ExpectationError::Overflow)?;
+        Ok(Some((from, until)))
+    }
+
+    /// Strict inverse of `canonical_bytes`.
+    pub fn from_canonical_bytes(input: &[u8]) -> Result<Self, ExpectationError> {
+        let mut f = Fields::new(decode_canonical(input)?)?;
+        let value = Self {
+            version: uint(f.take("version")?)?,
+            expectation_id: text(f.take("expectation_id")?)?,
+            module_id: text(f.take("module_id")?)?,
+            anchor_unix: uint(f.take("anchor_unix")?)?,
+            period_secs: uint(f.take("period_secs")?)?,
+            grace_secs: uint(f.take("grace_secs")?)?,
+            policy_digest: digest(f.take("policy_digest")?)?,
+        };
+        f.finish()?;
+        value.validate()?;
+        Ok(value)
+    }
+
     pub fn to_cbor(&self) -> Cbor {
         map(vec![
             ("version", Cbor::Uint(self.version)),
@@ -172,6 +244,51 @@ impl ExecutionExpectation {
 }
 
 impl AbsenceRecord {
+    /// Checks that this record names `expectation` and one of its windows.
+    /// It cannot show the window was silent: that needs the admission log.
+    pub fn check_bound_to(
+        &self,
+        expectation: &ExecutionExpectation,
+    ) -> Result<(), ExpectationError> {
+        let fail = |m| Err(ExpectationError::Mismatch(m));
+        expectation.validate()?;
+        if self.version != ABSENCE_VERSION {
+            return Err(ExpectationError::Schema("unsupported version"));
+        }
+        if self.expectation_digest != expectation.object_digest() {
+            return fail("expectation_digest");
+        }
+        if self.module_id != expectation.module_id {
+            return fail("module_id");
+        }
+        if expectation.window(self.window_index)? != (self.window_start_unix, self.window_end_unix)
+        {
+            return fail("window bounds");
+        }
+        Ok(())
+    }
+
+    /// Strict inverse of `canonical_bytes`.
+    pub fn from_canonical_bytes(input: &[u8]) -> Result<Self, ExpectationError> {
+        let mut f = Fields::new(decode_canonical(input)?)?;
+        let value = Self {
+            version: uint(f.take("version")?)?,
+            expectation_digest: digest(f.take("expectation_digest")?)?,
+            module_id: text(f.take("module_id")?)?,
+            window_index: uint(f.take("window_index")?)?,
+            window_start_unix: uint(f.take("window_start_unix")?)?,
+            window_end_unix: uint(f.take("window_end_unix")?)?,
+        };
+        f.finish()?;
+        if value.version != ABSENCE_VERSION {
+            return Err(ExpectationError::Schema("unsupported version"));
+        }
+        if !is_id(&value.module_id) {
+            return Err(ExpectationError::Schema("module_id"));
+        }
+        Ok(value)
+    }
+
     pub fn to_cbor(&self) -> Cbor {
         map(vec![
             ("version", Cbor::Uint(self.version)),
@@ -219,4 +336,52 @@ fn is_id(s: &str) -> bool {
         && s.len() <= MAX_ID_BYTES
         && s.bytes()
             .all(|b| b.is_ascii_alphanumeric() || b"._@+-/:".contains(&b))
+}
+
+struct Fields(Vec<(String, Cbor)>);
+
+impl Fields {
+    fn new(value: Cbor) -> Result<Self, ExpectationError> {
+        match value {
+            Cbor::Map(pairs) => Ok(Self(pairs)),
+            _ => Err(ExpectationError::Schema("expected map")),
+        }
+    }
+    fn take(&mut self, key: &'static str) -> Result<Cbor, ExpectationError> {
+        let index = self
+            .0
+            .iter()
+            .position(|(k, _)| k == key)
+            .ok_or(ExpectationError::Schema("missing field"))?;
+        Ok(self.0.swap_remove(index).1)
+    }
+    fn finish(self) -> Result<(), ExpectationError> {
+        if self.0.is_empty() {
+            Ok(())
+        } else {
+            Err(ExpectationError::Schema("unknown field"))
+        }
+    }
+}
+
+fn uint(v: Cbor) -> Result<u64, ExpectationError> {
+    match v {
+        Cbor::Uint(n) => Ok(n),
+        _ => Err(ExpectationError::Schema("expected unsigned integer")),
+    }
+}
+fn text(v: Cbor) -> Result<String, ExpectationError> {
+    match v {
+        Cbor::Text(s) => Ok(s),
+        _ => Err(ExpectationError::Schema("expected text")),
+    }
+}
+fn digest(v: Cbor) -> Result<Digest32, ExpectationError> {
+    match v {
+        Cbor::Bytes(b) => Ok(Digest32(
+            b.try_into()
+                .map_err(|_| ExpectationError::Schema("digest length"))?,
+        )),
+        _ => Err(ExpectationError::Schema("expected byte string")),
+    }
 }

@@ -1,10 +1,14 @@
+use arkhe_core::CanonicalEncode;
 use arkhe_core::{
     evidence::EvidenceReader, work::WorkIntent, worker::WorkerExecutionRecord, Digest32,
 };
 use arkhe_governance::{DevPolicyResolver, PolicyBinding};
 use arkhe_kernel::ContainmentGate;
-use arkhe_runtime::{Runtime, WorkCommitError};
-use arkhe_wormgraph::{postgres::PgWormGraph, retention::RetentionPolicy};
+use arkhe_runtime::{run_report::RunReport, Runtime, WorkCommitError};
+use arkhe_verify_core::absence::ExpectationSpec;
+use arkhe_wormgraph::{
+    absence::audit_and_record, postgres::PgWormGraph, retention::RetentionPolicy,
+};
 use axum::{
     extract::{DefaultBodyLimit, Path, State},
     http::{HeaderMap, StatusCode},
@@ -92,6 +96,54 @@ async fn commit(
         json!({"record_hash":receipt.to_hex(),"intent_digest":work.intent.digest().to_hex(),"worker_digest":work.worker_record.digest().to_hex()}),
     ))
 }
+/// Scheduler run reports (see `run_report`). Admission time is the store's.
+async fn run_report(
+    State(s): State<Arc<LiveState>>,
+    headers: HeaderMap,
+    Json(report): Json<RunReport>,
+) -> Result<Json<Value>, ApiError> {
+    authenticate(&headers, &s)?;
+    let worker = report
+        .worker_record(&s.actor)
+        .map_err(|m| (StatusCode::BAD_REQUEST, m))?;
+    let hash = s
+        .store
+        .commit_verified_worker(&worker)
+        .await
+        .map_err(|_| (StatusCode::SERVICE_UNAVAILABLE, "evidence commit failed"))?;
+    Ok(Json(
+        json!({"record_hash":hash.to_hex(),"module_id":worker.module_id}),
+    ))
+}
+/// `audit-expectation <spec.json> [from_window]`: one audit pass. Prints the
+/// outcome; the caller keeps `next_window` and schedules the next pass.
+async fn audit_expectation(path: &str, from_window: u64) -> Result<(), Box<dyn std::error::Error>> {
+    let spec: ExpectationSpec = serde_json::from_slice(&std::fs::read(path)?)?;
+    let expectation = spec.expectation()?;
+    let store = PgWormGraph::connect(&env::var("DATABASE_URL")?, &env::var("ARKHE_TENANT_ID")?)
+        .await
+        .map_err(std::io::Error::other)?;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)?
+        .as_secs();
+    let outcome = audit_and_record(&store, &store, &expectation, from_window, now)
+        .await
+        .map_err(std::io::Error::other)?;
+    let absences: Vec<Value> = outcome
+        .absences
+        .iter()
+        .map(|r| {
+            json!({"window_index":r.window_index,"window_start_unix":r.window_start_unix,
+                "window_end_unix":r.window_end_unix,"record_hash":r.object_digest().to_hex()})
+        })
+        .collect();
+    println!(
+        "{}",
+        json!({"expectation_digest":outcome.expectation_digest.to_hex(),"audited_at_unix":now,
+            "next_window":outcome.next_window,"absences":absences})
+    );
+    Ok(())
+}
 async fn read(
     State(s): State<Arc<LiveState>>,
     headers: HeaderMap,
@@ -139,6 +191,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("arkhe-sql migrations applied and checksums verified");
         return Ok(());
     }
+    if env::args().nth(1).as_deref() == Some("audit-expectation") {
+        let path = env::args()
+            .nth(2)
+            .ok_or("usage: arkhe-runtime audit-expectation <spec.json> [from_window]")?;
+        let from_window = env::args()
+            .nth(3)
+            .map(|v| v.parse())
+            .transpose()?
+            .unwrap_or(0);
+        return audit_expectation(&path, from_window).await;
+    }
     let retention_policy = RetentionPolicy::from_settings(
         env::var("ARKHE_EVIDENCE_RETENTION_DAYS").ok().as_deref(),
         env::var("ARKHE_EVIDENCE_IMMEDIATE_DAYS").ok().as_deref(),
@@ -180,6 +243,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         get(object),
         get(retention),
     )
+    .route("/v1/runs", post(run_report))
     .layer(DefaultBodyLimit::max(262144))
     .with_state(state);
     let listener = tokio::net::TcpListener::bind(

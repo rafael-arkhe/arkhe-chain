@@ -25,6 +25,15 @@ enum Command {
     ReleasePolicyDigest {
         trust: String,
     },
+    /// Check an AbsenceRecord digest against its expectation and window offline.
+    /// This does not re-derive that the window was silent.
+    VerifyAbsence {
+        expectation: String,
+        window: u64,
+        record_hash: String,
+        #[arg(long)]
+        now: u64,
+    },
     /// Inspect the restricted binary GGUF profile; '-' reads a bounded stdin snapshot.
     /// This command computes digests and does not verify authenticity.
     InspectGguf {
@@ -79,6 +88,18 @@ fn main() -> anyhow::Result<()> {
                 "{}",
                 arkhe_verify_core::release::policy_digest(&trust).map_err(anyhow::Error::msg)?
             );
+        }
+        Command::VerifyAbsence {
+            expectation,
+            window,
+            record_hash,
+            now,
+        } => {
+            let spec: arkhe_verify_core::absence::ExpectationSpec =
+                serde_json::from_slice(&bounded_release_read(&expectation, 32768)?)?;
+            let verdict = arkhe_verify_core::absence::verify(&spec, window, &record_hash, now)
+                .map_err(anyhow::Error::msg)?;
+            println!("{}", serde_json::to_string_pretty(&verdict)?);
         }
         Command::VerifyRelease {
             artifact,
