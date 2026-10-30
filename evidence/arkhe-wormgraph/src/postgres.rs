@@ -33,7 +33,24 @@ impl PgWormGraph {
         sqlx::migrate!("../../storage/sql/migrations")
             .run(&pool)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| {
+                // Pre-flight checks put the actionable list in DETAIL and HINT.
+                let db = match &e {
+                    sqlx::migrate::MigrateError::Execute(sqlx::Error::Database(db))
+                    | sqlx::migrate::MigrateError::ExecuteMigration(sqlx::Error::Database(db), _) => {
+                        db.try_downcast_ref::<sqlx::postgres::PgDatabaseError>()
+                    }
+                    _ => None,
+                };
+                match db {
+                    Some(pg) => format!(
+                        "{e}\nDETAIL: {}\nHINT: {}",
+                        pg.detail().unwrap_or("-"),
+                        pg.hint().unwrap_or("-")
+                    ),
+                    None => e.to_string(),
+                }
+            })?;
         pool.close().await;
         Ok(())
     }

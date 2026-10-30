@@ -64,6 +64,32 @@ async fn predecessor_must_be_a_transfer_of_the_same_asset() {
     );
 }
 
+/// Pins a deliberate divergence. The in-memory store has no uniqueness index
+/// and admits forks; Postgres rejects them (see the concurrent test below).
+/// Chain verification rejects the fork either way. If this test fails because
+/// the in-memory store started rejecting forks, update it: that is a fix.
+#[tokio::test]
+async fn in_memory_store_admits_forks_that_chain_verification_rejects() {
+    use arkhe_verify_core::custody::verify_chain;
+    let graph = WormGraph::new();
+    let (transfers, signed) = chain(2);
+    let mut fork = transfer(1, Some(transfers[0].object_digest()));
+    fork.transfer_id = "xfer-fork".into();
+    fork.to_party = key(20).verifying_key().to_bytes();
+    let fork = sign(&fork, &key(1), &key(20));
+    for s in [&signed[0], &signed[1], &fork] {
+        record_transfer(&graph, s).await.unwrap();
+    }
+    let both_branches = vec![signed[0].clone(), signed[1].clone(), fork.clone()];
+    assert_eq!(
+        verify_chain(ASSET, &both_branches).unwrap_err(),
+        "transfer 2: does not link to the previous transfer"
+    );
+    // Each branch alone is a valid chain: the store cannot say which is canonical.
+    assert!(verify_chain(ASSET, &signed).is_ok());
+    assert!(verify_chain(ASSET, &[signed[0].clone(), fork]).is_ok());
+}
+
 #[tokio::test]
 async fn badly_signed_transfer_is_never_committed() {
     let graph = WormGraph::new();

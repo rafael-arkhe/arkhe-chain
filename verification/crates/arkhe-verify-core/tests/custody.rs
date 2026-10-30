@@ -25,6 +25,10 @@ fn hundred_transfer_chain_verifies_offline() {
 }
 
 #[test]
+#[cfg_attr(
+    debug_assertions,
+    ignore = "exhaustive: ~22 s in debug; run with --release or -- --ignored"
+)]
 fn every_single_byte_change_to_any_leaf_is_rejected() {
     // Three leaves cover every link position: first (no predecessor), middle
     // (linked both ways) and head (no successor). Every byte of each is flipped.
