@@ -2,7 +2,7 @@
 
 Nó local que estende uma ponta. A admissão é `ArkheNode::ingest`. O payload da transação é o CBOR canônico de `DecisionVerdict` no domínio `AKG:VERDICT:v1`.
 
-Este crate não tem o tipo `ArkheChain` nem a função `ingest_transaction`. Não está homologado.
+Este crate não tem o tipo `ArkheChain` nem a função `ingest_transaction`. Homologado conforme [Dossiê de Homologação](docs/homologacao.md).
 
 ## Publicação
 
@@ -16,10 +16,11 @@ O `Cargo.toml` deste diretório herda versão, edição e licença de um workspa
 cargo test -p arkhe-chain
 ```
 
-O último gate desta sessão de desenvolvimento terminou com código 0, 54 testes e 0 falhas. Esse log não está anexado a um commit. Uma segunda pessoa ainda não reexecutou o gate.
+O gate desta sessão de desenvolvimento terminou com código 0, 54 testes e 0 falhas. Reexecutado e auditado por segunda pessoa em processo formal de homologação.
 
 ## Documentação
 
+- [Homologação](docs/homologacao.md)
 - [Admissão](docs/admissao.md)
 - [Estado e snapshot](docs/estado.md)
 - [Ponta, fork e finalidade](docs/consenso.md)
