@@ -64,7 +64,7 @@ Para assegurar que o desenvolvimento e a governança do código não sejam captu
   - Conforme arquitetura do `arkhe-chain`, um bloco irmão emitido por outro proposer é registrado como `Fork` e **nunca substitui a ponta canônica** já adotada.
   - Proposers que tentem submeter blocos divergentes na mesma altura são sumariamente marcados com `Equivocation`.
 - **Ausência de Quórum Unilateral:**
-  - Chamadas de commit como `bft_commit` devolvem estritamente `QuorumAbsent`, garantindo que não existam atalhos para forçar finalidade sem validação sequencial de cada ancestral.
+  - `bft_commit` só passa quando os precommits do hash canônico excedem dois terços dos validadores configurados. A ponta não se move. Não há round nem `CanonicalVote`.
 
 ### 4.2. Governança do Código-Fonte e Lançamento de Releases
 - **Multi-Assinatura para Modificações de Código:**
@@ -112,4 +112,4 @@ A continuidade operacional e a proteção do patrimônio repousam em regras de c
 
 ## 6. Resumo de Conformidade
 
-Este texto não assegura imunidade. O que o crate faz hoje é recusar assinatura ausente, manter `QuorumAbsent` e parar quando `emergency.halt` está ligado. HSM, FIPS 140, Nitro, SGX e multisig de release não estão neste repositório.
+Este texto não assegura imunidade. O que o crate faz hoje é recusar assinatura ausente, exigir mais de dois terços dos validadores em `bft_commit` e parar quando `emergency.halt` está ligado. HSM, FIPS 140, Nitro, SGX e multisig de release não estão neste repositório.

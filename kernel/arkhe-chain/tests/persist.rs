@@ -250,7 +250,7 @@ fn a_reopened_file_keeps_a_fork_and_the_first_tip() {
 }
 
 #[test]
-fn a_reopened_file_keeps_a_precommit_and_does_not_commit() {
+fn a_reopened_file_keeps_the_precommits_and_the_weight_threshold() {
     let path = path("precommit");
     let node = ArkheNode::open(
         &path,
@@ -289,7 +289,7 @@ fn a_reopened_file_keeps_a_precommit_and_does_not_commit() {
     )
     .unwrap();
     assert_eq!(again.precommit_count(1).unwrap(), 2);
-    assert_eq!(again.bft_commit(1).unwrap_err(), ChainError::QuorumAbsent);
+    again.bft_commit(1).unwrap();
     assert_eq!(again.height().unwrap(), 1);
     assert_eq!(again.tip().unwrap(), tip);
     assert_eq!(again.balance("bob").unwrap(), 25);

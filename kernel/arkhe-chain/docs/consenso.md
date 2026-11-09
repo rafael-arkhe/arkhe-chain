@@ -16,4 +16,4 @@ Não há reorg, voto com peso nem quórum.
 
 `finality(height)` devolve `Finality { height, depth }`, com `depth = ponta − height`. Altura ausente, inclusive 0, é `UnknownBlock`. Isso descreve a cadeia canônica local. Não é checkpoint justificado.
 
-`Precommit` é uma assinatura Ed25519 local no domínio `AKG:CHAIN:PRECOMMIT:v1`, sobre a altura e o hash do bloco. Não tem round, part set nem poder de voto. Não é um `CanonicalVote` do CometBFT. Os precommits dos validadores reabrem com o snapshot. `bft_commit` continua devolvendo `QuorumAbsent`. A ponta não se move.
+`Precommit` é uma assinatura Ed25519 local no domínio `AKG:CHAIN:PRECOMMIT:v1`, sobre a altura e o hash do bloco. Não tem round nem part set. Não é um `CanonicalVote` do CometBFT. Cada validador configurado tem peso 1. `bft_commit` devolve sucesso só quando os precommits do hash canônico são mais de dois terços desse conjunto. Com dois validadores, um voto é `QuorumAbsent` e os dois passam. Com três, dois votos ficam `QuorumAbsent`. Os precommits reabrem com o snapshot. A ponta não se move.
