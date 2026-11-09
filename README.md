@@ -16,7 +16,7 @@ O `Cargo.toml` deste diretório herda versão, edição e licença de um workspa
 cargo test -p arkhe-chain
 ```
 
-O gate desta sessão de desenvolvimento terminou com código 0, 54 testes e 0 falhas. Reexecutado e auditado por segunda pessoa em processo formal de homologação.
+O último gate desta sessão de desenvolvimento terminou com código 0, 65 testes e 0 falhas. Esse log não está anexado a um commit. Uma segunda pessoa ainda não reexecutou o gate.
 
 ## Documentação
 
