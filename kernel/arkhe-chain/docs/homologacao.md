@@ -8,7 +8,7 @@ Um dossiê anterior, no commit publicado `5b2d1750`, marcou o crate como homolog
 
 O comando no monorepo é `cargo test -p arkhe-chain`. O log de 9 de novembro de 2026 está em [gate-2026-11-09.log](gate-2026-11-09.log): código 0, 77 testes aprovados, 0 falhas, diretório `D:\arkhe`. O arquivo do log foi escrito depois dessa execução.
 
-O commit publicado `75b1ef73` repete o comando na raiz do checkout, também com 75 testes e 0 falhas. O log desse checkout está no próprio commit e nomeia `D:\arkhe-chain-pub`. `34bcece8` foi a execução anterior de 73, antes da rodada no precommit. As execuções foram nesta máquina. Não são a reexecução de outra pessoa.
+O commit publicado `105101c0` repete o comando na raiz do checkout, também com 77 testes e 0 falhas. O log desse checkout está no próprio commit e nomeia `D:\arkhe-chain-pub`. `75b1ef73` foi a execução anterior de 75, antes do part set na assinatura. As execuções foram nesta máquina. Não são a reexecução de outra pessoa.
 
 ## O que o código mantém
 
@@ -23,7 +23,7 @@ O commit publicado `75b1ef73` repete o comando na raiz do checkout, também com 
 | ID | O que falta |
 | --- | --- |
 | A3 | Outra pessoa executa `cargo test -p arkhe-chain` no workspace, no commit que publicar este registro. |
-| A4 | Fechado de novo em `75b1ef73`: `vendor/` e 75 testes na raiz. `34bcece8` foi a execução anterior de 73. Falta outra pessoa repetir o comando. |
+| A4 | Fechado de novo em `105101c0`: `vendor/` e 77 testes na raiz. `75b1ef73` foi a execução anterior de 75. Falta outra pessoa repetir o comando. |
 | C1 | Um irmão continua `Fork`. O limiar de precommit não troca a ponta. |
 | C2 | `CanonicalVote`. O part set local é um único part, o hash do bloco, na assinatura `v3`. O bloco não é dividido. A ponta não se move. |
 | F1 | ELF do guest, image id de 32 bytes e chave de verificação. Um `image_id` preenchido continua sem carregar. |
