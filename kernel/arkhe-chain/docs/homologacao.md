@@ -6,9 +6,9 @@ Um dossiê anterior, no commit publicado `5b2d1750`, marcou o crate como homolog
 
 ## Gate
 
-O comando no monorepo é `cargo test -p arkhe-chain`. O log de 9 de novembro de 2026 está em [gate-2026-11-09.log](gate-2026-11-09.log): código 0, 73 testes aprovados, 0 falhas. O arquivo do log foi escrito depois dessa execução.
+O comando no monorepo é `cargo test -p arkhe-chain`. O log de 9 de novembro de 2026 está em [gate-2026-11-09.log](gate-2026-11-09.log): código 0, 73 testes aprovados, 0 falhas, diretório `D:\arkhe`. O arquivo do log foi escrito depois dessa execução.
 
-O repositório publicado, no commit `dcee28ec`, traz `vendor/` com as cópias necessárias e o mesmo comando na raiz também terminou com 72 testes e 0 falhas. Essa execução foi na mesma máquina. Não é a reexecução de outra pessoa.
+O commit publicado `34bcece8` repete o comando na raiz do checkout, também com 73 testes e 0 falhas. O log desse checkout está no próprio commit e nomeia `D:\arkhe-chain-pub`. `dcee28ec` foi a execução anterior de 72, antes do limiar de peso. As execuções foram nesta máquina. Não são a reexecução de outra pessoa.
 
 ## O que o código mantém
 
@@ -23,8 +23,8 @@ O repositório publicado, no commit `dcee28ec`, traz `vendor/` com as cópias ne
 | ID | O que falta |
 | --- | --- |
 | A3 | Outra pessoa executa `cargo test -p arkhe-chain` no workspace, no commit que publicar este registro. |
-| A4 | Fechado no repositório publicado `dcee28ec`: `vendor/` permite o comando na raiz. Falta outra pessoa repetir esse comando. |
-| C1 | Votos com peso. Um reorg silencioso não substitui o quórum. |
+| A4 | Fechado de novo em `34bcece8`: `vendor/` e 73 testes na raiz. `dcee28ec` foi a execução anterior de 72. Falta outra pessoa repetir o comando. |
+| C1 | Um irmão continua `Fork`. O limiar de precommit não troca a ponta. |
 | C2 | Round e `CanonicalVote`. O limiar local de peso 1 já existe e não move a ponta. |
 | F1 | ELF do guest, image id de 32 bytes e chave de verificação. Um `image_id` preenchido continua sem carregar. |
 | F2 | Uma transação Bitcoin paga que um nó aceite. |
