@@ -23,7 +23,7 @@ Todo variante de `ChainError` é fail-closed. O texto estável começa por `FAIL
 | `Malformed` | Bytes que não são o bloco canônico |
 | `ParentMismatch` | Pai ou altura que não estende a ponta |
 | `Fork` | Irmão válido que não substitui a ponta |
-| `QuorumAbsent` | `bft_commit` sem poder de voto |
+| `QuorumAbsent` | `bft_commit` sem mais de dois terços dos validadores no hash canônico |
 | `Equivocation` | Dois blocos do mesmo proposer na mesma altura |
 | `StateMismatch` | Raiz ou contagem MMR diferente do cabeçalho |
 | `UnknownBlock` | Altura ou hash que esta cadeia não tem |

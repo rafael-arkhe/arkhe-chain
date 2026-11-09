@@ -10,13 +10,13 @@ Este crate não tem o tipo `ArkheChain` nem a função `ingest_transaction`. Nã
 - Hashtree: `htree://npub16azl5mr3qp2tf6duv0z6uh2ky4cvp60gj30yhnm0882k420c5a6shjzett/arkhe-chain`
 - Leitura: <https://git.iris.to/#/npub16azl5mr3qp2tf6duv0z6uh2ky4cvp60gj30yhnm0882k420c5a6shjzett/arkhe-chain>
 
-A raiz deste repositório é um workspace. `vendor/` guarda as cópias de `arkhe-core`, `arkhe-verify-core`, `arkhe-governance` e `arkhe-kernel` de que o crate precisa para compilar. O comando abaixo, nesta raiz, é o gate.
+O `Cargo.toml` deste diretório herda versão, edição e licença de um workspace Arkhe. O comando de teste abaixo roda nesse workspace, não num checkout isolado deste repositório.
 
 ```text
 cargo test -p arkhe-chain
 ```
 
-O último gate desta sessão de desenvolvimento terminou com código 0, 72 testes e 0 falhas. O log está em [docs/gate-2026-11-09.log](docs/gate-2026-11-09.log) e foi escrito depois da execução. Uma segunda pessoa ainda não reexecutou o gate.
+O último gate desta sessão de desenvolvimento terminou com código 0, 73 testes e 0 falhas. O log está em [docs/gate-2026-11-09.log](docs/gate-2026-11-09.log) e foi escrito depois da execução. Uma segunda pessoa ainda não reexecutou o gate.
 
 ## Documentação
 
@@ -34,7 +34,7 @@ O último gate desta sessão de desenvolvimento terminou com código 0, 72 teste
 - Todo envio exige Ed25519 e ML-DSA-65. Campo vazio, tamanho diferente de 3309 bytes, assinatura inválida ou chave ausente não move saldo.
 - Um bloco irmão de outro proposer, com o mesmo pai e a mesma altura, devolve `Fork` e não substitui a ponta.
 - Dois blocos distintos do mesmo proposer na mesma altura devolvem `Equivocation`.
-- `finality` é a profundidade local. `bft_commit` devolve `QuorumAbsent`. Não há poder de voto nem `CanonicalVote`.
+- `finality` é a profundidade local. `bft_commit` passa só com mais de dois terços dos validadores, peso 1 cada um, no hash canônico. Não há round nem `CanonicalVote`. A ponta não se move.
 - `submit_proof_and_bridge_assets` devolve `VerifierAbsent`. `image_id` preenchido não carrega. `verifyProof` no contrato devolve falso.
 - A âncora aceita tem 37 bytes, `ARKHE` seguido de `state_root`. `broadcast` permanece falso.
 - `cite_ethereum_execution` cita um bloco de execução informado pelo chamador e guarda essa citação. Outra citação na mesma altura é `EthereumConflict`. `confirm_ethereum_execution` só confirma quando um cliente devolve o mesmo hash. Sem cliente, a resposta é `RpcAbsent`. `settled` fica falso e a confirmação não entra no arquivo.

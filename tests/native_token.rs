@@ -535,7 +535,7 @@ fn canonical_depth_is_the_only_finality() {
 }
 
 #[test]
-fn a_signed_precommit_does_not_commit_the_block() {
+fn two_local_precommits_meet_the_weight_threshold_without_moving_the_tip() {
     let node = common::node();
     node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
         .unwrap();
@@ -553,11 +553,13 @@ fn a_signed_precommit_does_not_commit_the_block() {
     );
     arkhe_chain::sign_precommit(&mut vote, &common::SECRET_B).unwrap();
     node.note_precommit(&vote).unwrap();
+    assert_eq!(node.precommit_count(1).unwrap(), 1);
+    assert_eq!(node.bft_commit(1).unwrap_err(), ChainError::QuorumAbsent);
     vote.validator_id = "validator-a".into();
     arkhe_chain::sign_precommit(&mut vote, &common::SECRET_A).unwrap();
     node.note_precommit(&vote).unwrap();
     assert_eq!(node.precommit_count(1).unwrap(), 2);
-    assert_eq!(node.bft_commit(1).unwrap_err(), ChainError::QuorumAbsent);
+    node.bft_commit(1).unwrap();
     assert_eq!(
         node.finality(1).unwrap(),
         arkhe_chain::Finality { height: 1, depth: 0 }
@@ -649,4 +651,59 @@ fn a_sibling_block_is_a_fork_and_the_first_tip_stays() {
     assert_eq!(node.fork_count().unwrap(), 1);
     assert_eq!(node.tip().unwrap(), tip);
     assert_eq!(node.balance("bob").unwrap(), 25);
+}
+
+#[test]
+fn two_of_three_equal_weights_stay_short_of_the_threshold() {
+    let secret_c = [0x33u8; 32];
+    let validators = vec![
+        arkhe_chain::Validator {
+            id: "validator-a".into(),
+            public_key: arkhe_chain::public_key(&common::SECRET_A).unwrap(),
+        },
+        arkhe_chain::Validator {
+            id: "validator-b".into(),
+            public_key: arkhe_chain::public_key(&common::SECRET_B).unwrap(),
+        },
+        arkhe_chain::Validator {
+            id: "validator-c".into(),
+            public_key: arkhe_chain::public_key(&secret_c).unwrap(),
+        },
+    ];
+    let node = arkhe_chain::ArkheNode::new(
+        "validator-a",
+        &common::SECRET_A,
+        validators,
+        common::accounts(),
+    )
+    .unwrap();
+    node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
+        .unwrap();
+    node.propose_and_seal_block(TS).unwrap();
+    let tip = node.tip().unwrap();
+    for (id, secret) in [
+        ("validator-a", common::SECRET_A),
+        ("validator-b", common::SECRET_B),
+    ] {
+        let mut vote = arkhe_chain::Precommit {
+            validator_id: id.into(),
+            height: 1,
+            block_hash: tip,
+            signature: [0u8; 64],
+        };
+        arkhe_chain::sign_precommit(&mut vote, &secret).unwrap();
+        node.note_precommit(&vote).unwrap();
+    }
+    assert_eq!(node.bft_commit(1).unwrap_err(), ChainError::QuorumAbsent);
+    let mut third = arkhe_chain::Precommit {
+        validator_id: "validator-c".into(),
+        height: 1,
+        block_hash: tip,
+        signature: [0u8; 64],
+    };
+    arkhe_chain::sign_precommit(&mut third, &secret_c).unwrap();
+    node.note_precommit(&third).unwrap();
+    node.bft_commit(1).unwrap();
+    assert_eq!(node.tip().unwrap(), tip);
+    assert_eq!(node.height().unwrap(), 1);
 }

@@ -80,9 +80,9 @@ struct Inner {
     ethereum_links: BTreeMap<u64, EthereumExecutionId>,
 }
 
-/// Local finality. This is not a CometBFT commit: there is no voting power,
-/// no round, and no `CanonicalVote`. `depth` is the number of canonical
-/// blocks above `height`; the tip has depth 0.
+/// Local finality by depth. This is not a CometBFT commit: there is no round
+/// and no `CanonicalVote`. `depth` is the number of canonical blocks above
+/// `height`; the tip has depth 0.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Finality {
     pub height: u64,
@@ -120,7 +120,8 @@ pub struct AcceptedPeer {
 
 /// A local Ed25519 attestation. This is not a CometBFT `CanonicalVote`:
 /// the signed bytes are `AKG:CHAIN:PRECOMMIT:v1`, the height, and the block
-/// hash. It carries no round, no part set, and no voting power.
+/// hash. It carries no round and no part set. Each configured validator has
+/// weight 1.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Precommit {
     pub validator_id: String,
@@ -400,8 +401,9 @@ impl ArkheNode {
         Ok(Finality { height, depth })
     }
 
-    /// Store one verified local precommit. Two signatures are not a commit:
-    /// `bft_commit` stays `QuorumAbsent`, and the tip does not move.
+    /// Store one verified local precommit. The tip does not move. `bft_commit`
+    /// accepts the height only when the stored votes on the canonical hash
+    /// exceed two thirds of the configured validators.
     pub fn note_precommit(&self, vote: &Precommit) -> Result<(), ChainError> {
         let Some(public) = self.validators.get(&vote.validator_id) else {
             return Err(ChainError::NotProposer);
@@ -463,15 +465,28 @@ impl ArkheNode {
             .count())
     }
 
-    /// Refuse a BFT commit. A CometBFT commit is more than two thirds of the
-    /// voting power in `CanonicalVote` precommits for one round. This set has
-    /// no voting power, so stored Ed25519 precommits do not commit the height.
+    /// Accept the height when precommits on its canonical hash exceed two
+    /// thirds of the configured validators. Each validator has weight 1.
+    /// There is no round and no `CanonicalVote`. The tip does not move.
     pub fn bft_commit(&self, height: u64) -> Result<(), ChainError> {
         let inner = self.lock()?;
-        if !inner.by_height.contains_key(&height) {
-            return Err(ChainError::UnknownBlock);
+        let canonical = inner
+            .by_height
+            .get(&height)
+            .copied()
+            .ok_or(ChainError::UnknownBlock)?;
+        let votes = inner
+            .precommits
+            .iter()
+            .filter(|((stored_height, _), (hash, _))| {
+                *stored_height == height && *hash == canonical
+            })
+            .count();
+        let validators = self.validators.len();
+        if validators == 0 || votes.saturating_mul(3) <= validators.saturating_mul(2) {
+            return Err(ChainError::QuorumAbsent);
         }
-        Err(ChainError::QuorumAbsent)
+        Ok(())
     }
 
     pub fn encoded_block(&self, hash: &[u8; 32]) -> Result<Option<Vec<u8>>, ChainError> {
