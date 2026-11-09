@@ -158,6 +158,7 @@ async fn sync_rejects_a_tip_that_does_not_extend_the_local_chain() {
         .await
         .unwrap_err();
     assert_eq!(error, ChainError::P2p("fork"));
+    assert_eq!(client.fork_count().unwrap(), 1);
     assert_eq!(client.height().unwrap(), 1);
     assert_eq!(client.balance("carol").unwrap(), 25);
     assert_eq!(client.balance("bob").unwrap(), 0);
@@ -168,6 +169,42 @@ async fn sync_rejects_a_tip_that_does_not_extend_the_local_chain() {
     assert_eq!(client.supply().unwrap(), GENESIS_SUPPLY);
     assert_eq!(server_node.balance("bob").unwrap(), 25);
     assert_eq!(server_node.balance("carol").unwrap(), 0);
+}
+
+#[tokio::test]
+async fn sync_reports_equivocation_and_keeps_the_local_tip() {
+    let author = common::node();
+    author
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
+        .unwrap();
+    let remote = author.propose_and_seal_block(TS).unwrap().block.unwrap();
+
+    let server_node = Arc::new(common::peer());
+    server_node
+        .import_block(&arkhe_chain::encode_block(&remote))
+        .unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+
+    let client = common::node();
+    client
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "carol", 10))
+        .unwrap();
+    client.propose_and_seal_block(TS).unwrap();
+    let tip = client.tip().unwrap();
+    let error = sync_canonical(&client, server.listen_addr.clone(), server.local_peer_id)
+        .await
+        .unwrap_err();
+    assert_eq!(error, ChainError::Equivocation);
+    assert_eq!(client.fork_count().unwrap(), 0);
+    assert_eq!(client.height().unwrap(), 1);
+    assert_eq!(client.tip().unwrap(), tip);
+    assert_eq!(client.balance("carol").unwrap(), 10);
+    assert_eq!(client.balance("bob").unwrap(), 0);
+    assert_eq!(
+        client.balance(GENESIS_ACCOUNT).unwrap(),
+        GENESIS_SUPPLY - 10
+    );
+    assert_eq!(client.supply().unwrap(), GENESIS_SUPPLY);
 }
 
 #[tokio::test]

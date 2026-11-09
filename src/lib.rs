@@ -9,9 +9,9 @@
 //! `RULE_ALLOWED` is an allow. The verdict `subject` must equal
 //! [`Transaction::subject`]. A 3,309-byte `signature_mldsa` is an ML-DSA-65
 //! signature over the transaction fields, checked with the account's ML-DSA
-//! public key. An empty field is not an ML-DSA signature. The sender must
-//! present an Ed25519 signature over the transaction subject. A missing or
-//! invalid sender signature does not move a balance. This crate has no `ArkheChain` type and no
+//! public key. An empty field is rejected and does not move a balance. The
+//! sender must also present an Ed25519 signature over the transaction subject.
+//! A missing or invalid sender signature does not move a balance. This crate has no `ArkheChain` type and no
 //! `ingest_transaction` function.
 //!
 //! Balances move only through checked debits and credits. The MMR root is
@@ -70,11 +70,13 @@ struct Inner {
     contingency: Option<SettlementContingency>,
     sync_resume: Option<p2p::SyncResume>,
     forks: Vec<[u8; 32]>,
+    fork_blocks: Vec<Vec<u8>>,
+    precommits: BTreeMap<(u64, String), ([u8; 32], [u8; 64])>,
 }
 
-/// Local finality. This node has no votes and no reorg. A height is final
-/// when it holds the single canonical block. `depth` is the number of
-/// canonical blocks above it; the tip has depth 0.
+/// Local finality. This is not a CometBFT commit: there is no voting power,
+/// no round, and no `CanonicalVote`. `depth` is the number of canonical
+/// blocks above `height`; the tip has depth 0.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Finality {
     pub height: u64,
@@ -101,6 +103,17 @@ pub struct ArkheNode {
 pub struct Validator {
     pub id: String,
     pub public_key: [u8; 32],
+}
+
+/// A local Ed25519 attestation. This is not a CometBFT `CanonicalVote`:
+/// the signed bytes are `AKG:CHAIN:PRECOMMIT:v1`, the height, and the block
+/// hash. It carries no round, no part set, and no voting power.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Precommit {
+    pub validator_id: String,
+    pub height: u64,
+    pub block_hash: [u8; 32],
+    pub signature: [u8; 64],
 }
 
 #[derive(Debug)]
@@ -143,6 +156,8 @@ impl ArkheNode {
                 contingency: None,
                 sync_resume: None,
                 forks: Vec::new(),
+                fork_blocks: Vec::new(),
+                precommits: BTreeMap::new(),
             }),
             store: Mutex::new(None),
         })
@@ -150,7 +165,10 @@ impl ArkheNode {
 
     /// Open a chain file. A missing file starts at genesis and is created.
     /// An existing file is replayed from genesis and refused when the stored
-    /// accounts, nonces, tip, or MMR peaks differ from that replay.
+    /// accounts, nonces, account keys, tip, MMR peaks, recorded forks, or
+    /// precommits differ from that replay. A recorded fork is imported again
+    /// and must come back as `Fork`. A stored precommit is checked again and
+    /// does not commit the height. Neither replaces the canonical tip.
     pub fn open(
         path: impl AsRef<Path>,
         node_id: &str,
@@ -173,7 +191,44 @@ impl ArkheNode {
                 || inner.state.frontier.peaks != snap.peaks
                 || inner.state.balance_map() != &snap.balances
                 || inner.state.nonce_map() != &snap.nonces
+                || inner.state.account_keys() != &snap.ed25519
+                || inner.state.account_mldsa() != &snap.mldsa
             {
+                return Err(ChainError::Snapshot);
+            }
+            drop(inner);
+            for fork in &snap.forks {
+                if !matches!(node.import_block(fork), Err(ChainError::Fork)) {
+                    return Err(ChainError::Snapshot);
+                }
+            }
+            let inner = node.lock()?;
+            let recorded = snap
+                .forks
+                .iter()
+                .map(|bytes| tx::block_hash(bytes))
+                .collect::<Vec<_>>();
+            if inner.forks != recorded || inner.fork_blocks != snap.forks {
+                return Err(ChainError::Snapshot);
+            }
+            drop(inner);
+            for vote in &snap.precommits {
+                if node.note_precommit(vote).is_err() {
+                    return Err(ChainError::Snapshot);
+                }
+            }
+            let inner = node.lock()?;
+            let recorded = snap
+                .precommits
+                .iter()
+                .map(|vote| {
+                    (
+                        (vote.height, vote.validator_id.clone()),
+                        (vote.block_hash, vote.signature),
+                    )
+                })
+                .collect::<BTreeMap<_, _>>();
+            if inner.precommits != recorded || snap.precommits.len() != recorded.len() {
                 return Err(ChainError::Snapshot);
             }
             drop(inner);
@@ -255,6 +310,8 @@ impl ArkheNode {
                 &inner.by_height,
                 &inner.blocks,
                 &inner.mempool,
+                &inner.fork_blocks,
+                &inner.precommits,
             )
             .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
@@ -308,6 +365,79 @@ impl ArkheNode {
             .checked_sub(height)
             .ok_or(ChainError::UnknownBlock)?;
         Ok(Finality { height, depth })
+    }
+
+    /// Store one verified local precommit. Two signatures are not a commit:
+    /// `bft_commit` stays `QuorumAbsent`, and the tip does not move.
+    pub fn note_precommit(&self, vote: &Precommit) -> Result<(), ChainError> {
+        let Some(public) = self.validators.get(&vote.validator_id) else {
+            return Err(ChainError::NotProposer);
+        };
+        if !public.verify(&precommit_message(vote.height, &vote.block_hash), &vote.signature) {
+            return Err(ChainError::BadProposerSignature);
+        }
+        let path = self.store_path()?;
+        let mut inner = self.lock()?;
+        let canonical = inner
+            .by_height
+            .get(&vote.height)
+            .copied()
+            .ok_or(ChainError::UnknownBlock)?;
+        if vote.block_hash != canonical {
+            if inner.forks.contains(&vote.block_hash) {
+                return Err(ChainError::Fork);
+            }
+            return Err(ChainError::UnknownBlock);
+        }
+        let key = (vote.height, vote.validator_id.clone());
+        if let Some((stored, _)) = inner.precommits.get(&key) {
+            if *stored != vote.block_hash {
+                return Err(ChainError::Equivocation);
+            }
+            return Ok(());
+        }
+        inner
+            .precommits
+            .insert(key.clone(), (vote.block_hash, vote.signature));
+        if let Some(path) = path.as_deref() {
+            let written = persist::encode_snapshot(
+                &inner.state,
+                &inner.by_height,
+                &inner.blocks,
+                &inner.mempool,
+                &inner.fork_blocks,
+                &inner.precommits,
+            )
+            .and_then(|encoded| persist::write_atomic(path, &encoded));
+            if let Err(error) = written {
+                inner.precommits.remove(&key);
+                return Err(error);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn precommit_count(&self, height: u64) -> Result<usize, ChainError> {
+        let inner = self.lock()?;
+        if !inner.by_height.contains_key(&height) {
+            return Err(ChainError::UnknownBlock);
+        }
+        Ok(inner
+            .precommits
+            .iter()
+            .filter(|((stored_height, _), _)| *stored_height == height)
+            .count())
+    }
+
+    /// Refuse a BFT commit. A CometBFT commit is more than two thirds of the
+    /// voting power in `CanonicalVote` precommits for one round. This set has
+    /// no voting power, so stored Ed25519 precommits do not commit the height.
+    pub fn bft_commit(&self, height: u64) -> Result<(), ChainError> {
+        let inner = self.lock()?;
+        if !inner.by_height.contains_key(&height) {
+            return Err(ChainError::UnknownBlock);
+        }
+        Err(ChainError::QuorumAbsent)
     }
 
     pub fn encoded_block(&self, hash: &[u8; 32]) -> Result<Option<Vec<u8>>, ChainError> {
@@ -481,6 +611,23 @@ impl ArkheNode {
                     reject_sibling(&inner, &block, parent_height)?;
                     if !inner.forks.contains(&hash) {
                         inner.forks.push(hash);
+                        inner.fork_blocks.push(bytes.to_vec());
+                        if let Some(path) = path.as_deref() {
+                            let written = persist::encode_snapshot(
+                                &inner.state,
+                                &inner.by_height,
+                                &inner.blocks,
+                                &inner.mempool,
+                                &inner.fork_blocks,
+                                &inner.precommits,
+                            )
+                            .and_then(|encoded| persist::write_atomic(path, &encoded));
+                            if let Err(error) = written {
+                                inner.forks.pop();
+                                inner.fork_blocks.pop();
+                                return Err(error);
+                            }
+                        }
                     }
                     return Err(ChainError::Fork);
                 }
@@ -625,6 +772,8 @@ impl ArkheNode {
             &inner.by_height,
             &inner.blocks,
             &inner.mempool,
+            &inner.fork_blocks,
+            &inner.precommits,
         )?;
         drop(inner);
         persist::write_atomic(path, &bytes)
@@ -711,7 +860,14 @@ fn commit_extension(
     let mut mempool = inner.mempool.clone();
     retain_applicable(&working, &mut mempool);
     if let Some(path) = path {
-        let written = persist::encode_snapshot(&working, &inner.by_height, &inner.blocks, &mempool)
+        let written = persist::encode_snapshot(
+            &working,
+            &inner.by_height,
+            &inner.blocks,
+            &mempool,
+            &inner.fork_blocks,
+            &inner.precommits,
+        )
             .and_then(|encoded| persist::write_atomic(path, &encoded));
         if let Err(error) = written {
             inner.blocks.remove(&hash);
@@ -760,6 +916,23 @@ pub fn public_key(secret_key: &[u8; 32]) -> Result<[u8; 32], ChainError> {
 
 pub fn sign_proposer(block: &mut Block, secret_key: &[u8; 32]) -> Result<(), ChainError> {
     sign_block(block, &signer_from(secret_key)?)
+}
+
+pub fn precommit_message(height: u64, block_hash: &[u8; 32]) -> Vec<u8> {
+    let mut message = b"AKG:CHAIN:PRECOMMIT:v1\0".to_vec();
+    message.extend_from_slice(&height.to_be_bytes());
+    message.extend_from_slice(block_hash);
+    message
+}
+
+pub fn sign_precommit(vote: &mut Precommit, secret_key: &[u8; 32]) -> Result<(), ChainError> {
+    let signer = signer_from(secret_key)?;
+    let signature = signer.sign(&precommit_message(vote.height, &vote.block_hash));
+    vote.signature = signature
+        .as_slice()
+        .try_into()
+        .map_err(|_| ChainError::BadProposerSignature)?;
+    Ok(())
 }
 
 pub fn sign_sender(tx: &mut Transaction, secret_key: &[u8; 32]) -> Result<(), ChainError> {

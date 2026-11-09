@@ -12,6 +12,7 @@ fn circuit_file_pins_phase0_slash_verifier() {
     assert_eq!(circuit.verifier.seal_bytes, 260);
     assert_eq!(circuit.verifier.max_gas, 276_000);
     assert_eq!(circuit.verifier.chain, "base-sepolia");
+    assert_eq!(circuit.image_id, None);
     assert_eq!(
         circuit
             .public_inputs
@@ -68,7 +69,11 @@ fn proof_must_bind_the_sealed_root_and_is_not_broadcast() {
     assert_eq!(&plan.op_return[5..], &header.state_root);
     assert_eq!(plan.op_return.len(), 37);
     let encoded = arkhe_chain::encode_block(&block);
-    assert!(encoded.len() < arkhe_chain::MLDSA65_SIG_LEN);
+    assert_eq!(
+        block.transactions[0].signature_mldsa.len(),
+        arkhe_chain::MLDSA65_SIG_LEN
+    );
+    assert_eq!(block.header.proposer_signature.len(), 64);
     assert!(!encoded.windows(4).any(|window| window == b"ARKH"));
 }
 
