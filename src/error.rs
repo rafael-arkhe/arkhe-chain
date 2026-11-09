@@ -44,6 +44,8 @@ pub enum ChainError {
     RoundRegression,
     #[error("FAIL_CLOSED: PART_SET")]
     BadPartSet,
+    #[error("FAIL_CLOSED: CHAIN_ID")]
+    ChainId,
     #[error("FAIL_CLOSED: EQUIVOCATION")]
     Equivocation,
     #[error("FAIL_CLOSED: STATE_MISMATCH")]

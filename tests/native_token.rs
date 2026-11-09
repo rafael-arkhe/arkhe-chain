@@ -547,6 +547,7 @@ fn two_local_precommits_meet_the_weight_threshold_without_moving_the_tip() {
         round: 0,
         parts: 1,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -695,6 +696,7 @@ fn two_of_three_equal_weights_stay_short_of_the_threshold() {
             round: 0,
             parts: 1,
             part_hash: tip,
+            chain_id: arkhe_chain::CHAIN_ID.into(),
             block_hash: tip,
             signature: [0u8; 64],
         };
@@ -708,6 +710,7 @@ fn two_of_three_equal_weights_stay_short_of_the_threshold() {
         round: 0,
         parts: 1,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -735,6 +738,7 @@ fn only_the_highest_round_counts_toward_the_weight_threshold() {
             round: 0,
             parts: 1,
             part_hash: tip,
+            chain_id: arkhe_chain::CHAIN_ID.into(),
             block_hash: tip,
             signature: [0u8; 64],
         };
@@ -749,6 +753,7 @@ fn only_the_highest_round_counts_toward_the_weight_threshold() {
         round: 1,
         parts: 1,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -793,6 +798,7 @@ fn a_precommit_must_name_one_part_equal_to_the_block_hash() {
         round: 0,
         parts: 2,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -815,4 +821,35 @@ fn a_precommit_must_name_one_part_equal_to_the_block_hash() {
     assert_eq!(node.precommit_count(1).unwrap(), 1);
     assert_eq!(node.tip().unwrap(), tip);
     assert_eq!(node.bft_commit(1).unwrap_err(), ChainError::QuorumAbsent);
+}
+
+#[test]
+fn a_precommit_for_another_chain_is_refused() {
+    let node = common::node();
+    node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
+        .unwrap();
+    node.propose_and_seal_block(TS).unwrap();
+    let tip = node.tip().unwrap();
+    let mut vote = arkhe_chain::Precommit {
+        validator_id: "validator-a".into(),
+        height: 1,
+        round: 0,
+        parts: 1,
+        part_hash: tip,
+        chain_id: "other-chain".into(),
+        block_hash: tip,
+        signature: [0u8; 64],
+    };
+    arkhe_chain::sign_precommit(&mut vote, &common::SECRET_A).unwrap();
+    assert_eq!(node.note_precommit(&vote).unwrap_err(), ChainError::ChainId);
+    vote.chain_id.clear();
+    arkhe_chain::sign_precommit(&mut vote, &common::SECRET_A).unwrap();
+    assert_eq!(node.note_precommit(&vote).unwrap_err(), ChainError::ChainId);
+    assert_eq!(node.precommit_count(1).unwrap(), 0);
+    vote.chain_id = arkhe_chain::CHAIN_ID.into();
+    arkhe_chain::sign_precommit(&mut vote, &common::SECRET_A).unwrap();
+    node.note_precommit(&vote).unwrap();
+    assert_eq!(node.precommit_count(1).unwrap(), 1);
+    assert_eq!(node.tip().unwrap(), tip);
+    assert_eq!(node.height().unwrap(), 1);
 }

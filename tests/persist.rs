@@ -274,6 +274,7 @@ fn a_reopened_file_keeps_the_precommits_and_the_weight_threshold() {
             round: 0,
             parts: 1,
             part_hash: tip,
+            chain_id: arkhe_chain::CHAIN_ID.into(),
             block_hash: tip,
             signature: [0u8; 64],
         };
@@ -322,6 +323,7 @@ fn a_precommit_with_a_bad_signature_does_not_open() {
         round: 0,
         parts: 1,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -380,6 +382,7 @@ fn an_akgchns6_precommit_reopens_as_round_zero() {
             round: 0,
             parts: 1,
             part_hash: tip,
+            chain_id: arkhe_chain::CHAIN_ID.into(),
             block_hash: tip,
             signature: [0u8; 64],
         };
@@ -412,6 +415,7 @@ fn an_akgchns6_precommit_reopens_as_round_zero() {
         round: 0,
         parts: 1,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -520,6 +524,7 @@ fn a_round_only_precommit_reopens_and_is_not_a_new_vote() {
         round: 0,
         parts: 1,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -550,5 +555,65 @@ fn a_round_only_precommit_reopens_and_is_not_a_new_vote() {
     );
     assert_eq!(again.tip().unwrap(), tip);
     assert_eq!(again.bft_commit(1).unwrap_err(), ChainError::QuorumAbsent);
+    let _ = std::fs::remove_file(&path);
+}
+
+#[test]
+fn a_part_only_precommit_reopens_and_is_not_a_new_vote() {
+    let path = path("v3-precommit");
+    let node = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
+        .unwrap();
+    node.propose_and_seal_block(TS).unwrap();
+    let tip = node.tip().unwrap();
+    drop(node);
+
+    let mut bytes = std::fs::read(&path).unwrap();
+    assert!(bytes.starts_with(b"AKGCHNS7"));
+    assert_eq!(&bytes[bytes.len() - 8..], &[0u8; 8]);
+    bytes.truncate(bytes.len() - 8);
+    bytes.extend_from_slice(&1u32.to_be_bytes());
+    let mut vote = arkhe_chain::Precommit {
+        validator_id: "validator-a".into(),
+        height: 1,
+        round: 0,
+        parts: 1,
+        part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        block_hash: tip,
+        signature: [0u8; 64],
+    };
+    arkhe_chain::sign_part_precommit(&mut vote, &common::SECRET_A).unwrap();
+    bytes.extend_from_slice(&1u64.to_be_bytes());
+    bytes.extend_from_slice(&("validator-a".len() as u32).to_be_bytes());
+    bytes.extend_from_slice(b"validator-a");
+    bytes.extend_from_slice(&0u64.to_be_bytes());
+    bytes.extend_from_slice(&tip);
+    bytes.extend_from_slice(&vote.signature);
+    bytes.push(3);
+    bytes.extend_from_slice(&0u32.to_be_bytes());
+    std::fs::write(&path, &bytes).unwrap();
+
+    let again = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(again.precommit_count(1).unwrap(), 1);
+    assert_eq!(
+        again.note_precommit(&vote).unwrap_err(),
+        ChainError::BadProposerSignature
+    );
+    assert_eq!(again.tip().unwrap(), tip);
     let _ = std::fs::remove_file(&path);
 }

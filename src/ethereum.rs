@@ -66,7 +66,9 @@ pub fn ethereum_link(
     }
 }
 
-/// Reads an Ethereum execution block hash. This crate does not open a socket.
+/// Reads an Ethereum execution block hash.
+/// [`AbsentExecutionRpc`] does not open a socket. [`HttpExecutionRpc`] opens
+/// one plain HTTP connection and does not settle either chain.
 pub trait ExecutionRpc {
     fn execution_hash(&self, number: u64) -> Result<[u8; 32], ChainError>;
 }
@@ -79,4 +81,67 @@ impl ExecutionRpc for AbsentExecutionRpc {
     fn execution_hash(&self, _number: u64) -> Result<[u8; 32], ChainError> {
         Err(ChainError::RpcAbsent)
     }
+}
+
+/// JSON-RPC `eth_getBlockByNumber` over plain HTTP. There is no TLS and no
+/// authentication. A missing block or a refused connection is `RpcUnavailable`.
+#[derive(Debug, Clone)]
+pub struct HttpExecutionRpc {
+    pub endpoint: String,
+}
+
+impl ExecutionRpc for HttpExecutionRpc {
+    fn execution_hash(&self, number: u64) -> Result<[u8; 32], ChainError> {
+        let body = format!(
+            "{{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x{number:x}\",false]}}"
+        );
+        let raw = post_json(&self.endpoint, &body)?;
+        let value: serde_json::Value =
+            serde_json::from_str(&raw).map_err(|_| ChainError::RpcUnavailable)?;
+        if value.get("error").is_some() {
+            return Err(ChainError::RpcUnavailable);
+        }
+        let Some(text) = value.pointer("/result/hash").and_then(|item| item.as_str()) else {
+            return Err(ChainError::RpcUnavailable);
+        };
+        let hex = text.strip_prefix("0x").unwrap_or(text);
+        if hex.len() != 64 || !hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            return Err(ChainError::RpcUnavailable);
+        }
+        let mut hash = [0u8; 32];
+        for (index, byte) in hash.iter_mut().enumerate() {
+            *byte = u8::from_str_radix(&hex[index * 2..index * 2 + 2], 16)
+                .map_err(|_| ChainError::RpcUnavailable)?;
+        }
+        Ok(hash)
+    }
+}
+
+fn post_json(endpoint: &str, body: &str) -> Result<String, ChainError> {
+    let rest = endpoint
+        .strip_prefix("http://")
+        .ok_or(ChainError::RpcUnavailable)?;
+    let (host_port, path) = rest.split_once('/').unwrap_or((rest, ""));
+    let (host, port) = host_port.split_once(':').unwrap_or((host_port, "80"));
+    let port: u16 = port.parse().map_err(|_| ChainError::RpcUnavailable)?;
+    let mut stream = std::net::TcpStream::connect((host, port)).map_err(|_| ChainError::RpcUnavailable)?;
+    stream
+        .set_read_timeout(Some(std::time::Duration::from_secs(5)))
+        .map_err(|_| ChainError::RpcTimeout)?;
+    stream
+        .set_write_timeout(Some(std::time::Duration::from_secs(5)))
+        .map_err(|_| ChainError::RpcTimeout)?;
+    let request = format!(
+        "POST /{path} HTTP/1.1\r\nHost: {host_port}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        body.len()
+    );
+    std::io::Write::write_all(&mut stream, request.as_bytes()).map_err(|_| ChainError::RpcUnavailable)?;
+    let mut raw = Vec::new();
+    std::io::Read::read_to_end(&mut stream, &mut raw).map_err(|_| ChainError::RpcTimeout)?;
+    let text = String::from_utf8(raw).map_err(|_| ChainError::RpcUnavailable)?;
+    let (head, payload) = text.split_once("\r\n\r\n").ok_or(ChainError::RpcUnavailable)?;
+    if !head.starts_with("HTTP/1.1 200") && !head.starts_with("HTTP/1.0 200") {
+        return Err(ChainError::RpcUnavailable);
+    }
+    Ok(payload.to_string())
 }
