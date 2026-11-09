@@ -3,10 +3,12 @@ use std::path::Path;
 
 use crate::codec::{decode_tx, encode_tx};
 use crate::error::ChainError;
+use crate::ethereum::EthereumExecutionId;
 use crate::state::ChainState;
 use crate::tx::{account_id, Transaction, MLDSA65_PK_LEN};
 
-const MAGIC: &[u8; 8] = b"AKGCHNS5";
+const MAGIC_V5: &[u8; 8] = b"AKGCHNS5";
+const MAGIC_V6: &[u8; 8] = b"AKGCHNS6";
 const MAX_SNAPSHOT: usize = 64 * 1024 * 1024;
 const MAX_MEMPOOL: usize = 1000;
 
@@ -23,6 +25,7 @@ pub(crate) struct Snapshot {
     pub(crate) mldsa: BTreeMap<String, [u8; MLDSA65_PK_LEN]>,
     pub(crate) forks: Vec<Vec<u8>>,
     pub(crate) precommits: Vec<crate::Precommit>,
+    pub(crate) ethereum_links: BTreeMap<u64, EthereumExecutionId>,
 }
 
 pub(crate) fn encode_snapshot(
@@ -32,6 +35,7 @@ pub(crate) fn encode_snapshot(
     mempool: &VecDeque<Transaction>,
     forks: &[Vec<u8>],
     precommits: &BTreeMap<(u64, String), ([u8; 32], [u8; 64])>,
+    ethereum_links: &BTreeMap<u64, EthereumExecutionId>,
 ) -> Result<Vec<u8>, ChainError> {
     if by_height.len() as u64 != state.height {
         return Err(ChainError::Snapshot);
@@ -46,7 +50,7 @@ pub(crate) fn encode_snapshot(
         ordered.push(bytes.clone());
     }
     let mut out = Vec::new();
-    out.extend_from_slice(MAGIC);
+    out.extend_from_slice(MAGIC_V6);
     push_u64(&mut out, state.height);
     out.extend_from_slice(&state.tip);
     push_u64(&mut out, state.frontier.count);
@@ -87,6 +91,7 @@ pub(crate) fn encode_snapshot(
         out.extend_from_slice(fork);
     }
     write_precommits(&mut out, precommits)?;
+    write_ethereum_links(&mut out, ethereum_links)?;
     if out.len() > MAX_SNAPSHOT {
         return Err(ChainError::Snapshot);
     }
@@ -98,9 +103,14 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
         return Err(ChainError::Snapshot);
     }
     let mut rd = Rd { buf: bytes, i: 0 };
-    if rd.take(8)? != MAGIC {
+    let magic = rd.take(8)?;
+    let citations = if magic == MAGIC_V6 {
+        true
+    } else if magic == MAGIC_V5 {
+        false
+    } else {
         return Err(ChainError::Snapshot);
-    }
+    };
     let height = rd.u64()?;
     let tip = rd.arr32()?;
     let mmr_count = rd.u64()?;
@@ -160,6 +170,11 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
         forks.push(rd.take(n)?.to_vec());
     }
     let precommits = read_precommits(&mut rd)?;
+    let ethereum_links = if citations {
+        read_ethereum_links(&mut rd)?
+    } else {
+        BTreeMap::new()
+    };
     if rd.i != bytes.len() {
         return Err(ChainError::Snapshot);
     }
@@ -176,7 +191,70 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
         mldsa,
         forks,
         precommits,
+        ethereum_links,
     })
+}
+
+fn write_ethereum_links(
+    out: &mut Vec<u8>,
+    links: &BTreeMap<u64, EthereumExecutionId>,
+) -> Result<(), ChainError> {
+    let n = u32::try_from(links.len()).map_err(|_| ChainError::Snapshot)?;
+    if links.len() > 100_000 {
+        return Err(ChainError::Snapshot);
+    }
+    push_u32(out, n);
+    let mut previous_number = 0u64;
+    let mut seen_hashes = Vec::new();
+    for (height, execution) in links {
+        if *height == 0
+            || execution.number == 0
+            || execution.number <= previous_number
+            || execution.hash == [0u8; 32]
+            || seen_hashes.contains(&execution.hash)
+        {
+            return Err(ChainError::Snapshot);
+        }
+        previous_number = execution.number;
+        seen_hashes.push(execution.hash);
+        push_u64(out, *height);
+        push_u64(out, execution.number);
+        out.extend_from_slice(&execution.hash);
+    }
+    Ok(())
+}
+
+fn read_ethereum_links(
+    rd: &mut Rd<'_>,
+) -> Result<BTreeMap<u64, EthereumExecutionId>, ChainError> {
+    let n = rd.u32()? as usize;
+    if n > 100_000 {
+        return Err(ChainError::Snapshot);
+    }
+    let mut links = BTreeMap::new();
+    let mut previous_number = 0u64;
+    let mut seen_hashes = Vec::new();
+    for _ in 0..n {
+        let height = rd.u64()?;
+        let number = rd.u64()?;
+        let hash = rd.arr32()?;
+        if height == 0
+            || links.last_key_value().is_some_and(|(stored, _)| height <= *stored)
+            || number == 0
+            || number <= previous_number
+            || hash == [0u8; 32]
+            || seen_hashes.contains(&hash)
+        {
+            return Err(ChainError::Snapshot);
+        }
+        previous_number = number;
+        seen_hashes.push(hash);
+        links.insert(
+            height,
+            EthereumExecutionId { number, hash },
+        );
+    }
+    Ok(links)
 }
 
 pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), ChainError> {

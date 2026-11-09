@@ -29,6 +29,8 @@ Todo variante de `ChainError` é fail-closed. O texto estável começa por `FAIL
 | `UnknownBlock` | Altura ou hash que esta cadeia não tem |
 | `LockPoisoned` | Trava envenenada |
 | `AnchorAddress` | Endereço EVM que não tem `0x` e 40 hexadecimais |
+| `EthereumHeader` | Número de execução zero ou hash de execução todo zero |
+| `EthereumConflict` | Segunda citação diferente na mesma altura, ou número de execução que não avança |
 | `CircuitConfig` | Pino do circuito diferente do arquivo embarcado, ou `image_id` preenchido |
 | `ProofRejected` | Journal, seletor ou selo que não liga o bloco |
 | `InvalidSelector` | Seletor diferente de `73c457ba` |
@@ -40,5 +42,5 @@ Todo variante de `ChainError` é fail-closed. O texto estável começa por `FAIL
 | `RpcUnavailable` | Liquidação indisponível |
 | `EmergencyHalt` | Parada de emergência ligada |
 | `HaltConfig` | Arquivo de parada ilegível |
-| `P2p` | Peer, fork de sync, hash, limite ou tempo |
+| `P2p` | Peer de fora, a própria chave (`self`), fork de sync, hash, limite ou tempo |
 | `Snapshot` | Arquivo que não reproduz o estado |

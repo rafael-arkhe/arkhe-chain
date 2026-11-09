@@ -1,6 +1,6 @@
 # Sincronização
 
-O protocolo é `/arkhe/block-sync/1`, request-response CBOR do libp2p 0.54.1. O servidor escuta com a chave Ed25519 do validador. O mesmo nó mantém o mesmo peer id. Um peer fora do conjunto de validadores é `P2p("peer")` antes de qualquer importação. A mesma chave não disca para si.
+O protocolo é `/arkhe/block-sync/1`, request-response CBOR do libp2p 0.54.1. O servidor escuta com a chave Ed25519 do validador. O mesmo nó mantém o mesmo peer id. `accepted_peers` devolve só esse conjunto, em ordem de id. Não há Kademlia, mDNS nem bootstrap. Um peer fora do conjunto é `P2p("peer")` antes de qualquer importação. A mesma chave é `P2p("self")` e não disca para si.
 
 Os pedidos são `Tip`, `Block { hash }` e `Child { parent }`. `fetch_tip_block` não existe. Importar só o bloco da ponta de uma cadeia de altura 2 é `ParentMismatch`. A adesão é `sync_canonical`, que liga cada ancestral.
 

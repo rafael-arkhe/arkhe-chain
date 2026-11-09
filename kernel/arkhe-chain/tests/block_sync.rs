@@ -63,6 +63,53 @@ async fn sync_listens_as_the_validator_and_refuses_an_outsider() {
     assert_eq!(client.supply().unwrap(), GENESIS_SUPPLY);
 }
 
+#[test]
+fn accepted_peers_are_only_the_validator_keys() {
+    let node = common::node();
+    let peers = node.accepted_peers();
+    assert_eq!(
+        peers
+            .iter()
+            .map(|peer| (peer.validator_id.as_str(), peer.peer_id.to_string()))
+            .collect::<Vec<_>>(),
+        vec![
+            (
+                "validator-a",
+                "12D3KooWPqT2nMDSiXUSx5D7fasaxhxKigVhcqfkKqrLghCq9jxz".into(),
+            ),
+            (
+                "validator-b",
+                "12D3KooWLdJAwPtyQ5RFnr9wGXsQzpf3P2SeqFbYkqbfVehLu4Ns".into(),
+            ),
+        ]
+    );
+    assert_eq!(peers[0].peer_id, node.peer_id());
+    let outsider = common::outsider().peer_id();
+    assert!(peers.iter().all(|peer| peer.peer_id != outsider));
+
+    let alone = common::outsider();
+    let own = alone.accepted_peers();
+    assert_eq!(own.len(), 1);
+    assert_eq!(own[0].validator_id, "validator-c");
+    assert_eq!(
+        own[0].peer_id.to_string(),
+        "12D3KooWBRFW3HkJCLKSWb4yG6iWRBpgNjbM4FFvNsL5T5JKTqrd"
+    );
+}
+
+#[tokio::test]
+async fn the_node_does_not_dial_its_own_key() {
+    let node = Arc::new(common::node());
+    let server = spawn_server(Arc::clone(&node)).await.unwrap();
+    let error = sync_canonical(&node, server.listen_addr.clone(), server.local_peer_id)
+        .await
+        .unwrap_err();
+    assert_eq!(error, ChainError::P2p("self"));
+    assert_eq!(node.height().unwrap(), 0);
+    assert_eq!(node.tip().unwrap(), [0; 32]);
+    assert_eq!(node.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY);
+}
+
 #[tokio::test]
 async fn the_isolated_tip_does_not_adopt_a_longer_chain() {
     let server_node = Arc::new(common::node());

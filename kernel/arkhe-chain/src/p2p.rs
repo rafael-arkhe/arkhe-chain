@@ -102,6 +102,7 @@ pub(crate) struct SyncResume {
 /// One call walks at most 128 headers. A longer gap keeps the verified cursor
 /// and imports nothing until a later call reaches this node. The cursor is
 /// kept for the whole gap. A tip that does not extend this node is rejected.
+/// The node's own peer id is `P2p("self")` and is not dialed.
 /// A sibling of a canonical block is stored as `Fork` and does not replace the tip.
 /// The same proposer at the same height is `Equivocation` and is not stored.
 pub async fn sync_canonical(
@@ -109,6 +110,9 @@ pub async fn sync_canonical(
     addr: Multiaddr,
     peer: PeerId,
 ) -> Result<u64, ChainError> {
+    if peer == node.peer_id() {
+        return Err(ChainError::P2p("self"));
+    }
     if !node.accepts_peer(&peer) {
         return Err(ChainError::P2p("peer"));
     }
