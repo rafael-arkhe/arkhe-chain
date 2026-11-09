@@ -29,3 +29,4 @@ O checkout isolado deste repositório herda versão, edição, licença e depend
 | F1 | ELF do guest, image id de 32 bytes e chave de verificação. Um `image_id` preenchido continua sem carregar. |
 | F2 | Uma transação Bitcoin paga que um nó aceite. |
 | F3 | Um nó de execução Ethereum confirma o par número e hash. O cliente do teste é simulado. |
+| KMS | `docs/seguranca_chaves.md` lista requisitos de custódia. Este crate não guarda chave em HSM, não tem roster k-de-n e não está imune a intervenção. |
