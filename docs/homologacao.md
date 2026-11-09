@@ -6,9 +6,7 @@ Um dossiê anterior, no commit publicado `5b2d1750`, marcou o crate como homolog
 
 ## Gate
 
-O comando é `cargo test -p arkhe-chain`, no workspace que contém este crate. O log de 9 de novembro de 2026 está em [gate-2026-11-09.log](gate-2026-11-09.log): código 0, 72 testes aprovados, 0 falhas. O arquivo do log foi escrito depois dessa execução.
-
-O checkout isolado deste repositório herda versão, edição, licença e dependências de caminho do workspace. Sozinho, ele não é o gate.
+O comando é `cargo test -p arkhe-chain` na raiz deste repositório. O log de 9 de novembro de 2026 está em [gate-2026-11-09.log](gate-2026-11-09.log): código 0, 72 testes aprovados, 0 falhas, no workspace de origem. O arquivo do log foi escrito depois dessa execução. A mesma suíte, neste checkout, com as cópias em `vendor/`, também terminou com código 0, 72 testes e 0 falhas. Essa execução foi na mesma máquina. Não é a reexecução de outra pessoa.
 
 ## O que o código mantém
 
@@ -23,7 +21,7 @@ O checkout isolado deste repositório herda versão, edição, licença e depend
 | ID | O que falta |
 | --- | --- |
 | A3 | Outra pessoa executa `cargo test -p arkhe-chain` no workspace, no commit que publicar este registro. |
-| A4 | O checkout isolado passa a reproduzir o gate, ou o workspace continua sendo o único lugar do comando. |
+| A4 | Fechado neste checkout: `vendor/` permite `cargo test -p arkhe-chain` na raiz. Falta outra pessoa repetir esse comando. |
 | C1 | Votos com peso. Um reorg silencioso não substitui o quórum. |
 | C2 | `CanonicalVote`, round e mais de dois terços do poder de voto. |
 | F1 | ELF do guest, image id de 32 bytes e chave de verificação. Um `image_id` preenchido continua sem carregar. |

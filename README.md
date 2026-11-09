@@ -10,7 +10,7 @@ Este crate não tem o tipo `ArkheChain` nem a função `ingest_transaction`. Nã
 - Hashtree: `htree://npub16azl5mr3qp2tf6duv0z6uh2ky4cvp60gj30yhnm0882k420c5a6shjzett/arkhe-chain`
 - Leitura: <https://git.iris.to/#/npub16azl5mr3qp2tf6duv0z6uh2ky4cvp60gj30yhnm0882k420c5a6shjzett/arkhe-chain>
 
-O `Cargo.toml` deste diretório herda versão, edição e licença de um workspace Arkhe. O comando de teste abaixo roda nesse workspace, não num checkout isolado deste repositório.
+A raiz deste repositório é um workspace. `vendor/` guarda as cópias de `arkhe-core`, `arkhe-verify-core`, `arkhe-governance` e `arkhe-kernel` de que o crate precisa para compilar. O comando abaixo, nesta raiz, é o gate.
 
 ```text
 cargo test -p arkhe-chain

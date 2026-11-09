@@ -4,9 +4,35 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[workspace]
+resolver = "2"
+members = [".", "vendor/arkhe-core", "vendor/arkhe-verify-core", "vendor/arkhe-governance", "vendor/arkhe-kernel"]
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+version = "0.1.0"
+
+[workspace.dependencies]
+anyhow = "1"
+async-trait = "0.1"
+blake3 = "1.5"
+chrono = { version = "0.4", features = ["serde"] }
+hex = "0.4"
+ed25519-dalek = "2.2.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time", "fs"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+sha2 = "0.10"
+
+[profile.dev.package.curve25519-dalek]
+opt-level = 3
+
 [dependencies]
-arkhe-core = { path = "../arkhe-core" }
-arkhe-verify-core = { path = "../../verification/crates/arkhe-verify-core" }
+arkhe-core = { path = "vendor/arkhe-core" }
+arkhe-verify-core = { path = "vendor/arkhe-verify-core" }
 blake3.workspace = true
 futures = "0.3"
 libp2p = { version = "=0.54.1", default-features = false, features = ["tokio", "tcp", "noise", "yamux", "macros", "request-response", "cbor", "dns"] }
@@ -17,6 +43,6 @@ tokio.workspace = true
 fips204 = { version = "=0.4.6", default-features = false, features = ["ml-dsa-65"] }
 
 [dev-dependencies]
-arkhe-governance = { path = "../../governance/arkhe-governance" }
-arkhe-kernel = { path = "../arkhe-kernel" }
+arkhe-governance = { path = "vendor/arkhe-governance" }
+arkhe-kernel = { path = "vendor/arkhe-kernel" }
 tokio.workspace = true
