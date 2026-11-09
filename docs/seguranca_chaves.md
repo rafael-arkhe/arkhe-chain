@@ -23,7 +23,7 @@ Conforme especificado em `docs/admissao.md` e `docs/consenso.md`, o `arkhe-chain
 
 | Papel da Chave | Algoritmo | Tamanho da Chave / Assinatura | Domínio de Assinatura | Função no Protocolo |
 | --- | --- | --- | --- | --- |
-| **Proposer / Validador** | Ed25519 | Chave: 32 bytes<br>Assinatura: 64 bytes | `AKG:CHAIN:PROPOSER:v1`<br>`AKG:CHAIN:PRECOMMIT:v1` | Assinatura de blocos canônicos e atestações locais de precommit. Identidade de rede libp2p. |
+| **Proposer / Validador** | Ed25519 | Chave: 32 bytes<br>Assinatura: 64 bytes | `AKG:CHAIN:PROPOSER:v1`<br>`AKG:CHAIN:PRECOMMIT:v2` | Assinatura de blocos canônicos e atestações locais de precommit. `v1` só reabre arquivo antigo, como rodada 0. Identidade de rede libp2p. |
 | **Transação (Remetente)** | Ed25519 | Chave: 32 bytes<br>Assinatura: 64 bytes | `AKG:CHAIN:SENDER:v1` | Assinatura sobre o `subject` da transação (`nonce`, `sender`, `recipient`, `value`, `signature_mldsa`). |
 | **Resistência Quântica (ML-DSA)** | ML-DSA-65 (FIPS 204) | Chave: 1952 bytes<br>Assinatura: 3309 bytes | `AKG:CHAIN:MLDSA65:v1` | Assinatura pós-quântica cobrindo os dados da transação (`nonce`, `sender`, `recipient`, `value`). |
 | **Governança EVM / Bridge** | Conta Ethereum / Multisig | Endereço: 20 bytes | N/A (EVM calls) | Atualização de contratos de verificação ZK (`setVerifier`) em `ArkheValidityBridge.sol`. |
@@ -64,7 +64,7 @@ Para assegurar que o desenvolvimento e a governança do código não sejam captu
   - Conforme arquitetura do `arkhe-chain`, um bloco irmão emitido por outro proposer é registrado como `Fork` e **nunca substitui a ponta canônica** já adotada.
   - Proposers que tentem submeter blocos divergentes na mesma altura são sumariamente marcados com `Equivocation`.
 - **Ausência de Quórum Unilateral:**
-  - `bft_commit` só passa quando os precommits do hash canônico excedem dois terços dos validadores configurados. A ponta não se move. Não há round nem `CanonicalVote`.
+  - `bft_commit` só passa quando a rodada mais alta do hash canônico excede dois terços dos validadores configurados. A ponta não se move. Não há `CanonicalVote`.
 
 ### 4.2. Governança do Código-Fonte e Lançamento de Releases
 - **Multi-Assinatura para Modificações de Código:**
@@ -106,10 +106,10 @@ A continuidade operacional e a proteção do patrimônio repousam em regras de c
    - A substituição do conjunto de validadores é refletida na inicialização de nós com a nova configuração de chaves públicas autorizadas.
    - Tentativas da chave antiga de assinar blocos na cadeia atual são automaticamente descartadas pelos nós atualizados (`NotProposer` ou `BadProposerSignature`).
 3. **Persistência Segura:**
-   O arquivo escrito agora é `AKGCHNS6`. `AKGCHNS5` ainda abre. Um arquivo adulterado que não reproduz o estado devolve `ChainError::Snapshot`.
+   O arquivo escrito agora é `AKGCHNS7`. `AKGCHNS6` e `AKGCHNS5` ainda abrem. Um arquivo adulterado que não reproduz o estado devolve `ChainError::Snapshot`.
 
 ---
 
 ## 6. Resumo de Conformidade
 
-Este texto não assegura imunidade. O que o crate faz hoje é recusar assinatura ausente, exigir mais de dois terços dos validadores em `bft_commit` e parar quando `emergency.halt` está ligado. HSM, FIPS 140, Nitro, SGX e multisig de release não estão neste repositório.
+Este texto não assegura imunidade. O que o crate faz hoje é recusar assinatura ausente, exigir mais de dois terços dos validadores na rodada mais alta de `bft_commit` e parar quando `emergency.halt` está ligado. HSM, FIPS 140, Nitro, SGX e multisig de release não estão neste repositório.

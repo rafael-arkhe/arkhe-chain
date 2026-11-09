@@ -2,11 +2,11 @@ Command: cargo test -p arkhe-chain
 Workspace: D:\arkhe-chain-pub
 Date: 2026-11-09
 Exit: 0
-Result: 73 passed, 0 failed. Doc-tests: 0 passed.
+Result: 75 passed, 0 failed. Doc-tests: 0 passed.
 This log was written after the run. The tested sources did not include this file.
 
    Compiling arkhe-chain v0.1.0 (D:\arkhe-chain-pub)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 16.41s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 31.81s
      Running unittests src\lib.rs (target\debug\deps\arkhe_chain-5e2d97a1dec60347.exe)
 
 running 4 tests
@@ -22,19 +22,19 @@ test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 running 12 tests
 test the_node_does_not_dial_its_own_key ... ok
 test accepted_peers_are_only_the_validator_keys ... ok
-test sync_listens_as_the_validator_and_refuses_an_outsider ... ok
 test libp2p_loopback_syncs_the_sealed_block_and_replays_balances ... ok
-test sync_imports_only_the_missing_suffix ... ok
 test sync_reports_equivocation_and_keeps_the_local_tip ... ok
-test sync_rejects_a_tip_that_does_not_extend_the_local_chain ... ok
-test sync_imports_each_ancestor_until_the_remote_tip ... ok
 test the_isolated_tip_does_not_adopt_a_longer_chain ... ok
+test sync_listens_as_the_validator_and_refuses_an_outsider ... ok
+test sync_imports_each_ancestor_until_the_remote_tip ... ok
+test sync_rejects_a_tip_that_does_not_extend_the_local_chain ... ok
+test sync_imports_only_the_missing_suffix ... ok
 test sync_imports_a_chain_longer_than_the_old_window ... ok
 test sync_imports_nothing_when_the_announced_tip_is_beyond_the_buffer ... ok
 test sync_keeps_the_cursor_past_1024_headers has been running for over 60 seconds
 test sync_keeps_the_cursor_past_1024_headers ... ok
 
-test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 70.21s
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 94.71s
 
      Running tests\contingency.rs (target\debug\deps\contingency-c6c50f83f0cbb61c.exe)
 
@@ -46,13 +46,13 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
      Running tests\ethereum_link.rs (target\debug\deps\ethereum_link-0a6e2a3ccf404753.exe)
 
 running 5 tests
-test a_sealed_block_can_cite_an_execution_header_without_settling ... ok
 test a_zero_execution_header_is_refused ... ok
+test a_sealed_block_can_cite_an_execution_header_without_settling ... ok
 test a_failed_citation_write_keeps_the_file ... ok
 test a_matching_execution_client_confirms_without_settling_or_writing ... ok
 test a_reopened_file_keeps_one_citation_and_refuses_a_lower_execution_number ... ok
 
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
 
      Running tests\halt.rs (target\debug\deps\halt-c82a93fc9341f2df.exe)
 
@@ -78,7 +78,7 @@ test an_empty_file_and_a_trailing_byte_do_not_open ... ok
 test a_precommit_on_a_fork_is_not_stored_and_a_repeat_vote_stays_one ... ok
 test a_failed_fork_write_does_not_keep_the_sibling ... ok
 
-test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
 
      Running tests\mempool_stress.rs (target\debug\deps\mempool_stress-797673d06f2d5d51.exe)
 
@@ -86,63 +86,65 @@ running 1 test
 test invalid_flood_stays_out_of_the_mempool has been running for over 60 seconds
 test invalid_flood_stays_out_of_the_mempool ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 71.54s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 67.55s
 
      Running tests\native_token.rs (target\debug\deps\native_token-330e0a56c85a524a.exe)
 
-running 21 tests
+running 22 tests
 test a_missing_sender_signature_does_not_move_a_balance ... ok
 test a_verified_mldsa65_signature_moves_the_balance_and_a_flipped_one_does_not ... ok
-test a_block_without_the_proposer_signature_does_not_move_balances ... ok
 test ingest_reads_a_canonical_cbor_decision_verdict ... ok
+test a_block_without_the_proposer_signature_does_not_move_balances ... ok
 test import_replays_the_same_balances_and_a_tampered_block_does_not ... ok
 test an_unverified_mldsa_blob_does_not_move_a_balance ... ok
-test a_sibling_block_is_a_fork_and_the_first_tip_stays ... ok
 test insufficient_balance_is_rejected_before_the_mempool ... ok
 test a_second_block_by_the_same_proposer_at_the_same_height_is_equivocation ... ok
+test a_sibling_block_is_a_fork_and_the_first_tip_stays ... ok
 test a_reject_does_not_consume_the_nonce ... ok
+test only_the_highest_round_counts_toward_the_weight_threshold ... ok
 test overflow_and_self_transfer_leave_balances_unchanged ... ok
 test canonical_depth_is_the_only_finality ... ok
+test import_drops_stale_mempool_entries_and_keeps_the_next_nonce ... ok
 test state_root_covers_balances_and_nonces ... ok
 test two_local_precommits_meet_the_weight_threshold_without_moving_the_tip ... ok
-test timestamp_must_advance_and_a_rewound_block_is_not_imported ... ok
-test import_drops_stale_mempool_entries_and_keeps_the_next_nonce ... ok
-test zero_value_appends_the_mmr_without_moving_balances ... ok
 test two_of_three_equal_weights_stay_short_of_the_threshold ... ok
 test replayed_nonce_does_not_move_value_twice ... ok
 test containment_reject_emergency_stop_and_subject_mismatch_do_not_enter ... ok
+test zero_value_appends_the_mmr_without_moving_balances ... ok
 test transfer_debits_sender_credits_recipient_and_conserves_supply ... ok
+test timestamp_must_advance_and_a_rewound_block_is_not_imported ... ok
 
-test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
 
      Running tests\persist.rs (target\debug\deps\persist-36cd21e60aacb9f2.exe)
 
-running 9 tests
-test an_older_snapshot_without_the_mempool_does_not_open ... ok
+running 10 tests
 test a_reopened_file_keeps_the_mldsa_key_and_refuses_a_different_one ... ok
+test an_older_snapshot_without_the_mempool_does_not_open ... ok
 test a_tampered_snapshot_does_not_open ... ok
 test a_reopened_file_keeps_the_precommits_and_the_weight_threshold ... ok
 test a_precommit_with_a_bad_signature_does_not_open ... ok
 test a_failed_checkpoint_keeps_the_tip_the_balance_and_the_mempool ... ok
+test an_akgchns6_precommit_reopens_as_round_zero ... ok
 test a_reopened_file_replays_the_same_tip_balances_and_mmr ... ok
 test a_reopened_file_keeps_a_fork_and_the_first_tip ... ok
 test a_reopened_file_keeps_the_unsealed_mempool ... ok
 
-test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
 
      Running tests\replay_log.rs (target\debug\deps\replay_log-298a43f23cfc9517.exe)
 
 running 1 test
 test import_writes_a_replay_record_the_parser_reads_back ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
 
      Running tests\validity_bridge.rs (target\debug\deps\validity_bridge-4c0dca6a4021857a.exe)
 
 running 1 test
 test absent_bridge_and_rpc_failures_do_not_invent_a_receipt ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
 
      Running tests\validity_circuit.rs (target\debug\deps\validity_circuit-75a4b88f28b8374d.exe)
 
@@ -151,14 +153,14 @@ test the_anchor_must_be_arkhe_plus_the_state_root_and_is_not_broadcast ... ok
 test circuit_file_pins_phase0_slash_verifier ... ok
 test proof_must_bind_the_sealed_root_and_is_not_broadcast ... ok
 
-test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
 
      Running tests\verifier_absent.rs (target\debug\deps\verifier_absent-cdb632aaa5cbd216.exe)
 
 running 1 test
 test submit_never_returns_a_settlement_hash ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
 
    Doc-tests arkhe_chain
 

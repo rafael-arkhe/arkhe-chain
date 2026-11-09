@@ -143,7 +143,7 @@ fn a_reopened_file_keeps_one_citation_and_refuses_a_lower_execution_number() {
     .unwrap();
     assert_eq!(again.ethereum_citation(1).unwrap(), Some(link));
     assert_eq!(again.ethereum_citation(2).unwrap(), Some(later));
-    assert!(std::fs::read(&path).unwrap().starts_with(b"AKGCHNS6"));
+    assert!(std::fs::read(&path).unwrap().starts_with(b"AKGCHNS7"));
 
     let mut older = std::fs::read(&path).unwrap();
     older[..8].copy_from_slice(b"AKGCHNS5");

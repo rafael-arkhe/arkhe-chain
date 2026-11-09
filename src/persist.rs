@@ -9,6 +9,7 @@ use crate::tx::{account_id, Transaction, MLDSA65_PK_LEN};
 
 const MAGIC_V5: &[u8; 8] = b"AKGCHNS5";
 const MAGIC_V6: &[u8; 8] = b"AKGCHNS6";
+const MAGIC_V7: &[u8; 8] = b"AKGCHNS7";
 const MAX_SNAPSHOT: usize = 64 * 1024 * 1024;
 const MAX_MEMPOOL: usize = 1000;
 
@@ -24,8 +25,13 @@ pub(crate) struct Snapshot {
     pub(crate) ed25519: BTreeMap<String, [u8; 32]>,
     pub(crate) mldsa: BTreeMap<String, [u8; MLDSA65_PK_LEN]>,
     pub(crate) forks: Vec<Vec<u8>>,
-    pub(crate) precommits: Vec<crate::Precommit>,
+    pub(crate) precommits: Vec<DecodedPrecommit>,
     pub(crate) ethereum_links: BTreeMap<u64, EthereumExecutionId>,
+}
+
+pub(crate) struct DecodedPrecommit {
+    pub(crate) vote: crate::Precommit,
+    pub(crate) historical_v1: bool,
 }
 
 pub(crate) fn encode_snapshot(
@@ -34,7 +40,7 @@ pub(crate) fn encode_snapshot(
     blocks: &HashMap<[u8; 32], Vec<u8>>,
     mempool: &VecDeque<Transaction>,
     forks: &[Vec<u8>],
-    precommits: &BTreeMap<(u64, String), ([u8; 32], [u8; 64])>,
+    precommits: &BTreeMap<(u64, String), crate::StoredPrecommit>,
     ethereum_links: &BTreeMap<u64, EthereumExecutionId>,
 ) -> Result<Vec<u8>, ChainError> {
     if by_height.len() as u64 != state.height {
@@ -50,7 +56,7 @@ pub(crate) fn encode_snapshot(
         ordered.push(bytes.clone());
     }
     let mut out = Vec::new();
-    out.extend_from_slice(MAGIC_V6);
+    out.extend_from_slice(MAGIC_V7);
     push_u64(&mut out, state.height);
     out.extend_from_slice(&state.tip);
     push_u64(&mut out, state.frontier.count);
@@ -104,10 +110,12 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
     }
     let mut rd = Rd { buf: bytes, i: 0 };
     let magic = rd.take(8)?;
-    let citations = if magic == MAGIC_V6 {
-        true
+    let (citations, rounds) = if magic == MAGIC_V7 {
+        (true, true)
+    } else if magic == MAGIC_V6 {
+        (true, false)
     } else if magic == MAGIC_V5 {
-        false
+        (false, false)
     } else {
         return Err(ChainError::Snapshot);
     };
@@ -169,7 +177,7 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
         }
         forks.push(rd.take(n)?.to_vec());
     }
-    let precommits = read_precommits(&mut rd)?;
+    let precommits = read_precommits(&mut rd, rounds)?;
     let ethereum_links = if citations {
         read_ethereum_links(&mut rd)?
     } else {
@@ -269,28 +277,33 @@ pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), ChainError> 
 
 fn write_precommits(
     out: &mut Vec<u8>,
-    votes: &BTreeMap<(u64, String), ([u8; 32], [u8; 64])>,
+    votes: &BTreeMap<(u64, String), crate::StoredPrecommit>,
 ) -> Result<(), ChainError> {
     let n = u32::try_from(votes.len()).map_err(|_| ChainError::Snapshot)?;
     if votes.len() > 1_000 {
         return Err(ChainError::Snapshot);
     }
     push_u32(out, n);
-    for ((height, validator), (hash, signature)) in votes {
+    for ((height, validator), stored) in votes {
         if validator.is_empty() || validator.len() > 128 {
+            return Err(ChainError::Snapshot);
+        }
+        if stored.historical_v1 && stored.round != 0 {
             return Err(ChainError::Snapshot);
         }
         push_u64(out, *height);
         let len = u32::try_from(validator.len()).map_err(|_| ChainError::Snapshot)?;
         push_u32(out, len);
         out.extend_from_slice(validator.as_bytes());
-        out.extend_from_slice(hash);
-        out.extend_from_slice(signature);
+        push_u64(out, stored.round);
+        out.extend_from_slice(&stored.block_hash);
+        out.extend_from_slice(&stored.signature);
+        out.push(if stored.historical_v1 { 1 } else { 2 });
     }
     Ok(())
 }
 
-fn read_precommits(rd: &mut Rd<'_>) -> Result<Vec<crate::Precommit>, ChainError> {
+fn read_precommits(rd: &mut Rd<'_>, rounds: bool) -> Result<Vec<DecodedPrecommit>, ChainError> {
     let n = rd.u32()? as usize;
     if n > 1_000 {
         return Err(ChainError::Snapshot);
@@ -306,11 +319,30 @@ fn read_precommits(rd: &mut Rd<'_>) -> Result<Vec<crate::Precommit>, ChainError>
         let validator_id = std::str::from_utf8(&raw)
             .map_err(|_| ChainError::Snapshot)?
             .to_string();
-        votes.push(crate::Precommit {
-            validator_id,
-            height,
-            block_hash: rd.arr32()?,
-            signature: rd.take(64)?.try_into().map_err(|_| ChainError::Snapshot)?,
+        let round = if rounds { rd.u64()? } else { 0 };
+        let block_hash = rd.arr32()?;
+        let signature = rd.take(64)?.try_into().map_err(|_| ChainError::Snapshot)?;
+        let historical_v1 = if rounds {
+            match rd.take(1)?[0] {
+                1 => true,
+                2 => false,
+                _ => return Err(ChainError::Snapshot),
+            }
+        } else {
+            true
+        };
+        if historical_v1 && round != 0 {
+            return Err(ChainError::Snapshot);
+        }
+        votes.push(DecodedPrecommit {
+            vote: crate::Precommit {
+                validator_id,
+                height,
+                round,
+                block_hash,
+                signature,
+            },
+            historical_v1,
         });
     }
     Ok(votes)

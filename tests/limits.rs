@@ -318,6 +318,7 @@ fn a_precommit_on_a_fork_is_not_stored_and_a_repeat_vote_stays_one() {
     let unknown = Precommit {
         validator_id: "validator-c".into(),
         height: 1,
+        round: 0,
         block_hash: tip,
         signature: [0; 64],
     };
@@ -329,6 +330,7 @@ fn a_precommit_on_a_fork_is_not_stored_and_a_repeat_vote_stays_one() {
     let mut vote = Precommit {
         validator_id: "validator-b".into(),
         height: 1,
+        round: 0,
         block_hash: tip,
         signature: [0; 64],
     };
@@ -450,6 +452,7 @@ fn a_failed_precommit_write_does_not_keep_the_vote() {
     let mut vote = Precommit {
         validator_id: "validator-a".into(),
         height: 1,
+        round: 0,
         block_hash: tip,
         signature: [0; 64],
     };

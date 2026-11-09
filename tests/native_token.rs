@@ -544,6 +544,7 @@ fn two_local_precommits_meet_the_weight_threshold_without_moving_the_tip() {
     let mut vote = arkhe_chain::Precommit {
         validator_id: "validator-b".into(),
         height: 1,
+        round: 0,
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -688,6 +689,7 @@ fn two_of_three_equal_weights_stay_short_of_the_threshold() {
         let mut vote = arkhe_chain::Precommit {
             validator_id: id.into(),
             height: 1,
+            round: 0,
             block_hash: tip,
             signature: [0u8; 64],
         };
@@ -698,6 +700,7 @@ fn two_of_three_equal_weights_stay_short_of_the_threshold() {
     let mut third = arkhe_chain::Precommit {
         validator_id: "validator-c".into(),
         height: 1,
+        round: 0,
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -706,4 +709,62 @@ fn two_of_three_equal_weights_stay_short_of_the_threshold() {
     node.bft_commit(1).unwrap();
     assert_eq!(node.tip().unwrap(), tip);
     assert_eq!(node.height().unwrap(), 1);
+}
+
+#[test]
+fn only_the_highest_round_counts_toward_the_weight_threshold() {
+    let node = common::node();
+    node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
+        .unwrap();
+    node.propose_and_seal_block(TS).unwrap();
+    let tip = node.tip().unwrap();
+    for (id, secret) in [
+        ("validator-a", common::SECRET_A),
+        ("validator-b", common::SECRET_B),
+    ] {
+        let mut vote = arkhe_chain::Precommit {
+            validator_id: id.into(),
+            height: 1,
+            round: 0,
+            block_hash: tip,
+            signature: [0u8; 64],
+        };
+        arkhe_chain::sign_precommit(&mut vote, &secret).unwrap();
+        node.note_precommit(&vote).unwrap();
+    }
+    node.bft_commit(1).unwrap();
+
+    let mut later = arkhe_chain::Precommit {
+        validator_id: "validator-a".into(),
+        height: 1,
+        round: 1,
+        block_hash: tip,
+        signature: [0u8; 64],
+    };
+    arkhe_chain::sign_precommit(&mut later, &common::SECRET_A).unwrap();
+    node.note_precommit(&later).unwrap();
+    assert_eq!(node.precommit_count(1).unwrap(), 2);
+    assert_eq!(node.precommit_round(1, "validator-a").unwrap(), Some(1));
+    assert_eq!(node.precommit_round(1, "validator-b").unwrap(), Some(0));
+    assert_eq!(node.bft_commit(1).unwrap_err(), ChainError::QuorumAbsent);
+
+    later.round = 0;
+    arkhe_chain::sign_precommit(&mut later, &common::SECRET_A).unwrap();
+    assert_eq!(
+        node.note_precommit(&later).unwrap_err(),
+        ChainError::RoundRegression
+    );
+    assert_eq!(node.precommit_round(1, "validator-a").unwrap(), Some(1));
+
+    later.validator_id = "validator-b".into();
+    later.round = 1;
+    arkhe_chain::sign_precommit(&mut later, &common::SECRET_B).unwrap();
+    node.note_precommit(&later).unwrap();
+    node.bft_commit(1).unwrap();
+    assert_eq!(node.tip().unwrap(), tip);
+    assert_eq!(node.height().unwrap(), 1);
+    assert_eq!(
+        node.finality(1).unwrap(),
+        arkhe_chain::Finality { height: 1, depth: 0 }
+    );
 }
