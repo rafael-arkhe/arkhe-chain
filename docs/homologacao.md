@@ -111,6 +111,7 @@ Além da suíte Rust, os artefatos de apoio passam pelas seguintes validações:
 - [x] Rastreabilidade integral dos 54 testes automatizados cobrindo 100% dos cenários de borda e segurança.
 - [x] Verificação dos limites pós-quânticos (ML-DSA-65) e clássicos (Ed25519).
 - [x] Validação formal dos contratos EVM (`solc 0.8.20`) e esquemas de prova ZK.
+- [x] Política formal de blindagem de chaves em KMS/HSM e contingência de governança descentralizada homologada (`docs/seguranca_chaves.md`).
 - [x] Reexecução e auditoria do gate completada com sucesso por um segundo avaliador técnico.
 
 **Conclusão da Homologação:** O crate `arkhe-chain` encontra-se plenamente auditado, validado e homologado para os padrões estritos de arquitetura, segurança fail-closed e integridade de consenso Arkhe.
