@@ -321,6 +321,7 @@ fn a_precommit_on_a_fork_is_not_stored_and_a_repeat_vote_stays_one() {
         round: 0,
         parts: 1,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0; 64],
     };
@@ -335,6 +336,7 @@ fn a_precommit_on_a_fork_is_not_stored_and_a_repeat_vote_stays_one() {
         round: 0,
         parts: 1,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0; 64],
     };
@@ -460,6 +462,7 @@ fn a_failed_precommit_write_does_not_keep_the_vote() {
         round: 0,
         parts: 1,
         part_hash: tip,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
         block_hash: tip,
         signature: [0; 64],
     };

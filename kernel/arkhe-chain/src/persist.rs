@@ -291,7 +291,7 @@ fn write_precommits(
         if stored.preimage == 1 && stored.round != 0 {
             return Err(ChainError::Snapshot);
         }
-        if !matches!(stored.preimage, 1 | 2 | 3) {
+        if !matches!(stored.preimage, 1 | 2 | 3 | 4) {
             return Err(ChainError::Snapshot);
         }
         push_u64(out, *height);
@@ -327,7 +327,7 @@ fn read_precommits(rd: &mut Rd<'_>, rounds: bool) -> Result<Vec<DecodedPrecommit
         let signature = rd.take(64)?.try_into().map_err(|_| ChainError::Snapshot)?;
         let preimage = if rounds {
             match rd.take(1)?[0] {
-                preimage @ (1 | 2 | 3) => preimage,
+                preimage @ (1 | 2 | 3 | 4) => preimage,
                 _ => return Err(ChainError::Snapshot),
             }
         } else {
@@ -344,6 +344,7 @@ fn read_precommits(rd: &mut Rd<'_>, rounds: bool) -> Result<Vec<DecodedPrecommit
                 block_hash,
                 parts: 1,
                 part_hash: block_hash,
+                chain_id: crate::CHAIN_ID.to_string(),
                 signature,
             },
             preimage,

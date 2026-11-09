@@ -2,7 +2,8 @@ mod common;
 
 use arkhe_chain::{
     ethereum_link_commitment, ethereum_link_preimage, AbsentExecutionRpc, ArkheNode, ChainError,
-    EthereumExecutionId, ExecutionRpc, ETH_LINK_DOMAIN, GENESIS_ACCOUNT, GENESIS_SUPPLY,
+    EthereumExecutionId, ExecutionRpc, HttpExecutionRpc, ETH_LINK_DOMAIN, GENESIS_ACCOUNT,
+    GENESIS_SUPPLY,
 };
 
 const TS: u64 = 1_700_000_000;
@@ -274,4 +275,37 @@ fn a_matching_execution_client_confirms_without_settling_or_writing() {
     assert_eq!(reopened.commitment, stored.commitment);
     drop(again);
     let _ = std::fs::remove_file(&path);
+}
+
+#[test]
+#[ignore = "needs ARKHE_EXECUTION_RPC pointing at a live execution client"]
+fn a_live_execution_client_confirms_without_settling() {
+    let endpoint = std::env::var("ARKHE_EXECUTION_RPC").expect("ARKHE_EXECUTION_RPC");
+    let rpc = HttpExecutionRpc { endpoint };
+    let mut hash = None;
+    let mut last = String::from("no attempt");
+    for _ in 0..20 {
+        match rpc.execution_hash(1) {
+            Ok(found) if found != [0u8; 32] => {
+                hash = Some(found);
+                break;
+            }
+            Ok(_) => last = "zero hash".to_string(),
+            Err(err) => last = err.to_string(),
+        }
+        std::thread::sleep(std::time::Duration::from_millis(250));
+    }
+    let hash = hash.unwrap_or_else(|| panic!("execution block 1: {last}"));
+    let node = common::node();
+    node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
+        .unwrap();
+    node.propose_and_seal_block(TS).unwrap();
+    let stored = node
+        .cite_ethereum_execution(1, EthereumExecutionId { number: 1, hash })
+        .unwrap();
+    assert!(!stored.confirmed);
+    let confirmed = node.confirm_ethereum_execution(1, &rpc).unwrap();
+    assert!(confirmed.confirmed);
+    assert!(!confirmed.settled);
+    assert_eq!(node.ethereum_citation(1).unwrap().unwrap().confirmed, false);
 }
