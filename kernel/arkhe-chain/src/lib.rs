@@ -119,16 +119,21 @@ pub struct AcceptedPeer {
 }
 
 /// A local Ed25519 attestation. This is not a CometBFT `CanonicalVote`.
-/// [`precommit_message`] binds `AKG:CHAIN:PRECOMMIT:v2`, the height, the round,
-/// and the block hash. There is no part set. Each configured validator has
-/// weight 1. One validator keeps a single vote per height: a later round for
-/// the same hash replaces it, and an earlier round is refused.
+/// [`precommit_message`] binds `AKG:CHAIN:PRECOMMIT:v3`, the height, the round,
+/// the block hash, and a one-part header whose hash is that block. The block
+/// is not split. Each configured validator has weight 1. One validator keeps
+/// a single vote per height: a later round for the same hash replaces it, and
+/// an earlier round is refused.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Precommit {
     pub validator_id: String,
     pub height: u64,
     pub round: u64,
     pub block_hash: [u8; 32],
+    /// Accepted only when this is 1.
+    pub parts: u32,
+    /// Accepted only when this equals `block_hash`.
+    pub part_hash: [u8; 32],
     pub signature: [u8; 64],
 }
 
@@ -137,7 +142,8 @@ pub(crate) struct StoredPrecommit {
     pub(crate) round: u64,
     pub(crate) block_hash: [u8; 32],
     pub(crate) signature: [u8; 64],
-    pub(crate) historical_v1: bool,
+    /// 1 is the pre-round preimage, 2 binds the round, 3 also binds the part header.
+    pub(crate) preimage: u8,
 }
 
 #[derive(Debug)]
@@ -240,7 +246,7 @@ impl ArkheNode {
             drop(inner);
             for decoded in &snap.precommits {
                 if node
-                    .store_precommit(&decoded.vote, decoded.historical_v1)
+                    .store_precommit(&decoded.vote, decoded.preimage)
                     .is_err()
                 {
                     return Err(ChainError::Snapshot);
@@ -257,7 +263,7 @@ impl ArkheNode {
                             round: decoded.vote.round,
                             block_hash: decoded.vote.block_hash,
                             signature: decoded.vote.signature,
-                            historical_v1: decoded.historical_v1,
+                            preimage: decoded.preimage,
                         },
                     )
                 })
@@ -419,24 +425,32 @@ impl ArkheNode {
         Ok(Finality { height, depth })
     }
 
-    /// Store one verified local precommit. The signature must bind the round.
-    /// The tip does not move. `bft_commit` counts only the highest stored
-    /// round, and only when that round exceeds two thirds of the validators.
+    /// Store one verified local precommit. The signature must bind the round
+    /// and a one-part header equal to the block hash. The tip does not move.
+    /// `bft_commit` counts only the highest stored round.
     pub fn note_precommit(&self, vote: &Precommit) -> Result<(), ChainError> {
-        self.store_precommit(vote, false)
+        self.store_precommit(vote, 3)
     }
 
-    fn store_precommit(&self, vote: &Precommit, historical_v1: bool) -> Result<(), ChainError> {
+    fn store_precommit(&self, vote: &Precommit, preimage: u8) -> Result<(), ChainError> {
         let Some(public) = self.validators.get(&vote.validator_id) else {
             return Err(ChainError::NotProposer);
         };
-        let message = if historical_v1 {
-            if vote.round != 0 {
-                return Err(ChainError::BadProposerSignature);
+        let message = match preimage {
+            1 => {
+                if vote.round != 0 {
+                    return Err(ChainError::BadProposerSignature);
+                }
+                historical_precommit_message(vote.height, &vote.block_hash)
             }
-            historical_precommit_message(vote.height, &vote.block_hash)
-        } else {
-            precommit_message(vote.height, vote.round, &vote.block_hash)
+            2 => round_precommit_message(vote.height, vote.round, &vote.block_hash),
+            3 => {
+                if vote.parts != 1 || vote.part_hash != vote.block_hash {
+                    return Err(ChainError::BadPartSet);
+                }
+                precommit_message(vote.height, vote.round, &vote.block_hash, vote.parts, &vote.part_hash)
+            }
+            _ => return Err(ChainError::BadProposerSignature),
         };
         if !public.verify(&message, &vote.signature) {
             return Err(ChainError::BadProposerSignature);
@@ -473,7 +487,7 @@ impl ArkheNode {
                 round: vote.round,
                 block_hash: vote.block_hash,
                 signature: vote.signature,
-                historical_v1,
+                preimage,
             },
         );
         if let Some(path) = path.as_deref() {
@@ -1154,9 +1168,25 @@ pub fn sign_proposer(block: &mut Block, secret_key: &[u8; 32]) -> Result<(), Cha
     sign_block(block, &signer_from(secret_key)?)
 }
 
-/// Signed preimage of a new precommit. The round is bound. This is not a
-/// CometBFT `CanonicalVote`.
-pub fn precommit_message(height: u64, round: u64, block_hash: &[u8; 32]) -> Vec<u8> {
+/// Signed preimage of a new precommit. The round and the one-part header are
+/// bound. This is not a CometBFT `CanonicalVote`.
+pub fn precommit_message(
+    height: u64,
+    round: u64,
+    block_hash: &[u8; 32],
+    parts: u32,
+    part_hash: &[u8; 32],
+) -> Vec<u8> {
+    let mut message = b"AKG:CHAIN:PRECOMMIT:v3\0".to_vec();
+    message.extend_from_slice(&height.to_be_bytes());
+    message.extend_from_slice(&round.to_be_bytes());
+    message.extend_from_slice(block_hash);
+    message.extend_from_slice(&parts.to_be_bytes());
+    message.extend_from_slice(part_hash);
+    message
+}
+
+fn round_precommit_message(height: u64, round: u64, block_hash: &[u8; 32]) -> Vec<u8> {
     let mut message = b"AKG:CHAIN:PRECOMMIT:v2\0".to_vec();
     message.extend_from_slice(&height.to_be_bytes());
     message.extend_from_slice(&round.to_be_bytes());
@@ -1176,7 +1206,30 @@ pub fn historical_precommit_message(height: u64, block_hash: &[u8; 32]) -> Vec<u
 
 pub fn sign_precommit(vote: &mut Precommit, secret_key: &[u8; 32]) -> Result<(), ChainError> {
     let signer = signer_from(secret_key)?;
-    let signature = signer.sign(&precommit_message(vote.height, vote.round, &vote.block_hash));
+    let signature = signer.sign(&precommit_message(
+        vote.height,
+        vote.round,
+        &vote.block_hash,
+        vote.parts,
+        &vote.part_hash,
+    ));
+    vote.signature = signature
+        .as_slice()
+        .try_into()
+        .map_err(|_| ChainError::BadProposerSignature)?;
+    Ok(())
+}
+
+/// Signs the preimage stored as version 2: height, round, and block hash.
+/// [`ArkheNode::note_precommit`] does not accept this signature. An
+/// `AKGCHNS7` file that marks the vote as version 2 still opens it.
+pub fn sign_round_precommit(vote: &mut Precommit, secret_key: &[u8; 32]) -> Result<(), ChainError> {
+    let signer = signer_from(secret_key)?;
+    let signature = signer.sign(&round_precommit_message(
+        vote.height,
+        vote.round,
+        &vote.block_hash,
+    ));
     vote.signature = signature
         .as_slice()
         .try_into()

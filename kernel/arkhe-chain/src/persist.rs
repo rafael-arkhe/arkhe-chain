@@ -31,7 +31,7 @@ pub(crate) struct Snapshot {
 
 pub(crate) struct DecodedPrecommit {
     pub(crate) vote: crate::Precommit,
-    pub(crate) historical_v1: bool,
+    pub(crate) preimage: u8,
 }
 
 pub(crate) fn encode_snapshot(
@@ -288,7 +288,10 @@ fn write_precommits(
         if validator.is_empty() || validator.len() > 128 {
             return Err(ChainError::Snapshot);
         }
-        if stored.historical_v1 && stored.round != 0 {
+        if stored.preimage == 1 && stored.round != 0 {
+            return Err(ChainError::Snapshot);
+        }
+        if !matches!(stored.preimage, 1 | 2 | 3) {
             return Err(ChainError::Snapshot);
         }
         push_u64(out, *height);
@@ -298,7 +301,7 @@ fn write_precommits(
         push_u64(out, stored.round);
         out.extend_from_slice(&stored.block_hash);
         out.extend_from_slice(&stored.signature);
-        out.push(if stored.historical_v1 { 1 } else { 2 });
+        out.push(stored.preimage);
     }
     Ok(())
 }
@@ -322,16 +325,15 @@ fn read_precommits(rd: &mut Rd<'_>, rounds: bool) -> Result<Vec<DecodedPrecommit
         let round = if rounds { rd.u64()? } else { 0 };
         let block_hash = rd.arr32()?;
         let signature = rd.take(64)?.try_into().map_err(|_| ChainError::Snapshot)?;
-        let historical_v1 = if rounds {
+        let preimage = if rounds {
             match rd.take(1)?[0] {
-                1 => true,
-                2 => false,
+                preimage @ (1 | 2 | 3) => preimage,
                 _ => return Err(ChainError::Snapshot),
             }
         } else {
-            true
+            1
         };
-        if historical_v1 && round != 0 {
+        if preimage == 1 && round != 0 {
             return Err(ChainError::Snapshot);
         }
         votes.push(DecodedPrecommit {
@@ -340,9 +342,11 @@ fn read_precommits(rd: &mut Rd<'_>, rounds: bool) -> Result<Vec<DecodedPrecommit
                 height,
                 round,
                 block_hash,
+                parts: 1,
+                part_hash: block_hash,
                 signature,
             },
-            historical_v1,
+            preimage,
         });
     }
     Ok(votes)
