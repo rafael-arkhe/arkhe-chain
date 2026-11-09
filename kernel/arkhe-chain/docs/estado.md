@@ -1,0 +1,17 @@
+# Estado e snapshot
+
+A conta de gênese é `genesis-alloc`. A oferta inicial é `100_000_000`. O débito e o crédito de uma transferência acontecem juntos, ou nenhum dos dois acontece.
+
+A folha do MMR é `tx.record()`, o hash `AKG:CHAIN:TXREC:v1` da transação canônica inteira, incluindo o payload. A fronteira é `arkhe_verify_core::rbb::mmr::Frontier`. `mmr_root` devolve essa raiz crua.
+
+`state_root` é outro compromisso, domínio `AKG:CHAIN:STATE:v1`, sobre a raiz MMR, a contagem, os saldos e os nonces. As chaves das contas não entram nesse compromisso. O cabeçalho do bloco guarda `state_root`. Na importação, o estado reproduzido tem de bater com esse campo e com `mmr_count`.
+
+## Arquivo
+
+`ArkheNode::open` relê a cadeia desde a gênese. `new` sem caminho fica só na memória.
+
+O magic atual é `AKGCHNS5`. O arquivo guarda altura, ponta, picos do MMR, saldos, nonces, blocos, mempool, chaves Ed25519, chaves ML-DSA, blocos irmãos e precommits. `AKGCHNS1`, `AKGCHNS2`, `AKGCHNS3` e `AKGCHNS4` devolvem `Snapshot`.
+
+Uma diferença de altura, ponta, picos, saldos, nonces ou chaves também devolve `Snapshot`. Um precommit com a assinatura alterada não abre, e o arquivo não é reescrito. Uma escrita que falha no selo não move ponta, saldo nem mempool. Uma escrita que falha ao gravar um precommit remove esse precommit da memória.
+
+A importação e o selo reexecutam a fila. O que deixou de aplicar sai. O nonce seguinte permanece.
