@@ -50,6 +50,10 @@ pub enum ChainError {
     LockPoisoned,
     #[error("FAIL_CLOSED: ANCHOR_ADDRESS")]
     AnchorAddress,
+    #[error("FAIL_CLOSED: ETHEREUM_HEADER")]
+    EthereumHeader,
+    #[error("FAIL_CLOSED: ETHEREUM_CONFLICT")]
+    EthereumConflict,
     #[error("FAIL_CLOSED: CIRCUIT_CONFIG")]
     CircuitConfig,
     #[error("FAIL_CLOSED: PROOF_REJECTED")]

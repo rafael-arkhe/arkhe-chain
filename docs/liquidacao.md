@@ -13,3 +13,9 @@ O layout conferido na forma da prova é seletor de 4 bytes, journal e selo de 26
 `btc_op_return` são os 5 bytes `ARKHE` seguidos dos 32 bytes de `state_root`. `check_btc_op_return` aceita só esses 37 bytes. Prefixo errado, raiz errada ou outro tamanho, inclusive um buffer de 77 bytes, é `InvalidAnchorPrefix`.
 
 `AnchorPlan.broadcast` é falso. Este crate não publica uma transação Bitcoin.
+
+## Citação de um bloco de execução
+
+`cite_ethereum_execution` liga um bloco Arkhe já selado a um número e a um hash de bloco de execução que o chamador informa. O compromisso é BLAKE3 de `AKG:ETH:LINK:v1\0`, altura, hash do bloco Arkhe, `state_root`, número de execução e hash de execução. Número zero ou hash de execução todo zero é `EthereumHeader`. Altura ausente é `UnknownBlock`.
+
+A citação fica no snapshot `AKGCHNS6`. A mesma citação pode ser repetida. Outro hash, outro número, ou um número que não avança com a altura é `EthereumConflict` e não substitui a citação guardada. Uma escrita que falha não deixa a citação na memória. `settled` fica falso. `confirm_ethereum_execution` pede o hash ao cliente de execução. Sem cliente, a resposta é `RpcAbsent`. Um hash diferente é `EthereumConflict` e a citação guardada fica. A confirmação não entra no arquivo: ao reabrir, `confirmed` volta a falso. `settleBlockWithProof` continua a reverter sem verificador. As duas cadeias não passam a ser uma.

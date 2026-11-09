@@ -23,6 +23,7 @@ mod anchor;
 mod codec;
 mod contingency;
 mod error;
+mod ethereum;
 mod halt;
 mod p2p;
 mod persist;
@@ -37,6 +38,10 @@ pub use anchor::{btc_op_return, check_btc_op_return, AnchorPlan, AnchorPublisher
 pub use codec::{decode_block, encode_block};
 pub use contingency::{hold_for_absent_verifier, SettlementContingency};
 pub use error::ChainError;
+pub use ethereum::{
+    ethereum_link, ethereum_link_commitment, ethereum_link_preimage, AbsentExecutionRpc,
+    EthereumExecutionId, EthereumLink, ExecutionRpc, ETH_LINK_DOMAIN,
+};
 pub use halt::load_emergency_halt;
 pub use p2p::{spawn_server, sync_canonical, SyncServer, SYNC_PROTOCOL};
 pub use proof_verification::{
@@ -72,6 +77,7 @@ struct Inner {
     forks: Vec<[u8; 32]>,
     fork_blocks: Vec<Vec<u8>>,
     precommits: BTreeMap<(u64, String), ([u8; 32], [u8; 64])>,
+    ethereum_links: BTreeMap<u64, EthereumExecutionId>,
 }
 
 /// Local finality. This is not a CometBFT commit: there is no voting power,
@@ -103,6 +109,13 @@ pub struct ArkheNode {
 pub struct Validator {
     pub id: String,
     pub public_key: [u8; 32],
+}
+
+/// One validator the node will dial. This is not a discovered network peer.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AcceptedPeer {
+    pub validator_id: String,
+    pub peer_id: libp2p::PeerId,
 }
 
 /// A local Ed25519 attestation. This is not a CometBFT `CanonicalVote`:
@@ -158,6 +171,7 @@ impl ArkheNode {
                 forks: Vec::new(),
                 fork_blocks: Vec::new(),
                 precommits: BTreeMap::new(),
+                ethereum_links: BTreeMap::new(),
             }),
             store: Mutex::new(None),
         })
@@ -165,8 +179,9 @@ impl ArkheNode {
 
     /// Open a chain file. A missing file starts at genesis and is created.
     /// An existing file is replayed from genesis and refused when the stored
-    /// accounts, nonces, account keys, tip, MMR peaks, recorded forks, or
-    /// precommits differ from that replay. A recorded fork is imported again
+    /// accounts, nonces, account keys, tip, MMR peaks, recorded forks,
+    /// precommits, or execution citations differ from that replay. A recorded
+    /// fork is imported again
     /// and must come back as `Fork`. A stored precommit is checked again and
     /// does not commit the height. Neither replaces the canonical tip.
     pub fn open(
@@ -232,6 +247,13 @@ impl ArkheNode {
                 return Err(ChainError::Snapshot);
             }
             drop(inner);
+            for (height, execution) in &snap.ethereum_links {
+                node.cite_ethereum_execution(*height, *execution)
+                    .map_err(|_| ChainError::Snapshot)?;
+            }
+            if node.lock()?.ethereum_links != snap.ethereum_links {
+                return Err(ChainError::Snapshot);
+            }
             for tx in snap.mempool {
                 node.ingest(tx)?;
             }
@@ -247,7 +269,19 @@ impl ArkheNode {
 
     /// Libp2p peer id of this validator's Ed25519 key. Sync listens as this id.
     pub fn peer_id(&self) -> libp2p::PeerId {
-        libp2p::identity::PublicKey::from(self.signer.public()).to_peer_id()
+        validator_peer_id(&self.signer.public())
+    }
+
+    /// Validators this node can sync from. There is no discovery: the list is
+    /// exactly the Ed25519 keys passed to `new` or `open`, in validator-id order.
+    pub fn accepted_peers(&self) -> Vec<AcceptedPeer> {
+        self.validators
+            .iter()
+            .map(|(validator_id, public)| AcceptedPeer {
+                validator_id: validator_id.clone(),
+                peer_id: validator_peer_id(public),
+            })
+            .collect()
     }
 
     pub(crate) fn network_keypair(&self) -> libp2p::identity::Keypair {
@@ -255,9 +289,7 @@ impl ArkheNode {
     }
 
     pub(crate) fn accepts_peer(&self, peer: &libp2p::PeerId) -> bool {
-        self.validators.values().any(|public| {
-            libp2p::identity::PublicKey::from(public.clone()).to_peer_id() == *peer
-        })
+        self.accepted_peers().iter().any(|accepted| &accepted.peer_id == peer)
     }
 
     pub fn emergency_halt(&self) -> Result<bool, ChainError> {
@@ -312,6 +344,7 @@ impl ArkheNode {
                 &inner.mempool,
                 &inner.fork_blocks,
                 &inner.precommits,
+                &inner.ethereum_links,
             )
             .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
@@ -407,6 +440,7 @@ impl ArkheNode {
                 &inner.mempool,
                 &inner.fork_blocks,
                 &inner.precommits,
+                &inner.ethereum_links,
             )
             .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
@@ -479,6 +513,117 @@ impl ArkheNode {
             .ok_or(ChainError::UnknownBlock)?;
         let bytes = inner.blocks.get(&hash).ok_or(ChainError::UnknownBlock)?;
         Ok(decode_block(bytes)?.header)
+    }
+
+    /// Cite one Ethereum execution block from a sealed Arkhe block.
+    ///
+    /// The execution number and hash are taken from the caller. This method
+    /// does not dial Ethereum and does not settle. `settled` is false. One
+    /// height keeps one citation. A second execution number or hash at that
+    /// height, or a number that does not advance with height, is
+    /// [`ChainError::EthereumConflict`]. A zero execution number or an
+    /// all-zero execution hash is [`ChainError::EthereumHeader`].
+    pub fn cite_ethereum_execution(
+        &self,
+        height: u64,
+        execution: EthereumExecutionId,
+    ) -> Result<EthereumLink, ChainError> {
+        if execution.number == 0 || execution.hash == [0u8; 32] {
+            return Err(ChainError::EthereumHeader);
+        }
+        let path = self.store_path()?;
+        let mut inner = self.lock()?;
+        let arkhe_block_hash = inner
+            .by_height
+            .get(&height)
+            .copied()
+            .ok_or(ChainError::UnknownBlock)?;
+        let bytes = inner
+            .blocks
+            .get(&arkhe_block_hash)
+            .ok_or(ChainError::UnknownBlock)?;
+        let header = decode_block(bytes)?.header;
+        if header.block_number != height {
+            return Err(ChainError::StateMismatch);
+        }
+        if let Some(stored) = inner.ethereum_links.get(&height).copied() {
+            if stored == execution {
+                return Ok(ethereum_link(&header, arkhe_block_hash, execution));
+            }
+            return Err(ChainError::EthereumConflict);
+        }
+        if inner.ethereum_links.values().any(|stored| {
+            stored.number == execution.number || stored.hash == execution.hash
+        }) || inner.ethereum_links.iter().any(|(stored_height, stored)| {
+            (*stored_height < height && stored.number >= execution.number)
+                || (*stored_height > height && stored.number <= execution.number)
+        }) {
+            return Err(ChainError::EthereumConflict);
+        }
+        inner.ethereum_links.insert(height, execution);
+        if let Some(path) = path.as_deref() {
+            let written = persist::encode_snapshot(
+                &inner.state,
+                &inner.by_height,
+                &inner.blocks,
+                &inner.mempool,
+                &inner.fork_blocks,
+                &inner.precommits,
+                &inner.ethereum_links,
+            )
+            .and_then(|encoded| persist::write_atomic(path, &encoded));
+            if let Err(error) = written {
+                inner.ethereum_links.remove(&height);
+                return Err(error);
+            }
+        }
+        Ok(ethereum_link(&header, arkhe_block_hash, execution))
+    }
+
+    /// Ask an execution client whether the stored citation names that block.
+    ///
+    /// A missing client returns [`ChainError::RpcAbsent`]. A different hash
+    /// returns [`ChainError::EthereumConflict`] and leaves the stored citation
+    /// in place. The returned link has `confirmed` set and `settled` clear.
+    /// Nothing is written: reopening the file does not keep the confirmation.
+    pub fn confirm_ethereum_execution<R: ExecutionRpc>(
+        &self,
+        height: u64,
+        rpc: &R,
+    ) -> Result<EthereumLink, ChainError> {
+        let Some(mut link) = self.ethereum_citation(height)? else {
+            return Err(ChainError::UnknownBlock);
+        };
+        let reported = rpc.execution_hash(link.execution_number)?;
+        if reported == [0u8; 32] {
+            return Err(ChainError::EthereumHeader);
+        }
+        if reported != link.execution_hash {
+            return Err(ChainError::EthereumConflict);
+        }
+        link.confirmed = true;
+        link.settled = false;
+        Ok(link)
+    }
+
+    /// Stored citation for `height`. `None` means this chain has not cited one.
+    /// `confirmed` is false: the file does not record a client check.
+    pub fn ethereum_citation(&self, height: u64) -> Result<Option<EthereumLink>, ChainError> {
+        let inner = self.lock()?;
+        let Some(execution) = inner.ethereum_links.get(&height).copied() else {
+            return Ok(None);
+        };
+        let arkhe_block_hash = inner
+            .by_height
+            .get(&height)
+            .copied()
+            .ok_or(ChainError::UnknownBlock)?;
+        let bytes = inner
+            .blocks
+            .get(&arkhe_block_hash)
+            .ok_or(ChainError::UnknownBlock)?;
+        let header = decode_block(bytes)?.header;
+        Ok(Some(ethereum_link(&header, arkhe_block_hash, execution)))
     }
 
     /// Seal a block from the mempool. The block extends this node's tip by one.
@@ -620,6 +765,7 @@ impl ArkheNode {
                                 &inner.mempool,
                                 &inner.fork_blocks,
                                 &inner.precommits,
+                                &inner.ethereum_links,
                             )
                             .and_then(|encoded| persist::write_atomic(path, &encoded));
                             if let Err(error) = written {
@@ -774,6 +920,7 @@ impl ArkheNode {
             &inner.mempool,
             &inner.fork_blocks,
             &inner.precommits,
+            &inner.ethereum_links,
         )?;
         drop(inner);
         persist::write_atomic(path, &bytes)
@@ -867,6 +1014,7 @@ fn commit_extension(
             &mempool,
             &inner.fork_blocks,
             &inner.precommits,
+            &inner.ethereum_links,
         )
             .and_then(|encoded| persist::write_atomic(path, &encoded));
         if let Err(error) = written {
@@ -908,6 +1056,10 @@ fn accept_timestamp(inner: &Inner, timestamp: u64) -> Result<(), ChainError> {
         return Err(ChainError::BadTimestamp);
     }
     Ok(())
+}
+
+fn validator_peer_id(public: &ed25519::PublicKey) -> libp2p::PeerId {
+    libp2p::identity::PublicKey::from(public.clone()).to_peer_id()
 }
 
 pub fn public_key(secret_key: &[u8; 32]) -> Result<[u8; 32], ChainError> {

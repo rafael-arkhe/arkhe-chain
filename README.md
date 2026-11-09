@@ -2,7 +2,7 @@
 
 Nó local que estende uma ponta. A admissão é `ArkheNode::ingest`. O payload da transação é o CBOR canônico de `DecisionVerdict` no domínio `AKG:VERDICT:v1`.
 
-Este crate não tem o tipo `ArkheChain` nem a função `ingest_transaction`. Homologado conforme [Dossiê de Homologação](docs/homologacao.md).
+Este crate não tem o tipo `ArkheChain` nem a função `ingest_transaction`. Não está homologado.
 
 ## Publicação
 
@@ -16,11 +16,11 @@ O `Cargo.toml` deste diretório herda versão, edição e licença de um workspa
 cargo test -p arkhe-chain
 ```
 
-O último gate desta sessão de desenvolvimento terminou com código 0, 65 testes e 0 falhas. Esse log não está anexado a um commit. Uma segunda pessoa ainda não reexecutou o gate.
+O último gate desta sessão de desenvolvimento terminou com código 0, 72 testes e 0 falhas. O log está em [docs/gate-2026-11-09.log](docs/gate-2026-11-09.log) e foi escrito depois da execução. Uma segunda pessoa ainda não reexecutou o gate.
 
 ## Documentação
 
-- [Homologação](docs/homologacao.md)
+- [Registro do gate](docs/homologacao.md)
 - [Admissão](docs/admissao.md)
 - [Estado e snapshot](docs/estado.md)
 - [Ponta, fork e finalidade](docs/consenso.md)
@@ -36,3 +36,5 @@ O último gate desta sessão de desenvolvimento terminou com código 0, 65 teste
 - `finality` é a profundidade local. `bft_commit` devolve `QuorumAbsent`. Não há poder de voto nem `CanonicalVote`.
 - `submit_proof_and_bridge_assets` devolve `VerifierAbsent`. `image_id` preenchido não carrega. `verifyProof` no contrato devolve falso.
 - A âncora aceita tem 37 bytes, `ARKHE` seguido de `state_root`. `broadcast` permanece falso.
+- `cite_ethereum_execution` cita um bloco de execução informado pelo chamador e guarda essa citação. Outra citação na mesma altura é `EthereumConflict`. `confirm_ethereum_execution` só confirma quando um cliente devolve o mesmo hash. Sem cliente, a resposta é `RpcAbsent`. `settled` fica falso e a confirmação não entra no arquivo.
+- `accepted_peers` lista os validadores do nó. Não há descoberta de peers na rede.
