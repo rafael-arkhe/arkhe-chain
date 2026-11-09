@@ -26,6 +26,7 @@ O último gate desta sessão de desenvolvimento terminou com código 0, 72 teste
 - [Ponta, fork e finalidade](docs/consenso.md)
 - [Sincronização](docs/sincronizacao.md)
 - [Prova e âncora](docs/liquidacao.md)
+- [Blindagem de Chaves e Contingência](docs/seguranca_chaves.md)
 - [Erros](docs/erros.md)
 
 ## Limites que o código mantém
