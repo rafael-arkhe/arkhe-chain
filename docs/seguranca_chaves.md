@@ -23,7 +23,7 @@ Conforme especificado em `docs/admissao.md` e `docs/consenso.md`, o `arkhe-chain
 
 | Papel da Chave | Algoritmo | Tamanho da Chave / Assinatura | Domínio de Assinatura | Função no Protocolo |
 | --- | --- | --- | --- | --- |
-| **Proposer / Validador** | Ed25519 | Chave: 32 bytes<br>Assinatura: 64 bytes | `AKG:CHAIN:PROPOSER:v1`<br>`AKG:CHAIN:PRECOMMIT:v2` | Assinatura de blocos canônicos e atestações locais de precommit. `v1` só reabre arquivo antigo, como rodada 0. Identidade de rede libp2p. |
+| **Proposer / Validador** | Ed25519 | Chave: 32 bytes<br>Assinatura: 64 bytes | `AKG:CHAIN:PROPOSER:v1`<br>`AKG:CHAIN:PRECOMMIT:v3` | Assinatura de blocos canônicos e atestações locais de precommit. `v3` liga a rodada e um único part. `v2` e `v1` só reabrem arquivo antigo. Identidade de rede libp2p. |
 | **Transação (Remetente)** | Ed25519 | Chave: 32 bytes<br>Assinatura: 64 bytes | `AKG:CHAIN:SENDER:v1` | Assinatura sobre o `subject` da transação (`nonce`, `sender`, `recipient`, `value`, `signature_mldsa`). |
 | **Resistência Quântica (ML-DSA)** | ML-DSA-65 (FIPS 204) | Chave: 1952 bytes<br>Assinatura: 3309 bytes | `AKG:CHAIN:MLDSA65:v1` | Assinatura pós-quântica cobrindo os dados da transação (`nonce`, `sender`, `recipient`, `value`). |
 | **Governança EVM / Bridge** | Conta Ethereum / Multisig | Endereço: 20 bytes | N/A (EVM calls) | Atualização de contratos de verificação ZK (`setVerifier`) em `ArkheValidityBridge.sol`. |
@@ -64,7 +64,7 @@ Para assegurar que o desenvolvimento e a governança do código não sejam captu
   - Conforme arquitetura do `arkhe-chain`, um bloco irmão emitido por outro proposer é registrado como `Fork` e **nunca substitui a ponta canônica** já adotada.
   - Proposers que tentem submeter blocos divergentes na mesma altura são sumariamente marcados com `Equivocation`.
 - **Ausência de Quórum Unilateral:**
-  - `bft_commit` só passa quando a rodada mais alta do hash canônico excede dois terços dos validadores configurados. A ponta não se move. Não há `CanonicalVote`.
+  - `bft_commit` só passa quando a rodada mais alta do hash canônico excede dois terços dos validadores configurados. O precommit novo exige um único part igual ao hash do bloco. A ponta não se move. Não há `CanonicalVote`.
 
 ### 4.2. Governança do Código-Fonte e Lançamento de Releases
 - **Multi-Assinatura para Modificações de Código:**

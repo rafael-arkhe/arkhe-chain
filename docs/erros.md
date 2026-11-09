@@ -25,6 +25,7 @@ Todo variante de `ChainError` é fail-closed. O texto estável começa por `FAIL
 | `Fork` | Irmão válido que não substitui a ponta |
 | `QuorumAbsent` | `bft_commit` sem mais de dois terços dos validadores na rodada mais alta do hash canônico |
 | `RoundRegression` | Precommit de uma rodada menor do que a já guardada para o mesmo hash |
+| `BadPartSet` | Precommit cujo total de parts não é 1, ou cujo hash de part não é o hash do bloco |
 | `Equivocation` | Dois blocos do mesmo proposer na mesma altura |
 | `StateMismatch` | Raiz ou contagem MMR diferente do cabeçalho |
 | `UnknownBlock` | Altura ou hash que esta cadeia não tem |
