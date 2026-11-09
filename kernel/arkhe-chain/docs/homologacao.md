@@ -6,15 +6,15 @@ Um dossiê anterior, no commit publicado `5b2d1750`, marcou o crate como homolog
 
 ## Gate
 
-O comando no monorepo é `cargo test -p arkhe-chain`. O log de 9 de novembro de 2026 está em [gate-2026-11-09.log](gate-2026-11-09.log): código 0, 73 testes aprovados, 0 falhas, diretório `D:\arkhe`. O arquivo do log foi escrito depois dessa execução.
+O comando no monorepo é `cargo test -p arkhe-chain`. O log de 9 de novembro de 2026 está em [gate-2026-11-09.log](gate-2026-11-09.log): código 0, 75 testes aprovados, 0 falhas, diretório `D:\arkhe`. O arquivo do log foi escrito depois dessa execução.
 
 O commit publicado `34bcece8` repete o comando na raiz do checkout, também com 73 testes e 0 falhas. O log desse checkout está no próprio commit e nomeia `D:\arkhe-chain-pub`. `dcee28ec` foi a execução anterior de 72, antes do limiar de peso. As execuções foram nesta máquina. Não são a reexecução de outra pessoa.
 
 ## O que o código mantém
 
 - A admissão é `ArkheNode::ingest`. Não há `ArkheChain` nem `ingest_transaction`.
-- Todo envio exige Ed25519 e ML-DSA-65. O arquivo escrito é `AKGCHNS6`. `AKGCHNS5` abre com as citações de execução vazias. `AKGCHNS1` a `AKGCHNS4` devolvem `Snapshot`.
-- Um irmão de outro proposer fica `Fork` e não troca a ponta. O mesmo proposer na mesma altura é `Equivocation`. `bft_commit` passa só com mais de dois terços dos validadores no hash canônico. Não há round nem `CanonicalVote`. A ponta não se move.
+- Todo envio exige Ed25519 e ML-DSA-65. O arquivo escrito é `AKGCHNS7`. `AKGCHNS6` abre e trata o precommit antigo como rodada 0. `AKGCHNS5` abre com as citações de execução vazias. `AKGCHNS1` a `AKGCHNS4` devolvem `Snapshot`.
+- Um irmão de outro proposer fica `Fork` e não troca a ponta. O mesmo proposer na mesma altura é `Equivocation`. `bft_commit` conta só a rodada mais alta e passa só com mais de dois terços dos validadores no hash canônico. Não há `CanonicalVote`. A ponta não se move.
 - `submit_proof_and_bridge_assets` devolve `VerifierAbsent`. `verifyProof` devolve falso. A âncora aceita tem 37 bytes e `broadcast` fica falso.
 - `cite_ethereum_execution` guarda o número e o hash informados pelo chamador. `confirm_ethereum_execution` confirma quando o cliente devolve o mesmo hash. Sem cliente, a resposta é `RpcAbsent`. `settled` fica falso. A confirmação não entra no arquivo.
 
@@ -25,7 +25,7 @@ O commit publicado `34bcece8` repete o comando na raiz do checkout, também com 
 | A3 | Outra pessoa executa `cargo test -p arkhe-chain` no workspace, no commit que publicar este registro. |
 | A4 | Fechado de novo em `34bcece8`: `vendor/` e 73 testes na raiz. `dcee28ec` foi a execução anterior de 72. Falta outra pessoa repetir o comando. |
 | C1 | Um irmão continua `Fork`. O limiar de precommit não troca a ponta. |
-| C2 | Round e `CanonicalVote`. O limiar local de peso 1 já existe e não move a ponta. |
+| C2 | `CanonicalVote` e part set. A rodada local já entra na assinatura `v2` e no limiar. A ponta não se move. |
 | F1 | ELF do guest, image id de 32 bytes e chave de verificação. Um `image_id` preenchido continua sem carregar. |
 | F2 | Uma transação Bitcoin paga que um nó aceite. |
 | F3 | Um nó de execução Ethereum confirma o par número e hash. O cliente do teste é simulado. |

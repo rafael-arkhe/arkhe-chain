@@ -271,6 +271,7 @@ fn a_reopened_file_keeps_the_precommits_and_the_weight_threshold() {
         let mut vote = arkhe_chain::Precommit {
             validator_id: id.into(),
             height: 1,
+            round: 0,
             block_hash: tip,
             signature: [0u8; 64],
         };
@@ -289,6 +290,8 @@ fn a_reopened_file_keeps_the_precommits_and_the_weight_threshold() {
     )
     .unwrap();
     assert_eq!(again.precommit_count(1).unwrap(), 2);
+    assert_eq!(again.precommit_round(1, "validator-a").unwrap(), Some(0));
+    assert_eq!(again.precommit_round(1, "validator-b").unwrap(), Some(0));
     again.bft_commit(1).unwrap();
     assert_eq!(again.height().unwrap(), 1);
     assert_eq!(again.tip().unwrap(), tip);
@@ -314,6 +317,7 @@ fn a_precommit_with_a_bad_signature_does_not_open() {
     let mut vote = arkhe_chain::Precommit {
         validator_id: "validator-a".into(),
         height: 1,
+        round: 0,
         block_hash: tip,
         signature: [0u8; 64],
     };
@@ -336,6 +340,95 @@ fn a_precommit_with_a_bad_signature_does_not_open() {
         Err(error) => assert_eq!(error, ChainError::Snapshot),
     }
     assert_eq!(std::fs::read(&path).unwrap(), bytes);
+    let _ = std::fs::remove_file(&path);
+}
+
+#[test]
+fn an_akgchns6_precommit_reopens_as_round_zero() {
+    let path = path("v6-precommit");
+    let node = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
+        .unwrap();
+    node.propose_and_seal_block(TS).unwrap();
+    let tip = node.tip().unwrap();
+    drop(node);
+
+    let mut bytes = std::fs::read(&path).unwrap();
+    assert!(bytes.starts_with(b"AKGCHNS7"));
+    assert_eq!(&bytes[bytes.len() - 8..], &[0u8; 8]);
+    bytes[..8].copy_from_slice(b"AKGCHNS6");
+    bytes.truncate(bytes.len() - 8);
+    bytes.extend_from_slice(&2u32.to_be_bytes());
+    for (id, secret) in [
+        ("validator-a", common::SECRET_A),
+        ("validator-b", common::SECRET_B),
+    ] {
+        let mut vote = arkhe_chain::Precommit {
+            validator_id: id.into(),
+            height: 1,
+            round: 0,
+            block_hash: tip,
+            signature: [0u8; 64],
+        };
+        arkhe_chain::sign_historical_precommit(&mut vote, &secret).unwrap();
+        bytes.extend_from_slice(&1u64.to_be_bytes());
+        bytes.extend_from_slice(&(id.len() as u32).to_be_bytes());
+        bytes.extend_from_slice(id.as_bytes());
+        bytes.extend_from_slice(&tip);
+        bytes.extend_from_slice(&vote.signature);
+    }
+    bytes.extend_from_slice(&0u32.to_be_bytes());
+    std::fs::write(&path, &bytes).unwrap();
+
+    let again = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert!(std::fs::read(&path).unwrap().starts_with(b"AKGCHNS7"));
+    assert_eq!(again.precommit_round(1, "validator-a").unwrap(), Some(0));
+    assert_eq!(again.precommit_round(1, "validator-b").unwrap(), Some(0));
+    again.bft_commit(1).unwrap();
+    assert_eq!(again.tip().unwrap(), tip);
+    let mut historical = arkhe_chain::Precommit {
+        validator_id: "validator-a".into(),
+        height: 1,
+        round: 0,
+        block_hash: tip,
+        signature: [0u8; 64],
+    };
+    arkhe_chain::sign_historical_precommit(&mut historical, &common::SECRET_A).unwrap();
+    assert_eq!(
+        again.note_precommit(&historical).unwrap_err(),
+        ChainError::BadProposerSignature
+    );
+    historical.round = 1;
+    assert_eq!(
+        arkhe_chain::sign_historical_precommit(&mut historical, &common::SECRET_A).unwrap_err(),
+        ChainError::BadProposerSignature
+    );
+    drop(again);
+
+    let third = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    third.bft_commit(1).unwrap();
+    assert_eq!(third.height().unwrap(), 1);
     let _ = std::fs::remove_file(&path);
 }
 

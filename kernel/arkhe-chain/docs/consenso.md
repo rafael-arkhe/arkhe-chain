@@ -10,10 +10,10 @@ Dois blocos distintos do mesmo proposer na mesma altura são `Equivocation`. O e
 
 O sync que encontra um irmão grava `Fork` e devolve `P2p("fork")`. O sync que encontra equivocação devolve `Equivocation` e não grava o bloco. Uma cadeia mais longa não substitui a ponta local.
 
-Não há reorg, voto com peso nem quórum.
+Não há reorg. O limiar de precommit não troca a ponta.
 
 ## Finalidade
 
 `finality(height)` devolve `Finality { height, depth }`, com `depth = ponta − height`. Altura ausente, inclusive 0, é `UnknownBlock`. Isso descreve a cadeia canônica local. Não é checkpoint justificado.
 
-`Precommit` é uma assinatura Ed25519 local no domínio `AKG:CHAIN:PRECOMMIT:v1`, sobre a altura e o hash do bloco. Não tem round nem part set. Não é um `CanonicalVote` do CometBFT. Cada validador configurado tem peso 1. `bft_commit` devolve sucesso só quando os precommits do hash canônico são mais de dois terços desse conjunto. Com dois validadores, um voto é `QuorumAbsent` e os dois passam. Com três, dois votos ficam `QuorumAbsent`. Os precommits reabrem com o snapshot. A ponta não se move.
+`Precommit` é uma assinatura Ed25519 local no domínio `AKG:CHAIN:PRECOMMIT:v2`, sobre a altura, a rodada e o hash do bloco. Não tem part set e não é um `CanonicalVote` do CometBFT. Cada validador configurado tem peso 1 e um voto por altura. Uma rodada maior, no mesmo hash, substitui a anterior. Uma rodada menor é `RoundRegression`. `bft_commit` conta só a rodada mais alta e devolve sucesso só quando ela passa de dois terços. Uma rodada anterior não soma. Com dois validadores, os dois na rodada 0 passam; se só um sobe de rodada, o resultado volta a `QuorumAbsent`. `AKGCHNS5` e `AKGCHNS6` reabrem o precommit antigo, sem rodada na assinatura, como rodada 0. `note_precommit` não aceita essa assinatura antiga. A ponta não se move.

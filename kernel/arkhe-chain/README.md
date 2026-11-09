@@ -16,7 +16,7 @@ O `Cargo.toml` deste diretório herda versão, edição e licença de um workspa
 cargo test -p arkhe-chain
 ```
 
-O último gate desta sessão de desenvolvimento terminou com código 0, 73 testes e 0 falhas. O log está em [docs/gate-2026-11-09.log](docs/gate-2026-11-09.log) e foi escrito depois da execução. Uma segunda pessoa ainda não reexecutou o gate.
+O último gate desta sessão de desenvolvimento terminou com código 0, 75 testes e 0 falhas. O log está em [docs/gate-2026-11-09.log](docs/gate-2026-11-09.log) e foi escrito depois da execução. Uma segunda pessoa ainda não reexecutou o gate.
 
 ## Documentação
 
@@ -34,7 +34,7 @@ O último gate desta sessão de desenvolvimento terminou com código 0, 73 teste
 - Todo envio exige Ed25519 e ML-DSA-65. Campo vazio, tamanho diferente de 3309 bytes, assinatura inválida ou chave ausente não move saldo.
 - Um bloco irmão de outro proposer, com o mesmo pai e a mesma altura, devolve `Fork` e não substitui a ponta.
 - Dois blocos distintos do mesmo proposer na mesma altura devolvem `Equivocation`.
-- `finality` é a profundidade local. `bft_commit` passa só com mais de dois terços dos validadores, peso 1 cada um, no hash canônico. Não há round nem `CanonicalVote`. A ponta não se move.
+- `finality` é a profundidade local. `bft_commit` conta só a rodada mais alta e passa só com mais de dois terços dos validadores, peso 1 cada um, no hash canônico. A assinatura é `AKG:CHAIN:PRECOMMIT:v2` e liga a rodada. Não é um `CanonicalVote`. A ponta não se move.
 - `submit_proof_and_bridge_assets` devolve `VerifierAbsent`. `image_id` preenchido não carrega. `verifyProof` no contrato devolve falso.
 - A âncora aceita tem 37 bytes, `ARKHE` seguido de `state_root`. `broadcast` permanece falso.
 - `cite_ethereum_execution` cita um bloco de execução informado pelo chamador e guarda essa citação. Outra citação na mesma altura é `EthereumConflict`. `confirm_ethereum_execution` só confirma quando um cliente devolve o mesmo hash. Sem cliente, a resposta é `RpcAbsent`. `settled` fica falso e a confirmação não entra no arquivo.

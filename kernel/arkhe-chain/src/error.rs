@@ -40,6 +40,8 @@ pub enum ChainError {
     Fork,
     #[error("FAIL_CLOSED: QUORUM_ABSENT")]
     QuorumAbsent,
+    #[error("FAIL_CLOSED: ROUND_REGRESSION")]
+    RoundRegression,
     #[error("FAIL_CLOSED: EQUIVOCATION")]
     Equivocation,
     #[error("FAIL_CLOSED: STATE_MISMATCH")]

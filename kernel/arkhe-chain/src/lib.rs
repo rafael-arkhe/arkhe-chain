@@ -76,13 +76,13 @@ struct Inner {
     sync_resume: Option<p2p::SyncResume>,
     forks: Vec<[u8; 32]>,
     fork_blocks: Vec<Vec<u8>>,
-    precommits: BTreeMap<(u64, String), ([u8; 32], [u8; 64])>,
+    precommits: BTreeMap<(u64, String), StoredPrecommit>,
     ethereum_links: BTreeMap<u64, EthereumExecutionId>,
 }
 
-/// Local finality by depth. This is not a CometBFT commit: there is no round
-/// and no `CanonicalVote`. `depth` is the number of canonical blocks above
-/// `height`; the tip has depth 0.
+/// Local finality by depth. This is not a CometBFT commit: a round here is
+/// only an integer bound into the precommit, and there is no `CanonicalVote`.
+/// `depth` is the number of canonical blocks above `height`; the tip has depth 0.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Finality {
     pub height: u64,
@@ -118,16 +118,26 @@ pub struct AcceptedPeer {
     pub peer_id: libp2p::PeerId,
 }
 
-/// A local Ed25519 attestation. This is not a CometBFT `CanonicalVote`:
-/// the signed bytes are `AKG:CHAIN:PRECOMMIT:v1`, the height, and the block
-/// hash. It carries no round and no part set. Each configured validator has
-/// weight 1.
+/// A local Ed25519 attestation. This is not a CometBFT `CanonicalVote`.
+/// [`precommit_message`] binds `AKG:CHAIN:PRECOMMIT:v2`, the height, the round,
+/// and the block hash. There is no part set. Each configured validator has
+/// weight 1. One validator keeps a single vote per height: a later round for
+/// the same hash replaces it, and an earlier round is refused.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Precommit {
     pub validator_id: String,
     pub height: u64,
+    pub round: u64,
     pub block_hash: [u8; 32],
     pub signature: [u8; 64],
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct StoredPrecommit {
+    pub(crate) round: u64,
+    pub(crate) block_hash: [u8; 32],
+    pub(crate) signature: [u8; 64],
+    pub(crate) historical_v1: bool,
 }
 
 #[derive(Debug)]
@@ -228,8 +238,11 @@ impl ArkheNode {
                 return Err(ChainError::Snapshot);
             }
             drop(inner);
-            for vote in &snap.precommits {
-                if node.note_precommit(vote).is_err() {
+            for decoded in &snap.precommits {
+                if node
+                    .store_precommit(&decoded.vote, decoded.historical_v1)
+                    .is_err()
+                {
                     return Err(ChainError::Snapshot);
                 }
             }
@@ -237,10 +250,15 @@ impl ArkheNode {
             let recorded = snap
                 .precommits
                 .iter()
-                .map(|vote| {
+                .map(|decoded| {
                     (
-                        (vote.height, vote.validator_id.clone()),
-                        (vote.block_hash, vote.signature),
+                        (decoded.vote.height, decoded.vote.validator_id.clone()),
+                        StoredPrecommit {
+                            round: decoded.vote.round,
+                            block_hash: decoded.vote.block_hash,
+                            signature: decoded.vote.signature,
+                            historical_v1: decoded.historical_v1,
+                        },
                     )
                 })
                 .collect::<BTreeMap<_, _>>();
@@ -401,14 +419,26 @@ impl ArkheNode {
         Ok(Finality { height, depth })
     }
 
-    /// Store one verified local precommit. The tip does not move. `bft_commit`
-    /// accepts the height only when the stored votes on the canonical hash
-    /// exceed two thirds of the configured validators.
+    /// Store one verified local precommit. The signature must bind the round.
+    /// The tip does not move. `bft_commit` counts only the highest stored
+    /// round, and only when that round exceeds two thirds of the validators.
     pub fn note_precommit(&self, vote: &Precommit) -> Result<(), ChainError> {
+        self.store_precommit(vote, false)
+    }
+
+    fn store_precommit(&self, vote: &Precommit, historical_v1: bool) -> Result<(), ChainError> {
         let Some(public) = self.validators.get(&vote.validator_id) else {
             return Err(ChainError::NotProposer);
         };
-        if !public.verify(&precommit_message(vote.height, &vote.block_hash), &vote.signature) {
+        let message = if historical_v1 {
+            if vote.round != 0 {
+                return Err(ChainError::BadProposerSignature);
+            }
+            historical_precommit_message(vote.height, &vote.block_hash)
+        } else {
+            precommit_message(vote.height, vote.round, &vote.block_hash)
+        };
+        if !public.verify(&message, &vote.signature) {
             return Err(ChainError::BadProposerSignature);
         }
         let path = self.store_path()?;
@@ -425,15 +455,27 @@ impl ArkheNode {
             return Err(ChainError::UnknownBlock);
         }
         let key = (vote.height, vote.validator_id.clone());
-        if let Some((stored, _)) = inner.precommits.get(&key) {
-            if *stored != vote.block_hash {
+        let previous = inner.precommits.get(&key).cloned();
+        if let Some(stored) = &previous {
+            if stored.block_hash != vote.block_hash {
                 return Err(ChainError::Equivocation);
             }
-            return Ok(());
+            if vote.round < stored.round {
+                return Err(ChainError::RoundRegression);
+            }
+            if vote.round == stored.round {
+                return Ok(());
+            }
         }
-        inner
-            .precommits
-            .insert(key.clone(), (vote.block_hash, vote.signature));
+        inner.precommits.insert(
+            key.clone(),
+            StoredPrecommit {
+                round: vote.round,
+                block_hash: vote.block_hash,
+                signature: vote.signature,
+                historical_v1,
+            },
+        );
         if let Some(path) = path.as_deref() {
             let written = persist::encode_snapshot(
                 &inner.state,
@@ -446,7 +488,14 @@ impl ArkheNode {
             )
             .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
-                inner.precommits.remove(&key);
+                match previous {
+                    Some(stored) => {
+                        inner.precommits.insert(key, stored);
+                    }
+                    None => {
+                        inner.precommits.remove(&key);
+                    }
+                }
                 return Err(error);
             }
         }
@@ -465,9 +514,21 @@ impl ArkheNode {
             .count())
     }
 
-    /// Accept the height when precommits on its canonical hash exceed two
-    /// thirds of the configured validators. Each validator has weight 1.
-    /// There is no round and no `CanonicalVote`. The tip does not move.
+    /// Round stored for this validator at `height`. `Ok(None)` means no vote.
+    pub fn precommit_round(&self, height: u64, validator_id: &str) -> Result<Option<u64>, ChainError> {
+        let inner = self.lock()?;
+        if !inner.by_height.contains_key(&height) {
+            return Err(ChainError::UnknownBlock);
+        }
+        Ok(inner
+            .precommits
+            .get(&(height, validator_id.to_string()))
+            .map(|stored| stored.round))
+    }
+
+    /// Accept the height when the highest round on its canonical hash exceeds
+    /// two thirds of the configured validators. Each validator has weight 1.
+    /// Earlier rounds do not add. There is no `CanonicalVote`. The tip does not move.
     pub fn bft_commit(&self, height: u64) -> Result<(), ChainError> {
         let inner = self.lock()?;
         let canonical = inner
@@ -475,13 +536,21 @@ impl ArkheNode {
             .get(&height)
             .copied()
             .ok_or(ChainError::UnknownBlock)?;
-        let votes = inner
+        let rounds: Vec<u64> = inner
             .precommits
             .iter()
-            .filter(|((stored_height, _), (hash, _))| {
-                *stored_height == height && *hash == canonical
+            .filter_map(|((stored_height, _), stored)| {
+                if *stored_height == height && stored.block_hash == canonical {
+                    Some(stored.round)
+                } else {
+                    None
+                }
             })
-            .count();
+            .collect();
+        let Some(top) = rounds.iter().copied().max() else {
+            return Err(ChainError::QuorumAbsent);
+        };
+        let votes = rounds.iter().filter(|round| **round == top).count();
         let validators = self.validators.len();
         if validators == 0 || votes.saturating_mul(3) <= validators.saturating_mul(2) {
             return Err(ChainError::QuorumAbsent);
@@ -1085,7 +1154,20 @@ pub fn sign_proposer(block: &mut Block, secret_key: &[u8; 32]) -> Result<(), Cha
     sign_block(block, &signer_from(secret_key)?)
 }
 
-pub fn precommit_message(height: u64, block_hash: &[u8; 32]) -> Vec<u8> {
+/// Signed preimage of a new precommit. The round is bound. This is not a
+/// CometBFT `CanonicalVote`.
+pub fn precommit_message(height: u64, round: u64, block_hash: &[u8; 32]) -> Vec<u8> {
+    let mut message = b"AKG:CHAIN:PRECOMMIT:v2\0".to_vec();
+    message.extend_from_slice(&height.to_be_bytes());
+    message.extend_from_slice(&round.to_be_bytes());
+    message.extend_from_slice(block_hash);
+    message
+}
+
+/// Preimage of a precommit stored before rounds existed. It does not bind a
+/// round. The node accepts it only while opening an `AKGCHNS5` or `AKGCHNS6`
+/// file, and only as round 0.
+pub fn historical_precommit_message(height: u64, block_hash: &[u8; 32]) -> Vec<u8> {
     let mut message = b"AKG:CHAIN:PRECOMMIT:v1\0".to_vec();
     message.extend_from_slice(&height.to_be_bytes());
     message.extend_from_slice(block_hash);
@@ -1094,7 +1176,20 @@ pub fn precommit_message(height: u64, block_hash: &[u8; 32]) -> Vec<u8> {
 
 pub fn sign_precommit(vote: &mut Precommit, secret_key: &[u8; 32]) -> Result<(), ChainError> {
     let signer = signer_from(secret_key)?;
-    let signature = signer.sign(&precommit_message(vote.height, &vote.block_hash));
+    let signature = signer.sign(&precommit_message(vote.height, vote.round, &vote.block_hash));
+    vote.signature = signature
+        .as_slice()
+        .try_into()
+        .map_err(|_| ChainError::BadProposerSignature)?;
+    Ok(())
+}
+
+pub fn sign_historical_precommit(vote: &mut Precommit, secret_key: &[u8; 32]) -> Result<(), ChainError> {
+    if vote.round != 0 {
+        return Err(ChainError::BadProposerSignature);
+    }
+    let signer = signer_from(secret_key)?;
+    let signature = signer.sign(&historical_precommit_message(vote.height, &vote.block_hash));
     vote.signature = signature
         .as_slice()
         .try_into()
