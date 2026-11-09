@@ -4,9 +4,9 @@ use std::path::Path;
 use crate::codec::{decode_tx, encode_tx};
 use crate::error::ChainError;
 use crate::state::ChainState;
-use crate::tx::{account_id, Transaction};
+use crate::tx::{account_id, Transaction, MLDSA65_PK_LEN};
 
-const MAGIC: &[u8; 8] = b"AKGCHNS2";
+const MAGIC: &[u8; 8] = b"AKGCHNS5";
 const MAX_SNAPSHOT: usize = 64 * 1024 * 1024;
 const MAX_MEMPOOL: usize = 1000;
 
@@ -19,6 +19,10 @@ pub(crate) struct Snapshot {
     pub(crate) nonces: BTreeMap<String, u64>,
     pub(crate) blocks: Vec<Vec<u8>>,
     pub(crate) mempool: Vec<Transaction>,
+    pub(crate) ed25519: BTreeMap<String, [u8; 32]>,
+    pub(crate) mldsa: BTreeMap<String, [u8; MLDSA65_PK_LEN]>,
+    pub(crate) forks: Vec<Vec<u8>>,
+    pub(crate) precommits: Vec<crate::Precommit>,
 }
 
 pub(crate) fn encode_snapshot(
@@ -26,6 +30,8 @@ pub(crate) fn encode_snapshot(
     by_height: &BTreeMap<u64, [u8; 32]>,
     blocks: &HashMap<[u8; 32], Vec<u8>>,
     mempool: &VecDeque<Transaction>,
+    forks: &[Vec<u8>],
+    precommits: &BTreeMap<(u64, String), ([u8; 32], [u8; 64])>,
 ) -> Result<Vec<u8>, ChainError> {
     if by_height.len() as u64 != state.height {
         return Err(ChainError::Snapshot);
@@ -65,6 +71,22 @@ pub(crate) fn encode_snapshot(
         push_u32(&mut out, encoded.len() as u32);
         out.extend_from_slice(&encoded);
     }
+    write_keys(&mut out, state.account_keys())?;
+    write_keys(&mut out, state.account_mldsa())?;
+    let fork_count = u32::try_from(forks.len()).map_err(|_| ChainError::Snapshot)?;
+    if forks.len() > 1_000 {
+        return Err(ChainError::Snapshot);
+    }
+    push_u32(&mut out, fork_count);
+    for fork in forks {
+        let n = u32::try_from(fork.len()).map_err(|_| ChainError::Snapshot)?;
+        if fork.is_empty() || fork.len() > 2 * 1024 * 1024 {
+            return Err(ChainError::Snapshot);
+        }
+        push_u32(&mut out, n);
+        out.extend_from_slice(fork);
+    }
+    write_precommits(&mut out, precommits)?;
     if out.len() > MAX_SNAPSHOT {
         return Err(ChainError::Snapshot);
     }
@@ -116,6 +138,28 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
         }
         mempool.push(decode_tx(rd.take(n)?).map_err(|_| ChainError::Snapshot)?);
     }
+    let ed25519 = read_keys(&mut rd)?;
+    for public in ed25519.values() {
+        libp2p::identity::ed25519::PublicKey::try_from_bytes(public)
+            .map_err(|_| ChainError::Snapshot)?;
+    }
+    let mldsa = read_keys(&mut rd)?;
+    for public in mldsa.values() {
+        crate::tx::decode_mldsa_public(public).map_err(|_| ChainError::Snapshot)?;
+    }
+    let fork_count = rd.u32()? as usize;
+    if fork_count > 1_000 {
+        return Err(ChainError::Snapshot);
+    }
+    let mut forks = Vec::with_capacity(fork_count);
+    for _ in 0..fork_count {
+        let n = rd.u32()? as usize;
+        if n == 0 || n > 2 * 1024 * 1024 {
+            return Err(ChainError::Snapshot);
+        }
+        forks.push(rd.take(n)?.to_vec());
+    }
+    let precommits = read_precommits(&mut rd)?;
     if rd.i != bytes.len() {
         return Err(ChainError::Snapshot);
     }
@@ -128,6 +172,10 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
         nonces,
         blocks,
         mempool,
+        ed25519,
+        mldsa,
+        forks,
+        precommits,
     })
 }
 
@@ -139,6 +187,55 @@ pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), ChainError> 
     }
     std::fs::remove_file(path).map_err(|_| ChainError::Snapshot)?;
     std::fs::rename(&tmp, path).map_err(|_| ChainError::Snapshot)
+}
+
+fn write_precommits(
+    out: &mut Vec<u8>,
+    votes: &BTreeMap<(u64, String), ([u8; 32], [u8; 64])>,
+) -> Result<(), ChainError> {
+    let n = u32::try_from(votes.len()).map_err(|_| ChainError::Snapshot)?;
+    if votes.len() > 1_000 {
+        return Err(ChainError::Snapshot);
+    }
+    push_u32(out, n);
+    for ((height, validator), (hash, signature)) in votes {
+        if validator.is_empty() || validator.len() > 128 {
+            return Err(ChainError::Snapshot);
+        }
+        push_u64(out, *height);
+        let len = u32::try_from(validator.len()).map_err(|_| ChainError::Snapshot)?;
+        push_u32(out, len);
+        out.extend_from_slice(validator.as_bytes());
+        out.extend_from_slice(hash);
+        out.extend_from_slice(signature);
+    }
+    Ok(())
+}
+
+fn read_precommits(rd: &mut Rd<'_>) -> Result<Vec<crate::Precommit>, ChainError> {
+    let n = rd.u32()? as usize;
+    if n > 1_000 {
+        return Err(ChainError::Snapshot);
+    }
+    let mut votes = Vec::with_capacity(n);
+    for _ in 0..n {
+        let height = rd.u64()?;
+        let len = rd.u32()? as usize;
+        if len == 0 || len > 128 {
+            return Err(ChainError::Snapshot);
+        }
+        let raw = rd.take(len)?.to_vec();
+        let validator_id = std::str::from_utf8(&raw)
+            .map_err(|_| ChainError::Snapshot)?
+            .to_string();
+        votes.push(crate::Precommit {
+            validator_id,
+            height,
+            block_hash: rd.arr32()?,
+            signature: rd.take(64)?.try_into().map_err(|_| ChainError::Snapshot)?,
+        });
+    }
+    Ok(votes)
 }
 
 fn write_accounts(out: &mut Vec<u8>, map: &BTreeMap<String, u64>) -> Result<(), ChainError> {
@@ -154,6 +251,48 @@ fn write_accounts(out: &mut Vec<u8>, map: &BTreeMap<String, u64>) -> Result<(), 
         push_u64(out, *value);
     }
     Ok(())
+}
+
+fn write_keys<const N: usize>(
+    out: &mut Vec<u8>,
+    map: &BTreeMap<String, [u8; N]>,
+) -> Result<(), ChainError> {
+    let n = u32::try_from(map.len()).map_err(|_| ChainError::Snapshot)?;
+    push_u32(out, n);
+    for (account, key) in map {
+        if !account_id(account) {
+            return Err(ChainError::Snapshot);
+        }
+        let len = u32::try_from(account.len()).map_err(|_| ChainError::Snapshot)?;
+        push_u32(out, len);
+        out.extend_from_slice(account.as_bytes());
+        out.extend_from_slice(key);
+    }
+    Ok(())
+}
+
+fn read_keys<const N: usize>(rd: &mut Rd<'_>) -> Result<BTreeMap<String, [u8; N]>, ChainError> {
+    let n = rd.u32()? as usize;
+    if n > 100_000 {
+        return Err(ChainError::Snapshot);
+    }
+    let mut map = BTreeMap::new();
+    for _ in 0..n {
+        let len = rd.u32()? as usize;
+        if len == 0 || len > 128 {
+            return Err(ChainError::Snapshot);
+        }
+        let raw = rd.take(len)?.to_vec();
+        let text = std::str::from_utf8(&raw).map_err(|_| ChainError::Snapshot)?;
+        if !account_id(text) {
+            return Err(ChainError::Snapshot);
+        }
+        let key = rd.take(N)?.try_into().map_err(|_| ChainError::Snapshot)?;
+        if map.insert(text.to_string(), key).is_some() {
+            return Err(ChainError::Snapshot);
+        }
+    }
+    Ok(map)
 }
 
 fn read_accounts(rd: &mut Rd<'_>) -> Result<BTreeMap<String, u64>, ChainError> {

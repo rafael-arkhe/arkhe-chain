@@ -49,6 +49,16 @@ fn an_unverified_mldsa_blob_does_not_move_a_balance() {
     node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
         .unwrap();
     assert_eq!(node.mempool_len().unwrap(), 1);
+
+    let mut unsigned = common::transfer(1, GENESIS_ACCOUNT, "bob", 1);
+    unsigned.signature_mldsa.clear();
+    let unsigned = common::rebind(&unsigned);
+    assert_eq!(
+        node.ingest(unsigned).unwrap_err(),
+        ChainError::UnverifiedSignature
+    );
+    assert_eq!(node.mempool_len().unwrap(), 1);
+    assert_eq!(node.balance("bob").unwrap(), 0);
 }
 
 #[test]
@@ -70,7 +80,16 @@ fn a_verified_mldsa65_signature_moves_the_balance_and_a_flipped_one_does_not() {
     assert_eq!(node.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY - 25);
     assert_eq!(node.supply().unwrap(), GENESIS_SUPPLY);
 
-    let without_key = common::node();
+    let without = common::accounts();
+    let mut without_key_accounts = without;
+    without_key_accounts[0].mldsa_public_key = None;
+    let without_key = arkhe_chain::ArkheNode::new(
+        "validator-a",
+        &common::SECRET_A,
+        common::validators(),
+        without_key_accounts,
+    )
+    .unwrap();
     assert_eq!(
         without_key.ingest(tx.clone()).unwrap_err(),
         ChainError::UnverifiedSignature
@@ -513,6 +532,47 @@ fn canonical_depth_is_the_only_finality() {
     assert_eq!(node.balance("bob").unwrap(), 25);
     assert_eq!(node.balance("carol").unwrap(), 10);
     assert_eq!(node.supply().unwrap(), GENESIS_SUPPLY);
+}
+
+#[test]
+fn a_signed_precommit_does_not_commit_the_block() {
+    let node = common::node();
+    node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
+        .unwrap();
+    node.propose_and_seal_block(TS).unwrap();
+    let tip = node.tip().unwrap();
+    let mut vote = arkhe_chain::Precommit {
+        validator_id: "validator-b".into(),
+        height: 1,
+        block_hash: tip,
+        signature: [0u8; 64],
+    };
+    assert_eq!(
+        node.note_precommit(&vote).unwrap_err(),
+        ChainError::BadProposerSignature
+    );
+    arkhe_chain::sign_precommit(&mut vote, &common::SECRET_B).unwrap();
+    node.note_precommit(&vote).unwrap();
+    vote.validator_id = "validator-a".into();
+    arkhe_chain::sign_precommit(&mut vote, &common::SECRET_A).unwrap();
+    node.note_precommit(&vote).unwrap();
+    assert_eq!(node.precommit_count(1).unwrap(), 2);
+    assert_eq!(node.bft_commit(1).unwrap_err(), ChainError::QuorumAbsent);
+    assert_eq!(
+        node.finality(1).unwrap(),
+        arkhe_chain::Finality { height: 1, depth: 0 }
+    );
+    assert_eq!(node.tip().unwrap(), tip);
+    assert_eq!(node.balance("bob").unwrap(), 25);
+
+    vote.block_hash[0] ^= 0x01;
+    arkhe_chain::sign_precommit(&mut vote, &common::SECRET_A).unwrap();
+    assert_eq!(
+        node.note_precommit(&vote).unwrap_err(),
+        ChainError::UnknownBlock
+    );
+    assert_eq!(node.precommit_count(1).unwrap(), 2);
+    assert_eq!(node.bft_commit(0).unwrap_err(), ChainError::UnknownBlock);
 }
 
 #[test]

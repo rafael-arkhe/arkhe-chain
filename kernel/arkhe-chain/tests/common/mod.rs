@@ -47,18 +47,45 @@ pub const SECRET_A: [u8; 32] = [0x11; 32];
 pub const SECRET_B: [u8; 32] = [0x22; 32];
 pub const GENESIS_SECRET: [u8; 32] = [0x44; 32];
 pub const ATTACKER_SECRET: [u8; 32] = [0x55; 32];
+const GENESIS_MLDSA: [u8; 32] = [0x66; 32];
+const ATTACKER_MLDSA: [u8; 32] = [0x77; 32];
+
+fn mldsa_public(seed: &[u8; 32]) -> [u8; arkhe_chain::MLDSA65_PK_LEN] {
+    use std::sync::OnceLock;
+    static GENESIS: OnceLock<[u8; arkhe_chain::MLDSA65_PK_LEN]> = OnceLock::new();
+    static ATTACKER: OnceLock<[u8; arkhe_chain::MLDSA65_PK_LEN]> = OnceLock::new();
+    let slot = if *seed == GENESIS_MLDSA {
+        &GENESIS
+    } else if *seed == ATTACKER_MLDSA {
+        &ATTACKER
+    } else {
+        panic!("no cached ML-DSA seed");
+    };
+    *slot.get_or_init(|| {
+        let mut probe = Transaction {
+            nonce: 0,
+            sender: "genesis-alloc".into(),
+            recipient: "genesis-alloc".into(),
+            value: 0,
+            payload: Vec::new(),
+            signature_mldsa: Vec::new(),
+            sender_signature: [0u8; 64],
+        };
+        arkhe_chain::sign_mldsa(&mut probe, seed).unwrap()
+    })
+}
 
 pub fn accounts() -> Vec<arkhe_chain::Account> {
     vec![
         arkhe_chain::Account {
             id: "genesis-alloc".into(),
             public_key: arkhe_chain::public_key(&GENESIS_SECRET).unwrap(),
-            mldsa_public_key: None,
+            mldsa_public_key: Some(mldsa_public(&GENESIS_MLDSA)),
         },
         arkhe_chain::Account {
             id: "attacker-node".into(),
             public_key: arkhe_chain::public_key(&ATTACKER_SECRET).unwrap(),
-            mldsa_public_key: None,
+            mldsa_public_key: Some(mldsa_public(&ATTACKER_MLDSA)),
         },
     ]
 }
@@ -124,7 +151,7 @@ fn judged(
     allow: bool,
     emergency_stop: bool,
 ) -> Transaction {
-    let bare = Transaction {
+    let mut bare = Transaction {
         nonce,
         sender: sender.into(),
         recipient: recipient.into(),
@@ -133,6 +160,12 @@ fn judged(
         signature_mldsa: Vec::new(),
         sender_signature: [0u8; 64],
     };
+    let seed = match sender {
+        "genesis-alloc" => GENESIS_MLDSA,
+        "attacker-node" => ATTACKER_MLDSA,
+        other => panic!("no test key for {other}"),
+    };
+    arkhe_chain::sign_mldsa(&mut bare, &seed).unwrap();
     let mut gate = ContainmentGate::new(DevPolicyResolver);
     gate.set_emergency_stop(emergency_stop);
     let source = Source(policy(allow));

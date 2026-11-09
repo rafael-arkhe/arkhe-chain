@@ -38,6 +38,8 @@ pub enum ChainError {
     ParentMismatch,
     #[error("FAIL_CLOSED: FORK")]
     Fork,
+    #[error("FAIL_CLOSED: QUORUM_ABSENT")]
+    QuorumAbsent,
     #[error("FAIL_CLOSED: EQUIVOCATION")]
     Equivocation,
     #[error("FAIL_CLOSED: STATE_MISMATCH")]

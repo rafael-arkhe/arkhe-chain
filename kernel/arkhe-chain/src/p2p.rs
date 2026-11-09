@@ -102,6 +102,8 @@ pub(crate) struct SyncResume {
 /// One call walks at most 128 headers. A longer gap keeps the verified cursor
 /// and imports nothing until a later call reaches this node. The cursor is
 /// kept for the whole gap. A tip that does not extend this node is rejected.
+/// A sibling of a canonical block is stored as `Fork` and does not replace the tip.
+/// The same proposer at the same height is `Equivocation` and is not stored.
 pub async fn sync_canonical(
     node: &ArkheNode,
     addr: Multiaddr,
@@ -243,6 +245,17 @@ async fn follow(
                             },
                         ));
                         continue;
+                    }
+                    match node.import_block(&body) {
+                        Err(ChainError::Fork) => {
+                            node.clear_sync_resume()?;
+                            return Err(ChainError::P2p("fork"));
+                        }
+                        Err(ChainError::Equivocation) => {
+                            node.clear_sync_resume()?;
+                            return Err(ChainError::Equivocation);
+                        }
+                        _ => {}
                     }
                     if header.parent_hash == [0u8; 32] {
                         node.clear_sync_resume()?;

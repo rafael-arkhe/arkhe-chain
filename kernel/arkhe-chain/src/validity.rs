@@ -11,6 +11,7 @@ pub struct ValidityCircuit {
     pub profile: String,
     pub phase: u64,
     pub system: String,
+    pub image_id: Option<String>,
     pub verifier: VerifierPin,
     #[serde(rename = "journal_encoding")]
     pub journal_encoding: String,
@@ -59,6 +60,7 @@ pub fn load_circuit() -> Result<ValidityCircuit, ChainError> {
     if cfg.profile != "arkhe-validity-slash-v1"
         || cfg.phase != 0
         || cfg.system != "risc0-groth16"
+        || !image_id_is_absent(cfg.image_id.as_deref())
         || cfg.verifier.chain != "base-sepolia"
         || cfg.verifier.seal_bytes != 260
         || cfg.verifier.max_gas != 276_000
@@ -98,6 +100,10 @@ pub fn read_journal(proof: &[u8]) -> Result<ProofJournal, ChainError> {
     })
 }
 
+fn image_id_is_absent(image_id: Option<&str>) -> bool {
+    image_id.is_none()
+}
+
 fn decode_selector(hex: &str) -> Result<[u8; 4], ChainError> {
     if hex.len() != 8 {
         return Err(ChainError::CircuitConfig);
@@ -108,4 +114,18 @@ fn decode_selector(hex: &str) -> Result<[u8; 4], ChainError> {
             .map_err(|_| ChainError::CircuitConfig)?;
     }
     Ok(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::image_id_is_absent;
+
+    #[test]
+    fn a_filled_image_id_is_not_a_guest() {
+        assert!(image_id_is_absent(None));
+        assert!(!image_id_is_absent(Some(
+            "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff",
+        )));
+        assert!(!image_id_is_absent(Some("")));
+    }
 }

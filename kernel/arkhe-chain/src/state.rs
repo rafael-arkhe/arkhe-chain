@@ -107,13 +107,11 @@ impl ChainState {
             .get(&tx.sender)
             .ok_or(ChainError::UnverifiedSignature)?;
         tx.verify_sender(public_key)?;
-        if !tx.signature_mldsa.is_empty() {
-            let public = self
-                .account_mldsa
-                .get(&tx.sender)
-                .ok_or(ChainError::UnverifiedSignature)?;
-            tx.verify_mldsa(public)?;
-        }
+        let public = self
+            .account_mldsa
+            .get(&tx.sender)
+            .ok_or(ChainError::UnverifiedSignature)?;
+        tx.verify_mldsa(public)?;
         let verdict = DecisionVerdict::from_canonical_bytes(&tx.payload)
             .map_err(|_| ChainError::Admission("verdict"))?;
         if verdict.decision != Decision::Allow {

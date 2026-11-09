@@ -68,7 +68,10 @@ impl Transaction {
         if !account_id(&self.sender) || !account_id(&self.recipient) {
             return Err(ChainError::BadAccount);
         }
-        if self.signature_mldsa.len() != MLDSA65_SIG_LEN && !self.signature_mldsa.is_empty() {
+        if self.signature_mldsa.is_empty() {
+            return Err(ChainError::UnverifiedSignature);
+        }
+        if self.signature_mldsa.len() != MLDSA65_SIG_LEN {
             return Err(ChainError::BadSignatureLength);
         }
         if self.payload.len() > 4096 {
@@ -127,12 +130,41 @@ pub fn sign_mldsa(
     seed: &[u8; 32],
 ) -> Result<[u8; MLDSA65_PK_LEN], ChainError> {
     use fips204::traits::{KeyGen, SerDes, Signer};
-    let (public, secret) = fips204::ml_dsa_65::KG::keygen_from_seed(seed);
+    use std::collections::HashMap;
+    use std::sync::Mutex;
+
+    struct Pair {
+        public: [u8; MLDSA65_PK_LEN],
+        secret: Vec<u8>,
+    }
+    static CACHE: Mutex<Option<HashMap<[u8; 32], Pair>>> = Mutex::new(None);
+    let mut cache = CACHE.lock().unwrap_or_else(|poison| poison.into_inner());
+    let pairs = cache.get_or_insert_with(HashMap::new);
+    if !pairs.contains_key(seed) {
+        let (public, secret) = fips204::ml_dsa_65::KG::keygen_from_seed(seed);
+        pairs.insert(
+            *seed,
+            Pair {
+                public: public.into_bytes(),
+                secret: secret.into_bytes().to_vec(),
+            },
+        );
+    }
+    let pair = pairs.get(seed).expect("keypair");
+    let public = pair.public;
+    let secret_bytes: [u8; 4032] = pair
+        .secret
+        .as_slice()
+        .try_into()
+        .map_err(|_| ChainError::UnverifiedSignature)?;
+    drop(cache);
+    let secret = fips204::ml_dsa_65::PrivateKey::try_from_bytes(secret_bytes)
+        .map_err(|_| ChainError::UnverifiedSignature)?;
     let signature = secret
         .try_sign_with_seed(&[0x77; 32], &mldsa_message(tx), MLDSA65_CONTEXT)
         .map_err(|_| ChainError::UnverifiedSignature)?;
     tx.signature_mldsa = signature.to_vec();
-    Ok(public.into_bytes())
+    Ok(public)
 }
 
 pub(crate) fn sender_message(tx: &Transaction) -> Vec<u8> {
