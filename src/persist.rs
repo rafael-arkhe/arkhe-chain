@@ -376,13 +376,24 @@ fn read_ethereum_links(
 }
 
 pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), ChainError> {
+    use std::io::Write;
+
     let tmp = path.with_extension("arkhe-tmp");
-    std::fs::write(&tmp, bytes).map_err(|_| ChainError::Snapshot)?;
-    if std::fs::rename(&tmp, path).is_ok() {
-        return Ok(());
-    }
-    std::fs::remove_file(path).map_err(|_| ChainError::Snapshot)?;
-    std::fs::rename(&tmp, path).map_err(|_| ChainError::Snapshot)
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&tmp)
+        .map_err(|_| ChainError::Snapshot)?;
+    // Own and clean up only the temporary path created by this call. An
+    // existing path is refused, including a stale file or a symbolic link.
+    let temporary = tempfile::TempPath::try_from_path(tmp).map_err(|_| ChainError::Snapshot)?;
+    file.write_all(bytes).map_err(|_| ChainError::Snapshot)?;
+    file.sync_all().map_err(|_| ChainError::Snapshot)?;
+    drop(file);
+    // tempfile uses replacement semantics on Windows as well as Unix. It
+    // never deletes the previous destination before attempting replacement.
+    temporary.persist(path).map_err(|_| ChainError::Snapshot)?;
+    Ok(())
 }
 
 fn write_precommits(
@@ -390,9 +401,6 @@ fn write_precommits(
     votes: &BTreeMap<(u64, String), crate::StoredPrecommit>,
 ) -> Result<(), ChainError> {
     let n = u32::try_from(votes.len()).map_err(|_| ChainError::Snapshot)?;
-    if votes.len() > 1_000 {
-        return Err(ChainError::Snapshot);
-    }
     push_u32(out, n);
     for ((height, validator), stored) in votes {
         if validator.is_empty() || validator.len() > 128 {
@@ -418,7 +426,10 @@ fn write_precommits(
 
 fn read_precommits(rd: &mut Rd<'_>, rounds: bool) -> Result<Vec<DecodedPrecommit>, ChainError> {
     let n = rd.u32()? as usize;
-    if n > 1_000 {
+    // Bound allocation by bytes actually present, including legacy records.
+    // A record needs height, id length, at least one id byte, hash and signature.
+    let minimum_record = 8 + 4 + 1 + 32 + 64 + if rounds { 8 + 1 } else { 0 };
+    if n > (rd.buf.len() - rd.i) / minimum_record {
         return Err(ChainError::Snapshot);
     }
     let mut votes = Vec::with_capacity(n);

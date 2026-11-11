@@ -2,6 +2,8 @@
 
 Este arquivo registra o que o crate faz e o que ainda impede a homologação. O crate não está homologado.
 
+As correções da revisão de `0379344bf6977a447ad0452faa3e8d0d03de0b2b`, os testes de regressão e o gate que identifica o commit exato estão em [audit-remediation.md](audit-remediation.md). Os registros abaixo são históricos e não identificam automaticamente o resultado de uma revisão posterior.
+
 Um dossiê anterior, no commit publicado `5b2d1750`, marcou o crate como homologado, contou 54 testes e assinalou uma reexecução por uma segunda pessoa. Essa contagem não é a suíte atual, e essa reexecução não está neste log. Essas marcas ficam retiradas.
 
 ## Gate

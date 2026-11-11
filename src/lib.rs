@@ -317,7 +317,11 @@ impl ArkheNode {
                     blocks: saved.blocks,
                 });
             }
-            node.lock()?.committed = snap.committed;
+            // A height in a snapshot is a claim, not a quorum certificate.
+            // Replay every claimed commit using the verified stored votes.
+            for height in 1..=snap.committed {
+                node.bft_commit(height).map_err(|_| ChainError::Snapshot)?;
+            }
         }
         node.checkpoint_to(&path)?;
         *node.store.lock().map_err(|_| ChainError::LockPoisoned)? = Some(path);
@@ -535,6 +539,11 @@ impl ArkheNode {
             if vote.round == stored.round {
                 return Ok(());
             }
+        }
+        // Keep the certificate that justified an already persisted commit.
+        // Replacing one vote with a higher round could destroy that quorum.
+        if vote.height <= inner.committed {
+            return Ok(());
         }
         inner.precommits.insert(
             key.clone(),

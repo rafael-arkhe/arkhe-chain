@@ -3042,14 +3042,18 @@ async fn listen_and_hold() -> (PeerId, Multiaddr, tokio::task::JoinHandle<()>) {
                     StreamProtocol::new("/arkhe/block-sync/1"),
                     request_response::ProtocolSupport::Full,
                 )],
-                request_response::Config::default(),
+                // Keep the fixture alive past the client's 10-second timeout.
+                request_response::Config::default()
+                    .with_request_timeout(std::time::Duration::from_secs(60)),
             ),
             vote: request_response::cbor::Behaviour::new(
                 [(
                     StreamProtocol::new("/arkhe/precommit/1"),
                     request_response::ProtocolSupport::Full,
                 )],
-                request_response::Config::default(),
+                // Keep the fixture alive past the client's 10-second timeout.
+                request_response::Config::default()
+                    .with_request_timeout(std::time::Duration::from_secs(60)),
             ),
         })
         .map_err(|err| match err {})
