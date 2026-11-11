@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Controlled delegation demo for a real repository audit and portable verification."""
 import argparse
+from contextlib import closing
 import hashlib
 import json
 import os
@@ -76,7 +77,7 @@ def integer(value, low, high):
     return type(value) is int and low <= value <= high
 
 
-def validate_grant(envelope, trust, plan, commit, tree, output, now):
+def validate_grant(envelope, trust, plan, commit, tree, output, now, check_execution_path=True):
     grant = verify_signature(envelope, trust["authority_public"])
     if set(grant) != GRANT_FIELDS or not integer(grant["version"], 1, 1):
         raise ValueError("grant schema")
@@ -94,7 +95,9 @@ def validate_grant(envelope, trust, plan, commit, tree, output, now):
         raise ValueError("delegate not authorized")
     if grant["network_keys_digest"] != digest(canonical(trust["network_keys"])):
         raise ValueError("ledger identity not authorized")
-    if grant["output_directory"] != str(Path(output).resolve()):
+    if not isinstance(grant["output_directory"], str) or not grant["output_directory"]:
+        raise ValueError("output schema")
+    if check_execution_path and grant["output_directory"] != str(Path(output).resolve()):
         raise ValueError("output not authorized")
     if not integer(grant["max_attempts"], 1, 3) or not integer(grant["max_seconds"], 1, 1200):
         raise ValueError("invalid budget")
@@ -109,12 +112,12 @@ class Reservations:
     """Reserve before dispatch. In-doubt/running tasks require operator review."""
     def __init__(self, path):
         self.path = Path(path)
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db, db:
             db.execute("CREATE TABLE IF NOT EXISTS tasks (task_id TEXT PRIMARY KEY, grant_digest TEXT NOT NULL, attempts INTEGER NOT NULL, status TEXT NOT NULL)")
 
     def reserve(self, grant, envelope):
         commitment = digest(canonical(envelope))
-        with sqlite3.connect(self.path, timeout=10) as db:
+        with closing(sqlite3.connect(self.path, timeout=10)) as db, db:
             db.execute("BEGIN IMMEDIATE")
             row = db.execute("SELECT grant_digest, attempts, status FROM tasks WHERE task_id=?", (grant["task_id"],)).fetchone()
             if row is None:
@@ -126,7 +129,7 @@ class Reservations:
             db.execute("UPDATE tasks SET attempts=attempts+1, status='running' WHERE task_id=?", (grant["task_id"],))
 
     def finish(self, task_id, success):
-        with sqlite3.connect(self.path) as db:
+        with closing(sqlite3.connect(self.path)) as db, db:
             cursor = db.execute("UPDATE tasks SET status=? WHERE task_id=? AND status='running'",
                                 ("completed" if success else "failed", task_id))
             if cursor.rowcount != 1:
@@ -223,7 +226,7 @@ def verify_bundle(bundle, trust_path, pinned_trust_digest, binary):
     if not integer(receipt["started_at"], 0, 2**63 - 1) or not integer(receipt["finished_at"], receipt["started_at"], 2**63 - 1):
         raise ValueError("receipt time")
     grant = validate_grant(envelope, trust, plan, receipt["source_commit"], receipt["source_tree"],
-                           envelope["body"]["output_directory"], receipt["started_at"])
+                           envelope["body"]["output_directory"], receipt["started_at"], check_execution_path=False)
     if receipt["finished_at"] >= grant["expires_at"] or receipt["task_id"] != grant["task_id"]:
         raise ValueError("receipt outside delegation")
     counts = verify_gate(bundle / "gate", receipt["source_commit"], receipt["source_tree"])

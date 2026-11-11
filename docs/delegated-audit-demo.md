@@ -72,6 +72,11 @@ execution time. It does not require that the original delegation remain active
 when the auditor checks the exported bundle. The receipt and ledger timestamp
 must still lie within that original window.
 
+Execution requires the signed canonical output path on the execution host.
+Historical verification preserves that signed string without resolving it on the
+auditor's operating system. SQLite connections are explicitly closed after their
+transactions, including exceptions and concurrent reservation attempts.
+
 ## Trust boundaries and limits
 
 The authority, delegate and two validator identities are controlled by the same

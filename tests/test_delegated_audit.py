@@ -20,7 +20,7 @@ class DelegatedAuditTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.directory = tempfile.TemporaryDirectory()
-        cls.root = Path(cls.directory.name)
+        cls.root = Path(cls.directory.name).resolve()
         repo = Path(__file__).resolve().parents[1]
         target = Path(os.environ.get("CARGO_TARGET_DIR", repo / "target"))
         name = "delegated_audit_ledger" + (".exe" if os.name == "nt" else "")
@@ -150,6 +150,13 @@ class DelegatedAuditTests(unittest.TestCase):
     def test_other_output_is_rejected(self):
         with self.assertRaises(ValueError):
             self.validate(grant=dict(self.grant, output_directory=str(self.root / "elsewhere")))
+
+    def test_historical_verification_preserves_foreign_execution_path(self):
+        grant = dict(self.grant, output_directory="Z:\\original-host\\audit-bundle")
+        envelope = audit.sign(grant, self.authority)
+        verified = audit.validate_grant(envelope, self.trust, self.plan, "a" * 40, "b" * 40,
+            grant["output_directory"], int(time.time()), check_execution_path=False)
+        self.assertEqual(verified["output_directory"], grant["output_directory"])
 
     def test_invalid_budgets_are_rejected(self):
         for value in [0, -1, True, 4]:
