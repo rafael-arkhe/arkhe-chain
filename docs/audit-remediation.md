@@ -3,7 +3,7 @@
 These changes address four findings from the review of commit
 `0379344bf6977a447ad0452faa3e8d0d03de0b2b`.
 
-Two existing tamper tests now expect rejection during policy validation, before
+Three existing tamper tests now expect rejection during policy validation, before
 the state-root comparison. The highest-round test exercises an uncommitted
 height; the new restart regression covers certificate preservation after commit.
 The stalled-peer test fixture uses a 60-second server timeout, exceeding the
