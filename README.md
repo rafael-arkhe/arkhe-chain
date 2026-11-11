@@ -1,6 +1,8 @@
 # arkhe-chain
 
-`arkhe-chain` é a implementação do nó local em Rust que estende e gerencia a ponta da cadeia canônica Arkhe. O modelo de transação adota criptografia híbrida pós-quântica (Ed25519 + ML-DSA-65), árvore MMR de acumulação de transações, consenso BFT fail-closed com quórum estritamente superior a dois terços ($3f + 1$), ancoragem criptográfica Bitcoin e verificação de provas de validade ZK Groth16 para pontes de liquidação.
+`arkhe-chain` é a implementação do nó local em Rust que estende e gerencia a ponta da cadeia canônica Arkhe. O modelo de transação adota assinaturas Ed25519 + ML-DSA-65, árvore MMR e precommits com quórum estritamente superior a dois terços. A convergência BFT permanece pendente. O nó prepara âncoras Bitcoin e interfaces de liquidação ZK, cujo caminho padrão recusa a operação enquanto o verificador está ausente.
+
+As correções da auditoria, os limites de compatibilidade e o procedimento para vincular testes ao commit estão em [audit-remediation.md](docs/audit-remediation.md).
 
 A admissão de transações é feita exclusivamente via `ArkheNode::ingest`. O payload transacional transporta a codificação CBOR canônica de `DecisionVerdict` no domínio `AKG:VERDICT:v1`. O nó opera sob invariantes rígidos: não existem os tipos `ArkheChain` nem a função `ingest_transaction`. O projeto não possui marca de homologação de produção.
 
@@ -151,7 +153,7 @@ A comunicação inter-nós baseia-se na stack `libp2p` com streams orientados a 
 
 ## Limites e Invariantes Fail-Closed
 
-O código impõe barreiras fail-closed para garantir resiliência e integridade absoluta:
+O código impõe as seguintes validações e limites:
 - **Tamanho Máximo de Payload Transacional:** 4.096 bytes.
 - **Tamanho Máximo de Transações por Bloco:** 250 transações.
 - **Capacidade Máxima da Mempool:** 1.000 transações pendentes.

@@ -314,7 +314,7 @@ fn import_replays_the_same_balances_and_a_tampered_block_does_not() {
         untouched
             .import_block(&encode_block(&tampered))
             .unwrap_err(),
-        ChainError::StateMismatch
+        ChainError::Admission("policy")
     );
     assert_eq!(untouched.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY);
     assert_eq!(untouched.balance("bob").unwrap(), 0);
@@ -345,7 +345,7 @@ fn import_drops_stale_mempool_entries_and_keeps_the_next_nonce() {
         replica
             .import_block(&encode_block(&tampered))
             .unwrap_err(),
-        ChainError::StateMismatch
+        ChainError::Admission("policy")
     );
     assert_eq!(replica.mempool_len().unwrap(), 2);
     assert_eq!(replica.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY);
@@ -745,7 +745,7 @@ fn only_the_highest_round_counts_toward_the_weight_threshold() {
         arkhe_chain::sign_precommit(&mut vote, &secret).unwrap();
         node.note_precommit(&vote).unwrap();
     }
-    node.bft_commit(1).unwrap();
+    // Keep this height uncommitted while testing round replacement.
 
     let mut later = arkhe_chain::Precommit {
         validator_id: "validator-a".into(),

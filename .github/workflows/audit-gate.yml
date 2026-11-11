@@ -1,0 +1,37 @@
+name: Audit gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - fix/audit-remediation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chain:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install matching Rust toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal --no-self-update
+      - name: Select Rust toolchain
+        run: rustup default 1.99.1
+      - name: Test exact checkout
+        shell: bash
+        run: python scripts/audit_gate.py --output "$RUNNER_TEMP/arkhe-gate"
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: arkhe-gate-${{ matrix.os }}-${{ github.sha }}
+          path: ${{ runner.temp }}/arkhe-gate
+          if-no-files-found: error
