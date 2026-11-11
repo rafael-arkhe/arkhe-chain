@@ -1,0 +1,166 @@
+version: '3.8'
+
+networks:
+  arkhe-testnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+services:
+  val1:
+    build:
+      context: ..
+      dockerfile: testnet/docker/Dockerfile
+    container_name: arkhe-val1
+    restart: unless-stopped
+    command:
+      - "--id"
+      - "val1"
+      - "--key"
+      - "/etc/arkhe/keys/val1.key"
+      - "--genesis"
+      - "/etc/arkhe/genesis.txt"
+      - "--data"
+      - "/var/lib/arkhe/val1.data"
+      - "--listen"
+      - "/ip4/0.0.0.0/tcp/30333"
+      - "--peer-file"
+      - "/etc/arkhe/peers.txt"
+    volumes:
+      - ./keys:/etc/arkhe/keys:ro
+      - ./genesis.txt:/etc/arkhe/genesis.txt:ro
+      - ./peers.txt:/etc/arkhe/peers.txt:ro
+      - val1-data:/var/lib/arkhe
+    networks:
+      arkhe-testnet:
+        ipv4_address: 172.28.0.11
+    ports:
+      - "30333:30333"
+
+  val2:
+    build:
+      context: ..
+      dockerfile: testnet/docker/Dockerfile
+    container_name: arkhe-val2
+    restart: unless-stopped
+    command:
+      - "--id"
+      - "val2"
+      - "--key"
+      - "/etc/arkhe/keys/val2.key"
+      - "--genesis"
+      - "/etc/arkhe/genesis.txt"
+      - "--data"
+      - "/var/lib/arkhe/val2.data"
+      - "--listen"
+      - "/ip4/0.0.0.0/tcp/30334"
+      - "--peer-file"
+      - "/etc/arkhe/peers.txt"
+    volumes:
+      - ./keys:/etc/arkhe/keys:ro
+      - ./genesis.txt:/etc/arkhe/genesis.txt:ro
+      - ./peers.txt:/etc/arkhe/peers.txt:ro
+      - val2-data:/var/lib/arkhe
+    networks:
+      arkhe-testnet:
+        ipv4_address: 172.28.0.12
+    ports:
+      - "30334:30334"
+
+  val3:
+    build:
+      context: ..
+      dockerfile: testnet/docker/Dockerfile
+    container_name: arkhe-val3
+    restart: unless-stopped
+    command:
+      - "--id"
+      - "val3"
+      - "--key"
+      - "/etc/arkhe/keys/val3.key"
+      - "--genesis"
+      - "/etc/arkhe/genesis.txt"
+      - "--data"
+      - "/var/lib/arkhe/val3.data"
+      - "--listen"
+      - "/ip4/0.0.0.0/tcp/30335"
+      - "--peer-file"
+      - "/etc/arkhe/peers.txt"
+    volumes:
+      - ./keys:/etc/arkhe/keys:ro
+      - ./genesis.txt:/etc/arkhe/genesis.txt:ro
+      - ./peers.txt:/etc/arkhe/peers.txt:ro
+      - val3-data:/var/lib/arkhe
+    networks:
+      arkhe-testnet:
+        ipv4_address: 172.28.0.13
+    ports:
+      - "30335:30335"
+
+  val4:
+    build:
+      context: ..
+      dockerfile: testnet/docker/Dockerfile
+    container_name: arkhe-val4
+    restart: unless-stopped
+    command:
+      - "--id"
+      - "val4"
+      - "--key"
+      - "/etc/arkhe/keys/val4.key"
+      - "--genesis"
+      - "/etc/arkhe/genesis.txt"
+      - "--data"
+      - "/var/lib/arkhe/val4.data"
+      - "--listen"
+      - "/ip4/0.0.0.0/tcp/30336"
+      - "--peer-file"
+      - "/etc/arkhe/peers.txt"
+    volumes:
+      - ./keys:/etc/arkhe/keys:ro
+      - ./genesis.txt:/etc/arkhe/genesis.txt:ro
+      - ./peers.txt:/etc/arkhe/peers.txt:ro
+      - val4-data:/var/lib/arkhe
+    networks:
+      arkhe-testnet:
+        ipv4_address: 172.28.0.14
+    ports:
+      - "30336:30336"
+
+  observer:
+    build:
+      context: ..
+      dockerfile: testnet/docker/Dockerfile
+    container_name: arkhe-observer
+    restart: unless-stopped
+    command:
+      - "--id"
+      - "observer"
+      - "--key"
+      - "/etc/arkhe/keys/observer.key"
+      - "--genesis"
+      - "/etc/arkhe/genesis.txt"
+      - "--data"
+      - "/var/lib/arkhe/observer.data"
+      - "--listen"
+      - "/ip4/0.0.0.0/tcp/30337"
+      - "--peer-file"
+      - "/etc/arkhe/peers.txt"
+    volumes:
+      - ./keys:/etc/arkhe/keys:ro
+      - ./genesis.txt:/etc/arkhe/genesis.txt:ro
+      - ./peers.txt:/etc/arkhe/peers.txt:ro
+      - observer-data:/var/lib/arkhe
+    networks:
+      arkhe-testnet:
+        ipv4_address: 172.28.0.15
+    ports:
+      - "30337:30337"
+
+volumes:
+  val1-data:
+  val2-data:
+  val3-data:
+  val4-data:
+  observer-data:

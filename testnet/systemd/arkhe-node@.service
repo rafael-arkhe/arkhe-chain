@@ -1,0 +1,23 @@
+[Unit]
+Description=Arkhe Chain Validator Node %i
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=arkhe
+Group=arkhe
+EnvironmentFile=-/etc/arkhe/testnet-%i.env
+ExecStart=/usr/local/bin/arkhe-chain \
+    --id %i \
+    --key ${NODE_KEY_FILE} \
+    --genesis ${GENESIS_FILE} \
+    --data ${DATA_DIR}/%i.data \
+    --listen ${LISTEN_ADDR} \
+    --peer-file ${PEER_FILE}
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
