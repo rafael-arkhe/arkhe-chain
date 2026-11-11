@@ -22,6 +22,15 @@ pub struct ChainState {
 }
 
 impl ChainState {
+    /// Initialize public replay state from the same account validation as a node.
+    /// No signing key is needed to verify transactions and state commitments.
+    pub fn with_accounts(accounts: Vec<crate::Account>) -> Result<Self, ChainError> {
+        let parsed = crate::parse_accounts(accounts)?;
+        let mut state = Self::genesis();
+        state.set_account_keys(parsed.ed25519, parsed.mldsa)?;
+        Ok(state)
+    }
+
     pub fn genesis() -> Self {
         let mut balances = BTreeMap::new();
         balances.insert(GENESIS_ACCOUNT.to_string(), GENESIS_SUPPLY);

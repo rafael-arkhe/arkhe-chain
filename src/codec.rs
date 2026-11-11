@@ -60,7 +60,8 @@ fn write_header_body(out: &mut Vec<u8>, header: &BlockHeader) {
     push_str(out, &header.proposer);
 }
 
-pub(crate) fn proposer_message(block: &Block) -> Vec<u8> {
+/// Canonical public preimage covered by a block proposer's signature.
+pub fn proposer_message(block: &Block) -> Vec<u8> {
     let mut out = b"AKG:CHAIN:PROPOSER:v1\0".to_vec();
     write_header_body(&mut out, &block.header);
     push_u32(&mut out, block.transactions.len() as u32);
