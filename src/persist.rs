@@ -10,6 +10,9 @@ use crate::tx::{account_id, Transaction, MLDSA65_PK_LEN};
 const MAGIC_V5: &[u8; 8] = b"AKGCHNS5";
 const MAGIC_V6: &[u8; 8] = b"AKGCHNS6";
 const MAGIC_V7: &[u8; 8] = b"AKGCHNS7";
+const MAGIC_V8: &[u8; 8] = b"AKGCHNS8";
+const MAGIC_V9: &[u8; 8] = b"AKGCHNS9";
+const MAGIC_V10: &[u8; 8] = b"AKGCHN10";
 const MAX_SNAPSHOT: usize = 64 * 1024 * 1024;
 const MAX_MEMPOOL: usize = 1000;
 
@@ -27,6 +30,21 @@ pub(crate) struct Snapshot {
     pub(crate) forks: Vec<Vec<u8>>,
     pub(crate) precommits: Vec<DecodedPrecommit>,
     pub(crate) ethereum_links: BTreeMap<u64, EthereumExecutionId>,
+    pub(crate) sync: Option<DecodedSync>,
+    pub(crate) committed: u64,
+    pub(crate) genesis: Option<[u8; 32]>,
+}
+
+pub(crate) struct DecodedSync {
+    pub(crate) remote_tip: [u8; 32],
+    pub(crate) cursor: [u8; 32],
+    pub(crate) blocks: Vec<([u8; 32], Vec<u8>)>,
+}
+
+pub(crate) struct SyncView<'a> {
+    pub(crate) remote_tip: [u8; 32],
+    pub(crate) cursor: [u8; 32],
+    pub(crate) blocks: &'a [([u8; 32], Vec<u8>)],
 }
 
 pub(crate) struct DecodedPrecommit {
@@ -42,6 +60,9 @@ pub(crate) fn encode_snapshot(
     forks: &[Vec<u8>],
     precommits: &BTreeMap<(u64, String), crate::StoredPrecommit>,
     ethereum_links: &BTreeMap<u64, EthereumExecutionId>,
+    sync: Option<&SyncView<'_>>,
+    committed: u64,
+    genesis: [u8; 32],
 ) -> Result<Vec<u8>, ChainError> {
     if by_height.len() as u64 != state.height {
         return Err(ChainError::Snapshot);
@@ -55,8 +76,17 @@ pub(crate) fn encode_snapshot(
         let bytes = blocks.get(hash).ok_or(ChainError::Snapshot)?;
         ordered.push(bytes.clone());
     }
+    if committed > state.height {
+        return Err(ChainError::Snapshot);
+    }
     let mut out = Vec::new();
-    out.extend_from_slice(MAGIC_V7);
+    let magic = match (sync.is_some(), committed > 0) {
+        (false, false) => MAGIC_V7,
+        (true, false) => MAGIC_V8,
+        (false, true) => MAGIC_V9,
+        (true, true) => MAGIC_V10,
+    };
+    out.extend_from_slice(magic);
     push_u64(&mut out, state.height);
     out.extend_from_slice(&state.tip);
     push_u64(&mut out, state.frontier.count);
@@ -98,6 +128,13 @@ pub(crate) fn encode_snapshot(
     }
     write_precommits(&mut out, precommits)?;
     write_ethereum_links(&mut out, ethereum_links)?;
+    if let Some(sync) = sync {
+        write_sync(&mut out, sync)?;
+    }
+    if committed > 0 {
+        push_u64(&mut out, committed);
+    }
+    out.extend_from_slice(&genesis);
     if out.len() > MAX_SNAPSHOT {
         return Err(ChainError::Snapshot);
     }
@@ -110,12 +147,18 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
     }
     let mut rd = Rd { buf: bytes, i: 0 };
     let magic = rd.take(8)?;
-    let (citations, rounds) = if magic == MAGIC_V7 {
-        (true, true)
+    let (citations, rounds, sync_trailer, commit_trailer) = if magic == MAGIC_V10 {
+        (true, true, true, true)
+    } else if magic == MAGIC_V9 {
+        (true, true, false, true)
+    } else if magic == MAGIC_V8 {
+        (true, true, true, false)
+    } else if magic == MAGIC_V7 {
+        (true, true, false, false)
     } else if magic == MAGIC_V6 {
-        (true, false)
+        (true, false, false, false)
     } else if magic == MAGIC_V5 {
-        (false, false)
+        (false, false, false, false)
     } else {
         return Err(ChainError::Snapshot);
     };
@@ -183,9 +226,27 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
     } else {
         BTreeMap::new()
     };
-    if rd.i != bytes.len() {
+    let sync = if sync_trailer {
+        Some(read_sync(&mut rd)?)
+    } else {
+        None
+    };
+    let committed = if commit_trailer {
+        let committed = rd.u64()?;
+        if committed == 0 || committed > height {
+            return Err(ChainError::Snapshot);
+        }
+        committed
+    } else {
+        0
+    };
+    let genesis = if bytes.len() - rd.i == 32 {
+        Some(rd.arr32()?)
+    } else if rd.i != bytes.len() {
         return Err(ChainError::Snapshot);
-    }
+    } else {
+        None
+    };
     Ok(Snapshot {
         height,
         tip,
@@ -200,6 +261,55 @@ pub(crate) fn decode_snapshot(bytes: &[u8]) -> Result<Snapshot, ChainError> {
         forks,
         precommits,
         ethereum_links,
+        sync,
+        committed,
+        genesis,
+    })
+}
+
+fn write_sync(out: &mut Vec<u8>, sync: &SyncView<'_>) -> Result<(), ChainError> {
+    let count = sync.blocks.len();
+    if count == 0 || count > 128 {
+        return Err(ChainError::Snapshot);
+    }
+    out.extend_from_slice(&sync.remote_tip);
+    out.extend_from_slice(&sync.cursor);
+    push_u32(out, u32::try_from(count).map_err(|_| ChainError::Snapshot)?);
+    for (hash, body) in sync.blocks {
+        if body.is_empty() || body.len() > 2 * 1024 * 1024 || crate::tx::block_hash(body) != *hash {
+            return Err(ChainError::Snapshot);
+        }
+        out.extend_from_slice(hash);
+        push_u32(out, u32::try_from(body.len()).map_err(|_| ChainError::Snapshot)?);
+        out.extend_from_slice(body);
+    }
+    Ok(())
+}
+
+fn read_sync(rd: &mut Rd<'_>) -> Result<DecodedSync, ChainError> {
+    let remote_tip = rd.arr32()?;
+    let cursor = rd.arr32()?;
+    let count = rd.u32()? as usize;
+    if count == 0 || count > 128 {
+        return Err(ChainError::Snapshot);
+    }
+    let mut blocks = Vec::with_capacity(count);
+    for _ in 0..count {
+        let hash = rd.arr32()?;
+        let len = rd.u32()? as usize;
+        if len == 0 || len > 2 * 1024 * 1024 {
+            return Err(ChainError::Snapshot);
+        }
+        let body = rd.take(len)?.to_vec();
+        if crate::tx::block_hash(&body) != hash {
+            return Err(ChainError::Snapshot);
+        }
+        blocks.push((hash, body));
+    }
+    Ok(DecodedSync {
+        remote_tip,
+        cursor,
+        blocks,
     })
 }
 

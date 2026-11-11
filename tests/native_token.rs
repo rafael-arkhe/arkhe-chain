@@ -853,3 +853,97 @@ fn a_precommit_for_another_chain_is_refused() {
     assert_eq!(node.tip().unwrap(), tip);
     assert_eq!(node.height().unwrap(), 1);
 }
+
+#[test]
+fn a_zero_value_transfer_keeps_balances_and_appends_a_leaf() {
+    let node = common::node();
+    node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 0))
+        .unwrap();
+    node.propose_and_seal_block(TS).unwrap();
+    assert_eq!(node.balance("bob").unwrap(), 0);
+    assert_eq!(node.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY);
+    assert_eq!(node.supply().unwrap(), GENESIS_SUPPLY);
+    assert_eq!(node.mmr_count().unwrap(), 1);
+    assert_eq!(node.height().unwrap(), 1);
+    assert_eq!(node.mempool_len().unwrap(), 0);
+}
+
+#[test]
+fn a_quorum_records_the_next_height_without_changing_the_tip() {
+    let path = std::env::temp_dir().join(format!(
+        "arkhe-chain-commit-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    let node = arkhe_chain::ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
+        .unwrap();
+    node.propose_and_seal_block(TS).unwrap();
+    let first = node.tip().unwrap();
+    node.ingest(common::transfer(1, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    node.propose_and_seal_block(TS + 1).unwrap();
+    let tip = node.tip().unwrap();
+    assert_eq!(node.committed_height().unwrap(), 0);
+    assert!(std::fs::read(&path).unwrap().starts_with(b"AKGCHNS7"));
+    sign_both(&node, 2, tip);
+    assert_eq!(node.bft_commit(2).unwrap_err(), ChainError::CommitGap);
+    assert_eq!(node.committed_height().unwrap(), 0);
+    assert_eq!(node.tip().unwrap(), tip);
+    sign_both(&node, 1, first);
+    node.bft_commit(1).unwrap();
+    assert_eq!(node.committed_height().unwrap(), 1);
+    assert_eq!(node.tip().unwrap(), tip);
+    assert!(std::fs::read(&path).unwrap().starts_with(b"AKGCHNS9"));
+    node.bft_commit(1).unwrap();
+    sign_both(&node, 2, tip);
+    node.bft_commit(2).unwrap();
+    assert_eq!(node.committed_height().unwrap(), 2);
+    assert_eq!(node.tip().unwrap(), tip);
+    assert_eq!(node.height().unwrap(), 2);
+    assert_eq!(node.balance("bob").unwrap(), 26);
+    drop(node);
+
+    let again = arkhe_chain::ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(again.committed_height().unwrap(), 2);
+    assert_eq!(again.tip().unwrap(), tip);
+    assert_eq!(again.height().unwrap(), 2);
+    let _ = std::fs::remove_file(&path);
+}
+
+fn sign_both(node: &arkhe_chain::ArkheNode, height: u64, hash: [u8; 32]) {
+    for (id, secret) in [
+        ("validator-a", common::SECRET_A),
+        ("validator-b", common::SECRET_B),
+    ] {
+        let mut vote = arkhe_chain::Precommit {
+            validator_id: id.into(),
+            height,
+            round: 0,
+            parts: 1,
+            part_hash: hash,
+            chain_id: arkhe_chain::CHAIN_ID.into(),
+            block_hash: hash,
+            signature: [0u8; 64],
+        };
+        arkhe_chain::sign_precommit(&mut vote, &secret).unwrap();
+        node.note_precommit(&vote).unwrap();
+    }
+}

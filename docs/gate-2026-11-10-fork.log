@@ -1,0 +1,221 @@
+Command: cargo test -p arkhe-chain
+Workspace: D:\arkhe
+Date: 2026-11-10
+Exit: 0
+Result: 116 passed, 0 failed, 0 ignored, 0 doc-tests.
+This run prints forks N from --status --data. A chain with one stored sibling printed forks 1, height 1, and the previous tip. The file bytes were unchanged. A sibling does not replace the tip. There is no discovery. The 30 second budget was not changed.
+This log was written after the run. The tested sources did not include this file.
+
+Finished `test` profile [unoptimized + debuginfo] target(s) in 16.88s
+     Running unittests src\lib.rs (target\debug\deps\arkhe_chain-46f577fda3ae6c02.exe)
+
+running 4 tests
+test proof_verification::tests::test_submit_proof_fails_closed_when_verifier_absent ... ok
+test validity::tests::a_filled_image_id_is_not_a_guest ... ok
+test proof_verification::tests::test_submit_proof_succeeds_with_valid_260b_seal ... ok
+test proof_verification::tests::test_submit_proof_rejects_bad_shape ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\arkhe_chain-3a2523b7b79f8f1c.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\block_sync.rs (target\debug\deps\block_sync-b118a1b063880a80.exe)
+
+running 30 tests
+test a_short_announced_tip_is_refused ... ok
+test a_body_that_does_not_match_its_hash_is_refused ... ok
+test a_udp_listen_address_closes_without_waiting ... ok
+test a_validator_without_the_sync_protocol_is_refused ... ok
+test accepted_peers_are_only_the_validator_keys ... ok
+test a_peer_file_dials_the_address_written_by_announce ... ok
+test a_chosen_listen_address_serves_the_sealed_block ... ok
+test a_receiver_signs_the_canonical_height_it_had_not_voted ... ok
+test a_remote_precommit_records_the_height_without_changing_the_tip ... ok
+test libp2p_loopback_syncs_the_sealed_block_and_replays_balances ... ok
+test a_sealed_block_is_synced_and_attested_by_the_named_peer ... ok
+test configured_peers_skip_self_and_stop_on_an_outsider ... ok
+test a_later_catch_up_imports_the_block_sealed_after_startup ... ok
+test a_named_peer_submits_the_transaction_the_sealer_was_waiting_for ... ok
+test sync_imports_each_ancestor_until_the_remote_tip ... ok
+test sync_listens_as_the_validator_and_refuses_an_outsider ... ok
+test sync_imports_only_the_missing_suffix ... ok
+test the_node_does_not_dial_its_own_key ... ok
+test sync_rejects_a_tip_that_does_not_extend_the_local_chain ... ok
+test sync_reports_equivocation_and_keeps_the_local_tip ... ok
+test the_process_status_counts_a_waiting_transaction ... ok
+test a_second_submitted_transaction_seals_the_next_block ... ok
+test the_operator_attests_the_synced_height_without_changing_the_tip ... ok
+test the_isolated_tip_does_not_adopt_a_longer_chain ... ok
+test sync_imports_a_chain_longer_than_the_old_window ... ok
+test a_changed_announced_tip_discards_the_retained_bodies ... ok
+test sync_imports_nothing_when_the_announced_tip_is_beyond_the_buffer ... ok
+test a_reopened_client_resumes_the_retained_walk ... ok
+test sync_to_an_unanswered_address_stops_at_thirty_seconds ... ok
+test sync_keeps_the_cursor_past_1024_headers ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.42s
+
+     Running tests\contingency.rs (target\debug\deps\contingency-c9ce1c35ddd808fe.exe)
+
+running 1 test
+test verifier_absent_opens_a_local_hold_and_does_not_settle ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests\ethereum_link.rs (target\debug\deps\ethereum_link-4d96b0a27bd8c8ba.exe)
+
+running 7 tests
+test a_sealed_block_can_cite_an_execution_header_without_settling ... ok
+test an_http_execution_client_confirms_without_settling ... ok
+test a_zero_execution_header_is_refused ... ok
+test a_failed_citation_write_keeps_the_file ... ok
+test a_matching_execution_client_confirms_without_settling_or_writing ... ok
+test a_reopened_file_keeps_one_citation_and_refuses_a_lower_execution_number ... ok
+test an_http_execution_client_reads_only_a_block_hash ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.09s
+
+     Running tests\halt.rs (target\debug\deps\halt-358fa29405303b06.exe)
+
+running 3 tests
+test shipped_properties_leave_the_halt_off ... ok
+test a_bad_halt_file_stops_the_node ... ok
+test halt_blocks_ingest_seal_and_import_without_moving_balances ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running tests\limits.rs (target\debug\deps\limits-0293df259918c6fc.exe)
+
+running 11 tests
+test an_address_without_forty_hex_digits_is_not_an_anchor ... ok
+test an_oversized_or_empty_body_is_malformed_and_does_not_move_the_tip ... ok
+test shape_rejects_a_long_payload_a_bad_account_and_a_missing_key ... ok
+test a_node_refuses_an_empty_set_a_bad_id_and_a_mismatched_key ... ok
+test the_canonical_child_is_only_the_next_sealed_block ... ok
+test a_foreign_proposer_is_not_imported ... ok
+test a_failed_precommit_write_does_not_keep_the_vote ... ok
+test an_empty_file_and_a_trailing_byte_do_not_open ... ok
+test a_failed_ingest_write_drops_the_transaction ... ok
+test a_precommit_on_a_fork_is_not_stored_and_a_repeat_vote_stays_one ... ok
+test a_failed_fork_write_does_not_keep_the_sibling ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests\mempool_stress.rs (target\debug\deps\mempool_stress-84c2c6a5de72046c.exe)
+
+running 2 tests
+test invalid_flood_stays_out_of_the_mempool ... ok
+test the_mempool_stops_at_one_thousand_and_a_block_seals_two_hundred_fifty has been running for over 60 seconds
+test the_mempool_stops_at_one_thousand_and_a_block_seals_two_hundred_fifty ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 63.53s
+
+     Running tests\native_token.rs (target\debug\deps\native_token-052863830f8c6bdd.exe)
+
+running 26 tests
+test a_missing_sender_signature_does_not_move_a_balance ... ok
+test a_precommit_must_name_one_part_equal_to_the_block_hash ... ok
+test a_precommit_for_another_chain_is_refused ... ok
+test a_verified_mldsa65_signature_moves_the_balance_and_a_flipped_one_does_not ... ok
+test a_zero_value_transfer_keeps_balances_and_appends_a_leaf ... ok
+test a_block_without_the_proposer_signature_does_not_move_balances ... ok
+test an_unverified_mldsa_blob_does_not_move_a_balance ... ok
+test a_second_block_by_the_same_proposer_at_the_same_height_is_equivocation ... ok
+test a_reject_does_not_consume_the_nonce ... ok
+test insufficient_balance_is_rejected_before_the_mempool ... ok
+test canonical_depth_is_the_only_finality ... ok
+test ingest_reads_a_canonical_cbor_decision_verdict ... ok
+test a_sibling_block_is_a_fork_and_the_first_tip_stays ... ok
+test import_replays_the_same_balances_and_a_tampered_block_does_not ... ok
+test only_the_highest_round_counts_toward_the_weight_threshold ... ok
+test overflow_and_self_transfer_leave_balances_unchanged ... ok
+test two_local_precommits_meet_the_weight_threshold_without_moving_the_tip ... ok
+test transfer_debits_sender_credits_recipient_and_conserves_supply ... ok
+test containment_reject_emergency_stop_and_subject_mismatch_do_not_enter ... ok
+test two_of_three_equal_weights_stay_short_of_the_threshold ... ok
+test a_quorum_records_the_next_height_without_changing_the_tip ... ok
+test timestamp_must_advance_and_a_rewound_block_is_not_imported ... ok
+test state_root_covers_balances_and_nonces ... ok
+test zero_value_appends_the_mmr_without_moving_balances ... ok
+test replayed_nonce_does_not_move_value_twice ... ok
+test import_drops_stale_mempool_entries_and_keeps_the_next_nonce ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+
+     Running tests\operator.rs (target\debug\deps\operator-cef71f2d4f525ee2.exe)
+
+running 14 tests
+test a_configured_peer_must_name_one_peer_id ... ok
+test a_genesis_file_names_validators_and_account_keys ... ok
+test a_status_line_is_printed_only_when_it_changes ... ok
+test seal_without_a_timestamp_exits_with_usage ... ok
+test a_transaction_list_ingests_in_order_and_rejects_a_short_tail ... ok
+test show_peers_prints_the_validator_peer_id_and_opens_nothing ... ok
+test the_operator_process_listens_once_and_writes_the_file ... ok
+test status_counts_a_waiting_transaction_without_rewriting_the_file ... ok
+test announce_writes_the_listen_address_as_a_peer_value ... ok
+test show_genesis_hashes_the_parsed_file_and_opens_nothing ... ok
+test status_reads_the_file_without_rewriting_it ... ok
+test a_peer_file_lists_only_the_named_addresses ... ok
+test a_chain_error_is_printed_before_exit ... ok
+test status_counts_a_stored_fork_without_changing_the_tip ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.40s
+
+     Running tests\persist.rs (target\debug\deps\persist-7044ee23c33b9288.exe)
+
+running 12 tests
+test a_reopened_file_keeps_the_mldsa_key_and_refuses_a_different_one ... ok
+test an_older_snapshot_without_the_mempool_does_not_open ... ok
+test a_tampered_snapshot_does_not_open ... ok
+test a_precommit_with_a_bad_signature_does_not_open ... ok
+test a_part_only_precommit_reopens_and_is_not_a_new_vote ... ok
+test a_round_only_precommit_reopens_and_is_not_a_new_vote ... ok
+test a_reopened_file_keeps_the_precommits_and_the_weight_threshold ... ok
+test an_akgchns6_precommit_reopens_as_round_zero ... ok
+test a_failed_checkpoint_keeps_the_tip_the_balance_and_the_mempool ... ok
+test a_reopened_file_replays_the_same_tip_balances_and_mmr ... ok
+test a_reopened_file_keeps_a_fork_and_the_first_tip ... ok
+test a_reopened_file_keeps_the_unsealed_mempool ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests\replay_log.rs (target\debug\deps\replay_log-c46c447b8e1d8c10.exe)
+
+running 1 test
+test import_writes_a_replay_record_the_parser_reads_back ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+     Running tests\validity_bridge.rs (target\debug\deps\validity_bridge-120108d9a4b4e9f6.exe)
+
+running 1 test
+test absent_bridge_and_rpc_failures_do_not_invent_a_receipt ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests\validity_circuit.rs (target\debug\deps\validity_circuit-5337270d043f3468.exe)
+
+running 3 tests
+test the_anchor_must_be_arkhe_plus_the_state_root_and_is_not_broadcast ... ok
+test circuit_file_pins_phase0_slash_verifier ... ok
+test proof_must_bind_the_sealed_root_and_is_not_broadcast ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests\verifier_absent.rs (target\debug\deps\verifier_absent-8e44af0b40596f05.exe)
+
+running 1 test
+test submit_never_returns_a_settlement_hash ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+   Doc-tests arkhe_chain
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

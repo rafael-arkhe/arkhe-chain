@@ -1,0 +1,596 @@
+use std::fs::{File, OpenOptions, TryLockError};
+use std::path::{Path, PathBuf};
+
+use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
+
+use crate::p2p::{listen_on, seal_timestamp, sync_pass, RemoteSeal};
+use crate::{
+    attest_configured, codec, spawn_server_on, submit_tx, Account, ArkheNode, ChainError,
+    ConfiguredPeer, SyncServer, Transaction, Validator,
+};
+
+/// Read the operator genesis. A validator line is `validator <id> <ed25519 hex>`.
+/// An account line is `account <id> <ed25519 hex>` or the same plus an ML-DSA-65
+/// public key in hex. Blank lines and `#` comments are skipped. This file does
+/// not set balances and does not name peers.
+pub fn parse_genesis(text: &str) -> Result<(Vec<Validator>, Vec<Account>), ChainError> {
+    let mut validators = Vec::new();
+    let mut accounts = Vec::new();
+    for raw in text.lines() {
+        let line = raw.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let mut parts = line.split_whitespace();
+        match parts.next() {
+            Some("validator") => {
+                let id = parts.next().ok_or(ChainError::Malformed)?;
+                let key = parts.next().ok_or(ChainError::Malformed)?;
+                if parts.next().is_some() {
+                    return Err(ChainError::Malformed);
+                }
+                validators.push(Validator {
+                    id: id.to_string(),
+                    public_key: decode_fixed(key)?,
+                });
+            }
+            Some("account") => {
+                let id = parts.next().ok_or(ChainError::Malformed)?;
+                let key = parts.next().ok_or(ChainError::Malformed)?;
+                let mldsa = match parts.next() {
+                    None => None,
+                    Some(hex) if parts.next().is_none() => Some(decode_fixed(hex)?),
+                    Some(_) => return Err(ChainError::Malformed),
+                };
+                accounts.push(Account {
+                    id: id.to_string(),
+                    public_key: decode_fixed(key)?,
+                    mldsa_public_key: mldsa,
+                });
+            }
+            _ => return Err(ChainError::Malformed),
+        }
+    }
+    if validators.is_empty() {
+        return Err(ChainError::EmptyValidators);
+    }
+    Ok((validators, accounts))
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct ChainStatus {
+    pub height: u64,
+    pub committed: u64,
+    pub tip: [u8; 32],
+    pub mempool: u64,
+    pub forks: u64,
+    pub genesis: Option<[u8; 32]>,
+}
+
+/// The lines printed by `--status`. This does not read or write a file.
+pub fn format_status(status: &ChainStatus) -> String {
+    let mut tip = String::with_capacity(64);
+    for byte in status.tip {
+        tip.push_str(&format!("{byte:02x}"));
+    }
+    let genesis = match status.genesis {
+        Some(hash) => encode_hex(&hash),
+        None => "absent".to_string(),
+    };
+    format!(
+        "height {}\ncommitted {}\ntip {tip}\nmempool {}\nforks {}\ngenesis {genesis}\n",
+        status.height, status.committed, status.mempool, status.forks
+    )
+}
+
+/// A new status line when height, committed height, tip, mempool, forks, or the
+/// stored genesis hash changed. The same values return nothing. This is not a
+/// new consensus round.
+pub fn next_status_line(previous: &ChainStatus, next: &ChainStatus) -> Option<String> {
+    if previous == next {
+        None
+    } else {
+        Some(format_status(next))
+    }
+}
+
+/// Read height, committed height, tip, waiting transactions, forks, and the
+/// stored genesis hash. A file without the 32-byte trailer reports no hash.
+/// This does not open a listener and does not rewrite the file.
+pub fn read_status(path: &Path) -> Result<ChainStatus, ChainError> {
+    let bytes = std::fs::read(path).map_err(|_| ChainError::Snapshot)?;
+    let snap = crate::persist::decode_snapshot(&bytes)?;
+    Ok(ChainStatus {
+        height: snap.height,
+        committed: snap.committed,
+        tip: snap.tip,
+        mempool: u64::try_from(snap.mempool.len()).map_err(|_| ChainError::Snapshot)?,
+        forks: u64::try_from(snap.forks.len()).map_err(|_| ChainError::Snapshot)?,
+        genesis: snap.genesis,
+    })
+}
+
+/// One line per validator, in file order: `<id> <peer id>`. The peer id is
+/// the libp2p id of that Ed25519 key. This does not open a chain and does not
+/// discover peers.
+pub fn genesis_peer_lines(text: &str) -> Result<String, ChainError> {
+    let (validators, _) = parse_genesis(text)?;
+    let mut out = String::new();
+    for validator in validators {
+        let peer = crate::peer_id_from_bytes(&validator.public_key)?;
+        out.push_str(&validator.id);
+        out.push(' ');
+        out.push_str(&peer.to_string());
+        out.push('\n');
+    }
+    Ok(out)
+}
+
+pub struct GenesisFingerprint {
+    pub validators: u64,
+    pub accounts: u64,
+    pub hash: [u8; 32],
+}
+
+/// BLAKE3 of the parsed genesis, in file order. Blank lines and `#` comments
+/// are not part of the hash. This does not open a chain and does not name peers.
+pub fn genesis_fingerprint(text: &str) -> Result<GenesisFingerprint, ChainError> {
+    let (validators, accounts) = parse_genesis(text)?;
+    Ok(GenesisFingerprint {
+        validators: u64::try_from(validators.len()).map_err(|_| ChainError::Overflow)?,
+        accounts: u64::try_from(accounts.len()).map_err(|_| ChainError::Overflow)?,
+        hash: genesis_hash(&validators, &accounts)?,
+    })
+}
+
+pub(crate) fn genesis_hash(
+    validators: &[crate::Validator],
+    accounts: &[crate::Account],
+) -> Result<[u8; 32], ChainError> {
+    let mut canonical = String::new();
+    for validator in validators {
+        canonical.push_str("validator ");
+        canonical.push_str(&validator.id);
+        canonical.push(' ');
+        canonical.push_str(&encode_hex(&validator.public_key));
+        canonical.push('\n');
+    }
+    for account in accounts {
+        canonical.push_str("account ");
+        canonical.push_str(&account.id);
+        canonical.push(' ');
+        canonical.push_str(&encode_hex(&account.public_key));
+        if let Some(key) = &account.mldsa_public_key {
+            canonical.push(' ');
+            canonical.push_str(&encode_hex(key));
+        }
+        canonical.push('\n');
+    }
+    Ok(*blake3::hash(canonical.as_bytes()).as_bytes())
+}
+
+/// The three lines printed by `--show-genesis`.
+pub fn format_genesis(fingerprint: &GenesisFingerprint) -> String {
+    format!(
+        "validators {}\naccounts {}\nblake3 {}\n",
+        fingerprint.validators,
+        fingerprint.accounts,
+        encode_hex(&fingerprint.hash)
+    )
+}
+
+pub fn parse_secret_hex(text: &str) -> Result<[u8; 32], ChainError> {
+    decode_fixed(text.trim())
+}
+
+/// `addr` must end in exactly one `/p2p/<peer id>`. The returned address is
+/// the part before that protocol. `sync_configured` adds the peer id itself.
+pub fn parse_configured_peer(text: &str) -> Result<ConfiguredPeer, ChainError> {
+    let parsed: Multiaddr = text.parse().map_err(|_| ChainError::Malformed)?;
+    let mut peer_id = None;
+    let mut addr = Multiaddr::empty();
+    for protocol in parsed.iter() {
+        match protocol {
+            Protocol::P2p(id) if peer_id.is_none() => peer_id = Some(id),
+            Protocol::P2p(_) => return Err(ChainError::Malformed),
+            other => addr.push(other),
+        }
+    }
+    if addr.is_empty() {
+        return Err(ChainError::Malformed);
+    }
+    Ok(ConfiguredPeer {
+        addr,
+        peer_id: peer_id.ok_or(ChainError::Malformed)?,
+    })
+}
+
+#[derive(Debug)]
+pub struct PeerFile {
+    pub peers: Vec<ConfiguredPeer>,
+    /// Set when the file has a `# genesis <64 hex>` line. This is not a peer
+    /// and it does not discover anyone. Two different hashes are `Malformed`.
+    pub genesis: Option<[u8; 32]>,
+}
+
+/// Read `--peer` values from a file. Blank lines and `#` comments are skipped.
+/// A `# genesis <64 hex>` line records the announcer's genesis BLAKE3. The
+/// file does not discover peers. A missing file is `Snapshot`. A line that
+/// is not one `/p2p/<id>` address is `Malformed`.
+pub fn read_peer_file(path: &Path) -> Result<PeerFile, ChainError> {
+    let text = std::fs::read_to_string(path).map_err(|_| ChainError::Snapshot)?;
+    let mut peers = Vec::new();
+    let mut genesis = None;
+    for raw in text.lines() {
+        let line = raw.trim();
+        if line.is_empty() || (line.starts_with('#') && !line.starts_with("# genesis ")) {
+            continue;
+        }
+        if let Some(hex_text) = line.strip_prefix("# genesis ") {
+            let hash = decode_fixed(hex_text)?;
+            match genesis {
+                Some(stored) if stored != hash => return Err(ChainError::Malformed),
+                Some(_) => {}
+                None => genesis = Some(hash),
+            }
+            continue;
+        }
+        peers.push(parse_configured_peer(line)?);
+    }
+    Ok(PeerFile { peers, genesis })
+}
+
+pub struct OperatorRequest {
+    pub data: std::path::PathBuf,
+    pub id: String,
+    pub secret: [u8; 32],
+    pub genesis: String,
+    pub listen: Multiaddr,
+    pub peers: Vec<ConfiguredPeer>,
+    pub once: bool,
+    pub txs: Vec<u8>,
+    /// Set only together with a transaction list the operator should seal.
+    pub seal_at: Option<u64>,
+    /// When set, the bound listen address, including `/p2p/<id>`, is written
+    /// here as one line. That line is a `--peer` value. This does not discover
+    /// peers. A failed write stops the listener and returns `Snapshot`.
+    pub announce: Option<std::path::PathBuf>,
+}
+
+pub struct OperatorHandle {
+    pub listen: Multiaddr,
+    pub peer_id: PeerId,
+    node: std::sync::Arc<ArkheNode>,
+    secret: [u8; 32],
+    peers: Vec<ConfiguredPeer>,
+    seal_at: Option<u64>,
+    #[allow(dead_code)]
+    server: SyncServer,
+    #[allow(dead_code)]
+    lock: File,
+}
+
+impl OperatorHandle {
+    /// The bound address plus this validator's peer id. The result is a
+    /// `--peer` value. It does not discover anyone.
+    pub fn listen_line(&self) -> Multiaddr {
+        self.listen
+            .clone()
+            .with(Protocol::P2p(self.peer_id))
+    }
+
+    /// Height, committed height, tip, mempool, forks, and the genesis hash of
+    /// this process. This does not read the file again and does not rewrite it.
+    pub fn status(&self) -> Result<ChainStatus, ChainError> {
+        Ok(ChainStatus {
+            height: self.node.height()?,
+            committed: self.node.committed_height()?,
+            tip: self.node.tip()?,
+            mempool: u64::try_from(self.node.mempool_len()?).map_err(|_| ChainError::Snapshot)?,
+            forks: u64::try_from(self.node.fork_count()?).map_err(|_| ChainError::Snapshot)?,
+            genesis: Some(self.node.genesis_hash()),
+        })
+    }
+
+    /// Dial the named peers again, then sign round 0 of the next height that
+    /// already exists. A named peer whose tip is already on this chain does
+    /// not fail this call and does not change the tip. A walk that stops at
+    /// 128 headers keeps the cursor and does not fail this call. The next
+    /// call continues it. A refused dial, a peer that stays silent for 30
+    /// seconds, a closed connection, a request that is not answered in 10
+    /// seconds, a response the codec cannot read, and a peer that does not
+    /// speak the protocol do not fail this call. The next call tries again.
+    /// Nothing from that failure is stored. Equivocation and a different
+    /// genesis still fail the call. A seal waits until this pass has heard
+    /// every named peer. A peer that was not reached does not let another
+    /// answer seal. A peer whose announced tip is a canonical ancestor, and
+    /// not this tip, does not let this pass seal the next block. Announcing
+    /// this tip without the block body does not release the seal either.
+    /// The zero tip has no body. Until then the transactions stay in the
+    /// mempool and no block is produced. A peer that answered with a fork
+    /// is not a missed peer and is not behind. A transaction reply does not
+    /// dial, so a submitted transaction
+    /// waits in the mempool until this pass. An empty peer list still seals
+    /// before the reply. This does
+    /// not discover peers and does not open a later round.
+    pub async fn catch_up(&self) -> Result<u64, ChainError> {
+        let heard = heard_every_peer(&self.node, &self.peers).await?;
+        if heard {
+            if let Some(first) = self.seal_at {
+                if self.node.mempool_len()? > 0 {
+                    let timestamp = seal_timestamp(&self.node, first)?;
+                    let proposal = self.node.propose_and_seal_block(timestamp)?;
+                    if proposal.block.is_none() && proposal.rejected.is_empty() {
+                        return Err(ChainError::MempoolEmpty);
+                    }
+                }
+            }
+        }
+        match attest_configured(&self.node, &self.secret, &self.peers).await {
+            Ok(height) => Ok(height),
+            Err(error) => {
+                retry_on_the_next_pass(error)?;
+                self.node.committed_height()
+            }
+        }
+    }
+}
+
+/// Length-prefixed canonical transactions. Each item is a `u32` byte count
+/// followed by [`codec::encode_tx`].
+pub fn encode_tx_list(txs: &[Transaction]) -> Result<Vec<u8>, ChainError> {
+    let mut out = Vec::new();
+    for tx in txs {
+        let body = codec::encode_tx(tx);
+        let len = u32::try_from(body.len()).map_err(|_| ChainError::Overflow)?;
+        out.extend_from_slice(&len.to_be_bytes());
+        out.extend_from_slice(&body);
+    }
+    Ok(out)
+}
+
+/// Read a list from [`encode_tx_list`] without ingesting it.
+pub fn decode_tx_list(bytes: &[u8]) -> Result<Vec<Transaction>, ChainError> {
+    let mut i = 0;
+    let mut txs = Vec::new();
+    while i < bytes.len() {
+        if bytes.len() - i < 4 {
+            return Err(ChainError::Malformed);
+        }
+        let len = u32::from_be_bytes(bytes[i..i + 4].try_into().map_err(|_| ChainError::Malformed)?)
+            as usize;
+        i += 4;
+        if len == 0 || bytes.len() - i < len {
+            return Err(ChainError::Malformed);
+        }
+        txs.push(codec::decode_tx(&bytes[i..i + len])?);
+        i += len;
+    }
+    Ok(txs)
+}
+
+/// Ingest every transaction in a list from [`encode_tx_list`]. A short or
+/// malformed item ingests nothing after it. Earlier items stay in the mempool.
+pub fn ingest_tx_list(node: &ArkheNode, bytes: &[u8]) -> Result<usize, ChainError> {
+    let mut i = 0;
+    let mut count = 0usize;
+    while i < bytes.len() {
+        if bytes.len() - i < 4 {
+            return Err(ChainError::Malformed);
+        }
+        let len = u32::from_be_bytes(bytes[i..i + 4].try_into().map_err(|_| ChainError::Malformed)?)
+            as usize;
+        i += 4;
+        if len == 0 || bytes.len() - i < len {
+            return Err(ChainError::Malformed);
+        }
+        let tx = codec::decode_tx(&bytes[i..i + len])?;
+        i += len;
+        node.ingest(tx)?;
+        count += 1;
+    }
+    Ok(count)
+}
+
+/// Open `data` and listen. Dial the named peers. A process that is not sealing
+/// sends `txs` to those peers. A sealing process with local transactions seals
+/// one block at `seal_at`. A sealing process with no local transactions and
+/// without `once` waits and seals the first transaction a named peer submits.
+/// Then it signs round 0 for the next height that exists. The caller keeps the
+/// handle to leave the listener up. Dropping it stops the listener. `--seal`
+/// on two processes can fork. This does not choose a proposer. The process
+/// holds `<data>.lock` until the handle is dropped. A second process on the
+/// same file is `Busy` and does not open it. `--status` does not take the lock.
+/// A lock file left by a finished process does not block the next start.
+/// When this start created the file and dialing fails before any block,
+/// transaction, or sibling is stored, that file is removed. A file that
+/// already existed is left in place.
+pub async fn run_operator(request: OperatorRequest) -> Result<OperatorHandle, ChainError> {
+    let lock = lock_chain(&request.data)?;
+    let created = !request.data.exists();
+    let (validators, accounts) = parse_genesis(&request.genesis)?;
+    if request.data.exists() {
+        let bytes = std::fs::read(&request.data).map_err(|_| ChainError::Snapshot)?;
+        let snap = crate::persist::decode_snapshot(&bytes)?;
+        match snap.genesis {
+            Some(stored) if stored == genesis_hash(&validators, &accounts)? => {}
+            _ => return Err(ChainError::Genesis),
+        }
+    }
+    let node = std::sync::Arc::new(ArkheNode::open(
+        &request.data,
+        &request.id,
+        &request.secret,
+        validators,
+        accounts,
+    )?);
+    let mut fresh = FreshChain {
+        path: request.data.clone(),
+        created,
+        node: std::sync::Arc::clone(&node),
+    };
+    let wait_for_tx = request.seal_at.is_some() && request.txs.is_empty() && !request.once;
+    let server = if wait_for_tx {
+        listen_on(
+            std::sync::Arc::clone(&node),
+            request.listen,
+            Some(RemoteSeal {
+                timestamp: request.seal_at.expect("seal_at"),
+                secret: request.secret,
+                peers: request.peers.clone(),
+            }),
+        )
+        .await?
+    } else {
+        spawn_server_on(std::sync::Arc::clone(&node), request.listen).await?
+    };
+    let forward = request.seal_at.is_none() && !request.peers.is_empty() && !request.txs.is_empty();
+    if forward {
+        for tx in decode_tx_list(&request.txs)? {
+            for peer in &request.peers {
+                submit_tx(&node, peer.addr.clone(), peer.peer_id, &tx).await?;
+            }
+        }
+    }
+    let heard = heard_every_peer(&node, &request.peers).await?;
+    if !request.txs.is_empty() && !forward {
+        ingest_tx_list(&node, &request.txs)?;
+    }
+    if request.seal_at.is_some() && !wait_for_tx && heard {
+        let timestamp = seal_timestamp(&node, request.seal_at.expect("seal_at"))?;
+        let proposal = node.propose_and_seal_block(timestamp)?;
+        if proposal.block.is_none() {
+            return Err(proposal
+                .rejected
+                .into_iter()
+                .next()
+                .unwrap_or(ChainError::MempoolEmpty));
+        }
+    }
+    if !wait_for_tx {
+        match attest_configured(&node, &request.secret, &request.peers).await {
+            Ok(height) => Ok(height),
+            Err(error) => {
+                retry_on_the_next_pass(error)?;
+                node.committed_height()
+            }
+        }?;
+    }
+    let handle = OperatorHandle {
+        listen: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+        node,
+        secret: request.secret,
+        peers: request.peers,
+        seal_at: request.seal_at,
+        server,
+        lock,
+    };
+    if let Some(path) = &request.announce {
+        let line = format!(
+            "{}\n# genesis {}\n",
+            handle.listen_line(),
+            encode_hex(&handle.node.genesis_hash())
+        );
+        std::fs::write(path, line).map_err(|_| ChainError::Snapshot)?;
+    }
+    fresh.created = false;
+    Ok(handle)
+}
+
+async fn heard_every_peer(
+    node: &ArkheNode,
+    peers: &[ConfiguredPeer],
+) -> Result<bool, ChainError> {
+    if peers.is_empty() {
+        return Ok(true);
+    }
+    match sync_pass(node, peers).await {
+        Ok(pass) => Ok(!pass.missed && !pass.behind),
+        Err(error) => {
+            retry_on_the_next_pass(error)?;
+            Ok(false)
+        }
+    }
+}
+
+fn retry_on_the_next_pass(error: ChainError) -> Result<u64, ChainError> {
+    match error {
+        ChainError::P2p(
+            "sync-limit"
+            | "dial-failure"
+            | "timeout"
+            | "connection-closed"
+            | "rr-timeout"
+            | "io"
+            | "unsupported-protocol",
+        ) => Ok(0),
+        other => Err(other),
+    }
+}
+
+struct FreshChain {
+    path: PathBuf,
+    created: bool,
+    node: std::sync::Arc<ArkheNode>,
+}
+
+impl Drop for FreshChain {
+    fn drop(&mut self) {
+        if !self.created {
+            return;
+        }
+        let empty = matches!(self.node.height(), Ok(0))
+            && matches!(self.node.committed_height(), Ok(0))
+            && matches!(self.node.mempool_len(), Ok(0))
+            && matches!(self.node.fork_count(), Ok(0));
+        if empty {
+            let _ = std::fs::remove_file(&self.path);
+        }
+    }
+}
+
+pub fn read_operator_files(
+    key_path: &Path,
+    genesis_path: &Path,
+) -> Result<([u8; 32], String), ChainError> {
+    let key = std::fs::read_to_string(key_path).map_err(|_| ChainError::Snapshot)?;
+    let genesis = std::fs::read_to_string(genesis_path).map_err(|_| ChainError::Snapshot)?;
+    Ok((parse_secret_hex(&key)?, genesis))
+}
+
+fn chain_lock_path(path: &Path) -> PathBuf {
+    let mut name = path.as_os_str().to_os_string();
+    name.push(".lock");
+    PathBuf::from(name)
+}
+
+fn lock_chain(path: &Path) -> Result<File, ChainError> {
+    let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(chain_lock_path(path))
+        .map_err(|_| ChainError::Snapshot)?;
+    match file.try_lock() {
+        Ok(()) => Ok(file),
+        Err(TryLockError::WouldBlock) => Err(ChainError::Busy),
+        Err(TryLockError::Error(_)) => Err(ChainError::Snapshot),
+    }
+}
+
+fn encode_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn decode_fixed<const N: usize>(hex_text: &str) -> Result<[u8; N], ChainError> {
+    if hex_text.len() != N * 2 || !hex_text.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return Err(ChainError::Malformed);
+    }
+    let mut out = [0u8; N];
+    for (index, byte) in out.iter_mut().enumerate() {
+        *byte = u8::from_str_radix(&hex_text[index * 2..index * 2 + 2], 16)
+            .map_err(|_| ChainError::Malformed)?;
+    }
+    Ok(out)
+}
