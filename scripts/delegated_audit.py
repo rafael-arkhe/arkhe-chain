@@ -130,10 +130,33 @@ class Reservations:
 
     def finish(self, task_id, success):
         with closing(sqlite3.connect(self.path)) as db, db:
+            db.execute("BEGIN IMMEDIATE")
             cursor = db.execute("UPDATE tasks SET status=? WHERE task_id=? AND status='running'",
                                 ("completed" if success else "failed", task_id))
             if cursor.rowcount != 1:
+                row = db.execute("SELECT status FROM tasks WHERE task_id=?", (task_id,)).fetchone()
+                if success and row == ("completed",):
+                    return
                 raise ValueError("reservation state")
+
+    def complete_verified(self, grant, envelope):
+        """Close an existing reservation after public evidence verification."""
+        commitment = digest(canonical(envelope))
+        with closing(sqlite3.connect(self.path, timeout=10)) as db, db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT grant_digest, attempts, status FROM tasks WHERE task_id=?",
+                             (grant["task_id"],)).fetchone()
+            if row is None:
+                raise ValueError("no reservation to reconcile")
+            previous, attempts, status = row
+            if previous != commitment or not integer(attempts, 1, grant["max_attempts"]):
+                raise ValueError("reservation identity or budget mismatch")
+            if status == "completed":
+                return False
+            if status not in {"running", "failed"}:
+                raise ValueError("reservation state")
+            db.execute("UPDATE tasks SET status='completed' WHERE task_id=?", (grant["task_id"],))
+            return True
 
 
 def stop_process(process):
@@ -245,7 +268,24 @@ def verify_bundle(bundle, trust_path, pinned_trust_digest, binary):
     if verified.get("verified") is not True or not receipt["finished_at"] <= verified.get("timestamp", -1) < grant["expires_at"]:
         raise ValueError("ledger verification failed")
     return {"verified": True, "commit": receipt["source_commit"], "counts": counts,
+            "task_id": grant["task_id"], "grant_digest": expected["grant_digest"],
             "trust_sha256": pinned_trust_digest, "ledger": verified}
+
+
+def reconcile_task(output, pinned_trust_digest, binary):
+    """Reconcile a complete public result without dispatching the original action."""
+    output = Path(output).resolve()
+    bundle = output / "bundle"
+    verified = verify_bundle(bundle, output / "trust.json", pinned_trust_digest, binary)
+    envelope = read_json(bundle / "grant.json")
+    grant = envelope["body"]
+    if digest(canonical(envelope)) != verified["grant_digest"] or grant["task_id"] != verified["task_id"]:
+        raise ValueError("delegation changed during reconciliation")
+    state = output / "runtime/reservations.sqlite3"
+    if not state.is_file():
+        raise ValueError("reservation database absent")
+    changed = Reservations(state).complete_verified(grant, envelope)
+    return {**verified, "reservation_status": "completed", "reservation_changed": changed}
 
 
 def run_demo(repo, output, binary, max_seconds):
@@ -353,10 +393,16 @@ def main():
     verify.add_argument("--trust", type=Path, required=True)
     verify.add_argument("--trust-sha256", required=True)
     verify.add_argument("--ledger-binary", type=Path, required=True)
+    reconcile = commands.add_parser("reconcile")
+    reconcile.add_argument("--output", type=Path, required=True)
+    reconcile.add_argument("--trust-sha256", required=True)
+    reconcile.add_argument("--ledger-binary", type=Path, required=True)
     args = parser.parse_args()
     try:
         if args.command == "run":
             result = run_demo(args.repo, args.output, args.ledger_binary, args.max_seconds)
+        elif args.command == "reconcile":
+            result = reconcile_task(args.output, args.trust_sha256, args.ledger_binary)
         else:
             result = verify_bundle(args.bundle, args.trust, args.trust_sha256, args.ledger_binary)
         print(json.dumps(result, indent=2))

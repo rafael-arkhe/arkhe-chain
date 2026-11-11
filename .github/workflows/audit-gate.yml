@@ -7,6 +7,7 @@ on:
       - main
       - fix/audit-remediation
       - demo/delegated-audit
+      - fix/delegated-recovery
   workflow_dispatch:
 
 permissions:
@@ -38,6 +39,11 @@ jobs:
         env:
           LEDGER_BINARY: target/debug/examples/delegated_audit_ledger${{ runner.os == 'Windows' && '.exe' || '' }}
         run: python -B scripts/delegated_audit.py run --output "$RUNNER_TEMP/arkhe-delegated" --ledger-binary "$LEDGER_BINARY"
+      - name: Reconcile a modeled interruption of the real result
+        shell: bash
+        env:
+          LEDGER_BINARY: target/debug/examples/delegated_audit_ledger${{ runner.os == 'Windows' && '.exe' || '' }}
+        run: python -B scripts/exercise_reconciliation.py --source-run "$RUNNER_TEMP/arkhe-delegated" --output "$RUNNER_TEMP/arkhe-reconciliation" --ledger-binary "$LEDGER_BINARY"
       - name: Preserve evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -46,4 +52,5 @@ jobs:
           path: |
             ${{ runner.temp }}/arkhe-delegated
             ${{ runner.temp }}/delegated-adversarial.log
+            ${{ runner.temp }}/arkhe-reconciliation
           if-no-files-found: error
