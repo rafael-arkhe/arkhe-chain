@@ -36,7 +36,7 @@ mod validity;
 mod validity_bridge;
 
 pub use anchor::{btc_op_return, check_btc_op_return, AnchorPlan, AnchorPublisher, BTC_OP_RETURN_LEN};
-pub use codec::{decode_block, encode_block};
+pub use codec::{decode_block, encode_block, proposer_message};
 pub use contingency::{hold_for_absent_verifier, SettlementContingency};
 pub use error::ChainError;
 pub use ethereum::{
@@ -189,9 +189,7 @@ impl ArkheNode {
             Some(_) => return Err(ChainError::BadProposerKey),
             None => return Err(ChainError::NotProposer),
         }
-        let mut state = ChainState::genesis();
-        let parsed = parse_accounts(accounts)?;
-        state.set_account_keys(parsed.ed25519, parsed.mldsa)?;
+        let state = ChainState::with_accounts(accounts)?;
         Ok(Self {
             node_id: node_id.to_string(),
             signer,

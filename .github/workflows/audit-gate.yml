@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - fix/audit-remediation
+      - demo/delegated-audit
   workflow_dispatch:
 
 permissions:
@@ -25,13 +26,24 @@ jobs:
         run: rustup toolchain install 1.99.1 --profile minimal --no-self-update
       - name: Select Rust toolchain
         run: rustup default 1.99.1
+      - name: Install demo verifier dependency
+        run: python -m pip install -r scripts/requirements-demo.txt
+      - name: Build ledger demo and public verifier
+        run: cargo build --locked --example delegated_audit_ledger
+      - name: Test delegation and adversarial evidence
+        shell: bash
+        run: python -B -m unittest discover -s tests -p test_delegated_audit.py -v > "$RUNNER_TEMP/delegated-adversarial.log" 2>&1
       - name: Test exact checkout
         shell: bash
-        run: python scripts/audit_gate.py --output "$RUNNER_TEMP/arkhe-gate"
+        env:
+          LEDGER_BINARY: target/debug/examples/delegated_audit_ledger${{ runner.os == 'Windows' && '.exe' || '' }}
+        run: python -B scripts/delegated_audit.py run --output "$RUNNER_TEMP/arkhe-delegated" --ledger-binary "$LEDGER_BINARY"
       - name: Preserve evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: arkhe-gate-${{ matrix.os }}-${{ github.sha }}
-          path: ${{ runner.temp }}/arkhe-gate
+          path: |
+            ${{ runner.temp }}/arkhe-delegated
+            ${{ runner.temp }}/delegated-adversarial.log
           if-no-files-found: error
