@@ -105,6 +105,57 @@ and is not automatically repeated. The operator must reconcile external state
 and issue a new delegation if appropriate. The demo does not implement atomic
 commit across subprocess effects, SQLite and the ledger.
 
+## Reconcile a completed result after interruption
+
+Stop the old supervisor and preserve its output directory. If the signed grant,
+receipt, report, gate manifest/log, ledger block, certificate and inclusion proof
+are all available, reconcile using the operator-pinned public trust digest.
+
+```sh
+python -B scripts/delegated_audit.py reconcile \
+  --output ../delegated-audit-result \
+  --trust-sha256 OPERATOR_PINNED_SHA256 \
+  --ledger-binary target/debug/examples/delegated_audit_ledger
+```
+
+The command performs public verification, matches the existing reservation to
+the exact delegation and signed attempt budget, then marks it completed in an
+immediate SQLite transaction. It dispatches only the ledger's public `verify`
+operation. It does not execute the original gate or create a new block. A second
+call returns the same verified result with `reservation_changed=false`.
+
+An incomplete or altered bundle, absent reservation, different delegation or
+invalid attempt count leaves the reservation uncompleted. A previously failed
+reservation may be reconciled only when complete valid evidence proves that
+the task's result was already produced. Success is terminal and cannot be
+downgraded by a later failure update. A repeated successful finish is idempotent,
+including when another verifier has already reconciled the same reservation.
+
+Tests abruptly terminate a child process after its reservation has committed,
+then check that another process refuses a replay. Recovery tests additionally
+exercise public-only reconciliation, retries, invalid artifacts, identity and
+budget mismatches, and the CLI entry point. The artifact fixtures in these tests
+remain synthetic. A separate real-bundle recovery exercise can copy a completed
+audit bundle and reconstruct its reservation as `running` to model the window
+after ledger publication and before reservation completion. That models a crash
+window; it does not simulate a whole-system power failure.
+
+Run that modeled window against an actual completed audit with the following
+command. The helper works on a copy, checks every public artifact hash before and
+after, preserves the attempt count, and invokes the reconciliation CLI twice.
+
+```sh
+python -B scripts/exercise_reconciliation.py \
+  --source-run ../delegated-audit-result \
+  --output ../reconciliation-exercise \
+  --ledger-binary target/debug/examples/delegated_audit_ledger
+```
+
+Its summary identifies both the receipt's original source commit and the
+reconciliation implementation's commit. This also allows checking recovery of
+older compatible bundles after an implementation update. CI runs this exercise
+after the real audit on both Linux and Windows.
+
 ## Cognitive evaluation status
 
 | Capability | Evidence from this experiment | Remaining experiment |
