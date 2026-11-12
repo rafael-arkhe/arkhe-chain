@@ -89,7 +89,7 @@ jobs:
           rustc --version | tee kernel-evidence/toolchain.txt
           cargo --version | tee -a kernel-evidence/toolchain.txt
           # Arguments come exclusively from the fixed workflow matrix.
-          cargo test --locked -p arkhe-kernel $KERNEL_CARGO_ARGS -- --nocapture 2>&1 | tee kernel-evidence/tests.log
+          cargo test --locked -p arkhe-kernel --lib --tests $KERNEL_CARGO_ARGS -- --nocapture 2>&1 | tee kernel-evidence/tests.log
       - name: Preserve kernel test evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
