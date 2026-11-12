@@ -6,6 +6,8 @@ A folha do MMR é `tx.record()`, o hash `AKG:CHAIN:TXREC:v1` da transação can�
 
 `state_root` é outro compromisso, domínio `AKG:CHAIN:STATE:v1`, sobre a raiz MMR, a contagem, os saldos e os nonces. As chaves das contas não entram nesse compromisso. O cabeçalho do bloco guarda `state_root`. Na importação, o estado reproduzido tem de bater com esse campo e com `mmr_count`.
 
+Quando o registro de atestados tem ao menos uma folha, o domínio passa a `AKG:CHAIN:STATE:v2` e o compromisso cobre também a raiz e a contagem desse registro. Um estado com o registro vazio mantém o compromisso v1, byte a byte. `mmr_count` continua contando só transações. Os detalhes estão em [atestados.md](atestados.md).
+
 ## Arquivo
 
 `ArkheNode::open` relê a cadeia desde a gênese. `new` sem caminho fica só na memória.

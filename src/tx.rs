@@ -34,6 +34,8 @@ pub struct BlockHeader {
 pub struct Block {
     pub header: BlockHeader,
     pub transactions: Vec<Transaction>,
+    /// Attestation ops, applied after the transactions at this block's height.
+    pub attestations: Vec<crate::attest::AttestOp>,
 }
 
 pub fn account_id(s: &str) -> bool {

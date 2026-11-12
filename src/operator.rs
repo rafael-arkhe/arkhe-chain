@@ -6,16 +6,31 @@ use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 use crate::p2p::{listen_on, seal_timestamp, sync_pass, RemoteSeal};
 use crate::{
     attest_configured, codec, spawn_server_on, submit_tx, Account, ArkheNode, ChainError,
-    ConfiguredPeer, SyncServer, Transaction, Validator,
+    ConfiguredPeer, Grant, Role, SyncServer, Transaction, Validator,
 };
 
 /// Read the operator genesis. A validator line is `validator <id> <ed25519 hex>`.
 /// An account line is `account <id> <ed25519 hex>` or the same plus an ML-DSA-65
-/// public key in hex. Blank lines and `#` comments are skipped. This file does
-/// not set balances and does not name peers.
+/// public key in hex. A grant line is checked here and returned by
+/// [`parse_genesis_grants`]. Blank lines and `#` comments are skipped. This
+/// file does not set balances and does not name peers.
 pub fn parse_genesis(text: &str) -> Result<(Vec<Validator>, Vec<Account>), ChainError> {
+    let (validators, accounts, _) = parse_genesis_lines(text)?;
+    Ok((validators, accounts))
+}
+
+/// The role grants of the attestation policy, in file order. A grant line is
+/// `grant <account> <role> <grantor> <last height>`, with the role one of
+/// `requester`, `author`, `evaluator` or `approver`. Whether the two accounts
+/// exist is checked when the chain is opened, not here.
+pub fn parse_genesis_grants(text: &str) -> Result<Vec<Grant>, ChainError> {
+    Ok(parse_genesis_lines(text)?.2)
+}
+
+fn parse_genesis_lines(text: &str) -> Result<(Vec<Validator>, Vec<Account>, Vec<Grant>), ChainError> {
     let mut validators = Vec::new();
     let mut accounts = Vec::new();
+    let mut grants = Vec::new();
     for raw in text.lines() {
         let line = raw.trim();
         if line.is_empty() || line.starts_with('#') {
@@ -48,13 +63,30 @@ pub fn parse_genesis(text: &str) -> Result<(Vec<Validator>, Vec<Account>), Chain
                     mldsa_public_key: mldsa,
                 });
             }
+            Some("grant") => {
+                let delegate = parts.next().ok_or(ChainError::Malformed)?;
+                let role = parts.next().and_then(Role::from_name).ok_or(ChainError::Malformed)?;
+                let grantor = parts.next().ok_or(ChainError::Malformed)?;
+                let expires = parts.next().ok_or(ChainError::Malformed)?;
+                // Only the digits `u64` prints, so the line and the hash agree.
+                let height: u64 = expires.parse().map_err(|_| ChainError::Malformed)?;
+                if parts.next().is_some() || height.to_string() != expires {
+                    return Err(ChainError::Malformed);
+                }
+                grants.push(Grant {
+                    delegate: delegate.to_string(),
+                    role,
+                    grantor: grantor.to_string(),
+                    expires: height,
+                });
+            }
             _ => return Err(ChainError::Malformed),
         }
     }
     if validators.is_empty() {
         return Err(ChainError::EmptyValidators);
     }
-    Ok((validators, accounts))
+    Ok((validators, accounts, grants))
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -132,20 +164,21 @@ pub struct GenesisFingerprint {
     pub hash: [u8; 32],
 }
 
-/// BLAKE3 of the parsed genesis, in file order. Blank lines and `#` comments
-/// are not part of the hash. This does not open a chain and does not name peers.
+/// BLAKE3 of the parsed genesis: validators, then accounts, then grants, each
+/// in file order. Blank lines and `#` comments are not part of the hash. This does not open a chain and does not name peers.
 pub fn genesis_fingerprint(text: &str) -> Result<GenesisFingerprint, ChainError> {
-    let (validators, accounts) = parse_genesis(text)?;
+    let (validators, accounts, grants) = parse_genesis_lines(text)?;
     Ok(GenesisFingerprint {
         validators: u64::try_from(validators.len()).map_err(|_| ChainError::Overflow)?,
         accounts: u64::try_from(accounts.len()).map_err(|_| ChainError::Overflow)?,
-        hash: genesis_hash(&validators, &accounts)?,
+        hash: genesis_hash(&validators, &accounts, &grants)?,
     })
 }
 
 pub(crate) fn genesis_hash(
     validators: &[crate::Validator],
     accounts: &[crate::Account],
+    grants: &[crate::Grant],
 ) -> Result<[u8; 32], ChainError> {
     let mut canonical = String::new();
     for validator in validators {
@@ -165,6 +198,16 @@ pub(crate) fn genesis_hash(
             canonical.push_str(&encode_hex(key));
         }
         canonical.push('\n');
+    }
+    // No grant adds no line, so a genesis without grants keeps its hash.
+    for grant in grants {
+        canonical.push_str(&format!(
+            "grant {} {} {} {}\n",
+            grant.delegate,
+            grant.role.name(),
+            grant.grantor,
+            grant.expires
+        ));
     }
     Ok(*blake3::hash(canonical.as_bytes()).as_bytes())
 }
@@ -257,6 +300,13 @@ pub struct OperatorRequest {
     pub announce: Option<std::path::PathBuf>,
 }
 
+/// One file taken by [`OperatorHandle::take_inbox`]: its name and how many
+/// transactions it ingested, or why it was rejected.
+pub struct InboxFile {
+    pub name: String,
+    pub outcome: Result<usize, ChainError>,
+}
+
 pub struct OperatorHandle {
     pub listen: Multiaddr,
     pub peer_id: PeerId,
@@ -313,6 +363,39 @@ impl OperatorHandle {
     /// waits in the mempool until this pass. An empty peer list still seals
     /// before the reply. This does
     /// not discover peers and does not open a later round.
+    /// Ingest every `*.txs` file in `dir`, in file-name order. Each file is a
+    /// list from [`encode_tx_list`]. A file that ingests whole is renamed to
+    /// `<name>.done`. A file that fails is renamed to `<name>.rejected`; the
+    /// items before the failing one stay in the mempool. Nothing is sealed
+    /// here: the next [`catch_up`](Self::catch_up) seals what waits. The
+    /// directory is local. Whoever can write to it can submit, and there is
+    /// no other authentication. A writer must rename a finished file into
+    /// place, because a half-written `*.txs` is read as it is.
+    pub fn take_inbox(&self, dir: &Path) -> Result<Vec<InboxFile>, ChainError> {
+        let mut names = Vec::new();
+        for entry in std::fs::read_dir(dir).map_err(|_| ChainError::Snapshot)? {
+            let path = entry.map_err(|_| ChainError::Snapshot)?.path();
+            if path.extension().is_some_and(|ext| ext == "txs") && path.is_file() {
+                names.push(path);
+            }
+        }
+        names.sort();
+        let mut taken = Vec::new();
+        for path in names {
+            let outcome = std::fs::read(&path)
+                .map_err(|_| ChainError::Snapshot)
+                .and_then(|bytes| ingest_tx_list(&self.node, &bytes));
+            let mut moved = path.clone().into_os_string();
+            moved.push(if outcome.is_ok() { ".done" } else { ".rejected" });
+            std::fs::rename(&path, PathBuf::from(moved)).map_err(|_| ChainError::Snapshot)?;
+            taken.push(InboxFile {
+                name: path.file_name().unwrap_or_default().to_string_lossy().into_owned(),
+                outcome,
+            });
+        }
+        Ok(taken)
+    }
+
     pub async fn catch_up(&self) -> Result<u64, ChainError> {
         let heard = heard_every_peer(&self.node, &self.peers).await?;
         if heard {
@@ -408,21 +491,22 @@ pub fn ingest_tx_list(node: &ArkheNode, bytes: &[u8]) -> Result<usize, ChainErro
 pub async fn run_operator(request: OperatorRequest) -> Result<OperatorHandle, ChainError> {
     let lock = lock_chain(&request.data)?;
     let created = !request.data.exists();
-    let (validators, accounts) = parse_genesis(&request.genesis)?;
+    let (validators, accounts, grants) = parse_genesis_lines(&request.genesis)?;
     if request.data.exists() {
         let bytes = std::fs::read(&request.data).map_err(|_| ChainError::Snapshot)?;
         let snap = crate::persist::decode_snapshot(&bytes)?;
         match snap.genesis {
-            Some(stored) if stored == genesis_hash(&validators, &accounts)? => {}
+            Some(stored) if stored == genesis_hash(&validators, &accounts, &grants)? => {}
             _ => return Err(ChainError::Genesis),
         }
     }
-    let node = std::sync::Arc::new(ArkheNode::open(
+    let node = std::sync::Arc::new(ArkheNode::open_with_grants(
         &request.data,
         &request.id,
         &request.secret,
         validators,
         accounts,
+        grants,
     )?);
     let mut fresh = FreshChain {
         path: request.data.clone(),

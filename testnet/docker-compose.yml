@@ -1,5 +1,5 @@
-version: '3.8'
-
+# Local devnet: four validators on one bridge network. val1 seals; the
+# others follow. Create testnet/data/inbox before the first start.
 networks:
   arkhe-testnet:
     driver: bridge
@@ -27,11 +27,20 @@ services:
       - "/ip4/0.0.0.0/tcp/30333"
       - "--peer-file"
       - "/etc/arkhe/peers.txt"
+      # val1 is the only sealing process. --time is the timestamp of block 1;
+      # later blocks use the parent timestamp plus one.
+      - "--seal"
+      - "--time"
+      - "1794000000"
+      - "--inbox"
+      - "/var/lib/arkhe/inbox"
     volumes:
       - ./keys:/etc/arkhe/keys:ro
       - ./genesis.txt:/etc/arkhe/genesis.txt:ro
-      - ./peers.txt:/etc/arkhe/peers.txt:ro
+      - ./peers.docker.txt:/etc/arkhe/peers.txt:ro
       - val1-data:/var/lib/arkhe
+      # Transaction lists dropped in testnet/data/inbox are read by val1.
+      - ./data/inbox:/var/lib/arkhe/inbox
     networks:
       arkhe-testnet:
         ipv4_address: 172.28.0.11
@@ -60,7 +69,7 @@ services:
     volumes:
       - ./keys:/etc/arkhe/keys:ro
       - ./genesis.txt:/etc/arkhe/genesis.txt:ro
-      - ./peers.txt:/etc/arkhe/peers.txt:ro
+      - ./peers.docker.txt:/etc/arkhe/peers.txt:ro
       - val2-data:/var/lib/arkhe
     networks:
       arkhe-testnet:
@@ -90,7 +99,7 @@ services:
     volumes:
       - ./keys:/etc/arkhe/keys:ro
       - ./genesis.txt:/etc/arkhe/genesis.txt:ro
-      - ./peers.txt:/etc/arkhe/peers.txt:ro
+      - ./peers.docker.txt:/etc/arkhe/peers.txt:ro
       - val3-data:/var/lib/arkhe
     networks:
       arkhe-testnet:
@@ -120,7 +129,7 @@ services:
     volumes:
       - ./keys:/etc/arkhe/keys:ro
       - ./genesis.txt:/etc/arkhe/genesis.txt:ro
-      - ./peers.txt:/etc/arkhe/peers.txt:ro
+      - ./peers.docker.txt:/etc/arkhe/peers.txt:ro
       - val4-data:/var/lib/arkhe
     networks:
       arkhe-testnet:
@@ -128,39 +137,8 @@ services:
     ports:
       - "30336:30336"
 
-  observer:
-    build:
-      context: ..
-      dockerfile: testnet/docker/Dockerfile
-    container_name: arkhe-observer
-    restart: unless-stopped
-    command:
-      - "--id"
-      - "observer"
-      - "--key"
-      - "/etc/arkhe/keys/observer.key"
-      - "--genesis"
-      - "/etc/arkhe/genesis.txt"
-      - "--data"
-      - "/var/lib/arkhe/observer.data"
-      - "--listen"
-      - "/ip4/0.0.0.0/tcp/30337"
-      - "--peer-file"
-      - "/etc/arkhe/peers.txt"
-    volumes:
-      - ./keys:/etc/arkhe/keys:ro
-      - ./genesis.txt:/etc/arkhe/genesis.txt:ro
-      - ./peers.txt:/etc/arkhe/peers.txt:ro
-      - observer-data:/var/lib/arkhe
-    networks:
-      arkhe-testnet:
-        ipv4_address: 172.28.0.15
-    ports:
-      - "30337:30337"
-
 volumes:
   val1-data:
   val2-data:
   val3-data:
   val4-data:
-  observer-data:

@@ -20,6 +20,7 @@
 //! pairing.
 
 mod anchor;
+mod attest;
 mod codec;
 mod contingency;
 mod error;
@@ -36,6 +37,11 @@ mod validity;
 mod validity_bridge;
 
 pub use anchor::{btc_op_return, check_btc_op_return, AnchorPlan, AnchorPublisher, BTC_OP_RETURN_LEN};
+pub use attest::{
+    sign_attestation, AttestOp, AttestPolicy, AttestRegistry, AttestStatus, Attestation, Claim, Grant,
+    Receipt, Role, ATTEST_AUDIENCE, ATTEST_MAX_OPS_PER_BLOCK, ATTEST_MAX_RECORDS, ATTEST_POOL_CAPACITY,
+    ATTEST_SCHEME_ED25519, ATTEST_SIGNER_QUOTA, ATTEST_VERSION,
+};
 pub use codec::{decode_block, encode_block, proposer_message};
 pub use contingency::{hold_for_absent_verifier, SettlementContingency};
 pub use error::ChainError;
@@ -45,11 +51,11 @@ pub use ethereum::{
 };
 pub use halt::load_emergency_halt;
 pub use operator::{
-    encode_tx_list, genesis_peer_lines, ingest_tx_list, parse_configured_peer, parse_genesis,
+    encode_tx_list, genesis_peer_lines, ingest_tx_list, parse_configured_peer, parse_genesis, parse_genesis_grants,
     format_genesis, format_status, genesis_fingerprint, next_status_line, read_peer_file,
     read_status, ChainStatus, GenesisFingerprint, PeerFile,
     parse_secret_hex,
-    read_operator_files, run_operator, OperatorHandle, OperatorRequest,
+    read_operator_files, run_operator, InboxFile, OperatorHandle, OperatorRequest,
 };
 pub use p2p::{
     attest_configured, spawn_server, spawn_server_on, submit_precommit, submit_tx, sync_canonical,
@@ -78,6 +84,8 @@ const MEMPOOL_CAPACITY: usize = 1000;
 
 struct Inner {
     mempool: VecDeque<Transaction>,
+    /// Attestation ops waiting for a block. Kept in memory only.
+    attest_pool: VecDeque<AttestOp>,
     state: ChainState,
     blocks: HashMap<[u8; 32], Vec<u8>>,
     by_height: BTreeMap<u64, [u8; 32]>,
@@ -178,10 +186,23 @@ impl ArkheNode {
         validators: Vec<Validator>,
         accounts: Vec<Account>,
     ) -> Result<Self, ChainError> {
+        Self::new_with_grants(node_id, secret_key, validators, accounts, Vec::new())
+    }
+
+    /// `new` plus the role grants of the attestation policy. The grants are
+    /// part of the genesis hash. Without grants the hash is the one `new`
+    /// gives, and no approval can be executed.
+    pub fn new_with_grants(
+        node_id: &str,
+        secret_key: &[u8; 32],
+        validators: Vec<Validator>,
+        accounts: Vec<Account>,
+        grants: Vec<Grant>,
+    ) -> Result<Self, ChainError> {
         if !tx::account_id(node_id) {
             return Err(ChainError::BadAccount);
         }
-        let genesis_hash = operator::genesis_hash(&validators, &accounts)?;
+        let genesis_hash = operator::genesis_hash(&validators, &accounts, &grants)?;
         let validators = parse_validators(validators)?;
         let signer = signer_from(secret_key)?;
         match validators.get(node_id) {
@@ -189,7 +210,8 @@ impl ArkheNode {
             Some(_) => return Err(ChainError::BadProposerKey),
             None => return Err(ChainError::NotProposer),
         }
-        let state = ChainState::with_accounts(accounts)?;
+        let mut state = ChainState::with_accounts(accounts)?;
+        state.configure_attest(genesis_hash, grants)?;
         Ok(Self {
             node_id: node_id.to_string(),
             signer,
@@ -197,6 +219,7 @@ impl ArkheNode {
             genesis_hash,
             inner: Mutex::new(Inner {
                 mempool: VecDeque::with_capacity(MEMPOOL_CAPACITY),
+                attest_pool: VecDeque::new(),
                 state,
                 blocks: HashMap::new(),
                 by_height: BTreeMap::new(),
@@ -229,8 +252,22 @@ impl ArkheNode {
         validators: Vec<Validator>,
         accounts: Vec<Account>,
     ) -> Result<Self, ChainError> {
+        Self::open_with_grants(path, node_id, secret_key, validators, accounts, Vec::new())
+    }
+
+    /// `open` plus the role grants of the attestation policy. The registry
+    /// is not stored apart from the blocks: the replay rebuilds it, and each
+    /// header root is checked against it.
+    pub fn open_with_grants(
+        path: impl AsRef<Path>,
+        node_id: &str,
+        secret_key: &[u8; 32],
+        validators: Vec<Validator>,
+        accounts: Vec<Account>,
+        grants: Vec<Grant>,
+    ) -> Result<Self, ChainError> {
         let path = path.as_ref().to_path_buf();
-        let node = Self::new(node_id, secret_key, validators, accounts)?;
+        let node = Self::new_with_grants(node_id, secret_key, validators, accounts, grants)?;
         if path.exists() {
             let bytes = std::fs::read(&path).map_err(|_| ChainError::Snapshot)?;
             let snap = persist::decode_snapshot(&bytes)?;
@@ -410,9 +447,90 @@ impl ArkheNode {
         Ok(())
     }
 
-    /// BLAKE3 of the validator and account lines this node opened with.
+    /// BLAKE3 of the validator, account and grant lines this node opened with.
     pub fn genesis_hash(&self) -> [u8; 32] {
         self.genesis_hash
+    }
+
+    /// Queue a signed attestation for the next block this node seals. It is
+    /// tried at the next height, after the ops already queued. Nothing is
+    /// in the registry until a block carries it.
+    pub fn submit_attestation(&self, att: Attestation) -> Result<[u8; 32], ChainError> {
+        let id = att.id();
+        self.queue_op(AttestOp::Admit(att))?;
+        Ok(id)
+    }
+
+    /// Queue the single use of an approval for the next block this node
+    /// seals. The op is covered by this node's proposer signature and by no
+    /// other. The receipt exists once a block carries the op.
+    pub fn submit_execution(
+        &self,
+        approval: [u8; 32],
+        action: [u8; 32],
+        artifact: [u8; 32],
+    ) -> Result<(), ChainError> {
+        self.queue_op(AttestOp::Execute {
+            approval,
+            action,
+            artifact,
+        })
+    }
+
+    fn queue_op(&self, op: AttestOp) -> Result<(), ChainError> {
+        let mut inner = self.lock()?;
+        if inner.emergency_halt {
+            return Err(ChainError::EmergencyHalt);
+        }
+        let height = inner.state.height + 1;
+        let mut trial = inner.state.clone();
+        for queued in &inner.attest_pool {
+            trial.apply_op(queued, height)?;
+        }
+        trial.apply_op(&op, height)?;
+        if inner.attest_pool.len() >= ATTEST_POOL_CAPACITY {
+            return Err(ChainError::MempoolFull);
+        }
+        inner.attest_pool.push_back(op);
+        Ok(())
+    }
+
+    pub fn attest_pool_len(&self) -> Result<usize, ChainError> {
+        Ok(self.lock()?.attest_pool.len())
+    }
+
+    /// Root of the attestation registry at the tip. The header root covers
+    /// it once the registry has a leaf.
+    pub fn attest_root(&self) -> Result<[u8; 32], ChainError> {
+        self.lock()?.state.attest().root()
+    }
+
+    pub fn attest_count(&self) -> Result<u64, ChainError> {
+        Ok(self.lock()?.state.attest().count())
+    }
+
+    pub fn attest_policy_digest(&self) -> Result<[u8; 32], ChainError> {
+        Ok(self.lock()?.state.attest().policy_digest())
+    }
+
+    /// Status of an attestation carried by a canonical block, with authority
+    /// read at the tip height. Inclusion in a block is not finality; ask
+    /// `finality` or `committed_height` for that.
+    pub fn attest_status(&self, id: &[u8; 32]) -> Result<Option<AttestStatus>, ChainError> {
+        let inner = self.lock()?;
+        Ok(inner.state.attest().status(id, inner.state.height))
+    }
+
+    pub fn attest_receipt(&self, approval: &[u8; 32]) -> Result<Option<Receipt>, ChainError> {
+        Ok(self.lock()?.state.attest().receipt(approval).cloned())
+    }
+
+    /// Proof, leaf and registry root for one registry leaf at the tip.
+    pub fn attest_inclusion_proof(
+        &self,
+        leaf: u64,
+    ) -> Result<(arkhe_verify_core::rbb::mmr::Proof, [u8; 32], [u8; 32]), ChainError> {
+        self.lock()?.state.attest().inclusion_proof(leaf)
     }
 
     pub fn mempool_len(&self) -> Result<usize, ChainError> {
@@ -891,11 +1009,12 @@ impl ArkheNode {
         Ok(Some(ethereum_link(&header, arkhe_block_hash, execution)))
     }
 
-    /// Seal a block from the mempool. The block extends this node's tip by one.
-    /// The timestamp must be nonzero and later than the parent header. A
-    /// transaction that fails while the block is built is left out of the
-    /// block and reported in `rejected`. Balances change only for transactions
-    /// inside the sealed block.
+    /// Seal a block from the mempool and the attestation pool. The block
+    /// extends this node's tip by one. The timestamp must be nonzero and later
+    /// than the parent header. A transaction or op that fails while the block
+    /// is built is left out of the block and reported in `rejected`. Balances
+    /// and the registry change only for what is inside the sealed block. A
+    /// block may carry ops and no transaction.
     pub fn propose_and_seal_block(&self, timestamp: u64) -> Result<Proposal, ChainError> {
         if !self.validators.contains_key(&self.node_id) {
             return Err(ChainError::NotProposer);
@@ -906,10 +1025,11 @@ impl ArkheNode {
             return Err(ChainError::EmergencyHalt);
         }
         accept_timestamp(&inner, timestamp)?;
-        if inner.mempool.is_empty() {
+        if inner.mempool.is_empty() && inner.attest_pool.is_empty() {
             return Err(ChainError::MempoolEmpty);
         }
         let saved_mempool = inner.mempool.clone();
+        let saved_pool = inner.attest_pool.clone();
         let mut batch = Vec::new();
         while batch.len() < MAX_TX_PER_BLOCK {
             match inner.mempool.pop_front() {
@@ -926,7 +1046,17 @@ impl ArkheNode {
                 Err(error) => rejected.push(error),
             }
         }
-        if accepted.is_empty() {
+        let mut ops = Vec::new();
+        while ops.len() < ATTEST_MAX_OPS_PER_BLOCK {
+            let Some(op) = inner.attest_pool.pop_front() else {
+                break;
+            };
+            match working.apply_op(&op, working.height + 1) {
+                Ok(()) => ops.push(op),
+                Err(error) => rejected.push(error),
+            }
+        }
+        if accepted.is_empty() && ops.is_empty() {
             return Ok(Proposal {
                 block: None,
                 rejected,
@@ -944,6 +1074,7 @@ impl ArkheNode {
         let mut block = Block {
             header,
             transactions: accepted,
+            attestations: ops,
         };
         sign_block(&mut block, &self.signer)?;
         let bytes = encode_block(&block);
@@ -952,6 +1083,7 @@ impl ArkheNode {
         working.tip = hash;
         if let Err(error) = commit_extension(path.as_deref(), &mut inner, working, hash, bytes) {
             inner.mempool = saved_mempool;
+            inner.attest_pool = saved_pool;
             return Err(error);
         }
         Ok(Proposal {
@@ -1045,6 +1177,9 @@ impl ArkheNode {
         let mut working = inner.state.clone();
         for tx in &block.transactions {
             working.apply_tx(tx)?;
+        }
+        for op in &block.attestations {
+            working.apply_op(op, block.header.block_number)?;
         }
         if working.state_commitment()? != block.header.state_root
             || working.frontier.count != block.header.mmr_count
@@ -1219,11 +1354,7 @@ fn reject_sibling(inner: &Inner, block: &Block, parent_height: u64) -> Result<()
     if block.header.timestamp == 0 {
         return Err(ChainError::BadTimestamp);
     }
-    let mut trial = ChainState::genesis();
-    trial.set_account_keys(
-        inner.state.account_keys().clone(),
-        inner.state.account_mldsa().clone(),
-    )?;
+    let mut trial = inner.state.restart()?;
     for height in 1..=parent_height {
         let hash = inner
             .by_height
@@ -1238,6 +1369,9 @@ fn reject_sibling(inner: &Inner, block: &Block, parent_height: u64) -> Result<()
         for tx in &parent.transactions {
             trial.apply_tx(tx)?;
         }
+        for op in &parent.attestations {
+            trial.apply_op(op, parent.header.block_number)?;
+        }
         if height == parent_height && block.header.timestamp <= parent.header.timestamp {
             return Err(ChainError::BadTimestamp);
         }
@@ -1249,6 +1383,9 @@ fn reject_sibling(inner: &Inner, block: &Block, parent_height: u64) -> Result<()
     }
     for tx in &block.transactions {
         trial.apply_tx(tx)?;
+    }
+    for op in &block.attestations {
+        trial.apply_op(op, block.header.block_number)?;
     }
     if trial.state_commitment()? != block.header.state_root
         || trial.frontier.count != block.header.mmr_count
@@ -1303,6 +1440,14 @@ fn commit_extension(
         }
     }
     inner.mempool = mempool;
+    let queued = std::mem::take(&mut inner.attest_pool);
+    let mut trial = working.clone();
+    let next = working.height + 1;
+    for op in queued {
+        if trial.apply_op(&op, next).is_ok() {
+            inner.attest_pool.push_back(op);
+        }
+    }
     inner.state = working;
     Ok(())
 }
