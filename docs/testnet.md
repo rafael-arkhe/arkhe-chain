@@ -6,7 +6,7 @@ Este guia descreve a devnet local de `arkhe-chain`: quatro processos validadores
 
 Um único processo sela. Os outros três seguem.
 
-- `val1` sobe com `--seal`. Ele lê listas de transações de um diretório, uma vez por segundo, e sela um bloco com o que espera na mempool.
+- `val1` sobe com `--seal`. Ele lê listas de transações e de atestados de um diretório, uma vez por segundo, e sela um bloco com o que espera.
 - `val2`, `val3` e `val4` sincronizam os blocos de `val1` e assinam um precommit para cada altura.
 - Uma altura é registrada como confirmada quando `votos × 3 > validadores × 2`. Com quatro validadores, são três votos. `--status` mostra essa altura na linha `committed`.
 
@@ -16,11 +16,13 @@ O que isso não é:
 - A rede não progride com um validador fora do ar. `val1` só sela depois de ouvir todos os pares nomeados na passagem. Com um par parado, as transações ficam na mempool até ele voltar.
 - Dois processos com `--seal` podem bifurcar, e um irmão fica como `Fork` sem trocar a ponta. Por isso a devnet nomeia exatamente um selador.
 - Não há descoberta de pares. Cada nó disca os endereços do arquivo de pares.
-- Não há RPC, faucet em execução nem explorador. A entrada de transações é o diretório descrito na seção 4.3.
+- Não há RPC, faucet em execução nem explorador. A entrada de transações e de atestados é o diretório descrito nas seções 4.3 e 4.4.
+
+As regras de acordo, progresso e recuperação, com o teste de cada uma, estão em [regras.md](regras.md).
 
 ## 2. As chaves são públicas
 
-`testnet/keys/` guarda as chaves privadas dos quatro validadores, a chave e a semente ML-DSA-65 da conta `genesis-alloc`. Elas estão num repositório público. Qualquer pessoa pode assinar como qualquer validador e gastar a conta de gênese. Essas chaves servem para uma devnet local e para nada exposto à rede. Uma rede pública precisa de chaves geradas fora do repositório e de outro gênese.
+`testnet/keys/` guarda as chaves privadas dos quatro validadores, a chave e a semente ML-DSA-65 da conta `genesis-alloc`, e as chaves das seis contas `devnet-*` do fluxo de atestados. Elas estão num repositório público. Qualquer pessoa pode assinar como qualquer validador e gastar a conta de gênese. Essas chaves servem para uma devnet local e para nada exposto à rede. Uma rede pública precisa de chaves geradas fora do repositório e de outro gênese.
 
 `observer.key` e `observer.env` não são usados. `observer` não está no gênese, e um processo com um identificador fora do conjunto de validadores encerra com `NOT_PROPOSER`.
 
@@ -33,16 +35,20 @@ testnet/
 ├── environments/val{1..4}.env # variáveis para a unidade systemd
 ├── keys/                      # chaves da devnet (públicas, ver seção 2)
 ├── systemd/arkhe-node@.service
-├── genesis.txt                # validadores e a conta genesis-alloc
+├── genesis.txt                # validadores, contas e concessões de papel
 ├── peers.txt                  # pares em 127.0.0.1, para os scripts locais
 └── peers.docker.txt           # pares em 172.28.0.x, para o compose
 scripts/
 ├── init_testnet.sh            # confere o gênese e os pares
 ├── run_local_testnet.sh       # sobe os quatro processos; val1 sela
 ├── send_tx.sh                 # põe transferências do faucet na caixa de val1
+├── send_attest.sh             # põe um fluxo de atestados na caixa de val1
 ├── check_status.sh            # --status de cada nó
-└── stop_testnet.sh
+├── stop_testnet.sh
+├── devnet_smoke.sh            # sobe do zero e confere a devnet de ponta a ponta
+└── compose_smoke.sh           # o mesmo fluxo básico dentro do Docker Compose
 examples/devnet_tx.rs          # escreve uma lista de transações assinadas
+examples/devnet_attest.rs      # escreve um fluxo de atestados assinados
 ```
 
 Uma conta assina cada transação com Ed25519 (64 bytes) e ML-DSA-65 (3309 bytes). Os validadores usam só Ed25519.
@@ -57,8 +63,8 @@ cargo run --bin arkhe-chain -- --show-genesis --genesis testnet/genesis.txt
 
 ```text
 validators 4
-accounts 1
-blake3 3d551f83d7bedb51c9ca365df2d9d89619386fe93306cb19419eaf9bcb619d1f
+accounts 7
+blake3 2018b454a46466ef86535a353bb2eb5d8881f8687f709196d2e23f0a685cdc2f
 ```
 
 ### 4.2. Subir e parar
@@ -97,30 +103,47 @@ O script chama `examples/devnet_tx.rs`, que assina as transferências com as cha
 
 A caixa é um diretório local. Quem pode escrever nele pode enviar; não há outra autenticação. Quem escreve precisa renomear o arquivo pronto para `*.txs`, porque um arquivo pela metade é lido como está. `--inbox` só é aceito junto com `--seal` e sem `--once`.
 
-### 4.4. O que foi executado
+### 4.4. Enviar um fluxo de atestados
 
-Em 12 de novembro de 2026, no Windows, com os scripts acima e o binário desta árvore:
+```bash
+bash scripts/send_attest.sh 1
+```
 
-- Os quatro processos chegaram à mesma altura e à mesma ponta, com `committed` igual à altura, depois de cada lista enviada.
-- Uma lista com nonce errado foi recusada com `BAD_NONCE` e a seguinte foi selada.
-- Com `val4` parado, a transferência enviada ficou na mempool de `val1` e nenhum bloco foi selado. Com os quatro de volta, ela foi selada e os quatro chegaram à altura 2 com a mesma ponta.
-- Em três ciclos de parar e subir, dois deixaram um temporário órfão, que o script removeu, e nenhum nó registrou erro.
+O argumento é o número da rodada; cada número é um fluxo diferente. O script chama `examples/devnet_attest.rs`, que escreve em `testnet/data/inbox/<nome>.ops` cinco atestados: pedido, proposta, avaliação, aprovação e execução. Cada um é assinado pela conta `devnet-*` que tem aquele papel no gênese. A avaliação diz `passed` porque a ferramenta a escreve; nada é avaliado. Os detalhes estão em [atestados.md](atestados.md).
 
-Essas execuções não estão na suíte de testes e não deixaram log neste repositório. A suíte, `cargo test`, terminou com 178 aprovados e 0 falhas na mesma árvore.
+O log de `val1` mostra `inbox <nome>.ops ingested 5` e o bloco seguinte carrega os cinco. Um seguidor só adota um bloco cujos atestados reexecutam até a raiz do cabeçalho, então a mesma ponta nos quatro nós significa que os quatro aplicaram o fluxo. A mesma rodada de novo é recusada com `ATTEST: replay`.
+
+`--status` não mostra o registro de atestados.
+
+### 4.5. Conferir de ponta a ponta
+
+```bash
+bash scripts/devnet_smoke.sh
+```
+
+O script apaga `testnet/data/`, sobe os quatro processos e confere, nesta ordem: uma transferência selada com os quatro na mesma ponta; um fluxo de atestados selado; o mesmo fluxo recusado como replay; com `val4` parado, uma transferência esperando e nenhum bloco; com `val4` de volta, essa transferência selada; depois de parar e subir tudo, a mesma cadeia nos quatro e mais um bloco. Ele termina com código diferente de zero na primeira verificação que não vale.
+
+Em 12 de novembro de 2026, no Windows, o script terminou com `PASS: devnet smoke`. Essa execução não deixou log neste repositório. O job `devnet` do GitHub Actions roda o mesmo script no Linux.
 
 ## 5. Docker Compose
+
+```bash
+bash scripts/compose_smoke.sh
+```
+
+O script cria `testnet/data/inbox`, sobe o compose, envia uma transferência e um fluxo de atestados pela caixa e confere que os quatro contêineres chegam à mesma ponta. À mão:
 
 ```bash
 mkdir -p testnet/data/inbox
 ```
 
 ```bash
-docker compose -f testnet/docker-compose.yml up -d
+docker compose -f testnet/docker-compose.yml up -d --build
 ```
 
-O compose usa `peers.docker.txt`, com os endereços da rede bridge, sobe `val1` com `--seal` e monta `testnet/data/inbox` como caixa de `val1`. `send_tx.sh` escreve nesse mesmo diretório.
+O compose usa `peers.docker.txt`, com os endereços da rede bridge, sobe `val1` com `--seal` e monta `testnet/data/inbox` como caixa de `val1`. `send_tx.sh` e `send_attest.sh` escrevem nesse mesmo diretório. A imagem de build usa a mesma versão do Rust que o CI.
 
-O compose e a imagem não foram executados depois dessas mudanças: a máquina onde elas foram feitas não tem Docker. A imagem de build passou a `rust:1.89`, porque `File::try_lock` não existe em versões anteriores.
+O compose não foi executado na máquina onde essas mudanças foram feitas, que não tem Docker. O job `compose` do GitHub Actions roda `scripts/compose_smoke.sh`; o resultado dele é o que vale.
 
 ## 6. systemd
 

@@ -10,11 +10,12 @@ use arkhe_verify_core::rbb::mmr;
 const TS: u64 = 1_700_000_000;
 const ARTIFACT: [u8; 32] = [0xA1; 32];
 const ACTION: [u8; 32] = [0xAC; 32];
-const ROLES: [(&str, u8, Role); 4] = [
+const ROLES: [(&str, u8, Role); 5] = [
     ("requester", 0x82, Role::Requester),
     ("author", 0x83, Role::Author),
     ("evaluator", 0x84, Role::Evaluator),
     ("approver", 0x85, Role::Approver),
+    ("executor", 0x86, Role::Executor),
 ];
 
 fn secret(name: &str) -> [u8; 32] {
@@ -26,7 +27,7 @@ fn secret(name: &str) -> [u8; 32] {
 
 fn accounts() -> Vec<Account> {
     let mut accounts = common::accounts();
-    for name in ["root", "requester", "author", "evaluator", "approver"] {
+    for name in ["root", "requester", "author", "evaluator", "approver", "executor"] {
         accounts.push(Account {
             id: name.to_string(),
             public_key: public_key(&secret(name)).unwrap(),
@@ -80,7 +81,8 @@ fn queue_flow(node: &ArkheNode) -> [u8; 32] {
     let request = node
         .submit_attestation(signed(genesis, "requester", 1, Claim::Request { task: [7; 32], budget: 5 }))
         .unwrap();
-    node.submit_attestation(signed(genesis, "author", 1, Claim::Artifact { request, artifact: ARTIFACT }))
+    let proposal = node
+        .submit_attestation(signed(genesis, "author", 1, Claim::Artifact { request, artifact: ARTIFACT }))
         .unwrap();
     let evaluation = node
         .submit_attestation(signed(
@@ -101,9 +103,13 @@ fn queue_flow(node: &ArkheNode) -> [u8; 32] {
         genesis,
         "approver",
         1,
-        Claim::Approval { action: ACTION, artifact: ARTIFACT, evaluation, policy },
+        Claim::Approval { action: ACTION, artifact: ARTIFACT, proposal, evaluation, policy, cost: 2 },
     ))
     .unwrap()
+}
+
+fn execution(genesis: [u8; 32], nonce: u8, approval: [u8; 32], artifact: [u8; 32]) -> Attestation {
+    signed(genesis, "executor", nonce, Claim::Execution { approval, action: ACTION, artifact })
 }
 
 fn seal(node: &ArkheNode, timestamp: u64) -> Block {
@@ -153,19 +159,22 @@ fn a_second_node_replays_the_ops_to_the_same_root_and_receipt() {
     assert!(status.signature_valid && status.authority_confirmed);
     assert_eq!((status.included, status.execution_recorded), (3, None));
 
-    a.submit_execution(approval, ACTION, ARTIFACT).unwrap();
+    let genesis = a.genesis_hash();
+    let signed_execution = execution(genesis, 1, approval, ARTIFACT);
+    a.submit_attestation(signed_execution.clone()).unwrap();
     assert_eq!(
-        a.submit_execution(approval, ACTION, ARTIFACT),
+        a.submit_attestation(execution(genesis, 2, approval, ARTIFACT)),
         Err(ChainError::Attest("consumed"))
     );
     let second = seal(&a, TS + 1);
     b.import_block(&encode_block(&second)).unwrap();
     let receipt = b.attest_receipt(&approval).unwrap().unwrap();
     assert_eq!(Some(&receipt), a.attest_receipt(&approval).unwrap().as_ref());
-    assert_eq!((receipt.height, receipt.leaf), (2, 4));
-    assert_eq!(b.attest_status(&approval).unwrap().unwrap().execution_recorded, Some(4));
+    assert_eq!((receipt.height, receipt.leaf, receipt.cost), (2, 5, 2));
+    assert_eq!((receipt.execution, receipt.executor.as_str()), (signed_execution.id(), "executor"));
+    assert_eq!(b.attest_status(&approval).unwrap().unwrap().execution_recorded, Some(5));
     assert_eq!(
-        b.submit_execution(approval, ACTION, ARTIFACT),
+        b.submit_attestation(execution(genesis, 3, approval, ARTIFACT)),
         Err(ChainError::Attest("consumed"))
     );
 
@@ -189,25 +198,49 @@ fn the_header_root_covers_the_registry() {
     assert_eq!(b.import_block(&resigned(swapped)), Err(ChainError::StateMismatch));
 
     let mut edited = first.clone();
-    if let AttestOp::Admit(att) = &mut edited.attestations[2] {
-        att.expires += 1;
-    }
+    let AttestOp::Admit(att) = &mut edited.attestations[2];
+    att.expires += 1;
     assert_eq!(b.import_block(&resigned(edited)), Err(ChainError::UnverifiedSignature));
     assert_eq!((b.height().unwrap(), b.attest_count().unwrap()), (0, 0));
 
     b.import_block(&encode_block(&first)).unwrap();
-    a.submit_execution(approval, ACTION, ARTIFACT).unwrap();
+    let genesis = a.genesis_hash();
+    a.submit_attestation(execution(genesis, 1, approval, ARTIFACT)).unwrap();
     let second = seal(&a, TS + 1);
 
+    // The proposer cannot make an execution: it has to carry one that the
+    // executor signed for this approval, action and artifact.
     let mut other = second.clone();
-    other.attestations[0] = AttestOp::Execute { approval, action: ACTION, artifact: [0xB2; 32] };
+    other.attestations[0] = AttestOp::Admit(execution(genesis, 1, approval, [0xB2; 32]));
     assert_eq!(b.import_block(&resigned(other)), Err(ChainError::Attest("artifact")));
+
+    let mut edited = second.clone();
+    let AttestOp::Admit(att) = &mut edited.attestations[0];
+    if let Claim::Execution { artifact, .. } = &mut att.claim {
+        artifact[0] ^= 1;
+    }
+    assert_eq!(b.import_block(&resigned(edited)), Err(ChainError::UnverifiedSignature));
+
+    let mut forged = second.clone();
+    let AttestOp::Admit(att) = &mut forged.attestations[0];
+    sign_attestation(att, &common::SECRET_A).unwrap();
+    assert_eq!(b.import_block(&resigned(forged)), Err(ChainError::UnverifiedSignature));
+
+    let mut by_approver = second.clone();
+    let mut att = signed(genesis, "approver", 9, Claim::Execution { approval, action: ACTION, artifact: ARTIFACT });
+    att.nonce = [9; 32];
+    by_approver.attestations[0] = AttestOp::Admit(att);
+    assert_eq!(b.import_block(&resigned(by_approver)), Err(ChainError::Attest("authority")));
 
     let mut twice = second.clone();
     twice.attestations.push(second.attestations[0].clone());
-    assert_eq!(b.import_block(&resigned(twice)), Err(ChainError::Attest("consumed")));
+    assert_eq!(b.import_block(&resigned(twice)), Err(ChainError::Attest("replay")));
+    let mut again = second.clone();
+    again.attestations.push(AttestOp::Admit(execution(genesis, 2, approval, ARTIFACT)));
+    assert_eq!(b.import_block(&resigned(again)), Err(ChainError::Attest("consumed")));
     assert_eq!(b.attest_receipt(&approval).unwrap(), None);
     b.import_block(&encode_block(&second)).unwrap();
+    assert_eq!(b.attest_receipt(&approval).unwrap().unwrap().executor, "executor");
 }
 
 #[test]
@@ -219,7 +252,7 @@ fn a_transfer_and_ops_share_a_block_and_a_refused_op_is_left_out() {
         Err(ChainError::Attest("domain"))
     );
     assert_eq!(
-        a.submit_execution([9; 32], ACTION, ARTIFACT),
+        a.submit_attestation(execution(genesis, 1, [9; 32], ARTIFACT)),
         Err(ChainError::Attest("unknown"))
     );
     assert_eq!(a.attest_pool_len().unwrap(), 0);
@@ -255,7 +288,7 @@ fn a_reopened_file_rebuilds_the_registry_and_needs_the_same_grants() {
     };
     let node = open(grants()).unwrap();
     let approval = queue_flow(&node);
-    node.submit_execution(approval, ACTION, ARTIFACT).unwrap();
+    node.submit_attestation(execution(node.genesis_hash(), 1, approval, ARTIFACT)).unwrap();
     let block = seal(&node, TS);
     assert_eq!(block.attestations.len(), 5);
     let (tip, root, receipt) = (
@@ -267,7 +300,7 @@ fn a_reopened_file_rebuilds_the_registry_and_needs_the_same_grants() {
 
     let again = open(grants()).unwrap();
     assert_eq!((again.tip().unwrap(), again.attest_root().unwrap()), (tip, root));
-    assert_eq!(again.attest_count().unwrap(), 5);
+    assert_eq!(again.attest_count().unwrap(), 6);
     assert_eq!(again.attest_receipt(&approval).unwrap(), Some(receipt));
     drop(again);
 

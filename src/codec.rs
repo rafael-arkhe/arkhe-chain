@@ -17,6 +17,21 @@ pub(crate) fn decode_tx(bytes: &[u8]) -> Result<Transaction, ChainError> {
     Ok(tx)
 }
 
+pub(crate) fn encode_attestation(att: &Attestation) -> Vec<u8> {
+    let mut out = att.body();
+    out.extend_from_slice(&att.signature);
+    out
+}
+
+pub(crate) fn decode_attestation(bytes: &[u8]) -> Result<Attestation, ChainError> {
+    let mut rd = Rd { buf: bytes, i: 0 };
+    let att = read_attestation(&mut rd)?;
+    if rd.i != bytes.len() {
+        return Err(ChainError::Malformed);
+    }
+    Ok(att)
+}
+
 pub fn encode_block(block: &Block) -> Vec<u8> {
     let mut out = Vec::new();
     write_header(&mut out, &block.header);
@@ -90,16 +105,6 @@ fn write_ops(out: &mut Vec<u8>, ops: &[AttestOp]) {
                 out.extend_from_slice(&att.body());
                 out.extend_from_slice(&att.signature);
             }
-            AttestOp::Execute {
-                approval,
-                action,
-                artifact,
-            } => {
-                out.push(2);
-                out.extend_from_slice(approval);
-                out.extend_from_slice(action);
-                out.extend_from_slice(artifact);
-            }
         }
     }
 }
@@ -116,11 +121,6 @@ fn read_ops(rd: &mut Rd<'_>) -> Result<Vec<AttestOp>, ChainError> {
     for _ in 0..n {
         ops.push(match rd.u8()? {
             1 => AttestOp::Admit(read_attestation(rd)?),
-            2 => AttestOp::Execute {
-                approval: rd.arr32()?,
-                action: rd.arr32()?,
-                artifact: rd.arr32()?,
-            },
             _ => return Err(ChainError::Malformed),
         });
     }
@@ -160,12 +160,19 @@ fn read_attestation(rd: &mut Rd<'_>) -> Result<Attestation, ChainError> {
         4 => Claim::Approval {
             action: rd.arr32()?,
             artifact: rd.arr32()?,
+            proposal: rd.arr32()?,
             evaluation: rd.arr32()?,
             policy: rd.arr32()?,
+            cost: rd.u64()?,
         },
         5 => Claim::Revocation {
             delegate: rd.account()?,
             role: Role::from_u8(rd.u8()?).ok_or(ChainError::Malformed)?,
+        },
+        6 => Claim::Execution {
+            approval: rd.arr32()?,
+            action: rd.arr32()?,
+            artifact: rd.arr32()?,
         },
         _ => return Err(ChainError::Malformed),
     };

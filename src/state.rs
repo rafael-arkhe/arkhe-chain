@@ -79,14 +79,6 @@ impl ChainState {
     pub fn apply_op(&mut self, op: &AttestOp, height: u64) -> Result<(), ChainError> {
         match op {
             AttestOp::Admit(att) => self.attest.admit(att, height).map(|_| ()),
-            AttestOp::Execute {
-                approval,
-                action,
-                artifact,
-            } => self
-                .attest
-                .execute(approval, action, artifact, height, |_| Ok(()))
-                .map(|_| ()),
         }
     }
 

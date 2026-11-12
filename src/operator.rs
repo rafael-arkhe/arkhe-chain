@@ -6,7 +6,7 @@ use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 use crate::p2p::{listen_on, seal_timestamp, sync_pass, RemoteSeal};
 use crate::{
     attest_configured, codec, spawn_server_on, submit_tx, Account, ArkheNode, ChainError,
-    ConfiguredPeer, Grant, Role, SyncServer, Transaction, Validator,
+    Attestation, ConfiguredPeer, Grant, Role, SyncServer, Transaction, Validator,
 };
 
 /// Read the operator genesis. A validator line is `validator <id> <ed25519 hex>`.
@@ -363,10 +363,12 @@ impl OperatorHandle {
     /// waits in the mempool until this pass. An empty peer list still seals
     /// before the reply. This does
     /// not discover peers and does not open a later round.
-    /// Ingest every `*.txs` file in `dir`, in file-name order. Each file is a
-    /// list from [`encode_tx_list`]. A file that ingests whole is renamed to
-    /// `<name>.done`. A file that fails is renamed to `<name>.rejected`; the
-    /// items before the failing one stay in the mempool. Nothing is sealed
+    /// Ingest every `*.txs` and `*.ops` file in `dir`, in file-name order. A
+    /// `*.txs` file is a list from [`encode_tx_list`]. A `*.ops` file is a
+    /// list from [`encode_attestation_list`]; each signed attestation is
+    /// queued with [`ArkheNode::submit_attestation`]. A file that ingests
+    /// whole is renamed to `<name>.done`. A file that fails is renamed to
+    /// `<name>.rejected`; the items before the failing one stay queued. Nothing is sealed
     /// here: the next [`catch_up`](Self::catch_up) seals what waits. The
     /// directory is local. Whoever can write to it can submit, and there is
     /// no other authentication. A writer must rename a finished file into
@@ -375,7 +377,7 @@ impl OperatorHandle {
         let mut names = Vec::new();
         for entry in std::fs::read_dir(dir).map_err(|_| ChainError::Snapshot)? {
             let path = entry.map_err(|_| ChainError::Snapshot)?.path();
-            if path.extension().is_some_and(|ext| ext == "txs") && path.is_file() {
+            if path.extension().is_some_and(|ext| ext == "txs" || ext == "ops") && path.is_file() {
                 names.push(path);
             }
         }
@@ -384,7 +386,13 @@ impl OperatorHandle {
         for path in names {
             let outcome = std::fs::read(&path)
                 .map_err(|_| ChainError::Snapshot)
-                .and_then(|bytes| ingest_tx_list(&self.node, &bytes));
+                .and_then(|bytes| {
+                    if path.extension().is_some_and(|ext| ext == "ops") {
+                        submit_attestation_list(&self.node, &bytes)
+                    } else {
+                        ingest_tx_list(&self.node, &bytes)
+                    }
+                });
             let mut moved = path.clone().into_os_string();
             moved.push(if outcome.is_ok() { ".done" } else { ".rejected" });
             std::fs::rename(&path, PathBuf::from(moved)).map_err(|_| ChainError::Snapshot)?;
@@ -400,7 +408,7 @@ impl OperatorHandle {
         let heard = heard_every_peer(&self.node, &self.peers).await?;
         if heard {
             if let Some(first) = self.seal_at {
-                if self.node.mempool_len()? > 0 {
+                if self.node.mempool_len()? > 0 || self.node.attest_pool_len()? > 0 {
                     let timestamp = seal_timestamp(&self.node, first)?;
                     let proposal = self.node.propose_and_seal_block(timestamp)?;
                     if proposal.block.is_none() && proposal.rejected.is_empty() {
@@ -430,6 +438,41 @@ pub fn encode_tx_list(txs: &[Transaction]) -> Result<Vec<u8>, ChainError> {
         out.extend_from_slice(&body);
     }
     Ok(out)
+}
+
+/// Length-prefixed signed attestations, in the encoding a block carries.
+pub fn encode_attestation_list(atts: &[Attestation]) -> Result<Vec<u8>, ChainError> {
+    let mut out = Vec::new();
+    for att in atts {
+        let body = codec::encode_attestation(att);
+        let len = u32::try_from(body.len()).map_err(|_| ChainError::Overflow)?;
+        out.extend_from_slice(&len.to_be_bytes());
+        out.extend_from_slice(&body);
+    }
+    Ok(out)
+}
+
+/// Queue every attestation in a list from [`encode_attestation_list`]. A
+/// short, malformed or refused item queues nothing after it. Earlier items
+/// stay queued.
+pub fn submit_attestation_list(node: &ArkheNode, bytes: &[u8]) -> Result<usize, ChainError> {
+    let mut i = 0;
+    let mut count = 0usize;
+    while i < bytes.len() {
+        if bytes.len() - i < 4 {
+            return Err(ChainError::Malformed);
+        }
+        let len = u32::from_be_bytes(bytes[i..i + 4].try_into().map_err(|_| ChainError::Malformed)?)
+            as usize;
+        i += 4;
+        if len == 0 || bytes.len() - i < len {
+            return Err(ChainError::Malformed);
+        }
+        node.submit_attestation(codec::decode_attestation(&bytes[i..i + len])?)?;
+        i += len;
+        count += 1;
+    }
+    Ok(count)
 }
 
 /// Read a list from [`encode_tx_list`] without ingesting it.

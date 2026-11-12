@@ -51,7 +51,7 @@ pub use ethereum::{
 };
 pub use halt::load_emergency_halt;
 pub use operator::{
-    encode_tx_list, genesis_peer_lines, ingest_tx_list, parse_configured_peer, parse_genesis, parse_genesis_grants,
+    encode_attestation_list, encode_tx_list, genesis_peer_lines, submit_attestation_list, ingest_tx_list, parse_configured_peer, parse_genesis, parse_genesis_grants,
     format_genesis, format_status, genesis_fingerprint, next_status_line, read_peer_file,
     read_status, ChainStatus, GenesisFingerprint, PeerFile,
     parse_secret_hex,
@@ -454,27 +454,13 @@ impl ArkheNode {
 
     /// Queue a signed attestation for the next block this node seals. It is
     /// tried at the next height, after the ops already queued. Nothing is
-    /// in the registry until a block carries it.
+    /// in the registry until a block carries it. An `Execution` claim is
+    /// submitted here like any other: it consumes its approval when a block
+    /// carries it, and the receipt names its signer.
     pub fn submit_attestation(&self, att: Attestation) -> Result<[u8; 32], ChainError> {
         let id = att.id();
         self.queue_op(AttestOp::Admit(att))?;
         Ok(id)
-    }
-
-    /// Queue the single use of an approval for the next block this node
-    /// seals. The op is covered by this node's proposer signature and by no
-    /// other. The receipt exists once a block carries the op.
-    pub fn submit_execution(
-        &self,
-        approval: [u8; 32],
-        action: [u8; 32],
-        artifact: [u8; 32],
-    ) -> Result<(), ChainError> {
-        self.queue_op(AttestOp::Execute {
-            approval,
-            action,
-            artifact,
-        })
     }
 
     fn queue_op(&self, op: AttestOp) -> Result<(), ChainError> {
