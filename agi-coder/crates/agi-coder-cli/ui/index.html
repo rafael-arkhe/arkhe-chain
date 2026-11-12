@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AGI</title>
+    <link rel="stylesheet" href="/console.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="shell">
+      <aside class="side">
+        <p class="brand-name">AGI</p>
+        <p class="brand-meta">Local audit of this process. It does not declare AGI.</p>
+        <nav class="jumps" aria-label="On this page">
+          <a href="#step-grid">Check a grid</a>
+          <a href="#step-arc3">Interactive frame</a>
+          <a href="#step-faculties">Faculty checks</a>
+          <a href="#step-separation">Compare keys</a>
+          <a href="#step-receipt">Receipt and bundle</a>
+          <a href="#step-log">Session log</a>
+          <a href="#catalog">Pending catalog</a>
+          <a href="#step-tools">Plan and demo</a>
+        </nav>
+      </aside>
+      <div class="workspace">
+    <header class="top">
+      <p id="assessment-verdict" class="verdict" role="status">Loading this process.</p>
+    </header>
+    <aside id="authority-banner" class="banner">
+      <p class="banner-title">This process has no authority</p>
+      <p>Authority <span id="authority-value">false</span>. Runtime verified <span id="runtime-value">false</span>. declares_agi stays false.</p>
+    </aside>
+    <p id="next-step" class="next">Loading the next action.</p>
+    <main id="main">
+      <section id="step-grid" class="step">
+        <div class="step-copy">
+          <p class="step-index">1</p>
+          <h1>Check a grid</h1>
+          <p>Runs identity, transpose, flip_horizontal, or flip_vertical. This does not score ARC-AGI. Only L1 can be placed, and only after the test output matches.</p>
+        </div>
+        <div class="step-body">
+          <form id="arc-form">
+            <label for="arc-task">Grid task</label>
+            <textarea id="arc-task" name="task" required rows="8">{"program":"transpose","train":[{"input":[[1,2],[3,4]],"output":[[1,3],[2,4]]}],"test_input":[[0,1],[2,3]],"test_output":[[0,2],[1,3]],"cost_micro_usd":2,"tokens":3}</textarea>
+            <p class="hint">Train pairs must already match the program. Cost and tokens are your integers. The ratio 1/(cost+tokens) appears only after a pass with both greater than zero.</p>
+            <p id="grid-error" class="alert" role="alert" hidden></p>
+            <div class="actions">
+              <button class="primary" type="submit">Run grid check</button>
+              <button class="secondary" id="grid-handoff" type="button">Hand this grid to the related checks</button>
+            </div>
+            <p id="handoff-note" class="hint"></p>
+          </form>
+          <div class="result-pane">
+            <p id="grid-summary" class="empty">No grid check in this process yet.</p>
+            <div id="arc-grid" class="grid" role="img" aria-label="Output grid from the latest check" hidden></div>
+            <p id="efficiency" class="hint"></p>
+            <ol id="arc-trace"></ol>
+          </div>
+        </div>
+      </section>
+
+      <section id="step-arc3" class="step">
+        <div class="step-copy">
+          <h2>Interactive frame</h2>
+          <p>local-seek has three levels. Keys 1–5, undo, and a cell click follow the public ARC-AGI-3 turn shape. Level 3 has walls: a blocked step still counts and the marker stays. A finished level shows the steps taken over the known shortest path in this frame. That ratio is not an RHAE score. The command and this page continue observations/local-seek.json.</p>
+        </div>
+        <p id="arc3-status" class="empty">No interactive frame yet.</p>
+        <div id="arc3-grid" class="grid" role="img" aria-label="Local interactive frame" hidden></div>
+        <ul class="legend">
+          <li><span data-c="1"></span> Marker</li>
+          <li><span data-c="2"></span> Goal</li>
+          <li><span data-c="3"></span> Mark</li>
+          <li><span data-c="4"></span> Wall</li>
+        </ul>
+        <div class="actions">
+          <button type="button" data-arc3="1">1 right</button>
+          <button type="button" data-arc3="2">2 left</button>
+          <button type="button" data-arc3="3">3 down</button>
+          <button type="button" data-arc3="4">4 up</button>
+          <button type="button" data-arc3="5">5 wait</button>
+          <button type="button" data-arc3="undo">Undo</button>
+          <button type="button" data-arc3="reset">Reset</button>
+        </div>
+        <form id="arc3-click">
+          <label for="arc3-x">Click column</label>
+          <input id="arc3-x" type="number" min="0" max="63" value="3" required />
+          <label for="arc3-y">Click row</label>
+          <input id="arc3-y" type="number" min="0" max="63" value="1" required />
+          <p id="arc3-error" class="alert" role="alert" hidden></p>
+          <button class="primary" type="submit">Click a cell</button>
+        </form>
+      </section>
+
+      <section id="step-faculties" class="step">
+        <div class="step-copy">
+          <h2>Faculty checks</h2>
+          <p>Each file is recomputed here. A pass is that computation, not a human baseline from the DeepMind cognitive framework. The same files are written to observations/faculties.json and recomputed when the process opens. Perception reads a grid. Attention keeps the target cells. Learning applies a new pair. Memory compares a later recall. Reasoning checks that a conclusion follows. Problem solving requires both the selection and the conclusion. Generation, executive function, social cognition, and metacognition keep their own checks.</p>
+        </div>
+        <div class="tools">
+          <form id="perception-form">
+            <h3>Perception</h3>
+            <label for="perception-file">Read frame</label>
+            <textarea id="perception-file" required rows="4">{"frame":[[1,2],[3,4]],"reported":[[1,2],[3,4]]}</textarea>
+            <p class="hint">The reported grid must match the frame that was parsed. Values stay 0 to 9.</p>
+            <p id="perception-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Read the frame</button>
+          </form>
+          <form id="attention-form">
+            <h3>Attention</h3>
+            <label for="attention-file">Target cells</label>
+            <textarea id="attention-file" required rows="4">{"frame":[[1,2],[2,0]],"target":2,"selected":[[1,0],[0,1]]}</textarea>
+            <p class="hint">Selected cells must be every target, in row order, and no other cell.</p>
+            <p id="attention-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Select the target</button>
+          </form>
+          <form id="learning-form">
+            <h3>Learning</h3>
+            <label for="learning-file">New pair</label>
+            <textarea id="learning-file" required rows="5">{"train":[{"input":[[1,2],[3,4]],"output":[[1,3],[2,4]]}],"test_input":[[0,1],[2,3]],"test_output":[[0,2],[1,3]]}</textarea>
+            <p class="hint">The held-out pair must be absent from training. The rule is searched, not named.</p>
+            <p id="learning-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Apply the new pair</button>
+          </form>
+          <form id="memory-form">
+            <h3>Memory</h3>
+            <label for="memory-file">Stored and recalled</label>
+            <textarea id="memory-file" required rows="4">{"stored":[[1,2],[3,4]],"recalled":[[1,2],[3,4]],"delay_steps":2}</textarea>
+            <p class="hint">delay_steps must be at least 1. The count is in the file. It does not survive a restart.</p>
+            <p id="memory-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Compare the recall</button>
+          </form>
+          <form id="reasoning-form">
+            <h3>Reasoning</h3>
+            <label for="reasoning-file">Premise and conclusion</label>
+            <textarea id="reasoning-file" required rows="4">{"program":"transpose","premise":[[1,2],[3,4]],"conclusion":[[1,3],[2,4]]}</textarea>
+            <p class="hint">The conclusion must equal the program applied to the premise.</p>
+            <p id="reasoning-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Check the conclusion</button>
+          </form>
+          <form id="problem-form">
+            <h3>Problem solving</h3>
+            <label for="problem-file">Selection and conclusion</label>
+            <textarea id="problem-file" required rows="5">{"frame":[[1,2],[2,0]],"target":2,"selected":[[1,0],[0,1]],"program":"transpose","premise":[[1,2],[3,4]],"conclusion":[[1,3],[2,4]]}</textarea>
+            <p class="hint">Both the attention selection and the reasoning conclusion have to pass.</p>
+            <p id="problem-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Solve both parts</button>
+          </form>
+          <form id="generation-form">
+            <h3>Generation</h3>
+            <label for="generation-file">Training file</label>
+            <textarea id="generation-file" required rows="8">{"train":[{"input":[[1,2],[3,4]],"output":[[1,3],[2,4]]}],"test_input":[[0,1],[2,3]],"test_output":[[0,2],[1,3]]}</textarea>
+            <p class="hint">No program name is trusted. The check searches identity, transpose, flip_horizontal, and flip_vertical.</p>
+            <p id="generation-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Generate a program</button>
+          </form>
+          <form id="executive-form">
+            <h3>Executive function</h3>
+            <label for="executive-file">Execution file</label>
+            <textarea id="executive-file" required rows="6">{"goal":"Build agi.exe","completed":["design","implement","test","audit","deploy"],"production":false,"editor":false}</textarea>
+            <p class="hint">Stages must be a ready prefix of the planner. production and editor must stay false.</p>
+            <p id="executive-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Check the execution prefix</button>
+          </form>
+          <form id="social-form">
+            <h3>Social cognition</h3>
+            <label for="social-file">Other party's claim</label>
+            <textarea id="social-file" required rows="6">{"speaker_key":"1398f62c6d1a457c51ba6a4b5f3dbd2f69fca93216218dc8997e416bd17d93ca","program":"transpose","input":[[1,2],[3,4]],"claimed_output":[[1,3],[2,4]]}</textarea>
+            <p class="hint">The public key must be a valid ed25519 key and must differ from this process. The claimed grid is recomputed.</p>
+            <p id="social-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Judge another party's claim</button>
+          </form>
+          <form id="metacognition-form">
+            <h3>Metacognition</h3>
+            <label for="metacognition-file">Recorded verdict</label>
+            <textarea id="metacognition-file" required rows="6">{"program":"transpose","input":[[1,2],[3,4]],"output":[[1,3],[2,4]],"recorded_verdict":"pass"}</textarea>
+            <p class="hint">Pass means the recorded verdict matches a fresh run, including a recorded failure that really fails.</p>
+            <p id="metacognition-error" class="alert" role="alert" hidden></p>
+            <button class="primary" type="submit">Recompute a recorded verdict</button>
+          </form>
+        </div>
+        <p id="faculty-result" class="hint">No faculty check has run.</p>
+      </section>
+
+      <section id="step-separation" class="step">
+        <div class="step-copy">
+          <p class="step-index">2</p>
+          <h2>Compare proposer and evaluator</h2>
+          <p>The check passes only when key, entity, environment, and network all differ, and both keys are valid ed25519 public keys.</p>
+        </div>
+        <form id="separation-form">
+          <div class="pair">
+            <fieldset>
+              <legend>Proposer</legend>
+              <label for="proposer-key">Public key</label>
+              <input id="proposer-key" name="proposer_key" required autocomplete="off" spellcheck="false" inputmode="text" placeholder="64 hexadecimal characters" />
+              <label for="proposer-entity">Entity</label>
+              <input id="proposer-entity" name="proposer_entity" required autocomplete="off" />
+              <label for="proposer-environment">Environment</label>
+              <input id="proposer-environment" name="proposer_environment" required autocomplete="off" />
+              <label for="proposer-network">Network</label>
+              <input id="proposer-network" name="proposer_network" required autocomplete="off" />
+            </fieldset>
+            <fieldset>
+              <legend>Evaluator</legend>
+              <label for="evaluator-key">Public key</label>
+              <input id="evaluator-key" name="evaluator_key" required autocomplete="off" spellcheck="false" placeholder="64 hexadecimal characters" />
+              <label for="evaluator-entity">Entity</label>
+              <input id="evaluator-entity" name="evaluator_entity" required autocomplete="off" />
+              <label for="evaluator-environment">Environment</label>
+              <input id="evaluator-environment" name="evaluator_environment" required autocomplete="off" />
+              <label for="evaluator-network">Network</label>
+              <input id="evaluator-network" name="evaluator_network" required autocomplete="off" />
+            </fieldset>
+          </div>
+          <p id="separation-note" class="hint">No separation check has run.</p>
+          <p id="proposer-state" class="hint"></p>
+          <p id="evaluator-state" class="hint"></p>
+            <div class="actions">
+              <button class="primary" type="submit">Check separation</button>
+              <button class="secondary" id="link-parties" type="button">Link the parties and issue the receipt</button>
+              <button id="correct" type="button" hidden>Record a correction</button>
+            </div>
+          <p class="hint">A correction adds a new log fact. The failed action stays in the log. The button appears only while a failure is unresolved.</p>
+        </form>
+      </section>
+
+      <section id="step-receipt" class="step">
+        <div class="step-copy">
+          <p class="step-index">3</p>
+          <h2>Issue a receipt, then import a bundle</h2>
+          <p>The receipt this process can sign is ed25519, 174 bytes, not ML-DSA-65. Sufficiency still needs a bundle signed by a different key.</p>
+        </div>
+        <div class="step-body">
+          <div>
+            <p id="receipt-summary" class="empty">No receipt issued.</p>
+            <p>Local MMR root: <span id="mmr-root">none</span></p>
+            <pre id="mmr-proof" hidden></pre>
+            <details id="receipt-raw">
+              <summary>Receipt fields</summary>
+              <dl id="receipt-fields"></dl>
+            </details>
+            <p id="receipt-note" class="alert" role="alert" hidden></p>
+            <div class="actions">
+              <button id="issue-receipt" class="primary" type="button">Issue process receipt</button>
+              <button id="copy-receipt" type="button" hidden>Copy receipt hex</button>
+            </div>
+          </div>
+          <form id="bundle-form">
+            <label for="bundle-file">Evaluator bundle</label>
+            <input id="bundle-file" type="file" accept=".json,application/json" />
+            <p class="hint">Posted only to this process. The JSON needs receipt_hex, signature_hex, public_key_hex, leaf, root, and proof. Create the signature with <span class="mono">agi attest-receipt &lt;seed-hex&gt; &lt;receipt-hex&gt;</span>. The seed must not be 32 bytes of 0x09.</p>
+            <div class="actions">
+              <button id="bundle-draft" class="secondary" type="button">Prepare the independent bundle</button>
+            </div>
+            <label for="bundle-draft-json">Bundle draft</label>
+            <textarea id="bundle-draft-json" readonly rows="6" aria-label="Bundle draft"></textarea>
+            <label for="evaluator-public">Evaluator public key</label>
+            <input id="evaluator-public" autocomplete="off" spellcheck="false" inputmode="text" placeholder="64 hexadecimal characters" />
+            <label for="evaluator-signature">Evaluator signature</label>
+            <input id="evaluator-signature" autocomplete="off" spellcheck="false" inputmode="text" placeholder="128 hexadecimal characters" />
+            <p class="hint">Paste both values from the terminal. This page does not take the seed.</p>
+            <div class="actions">
+              <button id="bundle-verify" class="primary" type="button">Verify the pasted signature</button>
+            </div>
+            <p id="bundle-state" class="hint">No bundle check recorded.</p>
+            <p id="bundle-note" class="empty">No bundle selected.</p>
+          </form>
+        </div>
+      </section>
+
+      <section id="step-log" class="step">
+        <div class="step-copy">
+          <p class="step-index">4</p>
+          <h2>What this process recorded</h2>
+          <p id="matrix-lead">A faculty is pass only after its own check records a pass. Saved faculty files and the operator journal are recomputed when this process opens.</p>
+        </div>
+        <ul id="faculties" class="measures" aria-label="Checks this process can record"></ul>
+        <p id="ladder-line" class="hint">L1 is not placed.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>Actions recorded by this process.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Index</th>
+                <th scope="col">Kind</th>
+                <th scope="col">Verdict</th>
+                <th scope="col">Corrects</th>
+              </tr>
+            </thead>
+            <tbody id="action-rows"></tbody>
+          </table>
+        </div>
+        <p id="status-error" class="alert" role="alert" hidden></p>
+        <div id="catalog">
+        <p id="status-lead">Loading the catalog compiled into this binary.</p>
+        <div id="status-facts" class="facts" hidden></div>
+        <div class="table-wrap">
+          <table>
+            <caption>What this binary implements, and what it still leaves pending.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Component</th>
+                <th scope="col">State</th>
+                <th scope="col">Limitation</th>
+              </tr>
+            </thead>
+            <tbody id="status-rows"></tbody>
+          </table>
+        </div>
+        </div>
+      </section>
+
+      <section id="step-tools" class="step">
+        <div class="step-copy">
+          <h2>Other checks</h2>
+          <p>These stay inside this process. None of them edits a repository or deploys anything.</p>
+        </div>
+        <div class="tools">
+          <form id="plan-form">
+            <h3>Dependency plan</h3>
+            <label for="plan-goal">Goal</label>
+            <textarea id="plan-goal" name="goal" required maxlength="2000" rows="3" placeholder="Describe the change to sequence"></textarea>
+            <p class="hint">Builds design, implement, test, audit, and deploy. It does not edit a repository.</p>
+            <button class="primary" type="submit">Build dependency plan</button>
+            <div id="plan-result" class="result" aria-live="polite">
+              <p class="empty">No plan yet.</p>
+            </div>
+          </form>
+          <form id="demo-form">
+            <h3>Offline demo</h3>
+            <label for="demo-goal">Demo goal</label>
+            <textarea id="demo-goal" name="goal" required maxlength="2000" rows="2">Demonstrate evidence-gated execution</textarea>
+            <p class="hint">Public demonstration key, synthetic tests, in-memory journal. Nothing is deployed.</p>
+            <button class="primary" type="submit">Run offline demo</button>
+            <div id="demo-result" class="result" aria-live="polite">
+              <p class="empty">No demo has run in this page session.</p>
+            </div>
+          </form>
+        </div>
+        <div class="actions">
+          <button id="bitflip" class="danger" type="button">Flip one bit and check the digest</button>
+        </div>
+        <div id="bitflip-result" class="result" aria-live="polite">
+          <p class="empty">No bit-flip check has run.</p>
+        </div>
+        <details>
+          <summary>Commands that stay in the terminal</summary>
+          <p id="command-error" class="alert" role="alert" hidden></p>
+          <p class="hint">This page does not run them. Host commands stay on the terminal.</p>
+          <div class="table-wrap">
+            <table>
+              <caption>CLI commands and where they are allowed to run.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Command</th>
+                  <th scope="col">Surface</th>
+                  <th scope="col">Does</th>
+                  <th scope="col">Constraint</th>
+                </tr>
+              </thead>
+              <tbody id="command-rows"></tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+    </main>
+    <footer>
+      <p>Faculty files are recomputed from observations/faculties.json. Other operator checks are recomputed from observations/journal.json. The kernel journal stays in memory. declares_agi stays false.</p>
+    </footer>
+      </div>
+    </div>
+    <noscript>
+      <p>This page needs /console.js from the same agi.exe process. Terminal commands keep working without it.</p>
+    </noscript>
+    <script src="/console.js"></script>
+  </body>
+</html>

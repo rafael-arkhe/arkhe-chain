@@ -1,27 +1,45 @@
-use agi_coder_cognition::Planner;
 use agi_coder_core::*;
 use agi_coder_kernel::{ContainmentGate, InMemoryEvidenceStore, Policy};
-use agi_coder_pipeline::{
-    subagent::{ProtectedExecutor, Worker},
-    PipelineOrchestrator,
-};
 use agi_coder_wormgraph::{verify_inclusion, InclusionProof, WormGraph};
 use clap::{Parser, Subcommand};
-use ed25519_dalek::SigningKey;
 use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(
-    name = "agi-coder",
+    name = env!("CARGO_BIN_NAME"),
     version,
-    about = "Evidence-gated coding infrastructure"
+    about = "Local evidence-gated operator. This binary has no execution authority."
 )]
 struct Cli {
     #[command(subcommand)]
     command: Command,
 }
+
 #[derive(Subcommand)]
 enum Command {
+    /// Print the capability catalog. This does not re-run the suite or grant authority.
+    Status,
+    /// Print the MCP stdio launch entry. This does not start the server.
+    Mcp,
+    /// Print the pending capability reports. This does not perform those capabilities.
+    Pending,
+    /// Write the four gap observations. Weights, database, editor, and CI stay unproven.
+    Observe {
+        /// Workspace used to look for engine.local.json and a git remote.
+        #[arg(long, default_value = ".")]
+        workspace: PathBuf,
+        /// Local directory. A URL is rejected.
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Print an ed25519 evaluator signature for a 174-byte receipt. The seed must not be the process seed.
+    AttestReceipt { seed: String, receipt: String },
+    /// Serve the loopback operator page for status, plan, and the offline demo.
+    Ui {
+        /// Numeric loopback socket, for example 127.0.0.1:8791.
+        #[arg(long, default_value = "127.0.0.1:8791")]
+        bind: String,
+    },
     /// Generate an unverified proposal through a trusted DeepInfer process bridge.
     Infer {
         #[arg(long)]
@@ -33,7 +51,23 @@ enum Command {
     VerifySpec { manifest: PathBuf },
     /// Build a deterministic dependency plan; does not claim to implement the goal.
     Plan { goal: String },
-    /// Run the offline five-stage demo with a deliberately public demonstration key.
+    /// Step the local interactive frame. This does not score ARC-AGI-3.
+    Arc3 {
+        /// Comma-separated actions: 1, 2, 3, 4, 5, undo, click:x:y, or reset.
+        #[arg(long)]
+        actions: String,
+    },
+    /// Plan the five stages against a workspace and write a local manifest after tests pass.
+    Release {
+        #[arg(long, default_value = "Build agi.exe")]
+        goal: String,
+        /// Workspace that contains design/DESIGN.md and target/debug/agi.exe.
+        #[arg(long, default_value = ".")]
+        workspace: PathBuf,
+        /// Local directory. A URL is rejected.
+        #[arg(long)]
+        output: PathBuf,
+    },
     Run {
         #[arg(long, required = true)]
         demo: bool,
@@ -65,58 +99,33 @@ enum Command {
     /// Report an explicitly provided integer USD cost ledger.
     Cost { ledger: PathBuf },
 }
+
 fn read<T: serde::de::DeserializeOwned>(path: &PathBuf) -> anyhow::Result<T> {
     Ok(serde_json::from_slice(&std::fs::read(path)?)?)
 }
+
 fn print(value: &impl serde::Serialize) -> anyhow::Result<()> {
     println!("{}", serde_json::to_string_pretty(value)?);
     Ok(())
 }
 
-struct DemoWorker {
-    key: SigningKey,
-    now: Timestamp,
-    previous: Option<ContentHash>,
-}
-impl Worker for DemoWorker {
-    fn execute(&mut self, intent: &WorkIntent) -> Result<WorkerExecutionRecord, String> {
-        let make = || -> Result<WorkerExecutionRecord, agi_coder_core::Error> {
-            WorkerExecutionRecord {
-                operation_id: intent.operation_id()?,
-                intent_digest: intent.digest()?,
-                prev_hash: self.previous,
-                worker: "offline-demo".into(),
-                plan_digest: ContentHash::hash(b"five-stage-demo-v1"),
-                output: intent.target,
-                tests: TestResults {
-                    passed: 1,
-                    failed: 0,
-                    skipped: 0,
-                },
-                test_artifact: ContentHash::hash(
-                    b"demo-only: independent production verification is not configured",
-                ),
-                self_check: SelfCheckResult::Skipped,
-                completed_at: self.now,
-                signer: String::new(),
-                record_hash: ContentHash::ZERO,
-                signature: vec![],
-            }
-            .sign(&self.key)
-        };
-        let record = make().map_err(|e| e.to_string())?;
-        self.previous = Some(record.record_hash);
-        Ok(record)
-    }
-}
-struct DemoExecutor;
-impl ProtectedExecutor for DemoExecutor {
-    fn execute(&mut self, auth: &agi_coder_kernel::Authorization) -> Result<Vec<u8>, String> {
-        Ok(format!("demo receipt for {}", auth.operation()).into_bytes())
-    }
-}
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
+        Command::Status => print(&agi_coder_cli::ops::status())?,
+        Command::Mcp => print(&agi_coder_cli::ops::mcp_entry())?,
+        Command::Pending => print(&agi_coder_cli::pending::pending())?,
+        Command::Observe { workspace, output } => print(
+            &agi_coder_cli::observe::write_observations(&workspace, &output)
+                .map_err(anyhow::Error::msg)?,
+        )?,
+        Command::AttestReceipt { seed, receipt } => print(
+            &agi_coder_cli::cockpit::Session::attest(&seed, &receipt)
+                .map_err(anyhow::Error::msg)?,
+        )?,
+        Command::Ui { bind } => {
+            let addr = agi_coder_cli::serve::parse_loopback(&bind).map_err(anyhow::Error::msg)?;
+            agi_coder_cli::serve::serve(addr)?;
+        }
         Command::Infer {
             bridge_config,
             request,
@@ -135,49 +144,61 @@ fn main() -> anyhow::Result<()> {
             print(&report)?;
             anyhow::ensure!(report.accepted, "mutation verification did not meet policy");
         }
-        Command::Plan { goal } => print(&Planner::software(goal)?)?,
+        Command::Plan { goal } => {
+            print(&agi_coder_cli::ops::plan(&goal).map_err(anyhow::Error::msg)?)?
+        }
+        Command::Arc3 { actions } => {
+            let path = std::path::Path::new("observations/local-seek.json");
+            let mut session = agi_coder_cli::cockpit::Session::new();
+            session
+                .load_arc3(path)
+                .map_err(anyhow::Error::msg)?;
+            let mut last = session.view();
+            for action in actions.split(',').map(str::trim).filter(|item| !item.is_empty()) {
+                let (name, x, y) = if let Some(rest) = action.strip_prefix("click:") {
+                    let mut parts = rest.split(':');
+                    let x = parts
+                        .next()
+                        .and_then(|value| value.parse::<u8>().ok())
+                        .ok_or_else(|| anyhow::anyhow!("click needs x:y"))?;
+                    let y = parts
+                        .next()
+                        .and_then(|value| value.parse::<u8>().ok())
+                        .ok_or_else(|| anyhow::anyhow!("click needs x:y"))?;
+                    ("click".to_string(), Some(x), Some(y))
+                } else {
+                    (action.to_string(), None, None)
+                };
+                let body = serde_json::to_vec(&serde_json::json!({"action": name, "x": x, "y": y}))?;
+                last = session
+                    .run_arc3(&body)
+                    .map_err(anyhow::Error::msg)?;
+            }
+            session.save_arc3(path).map_err(anyhow::Error::msg)?;
+            print(&last)?;
+        }
+        Command::Release {
+            goal,
+            workspace,
+            output,
+        } => {
+            let status = std::process::Command::new("cargo")
+                .args(["test", "-p", "agi-coder-cli", "--lib"])
+                .current_dir(&workspace)
+                .status()?;
+            anyhow::ensure!(status.success(), "cargo test failed; local release was not written");
+            print(&agi_coder_cli::ops::release_local(
+                &goal,
+                &workspace,
+                &output,
+                true,
+                "cargo test -p agi-coder-cli --lib",
+            )
+            .map_err(anyhow::Error::msg)?)?
+        }
         Command::Run { demo, goal } => {
             anyhow::ensure!(demo, "only the explicit offline demo runner is configured");
-            let mut plan = Planner::software(goal.clone())?;
-            let key = SigningKey::from_bytes(&[7; 32]);
-            let now = Timestamp(1000);
-            let mut worker = DemoWorker {
-                key,
-                now,
-                previous: None,
-            };
-            let mut pipeline = PipelineOrchestrator::default();
-            let mut executor = DemoExecutor;
-            while let Some(task) = plan.next_ready() {
-                let id = task.id.clone();
-                plan.start(&id)?;
-                let intent = WorkIntent {
-                    requested_by: Did("did:agi:demo".into()),
-                    intent_type: match id.as_str() {
-                        "design" => WorkIntentType::Design,
-                        "implement" => WorkIntentType::Implement,
-                        "test" => WorkIntentType::Verify,
-                        "audit" => WorkIntentType::Audit,
-                        _ => WorkIntentType::Deploy,
-                    },
-                    target: ContentHash::hash(format!("{goal}:{id}").as_bytes()),
-                    parameters: serde_json::json!({"demo":true,"stage":id}),
-                    request_identity: RequestIdentity::new(format!("{goal}:{id}").as_bytes()),
-                    created_at: now,
-                };
-                let policy = Policy {
-                    allowed_signers: vec![hex::encode(worker.key.verifying_key().as_bytes())],
-                    allowed_requesters: vec![intent.requested_by.0.clone()],
-                    allowed_operations: vec![intent.intent_type],
-                    max_age_seconds: 60,
-                    expected_output: intent.target,
-                };
-                pipeline.run_stage(&intent, &policy, now, &mut worker, &mut executor)?;
-                plan.finish(&id, true)?;
-            }
-            print(
-                &serde_json::json!({"mode":"offline-demo", "plan":plan,"records":pipeline.graph.len(),"root":pipeline.graph.root(),"deployed":false}),
-            )?;
+            print(&agi_coder_cli::ops::run_demo(&goal).map_err(anyhow::Error::msg)?)?;
         }
         Command::Verify {
             record,
@@ -191,9 +212,12 @@ fn main() -> anyhow::Result<()> {
             let mut store = InMemoryEvidenceStore::default();
             let hash = store.insert(Evidence::WorkerExecution(record))?;
             let auth = ContainmentGate::authorize(&intent, hash, &store, &policy, Timestamp(now))?;
-            print(
-                &serde_json::json!({"authorized":true,"operation":auth.operation(),"evidence":auth.evidence(),"output":auth.output()}),
-            )?;
+            print(&serde_json::json!({
+                "authorized": true,
+                "operation": auth.operation(),
+                "evidence": auth.evidence(),
+                "output": auth.output()
+            }))?;
         }
         Command::Anchor { records } => {
             let mut graph = WormGraph::default();
@@ -201,9 +225,13 @@ fn main() -> anyhow::Result<()> {
                 graph.append(record);
             }
             let proofs: Vec<_> = (0..graph.len() as u64)
-                .filter_map(|i| graph.prove(i))
+                .filter_map(|index| graph.prove(index))
                 .collect();
-            print(&serde_json::json!({"scope":"local-only","root":graph.root(),"proofs":proofs}))?;
+            print(&serde_json::json!({
+                "scope": "local-only",
+                "root": graph.root(),
+                "proofs": proofs
+            }))?;
         }
         Command::Mmr { value, root, proof } => {
             let proof: InclusionProof = read(&proof)?;
@@ -211,12 +239,15 @@ fn main() -> anyhow::Result<()> {
                 verify_inclusion(value, &proof, root),
                 "invalid inclusion proof"
             );
-            print(&serde_json::json!({"valid":true}))?;
+            print(&serde_json::json!({"valid": true}))?;
         }
         Command::Cost { ledger } => {
             let ledger: agi_coder_cost::CostTracker = read(&ledger)?;
             let total = ledger.total_micro_usd().map_err(anyhow::Error::msg)?;
-            print(&serde_json::json!({"total_micro_usd":total,"entries":ledger.entries()}))?;
+            print(&serde_json::json!({
+                "total_micro_usd": total,
+                "entries": ledger.entries()
+            }))?;
         }
     }
     Ok(())

@@ -153,8 +153,11 @@ impl Bm25Index {
             b,
         };
         for document in documents {
-            if document.id.trim().is_empty() || index.documents.contains_key(&document.id) {
-                return Err("empty or duplicate document ID".into());
+            if document.id.trim().is_empty()
+                || document.id != document.id.trim()
+                || index.documents.contains_key(&document.id)
+            {
+                return Err("empty, padded, or duplicate document ID".into());
             }
             let tokens = tokenize(&document.text);
             index.lengths.insert(document.id.clone(), tokens.len());

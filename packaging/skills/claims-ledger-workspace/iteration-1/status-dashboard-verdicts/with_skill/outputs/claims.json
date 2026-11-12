@@ -1,0 +1,46 @@
+{
+  "title": "meshwatch status dashboard claims ledger",
+  "source": "meshwatch/docs/spec.md (undated, 5 numbered claims) and the dashboard UI text in meshwatch/src/components (audited 2026-11-02)",
+  "items": [
+    {
+      "id": "MW-01",
+      "scope": "manifest",
+      "label": "LEMMA",
+      "statement": "Release manifests are signed with Ed25519 and verified in the browser before the \"Manifest\" badge turns green.",
+      "state": "absent",
+      "gap": "Untested code covers part of this but is not delivered: verifyManifest() in meshwatch/src/lib/verify.ts does a real WebCrypto Ed25519 check and ManifestBadge.tsx renders VERIFIED only when it returns true, but ManifestBadge is never imported or rendered by Dashboard.tsx, nothing supplies the manifest, signature or a pinned public key, nothing in the repository signs manifests, and no test exists (no valid-signature, tampered-manifest or wrong-key case). Needed: mount ManifestBadge with a pinned key and a fetched manifest+signature, and add tests for valid, tampered and wrong-key inputs."
+    },
+    {
+      "id": "MW-02",
+      "scope": "health",
+      "label": "LEMMA",
+      "statement": "The health badge reflects live probes of the mesh; it turns red when any probe fails.",
+      "state": "absent",
+      "gap": "Untested code covers part of this but fails open: HealthBadge.tsx:4 uses `health?.ok ?? true`, so a failed fetch, a non-2xx /api/health response (fetchHealth returns null) or a response without `ok` all render green \"Healthy\". The badge reads one server-supplied boolean once on mount; it does not look at individual probes, does not refresh, and no probe code is in the repository. No test exists. Needed: unknown/null maps to a grey \"Unknown\" state, red when any probe reports failure, periodic refresh, and tests for fetch error, missing field and one failing probe."
+    },
+    {
+      "id": "MW-03",
+      "scope": "pipeline",
+      "label": "LEMMA",
+      "statement": "The deploy pipeline view shows the true state of each stage.",
+      "state": "absent",
+      "gap": "Untested code covers part of this but rewrites it: Pipeline.tsx:9 relabels every stage after the first failure as \"passed\" although the runner skipped it (comment on line 8 says so). Stages before the failure are shown as reported. When /api/health fails, Dashboard.tsx:15 renders an empty list with no \"unavailable\" message. No test exists. Needed: show stages after the first failure as \"not evaluated\", show an explicit unavailable state, and add a test with a failure in the middle of the pipeline."
+    },
+    {
+      "id": "MW-04",
+      "scope": "attestation",
+      "label": "LEMMA",
+      "statement": "Every node is hardware-attested (TPM 2.0) before it joins the mesh.",
+      "state": "absent",
+      "gap": "No attestation code exists in the repository (no TPM quote, no verifier, no join gate). Attestation.tsx:5 prints a hard-coded green \"TPM 2.0: VERIFIED ... All nodes attested at join\" with no input. Needed: either a real attestation verifier whose result drives the card, or remove the card and move the spec line to a Planned section."
+    },
+    {
+      "id": "MW-05",
+      "scope": "nodes",
+      "label": "LEMMA",
+      "statement": "The node counter shows how many nodes are online right now.",
+      "state": "absent",
+      "gap": "NodeCount.tsx:2 renders the constant \"1,248 nodes online\"; it takes no props and calls no API. Needed: bind it to a live source (e.g. a node count field from the API) with a timestamp and an explicit \"unknown\" state, plus a test, or remove it."
+    }
+  ]
+}

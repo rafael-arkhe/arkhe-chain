@@ -1,4 +1,4 @@
-use crate::{adapters::gensyn::GensynAdapter, types::AttestedReceipt, Error};
+use crate::{adapters::validate_native_receipt, types::AttestedReceipt, Error};
 use arkhe_core::Digest32;
 use arkhe_verify_core::mmr::{build_root_and_proof, verify_proof, ProofStep};
 use serde::{Deserialize, Serialize};
@@ -43,7 +43,7 @@ pub struct CompositeProof {
 }
 
 fn commitment(attested: &AttestedReceipt) -> Result<Digest32, Error> {
-    GensynAdapter::validate(&attested.receipt)?;
+    validate_native_receipt(&attested.receipt)?;
     // Typed JSON commits all receipt metadata and the presence/absence of hardware.
     Ok(Digest32::blake3(
         b"ARKHE/DEPIN/COMPOSITE/v1",

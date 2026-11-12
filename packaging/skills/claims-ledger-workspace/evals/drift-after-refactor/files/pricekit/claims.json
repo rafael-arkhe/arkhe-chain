@@ -1,0 +1,12 @@
+{
+  "title": "pricekit claims ledger",
+  "source": "README.md (v1.4)",
+  "items": [
+    { "id": "C-01", "scope": "rounding", "label": "LEMMA", "statement": "Amounts are rounded half-to-even to the currency's minor unit.", "state": "enforced",
+      "mechanism": "roundHalfEven() rounds ties to the even neighbour", "evidence": ["src/round.js", {"path": "src/round.js", "anchor": "roundHalfEven"}], "tests": ["tests/round.test.js"] },
+    { "id": "C-02", "scope": "rates", "label": "LEMMA", "statement": "FX rates are cached for 60 seconds, so checkout never waits on the rate API twice.", "state": "enforced",
+      "mechanism": "cachedRate() serves a rate from memory for 60 s", "evidence": ["src/fx-cache.js"], "tests": ["tests/fx-cache.test.js"] },
+    { "id": "C-03", "scope": "rates", "label": "LEMMA", "statement": "If the rate API is down, the last published reference rates are used.", "state": "enforced",
+      "mechanism": "rateWithFallback() returns REFERENCE_RATES when the fetch throws", "evidence": ["src/fallback.js"], "tests": ["tests/fallback.test.js"] }
+  ]
+}

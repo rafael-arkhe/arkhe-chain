@@ -22,6 +22,8 @@ pub enum ChainError {
     UnverifiedSignature,
     #[error("FAIL_CLOSED: ADMISSION: {0}")]
     Admission(&'static str),
+    #[error("FAIL_CLOSED: ATTEST: {0}")]
+    Attest(&'static str),
     #[error("FAIL_CLOSED: BAD_NONCE")]
     BadNonce,
     #[error("FAIL_CLOSED: SELF_TRANSFER")]
@@ -40,12 +42,18 @@ pub enum ChainError {
     Fork,
     #[error("FAIL_CLOSED: QUORUM_ABSENT")]
     QuorumAbsent,
+    #[error("FAIL_CLOSED: COMMIT_GAP")]
+    CommitGap,
     #[error("FAIL_CLOSED: ROUND_REGRESSION")]
     RoundRegression,
     #[error("FAIL_CLOSED: PART_SET")]
     BadPartSet,
     #[error("FAIL_CLOSED: CHAIN_ID")]
     ChainId,
+    #[error("FAIL_CLOSED: GENESIS")]
+    Genesis,
+    #[error("FAIL_CLOSED: BUSY")]
+    Busy,
     #[error("FAIL_CLOSED: EQUIVOCATION")]
     Equivocation,
     #[error("FAIL_CLOSED: STATE_MISMATCH")]

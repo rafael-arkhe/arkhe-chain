@@ -20,11 +20,13 @@
 //! pairing.
 
 mod anchor;
+mod attest;
 mod codec;
 mod contingency;
 mod error;
 mod ethereum;
 mod halt;
+mod operator;
 mod p2p;
 mod persist;
 mod proof_verification;
@@ -35,6 +37,11 @@ mod validity;
 mod validity_bridge;
 
 pub use anchor::{btc_op_return, check_btc_op_return, AnchorPlan, AnchorPublisher, BTC_OP_RETURN_LEN};
+pub use attest::{
+    sign_attestation, AttestOp, AttestPolicy, AttestRegistry, AttestStatus, Attestation, Claim, Grant,
+    Receipt, Role, ATTEST_AUDIENCE, ATTEST_MAX_OPS_PER_BLOCK, ATTEST_MAX_RECORDS, ATTEST_POOL_CAPACITY,
+    ATTEST_SCHEME_ED25519, ATTEST_SIGNER_QUOTA, ATTEST_VERSION,
+};
 pub use codec::{decode_block, encode_block};
 pub use contingency::{hold_for_absent_verifier, SettlementContingency};
 pub use error::ChainError;
@@ -43,14 +50,24 @@ pub use ethereum::{
     EthereumExecutionId, EthereumLink, ExecutionRpc, HttpExecutionRpc, ETH_LINK_DOMAIN,
 };
 pub use halt::load_emergency_halt;
-pub use p2p::{spawn_server, sync_canonical, SyncServer, SYNC_PROTOCOL};
+pub use operator::{
+    encode_tx_list, genesis_peer_lines, ingest_tx_list, parse_configured_peer, parse_genesis, parse_genesis_grants,
+    format_genesis, format_status, genesis_fingerprint, next_status_line, read_peer_file,
+    read_status, ChainStatus, GenesisFingerprint, PeerFile,
+    parse_secret_hex,
+    read_operator_files, run_operator, OperatorHandle, OperatorRequest,
+};
+pub use p2p::{
+    attest_configured, spawn_server, spawn_server_on, submit_precommit, submit_tx, sync_canonical,
+    sync_configured, ConfiguredPeer, SyncServer, PRECOMMIT_PROTOCOL, SYNC_PROTOCOL, TX_PROTOCOL,
+};
 pub use proof_verification::{
     check_shape, Groth16Verifier, RejectingVerifier, UndeployedVerifier, PHASE0_SELECTOR, SEAL_LEN,
 };
 pub use replay_log::{format_replay, parse_replay, ReplayRecord};
 pub use state::{apply_transfer, ChainState, GENESIS_ACCOUNT, GENESIS_SUPPLY};
 pub use tx::{
-    mldsa_message, sign_mldsa, Block, BlockHeader, Transaction, MLDSA65_CONTEXT, MLDSA65_PK_LEN,
+    mldsa_message, sign_mldsa, block_hash, Block, BlockHeader, Transaction, MLDSA65_CONTEXT, MLDSA65_PK_LEN,
     MLDSA65_SIG_LEN,
 };
 pub use validity::{load_circuit, read_journal, ProofJournal, ValidityCircuit};
@@ -67,6 +84,8 @@ const MEMPOOL_CAPACITY: usize = 1000;
 
 struct Inner {
     mempool: VecDeque<Transaction>,
+    /// Attestation ops waiting for a block. Kept in memory only.
+    attest_pool: VecDeque<AttestOp>,
     state: ChainState,
     blocks: HashMap<[u8; 32], Vec<u8>>,
     by_height: BTreeMap<u64, [u8; 32]>,
@@ -78,6 +97,8 @@ struct Inner {
     fork_blocks: Vec<Vec<u8>>,
     precommits: BTreeMap<(u64, String), StoredPrecommit>,
     ethereum_links: BTreeMap<u64, EthereumExecutionId>,
+    committed: u64,
+    genesis_hash: [u8; 32],
 }
 
 /// Local finality by depth. This is not a CometBFT commit: a round here is
@@ -100,6 +121,7 @@ pub struct ArkheNode {
     node_id: String,
     signer: ed25519::Keypair,
     validators: BTreeMap<String, ed25519::PublicKey>,
+    genesis_hash: [u8; 32],
     inner: Mutex<Inner>,
     store: Mutex<Option<PathBuf>>,
 }
@@ -164,9 +186,23 @@ impl ArkheNode {
         validators: Vec<Validator>,
         accounts: Vec<Account>,
     ) -> Result<Self, ChainError> {
+        Self::new_with_grants(node_id, secret_key, validators, accounts, Vec::new())
+    }
+
+    /// `new` plus the role grants of the attestation policy. The grants are
+    /// part of the genesis hash. Without grants the hash is the one `new`
+    /// gives, and no approval can be executed.
+    pub fn new_with_grants(
+        node_id: &str,
+        secret_key: &[u8; 32],
+        validators: Vec<Validator>,
+        accounts: Vec<Account>,
+        grants: Vec<Grant>,
+    ) -> Result<Self, ChainError> {
         if !tx::account_id(node_id) {
             return Err(ChainError::BadAccount);
         }
+        let genesis_hash = operator::genesis_hash(&validators, &accounts, &grants)?;
         let validators = parse_validators(validators)?;
         let signer = signer_from(secret_key)?;
         match validators.get(node_id) {
@@ -177,12 +213,15 @@ impl ArkheNode {
         let mut state = ChainState::genesis();
         let parsed = parse_accounts(accounts)?;
         state.set_account_keys(parsed.ed25519, parsed.mldsa)?;
+        state.configure_attest(genesis_hash, grants)?;
         Ok(Self {
             node_id: node_id.to_string(),
             signer,
             validators,
+            genesis_hash,
             inner: Mutex::new(Inner {
                 mempool: VecDeque::with_capacity(MEMPOOL_CAPACITY),
+                attest_pool: VecDeque::new(),
                 state,
                 blocks: HashMap::new(),
                 by_height: BTreeMap::new(),
@@ -194,6 +233,8 @@ impl ArkheNode {
                 fork_blocks: Vec::new(),
                 precommits: BTreeMap::new(),
                 ethereum_links: BTreeMap::new(),
+                committed: 0,
+                genesis_hash,
             }),
             store: Mutex::new(None),
         })
@@ -213,11 +254,30 @@ impl ArkheNode {
         validators: Vec<Validator>,
         accounts: Vec<Account>,
     ) -> Result<Self, ChainError> {
+        Self::open_with_grants(path, node_id, secret_key, validators, accounts, Vec::new())
+    }
+
+    /// `open` plus the role grants of the attestation policy. The registry
+    /// is not stored apart from the blocks: the replay rebuilds it, and each
+    /// header root is checked against it.
+    pub fn open_with_grants(
+        path: impl AsRef<Path>,
+        node_id: &str,
+        secret_key: &[u8; 32],
+        validators: Vec<Validator>,
+        accounts: Vec<Account>,
+        grants: Vec<Grant>,
+    ) -> Result<Self, ChainError> {
         let path = path.as_ref().to_path_buf();
-        let node = Self::new(node_id, secret_key, validators, accounts)?;
+        let node = Self::new_with_grants(node_id, secret_key, validators, accounts, grants)?;
         if path.exists() {
             let bytes = std::fs::read(&path).map_err(|_| ChainError::Snapshot)?;
             let snap = persist::decode_snapshot(&bytes)?;
+            if let Some(stored) = snap.genesis {
+                if stored != node.genesis_hash {
+                    return Err(ChainError::Genesis);
+                }
+            }
             for block in &snap.blocks {
                 node.import_block(block)?;
             }
@@ -287,6 +347,14 @@ impl ArkheNode {
             for tx in snap.mempool {
                 node.ingest(tx)?;
             }
+            if let Some(saved) = snap.sync {
+                node.lock()?.sync_resume = Some(p2p::SyncResume {
+                    remote_tip: saved.remote_tip,
+                    cursor: saved.cursor,
+                    blocks: saved.blocks,
+                });
+            }
+            node.lock()?.committed = snap.committed;
         }
         node.checkpoint_to(&path)?;
         *node.store.lock().map_err(|_| ChainError::LockPoisoned)? = Some(path);
@@ -367,15 +435,7 @@ impl ArkheNode {
         }
         inner.mempool.push_back(tx);
         if let Some(path) = path.as_deref() {
-            let written = persist::encode_snapshot(
-                &inner.state,
-                &inner.by_height,
-                &inner.blocks,
-                &inner.mempool,
-                &inner.fork_blocks,
-                &inner.precommits,
-                &inner.ethereum_links,
-            )
+            let written = encode_from(&inner.state, &inner, &inner.mempool)
             .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
                 inner.mempool.pop_back();
@@ -383,6 +443,92 @@ impl ArkheNode {
             }
         }
         Ok(())
+    }
+
+    /// BLAKE3 of the validator, account and grant lines this node opened with.
+    pub fn genesis_hash(&self) -> [u8; 32] {
+        self.genesis_hash
+    }
+
+    /// Queue a signed attestation for the next block this node seals. It is
+    /// tried at the next height, after the ops already queued. Nothing is
+    /// in the registry until a block carries it.
+    pub fn submit_attestation(&self, att: Attestation) -> Result<[u8; 32], ChainError> {
+        let id = att.id();
+        self.queue_op(AttestOp::Admit(att))?;
+        Ok(id)
+    }
+
+    /// Queue the single use of an approval for the next block this node
+    /// seals. The op is covered by this node's proposer signature and by no
+    /// other. The receipt exists once a block carries the op.
+    pub fn submit_execution(
+        &self,
+        approval: [u8; 32],
+        action: [u8; 32],
+        artifact: [u8; 32],
+    ) -> Result<(), ChainError> {
+        self.queue_op(AttestOp::Execute {
+            approval,
+            action,
+            artifact,
+        })
+    }
+
+    fn queue_op(&self, op: AttestOp) -> Result<(), ChainError> {
+        let mut inner = self.lock()?;
+        if inner.emergency_halt {
+            return Err(ChainError::EmergencyHalt);
+        }
+        let height = inner.state.height + 1;
+        let mut trial = inner.state.clone();
+        for queued in &inner.attest_pool {
+            trial.apply_op(queued, height)?;
+        }
+        trial.apply_op(&op, height)?;
+        if inner.attest_pool.len() >= ATTEST_POOL_CAPACITY {
+            return Err(ChainError::MempoolFull);
+        }
+        inner.attest_pool.push_back(op);
+        Ok(())
+    }
+
+    pub fn attest_pool_len(&self) -> Result<usize, ChainError> {
+        Ok(self.lock()?.attest_pool.len())
+    }
+
+    /// Root of the attestation registry at the tip. The header root covers
+    /// it once the registry has a leaf.
+    pub fn attest_root(&self) -> Result<[u8; 32], ChainError> {
+        self.lock()?.state.attest().root()
+    }
+
+    pub fn attest_count(&self) -> Result<u64, ChainError> {
+        Ok(self.lock()?.state.attest().count())
+    }
+
+    pub fn attest_policy_digest(&self) -> Result<[u8; 32], ChainError> {
+        Ok(self.lock()?.state.attest().policy_digest())
+    }
+
+    /// Status of an attestation carried by a canonical block, with authority
+    /// read at the tip height. Inclusion in a block is not finality; ask
+    /// `finality` or `committed_height` for that.
+    pub fn attest_status(&self, id: &[u8; 32]) -> Result<Option<AttestStatus>, ChainError> {
+        let inner = self.lock()?;
+        Ok(inner.state.attest().status(id, inner.state.height))
+    }
+
+    pub fn attest_receipt(&self, approval: &[u8; 32]) -> Result<Option<Receipt>, ChainError> {
+        Ok(self.lock()?.state.attest().receipt(approval).cloned())
+    }
+
+    /// Proof, leaf and registry root for one registry leaf at the tip.
+    pub fn attest_inclusion_proof(
+        &self,
+        leaf: u64,
+    ) -> Result<(arkhe_verify_core::rbb::mmr::Proof, [u8; 32], [u8; 32]), ChainError> {
+        self.lock()?.state.attest().inclusion_proof(leaf)
     }
 
     pub fn mempool_len(&self) -> Result<usize, ChainError> {
@@ -518,15 +664,7 @@ impl ArkheNode {
             },
         );
         if let Some(path) = path.as_deref() {
-            let written = persist::encode_snapshot(
-                &inner.state,
-                &inner.by_height,
-                &inner.blocks,
-                &inner.mempool,
-                &inner.fork_blocks,
-                &inner.precommits,
-                &inner.ethereum_links,
-            )
+            let written = encode_from(&inner.state, &inner, &inner.mempool)
             .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
                 match previous {
@@ -567,11 +705,108 @@ impl ArkheNode {
             .map(|stored| stored.round))
     }
 
-    /// Accept the height when the highest round on its canonical hash exceeds
-    /// two thirds of the configured validators. Each validator has weight 1.
-    /// Earlier rounds do not add. There is no `CanonicalVote`. The tip does not move.
-    pub fn bft_commit(&self, height: u64) -> Result<(), ChainError> {
+    /// This node's stored v4 precommit at `height`. An older preimage is not returned.
+    pub(crate) fn own_precommit(&self, height: u64) -> Result<Option<Precommit>, ChainError> {
         let inner = self.lock()?;
+        if !inner.by_height.contains_key(&height) {
+            return Err(ChainError::UnknownBlock);
+        }
+        let Some(stored) = inner.precommits.get(&(height, self.node_id.clone())) else {
+            return Ok(None);
+        };
+        if stored.preimage != 4 {
+            return Ok(None);
+        }
+        Ok(Some(Precommit {
+            validator_id: self.node_id.clone(),
+            height,
+            round: stored.round,
+            block_hash: stored.block_hash,
+            parts: 1,
+            part_hash: stored.block_hash,
+            chain_id: CHAIN_ID.to_string(),
+            signature: stored.signature,
+        }))
+    }
+
+    /// Stored v4 precommits for `height`, one per validator. Older preimages
+    /// are left out. This does not dial and does not change the tip.
+    pub(crate) fn precommits_at(&self, height: u64) -> Result<Vec<Precommit>, ChainError> {
+        let inner = self.lock()?;
+        if !inner.by_height.contains_key(&height) {
+            return Err(ChainError::UnknownBlock);
+        }
+        let mut votes = Vec::new();
+        for ((stored_height, validator_id), stored) in &inner.precommits {
+            if *stored_height != height || stored.preimage != 4 {
+                continue;
+            }
+            votes.push(Precommit {
+                validator_id: validator_id.clone(),
+                height,
+                round: stored.round,
+                block_hash: stored.block_hash,
+                parts: 1,
+                part_hash: stored.block_hash,
+                chain_id: CHAIN_ID.to_string(),
+                signature: stored.signature,
+            });
+        }
+        Ok(votes)
+    }
+
+    /// Sign round 0 for the next uncommitted height, when that block exists.
+    /// The signature uses this node's proposer key. A missing block leaves the
+    /// committed height unchanged. This does not dial and does not change the tip.
+    pub fn attest_own_next(&self) -> Result<u64, ChainError> {
+        let height = self.committed_height()?.saturating_add(1);
+        let hash = match self.block_hash_at(height) {
+            Ok(hash) => hash,
+            Err(ChainError::UnknownBlock) => return self.committed_height(),
+            Err(error) => return Err(error),
+        };
+        let mut vote = Precommit {
+            validator_id: self.node_id.clone(),
+            height,
+            round: 0,
+            parts: 1,
+            part_hash: hash,
+            chain_id: CHAIN_ID.to_string(),
+            block_hash: hash,
+            signature: [0u8; 64],
+        };
+        let signature = self.signer.sign(&precommit_message(
+            vote.height,
+            vote.round,
+            &vote.block_hash,
+            vote.parts,
+            &vote.part_hash,
+            &vote.chain_id,
+        ));
+        vote.signature = signature
+            .as_slice()
+            .try_into()
+            .map_err(|_| ChainError::BadProposerSignature)?;
+        self.note_precommit(&vote)?;
+        let _ = self.bft_commit(height);
+        self.committed_height()
+    }
+
+    /// Highest height whose canonical hash has been accepted by `bft_commit`.
+    /// Zero means no height has been committed. This does not change the tip.
+    pub fn committed_height(&self) -> Result<u64, ChainError> {
+        Ok(self.lock()?.committed)
+    }
+
+    /// Accept the next uncommitted height when the highest round on its
+    /// canonical hash exceeds two thirds of the configured validators. Each
+    /// validator has weight 1. Earlier rounds do not add. There is no
+    /// `CanonicalVote`. The tip hash does not change. A height above the next
+    /// uncommitted one is [`ChainError::CommitGap`]. A later missing quorum
+    /// does not erase a height already stored.
+    pub fn bft_commit(&self, height: u64) -> Result<(), ChainError> {
+        let path = self.store_path()?;
+        let mut inner = self.lock()?;
         let canonical = inner
             .by_height
             .get(&height)
@@ -595,6 +830,22 @@ impl ArkheNode {
         let validators = self.validators.len();
         if validators == 0 || votes.saturating_mul(3) <= validators.saturating_mul(2) {
             return Err(ChainError::QuorumAbsent);
+        }
+        if height <= inner.committed {
+            return Ok(());
+        }
+        if height != inner.committed.saturating_add(1) {
+            return Err(ChainError::CommitGap);
+        }
+        let previous = inner.committed;
+        inner.committed = height;
+        if let Some(path) = path.as_deref() {
+            let written = encode_from(&inner.state, &inner, &inner.mempool)
+                .and_then(|encoded| persist::write_atomic(path, &encoded));
+            if let Err(error) = written {
+                inner.committed = previous;
+                return Err(error);
+            }
         }
         Ok(())
     }
@@ -627,6 +878,14 @@ impl ArkheNode {
             return Err(ChainError::ParentMismatch);
         }
         Ok(Some(bytes))
+    }
+
+    pub fn block_hash_at(&self, height: u64) -> Result<[u8; 32], ChainError> {
+        self.lock()?
+            .by_height
+            .get(&height)
+            .copied()
+            .ok_or(ChainError::UnknownBlock)
     }
 
     pub fn header_at(&self, height: u64) -> Result<BlockHeader, ChainError> {
@@ -687,15 +946,7 @@ impl ArkheNode {
         }
         inner.ethereum_links.insert(height, execution);
         if let Some(path) = path.as_deref() {
-            let written = persist::encode_snapshot(
-                &inner.state,
-                &inner.by_height,
-                &inner.blocks,
-                &inner.mempool,
-                &inner.fork_blocks,
-                &inner.precommits,
-                &inner.ethereum_links,
-            )
+            let written = encode_from(&inner.state, &inner, &inner.mempool)
             .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
                 inner.ethereum_links.remove(&height);
@@ -751,11 +1002,12 @@ impl ArkheNode {
         Ok(Some(ethereum_link(&header, arkhe_block_hash, execution)))
     }
 
-    /// Seal a block from the mempool. The block extends this node's tip by one.
-    /// The timestamp must be nonzero and later than the parent header. A
-    /// transaction that fails while the block is built is left out of the
-    /// block and reported in `rejected`. Balances change only for transactions
-    /// inside the sealed block.
+    /// Seal a block from the mempool and the attestation pool. The block
+    /// extends this node's tip by one. The timestamp must be nonzero and later
+    /// than the parent header. A transaction or op that fails while the block
+    /// is built is left out of the block and reported in `rejected`. Balances
+    /// and the registry change only for what is inside the sealed block. A
+    /// block may carry ops and no transaction.
     pub fn propose_and_seal_block(&self, timestamp: u64) -> Result<Proposal, ChainError> {
         if !self.validators.contains_key(&self.node_id) {
             return Err(ChainError::NotProposer);
@@ -766,10 +1018,11 @@ impl ArkheNode {
             return Err(ChainError::EmergencyHalt);
         }
         accept_timestamp(&inner, timestamp)?;
-        if inner.mempool.is_empty() {
+        if inner.mempool.is_empty() && inner.attest_pool.is_empty() {
             return Err(ChainError::MempoolEmpty);
         }
         let saved_mempool = inner.mempool.clone();
+        let saved_pool = inner.attest_pool.clone();
         let mut batch = Vec::new();
         while batch.len() < MAX_TX_PER_BLOCK {
             match inner.mempool.pop_front() {
@@ -786,7 +1039,17 @@ impl ArkheNode {
                 Err(error) => rejected.push(error),
             }
         }
-        if accepted.is_empty() {
+        let mut ops = Vec::new();
+        while ops.len() < ATTEST_MAX_OPS_PER_BLOCK {
+            let Some(op) = inner.attest_pool.pop_front() else {
+                break;
+            };
+            match working.apply_op(&op, working.height + 1) {
+                Ok(()) => ops.push(op),
+                Err(error) => rejected.push(error),
+            }
+        }
+        if accepted.is_empty() && ops.is_empty() {
             return Ok(Proposal {
                 block: None,
                 rejected,
@@ -804,6 +1067,7 @@ impl ArkheNode {
         let mut block = Block {
             header,
             transactions: accepted,
+            attestations: ops,
         };
         sign_block(&mut block, &self.signer)?;
         let bytes = encode_block(&block);
@@ -812,6 +1076,7 @@ impl ArkheNode {
         working.tip = hash;
         if let Err(error) = commit_extension(path.as_deref(), &mut inner, working, hash, bytes) {
             inner.mempool = saved_mempool;
+            inner.attest_pool = saved_pool;
             return Err(error);
         }
         Ok(Proposal {
@@ -883,15 +1148,7 @@ impl ArkheNode {
                         inner.forks.push(hash);
                         inner.fork_blocks.push(bytes.to_vec());
                         if let Some(path) = path.as_deref() {
-                            let written = persist::encode_snapshot(
-                                &inner.state,
-                                &inner.by_height,
-                                &inner.blocks,
-                                &inner.mempool,
-                                &inner.fork_blocks,
-                                &inner.precommits,
-                                &inner.ethereum_links,
-                            )
+                            let written = encode_from(&inner.state, &inner, &inner.mempool)
                             .and_then(|encoded| persist::write_atomic(path, &encoded));
                             if let Err(error) = written {
                                 inner.forks.pop();
@@ -913,6 +1170,9 @@ impl ArkheNode {
         let mut working = inner.state.clone();
         for tx in &block.transactions {
             working.apply_tx(tx)?;
+        }
+        for op in &block.attestations {
+            working.apply_op(op, block.header.block_number)?;
         }
         if working.state_commitment()? != block.header.state_root
             || working.frontier.count != block.header.mmr_count
@@ -1038,15 +1298,7 @@ impl ArkheNode {
 
     fn checkpoint_to(&self, path: &Path) -> Result<(), ChainError> {
         let inner = self.lock()?;
-        let bytes = persist::encode_snapshot(
-            &inner.state,
-            &inner.by_height,
-            &inner.blocks,
-            &inner.mempool,
-            &inner.fork_blocks,
-            &inner.precommits,
-            &inner.ethereum_links,
-        )?;
+        let bytes = encode_from(&inner.state, &inner, &inner.mempool)?;
         drop(inner);
         persist::write_atomic(path, &bytes)
     }
@@ -1063,12 +1315,26 @@ impl ArkheNode {
     }
 
     pub(crate) fn store_sync_resume(&self, resume: p2p::SyncResume) -> Result<(), ChainError> {
-        self.lock()?.sync_resume = Some(resume);
-        Ok(())
+        self.write_sync_resume(Some(resume))
     }
 
     pub(crate) fn clear_sync_resume(&self) -> Result<(), ChainError> {
-        self.lock()?.sync_resume = None;
+        self.write_sync_resume(None)
+    }
+
+    fn write_sync_resume(&self, next: Option<p2p::SyncResume>) -> Result<(), ChainError> {
+        let path = self.store_path()?;
+        let mut inner = self.lock()?;
+        let previous = inner.sync_resume.clone();
+        inner.sync_resume = next;
+        if let Some(path) = path.as_deref() {
+            let written = encode_from(&inner.state, &inner, &inner.mempool)
+                .and_then(|encoded| persist::write_atomic(path, &encoded));
+            if let Err(error) = written {
+                inner.sync_resume = previous;
+                return Err(error);
+            }
+        }
         Ok(())
     }
 
@@ -1081,11 +1347,7 @@ fn reject_sibling(inner: &Inner, block: &Block, parent_height: u64) -> Result<()
     if block.header.timestamp == 0 {
         return Err(ChainError::BadTimestamp);
     }
-    let mut trial = ChainState::genesis();
-    trial.set_account_keys(
-        inner.state.account_keys().clone(),
-        inner.state.account_mldsa().clone(),
-    )?;
+    let mut trial = inner.state.restart()?;
     for height in 1..=parent_height {
         let hash = inner
             .by_height
@@ -1100,6 +1362,9 @@ fn reject_sibling(inner: &Inner, block: &Block, parent_height: u64) -> Result<()
         for tx in &parent.transactions {
             trial.apply_tx(tx)?;
         }
+        for op in &parent.attestations {
+            trial.apply_op(op, parent.header.block_number)?;
+        }
         if height == parent_height && block.header.timestamp <= parent.header.timestamp {
             return Err(ChainError::BadTimestamp);
         }
@@ -1112,12 +1377,39 @@ fn reject_sibling(inner: &Inner, block: &Block, parent_height: u64) -> Result<()
     for tx in &block.transactions {
         trial.apply_tx(tx)?;
     }
+    for op in &block.attestations {
+        trial.apply_op(op, block.header.block_number)?;
+    }
     if trial.state_commitment()? != block.header.state_root
         || trial.frontier.count != block.header.mmr_count
     {
         return Err(ChainError::StateMismatch);
     }
     Ok(())
+}
+
+fn encode_from(
+    state: &ChainState,
+    inner: &Inner,
+    mempool: &std::collections::VecDeque<Transaction>,
+) -> Result<Vec<u8>, ChainError> {
+    let sync = inner.sync_resume.as_ref().map(|resume| persist::SyncView {
+        remote_tip: resume.remote_tip,
+        cursor: resume.cursor,
+        blocks: &resume.blocks,
+    });
+    persist::encode_snapshot(
+        state,
+        &inner.by_height,
+        &inner.blocks,
+        mempool,
+        &inner.fork_blocks,
+        &inner.precommits,
+        &inner.ethereum_links,
+        sync.as_ref(),
+        inner.committed,
+        inner.genesis_hash,
+    )
 }
 
 fn commit_extension(
@@ -1132,15 +1424,7 @@ fn commit_extension(
     let mut mempool = inner.mempool.clone();
     retain_applicable(&working, &mut mempool);
     if let Some(path) = path {
-        let written = persist::encode_snapshot(
-            &working,
-            &inner.by_height,
-            &inner.blocks,
-            &mempool,
-            &inner.fork_blocks,
-            &inner.precommits,
-            &inner.ethereum_links,
-        )
+        let written = encode_from(&working, inner, &mempool)
             .and_then(|encoded| persist::write_atomic(path, &encoded));
         if let Err(error) = written {
             inner.blocks.remove(&hash);
@@ -1149,6 +1433,14 @@ fn commit_extension(
         }
     }
     inner.mempool = mempool;
+    let queued = std::mem::take(&mut inner.attest_pool);
+    let mut trial = working.clone();
+    let next = working.height + 1;
+    for op in queued {
+        if trial.apply_op(&op, next).is_ok() {
+            inner.attest_pool.push_back(op);
+        }
+    }
     inner.state = working;
     Ok(())
 }
@@ -1181,6 +1473,11 @@ fn accept_timestamp(inner: &Inner, timestamp: u64) -> Result<(), ChainError> {
         return Err(ChainError::BadTimestamp);
     }
     Ok(())
+}
+
+pub(crate) fn peer_id_from_bytes(bytes: &[u8; 32]) -> Result<libp2p::PeerId, ChainError> {
+    let public = ed25519::PublicKey::try_from_bytes(bytes).map_err(|_| ChainError::BadProposerKey)?;
+    Ok(validator_peer_id(&public))
 }
 
 fn validator_peer_id(public: &ed25519::PublicKey) -> libp2p::PeerId {

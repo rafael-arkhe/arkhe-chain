@@ -1,0 +1,84 @@
+{
+  "title": "vaultlite claims ledger",
+  "source": "vaultlite/README.md (package version 0.3.0 per pyproject.toml; audited 2026-11-02)",
+  "items": [
+    {
+      "id": "C-01",
+      "scope": "crypto",
+      "label": "LEMMA",
+      "statement": "Encrypted at rest with AES-256-GCM.",
+      "state": "partial",
+      "mechanism": "server.put() stores seal(MASTER_KEY, value), which encrypts with AESGCM under a key from AESGCM.generate_key(bit_length=256)",
+      "evidence": [
+        {"path": "vaultlite/vaultlite/crypto.py", "anchor": "AESGCM.generate_key(bit_length=256)"},
+        {"path": "vaultlite/vaultlite/server.py", "anchor": "STORE[name] = seal(MASTER_KEY"}
+      ],
+      "tests": ["vaultlite/tests/test_crypto.py", "vaultlite/tests/test_audit.py"],
+      "gap": "There is no 'at rest': STORE is an in-memory dict and nothing is written to disk. MASTER_KEY is None and nothing reads VAULTLITE_KEY (the comment in server.py is the only mention), so put() fails unless a test patches the key in. Nothing checks that a loaded key is 32 bytes, so a 16-byte key would silently give AES-128. No test asserts that stored values are ciphertext."
+    },
+    {
+      "id": "C-02",
+      "scope": "crypto",
+      "label": "LEMMA",
+      "statement": "Every secret has its own random nonce.",
+      "state": "enforced",
+      "mechanism": "seal() draws a fresh 12-byte nonce from os.urandom on every call and prefixes it to the ciphertext",
+      "evidence": [{"path": "vaultlite/vaultlite/crypto.py", "anchor": "nonce = os.urandom(12)"}],
+      "tests": ["vaultlite/tests/test_crypto.py"]
+    },
+    {
+      "id": "C-03",
+      "scope": "server",
+      "label": "LEMMA",
+      "statement": "Zero-knowledge server: the server never sees plaintext secrets.",
+      "state": "absent",
+      "gap": "The code contradicts the claim: server.py holds MASTER_KEY, put() receives the plaintext value and get() decrypts with open_sealed() and returns plaintext. Zero knowledge needs client-side encryption with keys the server never holds."
+    },
+    {
+      "id": "C-04",
+      "scope": "keys",
+      "label": "LEMMA",
+      "statement": "Automatic key rotation every 30 days.",
+      "state": "absent",
+      "gap": "No rotation code, scheduler, key versioning or re-encryption path exists; there is a single MASTER_KEY. The only 'rotation' in the code is the constant string printed by cli.status()."
+    },
+    {
+      "id": "C-05",
+      "scope": "audit",
+      "label": "LEMMA",
+      "statement": "Full audit log of every read, write and delete.",
+      "state": "partial",
+      "mechanism": "server.put() and server.get() call audit.log(), which appends a JSON line with time, action, name and user to audit.log",
+      "evidence": [
+        {"path": "vaultlite/vaultlite/audit.py", "anchor": "def log("},
+        {"path": "vaultlite/vaultlite/server.py", "anchor": "log(\"read\", name, user)"}
+      ],
+      "tests": ["vaultlite/tests/test_audit.py"],
+      "gap": "server.delete() does not call log(), so deletes are never recorded and no test covers them. The 'append-only' log is a plain file opened in append mode with no hash chain, signature or protection against editing. get() logs 'read' before the lookup, so a failed read is recorded as a read."
+    },
+    {
+      "id": "C-06",
+      "scope": "compliance",
+      "label": "LEMMA",
+      "statement": "SOC 2 Type II certified infrastructure.",
+      "state": "absent",
+      "gap": "No SOC 2 report, auditor letter or bridge letter is in the repository, and the repository describes no hosted infrastructure to certify."
+    },
+    {
+      "id": "C-07",
+      "scope": "performance",
+      "label": "LEMMA",
+      "statement": "Fast: p99 latency under 2 ms.",
+      "state": "absent",
+      "gap": "No benchmark or latency test exists and the HTTP layer the number would apply to is not in the repository (server.py has plain functions, no HTTP handlers despite its docstring). The number is not measured anywhere."
+    },
+    {
+      "id": "C-08",
+      "scope": "cli",
+      "label": "LEMMA",
+      "statement": "Run `vaultlite status` to confirm your store is healthy.",
+      "state": "absent",
+      "gap": "cli.status() prints the constant 'store SECURE, encryption OK, rotation OK' and returns 0 without checking anything; no branch can report a failure. pyproject.toml also defines no console script, so a `vaultlite` command is not installed."
+    }
+  ]
+}

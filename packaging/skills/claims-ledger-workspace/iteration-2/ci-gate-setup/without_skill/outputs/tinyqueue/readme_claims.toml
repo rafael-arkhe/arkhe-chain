@@ -1,0 +1,36 @@
+# Ledger of the features README.md promises, and the tests that prove each one.
+#
+# scripts/check_readme_claims.py (run in CI) fails when:
+#   - a bullet under "## Features" in README.md has no entry here,
+#   - an entry here no longer matches any README bullet (stale entry),
+#   - an entry lists no tests (nothing backs the claim),
+#   - a listed test does not exist any more, or
+#   - a listed test fails.
+#
+# `claim` must match the README bullet text exactly (leading "- " removed).
+# `tests` are pytest node ids, relative to the project root.
+
+[[claim]]
+claim = "FIFO job queue with `push()` and `pop()`."
+tests = ["tests/test_queue.py::test_fifo"]
+
+[[claim]]
+claim = "Automatic retries with exponential backoff for failing jobs."
+tests = [
+    "tests/test_retry.py::test_backoff_doubles",
+    "tests/test_retry.py::test_gives_up",
+]
+
+[[claim]]
+claim = "Duplicate jobs (same id) are dropped."
+tests = ["tests/test_queue.py::test_duplicates_dropped"]
+
+# No code backs these two yet: Queue keeps jobs only in memory (a deque) and
+# takes no lock. Add the feature and a test, or remove the bullet from the README.
+[[claim]]
+claim = "Jobs are persisted to disk and survive restarts."
+tests = []
+
+[[claim]]
+claim = "Thread-safe: share one queue across worker threads."
+tests = []

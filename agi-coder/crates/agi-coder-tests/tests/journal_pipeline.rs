@@ -121,6 +121,34 @@ fn ambiguous_effects_require_reconciliation_without_redispatch() {
     }
 }
 #[test]
+fn same_nonce_with_altered_parameters_conflicts_and_keeps_the_original() {
+    let mut journal = OperationJournal::default();
+    let original = intent();
+    let id = original.operation_id().unwrap();
+    let digest = original.digest().unwrap();
+    assert_eq!(journal.admit(&original).unwrap(), AdmissionResult::New(id));
+
+    let mut altered = original.clone();
+    altered.parameters = serde_json::json!({"goal": "different work"});
+    assert_eq!(altered.request_identity, original.request_identity);
+    assert_eq!(altered.operation_id().unwrap(), id);
+    assert_ne!(altered.digest().unwrap(), digest);
+    match journal.admit(&altered) {
+        Err(JournalError::Conflict) => {}
+        other => panic!("altered parameters were not rejected: {other:?}"),
+    }
+
+    let stored = journal.get(&id).unwrap();
+    assert_eq!(stored.intent_digest, digest);
+    assert_eq!(stored.status, Status::Pending);
+    assert!(stored.response.is_none());
+    assert_eq!(
+        journal.admit(&original).unwrap(),
+        AdmissionResult::InProgress
+    );
+}
+
+#[test]
 fn journal_rejects_invalid_transitions_and_actor_conflicts() {
     let mut j = OperationJournal::default();
     let i = intent();

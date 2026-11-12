@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "The updated claims.json passes the claims_ledger.py check command (exit 0) with its regenerated CLAIMS.md.",
+      "passed": true,
+      "evidence": "check exits 0: 'OK enforced 0, partial 2, absent 1' with the re-rendered CLAIMS.md"
+    },
+    {
+      "text": "The rate-cache claim (C-02) is now absent (not enforced or partial), with a gap saying the cache was removed in 2.0.",
+      "passed": true,
+      "evidence": "C-02 absent; gap 'Cache removed in 2.0.0; convert() fetches on every call'"
+    },
+    {
+      "text": "The rounding claim (C-01) is re-linked to the renamed round() in src/round.js (no reference to roundHalfEven remains in its evidence) and is not marked absent; enforced or partial with a named gap are both acceptable.",
+      "passed": true,
+      "evidence": "C-01 evidence: anchors 'export function round' (src/round.js) and 'return round(amount' (src/convert.js); no roundHalfEven; state partial with gap"
+    },
+    {
+      "text": "The offline fallback claim (C-03) is not marked absent and keeps evidence pointing at rateWithFallback() in src/fallback.js; enforced or partial with a named gap are both acceptable.",
+      "passed": true,
+      "evidence": "C-03 partial with evidence src/fallback.js (existing C-03 trace comment)"
+    },
+    {
+      "text": "Every claim statement in claims.json is unchanged from the 1.4 audit (the cache claim keeps its 60-second wording).",
+      "passed": true,
+      "evidence": "All three statements identical to the 1.4 registry (scripted comparison)"
+    },
+    {
+      "text": "README.md is unchanged, and the output tells the user the rate-cache line is now false.",
+      "passed": true,
+      "evidence": "README.md byte-identical to the fixture; report: 'README.md:6 ... a feature that no longer exists'"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 199.8,
+    "total_duration_seconds": 199.8
+  }
+}

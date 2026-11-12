@@ -1,7 +1,9 @@
 //! DeepInfer offline process integration. Generation is an unverified proposal.
 pub mod deepinfer_client;
+pub mod engine;
 pub mod sampling;
 pub use deepinfer_client::*;
+pub use engine::{engine_status, EngineStatus};
 pub use sampling::*;
 
 use agi_coder_core::ContentHash;

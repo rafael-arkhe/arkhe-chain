@@ -1,0 +1,49 @@
+{
+  "expectations": [
+    {
+      "text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.",
+      "passed": true,
+      "evidence": "HealthBadge.tsx:4 `health?.ok ?? true` classified OC-2 fail-open"
+    },
+    {
+      "text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.",
+      "passed": true,
+      "evidence": "Pipeline.tsx:9 stages after first failure shown passed, OC-3"
+    },
+    {
+      "text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.",
+      "passed": true,
+      "evidence": "Attestation.tsx:5 constant TPM VERIFIED, no attestation code, OC-1 + OC-4"
+    },
+    {
+      "text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.",
+      "passed": true,
+      "evidence": "NodeCount.tsx:2 constant 1,248, OC-5"
+    },
+    {
+      "text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().",
+      "passed": false,
+      "evidence": "Says verifyManifest() is a real check, but still lists 'ManifestBadge.tsx:9 | OC-6 Scope creep (minor)' in the overclaims table"
+    },
+    {
+      "text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).",
+      "passed": true,
+      "evidence": "Each overclaim row has a Fix column with a concrete change"
+    },
+    {
+      "text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).",
+      "passed": true,
+      "evidence": "MW-01..MW-05 each get a state (all absent)"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.86
+  },
+  "timing": {
+    "executor_duration_seconds": 177.7,
+    "total_duration_seconds": 177.7
+  }
+}

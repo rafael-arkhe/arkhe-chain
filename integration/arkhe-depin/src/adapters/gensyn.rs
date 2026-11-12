@@ -1,4 +1,5 @@
 use crate::{
+    adapters::{ensure_match, ReceiptAdapter},
     types::{DePINProvider, NativeReceipt, ReceiptKind},
     Error,
 };
@@ -25,10 +26,13 @@ impl VerdeReceipt {
 }
 
 pub struct GensynAdapter;
-impl GensynAdapter {
+
+impl ReceiptAdapter for GensynAdapter {
+    type Receipt = VerdeReceipt;
+
     /// Structural validation and deterministic typed JSON encoding only.
     /// The referee signature is preserved, not authenticated.
-    pub fn normalize(receipt: &VerdeReceipt) -> Result<NativeReceipt, Error> {
+    fn normalize(receipt: &VerdeReceipt) -> Result<NativeReceipt, Error> {
         if receipt.task_id.trim().is_empty()
             || receipt.divergence_op.trim().is_empty()
             || receipt.referee_decision.trim().is_empty()
@@ -55,17 +59,18 @@ impl GensynAdapter {
         })
     }
 
-    pub fn validate(receipt: &NativeReceipt) -> Result<(), Error> {
+    fn validate(receipt: &NativeReceipt) -> Result<(), Error> {
         let decoded: VerdeReceipt = serde_json::from_slice(&receipt.payload)?;
-        let normalized = Self::normalize(&decoded)?;
-        if normalized.receipt_hash != receipt.receipt_hash
-            || normalized.payload != receipt.payload
-            || normalized.issued_at != receipt.issued_at
-            || normalized.provider != receipt.provider
-            || normalized.kind != receipt.kind
-        {
-            return Err(Error::InvalidReceipt("normalization mismatch"));
-        }
-        Ok(())
+        ensure_match(&Self::normalize(&decoded)?, receipt)
+    }
+}
+
+impl GensynAdapter {
+    pub fn normalize(receipt: &VerdeReceipt) -> Result<NativeReceipt, Error> {
+        <Self as ReceiptAdapter>::normalize(receipt)
+    }
+
+    pub fn validate(receipt: &NativeReceipt) -> Result<(), Error> {
+        <Self as ReceiptAdapter>::validate(receipt)
     }
 }

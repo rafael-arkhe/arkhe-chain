@@ -1,0 +1,15 @@
+{
+  "title": "pricekit claims ledger",
+  "source": "README.md (v2.0.0, re-audited 2026-11-02; previous audit v1.4)",
+  "items": [
+    { "id": "C-01", "scope": "rounding", "label": "LEMMA", "statement": "Amounts are rounded half-to-even to the currency's minor unit.", "state": "partial",
+      "mechanism": "round() rounds exact binary ties to the even neighbour at a fixed 2 decimals (renamed from roundHalfEven() in 2.0)", "evidence": ["src/round.js", {"path": "src/round.js", "anchor": "round"}, "src/convert.js"], "tests": ["tests/round.test.js"],
+      "gap": "Not currency-aware: decimals defaults to 2 and convert() never passes a minor unit, so 0-decimal (JPY) and 3-decimal (KWD) currencies are rounded wrongly. Ties are detected on the float product, so decimal ties that are not exact in binary go the wrong way (e.g. round(0.545) = 0.55, round(1.015) = 1.01; 573 of 10,000 ties in 0.005..99.995 differ from decimal half-even). Tests only use binary-exact ties (0.125, 0.375)." },
+    { "id": "C-02", "scope": "rates", "label": "LEMMA", "statement": "FX rates are cached for 60 seconds, so checkout never waits on the rate API twice.", "state": "absent",
+      "mechanism": "", "evidence": ["CHANGELOG.md", "src/convert.js"], "tests": [],
+      "gap": "The cache was removed in 2.0.0 (CHANGELOG: stale rates caused mispriced carts). src/fx-cache.js, cachedRate() and tests/fx-cache.test.js no longer exist; convert() fetches the rate on every call, so checkout waits on the rate API every time. The statement is now false, not just unverified." },
+    { "id": "C-03", "scope": "rates", "label": "LEMMA", "statement": "If the rate API is down, the last published reference rates are used.", "state": "partial",
+      "mechanism": "rateWithFallback() returns REFERENCE_RATES[pair] when the fetch throws", "evidence": ["src/fallback.js", {"path": "src/fallback.js", "anchor": "rateWithFallback"}], "tests": ["tests/fallback.test.js"],
+      "gap": "REFERENCE_RATES is a hard-coded two-pair table (EUR/USD, USD/BRL), not a 'last published' feed; any other pair returns undefined and convert() yields NaN. Only a throwing fetch counts as 'down'; a hanging fetch has no timeout. Test covers EUR/USD only." }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "A GitHub Actions workflow in the repo has a step that runs the claims/docs check.",
+      "passed": true,
+      "evidence": "ci.yml step 'Claims ledger: python3 tools/claims_ledger.py check'"
+    },
+    {
+      "text": "The command CI runs uses only files inside the repository (no path to a skills folder or outside the repo).",
+      "passed": true,
+      "evidence": "Command uses tools/claims_ledger.py vendored in the repo; no outside paths"
+    },
+    {
+      "text": "Run at the repository root, the CI check command exits 0 on the repo as delivered.",
+      "passed": true,
+      "evidence": "Scripted: exit 0 on the delivered repo ('OK enforced 1, partial 2, absent 2')"
+    },
+    {
+      "text": "After deleting tinyqueue/retry.py, the same CI check command exits non-zero.",
+      "passed": true,
+      "evidence": "Scripted: after deleting tinyqueue/retry.py, exit 1 ('FAIL C-02: evidence tinyqueue/retry.py does not exist')"
+    },
+    {
+      "text": "The registry or table covers all five README features.",
+      "passed": true,
+      "evidence": "claims.json has C-01..C-05, one per README bullet"
+    },
+    {
+      "text": "Disk persistence and thread safety are recorded as absent (not dropped, not marked backed).",
+      "passed": true,
+      "evidence": "C-04 persistence and C-05 thread safety recorded absent with gaps"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 192.2,
+    "total_duration_seconds": 192.2
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "title": "tinyqueue claims ledger",
+  "source": "README.md \"Features\" section (tinyqueue 0.2.0, pyproject.toml)",
+  "items": [
+    {
+      "id": "C-01",
+      "scope": "queue",
+      "label": "LEMMA",
+      "statement": "FIFO job queue with `push()` and `pop()`.",
+      "state": "enforced",
+      "mechanism": "Queue stores jobs in a deque; push() appends and pop() takes from the left",
+      "evidence": [
+        {"path": "tinyqueue/queue.py", "anchor": "def push("},
+        {"path": "tinyqueue/queue.py", "anchor": "self._items.popleft()"}
+      ],
+      "tests": ["tests/test_queue.py"]
+    },
+    {
+      "id": "C-02",
+      "scope": "retry",
+      "label": "LEMMA",
+      "statement": "Automatic retries with exponential backoff for failing jobs.",
+      "state": "partial",
+      "mechanism": "run_with_retry() re-runs a failing callable up to `attempts` times, sleeping base_delay * 2 ** attempt between tries",
+      "evidence": [
+        {"path": "tinyqueue/retry.py", "anchor": "def run_with_retry("},
+        {"path": "tinyqueue/retry.py", "anchor": "base_delay * 2 ** attempt"}
+      ],
+      "tests": ["tests/test_retry.py"],
+      "gap": "Backoff itself is tested, but retry is a standalone helper: Queue never calls run_with_retry(), so a job popped from the queue is only retried if the caller wraps it by hand. No test covers a queued job being retried."
+    },
+    {
+      "id": "C-03",
+      "scope": "queue",
+      "label": "LEMMA",
+      "statement": "Duplicate jobs (same id) are dropped.",
+      "state": "partial",
+      "mechanism": "push() returns False without enqueuing when the job id is already in the pending-id set",
+      "evidence": [
+        {"path": "tinyqueue/queue.py", "anchor": "if job_id in self._ids:"}
+      ],
+      "tests": ["tests/test_queue.py"],
+      "gap": "Only jobs still pending are deduplicated: pop() discards the id, so the same id is accepted again afterwards. The test checks push()'s return value but not that the queue holds a single item, and nothing tests re-push after pop."
+    },
+    {
+      "id": "C-04",
+      "scope": "persistence",
+      "label": "LEMMA",
+      "statement": "Jobs are persisted to disk and survive restarts.",
+      "state": "absent",
+      "gap": "Queue is in-memory only (a deque and a set); no file, database or serialisation code exists, and no test restarts a queue and reads jobs back."
+    },
+    {
+      "id": "C-05",
+      "scope": "concurrency",
+      "label": "LEMMA",
+      "statement": "Thread-safe: share one queue across worker threads.",
+      "state": "absent",
+      "gap": "No lock or thread-safe structure guards Queue; push() does an unguarded check-then-add on _ids, so two threads can enqueue the same id, and pop() on an empty queue raises IndexError instead of blocking. No concurrency test."
+    }
+  ]
+}

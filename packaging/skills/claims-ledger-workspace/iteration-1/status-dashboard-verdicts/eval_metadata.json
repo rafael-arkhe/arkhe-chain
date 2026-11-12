@@ -1,0 +1,13 @@
+{
+  "eval_name": "status-dashboard-verdicts",
+  "prompt": "Our meshwatch status dashboard is green basically all the time and we're demoing it to investors on Friday. Is any of what it shows actually computed? Go through the spec in docs/ and the components and tell me what's real. Write your findings into the repo folder.",
+  "assertions": [
+    "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.",
+    "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.",
+    "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.",
+    "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.",
+    "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().",
+    "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).",
+    "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered)."
+  ]
+}

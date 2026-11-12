@@ -7,8 +7,11 @@ O domínio está em [domain-registry.json](domain-registry.json).
 ## Objeto
 
 Núcleo não assinado que liga os identificadores de uma release. Assinaturas
-k-de-n do keyset de release são um envelope separado sobre `object_digest`
-(ainda não especificado).
+k-de-n do keyset de release são um envelope separado.
+`arkhe-verify-core::release_keyset::admit` confere assinaturas Ed25519
+distintas, de chaves do keyset, sobre `AKG:RELEASE:SIG:v1\0 || object_digest`.
+O limiar mínimo é 2. Uma assinatura não admite a release. O módulo não
+guarda chave privada e não nomeia o roster.
 
 ```text
 object_digest = BLAKE3-256("AKG:RELEASE:v1\0" || CanonicalBytes(ReleaseManifest))

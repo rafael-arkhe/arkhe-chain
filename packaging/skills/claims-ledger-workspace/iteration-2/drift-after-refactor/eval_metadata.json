@@ -1,0 +1,12 @@
+{
+  "eval_name": "drift-after-refactor",
+  "prompt": "we shipped pricekit 2.0 last week (big refactor). before we tag the release, can you re-check that our claims table (CLAIMS.md / claims.json from the 1.4 audit) is still accurate and update it? leave the README wording alone, that's marketing's call, just tell me what's wrong with it.",
+  "assertions": [
+    "The updated claims.json passes the claims_ledger.py check command (exit 0) with its regenerated CLAIMS.md.",
+    "The rate-cache claim (C-02) is now absent (not enforced or partial), with a gap saying the cache was removed in 2.0.",
+    "The rounding claim (C-01) is re-linked to the renamed round() in src/round.js (no reference to roundHalfEven remains in its evidence) and is not marked absent; enforced or partial with a named gap are both acceptable.",
+    "The offline fallback claim (C-03) is not marked absent and keeps evidence pointing at rateWithFallback() in src/fallback.js; enforced or partial with a named gap are both acceptable.",
+    "Every claim statement in claims.json is unchanged from the 1.4 audit (the cache claim keeps its 60-second wording).",
+    "README.md is unchanged, and the output tells the user the rate-cache line is now false."
+  ]
+}

@@ -133,3 +133,39 @@ pub fn verify_inclusion(
     }
     h == proof.peaks[peak] && root(proof.leaf_count, &proof.peaks) == expected_root
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn two_appends_bind_position_and_the_previous_leaf() {
+        let first = ContentHash::hash(b"first-leaf");
+        let second = ContentHash::hash(b"second-leaf");
+        let mut chain = WormGraph::default();
+        assert_eq!(chain.append(first), 0);
+        let after_first = chain.root();
+        assert_eq!(chain.append(second), 1);
+        let chained = chain.root();
+
+        assert_ne!(chained, after_first);
+        assert_ne!(chained, second);
+        assert_ne!(chained, ContentHash::hash(second.as_bytes()));
+
+        let mut only_last = WormGraph::default();
+        assert_eq!(only_last.append(second), 0);
+        assert_ne!(chained, only_last.root());
+
+        let mut reversed = WormGraph::default();
+        reversed.append(second);
+        reversed.append(first);
+        assert_eq!(reversed.len(), chain.len());
+        assert_ne!(chained, reversed.root());
+
+        let mut other_previous = WormGraph::default();
+        other_previous.append(ContentHash::hash(b"other-previous-leaf"));
+        other_previous.append(second);
+        assert_eq!(other_previous.len(), 2);
+        assert_ne!(chained, other_previous.root());
+    }
+}

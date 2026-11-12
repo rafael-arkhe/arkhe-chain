@@ -4,6 +4,7 @@ use arkhe_core::decision::{Decision, DecisionVerdict};
 use arkhe_core::CanonicalEncode;
 use arkhe_verify_core::rbb::mmr::Frontier;
 
+use crate::attest::{AttestOp, AttestPolicy, AttestRegistry, Grant, ATTEST_AUDIENCE};
 use crate::error::ChainError;
 use crate::tx::Transaction;
 
@@ -19,6 +20,7 @@ pub struct ChainState {
     pub frontier: Frontier,
     account_keys: BTreeMap<String, [u8; 32]>,
     account_mldsa: BTreeMap<String, [u8; crate::tx::MLDSA65_PK_LEN]>,
+    attest: AttestRegistry,
 }
 
 impl ChainState {
@@ -33,6 +35,49 @@ impl ChainState {
             frontier: Frontier::default(),
             account_keys: BTreeMap::new(),
             account_mldsa: BTreeMap::new(),
+            attest: AttestRegistry::unconfigured(),
+        }
+    }
+
+    /// Bind the attestation registry to this chain's genesis. The policy
+    /// keys are the Ed25519 account keys. Call after `set_account_keys`.
+    pub(crate) fn configure_attest(
+        &mut self,
+        genesis_hash: [u8; 32],
+        grants: Vec<Grant>,
+    ) -> Result<(), ChainError> {
+        let policy = AttestPolicy {
+            keys: self.account_keys.clone(),
+            grants,
+        };
+        self.attest = AttestRegistry::new(crate::CHAIN_ID, genesis_hash, ATTEST_AUDIENCE, policy)?;
+        Ok(())
+    }
+
+    /// Genesis balances with this state's keys, grants and attestation domain.
+    pub(crate) fn restart(&self) -> Result<Self, ChainError> {
+        let mut fresh = Self::genesis();
+        fresh.set_account_keys(self.account_keys.clone(), self.account_mldsa.clone())?;
+        fresh.attest = self.attest.reset();
+        Ok(fresh)
+    }
+
+    pub fn attest(&self) -> &AttestRegistry {
+        &self.attest
+    }
+
+    /// Apply one block op at `height`. Nothing changes when it is refused.
+    pub fn apply_op(&mut self, op: &AttestOp, height: u64) -> Result<(), ChainError> {
+        match op {
+            AttestOp::Admit(att) => self.attest.admit(att, height).map(|_| ()),
+            AttestOp::Execute {
+                approval,
+                action,
+                artifact,
+            } => self
+                .attest
+                .execute(approval, action, artifact, height, |_| Ok(()))
+                .map(|_| ()),
         }
     }
 
@@ -91,13 +136,27 @@ impl ChainState {
 
     /// Header commitment. Covers the MMR root, its count, the balances, and
     /// the nonces. The raw MMR root stays available through `mmr_root`.
+    /// Once the attestation registry has a leaf, the commitment also covers
+    /// that registry's root and count, under `AKG:CHAIN:STATE:v2`. A state
+    /// with an empty registry keeps the v1 commitment. An empty transaction
+    /// MMR has no root: v1 fails on it, and v2 writes 32 zero bytes with
+    /// count 0, so a block of ops can come before the first transaction.
     pub fn state_commitment(&self) -> Result<[u8; 32], ChainError> {
         let mut body = Vec::new();
-        body.extend_from_slice(&self.mmr_root()?);
+        if self.frontier.count == 0 && self.attest.count() != 0 {
+            body.extend_from_slice(&[0u8; 32]);
+        } else {
+            body.extend_from_slice(&self.mmr_root()?);
+        }
         body.extend_from_slice(&self.frontier.count.to_be_bytes());
         write_accounts(&mut body, &self.balances)?;
         write_accounts(&mut body, &self.nonces)?;
-        Ok(arkhe_core::Digest32::blake3(b"AKG:CHAIN:STATE:v1\0", &body).0)
+        if self.attest.count() == 0 {
+            return Ok(arkhe_core::Digest32::blake3(b"AKG:CHAIN:STATE:v1\0", &body).0);
+        }
+        body.extend_from_slice(&self.attest.root()?);
+        body.extend_from_slice(&self.attest.count().to_be_bytes());
+        Ok(arkhe_core::Digest32::blake3(b"AKG:CHAIN:STATE:v2\0", &body).0)
     }
 
     pub fn apply_tx(&mut self, tx: &Transaction) -> Result<(), ChainError> {

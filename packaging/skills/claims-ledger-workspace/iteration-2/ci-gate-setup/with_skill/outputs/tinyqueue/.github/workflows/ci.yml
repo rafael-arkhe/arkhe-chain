@@ -1,0 +1,16 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest
+      - run: pytest -q
+      # Fails if a README feature in claims.json loses the code or tests behind it,
+      # or if CLAIMS.md is out of date. See claims.json for each claim's state and gap.
+      - name: Claims ledger
+        run: python3 tools/claims_ledger.py check

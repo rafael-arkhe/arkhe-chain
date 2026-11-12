@@ -182,6 +182,12 @@ fn bm25_formula_parameters_and_stable_identity() {
         assert!(Bm25Index::new(docs.clone(), k1, b).is_err());
     }
     assert!(Bm25Index::new(vec![docs[0].clone(), docs[0].clone()], 1.2, 0.75).is_err());
+    let mut padded = docs[0].clone();
+    padded.id = " b".into();
+    assert!(matches!(
+        Bm25Index::new(vec![padded], 1.2, 0.75),
+        Err(message) if message == "empty, padded, or duplicate document ID"
+    ));
     assert!(Bm25Index::new(vec![], 1.2, 0.75)
         .unwrap()
         .search("x", 1)

@@ -1,0 +1,84 @@
+{
+  "title": "meshwatch status dashboard claims ledger",
+  "source": "docs/spec.md (undated, 5 numbered items) and the UI text in src/components/*.tsx, read 2026-11-02",
+  "items": [
+    {
+      "id": "C-01",
+      "scope": "manifest",
+      "label": "LEMMA",
+      "statement": "Release manifests are signed with Ed25519.",
+      "state": "absent",
+      "gap": "Nothing in the repository signs manifests or refuses an unsigned release; only the verifying side exists (see C-02)."
+    },
+    {
+      "id": "C-02",
+      "scope": "manifest",
+      "label": "LEMMA",
+      "statement": "Release manifests are verified in the browser before the \"Manifest\" badge turns green.",
+      "state": "partial",
+      "mechanism": "verifyManifest() calls crypto.subtle.verify with Ed25519 over the raw manifest bytes, and ManifestBadge renders green only when it returns true (grey while checking, red on false or error).",
+      "evidence": [
+        {"path": "src/lib/verify.ts", "anchor": "verifyManifest"},
+        {"path": "src/components/ManifestBadge.tsx", "anchor": "verifyManifest(manifest, signature, publicKey)"}
+      ],
+      "tests": [],
+      "gap": "No tests exist (no valid, tampered or wrong-key vector). ManifestBadge is not rendered by Dashboard.tsx, so the live dashboard shows no Manifest badge at all. Nothing loads or pins the public key or fetches the manifest and signature, so which key is trusted is undefined."
+    },
+    {
+      "id": "C-03",
+      "scope": "health",
+      "label": "LEMMA",
+      "statement": "The health badge reflects live probes of the mesh.",
+      "state": "partial",
+      "mechanism": "Dashboard calls fetchHealth() once on mount (GET /api/health) and passes the result to HealthBadge, which reads health.ok.",
+      "evidence": [
+        {"path": "src/lib/api.ts", "anchor": "fetchHealth"},
+        {"path": "src/components/Dashboard.tsx", "anchor": "fetchHealth().then(setHealth)"}
+      ],
+      "tests": [],
+      "gap": "No probe code is in the repository; the badge trusts whatever /api/health returns. It is fetched once on mount with no polling, so it is not live. No tests."
+    },
+    {
+      "id": "C-04",
+      "scope": "health",
+      "label": "LEMMA",
+      "statement": "The health badge turns red when any probe fails.",
+      "state": "partial",
+      "mechanism": "HealthBadge renders red 'Degraded' only when health.ok is explicitly false.",
+      "evidence": [
+        {"path": "src/components/HealthBadge.tsx", "anchor": "health?.ok ?? true"}
+      ],
+      "tests": [],
+      "gap": "Fail-open: a network error, non-2xx response, a response without `ok`, and the initial loading state all render green 'Healthy' (health?.ok ?? true). Per-probe results are never inspected. No tests."
+    },
+    {
+      "id": "C-05",
+      "scope": "pipeline",
+      "label": "LEMMA",
+      "statement": "The deploy pipeline view shows the true state of each stage.",
+      "state": "partial",
+      "mechanism": "Pipeline renders the stages returned by /api/health with each stage's status.",
+      "evidence": [
+        {"path": "src/components/Pipeline.tsx", "anchor": "firstFailure"}
+      ],
+      "tests": [],
+      "gap": "Every stage after the first failed one is rewritten to 'passed' (Pipeline.tsx:9), although the comment says the runner skipped them; they must show 'not evaluated'. When /api/health fails the list is empty with no 'unknown' state. No tests."
+    },
+    {
+      "id": "C-06",
+      "scope": "attestation",
+      "label": "LEMMA",
+      "statement": "Every node is hardware-attested (TPM 2.0) before it joins the mesh.",
+      "state": "absent",
+      "gap": "No TPM quote, attestation verification or join gate exists anywhere in the repository; Attestation.tsx prints a hard-coded 'TPM 2.0: VERIFIED' badge."
+    },
+    {
+      "id": "C-07",
+      "scope": "nodes",
+      "label": "LEMMA",
+      "statement": "The node counter shows how many nodes are online right now.",
+      "state": "absent",
+      "gap": "NodeCount.tsx renders the literal 1,248; no data source, API call or prop feeds it."
+    }
+  ]
+}

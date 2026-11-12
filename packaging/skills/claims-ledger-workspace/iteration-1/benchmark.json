@@ -1,0 +1,309 @@
+{
+  "metadata": {
+    "skill_name": "claims-ledger",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-11-03T00:59:35Z",
+    "evals_run": [
+      "secrets-store-readme",
+      "status-dashboard-verdicts"
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": "secrets-store-readme",
+      "eval_name": "secrets-store-readme",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 151.6,
+        "tokens": 72652,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.",
+          "passed": true,
+          "evidence": "claims_ledger.py check prints 'OK enforced 1, partial 2, absent 5' on outputs/claims.json"
+        },
+        {
+          "text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.",
+          "passed": true,
+          "evidence": "C-01 partial citing crypto.py seal()/AESGCM and tests/test_crypto.py; nonce split out as C-02 enforced"
+        },
+        {
+          "text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).",
+          "passed": true,
+          "evidence": "C-03 absent; REPORT: 'server.py holds MASTER_KEY, put() receives plaintext, get() decrypts and returns it'"
+        },
+        {
+          "text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.",
+          "passed": true,
+          "evidence": "C-04 absent: 'no rotation code; single master key'"
+        },
+        {
+          "text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.",
+          "passed": true,
+          "evidence": "C-06 absent: 'no report or certificate in the repository'"
+        },
+        {
+          "text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.",
+          "passed": true,
+          "evidence": "C-07 absent: 'no benchmark, no HTTP layer'"
+        },
+        {
+          "text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.",
+          "passed": true,
+          "evidence": "C-05 partial: 'delete() never logs'"
+        },
+        {
+          "text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.",
+          "passed": true,
+          "evidence": "Overclaims table: 'cli.py:6 | OC-1 Constant verdict'"
+        },
+        {
+          "text": "The final report does not conclude that vaultlite is secure, verified or production ready.",
+          "passed": true,
+          "evidence": "Verdict says the README should not go on the landing page as written; no 'secure' conclusion"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "status-dashboard-verdicts",
+      "eval_name": "status-dashboard-verdicts",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 177.7,
+        "tokens": 79130,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.",
+          "passed": true,
+          "evidence": "HealthBadge.tsx:4 `health?.ok ?? true` classified OC-2 fail-open"
+        },
+        {
+          "text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.",
+          "passed": true,
+          "evidence": "Pipeline.tsx:9 stages after first failure shown passed, OC-3"
+        },
+        {
+          "text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.",
+          "passed": true,
+          "evidence": "Attestation.tsx:5 constant TPM VERIFIED, no attestation code, OC-1 + OC-4"
+        },
+        {
+          "text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.",
+          "passed": true,
+          "evidence": "NodeCount.tsx:2 constant 1,248, OC-5"
+        },
+        {
+          "text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().",
+          "passed": false,
+          "evidence": "Says verifyManifest() is a real check, but still lists 'ManifestBadge.tsx:9 | OC-6 Scope creep (minor)' in the overclaims table"
+        },
+        {
+          "text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).",
+          "passed": true,
+          "evidence": "Each overclaim row has a Fix column with a concrete change"
+        },
+        {
+          "text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).",
+          "passed": true,
+          "evidence": "MW-01..MW-05 each get a state (all absent)"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "secrets-store-readme",
+      "eval_name": "secrets-store-readme",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.89,
+        "passed": 8,
+        "failed": 1,
+        "total": 9,
+        "time_seconds": 109.2,
+        "tokens": 60245,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.",
+          "passed": false,
+          "evidence": "No claims.json produced; only README_CLAIMS_REVIEW.md"
+        },
+        {
+          "text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.",
+          "passed": true,
+          "evidence": "Row 1 'Partly true' citing crypto.py:7, crypto.py:11-12 and the passing tests"
+        },
+        {
+          "text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).",
+          "passed": true,
+          "evidence": "Row 2 'False': server.py:1/10/16 encrypt and decrypt on the server"
+        },
+        {
+          "text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.",
+          "passed": true,
+          "evidence": "Row 3 'False / not implemented': no rotation code anywhere"
+        },
+        {
+          "text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.",
+          "passed": true,
+          "evidence": "Row 5 'Unsupported': no audit report or attestation in the repo"
+        },
+        {
+          "text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.",
+          "passed": true,
+          "evidence": "Row 6 'Unsupported': no benchmarks or performance tests"
+        },
+        {
+          "text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.",
+          "passed": true,
+          "evidence": "Row 4 'Partly true': 'delete() logs nothing (server.py:19-20)'"
+        },
+        {
+          "text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.",
+          "passed": true,
+          "evidence": "Status row: 'cli.status() (cli.py:5-7) always prints store SECURE ... checks nothing'"
+        },
+        {
+          "text": "The final report does not conclude that vaultlite is secure, verified or production ready.",
+          "passed": true,
+          "evidence": "Recommends dropping unsupported claims; no 'secure' conclusion"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "status-dashboard-verdicts",
+      "eval_name": "status-dashboard-verdicts",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 68.8,
+        "tokens": 59246,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.",
+          "passed": true,
+          "evidence": "Item 2: 'HealthBadge.tsx:4 const ok = health?.ok ?? true' shows Healthy when it can't tell"
+        },
+        {
+          "text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.",
+          "passed": true,
+          "evidence": "Item 3: 'Pipeline.tsx:8-9 relabels every stage after the first failure as passed'"
+        },
+        {
+          "text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.",
+          "passed": true,
+          "evidence": "Item 4: 'Attestation.tsx always renders TPM 2.0: VERIFIED with no inputs'"
+        },
+        {
+          "text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.",
+          "passed": true,
+          "evidence": "Item 5: 'NodeCount.tsx returns the literal 1,248'"
+        },
+        {
+          "text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().",
+          "passed": true,
+          "evidence": "Item 1: 'Real check, not on the dashboard'; not called an overclaim"
+        },
+        {
+          "text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).",
+          "passed": true,
+          "evidence": "Fixes paragraph covers each finding"
+        },
+        {
+          "text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).",
+          "passed": true,
+          "evidence": "Table maps all five spec claims"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.93,
+        "stddev": 0.099,
+        "min": 0.86,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 164.65,
+        "stddev": 18.4555,
+        "min": 151.6,
+        "max": 177.7
+      },
+      "tokens": {
+        "mean": 75891.0,
+        "stddev": 4580.6377,
+        "min": 72652,
+        "max": 79130
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.945,
+        "stddev": 0.0778,
+        "min": 0.89,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 89.0,
+        "stddev": 28.5671,
+        "min": 68.8,
+        "max": 109.2
+      },
+      "tokens": {
+        "mean": 59745.5,
+        "stddev": 706.3997,
+        "min": 59246,
+        "max": 60245
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.01",
+      "time_seconds": "+75.7",
+      "tokens": "+16146"
+    }
+  },
+  "notes": [
+    "Non-discriminating: 15 of 16 assertions passed in both configurations. Opus without the skill finds planted overclaims on its own; finding issues is not where the skill adds value.",
+    "Only discriminating assertion: a claims registry the checker accepts (with-skill 1/1, baseline 0/1). The skill's value is the durable, machine-checked artefact and the CI gate, not detection.",
+    "Skill defect 1 (meshwatch): the checker requires tests for 'partial', so in a repo with no tests every claim with real code was forced to 'absent', contradicting SKILL.md's own edge-case rule and losing information.",
+    "Skill defect 2 (meshwatch): OC-6 led the run to list the computed ManifestBadge 'VERIFIED' as a (minor) overclaim, a false positive the baseline avoided.",
+    "Cost: +85% time and +27% tokens with the skill.",
+    "Baselines found unplanted issues (MASTER_KEY never loaded, no AAD binding, failed reads logged as reads); with-skill matched most of them.",
+    "Report files: in 3 of 4 runs the harness refused subagent writes of report .md files; the evaluator saved each run's final reply verbatim as its report. claims.json/CLAIMS.md were written by the runs themselves.",
+    "Trigger test (separate, simulated): 20/20 correct routing among 11 skills; claude -p was unavailable so run_eval.py was not used."
+  ]
+}

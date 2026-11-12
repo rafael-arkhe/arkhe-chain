@@ -1,0 +1,11 @@
+schema_version: "1.1"
+name: drift-after-refactor
+expected_outcome: |
+  The 2.0 refactor deleted the FX cache (src/fx-cache.js and its test) and renamed
+  roundHalfEven() to round(). The updated registry marks the 60-second rate cache claim
+  absent (README still promises it), re-links the rounding claim to round() so it stays
+  enforced with its passing test, keeps the offline fallback enforced, keeps every
+  claim statement as written, and the table is regenerated. README is not edited; the
+  cache line is reported as now false.
+context:
+  scaffold_script: place-files.sh

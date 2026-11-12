@@ -1,0 +1,506 @@
+{
+  "metadata": {
+    "skill_name": "claims-ledger",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-11-03T01:10:40Z",
+    "evals_run": [
+      "ci-gate-setup",
+      "drift-after-refactor",
+      "secrets-store-readme",
+      "status-dashboard-verdicts"
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": "ci-gate-setup",
+      "eval_name": "ci-gate-setup",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 192.2,
+        "tokens": 73011,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A GitHub Actions workflow in the repo has a step that runs the claims/docs check.",
+          "passed": true,
+          "evidence": "ci.yml step 'Claims ledger: python3 tools/claims_ledger.py check'"
+        },
+        {
+          "text": "The command CI runs uses only files inside the repository (no path to a skills folder or outside the repo).",
+          "passed": true,
+          "evidence": "Command uses tools/claims_ledger.py vendored in the repo; no outside paths"
+        },
+        {
+          "text": "Run at the repository root, the CI check command exits 0 on the repo as delivered.",
+          "passed": true,
+          "evidence": "Scripted: exit 0 on the delivered repo ('OK enforced 1, partial 2, absent 2')"
+        },
+        {
+          "text": "After deleting tinyqueue/retry.py, the same CI check command exits non-zero.",
+          "passed": true,
+          "evidence": "Scripted: after deleting tinyqueue/retry.py, exit 1 ('FAIL C-02: evidence tinyqueue/retry.py does not exist')"
+        },
+        {
+          "text": "The registry or table covers all five README features.",
+          "passed": true,
+          "evidence": "claims.json has C-01..C-05, one per README bullet"
+        },
+        {
+          "text": "Disk persistence and thread safety are recorded as absent (not dropped, not marked backed).",
+          "passed": true,
+          "evidence": "C-04 persistence and C-05 thread safety recorded absent with gaps"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "drift-after-refactor",
+      "eval_name": "drift-after-refactor",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 199.8,
+        "tokens": 72903,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The updated claims.json passes the claims_ledger.py check command (exit 0) with its regenerated CLAIMS.md.",
+          "passed": true,
+          "evidence": "check exits 0: 'OK enforced 0, partial 2, absent 1' with the re-rendered CLAIMS.md"
+        },
+        {
+          "text": "The rate-cache claim (C-02) is now absent (not enforced or partial), with a gap saying the cache was removed in 2.0.",
+          "passed": true,
+          "evidence": "C-02 absent; gap 'Cache removed in 2.0.0; convert() fetches on every call'"
+        },
+        {
+          "text": "The rounding claim (C-01) is re-linked to the renamed round() in src/round.js (no reference to roundHalfEven remains in its evidence) and is not marked absent; enforced or partial with a named gap are both acceptable.",
+          "passed": true,
+          "evidence": "C-01 evidence: anchors 'export function round' (src/round.js) and 'return round(amount' (src/convert.js); no roundHalfEven; state partial with gap"
+        },
+        {
+          "text": "The offline fallback claim (C-03) is not marked absent and keeps evidence pointing at rateWithFallback() in src/fallback.js; enforced or partial with a named gap are both acceptable.",
+          "passed": true,
+          "evidence": "C-03 partial with evidence src/fallback.js (existing C-03 trace comment)"
+        },
+        {
+          "text": "Every claim statement in claims.json is unchanged from the 1.4 audit (the cache claim keeps its 60-second wording).",
+          "passed": true,
+          "evidence": "All three statements identical to the 1.4 registry (scripted comparison)"
+        },
+        {
+          "text": "README.md is unchanged, and the output tells the user the rate-cache line is now false.",
+          "passed": true,
+          "evidence": "README.md byte-identical to the fixture; report: 'README.md:6 ... a feature that no longer exists'"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "secrets-store-readme",
+      "eval_name": "secrets-store-readme",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 168.7,
+        "tokens": 72760,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.",
+          "passed": true,
+          "evidence": "vaultlite/claims.json: check prints 'OK enforced 1, partial 2, absent 5'"
+        },
+        {
+          "text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.",
+          "passed": true,
+          "evidence": "C-01 partial: seal()/open_sealed() AES-256-GCM, tests/test_crypto.py; C-02 nonce enforced"
+        },
+        {
+          "text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).",
+          "passed": true,
+          "evidence": "C-03 absent: 'server.py holds MASTER_KEY ... put() encrypts plaintext on the server; get() decrypts'"
+        },
+        {
+          "text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.",
+          "passed": true,
+          "evidence": "C-04 absent: 'No rotation code at all'"
+        },
+        {
+          "text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.",
+          "passed": true,
+          "evidence": "C-06 absent: 'No report or certificate in the repo'"
+        },
+        {
+          "text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.",
+          "passed": true,
+          "evidence": "C-07 absent: 'No benchmark and no HTTP server'"
+        },
+        {
+          "text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.",
+          "passed": true,
+          "evidence": "C-05 partial: 'Deletes not logged or tested'"
+        },
+        {
+          "text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.",
+          "passed": true,
+          "evidence": "Overclaims: 'vaultlite/cli.py:6 | OC-1 Constant verdict'"
+        },
+        {
+          "text": "The final report does not conclude that vaultlite is secure, verified or production ready.",
+          "passed": true,
+          "evidence": "No 'secure' conclusion; proposes accurate landing copy instead"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "status-dashboard-verdicts",
+      "eval_name": "status-dashboard-verdicts",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 161.0,
+        "tokens": 71048,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.",
+          "passed": true,
+          "evidence": "C-04 partial: HealthBadge.tsx:4 `health?.ok ?? true`, OC-2"
+        },
+        {
+          "text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.",
+          "passed": true,
+          "evidence": "C-05 partial: Pipeline.tsx:9 stages after failure rewritten to passed, OC-3"
+        },
+        {
+          "text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.",
+          "passed": true,
+          "evidence": "C-06 absent: Attestation.tsx:5 constant TPM VERIFIED, OC-4 (+OC-1)"
+        },
+        {
+          "text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.",
+          "passed": true,
+          "evidence": "C-07 absent: NodeCount.tsx:2 literal 1,248, OC-5"
+        },
+        {
+          "text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().",
+          "passed": true,
+          "evidence": "ManifestBadge listed under 'Wording notes (not overclaims)': 'This verdict is computed'"
+        },
+        {
+          "text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).",
+          "passed": true,
+          "evidence": "Each of the 4 overclaims has a Fix column entry"
+        },
+        {
+          "text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).",
+          "passed": true,
+          "evidence": "Spec claims mapped to C-01..C-07 (spec items 1 and 2 split into atomic claims), each with a state"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "ci-gate-setup",
+      "eval_name": "ci-gate-setup",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.83,
+        "passed": 5,
+        "failed": 1,
+        "total": 6,
+        "time_seconds": 235.1,
+        "tokens": 61690,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A GitHub Actions workflow in the repo has a step that runs the claims/docs check.",
+          "passed": true,
+          "evidence": "ci.yml new job 'readme-claims': python scripts/check_readme_claims.py"
+        },
+        {
+          "text": "The command CI runs uses only files inside the repository (no path to a skills folder or outside the repo).",
+          "passed": true,
+          "evidence": "scripts/check_readme_claims.py and readme_claims.toml are in the repo; no outside paths"
+        },
+        {
+          "text": "Run at the repository root, the CI check command exits 0 on the repo as delivered.",
+          "passed": false,
+          "evidence": "Scripted: exit 1 on the delivered repo, by design: it fails on the two README features with no code (CONTESTED: arguably what the user asked for)"
+        },
+        {
+          "text": "After deleting tinyqueue/retry.py, the same CI check command exits non-zero.",
+          "passed": true,
+          "evidence": "Scripted: after deleting tinyqueue/retry.py, exit 1 (listed retry tests no longer collect)"
+        },
+        {
+          "text": "The registry or table covers all five README features.",
+          "passed": true,
+          "evidence": "readme_claims.toml maps all five Features bullets verbatim, and the checker fails on any unmapped bullet"
+        },
+        {
+          "text": "Disk persistence and thread safety are recorded as absent (not dropped, not marked backed).",
+          "passed": true,
+          "evidence": "Persistence and thread safety listed with no tests; reported as unbacked, CI fails on them"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "drift-after-refactor",
+      "eval_name": "drift-after-refactor",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.83,
+        "passed": 5,
+        "failed": 1,
+        "total": 6,
+        "time_seconds": 148.8,
+        "tokens": 62414,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The updated claims.json passes the claims_ledger.py check command (exit 0) with its regenerated CLAIMS.md.",
+          "passed": false,
+          "evidence": "check exits 1: C-01 evidence files do not name C-01; C-02 is absent yet still lists mechanism/evidence. CLAIMS.md rebuilt by hand"
+        },
+        {
+          "text": "The rate-cache claim (C-02) is now absent (not enforced or partial), with a gap saying the cache was removed in 2.0.",
+          "passed": true,
+          "evidence": "C-02 absent; report: 'src/fx-cache.js, cachedRate() and tests/fx-cache.test.js no longer exist'"
+        },
+        {
+          "text": "The rounding claim (C-01) is re-linked to the renamed round() in src/round.js (no reference to roundHalfEven remains in its evidence) and is not marked absent; enforced or partial with a named gap are both acceptable.",
+          "passed": true,
+          "evidence": "C-01 evidence re-pointed to round (anchor 'round'), no roundHalfEven; partial with gap"
+        },
+        {
+          "text": "The offline fallback claim (C-03) is not marked absent and keeps evidence pointing at rateWithFallback() in src/fallback.js; enforced or partial with a named gap are both acceptable.",
+          "passed": true,
+          "evidence": "C-03 partial with evidence src/fallback.js and anchor rateWithFallback"
+        },
+        {
+          "text": "Every claim statement in claims.json is unchanged from the 1.4 audit (the cache claim keeps its 60-second wording).",
+          "passed": true,
+          "evidence": "All three statements identical to the 1.4 registry (scripted comparison)"
+        },
+        {
+          "text": "README.md is unchanged, and the output tells the user the rate-cache line is now false.",
+          "passed": true,
+          "evidence": "README.md byte-identical; report: 'Rate cache bullet: this is now false'"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "secrets-store-readme",
+      "eval_name": "secrets-store-readme",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.89,
+        "passed": 8,
+        "failed": 1,
+        "total": 9,
+        "time_seconds": 109.2,
+        "tokens": 60245,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.",
+          "passed": false,
+          "evidence": "No claims.json produced; only README_CLAIMS_REVIEW.md"
+        },
+        {
+          "text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.",
+          "passed": true,
+          "evidence": "Row 1 'Partly true' citing crypto.py:7, crypto.py:11-12 and the passing tests"
+        },
+        {
+          "text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).",
+          "passed": true,
+          "evidence": "Row 2 'False': server.py:1/10/16 encrypt and decrypt on the server"
+        },
+        {
+          "text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.",
+          "passed": true,
+          "evidence": "Row 3 'False / not implemented': no rotation code anywhere"
+        },
+        {
+          "text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.",
+          "passed": true,
+          "evidence": "Row 5 'Unsupported': no audit report or attestation in the repo"
+        },
+        {
+          "text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.",
+          "passed": true,
+          "evidence": "Row 6 'Unsupported': no benchmarks or performance tests"
+        },
+        {
+          "text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.",
+          "passed": true,
+          "evidence": "Row 4 'Partly true': 'delete() logs nothing (server.py:19-20)'"
+        },
+        {
+          "text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.",
+          "passed": true,
+          "evidence": "Status row: 'cli.status() (cli.py:5-7) always prints store SECURE ... checks nothing'"
+        },
+        {
+          "text": "The final report does not conclude that vaultlite is secure, verified or production ready.",
+          "passed": true,
+          "evidence": "Recommends dropping unsupported claims; no 'secure' conclusion"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "status-dashboard-verdicts",
+      "eval_name": "status-dashboard-verdicts",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 68.8,
+        "tokens": 59246,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.",
+          "passed": true,
+          "evidence": "Item 2: 'HealthBadge.tsx:4 const ok = health?.ok ?? true' shows Healthy when it can't tell"
+        },
+        {
+          "text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.",
+          "passed": true,
+          "evidence": "Item 3: 'Pipeline.tsx:8-9 relabels every stage after the first failure as passed'"
+        },
+        {
+          "text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.",
+          "passed": true,
+          "evidence": "Item 4: 'Attestation.tsx always renders TPM 2.0: VERIFIED with no inputs'"
+        },
+        {
+          "text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.",
+          "passed": true,
+          "evidence": "Item 5: 'NodeCount.tsx returns the literal 1,248'"
+        },
+        {
+          "text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().",
+          "passed": true,
+          "evidence": "Item 1: 'Real check, not on the dashboard'; not called an overclaim"
+        },
+        {
+          "text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).",
+          "passed": true,
+          "evidence": "Fixes paragraph covers each finding"
+        },
+        {
+          "text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).",
+          "passed": true,
+          "evidence": "Table maps all five spec claims"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 180.425,
+        "stddev": 18.5189,
+        "min": 161.0,
+        "max": 199.8
+      },
+      "tokens": {
+        "mean": 72430.5,
+        "stddev": 927.3822,
+        "min": 71048,
+        "max": 73011
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.8875,
+        "stddev": 0.0802,
+        "min": 0.83,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 140.475,
+        "stddev": 71.0367,
+        "min": 68.8,
+        "max": 235.1
+      },
+      "tokens": {
+        "mean": 60898.75,
+        "stddev": 1423.7311,
+        "min": 59246,
+        "max": 62414
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.11",
+      "time_seconds": "+40.0",
+      "tokens": "+11532"
+    }
+  },
+  "notes": [
+    "Round-1 fixes confirmed: meshwatch now records code-without-tests as partial (4 partial vs 0) and puts the computed ManifestBadge under 'Wording notes', not overclaims.",
+    "secrets-store-readme and status-dashboard-verdicts reuse their round-1 baselines (no skill involved, so the baseline is unchanged); only with_skill was re-run.",
+    "Eval corrections applied to both configurations before grading: drift graders 03 and 04 originally required C-01 and C-03 to stay 'enforced'. Both runs proved the fixture's own code falls short (float tie errors, fixed 2 decimals; a 2-pair hard-coded fallback table returning NaN), so 'partial with a named gap' is the correct verdict and the graders now accept it.",
+    "Home-turf caveat: drift-01 (checker accepts the registry) uses the skill's own tool; the baseline had no checker and hand-built CLAIMS.md. It is still a real difference: only the skill leaves a machine-verifiable table.",
+    "CONTESTED: ci-gate-03 ('gate passes now') encodes the skill's design. The user asked for CI to fail when a promised feature has no code; the baseline's gate fails today on the two unbuilt features, which is a defensible reading. Excluding it, the CI case is 5/5 vs 5/5.",
+    "Product gap exposed by the baseline: its gate reads the README section, so a new bullet with no entry fails CI; and it fails on promises with no code. The skill's gate catches regressions of backed claims only. Both ideas should go into the skill.",
+    "Cost: +28% time, +19% tokens with the skill."
+  ]
+}

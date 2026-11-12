@@ -1,5 +1,7 @@
 //! Single-process admission journal. No external effect may precede `admit`.
+pub mod postgres;
 use agi_coder_core::{ContentHash, WorkIntent};
+pub use postgres::{open_database, postgres_status, SqlJournal};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -33,6 +35,8 @@ pub enum JournalError {
     Conflict,
     #[error("illegal journal transition")]
     Transition,
+    #[error("PostgreSQL is not connected. This process did not apply the migration.")]
+    DatabaseUnavailable,
     #[error(transparent)]
     Core(#[from] agi_coder_core::Error),
 }

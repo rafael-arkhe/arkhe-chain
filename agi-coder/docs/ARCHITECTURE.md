@@ -23,7 +23,7 @@ flowchart LR
   Receipt --> Journal
 ```
 
-The crates form an acyclic dependency graph rooted in `agi-coder-core`. Cognition, verification, research, and memory are independently usable. The pipeline composes the journal, evidence store, gate, and MMR. The Jules client is an execution adapter and has no gate override. The CLI wires a visibly synthetic offline demonstration, while callers can implement `Worker` and `ProtectedExecutor` for real integrations.
+The crates form an acyclic dependency graph rooted in `agi-coder-core`. Cognition, verification, research, and memory are independently usable. The pipeline composes the journal, evidence store, gate, and MMR. The external adapter entry is the MCP stdio server. It has no gate override. The Jules client remains in the tree and is not offered by `agi.exe`. The `agi` binary wires a visibly synthetic offline demonstration and a loopback operator page. Callers can implement `Worker` and `ProtectedExecutor` for real integrations. The page cannot authorize host commands.
 
 An operation ID identifies the replay slot using action type, target, and request identity. A separate intent digest binds requester and canonical parameters as well. This split makes changed parameters an idempotency conflict rather than an opportunity to execute again. Admission time is excluded so a later retry can match the original request.
 

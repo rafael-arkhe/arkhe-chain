@@ -1,0 +1,18 @@
+{
+  "title": "pricekit claims ledger",
+  "source": "README.md as shipped in pricekit 2.0.0 (wording unchanged since the v1.4 audit); re-audited 2026-11-02 against src/ and tests/ at 2.0.0",
+  "items": [
+    { "id": "C-01", "scope": "rounding", "label": "LEMMA", "statement": "Amounts are rounded half-to-even to the currency's minor unit.", "state": "partial",
+      "mechanism": "round(value, decimals = 2) scales by 10^decimals and moves an exact .5 tie to the even neighbour; convert() calls it with the default 2 decimals",
+      "evidence": [{"path": "src/round.js", "anchor": "export function round"}, {"path": "src/convert.js", "anchor": "return round(amount"}],
+      "tests": ["tests/round.test.js"],
+      "gap": "No currency minor-unit lookup: convert() always rounds to 2 decimals, so JPY (0) and KWD/BHD (3) are wrong (round(1234.5) returns 1234.5). Ties are detected on the binary float value * 100, so decimal ties that are not exact in binary round the wrong way: 573 of the 10,000 ties 0.005..99.995 fail, e.g. round(1.015) = 1.01 (want 1.02), round(0.545) = 0.55 (want 0.54). Tests only use binary-exact ties (0.125, 0.375) and never test a currency other than the 2-decimal default." },
+    { "id": "C-02", "scope": "rates", "label": "LEMMA", "statement": "FX rates are cached for 60 seconds, so checkout never waits on the rate API twice.", "state": "absent",
+      "gap": "The FX rate cache was removed in 2.0.0 (CHANGELOG: stale rates caused mispriced carts). src/fx-cache.js and tests/fx-cache.test.js no longer exist, and convert() calls fetchRate on every conversion (src/convert.js:5), so checkout waits on the rate API once per conversion. Either restore a cache with a test or remove the promise from README.md." },
+    { "id": "C-03", "scope": "rates", "label": "LEMMA", "statement": "If the rate API is down, the last published reference rates are used.", "state": "partial",
+      "mechanism": "rateWithFallback() returns REFERENCE_RATES[pair] when fetchRate throws",
+      "evidence": ["src/fallback.js"],
+      "tests": ["tests/fallback.test.js"],
+      "gap": "REFERENCE_RATES is a hard-coded table of two pairs (EUR/USD 1.08, USD/BRL 5.4) with no source, date or update path, so nothing makes them the 'last published' rates. Any other pair falls back to undefined and convert() returns NaN with no error (convert(10, 'GBP/USD', down) = NaN). Only the EUR/USD fallback is tested; no test covers an unknown pair, a fetch that resolves to a bad value, or the fallback through convert()." }
+  ]
+}

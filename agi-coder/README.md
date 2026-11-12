@@ -24,6 +24,14 @@ pnpm test
 cargo run --locked -p agi-coder-cli -- run --demo
 ```
 
+`cargo build --locked -p agi-coder-cli` writes `target/debug/agi.exe` on Windows and `target/debug/agi` elsewhere. Release archives and the CLI image also copy that binary to `agi-coder`. The operator page stays in the foreground:
+
+```powershell
+cargo run --locked -p agi-coder-cli -- ui --bind 127.0.0.1:8791
+```
+
+Open the printed loopback URL. See [CLI](docs/CLI.md) and [design](design/DESIGN.md).
+
 The offline demo creates five signed sample records through design, implementation, test, audit, and deployment **simulations**. It prints `mode: offline-demo` and `deployed: false`. Its public test key and synthetic test counts must never be trusted by a production policy.
 
 ```sh
@@ -50,7 +58,7 @@ The MCP process speaks JSON-RPC over stdio; it waits for client messages. Config
 | `agi-coder-jules` | Typed REST create/get/poll/activity pagination, patch extraction, conservative review routing |
 | `agi-coder-inference` | Validated sampling, bounded DeepInfer process bridge, content-addressed unverified proposals |
 | `agi-coder-cost` | Checked integer micro-USD accounting with measured/estimated labels |
-| `agi-coder-cli` | `plan`, `run --demo`, `infer`, `verify`, `verify-spec`, `anchor`, `mmr`, `cost` |
+| `agi-coder-cli` | `agi` and `agi-coder`: `status`, `mcp`, `pending`, `ui`, `plan`, `run --demo`, `infer`, `verify`, `verify-spec`, `anchor`, `mmr`, `cost` |
 | `agi-coder-tests` | Security, state machine, mutation, HTTP mock integration, and static golden tests |
 
 TypeScript packages: `@agi-coder/sdk` independently verifies MMR proofs and calculates explicit costs; `@agi-coder/mcp-server` exposes those operations using the official MCP SDK.
@@ -69,13 +77,13 @@ TypeScript packages: `@agi-coder/sdk` independently verifies MMR proofs and calc
 
 A signature proves which configured key attested a record and detects changed bytes. The signer remains responsible for running independent tests against the recorded output. Author strings alone cannot establish organizational independence. A local MMR proves inclusion relative to an independently trusted root; it does not establish external publication, execution truth, hardware identity, or code correctness.
 
-The journal, evidence store, and MMR are single-process and in memory. Restarting loses their state, so this version must not mediate irreversible production actions. The PostgreSQL migration is a contract for a future durable adapter. Research requires a caller-provided retrieval adapter. DeepInfer generation requires separate engine provisioning; there is no built-in LLM planner, autonomous repository editor, source mutation generator, or production deploy executor. The optional dashboard and Tauri app are deferred.
+The journal, evidence store, and MMR are single-process and in memory. Restarting loses their state, so this version must not mediate irreversible production actions. The PostgreSQL migration is a contract for a future durable adapter. Research requires a caller-provided retrieval adapter. DeepInfer generation requires separate engine provisioning; there is no built-in LLM planner, autonomous repository editor, source mutation generator, or production deploy executor. `agi ui` serves a loopback operator page for the catalog, the dependency plan, and the labeled demo. It does not expose `infer` or `verify-spec`. A Tauri shell is not packaged.
 
-CI, a manually dispatched signed release-candidate workflow, Dockerfiles, and a one-shot Kubernetes demo Job are included. No release, package publication, live Jules session, database migration, or deployment was performed during implementation. See [MATURITY.md](docs/MATURITY.md) and [VALIDATION.md](docs/VALIDATION.md).
+CI, a manually dispatched signed release-candidate workflow, Dockerfiles, and a one-shot Kubernetes demo Job are included. No release, package publication, database migration, or deployment was performed during implementation. `agi mcp` prints the stdio entry; it does not start the server. See [MATURITY.md](docs/MATURITY.md) and [VALIDATION.md](docs/VALIDATION.md).
 
 ## Design and references
 
-- [Architecture](docs/ARCHITECTURE.md), [security](docs/SECURITY.md), [formula](docs/AGI-CODER-FORMULA.md), and [implementation scope](docs/IMPLEMENTATION.md).
+- [Architecture](docs/ARCHITECTURE.md), [CLI](docs/CLI.md), [security](docs/SECURITY.md), [formula](docs/AGI-CODER-FORMULA.md), [implementation scope](docs/IMPLEMENTATION.md), and [operator design](design/DESIGN.md).
 - [MMR profile](specs/agi-coder/mmr-profile.md), [planning](specs/agi-coder/planning.md), [verification](specs/agi-coder/verification.md), and [pipeline](specs/agi-coder/pipeline.md).
 - [Official Jules API](https://developers.google.com/jules/api), [sessions](https://developers.google.com/jules/api/reference/rest/v1alpha/sessions), and [activity artifacts](https://developers.google.com/jules/api/reference/rest/v1alpha/sessions.activities) informed the alpha REST adapter; checked October 21, 2026.
 - [MCP stdio transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports) informed the SDK-based server and integration tests.

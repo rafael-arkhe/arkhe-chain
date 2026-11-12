@@ -1,0 +1,49 @@
+{
+  "expectations": [
+    {
+      "text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.",
+      "passed": true,
+      "evidence": "Item 2: 'HealthBadge.tsx:4 const ok = health?.ok ?? true' shows Healthy when it can't tell"
+    },
+    {
+      "text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.",
+      "passed": true,
+      "evidence": "Item 3: 'Pipeline.tsx:8-9 relabels every stage after the first failure as passed'"
+    },
+    {
+      "text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.",
+      "passed": true,
+      "evidence": "Item 4: 'Attestation.tsx always renders TPM 2.0: VERIFIED with no inputs'"
+    },
+    {
+      "text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.",
+      "passed": true,
+      "evidence": "Item 5: 'NodeCount.tsx returns the literal 1,248'"
+    },
+    {
+      "text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().",
+      "passed": true,
+      "evidence": "Item 1: 'Real check, not on the dashboard'; not called an overclaim"
+    },
+    {
+      "text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).",
+      "passed": true,
+      "evidence": "Fixes paragraph covers each finding"
+    },
+    {
+      "text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).",
+      "passed": true,
+      "evidence": "Table maps all five spec claims"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 68.8,
+    "total_duration_seconds": 68.8
+  }
+}

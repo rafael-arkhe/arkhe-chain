@@ -4,11 +4,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DePINProvider {
     Gensyn,
+    Filecoin,
+    Helium,
+    Vangrid,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReceiptKind {
     VerdeArbitration,
+    FilecoinDeal,
+    HeliumWitness,
+    VangridJob,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,7 +28,7 @@ pub struct NativeReceipt {
     pub issued_at: i64,
 }
 
-/// Opaque evidence committed by the proof. No TEE validation is implied.
+/// Opaque evidence committed by the proof. No TEE validation is implied by presence alone.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HardwareAttestation {

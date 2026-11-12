@@ -77,3 +77,36 @@ fn invalid_flood_stays_out_of_the_mempool() {
     assert_eq!(node.mmr_count().unwrap(), 2);
     assert_eq!(node.mempool_len().unwrap(), 0);
 }
+
+#[test]
+fn the_mempool_stops_at_one_thousand_and_a_block_seals_two_hundred_fifty() {
+    let mut prepared = Vec::with_capacity(1_001);
+    for index in 0..1_001 {
+        prepared.push(common::fresh_zero_transfer(index));
+    }
+    let mut accounts = common::accounts();
+    accounts.extend(prepared.iter().map(|(account, _)| account.clone()));
+    let node = arkhe_chain::ArkheNode::new(
+        "validator-a",
+        &common::SECRET_A,
+        common::validators(),
+        accounts,
+    )
+    .unwrap();
+    for (_, tx) in prepared.iter().take(1_000) {
+        node.ingest(tx.clone()).unwrap();
+    }
+    assert_eq!(node.mempool_len().unwrap(), 1_000);
+    assert_eq!(node.height().unwrap(), 0);
+    assert_eq!(node.ingest(prepared[1_000].1.clone()).unwrap_err(), ChainError::MempoolFull);
+    assert_eq!(node.mempool_len().unwrap(), 1_000);
+
+    let block = node.propose_and_seal_block(TS).unwrap().block.unwrap();
+    assert_eq!(block.transactions.len(), 250);
+    assert_eq!(node.mempool_len().unwrap(), 750);
+    assert_eq!(node.balance("bob").unwrap(), 0);
+    assert_eq!(node.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY);
+    assert_eq!(node.supply().unwrap(), GENESIS_SUPPLY);
+    assert_eq!(node.height().unwrap(), 1);
+    assert_eq!(node.mmr_count().unwrap(), 250);
+}

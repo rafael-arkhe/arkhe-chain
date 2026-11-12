@@ -137,6 +137,106 @@ impl EvidenceReader {
     }
 }
 
+/// Bytes the host actually received. Payload, record, subject and policy are
+/// separate hashes. `record_hash` may differ from `payload_digest`; custody does.
+pub struct PresentedEvidence<'a> {
+    pub envelope: EvidenceEnvelope,
+    pub payload_domain: &'a [u8],
+    pub payload: &'a [u8],
+    pub record_domain: &'a [u8],
+    pub record_bytes: &'a [u8],
+    pub subject_domain: &'a [u8],
+    pub subject_bytes: &'a [u8],
+    pub policy_domain: &'a [u8],
+    pub policy: &'a [u8],
+}
+
+/// Host boundary in front of `EvidenceReader`. The reader still does not
+/// authenticate evidence. This gate checks the presented bytes, then rejects
+/// an unauthenticated hash, a missing causal parent, a duplicate in the batch,
+/// and a hash already admitted. Each successful snapshot contains every record
+/// admitted so far, so a later record can read its causal parent. A failed
+/// batch leaves that history unchanged. It does not replace runtime isolation.
+#[derive(Debug, Default)]
+pub struct HostAdmission {
+    admitted: std::collections::HashSet<Digest32>,
+    history: Vec<EvidenceEnvelope>,
+}
+impl HostAdmission {
+    pub fn admit(
+        &mut self,
+        records: Vec<PresentedEvidence<'_>>,
+    ) -> Result<EvidenceReader, &'static str> {
+        if records.is_empty() {
+            return Err("empty admission");
+        }
+        let mut batch = std::collections::HashSet::new();
+        let mut envelopes = Vec::with_capacity(records.len());
+        for record in &records {
+            if record.payload_domain.is_empty()
+                || Digest32::blake3(record.payload_domain, record.payload)
+                    != record.envelope.payload_digest
+            {
+                return Err("payload digest does not match presented bytes");
+            }
+            let kind = record.envelope.kind.as_str();
+            if record.envelope.record_hash == Digest32::ZERO
+                || record.envelope.subject == Digest32::ZERO
+                || kind.is_empty()
+                || kind != kind.trim()
+            {
+                return Err("unauthenticated evidence");
+            }
+            if record.record_domain.is_empty()
+                || Digest32::blake3(record.record_domain, record.record_bytes)
+                    != record.envelope.record_hash
+            {
+                return Err("record hash does not match presented bytes");
+            }
+            if record.subject_domain.is_empty()
+                || Digest32::blake3(record.subject_domain, record.subject_bytes)
+                    != record.envelope.subject
+            {
+                return Err("subject digest does not match presented bytes");
+            }
+            match record.envelope.policy_digest {
+                None => {
+                    if !record.policy_domain.is_empty() || !record.policy.is_empty() {
+                        return Err("policy digest does not match presented bytes");
+                    }
+                }
+                Some(expected) => {
+                    if record.policy_domain.is_empty()
+                        || Digest32::blake3(record.policy_domain, record.policy) != expected
+                    {
+                        return Err("policy digest does not match presented bytes");
+                    }
+                }
+            }
+            if self.admitted.contains(&record.envelope.record_hash) {
+                return Err("replayed evidence");
+            }
+            for parent in &record.envelope.causal_parents {
+                if *parent == record.envelope.record_hash
+                    || (!self.admitted.contains(parent) && !batch.contains(parent))
+                {
+                    return Err("causal parent is not an earlier admitted record");
+                }
+            }
+            if !batch.insert(record.envelope.record_hash) {
+                return Err("duplicate evidence identity");
+            }
+            envelopes.push(record.envelope.clone());
+        }
+        let mut history = self.history.clone();
+        history.extend(envelopes);
+        let reader = EvidenceReader::from_snapshot(history.clone())?;
+        self.admitted.extend(batch);
+        self.history = history;
+        Ok(reader)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -200,5 +300,268 @@ mod tests {
         b.kind = "conflict".into();
         assert!(EvidenceReader::from_snapshot(vec![a.clone(), a.clone()]).is_err());
         assert!(EvidenceReader::from_snapshot(vec![a, b]).is_err());
+    }
+
+    fn presented(
+        byte: u8,
+        payload: &[u8],
+        parents: Vec<Digest32>,
+    ) -> (EvidenceEnvelope, Vec<u8>, Vec<u8>, Vec<u8>) {
+        let owned = payload.to_vec();
+        let record_bytes = [b"record-".as_slice(), &[byte]].concat();
+        let subject_bytes = [b"subject-".as_slice(), &[byte]].concat();
+        let digest = Digest32::blake3(b"AKG:TEST:PAYLOAD:v1\0", &owned);
+        (
+            EvidenceEnvelope {
+                record_hash: Digest32::blake3(b"AKG:TEST:RECORD:v1\0", &record_bytes),
+                kind: "observed".into(),
+                subject: Digest32::blake3(b"AKG:TEST:SUBJECT:v1\0", &subject_bytes),
+                payload_digest: digest,
+                policy_digest: None,
+                causal_parents: parents,
+            },
+            owned,
+            record_bytes,
+            subject_bytes,
+        )
+    }
+
+    fn present<'a>(
+        envelope: &'a EvidenceEnvelope,
+        payload: &'a [u8],
+        record_bytes: &'a [u8],
+        subject_bytes: &'a [u8],
+    ) -> PresentedEvidence<'a> {
+        PresentedEvidence {
+            envelope: envelope.clone(),
+            payload_domain: b"AKG:TEST:PAYLOAD:v1\0",
+            payload,
+            record_domain: b"AKG:TEST:RECORD:v1\0",
+            record_bytes,
+            subject_domain: b"AKG:TEST:SUBJECT:v1\0",
+            subject_bytes,
+            policy_domain: b"",
+            policy: b"",
+        }
+    }
+
+    #[test]
+    fn host_rejects_unauthenticated_duplicate_and_replay() {
+        let mut host = HostAdmission::default();
+        assert_eq!(host.admit(vec![]).unwrap_err(), "empty admission");
+        let (zero, zero_payload, zero_record, zero_subject) = presented(0, b"zero", vec![]);
+        let mut zero = zero;
+        zero.record_hash = Digest32::ZERO;
+        assert_eq!(
+            host.admit(vec![present(
+                &zero,
+                &zero_payload,
+                &zero_record,
+                &zero_subject
+            )])
+            .unwrap_err(),
+            "unauthenticated evidence"
+        );
+        let (mut bare_subject, bare_payload, bare_record, bare_subject_bytes) =
+            presented(6, b"bare-subject", vec![]);
+        bare_subject.subject = Digest32::ZERO;
+        assert_eq!(
+            host.admit(vec![present(
+                &bare_subject,
+                &bare_payload,
+                &bare_record,
+                &bare_subject_bytes
+            )])
+            .unwrap_err(),
+            "unauthenticated evidence"
+        );
+        let (mut spaced, spaced_payload, spaced_record, spaced_subject) =
+            presented(7, b"spaced", vec![]);
+        spaced.kind = " observed".into();
+        assert_eq!(
+            host.admit(vec![present(
+                &spaced,
+                &spaced_payload,
+                &spaced_record,
+                &spaced_subject
+            )])
+            .unwrap_err(),
+            "unauthenticated evidence"
+        );
+        let (first, first_payload, first_record, first_subject) = presented(1, b"first", vec![]);
+        assert_ne!(first.record_hash, first.payload_digest);
+        let reader = host
+            .admit(vec![present(
+                &first,
+                &first_payload,
+                &first_record,
+                &first_subject
+            )])
+            .unwrap();
+        assert_eq!(reader.get(first.record_hash).unwrap().kind, "observed");
+        assert_eq!(
+            host.admit(vec![present(
+                &first,
+                &first_payload,
+                &first_record,
+                &first_subject
+            )])
+            .unwrap_err(),
+            "replayed evidence"
+        );
+        let mut flipped = first_payload.clone();
+        flipped[0] ^= 1;
+        let (other, _, other_record, other_subject) = presented(4, b"other", vec![]);
+        assert_eq!(
+            host.admit(vec![present(&other, &flipped, &other_record, &other_subject)])
+                .unwrap_err(),
+            "payload digest does not match presented bytes"
+        );
+        let mut flipped_record = first_record.clone();
+        flipped_record[0] ^= 1;
+        let (bound, bound_payload, _, bound_subject) = presented(5, b"bound", vec![]);
+        assert_eq!(
+            host.admit(vec![present(
+                &bound,
+                &bound_payload,
+                &flipped_record,
+                &bound_subject
+            )])
+            .unwrap_err(),
+            "record hash does not match presented bytes"
+        );
+        let (subject_env, subject_payload, subject_record, subject_bytes) =
+            presented(8, b"subject", vec![]);
+        let mut flipped_subject = subject_bytes.clone();
+        flipped_subject[0] ^= 1;
+        assert_eq!(
+            host.admit(vec![present(
+                &subject_env,
+                &subject_payload,
+                &subject_record,
+                &flipped_subject
+            )])
+            .unwrap_err(),
+            "subject digest does not match presented bytes"
+        );
+        let (mut policy_env, policy_payload, policy_record, policy_subject) =
+            presented(9, b"policy", vec![]);
+        let policy_bytes = b"policy-body".to_vec();
+        policy_env.policy_digest = Some(Digest32::blake3(b"AKG:TEST:POLICY:v1\0", &policy_bytes));
+        let mut policy_item = present(
+            &policy_env,
+            &policy_payload,
+            &policy_record,
+            &policy_subject,
+        );
+        policy_item.policy_domain = b"AKG:TEST:POLICY:v1\0";
+        let mut flipped_policy = policy_bytes.clone();
+        flipped_policy[0] ^= 1;
+        policy_item.policy = &flipped_policy;
+        assert_eq!(
+            host.admit(vec![policy_item]).unwrap_err(),
+            "policy digest does not match presented bytes"
+        );
+        let mut policy_item = present(
+            &policy_env,
+            &policy_payload,
+            &policy_record,
+            &policy_subject,
+        );
+        policy_item.policy_domain = b"AKG:TEST:POLICY:v1\0";
+        let (open_env, open_payload, open_record, open_subject) = presented(10, b"open", vec![]);
+        let mut open_item = present(&open_env, &open_payload, &open_record, &open_subject);
+        open_item.policy = b"x";
+        assert_eq!(
+            host.admit(vec![open_item]).unwrap_err(),
+            "policy digest does not match presented bytes"
+        );
+        policy_item.policy = &policy_bytes;
+        host.admit(vec![policy_item]).unwrap();
+        let (fresh, fresh_payload, fresh_record, fresh_subject) = presented(11, b"fresh", vec![]);
+        let (missing, missing_payload, missing_record, missing_subject) =
+            presented(3, b"missing", vec![Digest32([9; 32])]);
+        assert!(host
+            .admit(vec![
+                present(&fresh, &fresh_payload, &fresh_record, &fresh_subject),
+                present(
+                    &missing,
+                    &missing_payload,
+                    &missing_record,
+                    &missing_subject
+                )
+            ])
+            .is_err());
+        host.admit(vec![present(
+            &fresh,
+            &fresh_payload,
+            &fresh_record,
+            &fresh_subject
+        )])
+        .unwrap();
+        let (child, child_payload, child_record, child_subject) =
+            presented(2, b"child", vec![first.record_hash]);
+        assert!(host
+            .admit(vec![
+                present(&child, &child_payload, &child_record, &child_subject),
+                present(&child, &child_payload, &child_record, &child_subject)
+            ])
+            .is_err());
+        assert_eq!(
+            host.admit(vec![present(
+                &missing,
+                &missing_payload,
+                &missing_record,
+                &missing_subject
+            )])
+            .unwrap_err(),
+            "causal parent is not an earlier admitted record"
+        );
+        let reader = host
+            .admit(vec![present(
+                &child,
+                &child_payload,
+                &child_record,
+                &child_subject
+            )])
+            .unwrap();
+        assert_eq!(
+            reader
+                .get(child.record_hash)
+                .unwrap()
+                .causal_parents
+                .len(),
+            1
+        );
+        assert_eq!(reader.get(first.record_hash).unwrap().kind, "observed");
+        let (parent, parent_payload, parent_record, parent_subject) =
+            presented(14, b"parent", vec![]);
+        let (late, late_payload, late_record, late_subject) =
+            presented(15, b"late", vec![parent.record_hash]);
+        assert_eq!(
+            host.admit(vec![
+                present(&late, &late_payload, &late_record, &late_subject),
+                present(&parent, &parent_payload, &parent_record, &parent_subject),
+            ])
+            .unwrap_err(),
+            "causal parent is not an earlier admitted record"
+        );
+        let parent_reader = host
+            .admit(vec![present(
+                &parent,
+                &parent_payload,
+                &parent_record,
+                &parent_subject,
+            )])
+            .unwrap();
+        assert!(parent_reader.get(late.record_hash).is_none());
+        let late_reader = host
+            .admit(vec![present(&late, &late_payload, &late_record, &late_subject)])
+            .unwrap();
+        assert_eq!(
+            late_reader.get(late.record_hash).unwrap().causal_parents,
+            vec![parent.record_hash]
+        );
+        assert!(late_reader.get(parent.record_hash).is_some());
     }
 }

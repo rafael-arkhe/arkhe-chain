@@ -129,6 +129,7 @@ pub fn sign(block: &mut arkhe_chain::Block) {
     arkhe_chain::sign_proposer(block, &SECRET_A).unwrap();
 }
 
+#[allow(dead_code)]
 pub fn transfer(nonce: u64, sender: &str, recipient: &str, value: u64) -> Transaction {
     judged(nonce, sender, recipient, value, true, false)
 }
@@ -195,6 +196,46 @@ fn sign_for(tx: &mut arkhe_chain::Transaction) {
         other => panic!("no test key for {other}"),
     };
     arkhe_chain::sign_sender(tx, &secret).unwrap();
+}
+
+#[allow(dead_code)]
+pub fn fresh_zero_transfer(index: u16) -> (arkhe_chain::Account, Transaction) {
+    let mut seed = [0x91u8; 32];
+    seed[..2].copy_from_slice(&index.to_be_bytes());
+    let id = format!("m{index}");
+    let mut bare = Transaction {
+        nonce: 0,
+        sender: id.clone(),
+        recipient: "bob".into(),
+        value: 0,
+        payload: Vec::new(),
+        signature_mldsa: Vec::new(),
+        sender_signature: [0u8; 64],
+    };
+    let mldsa_public_key = arkhe_chain::sign_mldsa(&mut bare, &seed).unwrap();
+    let gate = ContainmentGate::new(DevPolicyResolver);
+    let source = Source(policy(true));
+    let verdict: DecisionVerdict = gate
+        .decide_event(
+            bare.subject(),
+            EVENT,
+            POLICY,
+            &resolve(&source, POLICY, EVENT),
+        )
+        .unwrap();
+    let mut signed = Transaction {
+        payload: verdict.canonical_bytes(),
+        ..bare
+    };
+    arkhe_chain::sign_sender(&mut signed, &seed).unwrap();
+    (
+        arkhe_chain::Account {
+            id,
+            public_key: arkhe_chain::public_key(&seed).unwrap(),
+            mldsa_public_key: Some(mldsa_public_key),
+        },
+        signed,
+    )
 }
 
 #[allow(dead_code)]

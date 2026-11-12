@@ -1,3 +1,4 @@
+use crate::attest::{AttestOp, Attestation, Claim, Role, ATTEST_MAX_OPS_PER_BLOCK};
 use crate::error::ChainError;
 use crate::tx::{account_id, Block, BlockHeader, Transaction, MLDSA65_SIG_LEN};
 
@@ -23,6 +24,7 @@ pub fn encode_block(block: &Block) -> Vec<u8> {
     for tx in &block.transactions {
         write_tx(&mut out, tx);
     }
+    write_ops(&mut out, &block.attestations);
     out
 }
 
@@ -30,19 +32,21 @@ pub fn decode_block(bytes: &[u8]) -> Result<Block, ChainError> {
     let mut rd = Rd { buf: bytes, i: 0 };
     let header = read_header(&mut rd)?;
     let n = rd.u32()? as usize;
-    if n == 0 || n > 250 {
+    if n > 250 {
         return Err(ChainError::Malformed);
     }
     let mut transactions = Vec::with_capacity(n);
     for _ in 0..n {
         transactions.push(read_tx(&mut rd)?);
     }
-    if rd.i != bytes.len() {
+    let attestations = read_ops(&mut rd)?;
+    if rd.i != bytes.len() || (transactions.is_empty() && attestations.is_empty()) {
         return Err(ChainError::Malformed);
     }
     Ok(Block {
         header,
         transactions,
+        attestations,
     })
 }
 
@@ -67,7 +71,116 @@ pub(crate) fn proposer_message(block: &Block) -> Vec<u8> {
     for tx in &block.transactions {
         write_tx(&mut out, tx);
     }
+    write_ops(&mut out, &block.attestations);
     out
+}
+
+/// Nothing is written for a block without ops, so such a block keeps the
+/// bytes it had before ops existed.
+fn write_ops(out: &mut Vec<u8>, ops: &[AttestOp]) {
+    if ops.is_empty() {
+        return;
+    }
+    push_u32(out, ops.len() as u32);
+    for op in ops {
+        match op {
+            AttestOp::Admit(att) => {
+                out.push(1);
+                out.extend_from_slice(&att.body());
+                out.extend_from_slice(&att.signature);
+            }
+            AttestOp::Execute {
+                approval,
+                action,
+                artifact,
+            } => {
+                out.push(2);
+                out.extend_from_slice(approval);
+                out.extend_from_slice(action);
+                out.extend_from_slice(artifact);
+            }
+        }
+    }
+}
+
+fn read_ops(rd: &mut Rd<'_>) -> Result<Vec<AttestOp>, ChainError> {
+    if rd.i == rd.buf.len() {
+        return Ok(Vec::new());
+    }
+    let n = rd.u32()? as usize;
+    if n == 0 || n > ATTEST_MAX_OPS_PER_BLOCK {
+        return Err(ChainError::Malformed);
+    }
+    let mut ops = Vec::with_capacity(n);
+    for _ in 0..n {
+        ops.push(match rd.u8()? {
+            1 => AttestOp::Admit(read_attestation(rd)?),
+            2 => AttestOp::Execute {
+                approval: rd.arr32()?,
+                action: rd.arr32()?,
+                artifact: rd.arr32()?,
+            },
+            _ => return Err(ChainError::Malformed),
+        });
+    }
+    Ok(ops)
+}
+
+fn read_attestation(rd: &mut Rd<'_>) -> Result<Attestation, ChainError> {
+    let version = rd.u8()?;
+    let scheme = rd.u8()?;
+    let chain_id = rd.account()?;
+    let genesis = rd.arr32()?;
+    let audience = rd.account()?;
+    let signer = rd.account()?;
+    let nonce = rd.arr32()?;
+    let not_before = rd.u64()?;
+    let expires = rd.u64()?;
+    let claim = match rd.u8()? {
+        1 => Claim::Request {
+            task: rd.arr32()?,
+            budget: rd.u64()?,
+        },
+        2 => Claim::Artifact {
+            request: rd.arr32()?,
+            artifact: rd.arr32()?,
+        },
+        3 => Claim::Evaluation {
+            artifact: rd.arr32()?,
+            suite: rd.arr32()?,
+            environment: rd.arr32()?,
+            evidence: rd.arr32()?,
+            passed: match rd.u8()? {
+                0 => false,
+                1 => true,
+                _ => return Err(ChainError::Malformed),
+            },
+        },
+        4 => Claim::Approval {
+            action: rd.arr32()?,
+            artifact: rd.arr32()?,
+            evaluation: rd.arr32()?,
+            policy: rd.arr32()?,
+        },
+        5 => Claim::Revocation {
+            delegate: rd.account()?,
+            role: Role::from_u8(rd.u8()?).ok_or(ChainError::Malformed)?,
+        },
+        _ => return Err(ChainError::Malformed),
+    };
+    Ok(Attestation {
+        version,
+        scheme,
+        chain_id,
+        genesis,
+        audience,
+        signer,
+        nonce,
+        not_before,
+        expires,
+        claim,
+        signature: rd.arr64()?,
+    })
 }
 
 fn read_header(rd: &mut Rd<'_>) -> Result<BlockHeader, ChainError> {
@@ -135,6 +248,9 @@ impl Rd<'_> {
         let slice = &self.buf[self.i..end];
         self.i = end;
         Ok(slice)
+    }
+    fn u8(&mut self) -> Result<u8, ChainError> {
+        Ok(self.take(1)?[0])
     }
     fn u32(&mut self) -> Result<u32, ChainError> {
         let bytes: [u8; 4] = self

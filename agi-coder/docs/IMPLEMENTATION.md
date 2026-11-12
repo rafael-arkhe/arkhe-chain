@@ -9,13 +9,13 @@ The pasted attachment contains a proposed `agi-coder` tree, multiple older `arkh
 | Cognitive layers | DAG planner, retries, bounded loop, memory, hypothesis and source contracts | Caller supplies cognitive/model and retrieval implementations |
 | Verification | Finite-domain spec oracles; test-command mutation runner | Caller prepares mutants and independent tests; no automatic source mutation generation |
 | Pipeline | Worker/executor contracts, stage gates, replay and conflict handling, merge conflict checks | Single-process; durable coordination pending |
-| Jules | REST create/get/wait/activities, patch extraction, review routing, full HTTP mock integration | No live API credentials used; approval/post-message/source-list convenience methods deferred |
+| Jules crate | Local REST client and HTTP mock remain in the tree | Not listed by `agi status` and not invoked by `agi.exe` |
 | DeepInfer | Rust inference provider, sampling validation, bounded Python offline bridge, cognition proposal helper, CLI | Pinned source metadata; real Linux accelerator execution pending |
-| MCP and SDK | Real stdio server, proof verification and cost calculation | GPU attestation returns unsupported |
+| MCP and SDK | Real stdio server, proof verification, cost calculation, and `agi mcp` | The command prints the launch entry and does not start the server. GPU attestation returns unsupported |
 | Golden vectors | Independent Python MMR vectors, static WER fixture | WER generator is not independent; no cryptographic certification claimed |
 | Delivery | CI, static-vector and mock workflows, signed candidate workflow, Docker and Kubernetes assets | Authored but not run on GitHub or a cluster |
 | Database | SQL migration and checksum | Durable PostgreSQL runtime adapter pending |
-| Optional UIs | Deferred | Dashboard and Tauri desktop app do not improve the kernel verification milestone |
+| Operator UI | Loopback console, `status`, and `agi` / `agi.exe` | Renders the local catalog and the synthetic demo. No Tauri shell and no new execution authority |
 
 Wire-level differences from the attachment are deliberate: hashes serialize as lowercase hex; domain framing includes lengths; CBOR maps use encoded-key length then bytes rather than naive lexical sorting; signatures are actually verified; policy requires separate trusted output and requester bindings; MMR proofs carry exact leaf count and peak position. Empty/skipped tests do not pass, and remote completion never fabricates test evidence.
 

@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "claims-ledger", "runs": [{"id": "secrets-store-readme-with_skill", "prompt": "we're about to put vaultlite on our landing page and a customer's security team asked us to back up what the README says. can you check the README claims against the actual code in this repo and give me an honest picture of what's real and what isn't? put whatever you produce in the repo folder.", "eval_id": null, "outputs": [{"name": "claims.json", "type": "text", "content": "{\n  \"title\": \"vaultlite claims ledger\",\n  \"source\": \"vaultlite/README.md (package version 0.3.0 per pyproject.toml; audited 2026-11-02)\",\n  \"items\": [\n    {\n      \"id\": \"C-01\",\n      \"scope\": \"crypto\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"Encrypted at rest with AES-256-GCM.\",\n      \"state\": \"partial\",\n      \"mechanism\": \"server.put() stores seal(MASTER_KEY, value), which encrypts with AESGCM under a key from AESGCM.generate_key(bit_length=256)\",\n      \"evidence\": [\n        {\"path\": \"vaultlite/vaultlite/crypto.py\", \"anchor\": \"AESGCM.generate_key(bit_length=256)\"},\n        {\"path\": \"vaultlite/vaultlite/server.py\", \"anchor\": \"STORE[name] = seal(MASTER_KEY\"}\n      ],\n      \"tests\": [\"vaultlite/tests/test_crypto.py\", \"vaultlite/tests/test_audit.py\"],\n      \"gap\": \"There is no 'at rest': STORE is an in-memory dict and nothing is written to disk. MASTER_KEY is None and nothing reads VAULTLITE_KEY (the comment in server.py is the only mention), so put() fails unless a test patches the key in. Nothing checks that a loaded key is 32 bytes, so a 16-byte key would silently give AES-128. No test asserts that stored values are ciphertext.\"\n    },\n    {\n      \"id\": \"C-02\",\n      \"scope\": \"crypto\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"Every secret has its own random nonce.\",\n      \"state\": \"enforced\",\n      \"mechanism\": \"seal() draws a fresh 12-byte nonce from os.urandom on every call and prefixes it to the ciphertext\",\n      \"evidence\": [{\"path\": \"vaultlite/vaultlite/crypto.py\", \"anchor\": \"nonce = os.urandom(12)\"}],\n      \"tests\": [\"vaultlite/tests/test_crypto.py\"]\n    },\n    {\n      \"id\": \"C-03\",\n      \"scope\": \"server\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"Zero-knowledge server: the server never sees plaintext secrets.\",\n      \"state\": \"absent\",\n      \"gap\": \"The code contradicts the claim: server.py holds MASTER_KEY, put() receives the plaintext value and get() decrypts with open_sealed() and returns plaintext. Zero knowledge needs client-side encryption with keys the server never holds.\"\n    },\n    {\n      \"id\": \"C-04\",\n      \"scope\": \"keys\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"Automatic key rotation every 30 days.\",\n      \"state\": \"absent\",\n      \"gap\": \"No rotation code, scheduler, key versioning or re-encryption path exists; there is a single MASTER_KEY. The only 'rotation' in the code is the constant string printed by cli.status().\"\n    },\n    {\n      \"id\": \"C-05\",\n      \"scope\": \"audit\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"Full audit log of every read, write and delete.\",\n      \"state\": \"partial\",\n      \"mechanism\": \"server.put() and server.get() call audit.log(), which appends a JSON line with time, action, name and user to audit.log\",\n      \"evidence\": [\n        {\"path\": \"vaultlite/vaultlite/audit.py\", \"anchor\": \"def log(\"},\n        {\"path\": \"vaultlite/vaultlite/server.py\", \"anchor\": \"log(\\\"read\\\", name, user)\"}\n      ],\n      \"tests\": [\"vaultlite/tests/test_audit.py\"],\n      \"gap\": \"server.delete() does not call log(), so deletes are never recorded and no test covers them. The 'append-only' log is a plain file opened in append mode with no hash chain, signature or protection against editing. get() logs 'read' before the lookup, so a failed read is recorded as a read.\"\n    },\n    {\n      \"id\": \"C-06\",\n      \"scope\": \"compliance\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"SOC 2 Type II certified infrastructure.\",\n      \"state\": \"absent\",\n      \"gap\": \"No SOC 2 report, auditor letter or bridge letter is in the repository, and the repository describes no hosted infrastructure to certify.\"\n    },\n    {\n      \"id\": \"C-07\",\n      \"scope\": \"performance\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"Fast: p99 latency under 2 ms.\",\n      \"state\": \"absent\",\n      \"gap\": \"No benchmark or latency test exists and the HTTP layer the number would apply to is not in the repository (server.py has plain functions, no HTTP handlers despite its docstring). The number is not measured anywhere.\"\n    },\n    {\n      \"id\": \"C-08\",\n      \"scope\": \"cli\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"Run `vaultlite status` to confirm your store is healthy.\",\n      \"state\": \"absent\",\n      \"gap\": \"cli.status() prints the constant 'store SECURE, encryption OK, rotation OK' and returns 0 without checking anything; no branch can report a failure. pyproject.toml also defines no console script, so a `vaultlite` command is not installed.\"\n    }\n  ]\n}\n"}, {"name": "CLAIMS.md", "type": "text", "content": "# vaultlite claims ledger\n\n\u003c!-- Generated by claims_ledger.py from the claims registry. Do not edit. -->\n\nSource: vaultlite/README.md (package version 0.3.0 per pyproject.toml; audited 2026-11-02). States: `enforced` = a mechanism and passing tests cover the whole statement; `partial` = a named mechanism covers part of the statement; the gap names the rest; `absent` = no mechanism in this repository.\n\n| ID | Scope | Label | State | Claim | Mechanism | Evidence | Gap |\n|---|---|---|---|---|---|---|---|\n| C-01 | crypto | LEMMA | partial | Encrypted at rest with AES-256-GCM. | server.put() stores seal(MASTER_KEY, value), which encrypts with AESGCM under a key from AESGCM.generate_key(bit_length=256) | `vaultlite/vaultlite/crypto.py#AESGCM.generate_key(bit_length=256)`\u003cbr>`vaultlite/vaultlite/server.py#STORE[name] = seal(MASTER_KEY`\u003cbr>`vaultlite/tests/test_crypto.py`\u003cbr>`vaultlite/tests/test_audit.py` | There is no 'at rest': STORE is an in-memory dict and nothing is written to disk. MASTER_KEY is None and nothing reads VAULTLITE_KEY (the comment in server.py is the only mention), so put() fails unless a test patches the key in. Nothing checks that a loaded key is 32 bytes, so a 16-byte key would silently give AES-128. No test asserts that stored values are ciphertext. |\n| C-02 | crypto | LEMMA | enforced | Every secret has its own random nonce. | seal() draws a fresh 12-byte nonce from os.urandom on every call and prefixes it to the ciphertext | `vaultlite/vaultlite/crypto.py#nonce = os.urandom(12)`\u003cbr>`vaultlite/tests/test_crypto.py` | \u2014 |\n| C-03 | server | LEMMA | absent | Zero-knowledge server: the server never sees plaintext secrets. | \u2014 | \u2014 | The code contradicts the claim: server.py holds MASTER_KEY, put() receives the plaintext value and get() decrypts with open_sealed() and returns plaintext. Zero knowledge needs client-side encryption with keys the server never holds. |\n| C-04 | keys | LEMMA | absent | Automatic key rotation every 30 days. | \u2014 | \u2014 | No rotation code, scheduler, key versioning or re-encryption path exists; there is a single MASTER_KEY. The only 'rotation' in the code is the constant string printed by cli.status(). |\n| C-05 | audit | LEMMA | partial | Full audit log of every read, write and delete. | server.put() and server.get() call audit.log(), which appends a JSON line with time, action, name and user to audit.log | `vaultlite/vaultlite/audit.py#def log(`\u003cbr>`vaultlite/vaultlite/server.py#log(\"read\", name, user)`\u003cbr>`vaultlite/tests/test_audit.py` | server.delete() does not call log(), so deletes are never recorded and no test covers them. The 'append-only' log is a plain file opened in append mode with no hash chain, signature or protection against editing. get() logs 'read' before the lookup, so a failed read is recorded as a read. |\n| C-06 | compliance | LEMMA | absent | SOC 2 Type II certified infrastructure. | \u2014 | \u2014 | No SOC 2 report, auditor letter or bridge letter is in the repository, and the repository describes no hosted infrastructure to certify. |\n| C-07 | performance | LEMMA | absent | Fast: p99 latency under 2 ms. | \u2014 | \u2014 | No benchmark or latency test exists and the HTTP layer the number would apply to is not in the repository (server.py has plain functions, no HTTP handlers despite its docstring). The number is not measured anywhere. |\n| C-08 | cli | LEMMA | absent | Run `vaultlite status` to confirm your store is healthy. | \u2014 | \u2014 | cli.status() prints the constant 'store SECURE, encryption OK, rotation OK' and returns 0 without checking anything; no branch can report a failure. pyproject.toml also defines no console script, so a `vaultlite` command is not installed. |\n\nTotals: enforced 1, partial 2, absent 5.\n"}, {"name": "REPORT.md", "type": "text", "content": "\u003c!-- Saved by the evaluator from the run's final reply: the run's own Write was refused for report files. -->\n# Claims ledger report: vaultlite\n\n**Verdict:** 8 claims from vaultlite/README.md: 1 enforced, 2 partial, 5 absent. Tests run: `python -m pytest` 4 passed (crypto helpers and read/write logging only). No source edits.\n\n## Headline findings\n1. C-03 \"Zero-knowledge server\" is false: server.py holds MASTER_KEY, put() receives plaintext, get() decrypts and returns it.\n2. C-08 `vaultlite status` cannot report a problem: cli.py:6 always prints \"store SECURE, encryption OK, rotation OK\" and exits 0. pyproject.toml defines no console script.\n3. C-06 \"SOC 2 Type II certified\": no report or certificate in the repository.\n4. C-04 Automatic key rotation: no rotation code; single master key.\n5. C-07 p99 \u003c 2 ms: no benchmark, no HTTP layer.\n\n## Partly real\n6. C-01 AES-256-GCM at rest: values are encrypted, but the store is an in-memory dict and nothing loads VAULTLITE_KEY.\n7. C-05 Full audit log: reads and writes logged; delete() never logs; log is a plain editable file; failed reads logged as reads.\n\n## Real\n8. C-02 Fresh random nonce per secret: seal() draws os.urandom(12); covered by a passing test.\n\n| ID | State | Claim | Gap |\n|---|---|---|---|\n| C-01 | partial | Encrypted at rest with AES-256-GCM. | In-memory only; key never loaded; key length unchecked |\n| C-02 | enforced | Every secret has its own random nonce. | \u2014 |\n| C-03 | absent | Zero-knowledge server. | Server holds the key and decrypts |\n| C-04 | absent | Automatic key rotation every 30 days. | No rotation code |\n| C-05 | partial | Full audit log of every read, write and delete. | Deletes not logged or tested |\n| C-06 | absent | SOC 2 Type II certified infrastructure. | No report or certificate |\n| C-07 | absent | p99 latency under 2 ms. | No benchmark |\n| C-08 | absent | `vaultlite status` confirms your store is healthy. | Constant output, no checks |\n\n## Overclaims\n| Where | Pattern | Fix |\n|---|---|---|\n| cli.py:6 | OC-1 Constant verdict | Run real checks, print failures, exit non-zero |\n| README line 8 | contradicted | Remove, or \"encrypted with a key the server holds\" |\n| README line 9 | phantom feature | Remove or move to Planned |\n| README line 11 | OC-7 Borrowed authority | Remove unless a current report exists |\n| README line 12 | OC-5 Invented number | Remove or publish a benchmark |\n| README line 7 | OC-6 Scope creep | \"encrypted with AES-256-GCM (in-memory store, no persistence yet)\" |\n\n## Not checked\nOnly README.md as source; no CI history; hosting and SOC 2 work are outside the repo.\n\n## Next steps\n1. Remove C-03, C-06, C-04, C-07 from the landing page or move to Planned.\n2. C-08: real checks, [project.scripts] entry, test that a missing key fails status.\n3. C-01: load VAULTLITE_KEY and refuse to start without 32 bytes; test stored bytes are not plaintext.\n4. C-05: log deletes and test it.\n5. Optional: run claims_ledger.py check in CI.\n"}, {"name": "vaultlite/pyproject.toml", "type": "text", "content": "[project]\nname = \"vaultlite\"\nversion = \"0.3.0\"\ndependencies = [\"cryptography>=42\"]\n"}, {"name": "vaultlite/README.md", "type": "text", "content": "# vaultlite\n\nA small secrets store for teams that do not want to run Vault.\n\n## Features\n\n- **Encrypted at rest** with AES-256-GCM; every secret has its own random nonce.\n- **Zero-knowledge server**: the server never sees plaintext secrets.\n- **Automatic key rotation** every 30 days.\n- **Full audit log** of every read, write and delete.\n- **SOC 2 Type II certified** infrastructure.\n- **Fast**: p99 latency under 2 ms.\n\nRun `vaultlite status` to confirm your store is healthy.\n"}, {"name": "vaultlite/tests/test_audit.py", "type": "text", "content": "import json\nfrom vaultlite import audit, server\n\n\ndef test_reads_and_writes_are_logged(tmp_path, monkeypatch):\n    monkeypatch.setattr(audit, \"LOG_PATH\", str(tmp_path / \"audit.log\"))\n    from vaultlite.crypto import new_key\n    monkeypatch.setattr(server, \"MASTER_KEY\", new_key())\n    server.put(\"db\", \"pw\", \"ana\")\n    server.get(\"db\", \"ana\")\n    actions = [json.loads(l)[\"action\"] for l in open(tmp_path / \"audit.log\")]\n    assert actions == [\"write\", \"read\"]\n"}, {"name": "vaultlite/tests/test_crypto.py", "type": "text", "content": "import pytest\nfrom cryptography.exceptions import InvalidTag\nfrom vaultlite.crypto import new_key, open_sealed, seal\n\n\ndef test_round_trip():\n    key = new_key()\n    assert open_sealed(key, seal(key, b\"s3cret\")) == b\"s3cret\"\n\n\ndef test_nonce_is_fresh():\n    key = new_key()\n    assert seal(key, b\"x\") != seal(key, b\"x\")\n\n\ndef test_tampering_is_rejected():\n    key = new_key()\n    blob = bytearray(seal(key, b\"s3cret\"))\n    blob[-1] ^= 1\n    with pytest.raises(InvalidTag):\n        open_sealed(key, bytes(blob))\n"}, {"name": "vaultlite/vaultlite/__init__.py", "type": "text", "content": ""}, {"name": "vaultlite/vaultlite/audit.py", "type": "text", "content": "\"\"\"Append-only audit log.\"\"\"\nimport json\nimport time\n\nLOG_PATH = \"audit.log\"\n\n\ndef log(action: str, name: str, user: str) -> None:\n    with open(LOG_PATH, \"a\", encoding=\"utf-8\") as f:\n        f.write(json.dumps({\"t\": time.time(), \"action\": action, \"name\": name, \"user\": user}) + \"\\n\")\n"}, {"name": "vaultlite/vaultlite/cli.py", "type": "text", "content": "\"\"\"vaultlite command line.\"\"\"\nimport sys\n\n\ndef status() -> int:\n    print(\"vaultlite: store SECURE, encryption OK, rotation OK\")\n    return 0\n\n\nif __name__ == \"__main__\":\n    sys.exit(status() if sys.argv[1:] == [\"status\"] else 2)\n"}, {"name": "vaultlite/vaultlite/crypto.py", "type": "text", "content": "\"\"\"Encryption helpers for vaultlite.\"\"\"\nimport os\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\n\n\ndef new_key() -> bytes:\n    return AESGCM.generate_key(bit_length=256)\n\n\ndef seal(key: bytes, plaintext: bytes) -> bytes:\n    nonce = os.urandom(12)\n    return nonce + AESGCM(key).encrypt(nonce, plaintext, None)\n\n\ndef open_sealed(key: bytes, blob: bytes) -> bytes:\n    return AESGCM(key).decrypt(blob[:12], blob[12:], None)\n"}, {"name": "vaultlite/vaultlite/server.py", "type": "text", "content": "\"\"\"HTTP handlers. The server holds the master key and serves secrets to clients.\"\"\"\nfrom .crypto import open_sealed, seal\nfrom .audit import log\n\nMASTER_KEY = None  # loaded from VAULTLITE_KEY at startup\nSTORE = {}\n\n\ndef put(name: str, value: str, user: str) -> None:\n    STORE[name] = seal(MASTER_KEY, value.encode())\n    log(\"write\", name, user)\n\n\ndef get(name: str, user: str) -> str:\n    log(\"read\", name, user)\n    return open_sealed(MASTER_KEY, STORE[name]).decode()\n\n\ndef delete(name: str, user: str) -> None:\n    STORE.pop(name, None)\n"}], "grading": {"expectations": [{"text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.", "passed": true, "evidence": "claims_ledger.py check prints 'OK enforced 1, partial 2, absent 5' on outputs/claims.json"}, {"text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.", "passed": true, "evidence": "C-01 partial citing crypto.py seal()/AESGCM and tests/test_crypto.py; nonce split out as C-02 enforced"}, {"text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).", "passed": true, "evidence": "C-03 absent; REPORT: 'server.py holds MASTER_KEY, put() receives plaintext, get() decrypts and returns it'"}, {"text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.", "passed": true, "evidence": "C-04 absent: 'no rotation code; single master key'"}, {"text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.", "passed": true, "evidence": "C-06 absent: 'no report or certificate in the repository'"}, {"text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.", "passed": true, "evidence": "C-07 absent: 'no benchmark, no HTTP layer'"}, {"text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.", "passed": true, "evidence": "C-05 partial: 'delete() never logs'"}, {"text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.", "passed": true, "evidence": "Overclaims table: 'cli.py:6 | OC-1 Constant verdict'"}, {"text": "The final report does not conclude that vaultlite is secure, verified or production ready.", "passed": true, "evidence": "Verdict says the README should not go on the landing page as written; no 'secure' conclusion"}], "summary": {"passed": 9, "failed": 0, "total": 9, "pass_rate": 1.0}, "timing": {"executor_duration_seconds": 151.6, "total_duration_seconds": 151.6}}}, {"id": "secrets-store-readme-without_skill", "prompt": "we're about to put vaultlite on our landing page and a customer's security team asked us to back up what the README says. can you check the README claims against the actual code in this repo and give me an honest picture of what's real and what isn't? put whatever you produce in the repo folder.", "eval_id": null, "outputs": [{"name": "README_CLAIMS_REVIEW.md", "type": "text", "content": "# vaultlite README claims review\n\n**Scope:** `vaultlite/` at version 0.3.0 (`pyproject.toml`). Each claim in `vaultlite/README.md` was checked against the source code and tests in this folder.\n**Date:** 2026-11-02\n**What was run:** Python 3.14.2, cryptography 50.0.1, pytest 9.0.2.\n- `python -m pytest`: **4 passed** (`tests/test_crypto.py` x3, `tests/test_audit.py` x1).\n- `python -m vaultlite.cli status`: prints the \"healthy\" line, exits 0.\n- A probe script, kept outside the repo, called `server.put/get/delete` directly. Its results are quoted below.\n\nNo source files were changed.\n\n## Bottom line\n\nDo not put this README on the landing page as written. Of the six feature bullets:\n\n- **1 holds, with qualifications:** AES-256-GCM with a fresh random nonce per secret.\n- **1 holds only in part:** the audit log records reads and writes but not deletes.\n- **2 are contradicted by the code:** \"zero-knowledge server\" and \"automatic key rotation\".\n- **2 have no evidence in the repo at all:** SOC 2 Type II and p99 under 2 ms.\n- **The health-check instruction is misleading:** `vaultlite status` prints a hard-coded \"SECURE\" message without checking anything.\n\n## Claim by claim\n\n| # | README claim | Verdict | Evidence |\n|---|---|---|---|\n| 1 | Encrypted at rest with AES-256-GCM; every secret has its own random nonce | **Partly true** | `crypto.py:7` creates 256-bit keys. `crypto.py:11-12` uses `os.urandom(12)` as the nonce for each seal, then `AESGCM.encrypt`. The tests check the round trip, that nonces are fresh, and that a tampered blob is rejected (all pass). **However:** (a) nothing is ever written to disk. `server.STORE` is an in-memory dict (`server.py:6`), so \"at rest\" only covers process memory, and every secret is lost on restart. (b) `MASTER_KEY = None` (`server.py:5`). The comment says it is \"loaded from VAULTLITE_KEY at startup\", but no code reads that variable or any other environment variable. Out of the box, `put` fails with `TypeError` (confirmed by the probe). (c) No AAD is used (`None`), so a ciphertext stored under one secret name can be swapped in under another name and will still decrypt. |\n| 2 | Zero-knowledge server: the server never sees plaintext secrets | **False** | `server.py:1` says itself that \"The server holds the master key and serves secrets to clients.\" `put()` takes the plaintext `value` and encrypts it on the server (`server.py:10`). `get()` decrypts on the server and returns plaintext (`server.py:16`). This is server-side encryption, which is the opposite of zero-knowledge. |\n| 3 | Automatic key rotation every 30 days | **False / not implemented** | No rotation code exists anywhere (grep for `rotat` finds only the hard-coded string in `cli.py:6`). There is one module-level key, no key versioning, no re-encryption path and no scheduler. |\n| 4 | Full audit log of every read, write and delete | **Partly true** | `put` logs `write` and `get` logs `read` (`server.py:11,15`), and `test_audit.py` passes. **But `delete()` logs nothing** (`server.py:19-20`): the probe's log showed `write:db, read:db, read:missing` and no delete entry. Other gaps: `get` writes a `read` entry *before* the lookup, so reads that fail (missing names) are logged as reads. The log is a plain file at the relative path `audit.log` with no integrity protection. The `user` field is whatever the caller passes in, and there is no authentication anywhere in the code. \"Append-only\" is only a file-open mode, not a guarantee. |\n| 5 | SOC 2 Type II certified infrastructure | **Unsupported** | The repo has no infrastructure, deployment config, audit report or attestation reference. SOC 2 is an attestation about an organization's controls, not a property of code. Keep this claim only if you can hand the customer the actual report. Otherwise remove it. |\n| 6 | Fast: p99 latency under 2 ms | **Unsupported** | The repo has no benchmarks and no performance tests. `server.py` is a set of plain functions with no HTTP server, so there is nothing whose latency could be measured as shipped. |\n| - | \"Run `vaultlite status` to confirm your store is healthy\" | **Misleading** | `cli.status()` (`cli.py:5-7`) always prints `store SECURE, encryption OK, rotation OK` and returns 0. It checks nothing: no key, no store, no rotation (which doesn't exist). Also, `pyproject.toml` defines no `[project.scripts]` entry, so installing the package gives no `vaultlite` command. It only runs as `python -m vaultlite.cli status`. |\n\n## Other things a security reviewer will notice\n\n- `server.py` calls itself \"HTTP handlers\", but there is no HTTP layer, transport security, authentication or authorization in the repo.\n- The tests cover only the crypto helper and read/write logging. Nothing tests delete logging, key loading, rotation, the status command or persistence.\n\n## Suggested README wording, if it has to ship now\n\n> vaultlite is an early-stage (0.3.0) secrets store library. Secret values are encrypted with AES-256-GCM using a fresh random 96-bit nonce per write, under a single server-held 256-bit key. Secrets are currently held in memory only. Reads and writes are recorded in a local JSON-lines audit log.\n\nDrop \"zero-knowledge\", \"automatic key rotation\", \"SOC 2 Type II\" and \"p99 \u003c 2 ms\" until code or documents exist that back them. Either make `vaultlite status` perform real checks or remove that line.\n\n## Fixes that would turn claims true (not done, no source edits were made)\n\n1. Log deletes in `server.delete`, and log reads only after they succeed (or record the outcome).\n2. Actually load `MASTER_KEY` from `VAULTLITE_KEY` and fail clearly if it is missing.\n3. Persist the encrypted store to disk if \"at rest\" is going to mean what readers assume.\n4. Bind the secret name as AAD in `seal`/`open_sealed`.\n5. Implement key versioning and rotation before claiming rotation.\n6. Make `status` check real state, and add a `[project.scripts]` entry.\n"}, {"name": "vaultlite/pyproject.toml", "type": "text", "content": "[project]\nname = \"vaultlite\"\nversion = \"0.3.0\"\ndependencies = [\"cryptography>=42\"]\n"}, {"name": "vaultlite/README.md", "type": "text", "content": "# vaultlite\n\nA small secrets store for teams that do not want to run Vault.\n\n## Features\n\n- **Encrypted at rest** with AES-256-GCM; every secret has its own random nonce.\n- **Zero-knowledge server**: the server never sees plaintext secrets.\n- **Automatic key rotation** every 30 days.\n- **Full audit log** of every read, write and delete.\n- **SOC 2 Type II certified** infrastructure.\n- **Fast**: p99 latency under 2 ms.\n\nRun `vaultlite status` to confirm your store is healthy.\n"}, {"name": "vaultlite/tests/test_audit.py", "type": "text", "content": "import json\nfrom vaultlite import audit, server\n\n\ndef test_reads_and_writes_are_logged(tmp_path, monkeypatch):\n    monkeypatch.setattr(audit, \"LOG_PATH\", str(tmp_path / \"audit.log\"))\n    from vaultlite.crypto import new_key\n    monkeypatch.setattr(server, \"MASTER_KEY\", new_key())\n    server.put(\"db\", \"pw\", \"ana\")\n    server.get(\"db\", \"ana\")\n    actions = [json.loads(l)[\"action\"] for l in open(tmp_path / \"audit.log\")]\n    assert actions == [\"write\", \"read\"]\n"}, {"name": "vaultlite/tests/test_crypto.py", "type": "text", "content": "import pytest\nfrom cryptography.exceptions import InvalidTag\nfrom vaultlite.crypto import new_key, open_sealed, seal\n\n\ndef test_round_trip():\n    key = new_key()\n    assert open_sealed(key, seal(key, b\"s3cret\")) == b\"s3cret\"\n\n\ndef test_nonce_is_fresh():\n    key = new_key()\n    assert seal(key, b\"x\") != seal(key, b\"x\")\n\n\ndef test_tampering_is_rejected():\n    key = new_key()\n    blob = bytearray(seal(key, b\"s3cret\"))\n    blob[-1] ^= 1\n    with pytest.raises(InvalidTag):\n        open_sealed(key, bytes(blob))\n"}, {"name": "vaultlite/vaultlite/__init__.py", "type": "text", "content": ""}, {"name": "vaultlite/vaultlite/audit.py", "type": "text", "content": "\"\"\"Append-only audit log.\"\"\"\nimport json\nimport time\n\nLOG_PATH = \"audit.log\"\n\n\ndef log(action: str, name: str, user: str) -> None:\n    with open(LOG_PATH, \"a\", encoding=\"utf-8\") as f:\n        f.write(json.dumps({\"t\": time.time(), \"action\": action, \"name\": name, \"user\": user}) + \"\\n\")\n"}, {"name": "vaultlite/vaultlite/cli.py", "type": "text", "content": "\"\"\"vaultlite command line.\"\"\"\nimport sys\n\n\ndef status() -> int:\n    print(\"vaultlite: store SECURE, encryption OK, rotation OK\")\n    return 0\n\n\nif __name__ == \"__main__\":\n    sys.exit(status() if sys.argv[1:] == [\"status\"] else 2)\n"}, {"name": "vaultlite/vaultlite/crypto.py", "type": "text", "content": "\"\"\"Encryption helpers for vaultlite.\"\"\"\nimport os\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\n\n\ndef new_key() -> bytes:\n    return AESGCM.generate_key(bit_length=256)\n\n\ndef seal(key: bytes, plaintext: bytes) -> bytes:\n    nonce = os.urandom(12)\n    return nonce + AESGCM(key).encrypt(nonce, plaintext, None)\n\n\ndef open_sealed(key: bytes, blob: bytes) -> bytes:\n    return AESGCM(key).decrypt(blob[:12], blob[12:], None)\n"}, {"name": "vaultlite/vaultlite/server.py", "type": "text", "content": "\"\"\"HTTP handlers. The server holds the master key and serves secrets to clients.\"\"\"\nfrom .crypto import open_sealed, seal\nfrom .audit import log\n\nMASTER_KEY = None  # loaded from VAULTLITE_KEY at startup\nSTORE = {}\n\n\ndef put(name: str, value: str, user: str) -> None:\n    STORE[name] = seal(MASTER_KEY, value.encode())\n    log(\"write\", name, user)\n\n\ndef get(name: str, user: str) -> str:\n    log(\"read\", name, user)\n    return open_sealed(MASTER_KEY, STORE[name]).decode()\n\n\ndef delete(name: str, user: str) -> None:\n    STORE.pop(name, None)\n"}], "grading": {"expectations": [{"text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.", "passed": false, "evidence": "No claims.json produced; only README_CLAIMS_REVIEW.md"}, {"text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.", "passed": true, "evidence": "Row 1 'Partly true' citing crypto.py:7, crypto.py:11-12 and the passing tests"}, {"text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).", "passed": true, "evidence": "Row 2 'False': server.py:1/10/16 encrypt and decrypt on the server"}, {"text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.", "passed": true, "evidence": "Row 3 'False / not implemented': no rotation code anywhere"}, {"text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.", "passed": true, "evidence": "Row 5 'Unsupported': no audit report or attestation in the repo"}, {"text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.", "passed": true, "evidence": "Row 6 'Unsupported': no benchmarks or performance tests"}, {"text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.", "passed": true, "evidence": "Row 4 'Partly true': 'delete() logs nothing (server.py:19-20)'"}, {"text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.", "passed": true, "evidence": "Status row: 'cli.status() (cli.py:5-7) always prints store SECURE ... checks nothing'"}, {"text": "The final report does not conclude that vaultlite is secure, verified or production ready.", "passed": true, "evidence": "Recommends dropping unsupported claims; no 'secure' conclusion"}], "summary": {"passed": 8, "failed": 1, "total": 9, "pass_rate": 0.89}, "timing": {"executor_duration_seconds": 109.2, "total_duration_seconds": 109.2}}}, {"id": "status-dashboard-verdicts-with_skill", "prompt": "Our meshwatch status dashboard is green basically all the time and we're demoing it to investors on Friday. Is any of what it shows actually computed? Go through the spec in docs/ and the components and tell me what's real. Write your findings into the repo folder.", "eval_id": null, "outputs": [{"name": "claims.json", "type": "text", "content": "{\n  \"title\": \"meshwatch status dashboard claims ledger\",\n  \"source\": \"meshwatch/docs/spec.md (undated, 5 numbered claims) and the dashboard UI text in meshwatch/src/components (audited 2026-11-02)\",\n  \"items\": [\n    {\n      \"id\": \"MW-01\",\n      \"scope\": \"manifest\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"Release manifests are signed with Ed25519 and verified in the browser before the \\\"Manifest\\\" badge turns green.\",\n      \"state\": \"absent\",\n      \"gap\": \"Untested code covers part of this but is not delivered: verifyManifest() in meshwatch/src/lib/verify.ts does a real WebCrypto Ed25519 check and ManifestBadge.tsx renders VERIFIED only when it returns true, but ManifestBadge is never imported or rendered by Dashboard.tsx, nothing supplies the manifest, signature or a pinned public key, nothing in the repository signs manifests, and no test exists (no valid-signature, tampered-manifest or wrong-key case). Needed: mount ManifestBadge with a pinned key and a fetched manifest+signature, and add tests for valid, tampered and wrong-key inputs.\"\n    },\n    {\n      \"id\": \"MW-02\",\n      \"scope\": \"health\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"The health badge reflects live probes of the mesh; it turns red when any probe fails.\",\n      \"state\": \"absent\",\n      \"gap\": \"Untested code covers part of this but fails open: HealthBadge.tsx:4 uses `health?.ok ?? true`, so a failed fetch, a non-2xx /api/health response (fetchHealth returns null) or a response without `ok` all render green \\\"Healthy\\\". The badge reads one server-supplied boolean once on mount; it does not look at individual probes, does not refresh, and no probe code is in the repository. No test exists. Needed: unknown/null maps to a grey \\\"Unknown\\\" state, red when any probe reports failure, periodic refresh, and tests for fetch error, missing field and one failing probe.\"\n    },\n    {\n      \"id\": \"MW-03\",\n      \"scope\": \"pipeline\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"The deploy pipeline view shows the true state of each stage.\",\n      \"state\": \"absent\",\n      \"gap\": \"Untested code covers part of this but rewrites it: Pipeline.tsx:9 relabels every stage after the first failure as \\\"passed\\\" although the runner skipped it (comment on line 8 says so). Stages before the failure are shown as reported. When /api/health fails, Dashboard.tsx:15 renders an empty list with no \\\"unavailable\\\" message. No test exists. Needed: show stages after the first failure as \\\"not evaluated\\\", show an explicit unavailable state, and add a test with a failure in the middle of the pipeline.\"\n    },\n    {\n      \"id\": \"MW-04\",\n      \"scope\": \"attestation\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"Every node is hardware-attested (TPM 2.0) before it joins the mesh.\",\n      \"state\": \"absent\",\n      \"gap\": \"No attestation code exists in the repository (no TPM quote, no verifier, no join gate). Attestation.tsx:5 prints a hard-coded green \\\"TPM 2.0: VERIFIED ... All nodes attested at join\\\" with no input. Needed: either a real attestation verifier whose result drives the card, or remove the card and move the spec line to a Planned section.\"\n    },\n    {\n      \"id\": \"MW-05\",\n      \"scope\": \"nodes\",\n      \"label\": \"LEMMA\",\n      \"statement\": \"The node counter shows how many nodes are online right now.\",\n      \"state\": \"absent\",\n      \"gap\": \"NodeCount.tsx:2 renders the constant \\\"1,248 nodes online\\\"; it takes no props and calls no API. Needed: bind it to a live source (e.g. a node count field from the API) with a timestamp and an explicit \\\"unknown\\\" state, plus a test, or remove it.\"\n    }\n  ]\n}\n"}, {"name": "CLAIMS.md", "type": "text", "content": "# meshwatch status dashboard claims ledger\n\n\u003c!-- Generated by claims_ledger.py from the claims registry. Do not edit. -->\n\nSource: meshwatch/docs/spec.md (undated, 5 numbered claims) and the dashboard UI text in meshwatch/src/components (audited 2026-11-02). States: `enforced` = a mechanism and passing tests cover the whole statement; `partial` = a named mechanism covers part of the statement; the gap names the rest; `absent` = no mechanism in this repository.\n\n| ID | Scope | Label | State | Claim | Mechanism | Evidence | Gap |\n|---|---|---|---|---|---|---|---|\n| MW-01 | manifest | LEMMA | absent | Release manifests are signed with Ed25519 and verified in the browser before the \"Manifest\" badge turns green. | \u2014 | \u2014 | Untested code covers part of this but is not delivered: verifyManifest() in meshwatch/src/lib/verify.ts does a real WebCrypto Ed25519 check and ManifestBadge.tsx renders VERIFIED only when it returns true, but ManifestBadge is never imported or rendered by Dashboard.tsx, nothing supplies the manifest, signature or a pinned public key, nothing in the repository signs manifests, and no test exists (no valid-signature, tampered-manifest or wrong-key case). Needed: mount ManifestBadge with a pinned key and a fetched manifest+signature, and add tests for valid, tampered and wrong-key inputs. |\n| MW-02 | health | LEMMA | absent | The health badge reflects live probes of the mesh; it turns red when any probe fails. | \u2014 | \u2014 | Untested code covers part of this but fails open: HealthBadge.tsx:4 uses `health?.ok ?? true`, so a failed fetch, a non-2xx /api/health response (fetchHealth returns null) or a response without `ok` all render green \"Healthy\". The badge reads one server-supplied boolean once on mount; it does not look at individual probes, does not refresh, and no probe code is in the repository. No test exists. Needed: unknown/null maps to a grey \"Unknown\" state, red when any probe reports failure, periodic refresh, and tests for fetch error, missing field and one failing probe. |\n| MW-03 | pipeline | LEMMA | absent | The deploy pipeline view shows the true state of each stage. | \u2014 | \u2014 | Untested code covers part of this but rewrites it: Pipeline.tsx:9 relabels every stage after the first failure as \"passed\" although the runner skipped it (comment on line 8 says so). Stages before the failure are shown as reported. When /api/health fails, Dashboard.tsx:15 renders an empty list with no \"unavailable\" message. No test exists. Needed: show stages after the first failure as \"not evaluated\", show an explicit unavailable state, and add a test with a failure in the middle of the pipeline. |\n| MW-04 | attestation | LEMMA | absent | Every node is hardware-attested (TPM 2.0) before it joins the mesh. | \u2014 | \u2014 | No attestation code exists in the repository (no TPM quote, no verifier, no join gate). Attestation.tsx:5 prints a hard-coded green \"TPM 2.0: VERIFIED ... All nodes attested at join\" with no input. Needed: either a real attestation verifier whose result drives the card, or remove the card and move the spec line to a Planned section. |\n| MW-05 | nodes | LEMMA | absent | The node counter shows how many nodes are online right now. | \u2014 | \u2014 | NodeCount.tsx:2 renders the constant \"1,248 nodes online\"; it takes no props and calls no API. Needed: bind it to a live source (e.g. a node count field from the API) with a timestamp and an explicit \"unknown\" state, plus a test, or remove it. |\n\nTotals: enforced 0, partial 0, absent 5.\n"}, {"name": "meshwatch/docs/spec.md", "type": "text", "content": "# meshwatch status dashboard: spec\n\n1. Release manifests are signed with Ed25519 and verified in the browser before the \"Manifest\" badge turns green.\n2. The health badge reflects live probes of the mesh; it turns red when any probe fails.\n3. The deploy pipeline view shows the true state of each stage.\n4. Every node is hardware-attested (TPM 2.0) before it joins the mesh.\n5. The node counter shows how many nodes are online right now.\n"}, {"name": "meshwatch/src/components/Attestation.tsx", "type": "text", "content": "export function Attestation() {\n  return (\n    \u003csection className=\"card\">\n      \u003ch3>Node attestation\u003c/h3>\n      \u003cp>\u003cspan className=\"badge green\">TPM 2.0: VERIFIED\u003c/span> All nodes attested at join.\u003c/p>\n    \u003c/section>\n  );\n}\n"}, {"name": "meshwatch/src/components/Dashboard.tsx", "type": "text", "content": "import { useEffect, useState } from 'react';\nimport { fetchHealth, type Health } from '../lib/api';\nimport { Attestation } from './Attestation';\nimport { HealthBadge } from './HealthBadge';\nimport { NodeCount } from './NodeCount';\nimport { Pipeline } from './Pipeline';\n\nexport function Dashboard() {\n  const [health, setHealth] = useState\u003cHealth | null>(null);\n  useEffect(() => { fetchHealth().then(setHealth); }, []);\n  return (\n    \u003cmain>\n      \u003cHealthBadge health={health} />\n      \u003cNodeCount />\n      \u003cPipeline stages={health?.stages ?? []} />\n      \u003cAttestation />\n    \u003c/main>\n  );\n}\n"}, {"name": "meshwatch/src/components/HealthBadge.tsx", "type": "text", "content": "import type { Health } from '../lib/api';\n\nexport function HealthBadge({ health }: { health: Health | null }) {\n  const ok = health?.ok ?? true;\n  return \u003cspan className={`badge ${ok ? 'green' : 'red'}`}>{ok ? 'Healthy' : 'Degraded'}\u003c/span>;\n}\n"}, {"name": "meshwatch/src/components/ManifestBadge.tsx", "type": "text", "content": "import { useEffect, useState } from 'react';\nimport { verifyManifest } from '../lib/verify';\n\nexport function ManifestBadge({ manifest, signature, publicKey }: { manifest: Uint8Array; signature: Uint8Array; publicKey: CryptoKey }) {\n  const [valid, setValid] = useState\u003cboolean | null>(null);\n  useEffect(() => { verifyManifest(manifest, signature, publicKey).then(setValid); }, [manifest, signature, publicKey]);\n  if (valid === null) return \u003cspan className=\"badge grey\">Manifest: checking\u2026\u003c/span>;\n  return valid\n    ? \u003cspan className=\"badge green\">Manifest: VERIFIED\u003c/span>\n    : \u003cspan className=\"badge red\">Manifest: INVALID SIGNATURE\u003c/span>;\n}\n"}, {"name": "meshwatch/src/components/NodeCount.tsx", "type": "text", "content": "export function NodeCount() {\n  return \u003cp className=\"metric\">\u003cstrong>1,248\u003c/strong> nodes online\u003c/p>;\n}\n"}, {"name": "meshwatch/src/components/Pipeline.tsx", "type": "text", "content": "import type { Stage } from '../lib/api';\n\nexport function Pipeline({ stages }: { stages: Stage[] }) {\n  const firstFailure = stages.findIndex((s) => s.status === 'failed');\n  return (\n    \u003col className=\"pipeline\">\n      {stages.map((stage, i) => {\n        // Later stages are skipped by the runner after a failure; show them as done.\n        const status = firstFailure >= 0 && i > firstFailure ? 'passed' : stage.status;\n        return \u003cli key={stage.name} className={status}>{stage.name}: {status}\u003c/li>;\n      })}\n    \u003c/ol>\n  );\n}\n"}, {"name": "meshwatch/src/lib/api.ts", "type": "text", "content": "export interface Stage { name: string; status: 'passed' | 'failed' | 'running' }\nexport interface Health { ok?: boolean; stages: Stage[] }\n\nexport async function fetchHealth(): Promise\u003cHealth | null> {\n  try {\n    const res = await fetch('/api/health');\n    return res.ok ? await res.json() : null;\n  } catch {\n    return null;\n  }\n}\n"}, {"name": "meshwatch/src/lib/verify.ts", "type": "text", "content": "// Ed25519 signature check over the raw manifest bytes (WebCrypto).\nexport async function verifyManifest(manifest: Uint8Array, signature: Uint8Array, publicKey: CryptoKey): Promise\u003cboolean> {\n  try {\n    return await crypto.subtle.verify({ name: 'Ed25519' }, publicKey, signature, manifest);\n  } catch {\n    return false;\n  }\n}\n"}, {"name": "REPORT.md", "type": "text", "content": "\u003c!-- Saved by the evaluator from the run's final reply: the run's own Write was refused for report files. -->\n# Claims ledger report: meshwatch status dashboard\n\n**Verdict:** 5 claims from meshwatch/docs/spec.md: 0 enforced, 0 partial, 5 absent. 6 overclaims a viewer sees, 1 in the spec. `check` passes; table in CLAIMS.md.\n\n## Headline findings\n1. MW-04 TPM attestation shown VERIFIED with no attestation code: Attestation.tsx:5 renders a constant green \"TPM 2.0: VERIFIED\" (OC-1 + OC-4).\n2. MW-05 \"1,248 nodes online\" is a literal: NodeCount.tsx:2 (OC-5).\n3. MW-02 Health badge fails open: HealthBadge.tsx:4 `health?.ok ?? true` shows Healthy on fetch error, non-2xx or missing ok (OC-2); fetched once only.\n4. MW-03 Pipeline shows skipped stages as passed: Pipeline.tsx:9 (OC-3).\n5. MW-01 The only real check is not on the dashboard: verifyManifest() is a real Ed25519 check and ManifestBadge derives its verdict from it correctly, but Dashboard.tsx never renders it; no key source, no signing step.\n\n## Claims\n| ID | Label | State | Claim | Gap |\n|---|---|---|---|---|\n| MW-01 | LEMMA | absent | Manifests signed with Ed25519 and verified in the browser | Verify code exists but badge not rendered; no key source; no tests |\n| MW-02 | LEMMA | absent | Health badge reflects live probes, red on failure | Fails open (?? true); fetched once; no tests |\n| MW-03 | LEMMA | absent | Pipeline shows true state of each stage | Stages after failure shown passed; no tests |\n| MW-04 | LEMMA | absent | Every node TPM 2.0 attested | No attestation code; constant card |\n| MW-05 | LEMMA | absent | Node counter shows nodes online now | Constant 1,248 |\n\n## Overclaims\n| Where | Pattern | Fix |\n|---|---|---|\n| Attestation.tsx:5 | OC-1 + OC-4 | Remove the card or show \"not performed\" |\n| NodeCount.tsx:2 | OC-5 | Bind to a live source or show \"unavailable\" |\n| HealthBadge.tsx:4 | OC-2 | Green only on ok === true, red on false, grey Unknown otherwise |\n| Pipeline.tsx:8-9 | OC-3 | Stages after first failure as \"not evaluated\" |\n| Dashboard.tsx:15 | OC-2 (minor) | \"pipeline unavailable\" when the fetch fails |\n| ManifestBadge.tsx:9 | OC-6 (minor; computed, not rendered) | Say \"signature valid\" and name the key |\n| docs/spec.md:6 | OC-4 | Move TPM line to Planned |\n\n## Not checked\nNo tests, no package.json: nothing built or run. /api/health server not in repo. spec.md undated.\n\n## Next steps\n1. MW-04 remove or relabel attestation before Friday. 2. MW-05 remove or bind counter. 3. MW-02 three-state badge + interval + tests. 4. MW-03 \"not evaluated\" + test. 5. MW-01 render ManifestBadge with pinned key; valid/tampered/wrong-key tests. 6. Add check to CI.\n"}], "grading": {"expectations": [{"text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.", "passed": true, "evidence": "HealthBadge.tsx:4 `health?.ok ?? true` classified OC-2 fail-open"}, {"text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.", "passed": true, "evidence": "Pipeline.tsx:9 stages after first failure shown passed, OC-3"}, {"text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.", "passed": true, "evidence": "Attestation.tsx:5 constant TPM VERIFIED, no attestation code, OC-1 + OC-4"}, {"text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.", "passed": true, "evidence": "NodeCount.tsx:2 constant 1,248, OC-5"}, {"text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().", "passed": false, "evidence": "Says verifyManifest() is a real check, but still lists 'ManifestBadge.tsx:9 | OC-6 Scope creep (minor)' in the overclaims table"}, {"text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).", "passed": true, "evidence": "Each overclaim row has a Fix column with a concrete change"}, {"text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).", "passed": true, "evidence": "MW-01..MW-05 each get a state (all absent)"}], "summary": {"passed": 6, "failed": 1, "total": 7, "pass_rate": 0.86}, "timing": {"executor_duration_seconds": 177.7, "total_duration_seconds": 177.7}}}, {"id": "status-dashboard-verdicts-without_skill", "prompt": "Our meshwatch status dashboard is green basically all the time and we're demoing it to investors on Friday. Is any of what it shows actually computed? Go through the spec in docs/ and the components and tell me what's real. Write your findings into the repo folder.", "eval_id": null, "outputs": [{"name": "FINDINGS.md", "type": "text", "content": "\u003c!-- Saved by the evaluator from the run's final reply: the run's own Write was refused for report files. -->\n# meshwatch: what the dashboard actually computes\n\nVery little of what the meshwatch dashboard shows is actually computed. The one real check isn't on the dashboard, and the other four can't show a failure.\n\n| # | Spec claim | Reality | Evidence |\n|---|---|---|---|\n| 1 | Release manifest verified in the browser (Ed25519) before the Manifest badge turns green | Real check, not on the dashboard | lib/verify.ts does a WebCrypto Ed25519 check; ManifestBadge.tsx is correct, but Dashboard.tsx never renders it and nothing loads a manifest, signature or key. |\n| 2 | Health badge reflects live checks, red on any failure | Green when it can't tell | HealthBadge.tsx:4 `const ok = health?.ok ?? true;` shows Healthy on network error, non-2xx, bad JSON, missing ok, or loading. Fetched once, not live. |\n| 3 | Pipeline view shows true state of each stage | Turns failures into passes | Pipeline.tsx:8-9 relabels every stage after the first failure as 'passed'; the comment says they were skipped. |\n| 4 | Every node TPM 2.0 attested before joining | Fixed text | Attestation.tsx always renders \"TPM 2.0: VERIFIED\" with no inputs. |\n| 5 | Node counter shows nodes online now | Fixed text | NodeCount.tsx returns the literal \"1,248\". |\n\nFixes: label or remove attestation and node count for the demo; health badge grey \"Unknown\" or red unless ok === true, refresh on a timer; remove the pipeline relabelling and add a \"skipped\" status; render the Manifest badge wired to a real manifest, signature and pinned key; feed node count and attestation from real data (/api/nodes, per-node attestation records).\n"}, {"name": "meshwatch/docs/spec.md", "type": "text", "content": "# meshwatch status dashboard: spec\n\n1. Release manifests are signed with Ed25519 and verified in the browser before the \"Manifest\" badge turns green.\n2. The health badge reflects live probes of the mesh; it turns red when any probe fails.\n3. The deploy pipeline view shows the true state of each stage.\n4. Every node is hardware-attested (TPM 2.0) before it joins the mesh.\n5. The node counter shows how many nodes are online right now.\n"}, {"name": "meshwatch/src/components/Attestation.tsx", "type": "text", "content": "export function Attestation() {\n  return (\n    \u003csection className=\"card\">\n      \u003ch3>Node attestation\u003c/h3>\n      \u003cp>\u003cspan className=\"badge green\">TPM 2.0: VERIFIED\u003c/span> All nodes attested at join.\u003c/p>\n    \u003c/section>\n  );\n}\n"}, {"name": "meshwatch/src/components/Dashboard.tsx", "type": "text", "content": "import { useEffect, useState } from 'react';\nimport { fetchHealth, type Health } from '../lib/api';\nimport { Attestation } from './Attestation';\nimport { HealthBadge } from './HealthBadge';\nimport { NodeCount } from './NodeCount';\nimport { Pipeline } from './Pipeline';\n\nexport function Dashboard() {\n  const [health, setHealth] = useState\u003cHealth | null>(null);\n  useEffect(() => { fetchHealth().then(setHealth); }, []);\n  return (\n    \u003cmain>\n      \u003cHealthBadge health={health} />\n      \u003cNodeCount />\n      \u003cPipeline stages={health?.stages ?? []} />\n      \u003cAttestation />\n    \u003c/main>\n  );\n}\n"}, {"name": "meshwatch/src/components/HealthBadge.tsx", "type": "text", "content": "import type { Health } from '../lib/api';\n\nexport function HealthBadge({ health }: { health: Health | null }) {\n  const ok = health?.ok ?? true;\n  return \u003cspan className={`badge ${ok ? 'green' : 'red'}`}>{ok ? 'Healthy' : 'Degraded'}\u003c/span>;\n}\n"}, {"name": "meshwatch/src/components/ManifestBadge.tsx", "type": "text", "content": "import { useEffect, useState } from 'react';\nimport { verifyManifest } from '../lib/verify';\n\nexport function ManifestBadge({ manifest, signature, publicKey }: { manifest: Uint8Array; signature: Uint8Array; publicKey: CryptoKey }) {\n  const [valid, setValid] = useState\u003cboolean | null>(null);\n  useEffect(() => { verifyManifest(manifest, signature, publicKey).then(setValid); }, [manifest, signature, publicKey]);\n  if (valid === null) return \u003cspan className=\"badge grey\">Manifest: checking\u2026\u003c/span>;\n  return valid\n    ? \u003cspan className=\"badge green\">Manifest: VERIFIED\u003c/span>\n    : \u003cspan className=\"badge red\">Manifest: INVALID SIGNATURE\u003c/span>;\n}\n"}, {"name": "meshwatch/src/components/NodeCount.tsx", "type": "text", "content": "export function NodeCount() {\n  return \u003cp className=\"metric\">\u003cstrong>1,248\u003c/strong> nodes online\u003c/p>;\n}\n"}, {"name": "meshwatch/src/components/Pipeline.tsx", "type": "text", "content": "import type { Stage } from '../lib/api';\n\nexport function Pipeline({ stages }: { stages: Stage[] }) {\n  const firstFailure = stages.findIndex((s) => s.status === 'failed');\n  return (\n    \u003col className=\"pipeline\">\n      {stages.map((stage, i) => {\n        // Later stages are skipped by the runner after a failure; show them as done.\n        const status = firstFailure >= 0 && i > firstFailure ? 'passed' : stage.status;\n        return \u003cli key={stage.name} className={status}>{stage.name}: {status}\u003c/li>;\n      })}\n    \u003c/ol>\n  );\n}\n"}, {"name": "meshwatch/src/lib/api.ts", "type": "text", "content": "export interface Stage { name: string; status: 'passed' | 'failed' | 'running' }\nexport interface Health { ok?: boolean; stages: Stage[] }\n\nexport async function fetchHealth(): Promise\u003cHealth | null> {\n  try {\n    const res = await fetch('/api/health');\n    return res.ok ? await res.json() : null;\n  } catch {\n    return null;\n  }\n}\n"}, {"name": "meshwatch/src/lib/verify.ts", "type": "text", "content": "// Ed25519 signature check over the raw manifest bytes (WebCrypto).\nexport async function verifyManifest(manifest: Uint8Array, signature: Uint8Array, publicKey: CryptoKey): Promise\u003cboolean> {\n  try {\n    return await crypto.subtle.verify({ name: 'Ed25519' }, publicKey, signature, manifest);\n  } catch {\n    return false;\n  }\n}\n"}], "grading": {"expectations": [{"text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.", "passed": true, "evidence": "Item 2: 'HealthBadge.tsx:4 const ok = health?.ok ?? true' shows Healthy when it can't tell"}, {"text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.", "passed": true, "evidence": "Item 3: 'Pipeline.tsx:8-9 relabels every stage after the first failure as passed'"}, {"text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.", "passed": true, "evidence": "Item 4: 'Attestation.tsx always renders TPM 2.0: VERIFIED with no inputs'"}, {"text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.", "passed": true, "evidence": "Item 5: 'NodeCount.tsx returns the literal 1,248'"}, {"text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().", "passed": true, "evidence": "Item 1: 'Real check, not on the dashboard'; not called an overclaim"}, {"text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).", "passed": true, "evidence": "Fixes paragraph covers each finding"}, {"text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).", "passed": true, "evidence": "Table maps all five spec claims"}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}, "timing": {"executor_duration_seconds": 68.8, "total_duration_seconds": 68.8}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "claims-ledger", "skill_path": "\u003cpath/to/skill>", "executor_model": "\u003cmodel-name>", "analyzer_model": "\u003cmodel-name>", "timestamp": "2026-11-03T00:59:35Z", "evals_run": ["secrets-store-readme", "status-dashboard-verdicts"], "runs_per_configuration": 1}, "runs": [{"eval_id": "secrets-store-readme", "eval_name": "secrets-store-readme", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 9, "failed": 0, "total": 9, "time_seconds": 151.6, "tokens": 72652, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.", "passed": true, "evidence": "claims_ledger.py check prints 'OK enforced 1, partial 2, absent 5' on outputs/claims.json"}, {"text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.", "passed": true, "evidence": "C-01 partial citing crypto.py seal()/AESGCM and tests/test_crypto.py; nonce split out as C-02 enforced"}, {"text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).", "passed": true, "evidence": "C-03 absent; REPORT: 'server.py holds MASTER_KEY, put() receives plaintext, get() decrypts and returns it'"}, {"text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.", "passed": true, "evidence": "C-04 absent: 'no rotation code; single master key'"}, {"text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.", "passed": true, "evidence": "C-06 absent: 'no report or certificate in the repository'"}, {"text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.", "passed": true, "evidence": "C-07 absent: 'no benchmark, no HTTP layer'"}, {"text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.", "passed": true, "evidence": "C-05 partial: 'delete() never logs'"}, {"text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.", "passed": true, "evidence": "Overclaims table: 'cli.py:6 | OC-1 Constant verdict'"}, {"text": "The final report does not conclude that vaultlite is secure, verified or production ready.", "passed": true, "evidence": "Verdict says the README should not go on the landing page as written; no 'secure' conclusion"}], "notes": []}, {"eval_id": "status-dashboard-verdicts", "eval_name": "status-dashboard-verdicts", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 0.86, "passed": 6, "failed": 1, "total": 7, "time_seconds": 177.7, "tokens": 79130, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.", "passed": true, "evidence": "HealthBadge.tsx:4 `health?.ok ?? true` classified OC-2 fail-open"}, {"text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.", "passed": true, "evidence": "Pipeline.tsx:9 stages after first failure shown passed, OC-3"}, {"text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.", "passed": true, "evidence": "Attestation.tsx:5 constant TPM VERIFIED, no attestation code, OC-1 + OC-4"}, {"text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.", "passed": true, "evidence": "NodeCount.tsx:2 constant 1,248, OC-5"}, {"text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().", "passed": false, "evidence": "Says verifyManifest() is a real check, but still lists 'ManifestBadge.tsx:9 | OC-6 Scope creep (minor)' in the overclaims table"}, {"text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).", "passed": true, "evidence": "Each overclaim row has a Fix column with a concrete change"}, {"text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).", "passed": true, "evidence": "MW-01..MW-05 each get a state (all absent)"}], "notes": []}, {"eval_id": "secrets-store-readme", "eval_name": "secrets-store-readme", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.89, "passed": 8, "failed": 1, "total": 9, "time_seconds": 109.2, "tokens": 60245, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.", "passed": false, "evidence": "No claims.json produced; only README_CLAIMS_REVIEW.md"}, {"text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.", "passed": true, "evidence": "Row 1 'Partly true' citing crypto.py:7, crypto.py:11-12 and the passing tests"}, {"text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).", "passed": true, "evidence": "Row 2 'False': server.py:1/10/16 encrypt and decrypt on the server"}, {"text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.", "passed": true, "evidence": "Row 3 'False / not implemented': no rotation code anywhere"}, {"text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.", "passed": true, "evidence": "Row 5 'Unsupported': no audit report or attestation in the repo"}, {"text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.", "passed": true, "evidence": "Row 6 'Unsupported': no benchmarks or performance tests"}, {"text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.", "passed": true, "evidence": "Row 4 'Partly true': 'delete() logs nothing (server.py:19-20)'"}, {"text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.", "passed": true, "evidence": "Status row: 'cli.status() (cli.py:5-7) always prints store SECURE ... checks nothing'"}, {"text": "The final report does not conclude that vaultlite is secure, verified or production ready.", "passed": true, "evidence": "Recommends dropping unsupported claims; no 'secure' conclusion"}], "notes": []}, {"eval_id": "status-dashboard-verdicts", "eval_name": "status-dashboard-verdicts", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 68.8, "tokens": 59246, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.", "passed": true, "evidence": "Item 2: 'HealthBadge.tsx:4 const ok = health?.ok ?? true' shows Healthy when it can't tell"}, {"text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.", "passed": true, "evidence": "Item 3: 'Pipeline.tsx:8-9 relabels every stage after the first failure as passed'"}, {"text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.", "passed": true, "evidence": "Item 4: 'Attestation.tsx always renders TPM 2.0: VERIFIED with no inputs'"}, {"text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.", "passed": true, "evidence": "Item 5: 'NodeCount.tsx returns the literal 1,248'"}, {"text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().", "passed": true, "evidence": "Item 1: 'Real check, not on the dashboard'; not called an overclaim"}, {"text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).", "passed": true, "evidence": "Fixes paragraph covers each finding"}, {"text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).", "passed": true, "evidence": "Table maps all five spec claims"}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 0.93, "stddev": 0.099, "min": 0.86, "max": 1.0}, "time_seconds": {"mean": 164.65, "stddev": 18.4555, "min": 151.6, "max": 177.7}, "tokens": {"mean": 75891.0, "stddev": 4580.6377, "min": 72652, "max": 79130}}, "without_skill": {"pass_rate": {"mean": 0.945, "stddev": 0.0778, "min": 0.89, "max": 1.0}, "time_seconds": {"mean": 89.0, "stddev": 28.5671, "min": 68.8, "max": 109.2}, "tokens": {"mean": 59745.5, "stddev": 706.3997, "min": 59246, "max": 60245}}, "delta": {"pass_rate": "-0.01", "time_seconds": "+75.7", "tokens": "+16146"}}, "notes": ["Non-discriminating: 15 of 16 assertions passed in both configurations. Opus without the skill finds planted overclaims on its own; finding issues is not where the skill adds value.", "Only discriminating assertion: a claims registry the checker accepts (with-skill 1/1, baseline 0/1). The skill's value is the durable, machine-checked artefact and the CI gate, not detection.", "Skill defect 1 (meshwatch): the checker requires tests for 'partial', so in a repo with no tests every claim with real code was forced to 'absent', contradicting SKILL.md's own edge-case rule and losing information.", "Skill defect 2 (meshwatch): OC-6 led the run to list the computed ManifestBadge 'VERIFIED' as a (minor) overclaim, a false positive the baseline avoided.", "Cost: +85% time and +27% tokens with the skill.", "Baselines found unplanted issues (MASTER_KEY never loaded, no AAD binding, failed reads logged as reads); with-skill matched most of them.", "Report files: in 3 of 4 runs the harness refused subagent writes of report .md files; the evaluator saved each run's final reply verbatim as its report. claims.json/CLAIMS.md were written by the runs themselves.", "Trigger test (separate, simulated): 20/20 correct routing among 11 skills; claude -p was unavailable so run_eval.py was not used."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + escapeHtml(summary.passed || 0) + ' passed, ' + escapeHtml(summary.failed || 0) + ' failed of ' + escapeHtml(summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML.replace(/"/g, "&quot;");
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += escapeHtml(metadata.timestamp) + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + escapeHtml(metadata.evals_run.join(", ")) + " &mdash; ";
+      html += escapeHtml(metadata.runs_per_configuration || "?") + (metadata.runs_per_configuration === 1 ? " run" : " runs") + " per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+      // With a single configuration there is nothing to compare: only its column is shown
+      const compare = cells => configs.length >= 2 ? cells : "";
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th>" + compare("<th>" + escapeHtml(labelB) + "</th><th>Delta</th>") + "</tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += compare("<td>" + fmtStat(b.pass_rate, true) + "</td>");
+      html += compare('<td class="' + deltaClass(delta.pass_rate) + '">' + escapeHtml(delta.pass_rate || "—") + "</td>") + "</tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += compare("<td>" + fmtStat(b.time_seconds, false) + "</td>");
+        html += compare('<td class="' + deltaClass(delta.time_seconds) + '">' + escapeHtml(delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td>") + "</tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += compare("<td>" + fmtStat(b.tokens, false) + "</td>");
+        html += compare('<td class="' + deltaClass(delta.tokens) + '">' + escapeHtml(delta.tokens || "—") + "</td>") + "</tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        // Numeric ids first, then ids that are names
+        const rank = id => typeof id === "number" ? 0 : 1;
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) =>
+          rank(a) - rank(b) || (rank(a) ? String(a).localeCompare(String(b)) : a - b));
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = escapeHtml(config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()));
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + escapeHtml(run.run_number) + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + escapeHtml(r.passed || 0) + "/" + escapeHtml(r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + escapeHtml(r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + escapeHtml(run.run_number) + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

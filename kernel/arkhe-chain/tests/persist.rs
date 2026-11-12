@@ -176,6 +176,52 @@ fn a_reopened_file_keeps_the_unsealed_mempool() {
 }
 
 #[test]
+fn a_different_genesis_does_not_reopen_the_file() {
+    let path = path("genesis-file");
+    let node = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    drop(node);
+    let before = std::fs::read(&path).unwrap();
+    assert!(before.len() > 32);
+    let only_a = validators()
+        .into_iter()
+        .filter(|validator| validator.id == "validator-a")
+        .collect();
+    match ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        only_a,
+        common::accounts(),
+    ) {
+        Err(error) => assert_eq!(error, ChainError::Genesis),
+        Ok(_) => panic!("a different genesis reopened the file"),
+    }
+    assert_eq!(std::fs::read(&path).unwrap(), before);
+    let mut old = before.clone();
+    old.truncate(old.len() - 32);
+    std::fs::write(&path, &old).unwrap();
+    let again = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(again.height().unwrap(), 0);
+    drop(again);
+    assert!(std::fs::read(&path).unwrap().len() == before.len());
+    let _ = std::fs::remove_file(&path);
+}
+
+#[test]
 fn an_older_snapshot_without_the_mempool_does_not_open() {
     let path = path("oldmagic");
     for magic in [
@@ -332,8 +378,8 @@ fn a_precommit_with_a_bad_signature_does_not_open() {
     drop(node);
 
     let mut bytes = std::fs::read(&path).unwrap();
-    let last = bytes.len() - 1;
-    bytes[last] ^= 0x01;
+    let signature = bytes.len() - 32 - 4 - 1 - 1;
+    bytes[signature] ^= 0x01;
     std::fs::write(&path, &bytes).unwrap();
     match ArkheNode::open(
         &path,
@@ -368,6 +414,7 @@ fn an_akgchns6_precommit_reopens_as_round_zero() {
 
     let mut bytes = std::fs::read(&path).unwrap();
     assert!(bytes.starts_with(b"AKGCHNS7"));
+    bytes.truncate(bytes.len() - 32);
     assert_eq!(&bytes[bytes.len() - 8..], &[0u8; 8]);
     bytes[..8].copy_from_slice(b"AKGCHNS6");
     bytes.truncate(bytes.len() - 8);
@@ -471,6 +518,7 @@ fn a_reopened_file_keeps_the_mldsa_key_and_refuses_a_different_one() {
     )
     .unwrap();
     drop(node);
+    let before = std::fs::read(&path).unwrap();
 
     match ArkheNode::open(
         &path,
@@ -480,8 +528,9 @@ fn a_reopened_file_keeps_the_mldsa_key_and_refuses_a_different_one() {
         common::accounts(),
     ) {
         Ok(_) => panic!("snapshot opened with a different ML-DSA key"),
-        Err(error) => assert_eq!(error, ChainError::Snapshot),
+        Err(error) => assert_eq!(error, ChainError::Genesis),
     }
+    assert_eq!(std::fs::read(&path).unwrap(), before);
 
     let again = ArkheNode::open(
         &path,
@@ -515,6 +564,7 @@ fn a_round_only_precommit_reopens_and_is_not_a_new_vote() {
 
     let mut bytes = std::fs::read(&path).unwrap();
     assert!(bytes.starts_with(b"AKGCHNS7"));
+    bytes.truncate(bytes.len() - 32);
     assert_eq!(&bytes[bytes.len() - 8..], &[0u8; 8]);
     bytes.truncate(bytes.len() - 8);
     bytes.extend_from_slice(&1u32.to_be_bytes());
@@ -577,6 +627,7 @@ fn a_part_only_precommit_reopens_and_is_not_a_new_vote() {
 
     let mut bytes = std::fs::read(&path).unwrap();
     assert!(bytes.starts_with(b"AKGCHNS7"));
+    bytes.truncate(bytes.len() - 32);
     assert_eq!(&bytes[bytes.len() - 8..], &[0u8; 8]);
     bytes.truncate(bytes.len() - 8);
     bytes.extend_from_slice(&1u32.to_be_bytes());

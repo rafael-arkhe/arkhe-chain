@@ -1,7 +1,8 @@
 # arkhe-p2p — aquisição verificável de blobs pequenos
 
-Experimento Rust **fora de `arkhe-e02@1`**. Workspace independente, com lockfile
-próprio. Não altera o manifest congelado nem a publicação Hashtree existente.
+Experimento Rust **fora de `arkhe-e02@1`**. Membro do workspace raiz Arkhe;
+não altera o manifest congelado E02 nem a publicação Hashtree existente.
+A composição com DePIN/NRAS vive em `arkhe-network`.
 
 O protótipo de serviço gratuito e contador de observações está em
 [phase0/README.md](phase0/README.md): servidor HTTP de três evidências públicas,

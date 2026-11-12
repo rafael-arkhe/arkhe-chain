@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.",
+      "passed": false,
+      "evidence": "No claims.json produced; only README_CLAIMS_REVIEW.md"
+    },
+    {
+      "text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.",
+      "passed": true,
+      "evidence": "Row 1 'Partly true' citing crypto.py:7, crypto.py:11-12 and the passing tests"
+    },
+    {
+      "text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).",
+      "passed": true,
+      "evidence": "Row 2 'False': server.py:1/10/16 encrypt and decrypt on the server"
+    },
+    {
+      "text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.",
+      "passed": true,
+      "evidence": "Row 3 'False / not implemented': no rotation code anywhere"
+    },
+    {
+      "text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.",
+      "passed": true,
+      "evidence": "Row 5 'Unsupported': no audit report or attestation in the repo"
+    },
+    {
+      "text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.",
+      "passed": true,
+      "evidence": "Row 6 'Unsupported': no benchmarks or performance tests"
+    },
+    {
+      "text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.",
+      "passed": true,
+      "evidence": "Row 4 'Partly true': 'delete() logs nothing (server.py:19-20)'"
+    },
+    {
+      "text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.",
+      "passed": true,
+      "evidence": "Status row: 'cli.status() (cli.py:5-7) always prints store SECURE ... checks nothing'"
+    },
+    {
+      "text": "The final report does not conclude that vaultlite is secure, verified or production ready.",
+      "passed": true,
+      "evidence": "Recommends dropping unsupported claims; no 'secure' conclusion"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 1,
+    "total": 9,
+    "pass_rate": 0.89
+  },
+  "timing": {
+    "executor_duration_seconds": 109.2,
+    "total_duration_seconds": 109.2
+  }
+}

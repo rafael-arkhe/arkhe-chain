@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "The updated claims.json passes the claims_ledger.py check command (exit 0) with its regenerated CLAIMS.md.",
+      "passed": false,
+      "evidence": "check exits 1: C-01 evidence files do not name C-01; C-02 is absent yet still lists mechanism/evidence. CLAIMS.md rebuilt by hand"
+    },
+    {
+      "text": "The rate-cache claim (C-02) is now absent (not enforced or partial), with a gap saying the cache was removed in 2.0.",
+      "passed": true,
+      "evidence": "C-02 absent; report: 'src/fx-cache.js, cachedRate() and tests/fx-cache.test.js no longer exist'"
+    },
+    {
+      "text": "The rounding claim (C-01) is re-linked to the renamed round() in src/round.js (no reference to roundHalfEven remains in its evidence) and is not marked absent; enforced or partial with a named gap are both acceptable.",
+      "passed": true,
+      "evidence": "C-01 evidence re-pointed to round (anchor 'round'), no roundHalfEven; partial with gap"
+    },
+    {
+      "text": "The offline fallback claim (C-03) is not marked absent and keeps evidence pointing at rateWithFallback() in src/fallback.js; enforced or partial with a named gap are both acceptable.",
+      "passed": true,
+      "evidence": "C-03 partial with evidence src/fallback.js and anchor rateWithFallback"
+    },
+    {
+      "text": "Every claim statement in claims.json is unchanged from the 1.4 audit (the cache claim keeps its 60-second wording).",
+      "passed": true,
+      "evidence": "All three statements identical to the 1.4 registry (scripted comparison)"
+    },
+    {
+      "text": "README.md is unchanged, and the output tells the user the rate-cache line is now false.",
+      "passed": true,
+      "evidence": "README.md byte-identical; report: 'Rate cache bullet: this is now false'"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.83
+  },
+  "timing": {
+    "executor_duration_seconds": 148.8,
+    "total_duration_seconds": 148.8
+  }
+}

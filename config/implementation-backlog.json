@@ -106,9 +106,28 @@
       "priority": "P1",
       "finding": "RAG fornece estruturas de citação, mas `grounded` depende apenas de lista não vazia. Não foi evidenciada busca vetorial/híbrida com validação integral dos chunks nesse módulo.",
       "evidence_and_acceptance": "`cognition/arkhe-rag/src/lib.rs`. Validar digest e prova de cada fonte/chunk, separar presença de citação de fundamentação, incluir recuperação e casos negativos de índice adulterado.",
-      "state": "OPEN",
-      "next_step": "Validar digest/prova de cada fonte e chunk; separar existência de citação de grounding e implementar recuperação testável.",
+      "state": "PARTIAL",
+      "next_step": "O índice BM25 recusa identificador vazio, com espaço nas bordas ou duplicado. A raiz MMR fornecida ainda não autentica um checkpoint, e falta uma avaliação fora deste corpus sintético.",
       "execution_authority": false,
+      "implemented": [
+        "build_response records citations and leaves grounded false",
+        "bind_citations requires every citation to match an authorized chunk digest and source",
+        "poisoned chunk bytes are rejected before a grounded record is emitted",
+        "ground_retrieved binds citations only to hits present in the immutable BM25 snapshot",
+        "ground_included requires the cited hit text to verify under a supplied arkhe-mmr root",
+        "ground_retrieved rejects an empty hit id",
+        "ground_included rejects an all-zero MMR root",
+        "Bm25Index rejects an empty, padded, or duplicate document id"
+      ],
+      "validation": [
+        "cognition/arkhe-rag/tests/grounding.rs",
+        "cognition/arkhe-rag/tests/hybrid_retrieval.rs"
+      ],
+      "limitations": [
+        "A non-zero supplied arkhe-mmr root is still not a checkpoint and does not prove the chunk is true",
+        "Hybrid retrieval and vector search stay outside this function",
+        "No execution authority"
+      ],
       "depends_on": [
         "A02",
         "A10"
@@ -139,18 +158,46 @@
       "priority": "P1",
       "finding": "SQL append-only é uma propriedade de tabelas/roles, não de todo estado. O journal permite transições operacionais controladas por trigger. O DDL simplificado do anexo omite tenant e ator.",
       "evidence_and_acceptance": "`storage/sql/migrations/20261017000009_bugbounty.sql`. Preservar PK `(tenant_id,requested_by,operation_id)` e parâmetros imutáveis; documentar estado operacional mutável versus evidência imutável; testar isolamento/conflitos nas APIs. Não reescrever as migrações publicadas para copiar o exemplo.",
-      "state": "OPEN",
-      "next_step": "Acrescentar testes vivos das APIs escolhidas para tenant/ator, conflito de parâmetros e replay; preservar migrações publicadas.",
+      "state": "PARTIAL",
+      "next_step": "O journal em memória isola ator, recusa parâmetros trocados, ator em branco, dono errado e uma segunda conclusão. A API Postgres ao vivo, com tenant na chave, ainda não foi executada. As migrações publicadas não foram reescritas.",
       "execution_authority": false,
-      "depends_on": []
+      "depends_on": [],
+      "implemented": [
+        "OperationJournal keeps actors apart, rejects a changed parameters_digest, and replays the completed record",
+        "OperationJournal rejects a blank actor, a wrong owner, a second dispatch, a mismatched execution id, and a second complete"
+      ],
+      "validation": [
+        "integration/arkhe-bugbounty/src/journal.rs actor_parameter_conflict_and_replay_stay_isolated"
+      ],
+      "limitations": [
+        "The in-memory journal has no tenant column; PgOperations scopes tenant on the connection",
+        "No live Postgres run in this batch",
+        "Published migrations were not rewritten"
+      ]
     },
     {
       "id": "A10",
       "priority": "P1",
       "finding": "O SDK e o gate têm controles reais, mas não substituem isolamento de runtime. O host continua responsável por autenticar evidências antes do snapshot.",
       "evidence_and_acceptance": "`docs/COGNITION-SDK.md`, testes executados. Manter allowlist, sandbox e admissão; testar recebimento de evidência inválida e identidade duplicada no host, além da tipagem.",
-      "state": "OPEN",
-      "next_step": "Testar autenticação, replay e duplicidade na fronteira do host; manter SDK, grafo e sandbox como camadas distintas.",
+      "state": "PARTIAL",
+      "next_step": "O host recusa lote vazio e pai que só aparece depois do filho. O snapshot seguinte ainda contém o pai. record_hash pode continuar diferente de payload_digest. O isolamento de runtime continua separado.",
+      "implemented": [
+        "HostAdmission rejects a zero record hash, a replayed hash, a duplicate in the batch, and a causal parent that was not admitted earlier",
+        "HostAdmission rejects presented bytes whose BLAKE3 does not equal payload_digest",
+        "HostAdmission rejects presented record bytes whose BLAKE3 does not equal record_hash",
+        "HostAdmission rejects a zero subject, a padded kind, a subject or policy digest mismatch, and a failed batch does not admit its earlier records",
+        "A later snapshot still contains the causal parent admitted in an earlier batch",
+        "HostAdmission rejects an empty batch and a parent that appears only later in the same batch"
+      ],
+      "validation": [
+        "cognition/arkhe-cognition-sdk/src/lib.rs host_rejects_unauthenticated_duplicate_and_replay"
+      ],
+      "limitations": [
+        "record_hash and payload_digest stay independent hashes; the host supplies both byte strings and their domains",
+        "WormGraph append remains an idempotent commit and is a separate layer",
+        "No runtime isolation"
+      ],
       "execution_authority": false,
       "depends_on": []
     },

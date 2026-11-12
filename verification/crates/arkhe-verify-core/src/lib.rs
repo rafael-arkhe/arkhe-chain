@@ -18,5 +18,6 @@ pub mod policy;
 pub mod rbb;
 pub mod reconciliation;
 pub mod release;
+pub mod release_keyset;
 pub mod types;
 pub mod verification;

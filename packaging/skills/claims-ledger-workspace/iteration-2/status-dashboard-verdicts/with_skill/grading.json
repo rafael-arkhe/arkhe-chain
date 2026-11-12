@@ -1,0 +1,49 @@
+{
+  "expectations": [
+    {
+      "text": "The output identifies that HealthBadge.tsx shows Healthy when health is null or ok is missing (the ?? true default), i.e. it fails open.",
+      "passed": true,
+      "evidence": "C-04 partial: HealthBadge.tsx:4 `health?.ok ?? true`, OC-2"
+    },
+    {
+      "text": "The output identifies that Pipeline.tsx displays stages after the first failure as passed although they never ran.",
+      "passed": true,
+      "evidence": "C-05 partial: Pipeline.tsx:9 stages after failure rewritten to passed, OC-3"
+    },
+    {
+      "text": "The output identifies that the TPM 2.0 VERIFIED attestation badge in Attestation.tsx is a constant with no attestation check anywhere in the code.",
+      "passed": true,
+      "evidence": "C-06 absent: Attestation.tsx:5 constant TPM VERIFIED, OC-4 (+OC-1)"
+    },
+    {
+      "text": "The output identifies that the 1,248 nodes online figure in NodeCount.tsx is hard-coded, not read from any source.",
+      "passed": true,
+      "evidence": "C-07 absent: NodeCount.tsx:2 literal 1,248, OC-5"
+    },
+    {
+      "text": "The output does not classify the ManifestBadge VERIFIED state as an overclaim; it recognises it is computed from verifyManifest().",
+      "passed": true,
+      "evidence": "ManifestBadge listed under 'Wording notes (not overclaims)': 'This verdict is computed'"
+    },
+    {
+      "text": "Each confirmed overclaim comes with a concrete fix (what the code should compute or display instead).",
+      "passed": true,
+      "evidence": "Each of the 4 overclaims has a Fix column entry"
+    },
+    {
+      "text": "The output maps the five numbered spec claims in docs/spec.md to a verdict each (delivered, partial or not delivered).",
+      "passed": true,
+      "evidence": "Spec claims mapped to C-01..C-07 (spec items 1 and 2 split into atomic claims), each with a state"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 161.0,
+    "total_duration_seconds": 161.0
+  }
+}

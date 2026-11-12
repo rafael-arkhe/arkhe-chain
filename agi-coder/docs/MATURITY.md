@@ -13,15 +13,15 @@ Date: October 21, 2026. Status: implementation candidate.
 | Verification | LEMMA | Baseline validation, threshold scoring, author separation, actual child-process campaigns |
 | Pipeline | LEMMA | Replay, uncertain outcomes, denied evidence, mock provider through gate to MMR |
 | Research and cost | LEMMA | Source capture, evidence-required hypothesis resolution, checked integer ledger |
-| Jules API contract | LEMMA locally; live PENDING | Official alpha schema checked; local HTTP mock passes; no real session run |
-| SDK and MCP | LEMMA | TypeScript build, independent proof vectors, real stdio client handshake and tool calls |
+| MCP | LEMMA | Stdio server and `agi mcp` launch entry. Tools verify a caller-supplied MMR proof, sum a caller-supplied ledger, and return GPU attestation unsupported. No session and no execution authority |
 | DeepInfer Rust client and Python bridge contracts | LEMMA | CPU mock subprocess and fake-native adapter tests; sampling, bindings, deadlines, and cleanup |
-| DeepInfer engine execution | PENDING | Source revision pinned; no hardware build, weight loading, native generation, or reproducibility measurement |
-| PostgreSQL adapter, crash recovery | PENDING | Migration supplied; runtime journal is in memory |
-| External transparency anchoring | PENDING | `anchor` computes only a local MMR |
-| GPU/TEE attestation | PENDING | Explicit unsupported MCP response |
-| Autonomous model planning/editing and production deployment | PENDING | Provider/executor contracts and offline demo; no real end-to-end autonomy claim |
-| Hosted CI and signed releases | PENDING | Workflows authored, not executed here |
-| Optional dashboard and desktop application | PENDING | Deferred optional components |
+| DeepInfer engine execution | PENDING | `engine_status` pins the revision and reports weights and native generation unloaded |
+| PostgreSQL adapter, crash recovery | PENDING | SQL transition codec matches the migration; `open_database` returns unavailable; runtime journal is in memory |
+| External transparency anchoring | PENDING | `local_checkpoint` keeps `published` false; a matching witness is not publication |
+| GPU/TEE attestation | PENDING | Rust and TypeScript attestation both return `verified: false` |
+| Autonomous model planning/editing and production deployment | PENDING | `agi release` writes a local manifest after the plan, cargo test, and the ten faculty files. The deploy stage is inconclusive. `production` and `editor` stay false; no repository editor runs |
+| Hosted CI and signed releases | PENDING | `hosted_ci` reports `executed: false`; workflows are authored, not observed |
+| Operator console and `agi` binary | LEMMA | Loopback page for the catalog, grid, local-seek, faculty checks, separation, receipt, bundle, plan, and labeled offline demo. Saved checks are recomputed from files. Host commands stay on the terminal |
+| Desktop shell | PENDING | `desktop_shell` reports `packaged: false`. No window toolkit is linked |
 
 See [VALIDATION.md](VALIDATION.md) for exact observed commands. Do not infer CI success, SLSA level, or production readiness from local test results.

@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "A claims.json registry exists in the repo and the bundled claims_ledger.py check command exits 0 on it.",
+      "passed": true,
+      "evidence": "claims_ledger.py check prints 'OK enforced 1, partial 2, absent 5' on outputs/claims.json"
+    },
+    {
+      "text": "The AES-256-GCM encryption-at-rest claim is judged backed (enforced or partial), citing vaultlite/crypto.py and tests/test_crypto.py.",
+      "passed": true,
+      "evidence": "C-01 partial citing crypto.py seal()/AESGCM and tests/test_crypto.py; nonce split out as C-02 enforced"
+    },
+    {
+      "text": "The zero-knowledge claim is judged not delivered (absent or refuted, not partial or enforced), and the output says the server decrypts with a key it holds (server.py).",
+      "passed": true,
+      "evidence": "C-03 absent; REPORT: 'server.py holds MASTER_KEY, put() receives plaintext, get() decrypts and returns it'"
+    },
+    {
+      "text": "The automatic 30-day key rotation claim is judged absent: no rotation code exists.",
+      "passed": true,
+      "evidence": "C-04 absent: 'no rotation code; single master key'"
+    },
+    {
+      "text": "The SOC 2 Type II claim is judged absent or unsupported because no report or certificate is in the repository.",
+      "passed": true,
+      "evidence": "C-06 absent: 'no report or certificate in the repository'"
+    },
+    {
+      "text": "The p99 under 2 ms claim is judged unsupported because no benchmark measures it.",
+      "passed": true,
+      "evidence": "C-07 absent: 'no benchmark, no HTTP layer'"
+    },
+    {
+      "text": "The full audit log claim is judged partial, naming that delete() in server.py is not logged.",
+      "passed": true,
+      "evidence": "C-05 partial: 'delete() never logs'"
+    },
+    {
+      "text": "The output flags vaultlite/cli.py printing SECURE / rotation OK as a constant verdict that no check computes, with the file location.",
+      "passed": true,
+      "evidence": "Overclaims table: 'cli.py:6 | OC-1 Constant verdict'"
+    },
+    {
+      "text": "The final report does not conclude that vaultlite is secure, verified or production ready.",
+      "passed": true,
+      "evidence": "Verdict says the README should not go on the landing page as written; no 'secure' conclusion"
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 151.6,
+    "total_duration_seconds": 151.6
+  }
+}

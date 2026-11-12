@@ -65,6 +65,26 @@ fn assert_equal_scope(result: &SignatureVerification) {
 }
 
 #[test]
+fn minimal_vector_signing_payload_is_pinned() {
+    let document: Value = serde_json::from_str(include_str!(
+        "../../../vectors/c2pa/valid-minimal.json"
+    ))
+    .unwrap();
+    let payload = signing_payload(
+        &document["input"]["claim_v2"],
+        "signer-1",
+        "arkhe.test",
+        "Ed25519",
+    )
+    .unwrap();
+    assert!(payload.starts_with(b"AKG:C2PA-CLAIM-SIG:v1\0"));
+    assert_eq!(
+        hex::encode(&payload),
+        "414b473a433250412d434c41494d2d5349473a763100a563616c676745643235353139636b6964687369676e65722d31666973737565726a61726b68652e746573746770726f66696c65781d61726b68652d633270612d636c61696d2d7369676e61747572652d76316c636c61696d5f736861323536784063313233613764323433353436313931303830373366383965313534613331666363383733373762393039333163653763306562386362383637373733646434"
+    );
+}
+
+#[test]
 fn valid_signature_over_pinned_ed25519_root() {
     let claim = claim();
     let signature = signed(&claim, "signer-1", "arkhe.test", "Ed25519");

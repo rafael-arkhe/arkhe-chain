@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "A GitHub Actions workflow in the repo has a step that runs the claims/docs check.",
+      "passed": true,
+      "evidence": "ci.yml new job 'readme-claims': python scripts/check_readme_claims.py"
+    },
+    {
+      "text": "The command CI runs uses only files inside the repository (no path to a skills folder or outside the repo).",
+      "passed": true,
+      "evidence": "scripts/check_readme_claims.py and readme_claims.toml are in the repo; no outside paths"
+    },
+    {
+      "text": "Run at the repository root, the CI check command exits 0 on the repo as delivered.",
+      "passed": false,
+      "evidence": "Scripted: exit 1 on the delivered repo, by design: it fails on the two README features with no code (CONTESTED: arguably what the user asked for)"
+    },
+    {
+      "text": "After deleting tinyqueue/retry.py, the same CI check command exits non-zero.",
+      "passed": true,
+      "evidence": "Scripted: after deleting tinyqueue/retry.py, exit 1 (listed retry tests no longer collect)"
+    },
+    {
+      "text": "The registry or table covers all five README features.",
+      "passed": true,
+      "evidence": "readme_claims.toml maps all five Features bullets verbatim, and the checker fails on any unmapped bullet"
+    },
+    {
+      "text": "Disk persistence and thread safety are recorded as absent (not dropped, not marked backed).",
+      "passed": true,
+      "evidence": "Persistence and thread safety listed with no tests; reported as unbacked, CI fails on them"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.83
+  },
+  "timing": {
+    "executor_duration_seconds": 235.1,
+    "total_duration_seconds": 235.1
+  }
+}
