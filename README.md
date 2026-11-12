@@ -170,8 +170,9 @@ O diretório [`testnet/`](testnet/) traz uma devnet local: quatro processos vali
 - **Um selador, três seguidores:** `val1` sela; `val2`, `val3` e `val4` sincronizam e assinam um precommit por altura. Uma altura fica registrada como confirmada com três dos quatro votos.
 - **Não é BFT completo:** não há escolha de proposer, rodada posterior à 0, travamento de voto nem reorg, e a rede não progride com um validador fora do ar.
 - **Chaves públicas:** as chaves privadas em `testnet/keys/` estão neste repositório. Servem para a devnet local e para nada exposto à rede.
-- **Entrada de transações:** `scripts/send_tx.sh` escreve uma lista assinada no diretório que `val1` lê com `--inbox`. Não há RPC, faucet em execução nem explorador.
-- **Orquestração:** scripts em [`scripts/`](scripts/), `testnet/docker-compose.yml` e `testnet/systemd/arkhe-node@.service`. Só os scripts locais foram executados depois dessas mudanças.
+- **Entrada de transações e atestados:** `scripts/send_tx.sh` e `scripts/send_attest.sh` escrevem listas assinadas no diretório que `val1` lê com `--inbox`. Não há RPC, faucet em execução nem explorador.
+- **Conferência:** `scripts/devnet_smoke.sh` sobe a devnet do zero e confere acordo, parada, retomada e o fluxo de atestados.
+- **Orquestração:** scripts em [`scripts/`](scripts/), `testnet/docker-compose.yml` e `testnet/systemd/arkhe-node@.service`. Os scripts locais e o compose rodam no GitHub Actions; a unidade systemd não foi executada.
 
 O passo a passo e os limites estão no [Guia da Devnet](docs/testnet.md).
 
@@ -219,6 +220,7 @@ cargo test -p arkhe-chain --test operator
 O detalhamento aprofundado dos subsistemas do nó encontra-se nos guias de documentação em [`docs/`](docs/):
 
 - [Admissão de Transações](docs/admissao.md) — Regras de payload, veredito CBOR e assinaturas híbridas.
+- [Regras de acordo, progresso e recuperação](docs/regras.md) — O que o código impõe, o que não impõe e o teste de cada regra.
 - [Atestados](docs/atestados.md) — Declarações assinadas, aprovação de uso único e recibo, carregados nos blocos.
 - [Consenso, Bifurcações e Finalidade](docs/consenso.md) — Precommits v4, quórum BFT e regras de proposer.
 - [Estado e Snapshot](docs/estado.md) — Acumulador MMR, compromisso de estado e snapshots `AKGCHNS7..10`.

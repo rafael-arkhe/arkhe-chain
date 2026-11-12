@@ -4,6 +4,10 @@
 //! signature, the domain, and the replay and quota limits. It does not check
 //! that the statement is true. Authority is checked again when an approval
 //! is executed, against the grants and revocations in force at that height.
+//!
+//! An execution is itself a signed attestation. Nothing consumes an approval
+//! except an `Execution` claim signed by an account that holds the executor
+//! role, and the receipt names that account.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -36,23 +40,24 @@ pub enum Role {
     Author = 2,
     Evaluator = 3,
     Approver = 4,
+    Executor = 5,
 }
+
+const ROLES: [Role; 5] = [
+    Role::Requester,
+    Role::Author,
+    Role::Evaluator,
+    Role::Approver,
+    Role::Executor,
+];
 
 impl Role {
     pub(crate) fn from_u8(tag: u8) -> Option<Self> {
-        match tag {
-            1 => Some(Self::Requester),
-            2 => Some(Self::Author),
-            3 => Some(Self::Evaluator),
-            4 => Some(Self::Approver),
-            _ => None,
-        }
+        ROLES.into_iter().find(|role| *role as u8 == tag)
     }
 
     pub(crate) fn from_name(name: &str) -> Option<Self> {
-        [Self::Requester, Self::Author, Self::Evaluator, Self::Approver]
-            .into_iter()
-            .find(|role| role.name() == name)
+        ROLES.into_iter().find(|role| role.name() == name)
     }
 
     pub(crate) fn name(self) -> &'static str {
@@ -61,6 +66,7 @@ impl Role {
             Self::Author => "author",
             Self::Evaluator => "evaluator",
             Self::Approver => "approver",
+            Self::Executor => "executor",
         }
     }
 }
@@ -69,18 +75,11 @@ impl Role {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AttestOp {
     Admit(Attestation),
-    /// Consume one approval. The op carries no signature of its own; the
-    /// proposer signature over the block covers it.
-    Execute {
-        approval: [u8; 32],
-        action: [u8; 32],
-        artifact: [u8; 32],
-    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Claim {
-    /// "I request this task, within this budget."
+    /// "I request this task, and at most this much may be spent on it."
     Request { task: [u8; 32], budget: u64 },
     /// "I produced this artifact for that request."
     Artifact { request: [u8; 32], artifact: [u8; 32] },
@@ -92,15 +91,24 @@ pub enum Claim {
         evidence: [u8; 32],
         passed: bool,
     },
-    /// "I authorize this action on this artifact, given that evaluation."
+    /// "I authorize this action on the artifact of that proposal, given that
+    /// evaluation, under that policy, at this cost."
     Approval {
         action: [u8; 32],
         artifact: [u8; 32],
+        proposal: [u8; 32],
         evaluation: [u8; 32],
         policy: [u8; 32],
+        cost: u64,
     },
     /// "I withdraw the grant I gave."
     Revocation { delegate: String, role: Role },
+    /// "I apply this action to this artifact under that approval."
+    Execution {
+        approval: [u8; 32],
+        action: [u8; 32],
+        artifact: [u8; 32],
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -164,19 +172,33 @@ impl Attestation {
             Claim::Approval {
                 action,
                 artifact,
+                proposal,
                 evaluation,
                 policy,
+                cost,
             } => {
                 body.push(4);
                 body.extend_from_slice(action);
                 body.extend_from_slice(artifact);
+                body.extend_from_slice(proposal);
                 body.extend_from_slice(evaluation);
                 body.extend_from_slice(policy);
+                body.extend_from_slice(&cost.to_be_bytes());
             }
             Claim::Revocation { delegate, role } => {
                 body.push(5);
                 push_str(&mut body, delegate);
                 body.push(*role as u8);
+            }
+            Claim::Execution {
+                approval,
+                action,
+                artifact,
+            } => {
+                body.push(6);
+                body.extend_from_slice(approval);
+                body.extend_from_slice(action);
+                body.extend_from_slice(artifact);
             }
         }
         body
@@ -258,10 +280,17 @@ impl AttestPolicy {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Receipt {
+    /// The signed `Execution` attestation that consumed the approval.
+    pub execution: [u8; 32],
+    /// The account that signed it.
+    pub executor: String,
     pub approval: [u8; 32],
     pub evaluation: [u8; 32],
+    pub request: [u8; 32],
     pub artifact: [u8; 32],
     pub action: [u8; 32],
+    /// Charged against the request budget.
+    pub cost: u64,
     pub height: u64,
     /// Index of the receipt leaf in the registry MMR.
     pub leaf: u64,
@@ -270,10 +299,14 @@ pub struct Receipt {
 impl Receipt {
     pub fn record(&self) -> [u8; 32] {
         let mut body = Vec::new();
+        body.extend_from_slice(&self.execution);
+        push_str(&mut body, &self.executor);
         body.extend_from_slice(&self.approval);
         body.extend_from_slice(&self.evaluation);
+        body.extend_from_slice(&self.request);
         body.extend_from_slice(&self.artifact);
         body.extend_from_slice(&self.action);
+        body.extend_from_slice(&self.cost.to_be_bytes());
         body.extend_from_slice(&self.height.to_be_bytes());
         Digest32::blake3(RECEIPT_DOMAIN, &body).0
     }
@@ -289,7 +322,8 @@ pub struct AttestStatus {
     pub authority_confirmed: bool,
     /// Leaf index in the registry MMR.
     pub included: u64,
-    /// Leaf index of the receipt, for an approval that was executed.
+    /// Leaf index of the receipt, for an approval that was executed and for
+    /// the execution that consumed it.
     pub execution_recorded: Option<u64>,
     /// The claim names an evidence hash. The registry does not hold the
     /// evidence and does not check that it can be fetched.
@@ -310,6 +344,8 @@ pub struct AttestRegistry {
     per_signer: BTreeMap<String, usize>,
     revoked: BTreeMap<(String, Role), u64>,
     consumed: BTreeMap<[u8; 32], Receipt>,
+    /// Cost already charged to each request.
+    spent: BTreeMap<[u8; 32], u64>,
 }
 
 impl AttestRegistry {
@@ -329,13 +365,7 @@ impl AttestRegistry {
             audience: audience.to_string(),
             policy_digest: policy.digest(),
             policy,
-            records: Vec::new(),
-            frontier: Frontier::default(),
-            attestations: BTreeMap::new(),
-            nonces: BTreeSet::new(),
-            per_signer: BTreeMap::new(),
-            revoked: BTreeMap::new(),
-            consumed: BTreeMap::new(),
+            ..Self::unconfigured()
         })
     }
 
@@ -355,6 +385,7 @@ impl AttestRegistry {
             per_signer: BTreeMap::new(),
             revoked: BTreeMap::new(),
             consumed: BTreeMap::new(),
+            spent: BTreeMap::new(),
         }
     }
 
@@ -382,47 +413,21 @@ impl AttestRegistry {
         self.frontier.count
     }
 
+    /// Cost already charged to a request by executed approvals.
+    pub fn spent(&self, request: &[u8; 32]) -> u64 {
+        self.spent.get(request).copied().unwrap_or(0)
+    }
+
     /// Record a signed statement. Order: version and scheme, domain, shape,
-    /// window, signature, replay, quota, revocation authority, MMR.
+    /// window, signature, replay, quota, then what the claim itself needs.
+    /// A revocation needs the signer to be the grantor. An execution needs
+    /// everything [`execute`](Self::execute) checks, and consumes the
+    /// approval in the same call.
     pub fn admit(&mut self, att: &Attestation, height: u64) -> Result<[u8; 32], ChainError> {
-        if att.version != ATTEST_VERSION || att.scheme != ATTEST_SCHEME_ED25519 {
-            return Err(ChainError::Attest("version"));
+        if matches!(att.claim, Claim::Execution { .. }) {
+            return self.execute(att, height, |_| Ok(())).map(|(receipt, ())| receipt.execution);
         }
-        if att.chain_id != self.chain_id || att.genesis != self.genesis || att.audience != self.audience {
-            return Err(ChainError::Attest("domain"));
-        }
-        if !account_id(&att.signer) {
-            return Err(ChainError::BadAccount);
-        }
-        if let Claim::Revocation { delegate, .. } = &att.claim {
-            if !account_id(delegate) {
-                return Err(ChainError::BadAccount);
-            }
-        }
-        if att.not_before > att.expires || height < att.not_before || height > att.expires {
-            return Err(ChainError::Attest("window"));
-        }
-        let key = self
-            .policy
-            .keys
-            .get(&att.signer)
-            .ok_or(ChainError::UnverifiedSignature)?;
-        let public =
-            ed25519::PublicKey::try_from_bytes(key).map_err(|_| ChainError::UnverifiedSignature)?;
-        if !public.verify(&att.message(), &att.signature) {
-            return Err(ChainError::UnverifiedSignature);
-        }
-        let nonce = (att.signer.clone(), att.nonce);
-        if self.nonces.contains(&nonce) {
-            return Err(ChainError::Attest("replay"));
-        }
-        if self.records.len() >= ATTEST_MAX_RECORDS {
-            return Err(ChainError::Attest("full"));
-        }
-        let used = self.per_signer.get(&att.signer).copied().unwrap_or(0);
-        if used >= ATTEST_SIGNER_QUOTA {
-            return Err(ChainError::Attest("quota"));
-        }
+        let used = self.admissible(att, height, 1)?;
         let revokes = match &att.claim {
             Claim::Revocation { delegate, role } => {
                 let grant = self.grant(delegate, *role).ok_or(ChainError::Attest("authority"))?;
@@ -435,28 +440,34 @@ impl AttestRegistry {
         };
         let id = att.id();
         let leaf = self.frontier.append(&id).map_err(|_| ChainError::Mmr)?;
-        self.records.push(id);
-        self.nonces.insert(nonce);
-        self.per_signer.insert(att.signer.clone(), used + 1);
+        self.store(att, id, leaf, used);
         if let Some(key) = revokes {
             self.revoked.entry(key).or_insert(height);
         }
-        self.attestations.insert(id, (att.clone(), leaf));
         Ok(id)
     }
 
-    /// Consume one approval for one action on one artifact. `effect` runs
-    /// after every check passed. If it fails, the approval stays unused and
-    /// the registry is unchanged. If it succeeds, the approval is consumed
-    /// and the receipt is appended in the same call.
+    /// Consume one approval. `execution` is a signed `Execution` claim. The
+    /// signer must hold the executor role and must be neither the approver
+    /// nor the evaluator. `effect` runs after every check passed. If it
+    /// fails, the approval stays unused and the registry is unchanged. If it
+    /// succeeds, the execution and the receipt are appended, the approval is
+    /// consumed and the cost is charged to the request, in the same call.
     pub fn execute<T>(
         &mut self,
-        approval: &[u8; 32],
-        action: &[u8; 32],
-        artifact: &[u8; 32],
+        execution: &Attestation,
         height: u64,
         effect: impl FnOnce(&Receipt) -> Result<T, ChainError>,
     ) -> Result<(Receipt, T), ChainError> {
+        let Claim::Execution {
+            approval,
+            action,
+            artifact,
+        } = &execution.claim
+        else {
+            return Err(ChainError::Attest("kind"));
+        };
+        let used = self.admissible(execution, height, 2)?;
         let (approved, _) = self
             .attestations
             .get(approval)
@@ -464,8 +475,10 @@ impl AttestRegistry {
         let Claim::Approval {
             action: approved_action,
             artifact: approved_artifact,
+            proposal,
             evaluation,
             policy,
+            cost,
         } = &approved.claim
         else {
             return Err(ChainError::Attest("kind"));
@@ -476,7 +489,9 @@ impl AttestRegistry {
         if height < approved.not_before || height > approved.expires {
             return Err(ChainError::Attest("window"));
         }
-        if !self.holds(&approved.signer, Role::Approver, height) {
+        if !self.holds(&execution.signer, Role::Executor, height)
+            || !self.holds(&approved.signer, Role::Approver, height)
+        {
             return Err(ChainError::Attest("authority"));
         }
         if *policy != self.policy_digest {
@@ -512,31 +527,43 @@ impl AttestRegistry {
         if !self.holds(&evaluated.signer, Role::Evaluator, height) {
             return Err(ChainError::Attest("authority"));
         }
-        if evaluated.signer == approved.signer {
+        let (author, request, budget) = self.proposal(proposal, artifact, height)?;
+        let separate = [
+            (&evaluated.signer, &approved.signer),
+            (&execution.signer, &approved.signer),
+            (&execution.signer, &evaluated.signer),
+        ];
+        if separate.iter().any(|(a, b)| a == b) || author == approved.signer || author == evaluated.signer {
             return Err(ChainError::Attest("separation"));
         }
-        let author = self.proposal_author(artifact, height)?;
-        if author == approved.signer || author == evaluated.signer {
-            return Err(ChainError::Attest("separation"));
+        let spent = self.spent(&request);
+        let charged = spent.checked_add(*cost).ok_or(ChainError::Attest("budget"))?;
+        if charged > budget {
+            return Err(ChainError::Attest("budget"));
         }
-        if self.records.len() >= ATTEST_MAX_RECORDS {
-            return Err(ChainError::Attest("full"));
-        }
+        let id = execution.id();
+        let mut frontier = self.frontier.clone();
+        let execution_leaf = frontier.append(&id).map_err(|_| ChainError::Mmr)?;
         let mut receipt = Receipt {
+            execution: id,
+            executor: execution.signer.clone(),
             approval: *approval,
             evaluation: *evaluation,
+            request,
             artifact: *artifact,
             action: *action,
+            cost: *cost,
             height,
-            leaf: self.frontier.count,
+            leaf: 0,
         };
         let record = receipt.record();
-        let mut frontier = self.frontier.clone();
         receipt.leaf = frontier.append(&record).map_err(|_| ChainError::Mmr)?;
         let out = effect(&receipt)?;
         self.frontier = frontier;
+        self.store(execution, id, execution_leaf, used);
         self.records.push(record);
-        self.consumed.insert(*approval, receipt.clone());
+        self.spent.insert(request, charged);
+        self.consumed.insert(receipt.approval, receipt.clone());
         Ok((receipt, out))
     }
 
@@ -546,20 +573,24 @@ impl AttestRegistry {
 
     pub fn status(&self, id: &[u8; 32], height: u64) -> Option<AttestStatus> {
         let (att, leaf) = self.attestations.get(id)?;
-        let authority_confirmed = match &att.claim {
-            Claim::Request { .. } => self.holds(&att.signer, Role::Requester, height),
-            Claim::Artifact { .. } => self.holds(&att.signer, Role::Author, height),
-            Claim::Evaluation { .. } => self.holds(&att.signer, Role::Evaluator, height),
-            Claim::Approval { .. } => self.holds(&att.signer, Role::Approver, height),
-            Claim::Revocation { delegate, role } => self
-                .grant(delegate, *role)
-                .is_some_and(|grant| grant.grantor == att.signer),
+        let role = |role| self.holds(&att.signer, role, height);
+        let (authority_confirmed, receipt) = match &att.claim {
+            Claim::Request { .. } => (role(Role::Requester), None),
+            Claim::Artifact { .. } => (role(Role::Author), None),
+            Claim::Evaluation { .. } => (role(Role::Evaluator), None),
+            Claim::Approval { .. } => (role(Role::Approver), self.consumed.get(id)),
+            Claim::Execution { approval, .. } => (role(Role::Executor), self.consumed.get(approval)),
+            Claim::Revocation { delegate, role } => (
+                self.grant(delegate, *role)
+                    .is_some_and(|grant| grant.grantor == att.signer),
+                None,
+            ),
         };
         Some(AttestStatus {
             signature_valid: true,
             authority_confirmed,
             included: *leaf,
-            execution_recorded: self.consumed.get(id).map(|receipt| receipt.leaf),
+            execution_recorded: receipt.map(|receipt| receipt.leaf),
             evidence_referenced: matches!(att.claim, Claim::Evaluation { .. }),
         })
     }
@@ -571,6 +602,57 @@ impl AttestRegistry {
         let record = *self.records.get(index).ok_or(ChainError::Mmr)?;
         let proof = mmr::prove(&self.records, index).map_err(|_| ChainError::Mmr)?;
         Ok((proof, record, self.root()?))
+    }
+
+    /// The checks every attestation passes before its claim is looked at.
+    /// `leaves` is how many MMR leaves the claim will add. Returns how many
+    /// attestations the signer already has.
+    fn admissible(&self, att: &Attestation, height: u64, leaves: usize) -> Result<usize, ChainError> {
+        if att.version != ATTEST_VERSION || att.scheme != ATTEST_SCHEME_ED25519 {
+            return Err(ChainError::Attest("version"));
+        }
+        if att.chain_id != self.chain_id || att.genesis != self.genesis || att.audience != self.audience {
+            return Err(ChainError::Attest("domain"));
+        }
+        if !account_id(&att.signer) {
+            return Err(ChainError::BadAccount);
+        }
+        if let Claim::Revocation { delegate, .. } = &att.claim {
+            if !account_id(delegate) {
+                return Err(ChainError::BadAccount);
+            }
+        }
+        if att.not_before > att.expires || height < att.not_before || height > att.expires {
+            return Err(ChainError::Attest("window"));
+        }
+        let key = self
+            .policy
+            .keys
+            .get(&att.signer)
+            .ok_or(ChainError::UnverifiedSignature)?;
+        let public =
+            ed25519::PublicKey::try_from_bytes(key).map_err(|_| ChainError::UnverifiedSignature)?;
+        if !public.verify(&att.message(), &att.signature) {
+            return Err(ChainError::UnverifiedSignature);
+        }
+        if self.nonces.contains(&(att.signer.clone(), att.nonce)) {
+            return Err(ChainError::Attest("replay"));
+        }
+        if self.records.len() + leaves > ATTEST_MAX_RECORDS {
+            return Err(ChainError::Attest("full"));
+        }
+        let used = self.per_signer.get(&att.signer).copied().unwrap_or(0);
+        if used >= ATTEST_SIGNER_QUOTA {
+            return Err(ChainError::Attest("quota"));
+        }
+        Ok(used)
+    }
+
+    fn store(&mut self, att: &Attestation, id: [u8; 32], leaf: u64, used: usize) {
+        self.records.push(id);
+        self.nonces.insert((att.signer.clone(), att.nonce));
+        self.per_signer.insert(att.signer.clone(), used + 1);
+        self.attestations.insert(id, (att.clone(), leaf));
     }
 
     fn grant(&self, delegate: &str, role: Role) -> Option<&Grant> {
@@ -593,30 +675,41 @@ impl AttestRegistry {
         }
     }
 
-    /// Signer of a proposal for `artifact` made by a current author for a
-    /// request made by a current requester.
-    fn proposal_author(&self, artifact: &[u8; 32], height: u64) -> Result<&str, ChainError> {
-        for (att, _) in self.attestations.values() {
-            let Claim::Artifact {
-                request,
-                artifact: declared,
-            } = &att.claim
-            else {
-                continue;
-            };
-            if declared != artifact || !self.holds(&att.signer, Role::Author, height) {
-                continue;
-            }
-            let Some((asked, _)) = self.attestations.get(request) else {
-                continue;
-            };
-            if matches!(asked.claim, Claim::Request { .. })
-                && self.holds(&asked.signer, Role::Requester, height)
-            {
-                return Ok(&att.signer);
-            }
+    /// The proposal an approval names: its author, its request and that
+    /// request's budget. The proposal must declare `artifact`, come from a
+    /// current author, and answer a request from a current requester.
+    fn proposal(
+        &self,
+        proposal: &[u8; 32],
+        artifact: &[u8; 32],
+        height: u64,
+    ) -> Result<(&str, [u8; 32], u64), ChainError> {
+        let link = ChainError::Attest("link");
+        let (proposed, _) = self.attestations.get(proposal).ok_or(link.clone())?;
+        let Claim::Artifact {
+            request,
+            artifact: declared,
+        } = &proposed.claim
+        else {
+            return Err(link);
+        };
+        if declared != artifact || !self.holds(&proposed.signer, Role::Author, height) {
+            return Err(link);
         }
-        Err(ChainError::Attest("link"))
+        if height < proposed.not_before || height > proposed.expires {
+            return Err(ChainError::Attest("window"));
+        }
+        let (asked, _) = self.attestations.get(request).ok_or(link.clone())?;
+        let Claim::Request { budget, .. } = &asked.claim else {
+            return Err(link);
+        };
+        if !self.holds(&asked.signer, Role::Requester, height) {
+            return Err(link);
+        }
+        if height < asked.not_before || height > asked.expires {
+            return Err(ChainError::Attest("window"));
+        }
+        Ok((&proposed.signer, *request, *budget))
     }
 }
 

@@ -1,0 +1,75 @@
+name: Devnet
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install matching Rust toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal --no-self-update
+      - name: Select Rust toolchain
+        run: rustup default 1.99.1
+      - name: Agreement, progress and recovery rules
+        run: cargo test --locked --test devnet_rules
+      - name: Attestation registry and two-node replay
+        run: cargo test --locked --test attest --test attest_chain
+
+  devnet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install matching Rust toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal --no-self-update
+      - name: Select Rust toolchain
+        run: rustup default 1.99.1
+      - name: Four local processes, end to end
+        # `shell: bash` sets pipefail, so a failing script fails the step.
+        shell: bash
+        run: bash scripts/devnet_smoke.sh 2>&1 | tee "$RUNNER_TEMP/devnet-smoke.log"
+      - name: Preserve logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: devnet-smoke-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/devnet-smoke.log
+            testnet/data/*.log
+          if-no-files-found: warn
+
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install matching Rust toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal --no-self-update
+      - name: Select Rust toolchain
+        run: rustup default 1.99.1
+      - name: Four containers, end to end
+        # `shell: bash` sets pipefail, so a failing script fails the step.
+        shell: bash
+        run: bash scripts/compose_smoke.sh 2>&1 | tee "$RUNNER_TEMP/compose-smoke.log"
+      - name: Container logs
+        if: always()
+        run: docker compose -f testnet/docker-compose.yml logs --no-color > "$RUNNER_TEMP/compose-containers.log" 2>&1 || true
+      - name: Preserve logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: compose-smoke-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/compose-smoke.log
+            ${{ runner.temp }}/compose-containers.log
+          if-no-files-found: warn
