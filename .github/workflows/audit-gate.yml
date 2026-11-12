@@ -54,3 +54,46 @@ jobs:
             ${{ runner.temp }}/delegated-adversarial.log
             ${{ runner.temp }}/arkhe-reconciliation
           if-no-files-found: error
+
+  kernel:
+    name: kernel (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: default
+            cargo_args: ""
+          - profile: sqlite-broker
+            cargo_args: "--features sqlite-broker"
+    env:
+      TESTED_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.TESTED_COMMIT }}
+      - name: Install matching Rust toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal --no-self-update
+      - name: Select Rust toolchain
+        run: rustup default 1.99.1
+      - name: Test kernel package
+        shell: bash
+        env:
+          KERNEL_CARGO_ARGS: ${{ matrix.cargo_args }}
+        run: |
+          set -euo pipefail
+          mkdir -p kernel-evidence
+          git rev-parse HEAD | tee kernel-evidence/commit.txt
+          test "$(git rev-parse HEAD)" = "$TESTED_COMMIT"
+          rustc --version | tee kernel-evidence/toolchain.txt
+          cargo --version | tee -a kernel-evidence/toolchain.txt
+          # Arguments come exclusively from the fixed workflow matrix.
+          cargo test --locked -p arkhe-kernel --lib --tests $KERNEL_CARGO_ARGS -- --nocapture 2>&1 | tee kernel-evidence/tests.log
+      - name: Preserve kernel test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: kernel-${{ matrix.profile }}-${{ env.TESTED_COMMIT }}
+          path: kernel-evidence/
+          if-no-files-found: error

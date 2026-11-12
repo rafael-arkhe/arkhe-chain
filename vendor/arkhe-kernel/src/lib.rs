@@ -146,6 +146,11 @@ impl<R: PolicyResolver> ContainmentGate<R> {
                 reason: "emergency stop".into(),
             };
         }
+        if self.resolver.review_routing_required(intent, policy) {
+            return AuthorizationDecision::Reject {
+                reason: "policy requires review routing".into(),
+            };
+        }
         // A caller-supplied record is not proof of admission. All protected
         // intent types must use the evidence-reader path, including future types.
         if classify(&intent.intent_type) == Classification::Protected {
