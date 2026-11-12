@@ -1435,3 +1435,178 @@ fn seal_without_a_timestamp_exits_with_usage() {
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
+
+#[test]
+fn a_genesis_grant_line_is_parsed_hashed_and_opened_by_the_process() {
+    use arkhe_chain::{parse_genesis_grants, ArkheNode, Role};
+
+    let public = hex(&arkhe_chain::public_key(&common::SECRET_B).unwrap());
+    let base = format!("validator validator-b {public}\naccount bob {public}\naccount root {public}\n");
+    let text = format!("{base}# roles\ngrant bob approver root 500\ngrant bob evaluator root 7\n");
+
+    let grants = parse_genesis_grants(&text).unwrap();
+    assert_eq!(grants.len(), 2);
+    assert_eq!(
+        (grants[0].delegate.as_str(), grants[0].role, grants[0].grantor.as_str(), grants[0].expires),
+        ("bob", Role::Approver, "root", 500)
+    );
+    assert_eq!((grants[1].role, grants[1].expires), (Role::Evaluator, 7));
+    assert!(parse_genesis_grants(&base).unwrap().is_empty());
+    let (validators, accounts) = parse_genesis(&text).unwrap();
+    assert_eq!((validators.len(), accounts.len()), (1, 2));
+
+    for bad in [
+        "grant bob approver root",
+        "grant bob approver root 500 extra",
+        "grant bob owner root 500",
+        "grant bob Approver root 500",
+        "grant bob approver root 0500",
+        "grant bob approver root +5",
+        "grant bob approver root -1",
+    ] {
+        let text = format!("{base}{bad}\n");
+        assert!(matches!(parse_genesis(&text), Err(ChainError::Malformed)), "{bad}");
+        assert!(matches!(parse_genesis_grants(&text), Err(ChainError::Malformed)), "{bad}");
+    }
+
+    let with = genesis_fingerprint(&text).unwrap();
+    let without = genesis_fingerprint(&base).unwrap();
+    assert_ne!(with.hash, without.hash);
+    assert_eq!((with.validators, with.accounts), (1, 2));
+    let node = ArkheNode::new_with_grants("validator-b", &common::SECRET_B, validators, accounts, grants).unwrap();
+    assert_eq!(node.genesis_hash(), with.hash);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-grants-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let (data, key, genesis) = (dir.join("chain"), dir.join("key"), dir.join("genesis"));
+    std::fs::write(&key, hex(&common::SECRET_B)).unwrap();
+    let run = |text: &str| {
+        std::fs::write(&genesis, text).unwrap();
+        std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"))
+            .arg("--data")
+            .arg(&data)
+            .arg("--id")
+            .arg("validator-b")
+            .arg("--key")
+            .arg(&key)
+            .arg("--genesis")
+            .arg(&genesis)
+            .arg("--listen")
+            .arg("/ip4/127.0.0.1/tcp/0")
+            .arg("--once")
+            .output()
+            .unwrap()
+    };
+
+    // A grant to an account the genesis does not name does not create the file.
+    let unknown = run(&format!("{base}grant carol approver root 500\n"));
+    assert_ne!(unknown.status.code(), Some(0));
+    assert!(String::from_utf8_lossy(&unknown.stderr).contains("BAD_ACCOUNT"));
+    assert!(!data.exists());
+
+    let ran = run(&text);
+    assert_eq!(ran.status.code(), Some(0), "{}", String::from_utf8_lossy(&ran.stderr));
+    assert!(String::from_utf8(ran.stdout).unwrap().contains(&format!("genesis {}\n", hex(&with.hash))));
+
+    // The stored file opens only with the same grants.
+    let other = run(&base);
+    assert_ne!(other.status.code(), Some(0));
+    assert!(String::from_utf8_lossy(&other.stderr).contains("GENESIS"));
+    let longer = run(&text.replace(" 500", " 501"));
+    assert_ne!(longer.status.code(), Some(0));
+    assert_eq!(run(&text).status.code(), Some(0));
+
+    let open = |grants| {
+        let (validators, accounts) = parse_genesis(&text).unwrap();
+        ArkheNode::open_with_grants(&data, "validator-b", &common::SECRET_B, validators, accounts, grants)
+    };
+    assert!(matches!(open(Vec::new()), Err(ChainError::Genesis)));
+    let node = open(parse_genesis_grants(&text).unwrap()).unwrap();
+    assert_eq!(node.genesis_hash(), with.hash);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn the_sealing_operator_takes_lists_from_the_inbox_and_seals_them() {
+    use arkhe_chain::{run_operator, OperatorRequest};
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-inbox-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    let inbox = dir.join("inbox");
+    std::fs::create_dir_all(&inbox).unwrap();
+    let mut genesis = format!(
+        "validator validator-a {}\n",
+        hex(&arkhe_chain::public_key(&common::SECRET_A).unwrap())
+    );
+    for account in common::accounts() {
+        genesis.push_str(&format!(
+            "account {} {} {}\n",
+            account.id,
+            hex(&account.public_key),
+            hex(&account.mldsa_public_key.unwrap())
+        ));
+    }
+    let handle = run_operator(OperatorRequest {
+        data: dir.join("chain"),
+        id: "validator-a".into(),
+        secret: common::SECRET_A,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: Vec::new(),
+        once: false,
+        txs: Vec::new(),
+        seal_at: Some(1_700_000_000),
+        announce: None,
+    })
+    .await
+    .unwrap();
+
+    assert!(handle.take_inbox(&inbox).unwrap().is_empty());
+    let list = |nonce, recipient: &str| {
+        encode_tx_list(&[common::transfer(nonce, GENESIS_ACCOUNT, recipient, 25)]).unwrap()
+    };
+    std::fs::write(inbox.join("0002-late.txs"), list(5, "carol")).unwrap();
+    std::fs::write(inbox.join("0001-first.txs"), list(0, "bob")).unwrap();
+    let mut short = list(1, "dave");
+    short.pop();
+    std::fs::write(inbox.join("0003-short.txs"), short).unwrap();
+    std::fs::write(inbox.join("notes.txt"), b"not a list").unwrap();
+    std::fs::write(inbox.join("0004-writing.txs.partial"), list(1, "erin")).unwrap();
+
+    let taken = handle.take_inbox(&inbox).unwrap();
+    let seen: Vec<_> = taken.iter().map(|file| (file.name.as_str(), file.outcome.clone())).collect();
+    assert_eq!(
+        seen,
+        vec![
+            ("0001-first.txs", Ok(1)),
+            ("0002-late.txs", Err(ChainError::BadNonce)),
+            ("0003-short.txs", Err(ChainError::Malformed)),
+        ]
+    );
+    for name in ["0001-first.txs.done", "0002-late.txs.rejected", "0003-short.txs.rejected", "notes.txt", "0004-writing.txs.partial"] {
+        assert!(inbox.join(name).exists(), "{name}");
+    }
+    assert!(handle.take_inbox(&inbox).unwrap().is_empty());
+
+    let before = handle.status().unwrap();
+    assert_eq!((before.height, before.mempool), (0, 1));
+    handle.catch_up().await.unwrap();
+    let after = handle.status().unwrap();
+    assert_eq!((after.height, after.mempool), (1, 0));
+    assert!(handle.take_inbox(&dir.join("absent")).is_err());
+    drop(handle);
+    let _ = std::fs::remove_dir_all(&dir);
+}

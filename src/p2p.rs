@@ -765,6 +765,22 @@ fn vote_can_import(node: &ArkheNode, vote: &crate::Precommit) -> bool {
     public.verify(&message, &vote.signature)
 }
 
+/// Import one block of a sync walk. The walk read the local tip before it
+/// asked for this block. A vote that carries the same block can import it in
+/// between, and then the import here answers `ParentMismatch`. A block that
+/// is already canonical on this node is not a failed walk.
+fn import_synced(node: &ArkheNode, body: &[u8]) -> Result<(), ChainError> {
+    match node.import_block(body) {
+        Ok(_) => Ok(()),
+        Err(ChainError::ParentMismatch)
+            if announced_is_canonical(node, crate::tx::block_hash(body))? =>
+        {
+            Ok(())
+        }
+        Err(error) => Err(error),
+    }
+}
+
 fn import_voted_block(
     node: &ArkheNode,
     block_hash: [u8; 32],
@@ -1201,14 +1217,14 @@ async fn follow(
                             return Err(ChainError::P2p("hash"));
                         }
                         node.clear_sync_resume()?;
-                        node.import_block(&body)?;
+                        import_synced(node, &body)?;
                         let mut expect_parent = hash;
                         for (stored_hash, stored_body) in blocks.iter().rev() {
                             let next = linked_child(expect_parent, stored_body)?;
                             if next != *stored_hash {
                                 return Err(ChainError::P2p("hash"));
                             }
-                            node.import_block(stored_body)?;
+                            import_synced(node, stored_body)?;
                             expect_parent = next;
                         }
                         let imported = blocks.len().checked_add(1).ok_or(ChainError::Overflow)?;

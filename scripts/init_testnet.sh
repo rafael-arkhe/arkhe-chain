@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Git Bash on Windows rewrites an argument that starts with a slash into a
+# Windows path. A multiaddr is not a path. This has no effect elsewhere.
+export MSYS2_ARG_CONV_EXCL='/ip4;/ip6;/dns'
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 

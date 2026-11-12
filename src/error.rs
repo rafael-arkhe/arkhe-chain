@@ -22,6 +22,8 @@ pub enum ChainError {
     UnverifiedSignature,
     #[error("FAIL_CLOSED: ADMISSION: {0}")]
     Admission(&'static str),
+    #[error("FAIL_CLOSED: ATTEST: {0}")]
+    Attest(&'static str),
     #[error("FAIL_CLOSED: BAD_NONCE")]
     BadNonce,
     #[error("FAIL_CLOSED: SELF_TRANSFER")]

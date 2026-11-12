@@ -22,7 +22,7 @@ fn main() -> ExitCode {
                 eprintln!("{text}");
                 ExitCode::from(1)
             }
-            Ok(request) => {
+            Ok((request, inbox)) => {
                 let once = request.once;
                 let runtime = match tokio::runtime::Builder::new_multi_thread()
                     .enable_all()
@@ -50,6 +50,22 @@ fn main() -> ExitCode {
                                 runtime.block_on(async {
                                     loop {
                                         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                                        if let Some(dir) = &inbox {
+                                            match handle.take_inbox(dir) {
+                                                Ok(files) => {
+                                                    for file in files {
+                                                        match file.outcome {
+                                                            Ok(count) => println!("inbox {} ingested {count}", file.name),
+                                                            Err(err) => println!("inbox {} rejected {err}", file.name),
+                                                        }
+                                                    }
+                                                }
+                                                Err(err) => {
+                                                    eprintln!("{err}");
+                                                    return ExitCode::from(1);
+                                                }
+                                            }
+                                        }
                                         if let Err(err) = handle.catch_up().await {
                                             eprintln!("{err}");
                                             return ExitCode::from(1);
@@ -82,7 +98,12 @@ fn main() -> ExitCode {
     }
 }
 
-fn parse_args(args: impl Iterator<Item = String>) -> Result<OperatorRequest, CliError> {
+/// `--inbox <dir>` goes with `--seal` and without `--once`: only the sealing
+/// process reads the directory, once per pass.
+fn parse_args(
+    args: impl Iterator<Item = String>,
+) -> Result<(OperatorRequest, Option<PathBuf>), CliError> {
+    let mut inbox = None;
     let mut data = None;
     let mut id = None;
     let mut key = None;
@@ -118,6 +139,7 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<OperatorRequest, Cli
                 time = Some(text.parse::<u64>().map_err(|_| CliError::Usage)?);
             }
             "--announce" => announce = Some(PathBuf::from(need(&mut args)?)),
+            "--inbox" => inbox = Some(PathBuf::from(need(&mut args)?)),
             "--peer-file" => {
                 peer_file = true;
                 let path = need(&mut args)?;
@@ -139,6 +161,14 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<OperatorRequest, Cli
     }
     if status as u8 + show_peers as u8 + show_genesis as u8 > 1 {
         return Err(CliError::Usage);
+    }
+    if inbox.is_some() && (status || show_peers || show_genesis || once || !seal) {
+        return Err(CliError::Usage);
+    }
+    if let Some(dir) = &inbox {
+        if !dir.is_dir() {
+            return Err(failed(ChainError::Snapshot));
+        }
     }
     if status {
         let Some(data) = data.as_deref() else {
@@ -244,18 +274,21 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<OperatorRequest, Cli
         Some(path) => std::fs::read(path).map_err(|_| failed(ChainError::Snapshot))?,
         None => Vec::new(),
     };
-    Ok(OperatorRequest {
-        data: PathBuf::from(data),
-        id,
-        secret,
-        genesis,
-        listen,
-        peers,
-        once,
-        txs,
-        seal_at: time,
-        announce,
-    })
+    Ok((
+        OperatorRequest {
+            data: PathBuf::from(data),
+            id,
+            secret,
+            genesis,
+            listen,
+            peers,
+            once,
+            txs,
+            seal_at: time,
+            announce,
+        },
+        inbox,
+    ))
 }
 
 fn failed(err: ChainError) -> CliError {

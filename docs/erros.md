@@ -15,6 +15,7 @@ Todo variante de `ChainError` é fail-closed. O texto estável começa por `FAIL
 | `BadSignatureLength` | `signature_mldsa` com tamanho diferente de 3309 e não vazio |
 | `UnverifiedSignature` | Campo ML-DSA vazio, assinatura inválida ou chave ausente |
 | `Admission` | Veredito, payload ou subject recusado |
+| `Attest` | Atestado ou execução recusados pelo registro de atestados; os motivos estão em [atestados.md](atestados.md) |
 | `BadNonce` | Nonce que não é o próximo |
 | `SelfTransfer` | Envio para a mesma conta |
 | `InsufficientBalance` | Débito maior que o saldo |

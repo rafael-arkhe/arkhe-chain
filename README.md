@@ -165,23 +165,15 @@ O código impõe as seguintes validações e limites:
 
 ## Testnet e Operação de Infraestrutura
 
-A infraestrutura completa de implantação da rede de testes Arkhe está organizada no diretório [`testnet/`](testnet/):
+O diretório [`testnet/`](testnet/) traz uma devnet local: quatro processos validadores numa só máquina. Não é uma testnet pública.
 
-### Componentes da Testnet:
-- **Topologia de 4 Validadores BFT ($3f + 1$):** `val1`, `val2`, `val3`, `val4` e um nó observador (`observer`).
-- **Material Criptográfico Pré-Gerado:** Chaves Ed25519 e ML-DSA-65 pós-quântico em `testnet/keys/` (incluindo chaves e sementes da torneira / faucet).
-- **Ambientes de Execução:** Arquivos de variáveis em `testnet/environments/` para orquestração de portas e caminhos de banco.
-- **Orquestração Docker & Systemd:**
-  - `testnet/docker-compose.yml`: Topologia multi-container isolada em rede interna.
-  - `testnet/docker/Dockerfile`: Imagem de contêiner otimizada baseada em Ubuntu.
-  - `testnet/systemd/arkhe-node@.service`: Unidade systemd com reinicialização automática e sandboxing de segurança.
-- **Scripts de Automação em [`scripts/`](scripts/):**
-  - `init_testnet.sh`: Valida chaves, arquivos de gênese e diretórios de dados.
-  - `run_local_testnet.sh`: Inicia a topologia de 4 nós validadores em background com logs direcionados.
-  - `check_status.sh`: Coleta métricas de altura, ponta e mempool dos nós em execução.
-  - `stop_testnet.sh`: Finaliza os processos dos validadores locais.
+- **Um selador, três seguidores:** `val1` sela; `val2`, `val3` e `val4` sincronizam e assinam um precommit por altura. Uma altura fica registrada como confirmada com três dos quatro votos.
+- **Não é BFT completo:** não há escolha de proposer, rodada posterior à 0, travamento de voto nem reorg, e a rede não progride com um validador fora do ar.
+- **Chaves públicas:** as chaves privadas em `testnet/keys/` estão neste repositório. Servem para a devnet local e para nada exposto à rede.
+- **Entrada de transações:** `scripts/send_tx.sh` escreve uma lista assinada no diretório que `val1` lê com `--inbox`. Não há RPC, faucet em execução nem explorador.
+- **Orquestração:** scripts em [`scripts/`](scripts/), `testnet/docker-compose.yml` e `testnet/systemd/arkhe-node@.service`. Só os scripts locais foram executados depois dessas mudanças.
 
-Para instruções completas de configuração e operação da rede de testes, consulte o [Guia da Testnet](docs/testnet.md).
+O passo a passo e os limites estão no [Guia da Devnet](docs/testnet.md).
 
 ---
 
@@ -227,6 +219,7 @@ cargo test -p arkhe-chain --test operator
 O detalhamento aprofundado dos subsistemas do nó encontra-se nos guias de documentação em [`docs/`](docs/):
 
 - [Admissão de Transações](docs/admissao.md) — Regras de payload, veredito CBOR e assinaturas híbridas.
+- [Atestados](docs/atestados.md) — Declarações assinadas, aprovação de uso único e recibo, carregados nos blocos.
 - [Consenso, Bifurcações e Finalidade](docs/consenso.md) — Precommits v4, quórum BFT e regras de proposer.
 - [Estado e Snapshot](docs/estado.md) — Acumulador MMR, compromisso de estado e snapshots `AKGCHNS7..10`.
 - [Sincronização P2P](docs/sincronizacao.md) — Troca de blocos, cursor de retomada e tolerância a falhas.
