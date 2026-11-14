@@ -8,9 +8,9 @@ use std::collections::BTreeMap;
 fn effective_container_policy_rejects_expanded_privileges_limits_and_mounts() {
     use arkhe_runtime::preview::executor::verify_container_policy;
     let (request, _, _) = fixture::fixture(1000);
-    let config = serde_json::json!({"Image":request.spec.image,"Config":{"User":"10001:10001","Entrypoint":["cargo"],"Cmd":["test","--locked","--offline","-p","arkhe-agent"],"WorkingDir":"/input"},"Mounts":[{"Type":"bind","Destination":"/input","RW":false}],"HostConfig":{"NetworkMode":"none","ReadonlyRootfs":true,"Privileged":false,"CapAdd":[],"SecurityOpt":["no-new-privileges"],"CapDrop":["CAP_CHOWN","CAP_DAC_OVERRIDE","CAP_FOWNER","CAP_FSETID","CAP_KILL","CAP_NET_BIND_SERVICE","CAP_SETFCAP","CAP_SETGID","CAP_SETPCAP","CAP_SETUID","CAP_SYS_CHROOT"],"Memory":1610612736i64,"MemorySwap":1610612736i64,"PidsLimit":128,"CpuQuota":200000,"CpuPeriod":100000,"Tmpfs":{"/tmp":"rw,noexec,size=67108864","/work":"rw,exec,size=1073741824"}}});
+    let config = serde_json::json!({"Image":request.spec.image,"Config":{"User":"10001:10001","Entrypoint":["cargo"],"Cmd":["test","--locked","--offline","-p","arkhe-agent"],"WorkingDir":"/input"},"Mounts":[{"Type":"bind","Destination":"/input","RW":false}],"HostConfig":{"NetworkMode":"none","ReadonlyRootfs":true,"Privileged":false,"CapAdd":[],"Devices":[],"DeviceCgroupRules":null,"SecurityOpt":["no-new-privileges"],"CapDrop":["CAP_CHOWN","CAP_DAC_OVERRIDE","CAP_FOWNER","CAP_FSETID","CAP_KILL","CAP_NET_BIND_SERVICE","CAP_SETFCAP","CAP_SETGID","CAP_SETPCAP","CAP_SETUID","CAP_SYS_CHROOT"],"Memory":1610612736i64,"MemorySwap":1610612736i64,"PidsLimit":128,"CpuQuota":200000,"CpuPeriod":100000,"Tmpfs":{"/tmp":"rw,noexec,size=67108864","/work":"rw,exec,size=1073741824"}}});
     assert!(verify_container_policy(&config, &request.spec).is_ok());
-    for change in 0..7 {
+    for change in 0..11 {
         let mut v = config.clone();
         match change {
             0 => v["HostConfig"]["Memory"] = serde_json::json!(0),
@@ -19,12 +19,26 @@ fn effective_container_policy_rejects_expanded_privileges_limits_and_mounts() {
             3 => v["HostConfig"]["CapAdd"] = serde_json::json!(["SYS_ADMIN"]),
             4 => v["Config"]["Cmd"] = serde_json::json!(["test"]),
             5 => v["HostConfig"]["Tmpfs"]["/tmp"] = serde_json::json!("rw,exec"),
-            _ => v["Mounts"]
+            6 => v["Mounts"]
                 .as_array_mut()
                 .unwrap()
                 .push(serde_json::json!({"Destination":"/host","Type":"bind","RW":false})),
+            // A device reaches the container without appearing as a mount.
+            7 => {
+                v["HostConfig"]["Devices"] = serde_json::json!([
+                    {"PathOnHost":"/dev/nvidia0","PathInContainer":"/dev/nvidia0"}
+                ])
+            }
+            8 => v["HostConfig"]["DeviceRequests"] = serde_json::json!([
+                {"Driver":"nvidia","Count":1,"Capabilities":[["gpu"]]}
+            ]),
+            9 => v["HostConfig"]["DeviceCgroupRules"] = serde_json::json!(["c 195:* rwm"]),
+            // Without the inventory, device absence is not established.
+            _ => {
+                v["HostConfig"].as_object_mut().unwrap().remove("Devices");
+            }
         }
-        assert!(verify_container_policy(&v, &request.spec).is_err());
+        assert!(verify_container_policy(&v, &request.spec).is_err(), "{change}");
     }
 }
 // These fixtures test enforcement of an external qualification signature. They

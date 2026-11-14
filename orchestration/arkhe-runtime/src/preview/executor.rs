@@ -10,8 +10,9 @@ use std::{
 };
 use tokio::{io::AsyncReadExt, process::Command};
 
-pub const VECTORS: [&str; 22] = [
+pub const VECTORS: [&str; 23] = [
     "identity",
+    "device-absence",
     "cgroup-enforcement",
     "mount-inventory",
     "socket-local-control",
@@ -87,7 +88,7 @@ impl Qualification {
             || self.issued_at > now
             || self.expires_at <= now
             || self.expires_at.saturating_sub(self.issued_at) > 86400
-            || self.vectors.len() != 22
+            || self.vectors.len() != VECTORS.len()
             || VECTORS
                 .iter()
                 .any(|v| self.vectors.get(*v).map(String::as_str) != Some("PASS"))
@@ -102,6 +103,7 @@ pub fn profile_digest() -> Digest32 {
         b"AKG:PREVIEW:EXECUTOR:v1\0",
         &encode_value(&serde_json::json!({
             "command":"cargo test --locked --offline -p MODULE", "network":"none","read_only":1,
+            "devices":"none",
             "uid":"10001:10001","cap_drop":"ALL","no_new_privileges":1,"memory":1610612736u64,
             "memory_swap":1610612736u64,"pids":128,"cpus":2,"work_tmpfs":1073741824u64,
             "tmp_tmpfs":67108864,"tmp_noexec":1,"deadline_seconds":120,"max_output_bytes":1048576
@@ -563,6 +565,18 @@ pub fn verify_container_policy(c: &serde_json::Value, spec: &PreviewSpec) -> Res
     let mounts = c["Mounts"]
         .as_array()
         .ok_or("mount inventory unavailable")?;
+    // A device bypasses the mount inventory: a container with no bind outside
+    // /input can still hold /dev/nvidia0. The profile says no device, so the
+    // engine must report the field, and absence is read from that report.
+    let devices = h["Devices"]
+        .as_array()
+        .ok_or("device inventory unavailable")?;
+    // These two are emitted only once something asks for them, so absent and
+    // null are absence while any entry is not. This establishes absence of the
+    // devices the engine reports under HostConfig; a device attached by a
+    // mechanism it does not report there is outside what this check can see,
+    // which is why `device-absence` is also a qualification vector.
+    let unset = |v: &serde_json::Value| v.is_null() || empty(v);
     let binds: Vec<_> = mounts.iter().filter(|m| m["Type"] == "bind").collect();
     if c["Image"] != spec.image
         || config["User"] != "10001:10001"
@@ -570,6 +584,9 @@ pub fn verify_container_policy(c: &serde_json::Value, spec: &PreviewSpec) -> Res
         || h["ReadonlyRootfs"] != true
         || h["Privileged"] != false
         || !empty(&h["CapAdd"])
+        || !devices.is_empty()
+        || !unset(&h["DeviceRequests"])
+        || !unset(&h["DeviceCgroupRules"])
         || !security
         || caps.iter().any(|cap| !drops.iter().any(|v| v == cap))
         || h["Memory"] != 1610612736i64

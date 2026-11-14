@@ -7,6 +7,7 @@ pub mod expectation;
 pub(crate) mod fields;
 pub mod formal_proof;
 pub mod match_summary;
+pub mod measurement;
 pub mod output_proof;
 pub mod release;
 pub mod review;
