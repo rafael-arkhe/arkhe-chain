@@ -101,9 +101,12 @@ class Gateway:
         # Exclusive file creation prevents silently reinitializing an existing DB.
         with path.open("xb"):
             pass
-        with sqlite3.connect(str(path)) as db:
+        db = sqlite3.connect(str(path))
+        try:
             db.execute("PRAGMA journal_mode=WAL")
             db.executescript(SCHEMA)
+        finally:
+            db.close()
 
     def close(self) -> None:
         self._db.close()
