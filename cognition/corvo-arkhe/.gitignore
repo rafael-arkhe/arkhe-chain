@@ -1,0 +1,32 @@
+# O corpus é dado pessoal. A raiz do repo já diz isso:
+#
+#     # Local chat export extract. Personal data, never commit.
+#     /memory.md
+#
+# Tudo em out/ é destilado desse corpus e embute mensagens verbatim --
+# atoms.jsonl tem 6.665 delas, mode-mirror.md e profile.md trazem ~200 como
+# exemplares, normalized.jsonl tem as 278.854 linhas de sinal inteiras. A
+# mesma regra vale aqui: não versionar.
+#
+# O que fica versionado é a RECEITA: pipeline, loader, harness de avaliação,
+# testes e documentação. `python -I pipeline/run_all.py` reconstrói out/
+# por completo, e de forma determinística -- mesmo corpus, mesmo
+# agent_identity.
+#
+# Consequência que vale saber: sem out/ no repo, o `agent_identity` não é
+# reproduzível a partir do clone sozinho. Ele exige o memory.md local, que é
+# exatamente o ponto. Quem tem o corpus regenera e confere o hash contra o
+# identity.json da própria execução.
+out/
+
+# Amostras do teste cego: são mensagens reais dele, e o gabarito estraga o
+# experimento se circular.
+eval/arms/real_full.txt
+eval/arms/real_band.txt
+eval/arms/real_blind.txt
+eval/blind-test.md
+eval/blind-key.json
+eval/blind-result.json
+
+__pycache__/
+*.pyc
