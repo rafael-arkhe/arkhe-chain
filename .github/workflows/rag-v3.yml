@@ -1,0 +1,76 @@
+name: RAG v3 temporal gateway
+
+on:
+  push:
+    branches: [main, feat/rag-v3-temporal-gateway]
+    paths:
+      - scripts/arkhe_rag_v3.py
+      - scripts/falsify_rag_v3.py
+      - tests/test_arkhe_rag_v3.py
+      - docs/rag-v3.md
+      - .github/workflows/rag-v3.yml
+  pull_request:
+    paths:
+      - scripts/arkhe_rag_v3.py
+      - scripts/falsify_rag_v3.py
+      - tests/test_arkhe_rag_v3.py
+      - docs/rag-v3.md
+      - .github/workflows/rag-v3.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gateway:
+    name: gateway (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      TESTED_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      EVIDENCE: ${{ runner.temp }}/rag-v3-evidence
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.TESTED_COMMIT }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Record checkout and runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE"
+          git rev-parse HEAD | tee "$EVIDENCE/commit.txt"
+          test "$(git rev-parse HEAD)" = "$TESTED_COMMIT"
+          python --version > "$EVIDENCE/runtime.txt"
+          python -c "import sqlite3; print('SQLite', sqlite3.sqlite_version)" >> "$EVIDENCE/runtime.txt"
+          git diff --exit-code
+      - name: Test binding, permissions, failures and two-connection ordering
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -B -m unittest discover -s tests -p test_arkhe_rag_v3.py -v 2>&1 | tee "$EVIDENCE/tests.log"
+      - name: Exercise enumerated faulty implementations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -B scripts/falsify_rag_v3.py --output "$EVIDENCE/mutants" | tee "$EVIDENCE/mutants.log"
+      - name: Run synthetic local adapter and temporal disclosure demo
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -B scripts/arkhe_rag_v3.py --output "$EVIDENCE/demo" | tee "$EVIDENCE/demo.log"
+      - name: Preserve commit-linked evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: rag-v3-${{ matrix.os }}-${{ env.TESTED_COMMIT }}
+          path: ${{ env.EVIDENCE }}
+          if-no-files-found: error
+          retention-days: 14
