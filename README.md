@@ -1,240 +1,43 @@
 # arkhe-chain
 
-`arkhe-chain` é a implementação do nó local em Rust que estende e gerencia a ponta da cadeia canônica Arkhe. O modelo de transação adota assinaturas Ed25519 + ML-DSA-65, árvore MMR e precommits com quórum estritamente superior a dois terços. A convergência BFT permanece pendente. O nó prepara âncoras Bitcoin e interfaces de liquidação ZK, cujo caminho padrão recusa a operação enquanto o verificador está ausente.
+Local node that extends a tip. Admission is `ArkheNode::ingest`. Transaction payload is canonical CBOR of `DecisionVerdict` in domain `AKG:VERDICT:v1`.
 
-As correções da auditoria, os limites de compatibilidade e o procedimento para vincular testes ao commit estão em [audit-remediation.md](docs/audit-remediation.md).
+This crate does not have type `ArkheChain` nor function `ingest_transaction`. It is not homologated.
 
-A admissão de transações é feita exclusivamente via `ArkheNode::ingest`. O payload transacional transporta a codificação CBOR canônica de `DecisionVerdict` no domínio `AKG:VERDICT:v1`. O nó opera sob invariantes rígidos: não existem os tipos `ArkheChain` nem a função `ingest_transaction`. O projeto não possui marca de homologação de produção.
+## Publication
 
----
+- GitHub: <https://github.com/rafael-arkhe/arkhe-chain>
+- Hashtree: `htree://npub16azl5mr3qp2tf6duv0z6uh2ky4cvp60gj30yhnm0882k420c5a6shjzett/arkhe-chain`
+- Read: <https://git.iris.to/#/npub16azl5mr3qp2tf6duv0z6uh2ky4cvp60gj30yhnm0882k420c5a6shjzett/arkhe-chain>
 
-## Índice
-
-1. [Arquitetura e Componentes Centrais](#arquitetura-e-componentes-centrais)
-2. [Criptografia Híbrida e Formato de Transações](#criptografia-híbrida-e-formato-de-transações)
-3. [Consenso BFT e Finalidade](#consenso-bft-e-finalidade)
-4. [Árvores de Estado, MMR e Persistência](#árvores-de-estado-mmr-e-persistência)
-5. [Camada P2P e Protocolo de Sincronização](#camada-p2p-e-protocolo-de-sincronização)
-6. [Liquidação ZK, Ponte EVM e Âncora Bitcoin](#liquidação-zk-ponte-evm-e-âncora-bitcoin)
-7. [Limites e Invariantes Fail-Closed](#limites-e-invariantes-fail-closed)
-8. [Testnet e Operação de Infraestrutura](#testnet-e-operação-de-infraestrutura)
-9. [Compilação, Testes e Verificação](#compilação-testes-e-verificação)
-10. [Histórico de Validação e Gates](#histórico-de-validação-e-gates)
-
----
-
-## Arquitetura e Componentes Centrais
-
-O nó é estruturado em torno da estrutura `ArkheNode`, que encapsula:
-- **Motor de Transição de Estado:** Débito/crédito atômico de saldos nativos, nonces sequenciais e acumulação sequencial de registros transacionais em Merkle Mountain Range (MMR).
-- **Mempool Determinística:** Capacidade máxima de 1.000 transações pendentes; blocos selam no máximo 250 transações por altura.
-- **Operador CLI e Daemon:** Binário `arkhe-chain` com suporte a modos de escuta daemon (`listen`), operador de selagem (`--seal` com `--time`), submissão única (`--once`), consulta de status sem alteração de disco (`--status`), exibição de validadores (`--show-peers`) e hash canônico de gênese (`--show-genesis`).
-- **Mecanismo de Parada de Emergência (`Halt`):** Controlado via propriedade `emergency.halt=true` em `arkhe-chain.properties`, bloqueando preventivamente admissão, selagem e importação sem alterar o estado.
+This directory `Cargo.toml` inherits version, edition, and license from an Arkhe workspace. The test command below runs in that workspace, not an isolated checkout of this repository.
 
 ```text
-              [ Transação Externa ]
-                        │
-                        ▼
-             ArkheNode::ingest(&tx)
-                        │
-      ┌─────────────────┴─────────────────┐
-      │ Validação Híbrida Fail-Closed     │
-      │  ├─ Ed25519 (64B) [Sender]        │
-      │  ├─ ML-DSA-65 (3309B) [FIPS 204]  │
-      │  └─ DecisionVerdict (CBOR)        │
-      └─────────────────┬─────────────────┘
-                        ▼
-                  [ Mempool ] (Máx: 1000 txs)
-                        │
-             propose_and_seal_block
-                        │
-                        ▼
-      ┌─────────────────┴─────────────────┐
-      │ Bloco Selado (Máx 250 txs)        │
-      │  ├─ Hash Pai + Altura + Proposer  │
-      │  ├─ Raiz de Estado (AKG:STATE:v1) │
-      │  ├─ MMR Root (AKG:CHAIN:TXREC:v1) │
-      │  └─ Assinatura Ed25519 Proposer   │
-      └─────────────────┬─────────────────┘
-                        ▼
-             Consenso P2P & Finalidade
-       (/arkhe/block-sync/1 & /arkhe/precommit/1)
-```
-
----
-
-## Criptografia Híbrida e Formato de Transações
-
-Todo envio de transação no Arkhe requer dualidade de chaves e assinaturas obrigatórias, sem fallback clássico ou quântico isolado:
-
-| Campo | Primitiva Criptográfica | Tamanho | Domínio Canônico | Escopo da Mensagem |
-| :--- | :--- | :--- | :--- | :--- |
-| `signature_mldsa` | ML-DSA-65 (`fips204`) | 3.309 bytes | `AKG:CHAIN:MLDSA65:v1` | `nonce \|\| sender \|\| recipient \|\| value` |
-| `sender_signature` | Ed25519 (`ed25519-dalek`) | 64 bytes | `AKG:CHAIN:SENDER:v1` | `subject` da transação |
-| Chave Pública ML-DSA | Pós-quântica lattice-based | 1.952 bytes | — | Registrada na gênese ou estado |
-| Chave Pública Ed25519 | Curva elíptica Edwards25519 | 32 bytes | — | Identificador canônico da conta |
-
-### Regras de Validação de Admissão:
-1. **Forma e Tamanho:** Campo `signature_mldsa` vazio retorna `UnverifiedSignature`. Tamanho diferente de 3.309 bytes retorna `BadSignatureLength`.
-2. **Ordem de Avaliação em `apply_tx`:** (1) Verificação formal do envelope; (2) Verificação da chave e assinatura Ed25519; (3) Verificação da chave e assinatura ML-DSA-65; (4) Veredito de política `DecisionVerdict` (apenas `RULE_ALLOWED` gera `Allow`); (5) Validação estrita do nonce (`BadNonce` se não for sequencial); (6) Débito e crédito mútuo com conservação de oferta (`InsufficientBalance` se fundos insuficientes); (7) Inserção do registro `tx.record()` no MMR.
-
----
-
-## Consenso BFT e Finalidade
-
-O protocolo de consenso opera sobre uma topologia BFT sem reordenação de blocos (sem reorg):
-
-- **Extensão da Ponta:** Um bloco só é adotado quando o `parent_hash` coincide exatamente com a ponta canônica atual do nó e a nova altura é `tip.height + 1`.
-- **Assinatura do Proposer:** Bloco assinado via Ed25519 sob o domínio `AKG:CHAIN:PROPOSER:v1` cobrindo o cabeçalho e transações. Proposer deve pertencer ao conjunto estático de validadores (`EmptyValidators` ou `NotProposer` em violação).
-- **Tratamento de Bifurcações e Equivocação:**
-  - *Irmão de Proposer Distinto:* Um bloco na mesma altura e com o mesmo pai gerado por outro validador é classificado como `Fork`. É arquivado na tabela de irmãos e não substitui a ponta canônica local.
-  - *Equivocação do Mesmo Proposer:* Dois blocos diferentes gerados pelo mesmo proposer na mesma altura resultam no erro fatal de equivocação (`Equivocation`), mantendo a ponta intacta.
-- **Precommits e Quórum BFT:**
-  - O precommit v4 é assinado em Ed25519 sob o domínio canônico `AKG:CHAIN:PRECOMMIT:v4`.
-  - A mensagem assinada amarra: `height || round || block_hash || parts (exatamente 1) || part_hash (igual ao block_hash) || chain_id ("arkhe-chain")`.
-  - O quórum para commit `bft_commit(height)` exige estritamente mais de dois terços dos votos dos validadores ($v > \frac{2}{3} N$, ou seja, $3v > 2N$). Sob modelo $3f + 1$, com 4 validadores são necessários no mínimo 3 votos válidos.
-  - Votos com totais de parts diferentes de 1 ou part_hash divergente retornam `BadPartSet`. Voto em cadeia externa retorna `ChainId`.
-
----
-
-## Árvores de Estado, MMR e Persistência
-
-### Compromissos Criptográficos
-- **Folha do MMR:** Cada transação aceita gera uma folha canônica calculada por `tx.record()`, correspondente ao hash BLAKE3 no domínio `AKG:CHAIN:TXREC:v1`. O MMR utiliza `arkhe_verify_core::rbb::mmr::Frontier`.
-- **Raiz de Estado (`state_root`):** Compromisso BLAKE3 no domínio `AKG:CHAIN:STATE:v1` cobrindo:
-  `mmr_root || mmr_count || saldos canônicos || nonces das contas`.
-
-### Snapshots Canônicos e Formato de Disco
-O estado é persistido em arquivos de snapshot com marcadores de versão binária:
-- `AKGCHNS7`: Formato canônico padrão contendo altura, ponta, picos do MMR, saldos, nonces, blocos selados, fila de mempool, chaves Ed25519, chaves ML-DSA, blocos irmãos (forks), precommits por rodada e citações de blocos de execução Ethereum, finalizado com o hash BLAKE3 de 32 bytes da gênese.
-- `AKGCHNS8`: Formato estendido que preserva a caminhada de sincronização interrompida (ponta remota anunciada, cursor e corpos de blocos validados retidos).
-- `AKGCHNS9` / `AKGCHN10`: Formatos que incorporam a altura canônica confirmada por quórum BFT e cursor de sincronização.
-- Snapshots corrompidos, violados ou divergentes falham fechado (`Snapshot`). Arquivos de gênese incompatíveis são rejeitados com `Genesis`.
-
----
-
-## Camada P2P e Protocolo de Sincronização
-
-A comunicação inter-nós baseia-se na stack `libp2p` com streams orientados a CBOR sobre multiplexação Yamux e criptografia de transporte Noise:
-
-- **Protocolos de Rede Registrados:**
-  - `/arkhe/block-sync/1`: Troca de pontas (`Tip`), consulta de blocos por hash (`Block`) e nós filhos (`Child`).
-  - `/arkhe/precommit/1`: Propagação e coleta de votos BFT v4 entre validadores nomeados.
-  - `/arkhe/tx/1`: Ingestão remota de transações para operadores em modo `--seal`.
-- **Descoberta Estática:** Não há descobrimento aleatório via DHT (Kademlia) ou mDNS descontrolado em produção. O nó aceita e disca apenas os validadores declarados explicitamente no arquivo de gênese (`accepted_peers`).
-- **Limites de Janela de Sincronização:** Uma rodada de sincronização caminha no máximo 128 blocos em direção à ponta local (`MAX_SYNC_BLOCKS`). Ultrapassado o limite, o nó salva o progresso e o cursor em `AKGCHNS8` retornando `P2p("sync-limit")`, permitindo que passagens subsequentes retomem do ponto de interrupção.
-- **Tratamento de Falhas P2P:** Falhas de conexão, fechamento prematuro (`connection-closed`), respostas não legíveis (`io`) e timeouts de requisição (`rr-timeout`) são tratados isoladamente por peer e não impedem que um par íntegro forneça a cadeia válida.
-
----
-
-## Liquidação ZK, Ponte EVM e Âncora Bitcoin
-
-### 1. Provas ZK Groth16 e Contratos EVM
-- O nó integra o perfil de circuito `arkhe-validity-slash-v1` (fase 0, `risc0-groth16`), registrado em `circuits/validity_slash.json` com seletor `73c457ba` e selo de 260 bytes.
-- O journal associa o número do bloco, a raiz de estado reivindicada (`claimed_root`) e o hash do pai.
-- Os contratos Solidity em `contracts/`:
-  - `contracts/ArkheValidityBridge.sol`: Ponte de validade que aceita submissão de estado e provas.
-  - `contracts/Groth16Verifier.sol`: Verificador Groth16. Enquanto não houver chaves de verificação implantadas, a ponte retorna `VerifierAbsent` de forma fail-closed.
-- Compilação dos contratos:
-  ```bash
-  npx solc@0.8.20 --bin contracts/ArkheValidityBridge.sol contracts/Groth16Verifier.sol
-  ```
-
-### 2. Âncora Bitcoin (OP_RETURN)
-- A âncora Bitcoin é composta estritamente por 37 bytes: prefixo ASCII `ARKHE` (5 bytes) concatenado com os 32 bytes do `state_root`.
-- Qualquer buffer divergente retorna `InvalidAnchorPrefix`. Por política fail-closed padrão, o campo `AnchorPlan.broadcast` permanece desligado (`false`).
-
-### 3. Citação e Confirmação de Execução Ethereum
-- `cite_ethereum_execution` vincula um bloco selado do Arkhe ao número e hash de um bloco de execução externo via hash BLAKE3 no domínio `AKG:ETH:LINK:v1\0`.
-- Conflitos de cabeçalhos ou reversões numéricas disparam `EthereumConflict`.
-- `confirm_ethereum_execution` consulta nós JSON-RPC locais ou HTTPS (utilizando a raiz de certificados TLS do sistema). Sem cliente configurado, retorna `RpcAbsent` e o status `settled` permanece inalterado.
-
----
-
-## Limites e Invariantes Fail-Closed
-
-O código impõe as seguintes validações e limites:
-- **Tamanho Máximo de Payload Transacional:** 4.096 bytes.
-- **Tamanho Máximo de Transações por Bloco:** 250 transações.
-- **Capacidade Máxima da Mempool:** 1.000 transações pendentes.
-- **Oferta de Gênese Inicial:** `100_000_000` tokens canônicos alocados para a conta inicial (`genesis-alloc`).
-- **Tamanho de Bloco Propagado em Votos:** No máximo 1 MiB (`VOTE_BLOCK_LIMIT`).
-- **Resolução de Forks:** Cadeias mais longas de validadores discordantes não causam reorg da ponta canônica local. O consenso exige o limiar de precommit do comitê estático.
-
----
-
-## Testnet e Operação de Infraestrutura
-
-O diretório [`testnet/`](testnet/) traz uma devnet local: quatro processos validadores numa só máquina. Não é uma testnet pública.
-
-- **Um selador, três seguidores:** `val1` sela; `val2`, `val3` e `val4` sincronizam e assinam um precommit por altura. Uma altura fica registrada como confirmada com três dos quatro votos.
-- **Não é BFT completo:** não há escolha de proposer, rodada posterior à 0, travamento de voto nem reorg, e a rede não progride com um validador fora do ar.
-- **Chaves públicas:** as chaves privadas em `testnet/keys/` estão neste repositório. Servem para a devnet local e para nada exposto à rede.
-- **Entrada de transações e atestados:** `scripts/send_tx.sh` e `scripts/send_attest.sh` escrevem listas assinadas no diretório que `val1` lê com `--inbox`. Não há RPC, faucet em execução nem explorador.
-- **Conferência:** `scripts/devnet_smoke.sh` sobe a devnet do zero e confere acordo, parada, retomada e o fluxo de atestados.
-- **Orquestração:** scripts em [`scripts/`](scripts/), `testnet/docker-compose.yml` e `testnet/systemd/arkhe-node@.service`. Os scripts locais e o compose rodam no GitHub Actions; a unidade systemd não foi executada.
-
-O passo a passo e os limites estão no [Guia da Devnet](docs/testnet.md).
-
----
-
-## Compilação, Testes e Verificação
-
-### Compilação do Workspace
-O repositório é configurado como um workspace Cargo contendo a raiz e os crates de apoio em `vendor/`. A compilação e verificação de tipos devem ser executadas a partir da raiz:
-
-```bash
-# Compilar todos os pacotes do workspace
-cargo build --workspace
-
-# Checar testes do nó arkhe-chain
-cargo check --tests -p arkhe-chain
-```
-
-### Execução da Suíte de Testes
-Para rodar a suíte completa de testes unitários e de integração de `arkhe-chain`:
-
-```bash
 cargo test -p arkhe-chain
 ```
 
-Para rodar suítes de testes específicas:
-```bash
-# Testes de criptografia e regras de saldo nativo
-cargo test -p arkhe-chain --test native_token
+The last Windows gate finished 15 November 2026 with exit code 0, 217 tests passed, 0 failures and 0 tests ignored, one test at a time. Log is at [docs/gate-2026-11-15-attest-full.log](docs/gate-2026-11-15-attest-full.log) and was written after the run. A synced body that admits another attestation when the registry already has 4096 leaves does not end the list even when another peer imported a block. Local tip already carries those 4096. Nothing is sealed and the tip does not move from the full body. Alone, the result remains `Attest("full")` and height stays 64. Another attest error still ends the list. Unanswered request assertion remains `P2p("rr-timeout")`. The previous log, with 216, remains at [docs/gate-2026-11-15-attest-quota.log](docs/gate-2026-11-15-attest-quota.log). The previous log, with 215, remains at [docs/gate-2026-11-15-attest-consumed.log](docs/gate-2026-11-15-attest-consumed.log). The previous log, with 214, remains at [docs/gate-2026-11-15-attest-separation.log](docs/gate-2026-11-15-attest-separation.log). The previous log, with 213, remains at [docs/gate-2026-11-15-attest-evaluation.log](docs/gate-2026-11-15-attest-evaluation.log). The previous log, with 212, remains at [docs/gate-2026-11-15-attest-link.log](docs/gate-2026-11-15-attest-link.log). The previous log, with 211, remains at [docs/gate-2026-11-15-attest-artifact.log](docs/gate-2026-11-15-attest-artifact.log). The previous log, with 210, remains at [docs/gate-2026-11-15-attest-action.log](docs/gate-2026-11-15-attest-action.log). The previous log, with 209, remains at [docs/gate-2026-11-15-attest-policy.log](docs/gate-2026-11-15-attest-policy.log). The previous log, with 208, remains at [docs/gate-2026-11-15-attest-kind.log](docs/gate-2026-11-15-attest-kind.log). The previous log, with 207, remains at [docs/gate-2026-11-15-attest-unknown.log](docs/gate-2026-11-15-attest-unknown.log). The previous log, with 206, remains at [docs/gate-2026-11-15-attest-authority.log](docs/gate-2026-11-15-attest-authority.log). The previous log, with 205, remains at [docs/gate-2026-11-15-attest-replay.log](docs/gate-2026-11-15-attest-replay.log). The previous log, with 204, remains at [docs/gate-2026-11-15-attest-window.log](docs/gate-2026-11-15-attest-window.log). The previous log, with 203, remains at [docs/gate-2026-11-15-attest-domain.log](docs/gate-2026-11-15-attest-domain.log). The previous log, with 202, remains at [docs/gate-2026-11-15-attest-version.log](docs/gate-2026-11-15-attest-version.log). The previous log, with 201, remains at [docs/gate-2026-11-15-bad-account.log](docs/gate-2026-11-15-bad-account.log). The previous log, with 200, remains at [docs/gate-2026-11-15-short-mldsa.log](docs/gate-2026-11-15-short-mldsa.log). The previous log, with 199, remains at [docs/gate-2026-11-15-long-payload.log](docs/gate-2026-11-15-long-payload.log). The previous log, with 198, remains at [docs/gate-2026-11-15-verdict-seal.log](docs/gate-2026-11-15-verdict-seal.log). The previous log, with 197, remains at [docs/gate-2026-11-15-subject-seal.log](docs/gate-2026-11-15-subject-seal.log). The previous log, with 196, remains at [docs/gate-2026-11-15-reject-seal.log](docs/gate-2026-11-15-reject-seal.log). The previous log, with 195, remains at [docs/gate-2026-11-15-balance-seal.log](docs/gate-2026-11-15-balance-seal.log). The previous log, with 194, remains at [docs/gate-2026-11-15-self-seal.log](docs/gate-2026-11-15-self-seal.log). The previous log, with 193, remains at [docs/gate-2026-11-15-nonce-seal.log](docs/gate-2026-11-15-nonce-seal.log). The previous log, with 192, remains at [docs/gate-2026-11-15-sender-seal.log](docs/gate-2026-11-15-sender-seal.log). The previous log, with 191, remains at [docs/gate-2026-11-15-time-seal.log](docs/gate-2026-11-15-time-seal.log). The previous log, with 190, remains at [docs/gate-2026-11-15-state-seal.log](docs/gate-2026-11-15-state-seal.log). The previous log, with 189, remains at [docs/gate-2026-11-15-parent-seal.log](docs/gate-2026-11-15-parent-seal.log). The previous log, with 188, remains at [docs/gate-2026-11-15-stranger-seal.log](docs/gate-2026-11-15-stranger-seal.log). That count includes attest suites the 167 log did not list. The previous log, with 167, remains at [docs/gate-2026-11-10-proposer-seal.log](docs/gate-2026-11-10-proposer-seal.log). The previous log, with 166, remains at [docs/gate-2026-11-10-vote-body.log](docs/gate-2026-11-10-vote-body.log). The previous log, with 165, remains at [docs/gate-2026-11-10-later-block.log](docs/gate-2026-11-10-later-block.log). The previous log, with 164, remains at [docs/gate-2026-11-10-vote-refusal.log](docs/gate-2026-11-10-vote-refusal.log). The previous log, with 163, remains at [docs/gate-2026-11-10-vote-proposer.log](docs/gate-2026-11-10-vote-proposer.log). The previous log, with 162, remains at [docs/gate-2026-11-10-vote-signature.log](docs/gate-2026-11-10-vote-signature.log). The previous log, with 161, remains at [docs/gate-2026-11-10-vote-round.log](docs/gate-2026-11-10-vote-round.log). The previous log, with 160, remains at [docs/gate-2026-11-10-vote-part.log](docs/gate-2026-11-10-vote-part.log). The previous log, with 159, remains at [docs/gate-2026-11-10-vote-chain.log](docs/gate-2026-11-10-vote-chain.log). The previous log, with 158, remains at [docs/gate-2026-11-10-vote-genesis.log](docs/gate-2026-11-10-vote-genesis.log). The previous log, with 157, remains at [docs/gate-2026-11-10-outsider-seal.log](docs/gate-2026-11-10-outsider-seal.log). The previous log, with 156, remains at [docs/gate-2026-11-10-missing-seal.log](docs/gate-2026-11-10-missing-seal.log). The previous log, with 155, remains at [docs/gate-2026-11-10-short-tip-seal.log](docs/gate-2026-11-10-short-tip-seal.log). The previous log, with 154, remains at [docs/gate-2026-11-10-malformed-seal.log](docs/gate-2026-11-10-malformed-seal.log). The previous log, with 153, remains at [docs/gate-2026-11-10-hash-seal.log](docs/gate-2026-11-10-hash-seal.log). The previous log, with 152, remains at [docs/gate-2026-11-10-foreign-seal.log](docs/gate-2026-11-10-foreign-seal.log). The previous log, with 151, remains at [docs/gate-2026-11-10-tip-mismatch.log](docs/gate-2026-11-10-tip-mismatch.log). The previous log, also with 151, remains at [docs/gate-2026-11-10-tip-body.log](docs/gate-2026-11-10-tip-body.log). The prior log, also with 151, remains at [docs/gate-2026-11-10-behind-seal.log](docs/gate-2026-11-10-behind-seal.log). The log for 150 remains at [docs/gate-2026-11-10-missed-seal.log](docs/gate-2026-11-10-missed-seal.log). The log for 149 remains at [docs/gate-2026-11-10-reply-next.log](docs/gate-2026-11-10-reply-next.log). The log for 148 remains at [docs/gate-2026-11-10-wait-seal.log](docs/gate-2026-11-10-wait-seal.log). The log for 147 remains at [docs/gate-2026-11-10-retry-next.log](docs/gate-2026-11-10-retry-next.log). The log for 146 remains at [docs/gate-2026-11-10-io-next.log](docs/gate-2026-11-10-io-next.log). The log for 145 remains at [docs/gate-2026-11-10-rr-timeout-next.log](docs/gate-2026-11-10-rr-timeout-next.log). The log for 144 remains at [docs/gate-2026-11-10-malformed-next.log](docs/gate-2026-11-10-malformed-next.log). The log for 143 remains at [docs/gate-2026-11-10-closed-next.log](docs/gate-2026-11-10-closed-next.log). The log for 142 remains at [docs/gate-2026-11-10-dial-next.log](docs/gate-2026-11-10-dial-next.log). The log for 141 remains at [docs/gate-2026-11-10-outsider-next.log](docs/gate-2026-11-10-outsider-next.log). The log for 140 remains at [docs/gate-2026-11-10-tip-next.log](docs/gate-2026-11-10-tip-next.log). The log for 139 remains at [docs/gate-2026-11-10-hash-next.log](docs/gate-2026-11-10-hash-next.log). The log for 138 remains at [docs/gate-2026-11-10-protocol-next.log](docs/gate-2026-11-10-protocol-next.log). The log for 137 remains at [docs/gate-2026-11-10-limit-next.log](docs/gate-2026-11-10-limit-next.log). The log for 136 remains at [docs/gate-2026-11-10-sync-resume.log](docs/gate-2026-11-10-sync-resume.log). The log for 135 remains at [docs/gate-2026-11-10-genesis-next.log](docs/gate-2026-11-10-genesis-next.log). The log for 134 remains at [docs/gate-2026-11-10-timeout-next.log](docs/gate-2026-11-10-timeout-next.log). The log for 133 remains at [docs/gate-2026-11-10-vote-relay.log](docs/gate-2026-11-10-vote-relay.log). The log for 132 remains at [docs/gate-2026-11-10-missing-body.log](docs/gate-2026-11-10-missing-body.log). The log for 131 remains at [docs/gate-2026-11-10-longer-extension.log](docs/gate-2026-11-10-longer-extension.log). The log for 130 remains at [docs/gate-2026-11-10-sibling-next.log](docs/gate-2026-11-10-sibling-next.log). The log for 129 remains at [docs/gate-2026-11-10-sibling-tip.log](docs/gate-2026-11-10-sibling-tip.log). The previous log that still treated sibling tip as a list-stopping error remains at [docs/gate-2026-11-10-vote-fork.log](docs/gate-2026-11-10-vote-fork.log). The previous log that still said a body that does not extend the tip does not store sibling remains at [docs/gate-2026-11-10-vote-block.log](docs/gate-2026-11-10-vote-block.log). The previous log that still said dial does not deliver the block remains at [docs/gate-2026-11-10-vote-again.log](docs/gate-2026-11-10-vote-again.log). The log for 128 remains at [docs/gate-2026-11-10-longer-peer.log](docs/gate-2026-11-10-longer-peer.log). The log for 127 remains at [docs/gate-2026-11-10-shorter-peer.log](docs/gate-2026-11-10-shorter-peer.log). The log for 126 remains at [docs/gate-2026-11-10-vote-behind.log](docs/gate-2026-11-10-vote-behind.log). The previous log that described `UnknownBlock` output, remains at [docs/gate-2026-11-10-seal-after-sync.log](docs/gate-2026-11-10-seal-after-sync.log). The log for 125 remains at [docs/gate-2026-11-10-fresh-dial.log](docs/gate-2026-11-10-fresh-dial.log). The log for 124 remains at [docs/gate-2026-11-10-announce-genesis.log](docs/gate-2026-11-10-announce-genesis.log). The log for 123 remains at [docs/gate-2026-11-10-busy.log](docs/gate-2026-11-10-busy.log). The log for 122 remains at [docs/gate-2026-11-10-adopt.log](docs/gate-2026-11-10-adopt.log). The log for 121 remains at [docs/gate-2026-11-10-status-check.log](docs/gate-2026-11-10-status-check.log). The log for 120 remains at [docs/gate-2026-11-10-status-genesis.log](docs/gate-2026-11-10-status-genesis.log). The log for 119 remains at [docs/gate-2026-11-10-file-genesis.log](docs/gate-2026-11-10-file-genesis.log). The log for 118 remains at [docs/gate-2026-11-10-admit.log](docs/gate-2026-11-10-admit.log). The log for 117 remains at [docs/gate-2026-11-10-genesis-check.log](docs/gate-2026-11-10-genesis-check.log). The log for 116 remains at [docs/gate-2026-11-10-fork.log](docs/gate-2026-11-10-fork.log). The log for 115 remains at [docs/gate-2026-11-10-genesis.log](docs/gate-2026-11-10-genesis.log). The log for 114 remains at [docs/gate-2026-11-10-live.log](docs/gate-2026-11-10-live.log). The log for 112 remains at [docs/gate-2026-11-10-error.log](docs/gate-2026-11-10-error.log). The log for 111 remains at [docs/gate-2026-11-10-mempool.log](docs/gate-2026-11-10-mempool.log). The log for 110 remains at [docs/gate-2026-11-10-peer-file.log](docs/gate-2026-11-10-peer-file.log). The log for 108 remains at [docs/gate-2026-11-10-announce.log](docs/gate-2026-11-10-announce.log). The log for 107 remains at [docs/gate-2026-11-10-status.log](docs/gate-2026-11-10-status.log). The log for 106 remains at [docs/gate-2026-11-10-peers.log](docs/gate-2026-11-10-peers.log). The log for 105 remains at [docs/gate-2026-11-10-catch.log](docs/gate-2026-11-10-catch.log). The log for 104 remains at [docs/gate-2026-11-10-second.log](docs/gate-2026-11-10-second.log). The log for 103 remains at [docs/gate-2026-11-10-tx.log](docs/gate-2026-11-10-tx.log). The log for 102 remains at [docs/gate-2026-11-10-seal.log](docs/gate-2026-11-10-seal.log). The log for 99 remains at [docs/gate-2026-11-10-attest.log](docs/gate-2026-11-10-attest.log). The log for 98 remains at [docs/gate-2026-11-10-echo.log](docs/gate-2026-11-10-echo.log). The log for 97 remains at [docs/gate-2026-11-10-precommit.log](docs/gate-2026-11-10-precommit.log). The log for 96 remains at [docs/gate-2026-11-10-commit.log](docs/gate-2026-11-10-commit.log). The log for 95 remains at [docs/gate-2026-11-10-listen.log](docs/gate-2026-11-10-listen.log). The log for 89, with cursor stored, remains at [docs/gate-2026-11-10-resume.log](docs/gate-2026-11-10-resume.log). The previous log for 89 remains at [docs/gate-2026-11-10-tip-hash.log](docs/gate-2026-11-10-tip-hash.log). The log for 87 remains at [docs/gate-2026-11-10-zero-ignored.log](docs/gate-2026-11-10-zero-ignored.log). The log for 86, with 1 ignored, remains at [docs/gate-2026-11-10-protocol.log](docs/gate-2026-11-10-protocol.log). The log for 85, with HTTPS client, remains at [docs/gate-2026-11-10-https.log](docs/gate-2026-11-10-https.log). The log for 85 earlier remains at [docs/gate-2026-11-10-restantes.log](docs/gate-2026-11-10-restantes.log). The log for 81 passed, with the two cursor tests, remains at [docs/gate-2026-11-10-cursor.log](docs/gate-2026-11-10-cursor.log). The earlier same-day log, with 79 passed, remains at [docs/gate-2026-11-10.log](docs/gate-2026-11-10.log). The 9 November log, with 79 passed and no ignored test, remains at [docs/gate-2026-11-09.log](docs/gate-2026-11-09.log). On the 9th, user `arkhen` on Ubuntu in WSL2 reran the working tree on this machine: 78 passed, 1 failure on sync of 1,025 blocks with `P2p("timeout")` and 1 ignored test. Log is at [docs/gate-wsl-arkhen-2026-11-09.log](docs/gate-wsl-arkhen-2026-11-09.log). On the 10th, with retained sync bodies and without the two cursor tests, the same account reran the suite: 79 passed, 0 failures and 1 ignored. Log is at [docs/gate-wsl-arkhen-2026-11-10.log](docs/gate-wsl-arkhen-2026-11-10.log). That account is not a second person. That fix is not in `fb22f02a`.
 
-# Testes de persistência e integridade de snapshots
-cargo test -p arkhe-chain --test persist
+## Documentation
 
-# Testes de limites e fail-closed
-cargo test -p arkhe-chain --test limits
+- [Gate record](docs/homologacao.md)
+- [Admission](docs/admissao.md)
+- [Attestations](docs/atestados.md)
+- [State and snapshot](docs/estado.md)
+- [Tip, fork, and finality](docs/consenso.md)
+- [Synchronization](docs/sincronizacao.md)
+- [Proof and anchor](docs/liquidacao.md)
+- [Key hardening and contingency](docs/seguranca_chaves.md)
+- [Errors](docs/erros.md)
+- [Local testnet (scaffolding)](docs/testnet.md) — `testnet/`; not homologated
 
-# Testes do operador CLI
-cargo test -p arkhe-chain --test operator
-```
+## Limits the code maintains
 
----
-
-## Documentação Técnica Complementar
-
-O detalhamento aprofundado dos subsistemas do nó encontra-se nos guias de documentação em [`docs/`](docs/):
-
-- [Admissão de Transações](docs/admissao.md) — Regras de payload, veredito CBOR e assinaturas híbridas.
-- [Regras de acordo, progresso e recuperação](docs/regras.md) — O que o código impõe, o que não impõe e o teste de cada regra.
-- [Atestados](docs/atestados.md) — Declarações assinadas, aprovação de uso único e recibo, carregados nos blocos.
-- [Consenso, Bifurcações e Finalidade](docs/consenso.md) — Precommits v4, quórum BFT e regras de proposer.
-- [Estado e Snapshot](docs/estado.md) — Acumulador MMR, compromisso de estado e snapshots `AKGCHNS7..10`.
-- [Sincronização P2P](docs/sincronizacao.md) — Troca de blocos, cursor de retomada e tolerância a falhas.
-- [Liquidação e Pontes](docs/liquidacao.md) — Integração Groth16, âncora Bitcoin e citação de execução EVM.
-- [Blindagem de Chaves e Contingência](docs/seguranca_chaves.md) — Requisitos de custódia e isolamento de chaves.
-- [Catálogo de Erros](docs/erros.md) — Tabela exaustiva de variantes `ChainError`.
-- [Dossiê de Homologação](docs/homologacao.md) — Pendências para certificação e critérios de aceitação.
-- [Histórico Completo de Gates](docs/historico_gates.md) — Registros cronológicos de gates e logs de execução.
-
----
-
-## Publicação e Referências
-
-- Repositório GitHub: <https://github.com/rafael-arkhe/arkhe-chain>
-- Árvore Hashtree: `htree://npub16azl5mr3qp2tf6duv0z6uh2ky4cvp60gj30yhnm0882k420c5a6shjzett/arkhe-chain`
-- Leitura Iris Git: <https://git.iris.to/#/npub16azl5mr3qp2tf6duv0z6uh2ky4cvp60gj30yhnm0882k420c5a6shjzett/arkhe-chain>
+- Every send requires Ed25519 and ML-DSA-65. Empty field, size other than 3309 bytes, invalid signature or missing key does not move balance.
+- A sibling block from another proposer, with the same parent and height, returns `Fork` and does not replace the tip.
+- Two distinct blocks from the same proposer at the same height return `Equivocation`.
+- `finality` is local depth. `bft_commit` counts only the highest round and passes only with more than two thirds of validators, weight 1 each, on the canonical hash. Signature is `AKG:CHAIN:PRECOMMIT:v4` and binds round, single part equal to block hash, and identifier `arkhe-chain`. It is not a `CanonicalVote`. The tip does not move.
+- `submit_proof_and_bridge_assets` returns `VerifierAbsent`. Set `image_id` does not load. `verifyProof` in the contract returns false.
+- Accepted anchor is 37 bytes, `ARKHE` followed by `state_root`. `broadcast` stays false.
+- `cite_ethereum_execution` cites execution block reported by caller and stores that citation. Another citation at the same height is `EthereumConflict`. `confirm_ethereum_execution` confirms only when a client returns the same hash. Without client, response is `RpcAbsent`. `settled` stays false and confirmation does not enter the file.
+- `accepted_peers` lists node validators. There is no peer discovery on the network.

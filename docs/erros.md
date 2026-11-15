@@ -1,50 +1,50 @@
-# Erros
+# Errors
 
-Todo variante de `ChainError` é fail-closed. O texto estável começa por `FAIL_CLOSED:`.
+Every `ChainError` variant is fail-closed. Stable text starts with `FAIL_CLOSED:`.
 
-| Variante | Quando aparece |
+| Variant | When it appears |
 | --- | --- |
-| `MempoolEmpty` | Selo sem transação na fila |
-| `MempoolFull` | Fila em 1000 |
-| `EmptyValidators` | Conjunto de validadores vazio |
-| `NotProposer` | Identidade fora do conjunto |
-| `BadProposerKey` | Chave do proposer ilegível |
-| `BadProposerSignature` | Assinatura Ed25519 do bloco ou do precommit não confere |
-| `BadAccount` | Identificador de conta recusado |
-| `BadTimestamp` | Timestamp zero ou que não avança |
-| `BadSignatureLength` | `signature_mldsa` com tamanho diferente de 3309 e não vazio |
-| `UnverifiedSignature` | Campo ML-DSA vazio, assinatura inválida ou chave ausente |
-| `Admission` | Veredito, payload ou subject recusado |
-| `Attest` | Atestado ou execução recusados pelo registro de atestados; os motivos estão em [atestados.md](atestados.md) |
-| `BadNonce` | Nonce que não é o próximo |
-| `SelfTransfer` | Envio para a mesma conta |
-| `InsufficientBalance` | Débito maior que o saldo |
-| `Overflow` | Soma que não cabe em `u64` |
-| `Mmr` | A fronteira não aceita a folha |
-| `Malformed` | Bytes que não são o bloco canônico |
-| `ParentMismatch` | Pai ou altura que não estende a ponta |
-| `Fork` | Irmão válido que não substitui a ponta |
-| `QuorumAbsent` | `bft_commit` sem mais de dois terços dos validadores na rodada mais alta do hash canônico |
-| `RoundRegression` | Precommit de uma rodada menor do que a já guardada para o mesmo hash |
-| `BadPartSet` | Precommit cujo total de parts não é 1, ou cujo hash de part não é o hash do bloco |
-| `ChainId` | Precommit cujo identificador não é `arkhe-chain` |
-| `Equivocation` | Dois blocos do mesmo proposer na mesma altura |
-| `StateMismatch` | Raiz ou contagem MMR diferente do cabeçalho |
-| `UnknownBlock` | Altura ou hash que esta cadeia não tem |
-| `LockPoisoned` | Trava envenenada |
-| `AnchorAddress` | Endereço EVM que não tem `0x` e 40 hexadecimais |
-| `EthereumHeader` | Número de execução zero ou hash de execução todo zero |
-| `EthereumConflict` | Segunda citação diferente na mesma altura, ou número de execução que não avança |
-| `CircuitConfig` | Pino do circuito diferente do arquivo embarcado, ou `image_id` preenchido |
-| `ProofRejected` | Journal, seletor ou selo que não liga o bloco |
-| `InvalidSelector` | Seletor diferente de `73c457ba` |
-| `InvalidSealLength` | Selo diferente de 260 bytes |
-| `InvalidAnchorPrefix` | Buffer diferente de `ARKHE` mais `state_root` |
-| `VerifierAbsent` | Verificador Groth16 não implantado |
-| `RpcAbsent` | Cliente de liquidação ausente |
-| `RpcTimeout` | Liquidação sem resposta no prazo |
-| `RpcUnavailable` | Liquidação indisponível |
-| `EmergencyHalt` | Parada de emergência ligada |
-| `HaltConfig` | Arquivo de parada ilegível |
-| `P2p` | Peer de fora, a própria chave (`self`), fork de sync, hash, limite ou tempo |
-| `Snapshot` | Arquivo que não reproduz o estado |
+| `MempoolEmpty` | Seal with no transaction in the queue |
+| `MempoolFull` | Queue at 1000 |
+| `EmptyValidators` | Empty validator set |
+| `NotProposer` | Identity outside the set |
+| `BadProposerKey` | Unreadable proposer key |
+| `BadProposerSignature` | Ed25519 signature on block or precommit does not verify |
+| `BadAccount` | Rejected account identifier |
+| `BadTimestamp` | Timestamp zero or not advancing |
+| `BadSignatureLength` | `signature_mldsa` length not 3309 and not empty |
+| `UnverifiedSignature` | Empty ML-DSA field, invalid signature, or missing key |
+| `Admission` | Verdict, payload, or subject rejected |
+| `Attest` | Attestation or execution rejected by the attest registry; reasons are in [atestados.md](atestados.md) |
+| `BadNonce` | Nonce is not the next one |
+| `SelfTransfer` | Send to the same account |
+| `InsufficientBalance` | Debit greater than balance |
+| `Overflow` | Sum does not fit in `u64` |
+| `Mmr` | Frontier does not accept the leaf |
+| `Malformed` | Bytes are not the canonical block |
+| `ParentMismatch` | Parent or height does not extend the tip |
+| `Fork` | Valid sibling that does not replace the tip |
+| `QuorumAbsent` | `bft_commit` without more than two thirds of validators on the highest round of the canonical hash |
+| `RoundRegression` | Precommit from a round lower than already stored for the same hash |
+| `BadPartSet` | Precommit whose part count is not 1, or whose part hash is not the block hash |
+| `ChainId` | Precommit whose identifier is not `arkhe-chain` |
+| `Equivocation` | Two blocks from the same proposer at the same height |
+| `StateMismatch` | Root or MMR count differs from the header |
+| `UnknownBlock` | Height or hash this chain does not have |
+| `LockPoisoned` | Poisoned lock |
+| `AnchorAddress` | EVM address without `0x` and 40 hex digits |
+| `EthereumHeader` | Execution block number zero or all-zero execution hash |
+| `EthereumConflict` | Second different citation at the same height, or execution number not advancing |
+| `CircuitConfig` | Circuit pin differs from embedded file, or `image_id` set |
+| `ProofRejected` | Journal, selector, or seal does not bind the block |
+| `InvalidSelector` | Selector other than `73c457ba` |
+| `InvalidSealLength` | Seal other than 260 bytes |
+| `InvalidAnchorPrefix` | Buffer other than `ARKHE` plus `state_root` |
+| `VerifierAbsent` | Groth16 verifier not deployed |
+| `RpcAbsent` | Settlement client absent |
+| `RpcTimeout` | Settlement did not respond in time |
+| `RpcUnavailable` | Settlement unavailable |
+| `EmergencyHalt` | Emergency halt enabled |
+| `HaltConfig` | Unreadable halt file |
+| `P2p` | Out-of-set peer, own key (`self`), sync fork, hash, limit, or timeout |
+| `Snapshot` | File does not reproduce state |

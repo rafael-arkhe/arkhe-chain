@@ -1,30 +1,30 @@
-# Admissão
+# Admission
 
-`ArkheNode::ingest` recebe uma `Transaction`. Não existe uma segunda função que receba a transação e o veredito separados.
+`ArkheNode::ingest` takes a `Transaction`. There is no second function that takes the transaction and verdict separately.
 
-O payload é o CBOR canônico de `arkhe_core::decision::DecisionVerdict`, domínio `AKG:VERDICT:v1`. O mapa tem as chaves `version`, `subject`, `event_type`, `policy_id`, `policy_digest`, `rule_id`, `decision` (`ALLOW` ou `REJECT`) e `reason` (`RULE_ALLOWED`, `RULE_REJECTED`, `NO_RULE_MATCHED`, `POLICY_UNAVAILABLE` ou `EMERGENCY_STOP`). Só `RULE_ALLOWED` produz `Allow`. O `subject` do veredito tem de ser igual a `Transaction::subject`.
+The payload is canonical CBOR of `arkhe_core::decision::DecisionVerdict`, domain `AKG:VERDICT:v1`. The map has keys `version`, `subject`, `event_type`, `policy_id`, `policy_digest`, `rule_id`, `decision` (`ALLOW` or `REJECT`), and `reason` (`RULE_ALLOWED`, `RULE_REJECTED`, `NO_RULE_MATCHED`, `POLICY_UNAVAILABLE`, or `EMERGENCY_STOP`). Only `RULE_ALLOWED` yields `Allow`. The verdict `subject` must equal `Transaction::subject`.
 
-`subject` inclui `signature_mldsa` e exclui o payload e `sender_signature`.
+`subject` includes `signature_mldsa` and excludes the payload and `sender_signature`.
 
-## Assinaturas
+## Signatures
 
-Cada envio carrega os dois campos:
+Every send carries both fields:
 
-| Campo | Tamanho | Domínio | Mensagem |
+| Field | Size | Domain | Message |
 | --- | --- | --- | --- |
-| `signature_mldsa` | 3309 bytes, ML-DSA-65 (`fips204`, feature `ml-dsa-65`) | `AKG:CHAIN:MLDSA65:v1` | nonce, sender, recipient e value |
-| `sender_signature` | 64 bytes, Ed25519 | `AKG:CHAIN:SENDER:v1` | subject da transação |
+| `signature_mldsa` | 3309 bytes, ML-DSA-65 (`fips204`, feature `ml-dsa-65`) | `AKG:CHAIN:MLDSA65:v1` | nonce, sender, recipient, and value |
+| `sender_signature` | 64 bytes, Ed25519 | `AKG:CHAIN:SENDER:v1` | transaction subject |
 
-A chave pública ML-DSA-65 tem 1952 bytes. Um campo `signature_mldsa` vazio devolve `UnverifiedSignature`. Qualquer outro tamanho que não seja 3309 devolve `BadSignatureLength`. Assinatura inválida ou chave ausente devolve `UnverifiedSignature` antes de mover saldo.
+The ML-DSA-65 public key is 1952 bytes. An empty `signature_mldsa` field returns `UnverifiedSignature`. Any size other than 3309 returns `BadSignatureLength`. Invalid signature or missing key returns `UnverifiedSignature` before moving balance.
 
-A ordem de `apply_tx` é forma, chave Ed25519, verificação Ed25519, chave ML-DSA, verificação ML-DSA, veredito, nonce, transferência e MMR.
+The order in `apply_tx` is shape, Ed25519 key, Ed25519 verify, ML-DSA key, ML-DSA verify, verdict, nonce, transfer, and MMR.
 
-## Nonce, valor e fila
+## Nonce, value, and queue
 
-O nonce tem de ser o próximo da conta. Outro valor é `BadNonce`. Um veredito que não é allow não consome nonce, mas a transação ainda precisa das assinaturas válidas para chegar a `Admission("not-allow")`.
+The nonce must be the account’s next. Any other value is `BadNonce`. A non-allow verdict does not consume nonce, but the transaction still needs valid signatures to reach `Admission("not-allow")`.
 
-Valor zero não altera saldos e ainda acrescenta a folha ao MMR. Transferência para a mesma conta é `SelfTransfer`. Saldo insuficiente é `InsufficientBalance` e a transação não entra na mempool.
+Zero value does not change balances and still appends a leaf to the MMR. Transfer to the same account is `SelfTransfer`. Insufficient balance is `InsufficientBalance` and the transaction does not enter the mempool.
 
-A mempool cabe 1000 transações. O payload cabe 4096 bytes. Um bloco sela no máximo 250 transações. `propose_and_seal_block` só estende a ponta deste nó em um. O timestamp tem de ser maior que zero e maior que o do pai.
+The mempool holds 1000 transactions. Payload fits 4096 bytes. A block seals at most 250 transactions. `propose_and_seal_block` only extends this node’s tip by one. Timestamp must be greater than zero and greater than the parent’s.
 
-`emergency.halt=true` em `arkhe-chain.properties` impede ingest, selo e importação. Um texto que não seja exatamente `true` ou `false` é `HaltConfig` e o nó permanece parado.
+`emergency.halt=true` in `arkhe-chain.properties` blocks ingest, seal, and import. Text that is not exactly `true` or `false` is `HaltConfig` and the node stays stopped.
