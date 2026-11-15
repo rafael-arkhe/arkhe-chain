@@ -1,8 +1,8 @@
-# Testnet local da arkhe-chain
+# arkhe-chain local testnet
 
-Scaffolding em `testnet/`. **Não está homologada.** Não há descoberta automática de peers. Dois processos com `--seal` em paralelo podem criar fork: só um nó sela.
+Scaffolding in `testnet/`. **Not homologated.** There is no automatic peer discovery. Two processes with `--seal` in parallel may fork: only one node seals.
 
-Chaves privadas ficam só em `testnet/local/` (ignorado pelo git). Não copie essas chaves para o repositório. A ponta pública de referência `rafael-arkhe/arkhe-chain` em `1182b4ff` publica chaves em `testnet/keys/`; este monorepo mantém a higiene inversa.
+Private keys live only in `testnet/local/` (gitignored). Do not copy those keys into the repository. Public reference tip `rafael-arkhe/arkhe-chain` at `1182b4ff` publishes keys in `testnet/keys/`; this monorepo keeps the opposite hygiene.
 
 ## Layout
 
@@ -16,21 +16,21 @@ testnet/
   scripts/          # gen-keys, init-local, start-node, collect-peers, write-peers-docker,
                     # status, faucet-tx, send-attest, check-status, run-local,
                     # run-background, stop-background, smoke-local, clean-local
-  systemd/          # unidade exemplo; não executada aqui
-  local/            # gerado: genesis.txt, peers.txt, keys/, data/, inbox/, *.env, *.log
+  systemd/          # example unit; not run here
+  local/            # generated: genesis.txt, peers.txt, keys/, data/, inbox/, *.env, *.log
 ```
 
-O gênese (`local/genesis.txt`) segue o formato do operador:
+Genesis (`local/genesis.txt`) follows operator format:
 
 - `validator <id> <ed25519 hex>`
 - `account <id> <ed25519 hex> [mldsa65 hex]`
-- linhas em branco e `#` são ignoradas
+- blank lines and `#` are ignored
 
-`genesis-alloc` recebe o supply do gênese no código (`GENESIS_SUPPLY`). Contas de faucet usam Ed25519 + ML-DSA-65.
+`genesis-alloc` receives genesis supply in code (`GENESIS_SUPPLY`). Faucet accounts use Ed25519 + ML-DSA-65.
 
-## 1. Gerar chaves e gênese
+## 1. Generate keys and genesis
 
-No root do monorepo Arkhe:
+At the Arkhe monorepo root:
 
 ```powershell
 .\kernel\arkhe-chain\testnet\scripts\gen-keys.ps1
@@ -40,24 +40,24 @@ No root do monorepo Arkhe:
 kernel/arkhe-chain/testnet/scripts/gen-keys.sh
 ```
 
-Ou:
+Or:
 
 ```text
 cargo run -p arkhe-chain --example testnet_gen_keys
 ```
 
-Isto cria `local/genesis.txt`, `local/keys/*.key`, `local/inbox/`, `local/node1.env` … `local/observer.env` e um `local/peers.txt` ainda sem multiaddresses. O sealer (`node1`) recebe `ARKHE_INBOX`.
+This creates `local/genesis.txt`, `local/keys/*.key`, `local/inbox/`, `local/node1.env` … `local/observer.env`, and a `local/peers.txt` still without multiaddresses. The sealer (`node1`) gets `ARKHE_INBOX`.
 
-Confira o BLAKE3:
+Check BLAKE3:
 
 ```text
 cargo run -p arkhe-chain -- --show-genesis --genesis kernel/arkhe-chain/testnet/local/genesis.txt
 cargo run -p arkhe-chain -- --show-peers --genesis kernel/arkhe-chain/testnet/local/genesis.txt
 ```
 
-## 2. Arranque nativo (recomendado no Windows)
+## 2. Native startup (recommended on Windows)
 
-1. Suba cada nó uma vez com `-Once` / `--once` para gravar o anúncio. Nesse modo os scripts **não** passam `--seal` (mempool vazia devolveria `MempoolEmpty`):
+1. Start each node once with `-Once` / `--once` to write the announce. In that mode scripts **do not** pass `--seal` (empty mempool would return `MempoolEmpty`):
 
 ```powershell
 .\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node1 -Once
@@ -66,25 +66,25 @@ cargo run -p arkhe-chain -- --show-peers --genesis kernel/arkhe-chain/testnet/lo
 .\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node observer -Once
 ```
 
-Atalho: `.\kernel\arkhe-chain\testnet\scripts\init-local.ps1` (gen-keys se faltar, show-genesis, announce `--once`, collect-peers). `run-local.ps1` faz só o announce+collect.
+Shortcut: `.\kernel\arkhe-chain\testnet\scripts\init-local.ps1` (gen-keys if missing, show-genesis, announce `--once`, collect-peers). `run-local.ps1` does only announce+collect.
 
-2. Recolha as multiaddresses (se ainda não o fez):
+2. Collect multiaddresses (if not done yet):
 
 ```powershell
 .\kernel\arkhe-chain\testnet\scripts\collect-peers.ps1
 ```
 
-3. Suba os nós de forma persistente (só `node1` tem `ARKHE_SEAL=1` e `--inbox`). `ARKHE_TIME=now` resolve para o unix time no arranque (timestamp do bloco 1; depois pai+1):
+3. Start nodes persistently (only `node1` has `ARKHE_SEAL=1` and `--inbox`). `ARKHE_TIME=now` resolves to unix time at startup (block 1 timestamp; then parent+1):
 
 ```powershell
 .\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node1
-# outros terminais:
+# other terminals:
 .\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node2
 .\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node3
 .\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node observer
 ```
 
-Ou em background (seguidores primeiro, depois o sealer):
+Or in background (followers first, then sealer):
 
 ```powershell
 .\kernel\arkhe-chain\testnet\scripts\run-background.ps1
@@ -92,7 +92,7 @@ Ou em background (seguidores primeiro, depois o sealer):
 .\kernel\arkhe-chain\testnet\scripts\stop-background.ps1
 ```
 
-Cada processo imprime `listen …` e linhas de `--status` quando o estado muda. O sealer lê `local/inbox/*.txs` e `*.ops` uma vez por segundo e sela o que espera, se todos os pares nomeados responderam.
+Each process prints `listen …` and `--status` lines when state changes. The sealer reads `local/inbox/*.txs` and `*.ops` once per second and seals what waits if all named peers answered.
 
 ## 3. Status
 
@@ -100,35 +100,35 @@ Cada processo imprime `listen …` e linhas de `--status` quando o estado muda. 
 .\kernel\arkhe-chain\testnet\scripts\status.ps1 -Node node1
 ```
 
-Equivalente:
+Equivalent:
 
 ```text
 cargo run -p arkhe-chain -- --status --data <ARKHE_DATA> --genesis <ARKHE_GENESIS>
 ```
 
-Saída: `height`, `committed`, `tip`, `mempool`, `forks`, `genesis`.
+Output: `height`, `committed`, `tip`, `mempool`, `forks`, `genesis`.
 
-## 4. Transação de faucet / transferência
+## 4. Faucet / transfer transaction
 
-Gera um ficheiro na caixa do sealer (rename atómico para `*.txs`):
+Writes a file in the sealer inbox (atomic rename to `*.txs`):
 
 ```powershell
 .\kernel\arkhe-chain\testnet\scripts\faucet-tx.ps1 -Nonce 0 -Recipient alice -Value 100
 ```
 
-O log de `node1` mostra `inbox <nome>.txs ingested <n>` (ou `rejected`). O remetente é `genesis-alloc`. O payload é o CBOR `DecisionVerdict` Allow no domínio usado pelos testes. Nonce tem de ser o seguinte do remetente.
+`node1` log shows `inbox <name>.txs ingested <n>` (or `rejected`). Sender is `genesis-alloc`. Payload is CBOR `DecisionVerdict` Allow in the domain tests use. Nonce must be sender’s next.
 
-`--inbox` só é aceite junto com `--seal` e sem `--once`. Quem pode escrever no diretório pode submeter; não há outra autenticação.
+`--inbox` is accepted only with `--seal` and without `--once`. Whoever can write the directory can submit; there is no other authentication.
 
-## 4.1. Fluxo de atestados na caixa
+## 4.1. Attest flow in the inbox
 
-`testnet_gen_keys` cria contas `testnet-{root,requester,author,evaluator,approver}` e as linhas `grant` correspondentes. Sem papel Executor: no crate local a execução é `AttestOp::Execute` do selador (`submit_execution`), não um quinto atestado na caixa.
+`testnet_gen_keys` creates accounts `testnet-{root,requester,author,evaluator,approver}` and matching `grant` lines. Without Executor role: in the local crate execution is sealer `AttestOp::Execute` (`submit_execution`), not a fifth attestation in the inbox.
 
 ```powershell
 .\kernel\arkhe-chain\testnet\scripts\send-attest.ps1 -Run 1
 ```
 
-Isto escreve `local/inbox/flow-1.ops` (quatro atestados; rename atómico). O sealer admite-os no bloco seguinte se os pares responderam. A avaliação vem com `passed: true` porque a ferramenta a escreve; nada é avaliado de verdade.
+This writes `local/inbox/flow-1.ops` (four attestations; atomic rename). The sealer admits them in the next block if peers answered. Evaluation comes with `passed: true` because the tool writes it; nothing is actually evaluated.
 
 ## 5. Docker Compose
 
@@ -138,32 +138,32 @@ kernel/arkhe-chain/testnet/scripts/gen-keys.sh
 docker compose -f kernel/arkhe-chain/testnet/docker-compose.yml up
 ```
 
-O compose monta o monorepo e corre o binário em `target/debug` ou `target/release`. Portas: 19001–19004. Pare e remova:
+Compose mounts the monorepo and runs the binary from `target/debug` or `target/release`. Ports: 19001–19004. Stop and remove:
 
 ```text
 docker compose -f kernel/arkhe-chain/testnet/docker-compose.yml down
 ```
 
-Em Docker, as linhas de `peers.txt` devem usar o hostname do serviço (`node1`, `node2`, …) ou o IP da bridge, não só `127.0.0.1` do host. Nos `.env` montados no compose, use `ARKHE_LISTEN=/ip4/0.0.0.0/tcp/…` (o `gen-keys` nativo grava `127.0.0.1`). Depois do collect-peers nativo:
+In Docker, `peers.txt` lines must use service hostname (`node1`, `node2`, …) or bridge IP, not only host `127.0.0.1`. In compose-mounted `.env`, use `ARKHE_LISTEN=/ip4/0.0.0.0/tcp/…` (native `gen-keys` writes `127.0.0.1`). After native collect-peers:
 
 ```powershell
 .\kernel\arkhe-chain\testnet\scripts\write-peers-docker.ps1
 ```
 
-## 6. Smoke local (não homologa)
+## 6. Local smoke (does not homologate)
 
 ```powershell
 .\kernel\arkhe-chain\testnet\scripts\smoke-local.ps1
 ```
 
-Sobe background, envia uma transferência faucet e um fluxo de 4 atestados pela inbox, espera acordo nas alturas 1 e 2, e para. Sai com `PASS: local smoke (transfer + attest admit). Not homologation.` — não fecha A3 nem marca a testnet como homologada. Sem Executor: a execução continua `submit_execution` no sealer, fora deste smoke.
+Starts background, sends one faucet transfer and a 4-attest flow via inbox, waits for agreement at heights 1 and 2, then stops. Exits with `PASS: local smoke (transfer + attest admit). Not homologation.` — does not close A3 or mark the testnet homologated. Without Executor: execution remains sealer `submit_execution`, outside this smoke.
 
-## Limites honestos
+## Honest limits
 
-- Sem Kademlia/mDNS: só `--peer` / `--peer-file`.
-- Sem eleição de proposer: `--seal` em mais do que um processo pode bifurcar.
-- `bft_commit` não move a ponta; não há `CanonicalVote`.
-- Liquidação (Groth16 / Bitcoin broadcast / Ethereum settled) continua recusada no crate.
-- Esta pasta não fecha A3 nem marca a cadeia como homologada.
-- Tip pública alinhada para documentação: `1182b4ff` (`rafael-arkhe/arkhe-chain`). Melhorias locais portadas: `--inbox`, sela com `attest_pool`, layout `testnet/`, `Admission("policy")`, certificado de commit preservado no reopen, regras A/P/R em [regras.md](regras.md), smoke com replay/halt/catch-up/restart. Sem commit de chaves e sem papel `executor`.
-- Evidência de gate fora do checkout: `python kernel/arkhe-chain/scripts/audit_gate.py --output ../arkhe-gate-result` (exige `kernel/arkhe-chain` limpo).
+- No Kademlia/mDNS: only `--peer` / `--peer-file`.
+- No proposer election: `--seal` on more than one process may fork.
+- `bft_commit` does not move the tip; there is no `CanonicalVote`.
+- Settlement (Groth16 / Bitcoin broadcast / Ethereum settled) remains refused in the crate.
+- This folder does not close A3 or mark the chain homologated.
+- Public tip aligned for documentation: `1182b4ff` (`rafael-arkhe/arkhe-chain`). Local ports: `--inbox`, seal with `attest_pool`, `testnet/` layout, `Admission("policy")`, commit certificate preserved on reopen, A/P/R rules in [regras.md](regras.md), smoke with replay/halt/catch-up/restart. No key commit and no `executor` role.
+- Gate evidence outside checkout: `python kernel/arkhe-chain/scripts/audit_gate.py --output ../arkhe-gate-result` (requires clean `kernel/arkhe-chain`).

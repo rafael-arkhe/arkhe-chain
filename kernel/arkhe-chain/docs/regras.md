@@ -1,95 +1,95 @@
-# Regras de acordo, progresso e recuperação
+# Agreement, liveness, and recovery rules
 
-Este documento enuncia as regras que o código impõe hoje e diz, para cada uma, onde ela está e que teste a exercita. Onde a regra é fraca, o texto diz que é fraca. Nada aqui é uma prova formal: a verificação é por teste, com os cenários listados.
+This document states the rules the code enforces today and, for each, where it lives and which test exercises it. Where a rule is weak, the text says it is weak. Nothing here is a formal proof: verification is by test, with the listed scenarios.
 
-O cenário é o da testnet local: quatro validadores, cada um com peso 1, e um único processo que sela. O crate não está homologado. A ponta pública de referência é `1182b4ff` (`rafael-arkhe/arkhe-chain`); este monorepo porta as regras A/P/R sem o papel `executor` da tip.
+The scenario is the local testnet: four validators, weight 1 each, and a single sealing process. The crate is not homologated. The public reference tip is `1182b4ff` (`rafael-arkhe/arkhe-chain`); this monorepo ports A/P/R rules without the `executor` role from the tip.
 
-## Modelo
+## Model
 
-- **Validador honesto:** roda este código sem alteração. Assina no máximo um precommit por altura, para o bloco que é canônico no próprio nó.
-- **Validador faltoso:** pode assinar blocos diferentes na mesma altura, selar fora de hora ou ficar calado.
-- **Rede:** os pares são os endereços nomeados. Uma mensagem pode atrasar ou se perder. Não há descoberta.
+- **Honest validator:** runs this code unmodified. Signs at most one precommit per height for the block canonical on its own node.
+- **Faulty validator:** may sign different blocks at the same height, seal out of turn, or stay silent.
+- **Network:** peers are named addresses. A message may delay or be lost. There is no discovery.
 
-## Acordo
+## Agreement
 
-**A1. Confirmação exige mais de dois terços.** Um nó registra a altura `h` como confirmada quando os votos da rodada mais alta, no hash canônico dele em `h`, satisfazem `votos × 3 > validadores × 2`. Com quatro validadores são três votos. A confirmação é sequencial: `h` só confirma depois de `h − 1`. Confirmar não move a ponta.
-Onde: `ArkheNode::bft_commit`. Teste: `a1_a_height_commits_only_with_more_than_two_thirds_of_the_validators`.
+**A1. Confirmation requires more than two thirds.** A node records height `h` as confirmed when votes on the highest round, on its canonical hash at `h`, satisfy `votes × 3 > validators × 2`. With four validators that is three votes. Confirmation is sequential: `h` confirms only after `h − 1`. Confirming does not move the tip.
+Where: `ArkheNode::bft_commit`. Test: `a1_a_height_commits_only_with_more_than_two_thirds_of_the_validators`.
 
-**A2. Um nó só conta votos para o próprio bloco canônico.** Voto para um irmão é `Fork`. Voto para um bloco desconhecido é `UnknownBlock`. Voto de quem não é validador é `NotProposer`. Assinatura que não é da chave do validador é `BadProposerSignature`. Voto para outro identificador de cadeia é `ChainId`. O mesmo voto repetido conta uma vez.
-Onde: `ArkheNode::note_precommit`. Teste: `a2_a_node_counts_votes_only_for_its_own_canonical_block`.
+**A2. A node counts votes only for its own canonical block.** Vote for a sibling is `Fork`. Vote for unknown block is `UnknownBlock`. Vote from non-validator is `NotProposer`. Signature not from validator key is `BadProposerSignature`. Vote for another chain id is `ChainId`. The same vote counted once.
+Where: `ArkheNode::note_precommit`. Test: `a2_a_node_counts_votes_only_for_its_own_canonical_block`.
 
-**A3. Dois blocos na mesma altura não confirmam os dois com até um validador faltoso.** Confirmar exige três de quatro votos. Dois conjuntos de três têm ao menos dois validadores em comum, e um validador honesto assina um só bloco por altura. Com zero faltosos e a rede dividida dois a dois, nenhum lado confirma. Com um faltoso que assina os dois blocos, no máximo um lado confirma.
-Onde: A1 e A2 juntas. Teste: `a3_two_blocks_at_one_height_cannot_both_commit_with_one_double_signer`.
+**A3. Two blocks at one height cannot both confirm with at most one faulty validator.** Confirmation needs three of four votes. Two sets of three share at least two validators, and an honest validator signs only one block per height. With zero faulty and the network split two-two, neither side confirms. With one faulty signing both blocks, at most one side confirms.
+Where: A1 and A2 together. Test: `a3_two_blocks_at_one_height_cannot_both_commit_with_one_double_signer`.
 
-**A4. Com dois faltosos em quatro, o acordo não vale.** Se dois validadores assinam os dois blocos, os dois lados chegam a três votos e confirmam blocos diferentes. Esse é o limite da regra, e o teste o mostra de propósito.
-Teste: `a4_two_double_signers_of_four_break_agreement`.
+**A4. With two faulty of four, agreement fails.** If two validators sign both blocks, both sides reach three votes and confirm different blocks. That is the rule’s limit, and the test shows it on purpose.
+Test: `a4_two_double_signers_of_four_break_agreement`.
 
-**A5. Um bloco canônico não é substituído.** Um irmão de outro proposer fica registrado como `Fork` e não troca a ponta. Uma cadeia mais longa não troca a ponta. Dois blocos do mesmo proposer na mesma altura são `Equivocation` e o segundo não é gravado. Não há reorg, nem antes nem depois da confirmação.
-Onde: `ArkheNode::import_block`. Teste: `a5_a_committed_block_is_not_replaced_by_a_sibling_or_a_longer_chain`.
+**A5. A canonical block is not replaced.** A sibling from another proposer is recorded as `Fork` and does not change the tip. A longer chain does not change the tip. Two blocks from the same proposer at the same height are `Equivocation` and the second is not stored. There is no reorg, before or after confirmation.
+Where: `ArkheNode::import_block`. Test: `a5_a_committed_block_is_not_replaced_by_a_sibling_or_a_longer_chain`.
 
-O que o acordo não cobre:
+What agreement does not cover:
 
-- Não há evidência de falta nem punição. Um voto duplo não é detectado por um nó que só vê um dos lados.
-- Uma bifurcação não se resolve sozinha. Se dois processos selam e a rede se divide, cada nó fica com o bloco que viu primeiro, para sempre. Sair disso exige apagar o arquivo dos nós do lado descartado, o que é uma decisão de operador fora do protocolo.
-- O conjunto de validadores é o do gênese. Não muda.
+- There is no evidence of fault or punishment. Double signing is not detected by a node that only sees one side.
+- A fork does not resolve itself. If two processes seal and the network splits, each node keeps the block it saw first, forever. Escaping that requires erasing the file on discarded-side nodes, which is an operator decision outside the protocol.
+- The validator set is genesis. It does not change.
 
-## Progresso
+## Liveness
 
-**P1. O selador sela só depois de ouvir todos os pares nomeados na passagem.** Um par que não respondeu, ou cuja ponta anunciada está atrás, segura o selo. As transações e os atestados ficam na fila até a passagem em que todos respondem na mesma ponta. Com um validador parado, a altura não avança; quando ele volta, o que esperava é selado.
-Onde: `OperatorHandle::catch_up` e `heard_every_peer`. Teste: `p1_the_sealer_seals_only_after_every_named_peer_answered`.
+**P1. The sealer seals only after hearing every named peer in the pass.** A peer that did not answer, or whose announced tip lags, holds the seal. Transactions and attestations stay queued until a pass where everyone answers at the same tip. With one validator stopped, height does not advance; when it returns, what waited is sealed.
+Where: `OperatorHandle::catch_up` and `heard_every_peer`. Test: `p1_the_sealer_seals_only_after_every_named_peer_answered`.
 
-**P2. Um bloco exige conteúdo.** Sem transação e sem atestado na fila, nenhum bloco é selado. O timestamp do bloco 1 é o de `--time`; cada bloco seguinte usa o do pai mais um.
-Onde: `ArkheNode::propose_and_seal_block` e `seal_timestamp`. Teste: `the_sealing_operator_takes_lists_from_the_inbox_and_seals_them`, em `tests/operator.rs`.
+**P2. A block requires content.** With no transaction and no attestation in the queue, no block is sealed. Block 1 timestamp is `--time`; each following block uses parent plus one.
+Where: `ArkheNode::propose_and_seal_block` and `seal_timestamp`. Test: `the_sealing_operator_takes_lists_from_the_inbox_and_seals_them`, in `tests/operator.rs`.
 
-O que o progresso não garante:
+What liveness does not guarantee:
 
-- **Não há tolerância a parada.** A1 confirmaria com três de quatro votos, mas P1 não deixa o bloco nascer com um par fora. A rede para com qualquer validador parado. Isso é uma escolha: como não há reorg, selar sem ouvir todos arrisca uma bifurcação permanente quando existe mais de um selador.
-- **Não há troca de selador.** Se o único processo com `--seal` para, ninguém sela. Não há rodada posterior à 0 nem escolha de proposer.
-- **Não há prazo.** Nada garante que uma transação aceita seja selada em um tempo dado.
+- **No crash tolerance.** A1 would confirm with three of four votes, but P1 does not let the block be born with a peer down. The network stops with any validator stopped. That is a choice: with no reorg, sealing without hearing everyone risks a permanent fork when more than one sealer exists.
+- **No sealer failover.** If the only process with `--seal` stops, nobody seals. There is no round after 0 and no proposer selection.
+- **No deadline.** Nothing guarantees an accepted transaction is sealed within a given time.
 
-## Recuperação
+## Recovery
 
-**R1. Um nó que perdeu o arquivo ressincroniza do gênese.** Ele sobe na altura 0, busca os blocos dos pares, reexecuta cada um contra a raiz do cabeçalho e volta a votar. Os votos dos outros chegam de novo e a altura confirmada é reconstruída.
-Onde: `sync_pass` e `attest_configured`. Teste: `r1_a_follower_that_lost_its_file_syncs_from_genesis_and_votes_again`.
+**R1. A node that lost its file resyncs from genesis.** It starts at height 0, fetches blocks from peers, replays each against header root, and votes again. Others’ votes arrive again and confirmed height is rebuilt.
+Where: `sync_pass` and `attest_configured`. Test: `r1_a_follower_that_lost_its_file_syncs_from_genesis_and_votes_again`.
 
-**R2. Um nó reiniciado retoma do próprio arquivo.** Altura, ponta, altura confirmada e fila de transações voltam como estavam. O arquivo é reexecutado do gênese na abertura e recusado se o resultado difere do que está gravado. A altura confirmada no arquivo é uma reivindicação: `open` a reconstrói com `bft_commit` e os votos gravados.
-Onde: `ArkheNode::open`. Teste: `r2_a_restarted_node_resumes_from_its_file`.
+**R2. A restarted node resumes from its own file.** Height, tip, confirmed height, and transaction queue return as they were. The file is replayed from genesis on open and refused if result differs from what is stored. Confirmed height in the file is a claim: `open` rebuilds it with `bft_commit` and stored votes.
+Where: `ArkheNode::open`. Test: `r2_a_restarted_node_resumes_from_its_file`.
 
-**R3. Um temporário órfão impede a partida até ser removido.** Um processo morto no meio de uma gravação deixa `<arquivo>.arkhe-tmp`. O nó não sobe enquanto ele existir e devolve `Snapshot`. O arquivo da cadeia é trocado inteiro ou não é trocado, então o órfão pode ser removido.
-Onde: `persist::write_atomic`. Testes: `r2_a_restarted_node_resumes_from_its_file` e `a_stale_temporary_file_cannot_be_followed_or_truncated`, em `tests/audit_regressions.rs`.
+**R3. An orphan temporary blocks startup until removed.** A process killed mid-write leaves `<file>.arkhe-tmp`. The node does not start while it exists and returns `Snapshot`. Chain file is swapped whole or not at all, so the orphan may be removed.
+Where: `persist::write_atomic`. Tests: `r2_a_restarted_node_resumes_from_its_file` and `a_stale_temporary_file_cannot_be_followed_or_truncated`, in `tests/audit_regressions.rs`.
 
-**R4. Um bloco entregue por dois caminhos não derruba a sincronização.** Um voto pode trazer o bloco enquanto a busca ainda o pede. A busca aceita um bloco que já é canônico no nó.
-Onde: `import_synced` em `src/p2p.rs`. Teste: `r4_a_synced_reimport_of_an_already_canonical_block_is_not_a_failed_walk`.
+**R4. A block delivered two ways does not break sync.** A vote may carry the block while fetch still asks for it. Fetch accepts a block already canonical on the node.
+Where: `import_synced` in `src/p2p.rs`. Test: `r4_a_synced_reimport_of_an_already_canonical_block_is_not_a_failed_walk`.
 
-O que a recuperação não cobre:
+What recovery does not cover:
 
-- **A fila de atestados não está no arquivo.** Um selador reiniciado perde os atestados que esperavam. As transações que esperavam voltam.
-- **Não há recuperação de bifurcação**, como dito em Acordo.
-- **Não há cópia de segurança.** Um nó com o arquivo corrompido tem de ser apagado e ressincronizado (R1), o que só funciona enquanto os outros três estão de pé (P1).
+- **Attest queue is not in the file.** A restarted sealer loses waiting attestations. Waiting transactions return.
+- **No fork recovery**, as stated under Agreement.
+- **No backup.** A node with corrupted file must be erased and resynced (R1), which only works while the other three are up (P1).
 
-## Autorização
+## Authorization
 
-As regras do registro de atestados estão em [atestados.md](atestados.md). Neste monorepo o caminho de execução difere da tip pública: não há papel `executor`.
+Attest registry rules are in [atestados.md](atestados.md). In this monorepo the execution path differs from the public tip: there is no `executor` role.
 
-**Z1. `Execute` não tem assinatura própria.** A operação no bloco é `AttestOp::Execute` coberta só pela assinatura do proposer. Quem sela consegue consumir uma aprovação válida. O recibo não nomeia um executor. A tip pública exige um atestado `Execution` assinado por uma conta com papel `executor`; isso não foi portado de propósito.
-Onde: `AttestOp::Execute` e `submit_execution`. Ver [atestados.md](atestados.md).
+**Z1. `Execute` has no signature of its own.** The block operation is `AttestOp::Execute` covered only by proposer signature. Whoever seals can consume a valid approval. The receipt does not name an executor. The public tip requires a `Execution` attestation signed by an account with `executor` role; that was not ported on purpose.
+Where: `AttestOp::Execute` and `submit_execution`. See [atestados.md](atestados.md).
 
-**Z2. Separação de papéis na admissão.** Avaliador e aprovador são contas distintas; o autor da proposta não é o avaliador nem o aprovador. Os papéis do gênese são `requester`, `author`, `evaluator` e `approver`.
-Teste de suíte de attest: `Attest("separation")` (gate `attest-separation`).
+**Z2. Role separation on admission.** Evaluator and approver are distinct accounts; artifact author is not evaluator or approver. Genesis roles are `requester`, `author`, `evaluator`, and `approver`.
+Attest suite test: `Attest("separation")` (gate `attest-separation`).
 
-**Z3. O `budget` do pedido é assinado e não é cobrado.** O registro guarda o valor; a execução local não soma custos contra o orçamento. A tip pública recusa com `Attest("budget")`; isso não está neste monorepo.
-Ver [atestados.md](atestados.md).
+**Z3. Request `budget` is signed and not charged.** The registry stores the value; local execution does not sum costs against budget. The public tip refuses with `Attest("budget")`; that is not in this monorepo.
+See [atestados.md](atestados.md).
 
-**Z4. Uma aprovação vale uma vez.** Segunda execução da mesma aprovação é `Attest("consumed")`.
-Ver o gate `attest-consumed`.
+**Z4. An approval is single-use.** Second execution of the same approval is `Attest("consumed")`.
+See gate `attest-consumed`.
 
-O que a autorização não cobre:
+What authorization does not cover:
 
-- **O veredito de admissão de uma transação não é assinado por ninguém.** `apply_tx` exige um `DecisionVerdict` com `Allow`, o `subject` da transação e a política local (`Admission("policy")`), e não exige assinatura de uma autoridade de política. Quem tem a chave de uma conta consegue emitir o próprio veredito, como faz `examples/testnet_faucet_tx.rs`.
-- **A caixa `--inbox` não autentica quem escreve.** O que protege é a assinatura de cada transação e de cada atestado. Quem escreve no diretório consegue encher a fila.
-- **O efeito da execução fica fora da cadeia.** O recibo registra que a execução foi autorizada e consumida, não que a ação foi aplicada corretamente.
+- **Transaction admission verdict is signed by nobody.** `apply_tx` requires `DecisionVerdict` with `Allow`, transaction `subject`, and local policy (`Admission("policy")`), and does not require signature from a policy authority. Whoever has an account key can emit their own verdict, as `examples/testnet_faucet_tx.rs` does.
+- **`--inbox` does not authenticate writers.** What protects is each transaction and attestation signature. Whoever can write the directory can fill the queue.
+- **Execution effect is off-chain.** The receipt records that execution was authorized and consumed, not that the action was applied correctly.
 
-## Como repetir
+## How to rerun
 
 ```bash
 cargo test -p arkhe-chain --test devnet_rules -- --test-threads=1
@@ -103,4 +103,4 @@ cargo test -p arkhe-chain --test audit_regressions -- --test-threads=1
 bash kernel/arkhe-chain/testnet/scripts/smoke-local.sh
 ```
 
-O terceiro comando sobe os processos locais e confere transferência, atestados (4 ops), replay, parada de um seguidor, catch-up e restart. Não homologa.
+The third command starts local processes and checks transfer, attestations (4 ops), replay, stopping a follower, catch-up, and restart. It does not homologate.

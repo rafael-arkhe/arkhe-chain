@@ -1,19 +1,19 @@
-# Estado e snapshot
+# State and snapshot
 
-A conta de gênese é `genesis-alloc`. A oferta inicial é `100_000_000`. O débito e o crédito de uma transferência acontecem juntos, ou nenhum dos dois acontece.
+The genesis account is `genesis-alloc`. Initial supply is `100_000_000`. Debit and credit of a transfer happen together, or neither happens.
 
-A folha do MMR é `tx.record()`, o hash `AKG:CHAIN:TXREC:v1` da transação canônica inteira, incluindo o payload. A fronteira é `arkhe_verify_core::rbb::mmr::Frontier`. `mmr_root` devolve essa raiz crua.
+The MMR leaf is `tx.record()`, hash `AKG:CHAIN:TXREC:v1` over the full canonical transaction, including payload. The frontier is `arkhe_verify_core::rbb::mmr::Frontier`. `mmr_root` returns that raw root.
 
-`state_root` é outro compromisso, domínio `AKG:CHAIN:STATE:v1`, sobre a raiz MMR, a contagem, os saldos e os nonces. As chaves das contas não entram nesse compromisso. O cabeçalho do bloco guarda `state_root`. Na importação, o estado reproduzido tem de bater com esse campo e com `mmr_count`.
+`state_root` is a separate commitment, domain `AKG:CHAIN:STATE:v1`, over MMR root, count, balances, and nonces. Account keys are not in that commitment. The block header stores `state_root`. On import, reproduced state must match that field and `mmr_count`.
 
-Quando o registro de atestados tem ao menos uma folha, o domínio passa a `AKG:CHAIN:STATE:v2` e o compromisso cobre também a raiz e a contagem desse registro. Um estado com o registro vazio mantém o compromisso v1, byte a byte. `mmr_count` continua contando só transações. Os detalhes estão em [atestados.md](atestados.md).
+When the attest registry has at least one leaf, the domain becomes `AKG:CHAIN:STATE:v2` and the commitment also covers that registry’s root and count. State with an empty registry keeps the v1 commitment, byte for byte. `mmr_count` still counts only transactions. Details are in [atestados.md](atestados.md).
 
-## Arquivo
+## File
 
-`ArkheNode::open` relê a cadeia desde a gênese. `new` sem caminho fica só na memória.
+`ArkheNode::open` replays the chain from genesis. `new` without a path stays in memory only.
 
-O arquivo escrito sem caminhada pausada é `AKGCHNS7`: altura, ponta, picos do MMR, saldos, nonces, blocos, mempool, chaves Ed25519, chaves ML-DSA, blocos irmãos, precommits com rodada e as citações de blocos de execução. O arquivo termina com os 32 bytes do BLAKE3 do gênese. `AKGCHNS8` acrescenta a ponta anunciada, o cursor e os corpos já conferidos quando o sync para no limite. O import que fecha apaga esse cursor. `AKGCHNS9` acrescenta a altura confirmada pelo quórum. Essa altura no arquivo é uma reivindicação: `open` volta a passar `bft_commit` com os votos já conferidos; sem quórum o arquivo não abre e não é reescrito. `AKGCHN10` junta essa altura ao cursor de sync. `AKGCHNS6` ainda abre; o precommit desse arquivo não traz rodada e volta como rodada 0. `AKGCHNS5` ainda abre e traz as citações vazias. `AKGCHNS1`, `AKGCHNS2`, `AKGCHNS3` e `AKGCHNS4` devolvem `Snapshot`. `ArkheNode::open` ainda abre um arquivo sem esses 32 bytes, e a escrita seguinte grava o hash de quem abriu. O processo `arkhe-chain` não adota esse arquivo: devolve `Genesis` e não reescreve. Outro BLAKE3 é `Genesis` nos dois caminhos, e o arquivo não é reescrito.
+The file written without a paused walk is `AKGCHNS7`: height, tip, MMR peaks, balances, nonces, blocks, mempool, Ed25519 keys, ML-DSA keys, sibling blocks, precommits with round, and execution-block citations. The file ends with the 32-byte BLAKE3 of genesis. `AKGCHNS8` adds announced tip, cursor, and bodies already checked when sync hits the limit. The import that finishes clears that cursor. `AKGCHNS9` adds height confirmed by quorum. That height in the file is a claim: `open` runs `bft_commit` again with votes already checked; without quorum the file does not open and is not rewritten. `AKGCHN10` joins that height to the sync cursor. `AKGCHNS6` still opens; precommit in that file has no round and comes back as round 0. `AKGCHNS5` still opens and carries empty citations. `AKGCHNS1`, `AKGCHNS2`, `AKGCHNS3`, and `AKGCHNS4` return `Snapshot`. `ArkheNode::open` still opens a file without those 32 bytes, and the next write stores the hash from whoever opened. The `arkhe-chain` process does not adopt that file: it returns `Genesis` and does not rewrite. Another BLAKE3 is `Genesis` on both paths, and the file is not rewritten.
 
-Uma diferença de altura, ponta, picos, saldos, nonces ou chaves também devolve `Snapshot`. Um precommit com a assinatura alterada não abre, e o arquivo não é reescrito. Uma escrita que falha no selo não move ponta, saldo nem mempool. Uma escrita que falha ao gravar um precommit remove esse precommit da memória.
+A mismatch in height, tip, peaks, balances, nonces, or keys also returns `Snapshot`. A precommit with altered signature does not open, and the file is not rewritten. A failed write on seal does not move tip, balance, or mempool. A failed write when storing a precommit removes that precommit from memory.
 
-A importação e o selo reexecutam a fila. O que deixou de aplicar sai. O nonce seguinte permanece.
+Import and seal replay the queue. What no longer applies is dropped. The next nonce remains.
