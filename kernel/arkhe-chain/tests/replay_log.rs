@@ -33,11 +33,14 @@ fn import_writes_a_replay_record_the_parser_reads_back() {
     let rejected = common::node();
     assert_eq!(
         rejected.import_block(&encode_block(&tampered)).unwrap_err(),
-        ChainError::StateMismatch
+        ChainError::Admission("policy")
     );
     let failed = rejected.last_replay().unwrap().expect("failed replay");
     assert!(!failed.adopted);
-    assert_eq!(failed.error.as_deref(), Some("FAIL_CLOSED: STATE_MISMATCH"));
+    assert_eq!(
+        failed.error.as_deref(),
+        Some("FAIL_CLOSED: ADMISSION: policy")
+    );
     assert_eq!(
         parse_replay(&format_replay(&failed).unwrap()).unwrap(),
         failed

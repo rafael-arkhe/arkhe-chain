@@ -648,9 +648,105 @@ async fn deliver_configured(
 /// and nothing is stored. A body whose proposer signature does not verify
 /// does not end the list. Alone, that result stays `BadProposerSignature`
 /// and nothing is stored. A body whose proposer is not a validator does not
-/// end the list. Alone, that result stays `NotProposer` and nothing is
-/// stored. Any other error
-/// stops the rest of the list. Equivocation still stops the list. There is no
+/// end the list. Alone, that result stays `NotProposer` and nothing
+/// is stored. A body whose height does not follow its parent does not end
+/// the list. Alone, that result stays `ParentMismatch` and nothing is stored.
+/// A body whose state root or MMR count does not match the replay does not
+/// end the list. Alone, that result stays `StateMismatch` and nothing is
+/// stored. A body whose timestamp is zero
+/// does not end the list. Alone, that result stays `BadTimestamp` and nothing
+/// is stored. A body whose sender signature does not verify does not end
+/// the list. Alone, that result stays `UnverifiedSignature` and nothing is
+/// stored. A body whose transaction nonce is not the next one does not end
+/// the list. Both sender signatures still verify. Alone, that result stays
+/// `BadNonce` and nothing is stored. A body that transfers to its own sender
+/// does not end the list. The nonce is the next one and both sender
+/// signatures still verify. Alone, that result stays `SelfTransfer` and
+/// nothing is stored. A body that spends more than the sender holds does not
+/// end the list. The recipient is someone else, the nonce is the next one,
+/// and both sender signatures still verify. Alone, that result stays
+/// `InsufficientBalance` and nothing is stored. A body whose verdict is not
+/// Allow does not end the list. Both sender signatures still verify. Alone,
+/// that result stays `Admission("not-allow")` and nothing is stored. A body
+/// whose Allow verdict names another subject does not end the list. A decoded
+/// verdict re-encodes to the same bytes, so that check is not this one. Both
+/// sender signatures still verify. Alone, that result stays
+/// `Admission("subject")` and nothing is stored. A body whose payload does
+/// not decode as a verdict does not end the list. Both sender signatures
+/// still verify. Alone, that result stays `Admission("verdict")` and nothing
+/// is stored. A body whose payload is longer than 4096 bytes does not decode.
+/// Alone, that result stays `Malformed` and nothing is stored. A loose
+/// transfer with that payload stays `Admission("payload")` at ingest and does
+/// not enter a block. The re-encode check does not fire. A body whose
+/// ML-DSA signature is neither empty nor 3309 bytes does not decode. Alone,
+/// that result stays `BadSignatureLength` and nothing is stored. An empty
+/// field stays `UnverifiedSignature`. A longer field stays `Malformed`.
+/// A body whose account contains a character outside the allowed set does
+/// not decode. Alone, that result stays `BadAccount` and nothing is stored.
+/// An empty name, or one longer than 128 bytes, stays `Malformed`.
+/// A body whose attestation version is not 1, or whose scheme is not 1, does
+/// not end the list. Alone, that result stays `Attest("version")` and nothing
+/// is stored. A body whose attestation names another chain, genesis, or
+/// audience does not end the list. The version and the scheme stay 1. Alone,
+/// that result stays `Attest("domain")` and nothing is stored. A body whose
+/// attestation window does not cover the block height does not end the list.
+/// The version, the scheme, the chain, the genesis, and the audience match.
+/// Alone, that result stays `Attest("window")` and nothing is stored. A
+/// window whose start is after its end returns the same error. A body that
+/// admits the same signer nonce twice does not end the list. The version,
+/// the scheme, the chain, the genesis, the audience, and the window match,
+/// and the signature verifies. Alone, that result stays `Attest("replay")`
+/// and nothing is stored. A body that revokes a role the registry never
+/// granted does not end the list. The signer is `genesis-alloc`, the
+/// signature verifies, and the version, the scheme, the chain, the genesis,
+/// the audience, and the window match. Alone, that result stays
+/// `Attest("authority")` and nothing is stored. A grant given by someone
+/// else returns the same error. A body that executes an approval the
+/// registry does not contain does not end the list. The approval, the
+/// action, and the artifact are 32 zero bytes. Alone, that result stays
+/// `Attest("unknown")` and nothing is stored. A body that admits a request
+/// and then executes that id does not end the list. The request is not an
+/// approval. Alone, that result stays `Attest("kind")` and nothing is stored.
+/// A body that executes an approval whose policy digest is 32 zero bytes does
+/// not end the list. The same grant is part of the genesis: `genesis-alloc`
+/// may approve through height 10. The signer holds that role, and the version,
+/// the scheme, the chain, the genesis, the audience, and the window match.
+/// Alone, that result stays `Attest("policy")` and nothing is stored. The
+/// action and the artifact are not checked. A body that executes a different
+/// action does not end the list. The policy digest matches the registry. The
+/// approved action is 32 bytes of 1 and the executed action is 32 zero bytes.
+/// The artifact is 32 zero bytes on both and is not checked. Alone, that
+/// result stays `Attest("action")` and nothing is stored. A body that executes
+/// a different artifact does not end the list. The policy digest and the
+/// action match. The approved artifact is 32 bytes of 1 and the executed
+/// artifact is 32 zero bytes. The evaluation is not checked. Alone, that
+/// result stays `Attest("artifact")` and nothing is stored. A body that
+/// executes an approval whose evaluation is 32 zero bytes does not end the
+/// list. The policy digest, the action, and the artifact match. The
+/// evaluation is not in the registry. Alone, that result stays
+/// `Attest("link")` and nothing is stored. An evaluation that is not an
+/// Evaluation claim, or whose artifact differs, returns the same error. A
+/// body that executes an approval whose evaluation is present and failed
+/// does not end the list. The policy digest, the action, and the artifact
+/// match. Alone, that result stays `Attest("evaluation")` and nothing is
+/// stored. The evaluation window and the evaluator role are not checked. A
+/// body that uses the same signer for the evaluation and the approval does
+/// not end the list. The evaluation passed. The same grants are part of the
+/// genesis: `genesis-alloc` may approve and evaluate through height 10. Alone,
+/// that result stays `Attest("separation")` and nothing is stored. An author
+/// who is also the approver or the evaluator returns the same error. A body
+/// that executes the same approval twice does not end the list. The first
+/// execution would succeed: distinct requester, author, evaluator, and
+/// approver, with matching grants in the genesis. Alone, that result stays
+/// `Attest("consumed")` and nothing is stored. A body that admits one more
+/// attestation from a signer who already holds 64 does not end the list.
+/// The local tip already carries those 64. Alone, that result stays
+/// `Attest("quota")` and the tip does not move. A body that admits one more
+/// attestation when the registry already holds 4096 leaves does not end the
+/// list. The local tip already carries those 4096. Alone, that result stays
+/// `Attest("full")` and the tip does not move. Any other attestation error still stops the list.
+/// Equivocation still stops the list. Any other error
+/// stops the rest of the list. There is no
 /// discovery and no retry of a refused validator.
 pub async fn sync_configured(
     node: &ArkheNode,
@@ -703,6 +799,171 @@ pub(crate) struct SyncPass {
     /// validator. The import count can still be nonzero. The operator fails
     /// the pass and does not seal.
     pub unknown_proposer: bool,
+    /// True when a named peer returned a body whose height does not follow
+    /// its parent. The import count can still be nonzero. The operator fails
+    /// the pass and does not seal.
+    pub parent_mismatch: bool,
+    /// True when a named peer returned a body whose state root or MMR count
+    /// does not match the replay. The import count can still be nonzero. The
+    /// operator fails the pass and does not seal.
+    pub state_mismatch: bool,
+    /// True when a named peer returned a body whose timestamp is zero. The
+    /// import count can still be nonzero. The operator fails the pass and
+    /// does not seal.
+    pub bad_timestamp: bool,
+    /// True when a named peer returned a body whose sender signature does
+    /// not verify. The proposer signature still verifies. The import count
+    /// can still be nonzero. The operator fails the pass and does not seal.
+    pub unverified_sender: bool,
+    /// True when a named peer returned a body whose transaction nonce is not
+    /// the next one. Both sender signatures still verify. The import count
+    /// can still be nonzero. The operator fails the pass and does not seal.
+    pub bad_nonce: bool,
+    /// True when a named peer returned a body that transfers to its own
+    /// sender. The nonce is the next one and both sender signatures still
+    /// verify. The import count can still be nonzero. The operator fails the
+    /// pass and does not seal.
+    pub self_transfer: bool,
+    /// True when a named peer returned a body that spends more than the
+    /// sender holds. The recipient is someone else. The nonce is the next
+    /// one and both sender signatures still verify. The import count can
+    /// still be nonzero. The operator fails the pass and does not seal.
+    pub short_balance: bool,
+    /// True when a named peer returned a body whose verdict is not Allow.
+    /// Both sender signatures still verify. The import count can still be
+    /// nonzero. The operator fails the pass and does not seal.
+    pub not_allow: bool,
+    /// True when a named peer returned an Allow verdict for another subject.
+    /// A decoded verdict re-encodes to the same bytes. Both sender signatures
+    /// still verify. The import count can still be nonzero. The operator
+    /// fails the pass and does not seal.
+    pub foreign_subject: bool,
+    /// True when a named peer returned a payload that does not decode as a
+    /// verdict. Both sender signatures still verify. The import count can
+    /// still be nonzero. The operator fails the pass and does not seal.
+    /// A payload longer than 4096 bytes does not decode, so that pass stays
+    /// `Malformed`. A loose transfer with that payload stays
+    /// `Admission("payload")` at ingest.
+    pub bad_verdict: bool,
+    /// True when a named peer returned a body whose ML-DSA signature is
+    /// neither empty nor 3309 bytes. The body does not decode. The import
+    /// count can still be nonzero. The operator fails the pass and does not
+    /// seal. An empty field stays `UnverifiedSignature`. A longer field stays
+    /// `Malformed`.
+    pub bad_signature_length: bool,
+    /// True when a named peer returned a body whose account contains a
+    /// character outside the allowed set. The body does not decode. The
+    /// import count can still be nonzero. The operator fails the pass and
+    /// does not seal. An empty name, or one longer than 128 bytes, stays
+    /// `Malformed`.
+    pub bad_account: bool,
+    /// True when a named peer returned a body whose attestation version is
+    /// not 1, or whose scheme is not 1. The import count can still be
+    /// nonzero. The operator fails the pass and does not seal.
+    pub attest_version: bool,
+    /// True when a named peer returned an attestation for another chain,
+    /// genesis, or audience. The version and the scheme stay 1. The import
+    /// count can still be nonzero. The operator fails the pass and does not
+    /// seal. Any other attestation error still stops the list.
+    pub attest_domain: bool,
+    /// True when a named peer returned an attestation whose window does not
+    /// cover the block height. The version, the scheme, the chain, the
+    /// genesis, and the audience match. The import count can still be
+    /// nonzero. The operator fails the pass and does not seal. A window
+    /// whose start is after its end returns the same error. Any other
+    /// attestation error still stops the list.
+    pub attest_window: bool,
+    /// True when a named peer returned a body that admits the same signer
+    /// nonce twice. The version, the scheme, the chain, the genesis, the
+    /// audience, and the window match, and the signature verifies. The
+    /// import count can still be nonzero. The operator fails the pass and
+    /// does not seal. Any other attestation error still stops the list.
+    pub attest_replay: bool,
+    /// True when a named peer returned a revocation of a role the registry
+    /// never granted. The signer is `genesis-alloc`, the signature verifies,
+    /// and the version, the scheme, the chain, the genesis, the audience,
+    /// and the window match. The import count can still be nonzero. The
+    /// operator fails the pass and does not seal. A grant given by someone
+    /// else returns the same error. Any other attestation error still stops
+    /// the list.
+    pub attest_authority: bool,
+    /// True when a named peer returned an execution of an approval the
+    /// registry does not contain. The approval, the action, and the artifact
+    /// are 32 zero bytes. The import count can still be nonzero. The operator
+    /// fails the pass and does not seal. Any other attestation error still
+    /// stops the list.
+    pub attest_unknown: bool,
+    /// True when a named peer returned an execution of an id that is a
+    /// request, not an approval. The import count can still be nonzero. The
+    /// operator fails the pass and does not seal. Nothing from that body is
+    /// stored. Any other attestation error still stops the list.
+    pub attest_kind: bool,
+    /// True when a named peer returned an execution of an approval whose
+    /// policy digest is 32 zero bytes. The same grant is part of the genesis:
+    /// `genesis-alloc` may approve through height 10. The signer holds that
+    /// role. The import count can still be nonzero. The operator fails the
+    /// pass and does not seal. Nothing from that body is stored. The action
+    /// and the artifact are not checked. Any other attestation error still
+    /// stops the list.
+    pub attest_policy: bool,
+    /// True when a named peer returned an execution whose action differs from
+    /// the approval. The policy digest matches the registry. The approved
+    /// action is 32 bytes of 1 and the executed action is 32 zero bytes. The
+    /// artifact is 32 zero bytes on both and is not checked. The same grant is
+    /// part of the genesis. The import count can still be nonzero. The
+    /// operator fails the pass and does not seal. Nothing from that body is
+    /// stored. Any other attestation error still stops the list.
+    pub attest_action: bool,
+    /// True when a named peer returned an execution whose artifact differs
+    /// from the approval. The policy digest and the action match. The
+    /// approved artifact is 32 bytes of 1 and the executed artifact is 32
+    /// zero bytes. The evaluation is not checked. The same grant is part of
+    /// the genesis. The import count can still be nonzero. The operator fails
+    /// the pass and does not seal. Nothing from that body is stored. Any
+    /// other attestation error still stops the list.
+    pub attest_artifact: bool,
+    /// True when a named peer returned an execution whose evaluation is 32
+    /// zero bytes and is not in the registry. The policy digest, the action,
+    /// and the artifact match. An evaluation that is not an Evaluation claim,
+    /// or whose artifact differs, returns the same error. The same grant is
+    /// part of the genesis. The import count can still be nonzero. The
+    /// operator fails the pass and does not seal. Nothing from that body is
+    /// stored. Any other attestation error still stops the list.
+    pub attest_link: bool,
+    /// True when a named peer returned an execution whose evaluation is
+    /// present and failed. The policy digest, the action, and the artifact
+    /// match. The evaluation window and the evaluator role are not checked.
+    /// The same grant is part of the genesis. The import count can still be
+    /// nonzero. The operator fails the pass and does not seal. Nothing from
+    /// that body is stored. Any other attestation error still stops the list.
+    pub attest_evaluation: bool,
+    /// True when a named peer returned an execution whose evaluation and
+    /// approval share one signer. The evaluation passed. The same grants are
+    /// part of the genesis: `genesis-alloc` may approve and evaluate through
+    /// height 10. An author who is also the approver or the evaluator returns
+    /// the same error. The import count can still be nonzero. The operator
+    /// fails the pass and does not seal. Nothing from that body is stored.
+    /// Any other attestation error still stops the list.
+    pub attest_separation: bool,
+    /// True when a named peer returned a body that executes the same approval
+    /// twice. The first execution would succeed: distinct requester, author,
+    /// evaluator, and approver, with matching grants in the genesis. The
+    /// import count can still be nonzero. The operator fails the pass and
+    /// does not seal. Nothing from that body is stored. Any other attestation
+    /// error still stops the list.
+    pub attest_consumed: bool,
+    /// True when a named peer returned a body that admits one more attestation
+    /// from a signer who already holds 64. The local tip already carries those
+    /// 64. The import count can still be nonzero. The operator fails the pass
+    /// and does not seal. The tip does not move. Any other attestation error
+    /// still stops the list.
+    pub attest_quota: bool,
+    /// True when a named peer returned a body that admits one more attestation
+    /// when the registry already holds 4096 leaves. The local tip already
+    /// carries those 4096. The import count can still be nonzero. The operator
+    /// fails the pass and does not seal. The tip does not move. Any other
+    /// attestation error still stops the list.
+    pub attest_full: bool,
 }
 
 pub(crate) async fn sync_pass(
@@ -729,6 +990,34 @@ pub(crate) async fn sync_pass(
     let mut saw_outsider = false;
     let mut saw_bad_proposer = false;
     let mut saw_unknown_proposer = false;
+    let mut saw_parent = false;
+    let mut saw_state = false;
+    let mut saw_time = false;
+    let mut saw_sender = false;
+    let mut saw_nonce = false;
+    let mut saw_self_transfer = false;
+    let mut saw_balance = false;
+    let mut saw_allow = false;
+    let mut saw_subject = false;
+    let mut saw_verdict = false;
+    let mut saw_length = false;
+    let mut saw_account = false;
+    let mut saw_attest_version = false;
+    let mut saw_attest_domain = false;
+    let mut saw_attest_window = false;
+    let mut saw_attest_replay = false;
+    let mut saw_attest_authority = false;
+    let mut saw_attest_unknown = false;
+    let mut saw_attest_kind = false;
+    let mut saw_attest_policy = false;
+    let mut saw_attest_action = false;
+    let mut saw_attest_artifact = false;
+    let mut saw_attest_link = false;
+    let mut saw_attest_evaluation = false;
+    let mut saw_attest_separation = false;
+    let mut saw_attest_consumed = false;
+    let mut saw_attest_quota = false;
+    let mut saw_attest_full = false;
     let mut saw_behind = false;
     let mut imported_total = 0u64;
     for peer in peers {
@@ -759,6 +1048,34 @@ pub(crate) async fn sync_pass(
             Err(ChainError::P2p("peer")) => saw_outsider = true,
             Err(ChainError::BadProposerSignature) => saw_bad_proposer = true,
             Err(ChainError::NotProposer) => saw_unknown_proposer = true,
+            Err(ChainError::ParentMismatch) => saw_parent = true,
+            Err(ChainError::StateMismatch) => saw_state = true,
+            Err(ChainError::BadTimestamp) => saw_time = true,
+            Err(ChainError::UnverifiedSignature) => saw_sender = true,
+            Err(ChainError::BadNonce) => saw_nonce = true,
+            Err(ChainError::SelfTransfer) => saw_self_transfer = true,
+            Err(ChainError::InsufficientBalance) => saw_balance = true,
+            Err(ChainError::Admission("not-allow")) => saw_allow = true,
+            Err(ChainError::Admission("subject")) => saw_subject = true,
+            Err(ChainError::Admission("verdict")) => saw_verdict = true,
+            Err(ChainError::BadSignatureLength) => saw_length = true,
+            Err(ChainError::BadAccount) => saw_account = true,
+            Err(ChainError::Attest("version")) => saw_attest_version = true,
+            Err(ChainError::Attest("domain")) => saw_attest_domain = true,
+            Err(ChainError::Attest("window")) => saw_attest_window = true,
+            Err(ChainError::Attest("replay")) => saw_attest_replay = true,
+            Err(ChainError::Attest("authority")) => saw_attest_authority = true,
+            Err(ChainError::Attest("unknown")) => saw_attest_unknown = true,
+            Err(ChainError::Attest("kind")) => saw_attest_kind = true,
+            Err(ChainError::Attest("policy")) => saw_attest_policy = true,
+            Err(ChainError::Attest("action")) => saw_attest_action = true,
+            Err(ChainError::Attest("artifact")) => saw_attest_artifact = true,
+            Err(ChainError::Attest("link")) => saw_attest_link = true,
+            Err(ChainError::Attest("evaluation")) => saw_attest_evaluation = true,
+            Err(ChainError::Attest("separation")) => saw_attest_separation = true,
+            Err(ChainError::Attest("consumed")) => saw_attest_consumed = true,
+            Err(ChainError::Attest("quota")) => saw_attest_quota = true,
+            Err(ChainError::Attest("full")) => saw_attest_full = true,
             Err(error) => return Err(error),
         }
     }
@@ -776,6 +1093,34 @@ pub(crate) async fn sync_pass(
             outsider: saw_outsider,
             bad_proposer: saw_bad_proposer,
             unknown_proposer: saw_unknown_proposer,
+            parent_mismatch: saw_parent,
+            state_mismatch: saw_state,
+            bad_timestamp: saw_time,
+            unverified_sender: saw_sender,
+            bad_nonce: saw_nonce,
+            self_transfer: saw_self_transfer,
+            short_balance: saw_balance,
+            not_allow: saw_allow,
+            foreign_subject: saw_subject,
+            bad_verdict: saw_verdict,
+            bad_signature_length: saw_length,
+            bad_account: saw_account,
+            attest_version: saw_attest_version,
+            attest_domain: saw_attest_domain,
+            attest_window: saw_attest_window,
+            attest_replay: saw_attest_replay,
+            attest_authority: saw_attest_authority,
+            attest_unknown: saw_attest_unknown,
+            attest_kind: saw_attest_kind,
+            attest_policy: saw_attest_policy,
+            attest_action: saw_attest_action,
+            attest_artifact: saw_attest_artifact,
+            attest_link: saw_attest_link,
+            attest_evaluation: saw_attest_evaluation,
+            attest_separation: saw_attest_separation,
+            attest_consumed: saw_attest_consumed,
+            attest_quota: saw_attest_quota,
+            attest_full: saw_attest_full,
         })
     } else if saw_timeout {
         Err(ChainError::P2p("timeout"))
@@ -807,6 +1152,62 @@ pub(crate) async fn sync_pass(
         Err(ChainError::BadProposerSignature)
     } else if saw_unknown_proposer {
         Err(ChainError::NotProposer)
+    } else if saw_parent {
+        Err(ChainError::ParentMismatch)
+    } else if saw_state {
+        Err(ChainError::StateMismatch)
+    } else if saw_time {
+        Err(ChainError::BadTimestamp)
+    } else if saw_sender {
+        Err(ChainError::UnverifiedSignature)
+    } else if saw_nonce {
+        Err(ChainError::BadNonce)
+    } else if saw_self_transfer {
+        Err(ChainError::SelfTransfer)
+    } else if saw_balance {
+        Err(ChainError::InsufficientBalance)
+    } else if saw_allow {
+        Err(ChainError::Admission("not-allow"))
+    } else if saw_subject {
+        Err(ChainError::Admission("subject"))
+    } else if saw_verdict {
+        Err(ChainError::Admission("verdict"))
+    } else if saw_length {
+        Err(ChainError::BadSignatureLength)
+    } else if saw_account {
+        Err(ChainError::BadAccount)
+    } else if saw_attest_version {
+        Err(ChainError::Attest("version"))
+    } else if saw_attest_domain {
+        Err(ChainError::Attest("domain"))
+    } else if saw_attest_window {
+        Err(ChainError::Attest("window"))
+    } else if saw_attest_replay {
+        Err(ChainError::Attest("replay"))
+    } else if saw_attest_authority {
+        Err(ChainError::Attest("authority"))
+    } else if saw_attest_unknown {
+        Err(ChainError::Attest("unknown"))
+    } else if saw_attest_kind {
+        Err(ChainError::Attest("kind"))
+    } else if saw_attest_policy {
+        Err(ChainError::Attest("policy"))
+    } else if saw_attest_action {
+        Err(ChainError::Attest("action"))
+    } else if saw_attest_artifact {
+        Err(ChainError::Attest("artifact"))
+    } else if saw_attest_link {
+        Err(ChainError::Attest("link"))
+    } else if saw_attest_evaluation {
+        Err(ChainError::Attest("evaluation"))
+    } else if saw_attest_separation {
+        Err(ChainError::Attest("separation"))
+    } else if saw_attest_consumed {
+        Err(ChainError::Attest("consumed"))
+    } else if saw_attest_quota {
+        Err(ChainError::Attest("quota"))
+    } else if saw_attest_full {
+        Err(ChainError::Attest("full"))
     } else if saw_self {
         Err(ChainError::P2p("self"))
     } else {
@@ -969,6 +1370,22 @@ fn precommit_from_request(request: VoteRequest) -> Result<crate::Precommit, Chai
         chain_id: request.chain_id,
         signature,
     })
+}
+
+/// Import one block of a sync walk. The walk read the local tip before it
+/// asked for this block. A vote that carries the same block can import it in
+/// between, and then the import here answers `ParentMismatch`. A block that
+/// is already canonical on this node is not a failed walk.
+pub fn import_synced(node: &ArkheNode, body: &[u8]) -> Result<(), ChainError> {
+    match node.import_block(body) {
+        Ok(_) => Ok(()),
+        Err(ChainError::ParentMismatch)
+            if announced_is_canonical(node, crate::tx::block_hash(body))? =>
+        {
+            Ok(())
+        }
+        Err(error) => Err(error),
+    }
 }
 
 fn vote_can_import(node: &ArkheNode, vote: &crate::Precommit) -> bool {
@@ -1432,14 +1849,14 @@ async fn follow(
                             return Err(ChainError::P2p("hash"));
                         }
                         node.clear_sync_resume()?;
-                        node.import_block(&body)?;
+                        import_synced(node, &body)?;
                         let mut expect_parent = hash;
                         for (stored_hash, stored_body) in blocks.iter().rev() {
                             let next = linked_child(expect_parent, stored_body)?;
                             if next != *stored_hash {
                                 return Err(ChainError::P2p("hash"));
                             }
-                            node.import_block(stored_body)?;
+                            import_synced(node, stored_body)?;
                             expect_parent = next;
                         }
                         let imported = blocks.len().checked_add(1).ok_or(ChainError::Overflow)?;

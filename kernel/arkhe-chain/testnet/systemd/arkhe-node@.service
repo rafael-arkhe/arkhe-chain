@@ -1,0 +1,26 @@
+[Unit]
+Description=Arkhe Chain Testnet Node %i
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=arkhe
+Group=arkhe
+# Instale cada local/*.env como /etc/arkhe/testnet-<id>.env com caminhos absolutos.
+# O de node1/validator-1 deve trazer EXTRA_ARGS com --seal --time <n> --inbox <dir>.
+EnvironmentFile=-/etc/arkhe/testnet-%i.env
+ExecStart=/usr/local/bin/arkhe-chain \
+    --id ${ARKHE_ID} \
+    --key ${ARKHE_KEY} \
+    --genesis ${ARKHE_GENESIS} \
+    --data ${ARKHE_DATA} \
+    --listen ${ARKHE_LISTEN} \
+    --peer-file ${ARKHE_PEER_FILE} \
+    --announce ${ARKHE_ANNOUNCE} $EXTRA_ARGS
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

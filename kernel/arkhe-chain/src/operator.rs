@@ -5,7 +5,7 @@ use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 
 use crate::p2p::{attest_pass, listen_on, seal_timestamp, sync_pass, RemoteSeal};
 use crate::{
-    codec, spawn_server_on, submit_tx, Account, ArkheNode, ChainError,
+    codec, spawn_server_on, submit_tx, Account, ArkheNode, Attestation, ChainError,
     ConfiguredPeer, Grant, Role, SyncServer, Transaction, Validator,
 };
 
@@ -262,6 +262,9 @@ pub struct PeerFile {
 /// is not one `/p2p/<id>` address is `Malformed`.
 pub fn read_peer_file(path: &Path) -> Result<PeerFile, ChainError> {
     let text = std::fs::read_to_string(path).map_err(|_| ChainError::Snapshot)?;
+    // PowerShell `Set-Content -Encoding utf8` may prefix a BOM; that must not
+    // turn `# genesis <hash>` into a peer line.
+    let text = text.strip_prefix('\u{feff}').unwrap_or(text.as_str());
     let mut peers = Vec::new();
     let mut genesis = None;
     for raw in text.lines() {
@@ -298,6 +301,13 @@ pub struct OperatorRequest {
     /// here as one line. That line is a `--peer` value. This does not discover
     /// peers. A failed write stops the listener and returns `Snapshot`.
     pub announce: Option<std::path::PathBuf>,
+}
+
+/// One file taken by [`OperatorHandle::take_inbox`]: its name and how many
+/// transactions it ingested, or why it was rejected.
+pub struct InboxFile {
+    pub name: String,
+    pub outcome: Result<usize, ChainError>,
 }
 
 pub struct OperatorHandle {
@@ -378,18 +388,138 @@ impl OperatorHandle {
     /// proposer signature does not verify fails the pass the same way, before
     /// the seal, even when another named peer imported a block. A synced body
     /// whose proposer is not a validator fails the pass the same way and does
-    /// not seal. Until then the transactions stay in the
+    /// not seal. A synced body whose height does not follow its parent fails
+    /// the pass the same way and does not seal. A synced body whose state root
+    /// or MMR count does not match the replay fails the pass the same way and
+    /// does not seal. A synced body whose timestamp is zero fails the pass
+    /// the same way and does not seal. A synced body whose sender signature
+    /// does not verify fails the pass the same way and does not seal. The
+    /// proposer signature still verifies. A synced body whose transaction
+    /// nonce is not the next one fails the pass the same way and does not
+    /// seal. Both sender signatures still verify. A synced body that
+    /// transfers to its own sender fails the pass the same way and does not
+    /// seal. The nonce is the next one. A synced body that spends more than
+    /// the sender holds fails the pass the same way and does not seal. The
+    /// recipient is someone else. A synced body whose verdict is not Allow
+    /// fails the pass the same way and does not seal. Both sender signatures
+    /// still verify. A synced body whose Allow verdict names another subject
+    /// fails the pass the same way and does not seal. A decoded verdict
+    /// re-encodes to the same bytes. A synced body whose payload does not
+    /// decode as a verdict fails the pass the same way and does not seal.
+    /// A synced body whose payload is longer than 4096 bytes does not decode.
+    /// Alone, that result stays `Malformed` and does not seal. A loose
+    /// transfer with that payload stays `Admission("payload")` at ingest and
+    /// does not enter a block. The re-encode check does not fire. A synced
+    /// body whose ML-DSA signature is neither empty nor 3309 bytes does not
+    /// decode. Alone, that result stays `BadSignatureLength` and does not
+    /// seal. An empty field stays `UnverifiedSignature`. A longer field stays
+    /// `Malformed`. A synced body whose account contains a character outside
+    /// the allowed set does not decode. Alone, that result stays
+    /// `BadAccount` and does not seal. An empty name, or one longer than 128
+    /// bytes, stays `Malformed`. A synced body whose attestation version is
+    /// not 1, or whose scheme is not 1, fails the pass the same way and does
+    /// not seal. A synced body whose attestation names another chain, genesis,
+    /// or audience fails the pass the same way and does not seal. The version
+    /// and the scheme stay 1. A synced body whose attestation window does not
+    /// cover the block height fails the pass the same way and does not seal.
+    /// The version, the scheme, the chain, the genesis, and the audience
+    /// match. A window whose start is after its end returns the same error.
+    /// A synced body that admits the same signer nonce twice fails the pass
+    /// the same way and does not seal. The signature verifies. A synced body
+    /// that revokes a role the registry never granted fails the pass the same
+    /// way and does not seal. The signer is `genesis-alloc`. A grant given by
+    /// someone else returns the same error. A synced body that executes an
+    /// approval the registry does not contain fails the pass the same way and
+    /// does not seal. The approval, the action, and the artifact are 32 zero
+    /// bytes. A synced body that admits a request and then executes that id
+    /// fails the pass the same way and does not seal. The request is not an
+    /// approval, and nothing from that body is stored. A synced body that
+    /// executes an approval whose policy digest is 32 zero bytes fails the
+    /// pass the same way and does not seal. The same grant is part of the
+    /// genesis: `genesis-alloc` may approve through height 10. The action and
+    /// the artifact are not checked. A synced body that executes a different
+    /// action fails the pass the same way and does not seal. The policy digest
+    /// matches the registry. The artifact is not checked. A synced body that
+    /// executes a different artifact fails the pass the same way and does not
+    /// seal. The policy digest and the action match. The evaluation is not
+    /// checked. A synced body that executes an approval whose evaluation is
+    /// 32 zero bytes fails the pass the same way and does not seal. The
+    /// policy digest, the action, and the artifact match. The evaluation is
+    /// not in the registry. An evaluation that is not an Evaluation claim, or
+    /// whose artifact differs, returns the same error. A synced body that
+    /// executes an approval whose evaluation is present and failed fails the
+    /// pass the same way and does not seal. The policy digest, the action,
+    /// and the artifact match. The evaluation window and the evaluator role
+    /// are not checked. A synced body that uses the same signer for the
+    /// evaluation and the approval fails the pass the same way and does not
+    /// seal. The evaluation passed. The same grants are part of the genesis:
+    /// `genesis-alloc` may approve and evaluate through height 10. An author
+    /// who is also the approver or the evaluator returns the same error. A
+    /// synced body that executes the same approval twice fails the pass the
+    /// same way and does not seal. The first execution would succeed: distinct
+    /// requester, author, evaluator, and approver, with matching grants in the
+    /// genesis. A synced body that admits one more attestation from a signer
+    /// who already holds 64 fails the pass the same way and does not seal. The
+    /// local tip already carries those 64. A synced body that admits one more
+    /// attestation when the registry already holds 4096 leaves fails the pass
+    /// the same way and does not seal. The local tip already carries those
+    /// 4096. Any other attestation error still stops the list. Until then the transactions stay in the
     /// mempool and no block is produced. A peer that answered with a fork
     /// is not a missed peer and is not behind. A transaction reply does not
     /// dial, so a submitted transaction
     /// waits in the mempool until this pass. An empty peer list still seals
     /// before the reply. This does
     /// not discover peers and does not open a later round.
+    /// Ingest every `*.txs` and `*.ops` file in `dir`, in file-name order. A
+    /// `*.txs` file is a list from [`encode_tx_list`]. A `*.ops` file is a
+    /// list from [`encode_attestation_list`]; each signed attestation is
+    /// queued with [`ArkheNode::submit_attestation`]. A file that ingests
+    /// whole is renamed to `<name>.done`. A file that fails is renamed to
+    /// `<name>.rejected`; the items before the failing one stay queued. Nothing is sealed
+    /// here: the next [`catch_up`](Self::catch_up) seals what waits. The
+    /// directory is local. Whoever can write to it can submit, and there is
+    /// no other authentication. A writer must rename a finished file into
+    /// place, because a half-written `*.txs` is read as it is.
+    pub fn take_inbox(&self, dir: &Path) -> Result<Vec<InboxFile>, ChainError> {
+        let mut names = Vec::new();
+        for entry in std::fs::read_dir(dir).map_err(|_| ChainError::Snapshot)? {
+            let path = entry.map_err(|_| ChainError::Snapshot)?.path();
+            if path.extension().is_some_and(|ext| ext == "txs" || ext == "ops") && path.is_file() {
+                names.push(path);
+            }
+        }
+        names.sort();
+        let mut taken = Vec::new();
+        for path in names {
+            let outcome = std::fs::read(&path)
+                .map_err(|_| ChainError::Snapshot)
+                .and_then(|bytes| {
+                    if path.extension().is_some_and(|ext| ext == "ops") {
+                        submit_attestation_list(&self.node, &bytes)
+                    } else {
+                        ingest_tx_list(&self.node, &bytes)
+                    }
+                });
+            let mut moved = path.clone().into_os_string();
+            moved.push(if outcome.is_ok() { ".done" } else { ".rejected" });
+            std::fs::rename(&path, PathBuf::from(moved)).map_err(|_| ChainError::Snapshot)?;
+            taken.push(InboxFile {
+                name: path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .into_owned(),
+                outcome,
+            });
+        }
+        Ok(taken)
+    }
+
     pub async fn catch_up(&self) -> Result<u64, ChainError> {
         let heard = heard_every_peer(&self.node, &self.peers).await?;
         if heard {
             if let Some(first) = self.seal_at {
-                if self.node.mempool_len()? > 0 {
+                if self.node.mempool_len()? > 0 || self.node.attest_pool_len()? > 0 {
                     let timestamp = seal_timestamp(&self.node, first)?;
                     let proposal = self.node.propose_and_seal_block(timestamp)?;
                     if proposal.block.is_none() && proposal.rejected.is_empty() {
@@ -419,6 +549,41 @@ pub fn encode_tx_list(txs: &[Transaction]) -> Result<Vec<u8>, ChainError> {
         out.extend_from_slice(&body);
     }
     Ok(out)
+}
+
+/// Length-prefixed signed attestations, in the encoding a block carries.
+pub fn encode_attestation_list(atts: &[Attestation]) -> Result<Vec<u8>, ChainError> {
+    let mut out = Vec::new();
+    for att in atts {
+        let body = codec::encode_attestation(att);
+        let len = u32::try_from(body.len()).map_err(|_| ChainError::Overflow)?;
+        out.extend_from_slice(&len.to_be_bytes());
+        out.extend_from_slice(&body);
+    }
+    Ok(out)
+}
+
+/// Queue every attestation in a list from [`encode_attestation_list`]. A
+/// short, malformed or refused item queues nothing after it. Earlier items
+/// stay queued.
+pub fn submit_attestation_list(node: &ArkheNode, bytes: &[u8]) -> Result<usize, ChainError> {
+    let mut i = 0;
+    let mut count = 0usize;
+    while i < bytes.len() {
+        if bytes.len() - i < 4 {
+            return Err(ChainError::Malformed);
+        }
+        let len = u32::from_be_bytes(bytes[i..i + 4].try_into().map_err(|_| ChainError::Malformed)?)
+            as usize;
+        i += 4;
+        if len == 0 || bytes.len() - i < len {
+            return Err(ChainError::Malformed);
+        }
+        node.submit_attestation(codec::decode_attestation(&bytes[i..i + len])?)?;
+        i += len;
+        count += 1;
+    }
+    Ok(count)
 }
 
 /// Read a list from [`encode_tx_list`] without ingesting it.
@@ -587,6 +752,34 @@ async fn heard_every_peer(
         Ok(pass) if pass.outsider => Err(ChainError::P2p("peer")),
         Ok(pass) if pass.bad_proposer => Err(ChainError::BadProposerSignature),
         Ok(pass) if pass.unknown_proposer => Err(ChainError::NotProposer),
+        Ok(pass) if pass.parent_mismatch => Err(ChainError::ParentMismatch),
+        Ok(pass) if pass.state_mismatch => Err(ChainError::StateMismatch),
+        Ok(pass) if pass.bad_timestamp => Err(ChainError::BadTimestamp),
+        Ok(pass) if pass.unverified_sender => Err(ChainError::UnverifiedSignature),
+        Ok(pass) if pass.bad_nonce => Err(ChainError::BadNonce),
+        Ok(pass) if pass.self_transfer => Err(ChainError::SelfTransfer),
+        Ok(pass) if pass.short_balance => Err(ChainError::InsufficientBalance),
+        Ok(pass) if pass.not_allow => Err(ChainError::Admission("not-allow")),
+        Ok(pass) if pass.foreign_subject => Err(ChainError::Admission("subject")),
+        Ok(pass) if pass.bad_verdict => Err(ChainError::Admission("verdict")),
+        Ok(pass) if pass.bad_signature_length => Err(ChainError::BadSignatureLength),
+        Ok(pass) if pass.bad_account => Err(ChainError::BadAccount),
+        Ok(pass) if pass.attest_version => Err(ChainError::Attest("version")),
+        Ok(pass) if pass.attest_domain => Err(ChainError::Attest("domain")),
+        Ok(pass) if pass.attest_window => Err(ChainError::Attest("window")),
+        Ok(pass) if pass.attest_replay => Err(ChainError::Attest("replay")),
+        Ok(pass) if pass.attest_authority => Err(ChainError::Attest("authority")),
+        Ok(pass) if pass.attest_unknown => Err(ChainError::Attest("unknown")),
+        Ok(pass) if pass.attest_kind => Err(ChainError::Attest("kind")),
+        Ok(pass) if pass.attest_policy => Err(ChainError::Attest("policy")),
+        Ok(pass) if pass.attest_action => Err(ChainError::Attest("action")),
+        Ok(pass) if pass.attest_artifact => Err(ChainError::Attest("artifact")),
+        Ok(pass) if pass.attest_link => Err(ChainError::Attest("link")),
+        Ok(pass) if pass.attest_evaluation => Err(ChainError::Attest("evaluation")),
+        Ok(pass) if pass.attest_separation => Err(ChainError::Attest("separation")),
+        Ok(pass) if pass.attest_consumed => Err(ChainError::Attest("consumed")),
+        Ok(pass) if pass.attest_quota => Err(ChainError::Attest("quota")),
+        Ok(pass) if pass.attest_full => Err(ChainError::Attest("full")),
         Ok(pass) => Ok(!pass.missed && !pass.behind),
         Err(error) => {
             retry_on_the_next_pass(error)?;

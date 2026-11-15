@@ -24,6 +24,15 @@ pub struct ChainState {
 }
 
 impl ChainState {
+    /// Initialize public replay state from the same account validation as a node.
+    /// No signing key is needed to verify transactions and state commitments.
+    pub fn with_accounts(accounts: Vec<crate::Account>) -> Result<Self, ChainError> {
+        let parsed = crate::parse_accounts(accounts)?;
+        let mut state = Self::genesis();
+        state.set_account_keys(parsed.ed25519, parsed.mldsa)?;
+        Ok(state)
+    }
+
     pub fn genesis() -> Self {
         let mut balances = BTreeMap::new();
         balances.insert(GENESIS_ACCOUNT.to_string(), GENESIS_SUPPLY);
@@ -182,6 +191,7 @@ impl ChainState {
         if verdict.subject != tx.subject() {
             return Err(ChainError::Admission("subject"));
         }
+        validate_transfer_policy(&verdict)?;
         let expected = self.nonces.get(&tx.sender).copied().unwrap_or(0);
         if tx.nonce != expected {
             return Err(ChainError::BadNonce);
@@ -194,6 +204,33 @@ impl ChainState {
         self.nonces.insert(tx.sender.clone(), next);
         Ok(())
     }
+}
+
+/// Consensus policy for this protocol version. Admission recomputes its digest
+/// locally instead of trusting a policy identifier or digest supplied by a sender.
+fn validate_transfer_policy(verdict: &DecisionVerdict) -> Result<(), ChainError> {
+    use arkhe_governance::event_policy::{EventPolicy, EventRule, RuleAction};
+    use std::sync::OnceLock;
+
+    static POLICY: OnceLock<EventPolicy> = OnceLock::new();
+    let policy = POLICY.get_or_init(|| EventPolicy {
+        policy_id: "chain-v1".into(),
+        version: 1,
+        rules: vec![EventRule {
+            rule_id: "transfer".into(),
+            event_type: "chain-transfer".into(),
+            action: RuleAction::Allow,
+        }],
+    });
+    let rule = &policy.rules[0];
+    if verdict.policy_id != policy.policy_id
+        || verdict.policy_digest != Some(policy.digest())
+        || verdict.event_type != rule.event_type
+        || verdict.rule_id.as_deref() != Some(rule.rule_id.as_str())
+    {
+        return Err(ChainError::Admission("policy"));
+    }
+    Ok(())
 }
 
 /// Move `value` from `sender` to `recipient`. A zero value does not change

@@ -1159,6 +1159,14 @@ fn a_peer_file_lists_only_the_named_addresses() {
     assert_eq!(read.peers.len(), 1);
     assert_eq!(read.peers[0].addr.to_string(), "/ip4/127.0.0.1/tcp/9");
     assert_eq!(read.genesis, None);
+    // A UTF-8 BOM must not turn `# genesis <hash>` into a multiaddr.
+    let hash = [0xab; 32];
+    let mut bombed = vec![0xef, 0xbb, 0xbf];
+    bombed.extend_from_slice(format!("# genesis {}\n{line}\n", hex(&hash)).as_bytes());
+    std::fs::write(&peers, bombed).unwrap();
+    let read = read_peer_file(&peers).unwrap();
+    assert_eq!(read.peers.len(), 1);
+    assert_eq!(read.genesis, Some(hash));
     std::fs::write(&peers, format!("{line}\nnot-an-address\n")).unwrap();
     assert_eq!(read_peer_file(&peers).unwrap_err(), ChainError::Malformed);
     assert_eq!(
@@ -1530,5 +1538,261 @@ fn a_genesis_grant_line_is_parsed_hashed_and_opened_by_the_process() {
     assert!(matches!(open(Vec::new()), Err(ChainError::Genesis)));
     let node = open(parse_genesis_grants(&text).unwrap()).unwrap();
     assert_eq!(node.genesis_hash(), with.hash);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn the_sealing_operator_takes_lists_from_the_inbox_and_seals_them() {
+    use arkhe_chain::{run_operator, OperatorRequest};
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-inbox-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    let inbox = dir.join("inbox");
+    std::fs::create_dir_all(&inbox).unwrap();
+    let mut genesis = format!(
+        "validator validator-a {}\n",
+        hex(&arkhe_chain::public_key(&common::SECRET_A).unwrap())
+    );
+    for account in common::accounts() {
+        genesis.push_str(&format!(
+            "account {} {} {}\n",
+            account.id,
+            hex(&account.public_key),
+            hex(&account.mldsa_public_key.unwrap())
+        ));
+    }
+    let handle = run_operator(OperatorRequest {
+        data: dir.join("chain"),
+        id: "validator-a".into(),
+        secret: common::SECRET_A,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: Vec::new(),
+        once: false,
+        txs: Vec::new(),
+        seal_at: Some(1_700_000_000),
+        announce: None,
+    })
+    .await
+    .unwrap();
+
+    assert!(handle.take_inbox(&inbox).unwrap().is_empty());
+    let list = |nonce, recipient: &str| {
+        encode_tx_list(&[common::transfer(nonce, GENESIS_ACCOUNT, recipient, 25)]).unwrap()
+    };
+    std::fs::write(inbox.join("0002-late.txs"), list(5, "carol")).unwrap();
+    std::fs::write(inbox.join("0001-first.txs"), list(0, "bob")).unwrap();
+    let mut short = list(1, "dave");
+    short.pop();
+    std::fs::write(inbox.join("0003-short.txs"), short).unwrap();
+    std::fs::write(inbox.join("notes.txt"), b"not a list").unwrap();
+    std::fs::write(inbox.join("0004-writing.txs.partial"), list(1, "erin")).unwrap();
+
+    let taken = handle.take_inbox(&inbox).unwrap();
+    let seen: Vec<_> = taken
+        .iter()
+        .map(|file| (file.name.as_str(), file.outcome.clone()))
+        .collect();
+    assert_eq!(
+        seen,
+        vec![
+            ("0001-first.txs", Ok(1)),
+            ("0002-late.txs", Err(ChainError::BadNonce)),
+            ("0003-short.txs", Err(ChainError::Malformed)),
+        ]
+    );
+    for name in [
+        "0001-first.txs.done",
+        "0002-late.txs.rejected",
+        "0003-short.txs.rejected",
+        "notes.txt",
+        "0004-writing.txs.partial",
+    ] {
+        assert!(inbox.join(name).exists(), "{name}");
+    }
+    assert!(handle.take_inbox(&inbox).unwrap().is_empty());
+
+    let before = handle.status().unwrap();
+    assert_eq!((before.height, before.mempool), (0, 1));
+    handle.catch_up().await.unwrap();
+    let after = handle.status().unwrap();
+    assert_eq!((after.height, after.mempool), (1, 0));
+    assert!(handle.take_inbox(&dir.join("absent")).is_err());
+    drop(handle);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn the_sealing_operator_takes_attestation_lists_from_the_inbox() {
+    use arkhe_chain::{
+        encode_attestation_list, run_operator, sign_attestation, Attestation, Claim, OperatorRequest,
+        ATTEST_AUDIENCE, ATTEST_SCHEME_ED25519, ATTEST_VERSION, CHAIN_ID,
+    };
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-inbox-ops-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    let inbox = dir.join("inbox");
+    std::fs::create_dir_all(&inbox).unwrap();
+    let genesis_pk = hex(&arkhe_chain::public_key(&common::GENESIS_SECRET).unwrap());
+    let mut genesis = format!(
+        "validator validator-a {}\n",
+        hex(&arkhe_chain::public_key(&common::SECRET_A).unwrap())
+    );
+    for account in common::accounts() {
+        genesis.push_str(&format!(
+            "account {} {} {}\n",
+            account.id,
+            hex(&account.public_key),
+            hex(&account.mldsa_public_key.unwrap())
+        ));
+    }
+    genesis.push_str(&format!(
+        "account root {genesis_pk}\ngrant {GENESIS_ACCOUNT} requester root 1000000000\n"
+    ));
+    let hash = genesis_fingerprint(&genesis).unwrap().hash;
+    let handle = run_operator(OperatorRequest {
+        data: dir.join("chain"),
+        id: "validator-a".into(),
+        secret: common::SECRET_A,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: Vec::new(),
+        once: false,
+        txs: Vec::new(),
+        seal_at: Some(1_700_000_000),
+        announce: None,
+    })
+    .await
+    .unwrap();
+
+    let mut request = Attestation {
+        version: ATTEST_VERSION,
+        scheme: ATTEST_SCHEME_ED25519,
+        chain_id: CHAIN_ID.into(),
+        genesis: hash,
+        audience: ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [9; 32],
+        not_before: 0,
+        expires: 1_000_000_000,
+        claim: Claim::Request {
+            task: [7; 32],
+            budget: 1,
+        },
+        signature: [0; 64],
+    };
+    sign_attestation(&mut request, &common::GENESIS_SECRET).unwrap();
+    std::fs::write(
+        inbox.join("0001-request.ops"),
+        encode_attestation_list(&[request]).unwrap(),
+    )
+    .unwrap();
+    let mut short = encode_attestation_list(&[]).unwrap();
+    short.extend_from_slice(&[0, 0, 0, 8, 1, 2, 3, 4]);
+    std::fs::write(inbox.join("0002-short.ops"), short).unwrap();
+
+    let taken = handle.take_inbox(&inbox).unwrap();
+    let seen: Vec<_> = taken
+        .iter()
+        .map(|file| (file.name.as_str(), file.outcome.clone()))
+        .collect();
+    assert_eq!(
+        seen,
+        vec![
+            ("0001-request.ops", Ok(1)),
+            ("0002-short.ops", Err(ChainError::Malformed)),
+        ]
+    );
+    assert!(inbox.join("0001-request.ops.done").exists());
+    assert!(inbox.join("0002-short.ops.rejected").exists());
+
+    let before = handle.status().unwrap();
+    assert_eq!(before.height, 0);
+    handle.catch_up().await.unwrap();
+    let after = handle.status().unwrap();
+    assert_eq!(after.height, 1);
+    drop(handle);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn inbox_flag_requires_seal_without_once_and_an_existing_directory() {
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-inbox-cli-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let inbox = dir.join("inbox");
+    std::fs::create_dir(&inbox).unwrap();
+    let key = dir.join("key");
+    let genesis = dir.join("genesis");
+    std::fs::write(&key, hex(&common::SECRET_B)).unwrap();
+    let public = hex(&arkhe_chain::public_key(&common::SECRET_B).unwrap());
+    std::fs::write(&genesis, format!("validator validator-b {public}\n")).unwrap();
+    let fill = |cmd: &mut std::process::Command| {
+        cmd.arg("--data")
+            .arg(dir.join("chain"))
+            .arg("--id")
+            .arg("validator-b")
+            .arg("--key")
+            .arg(&key)
+            .arg("--genesis")
+            .arg(&genesis)
+            .arg("--listen")
+            .arg("/ip4/127.0.0.1/tcp/0");
+    };
+
+    let mut without_seal = std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"));
+    fill(&mut without_seal);
+    let without_seal = without_seal
+        .arg("--inbox")
+        .arg(&inbox)
+        .arg("--once")
+        .output()
+        .unwrap();
+    assert_eq!(without_seal.status.code(), Some(2));
+
+    let mut with_once = std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"));
+    fill(&mut with_once);
+    let with_once = with_once
+        .arg("--seal")
+        .arg("--time")
+        .arg("1")
+        .arg("--inbox")
+        .arg(&inbox)
+        .arg("--once")
+        .output()
+        .unwrap();
+    assert_eq!(with_once.status.code(), Some(2));
+
+    let mut missing_dir = std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"));
+    fill(&mut missing_dir);
+    let missing_dir = missing_dir
+        .arg("--seal")
+        .arg("--time")
+        .arg("1")
+        .arg("--inbox")
+        .arg(dir.join("missing-inbox"))
+        .output()
+        .unwrap();
+    assert_eq!(missing_dir.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&missing_dir.stderr).contains("SNAPSHOT"));
+
     let _ = std::fs::remove_dir_all(&dir);
 }

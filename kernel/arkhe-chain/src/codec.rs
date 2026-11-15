@@ -17,6 +17,21 @@ pub(crate) fn decode_tx(bytes: &[u8]) -> Result<Transaction, ChainError> {
     Ok(tx)
 }
 
+pub(crate) fn encode_attestation(att: &Attestation) -> Vec<u8> {
+    let mut out = att.body();
+    out.extend_from_slice(&att.signature);
+    out
+}
+
+pub(crate) fn decode_attestation(bytes: &[u8]) -> Result<Attestation, ChainError> {
+    let mut rd = Rd { buf: bytes, i: 0 };
+    let att = read_attestation(&mut rd)?;
+    if rd.i != bytes.len() {
+        return Err(ChainError::Malformed);
+    }
+    Ok(att)
+}
+
 pub fn encode_block(block: &Block) -> Vec<u8> {
     let mut out = Vec::new();
     write_header(&mut out, &block.header);

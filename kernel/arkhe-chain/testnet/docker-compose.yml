@@ -1,0 +1,53 @@
+# Orquestração local. Exige material em local/ (gitignored) e binário no monorepo
+# ou build da imagem em docker/Dockerfile.
+#   cargo build -p arkhe-chain
+#   testnet/scripts/gen-keys.sh
+#   docker compose -f kernel/arkhe-chain/testnet/docker-compose.yml up
+#
+# Só node1 sela. Dois processos com --seal em paralelo podem criar fork.
+# Chaves nunca vão no git: monte local/keys e local/inbox.
+
+name: arkhe-testnet
+
+x-node: &node
+  image: ${ARKHE_RUNTIME_IMAGE:-debian:bookworm-slim}
+  working_dir: /workspace
+  volumes:
+    - ../../../../:/workspace:rw
+  networks: [arkhe_testnet]
+  command:
+    - bash
+    - /workspace/kernel/arkhe-chain/testnet/scripts/docker-entrypoint.sh
+
+services:
+  node1:
+    <<: *node
+    environment:
+      ARKHE_ENV: /workspace/kernel/arkhe-chain/testnet/local/node1.env
+    ports:
+      - "19001:19001"
+
+  node2:
+    <<: *node
+    environment:
+      ARKHE_ENV: /workspace/kernel/arkhe-chain/testnet/local/node2.env
+    ports:
+      - "19002:19002"
+
+  node3:
+    <<: *node
+    environment:
+      ARKHE_ENV: /workspace/kernel/arkhe-chain/testnet/local/node3.env
+    ports:
+      - "19003:19003"
+
+  observer:
+    <<: *node
+    environment:
+      ARKHE_ENV: /workspace/kernel/arkhe-chain/testnet/local/observer.env
+    ports:
+      - "19004:19004"
+
+networks:
+  arkhe_testnet:
+    driver: bridge

@@ -51,15 +51,16 @@ pub use ethereum::{
 };
 pub use halt::load_emergency_halt;
 pub use operator::{
-    encode_tx_list, genesis_peer_lines, ingest_tx_list, parse_configured_peer, parse_genesis, parse_genesis_grants,
-    format_genesis, format_status, genesis_fingerprint, next_status_line, read_peer_file,
-    read_status, ChainStatus, GenesisFingerprint, PeerFile,
-    parse_secret_hex,
-    read_operator_files, run_operator, OperatorHandle, OperatorRequest,
+    encode_attestation_list, encode_tx_list, genesis_peer_lines, ingest_tx_list,
+    parse_configured_peer, parse_genesis, parse_genesis_grants, format_genesis, format_status,
+    genesis_fingerprint, next_status_line, read_peer_file, read_status, submit_attestation_list,
+    ChainStatus, GenesisFingerprint, InboxFile, PeerFile, parse_secret_hex, read_operator_files,
+    run_operator, OperatorHandle, OperatorRequest,
 };
 pub use p2p::{
-    attest_configured, spawn_server, spawn_server_on, submit_precommit, submit_tx, sync_canonical,
-    sync_configured, ConfiguredPeer, SyncServer, PRECOMMIT_PROTOCOL, SYNC_PROTOCOL, TX_PROTOCOL,
+    attest_configured, import_synced, spawn_server, spawn_server_on, submit_precommit, submit_tx,
+    sync_canonical, sync_configured, ConfiguredPeer, SyncServer, PRECOMMIT_PROTOCOL, SYNC_PROTOCOL,
+    TX_PROTOCOL,
 };
 pub use proof_verification::{
     check_shape, Groth16Verifier, RejectingVerifier, UndeployedVerifier, PHASE0_SELECTOR, SEAL_LEN,
@@ -210,9 +211,7 @@ impl ArkheNode {
             Some(_) => return Err(ChainError::BadProposerKey),
             None => return Err(ChainError::NotProposer),
         }
-        let mut state = ChainState::genesis();
-        let parsed = parse_accounts(accounts)?;
-        state.set_account_keys(parsed.ed25519, parsed.mldsa)?;
+        let mut state = ChainState::with_accounts(accounts)?;
         state.configure_attest(genesis_hash, grants)?;
         Ok(Self {
             node_id: node_id.to_string(),
@@ -354,7 +353,11 @@ impl ArkheNode {
                     blocks: saved.blocks,
                 });
             }
-            node.lock()?.committed = snap.committed;
+            // A height in a snapshot is a claim, not a quorum certificate.
+            // Replay every claimed commit using the verified stored votes.
+            for height in 1..=snap.committed {
+                node.bft_commit(height).map_err(|_| ChainError::Snapshot)?;
+            }
         }
         node.checkpoint_to(&path)?;
         *node.store.lock().map_err(|_| ChainError::LockPoisoned)? = Some(path);
@@ -653,6 +656,11 @@ impl ArkheNode {
             if vote.round == stored.round {
                 return Ok(());
             }
+        }
+        // Keep the certificate that justified an already persisted commit.
+        // Replacing one vote with a higher round could destroy that quorum.
+        if vote.height <= inner.committed {
+            return Ok(());
         }
         inner.precommits.insert(
             key.clone(),
@@ -1639,12 +1647,12 @@ fn sign_block(block: &mut Block, signer: &ed25519::Keypair) -> Result<(), ChainE
     Ok(())
 }
 
-struct ParsedAccounts {
-    ed25519: BTreeMap<String, [u8; 32]>,
-    mldsa: BTreeMap<String, [u8; MLDSA65_PK_LEN]>,
+pub(crate) struct ParsedAccounts {
+    pub ed25519: BTreeMap<String, [u8; 32]>,
+    pub mldsa: BTreeMap<String, [u8; MLDSA65_PK_LEN]>,
 }
 
-fn parse_accounts(accounts: Vec<Account>) -> Result<ParsedAccounts, ChainError> {
+pub(crate) fn parse_accounts(accounts: Vec<Account>) -> Result<ParsedAccounts, ChainError> {
     let mut ed25519 = BTreeMap::new();
     let mut mldsa = BTreeMap::new();
     for account in accounts {

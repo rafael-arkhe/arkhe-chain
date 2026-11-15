@@ -1860,6 +1860,3755 @@ async fn a_malformed_body_does_not_let_another_peer_seal() {
 }
 
 #[tokio::test]
+async fn a_full_registry_does_not_let_another_peer_seal() {
+    let signers: Vec<([u8; 32], String)> = (0..arkhe_chain::ATTEST_SIGNER_QUOTA)
+        .map(|i| {
+            let mut secret = [0xA0u8; 32];
+            secret[1] = i as u8;
+            (secret, format!("full-{i:02}"))
+        })
+        .collect();
+    let mut accounts = common::accounts();
+    for (secret, id) in &signers {
+        accounts.push(arkhe_chain::Account {
+            id: id.clone(),
+            public_key: arkhe_chain::public_key(secret).unwrap(),
+            mldsa_public_key: None,
+        });
+    }
+    let filled = |id: &str, secret: &[u8; 32]| {
+        arkhe_chain::ArkheNode::new(id, secret, common::validators(), accounts.clone()).unwrap()
+    };
+    let source = filled("validator-a", &common::SECRET_A);
+    let genesis_hash = source.genesis_hash();
+    let mut bodies = Vec::with_capacity(arkhe_chain::ATTEST_SIGNER_QUOTA);
+    for round in 0..arkhe_chain::ATTEST_SIGNER_QUOTA {
+        for (secret, id) in &signers {
+            let mut nonce = [0u8; 32];
+            nonce[0] = round as u8;
+            let mut att = arkhe_chain::Attestation {
+                version: arkhe_chain::ATTEST_VERSION,
+                scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+                chain_id: arkhe_chain::CHAIN_ID.into(),
+                genesis: genesis_hash,
+                audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+                signer: id.clone(),
+                nonce,
+                not_before: 0,
+                expires: 200,
+                claim: arkhe_chain::Claim::Request {
+                    task: [0; 32],
+                    budget: 0,
+                },
+                signature: [0; 64],
+            };
+            arkhe_chain::sign_attestation(&mut att, secret).unwrap();
+            source.submit_attestation(att).unwrap();
+        }
+        source
+            .propose_and_seal_block(TS + round as u64)
+            .unwrap();
+        let tip = source.tip().unwrap();
+        bodies.push(source.encoded_block(&tip).unwrap().unwrap());
+    }
+    assert_eq!(
+        source.attest_count().unwrap(),
+        arkhe_chain::ATTEST_MAX_RECORDS as u64
+    );
+    let tip = source.tip().unwrap();
+    let tip_body = bodies.last().unwrap().clone();
+    let mut block = arkhe_chain::decode_block(&tip_body).unwrap();
+    block.header.block_number = arkhe_chain::ATTEST_SIGNER_QUOTA as u64 + 1;
+    block.header.parent_hash = tip;
+    block.header.timestamp = TS + arkhe_chain::ATTEST_SIGNER_QUOTA as u64;
+    block.transactions.clear();
+    let (over_secret, over_id) = &signers[0];
+    let mut over = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: genesis_hash,
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: over_id.clone(),
+        nonce: [200; 32],
+        not_before: 0,
+        expires: 200,
+        claim: arkhe_chain::Claim::Request {
+            task: [0; 32],
+            budget: 0,
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut over, over_secret).unwrap();
+    block.attestations = vec![arkhe_chain::AttestOp::Admit(over)];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) = listen_replies(
+        validator_a_key(),
+        genesis_hash,
+        Some(hash.to_vec()),
+        Some(body),
+        "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+    )
+    .await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = filled("validator-b", &common::SECRET_B);
+    for body in &bodies {
+        alone.import_block(body).unwrap();
+    }
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("full"));
+    assert_eq!(
+        alone.height().unwrap(),
+        arkhe_chain::ATTEST_SIGNER_QUOTA as u64
+    );
+    assert_eq!(alone.tip().unwrap(), tip);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(filled("validator-a", &common::SECRET_A));
+    for body in &bodies {
+        server_node.import_block(body).unwrap();
+    }
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node
+        .propose_and_seal_block(TS + arkhe_chain::ATTEST_SIGNER_QUOTA as u64)
+        .unwrap();
+    let live_tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = filled("validator-b", &common::SECRET_B);
+    for body in &bodies {
+        reader.import_block(body).unwrap();
+    }
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(
+        reader.height().unwrap(),
+        arkhe_chain::ATTEST_SIGNER_QUOTA as u64 + 1
+    );
+    assert_eq!(reader.tip().unwrap(), live_tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-full-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let mut genesis = String::new();
+    for validator in common::validators() {
+        genesis.push_str(&format!(
+            "validator {} {}\n",
+            validator.id,
+            hex_key(&validator.public_key)
+        ));
+    }
+    for account in &accounts {
+        genesis.push_str(&format!(
+            "account {} {}",
+            account.id,
+            hex_key(&account.public_key)
+        ));
+        if let Some(key) = &account.mldsa_public_key {
+            genesis.push(' ');
+            genesis.push_str(&hex_key(key));
+        }
+        genesis.push('\n');
+    }
+    {
+        let sealer = arkhe_chain::ArkheNode::open(
+            &data,
+            "validator-b",
+            &common::SECRET_B,
+            common::validators(),
+            accounts.clone(),
+        )
+        .unwrap();
+        for body in &bodies {
+            sealer.import_block(body).unwrap();
+        }
+    }
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS + arkhe_chain::ATTEST_SIGNER_QUOTA as u64),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the over-full attest sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("full"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        accounts.clone(),
+    )
+    .unwrap();
+    assert_eq!(
+        opened.height().unwrap(),
+        arkhe_chain::ATTEST_SIGNER_QUOTA as u64 + 1
+    );
+    assert_eq!(opened.tip().unwrap(), live_tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), live_tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_signer_over_quota_does_not_let_another_peer_seal() {
+    let source = common::node();
+    for i in 0..arkhe_chain::ATTEST_SIGNER_QUOTA {
+        let mut nonce = [0u8; 32];
+        nonce[0] = i as u8;
+        let mut att = arkhe_chain::Attestation {
+            version: arkhe_chain::ATTEST_VERSION,
+            scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+            chain_id: arkhe_chain::CHAIN_ID.into(),
+            genesis: source.genesis_hash(),
+            audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+            signer: GENESIS_ACCOUNT.into(),
+            nonce,
+            not_before: 0,
+            expires: 1,
+            claim: arkhe_chain::Claim::Request {
+                task: [0; 32],
+                budget: 0,
+            },
+            signature: [0; 64],
+        };
+        arkhe_chain::sign_attestation(&mut att, &common::GENESIS_SECRET).unwrap();
+        source.submit_attestation(att).unwrap();
+    }
+    source.propose_and_seal_block(TS).unwrap();
+    let tip = source.tip().unwrap();
+    let tip_body = source.encoded_block(&tip).unwrap().unwrap();
+    let mut block = arkhe_chain::decode_block(&tip_body).unwrap();
+    block.header.block_number = 2;
+    block.header.parent_hash = tip;
+    block.header.timestamp = TS + 1;
+    block.transactions.clear();
+    let mut over = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [200; 32],
+        not_before: 0,
+        expires: 2,
+        claim: arkhe_chain::Claim::Request {
+            task: [0; 32],
+            budget: 0,
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut over, &common::GENESIS_SECRET).unwrap();
+    block.attestations = vec![arkhe_chain::AttestOp::Admit(over)];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    alone.import_block(&tip_body).unwrap();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("quota"));
+    assert_eq!(alone.height().unwrap(), 1);
+    assert_eq!(alone.tip().unwrap(), tip);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node.import_block(&tip_body).unwrap();
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS + 1).unwrap();
+    let live_tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    reader.import_block(&tip_body).unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 2);
+    assert_eq!(reader.tip().unwrap(), live_tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-quota-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    {
+        let sealer = arkhe_chain::ArkheNode::open(
+            &data,
+            "validator-b",
+            &common::SECRET_B,
+            common::validators(),
+            common::accounts(),
+        )
+        .unwrap();
+        sealer.import_block(&tip_body).unwrap();
+    }
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS + 1),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the over-quota attest sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("quota"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 2);
+    assert_eq!(opened.tip().unwrap(), live_tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), live_tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_consumed_approval_does_not_let_another_peer_seal() {
+    const AUTHOR_SECRET: [u8; 32] = [0x88; 32];
+    let mut accounts = common::accounts();
+    accounts.push(arkhe_chain::Account {
+        id: "author-node".into(),
+        public_key: arkhe_chain::public_key(&AUTHOR_SECRET).unwrap(),
+        mldsa_public_key: None,
+    });
+    let grants = vec![
+        arkhe_chain::Grant {
+            delegate: GENESIS_ACCOUNT.into(),
+            role: arkhe_chain::Role::Requester,
+            grantor: GENESIS_ACCOUNT.into(),
+            expires: 10,
+        },
+        arkhe_chain::Grant {
+            delegate: "author-node".into(),
+            role: arkhe_chain::Role::Author,
+            grantor: GENESIS_ACCOUNT.into(),
+            expires: 10,
+        },
+        arkhe_chain::Grant {
+            delegate: "attacker-node".into(),
+            role: arkhe_chain::Role::Evaluator,
+            grantor: GENESIS_ACCOUNT.into(),
+            expires: 10,
+        },
+        arkhe_chain::Grant {
+            delegate: GENESIS_ACCOUNT.into(),
+            role: arkhe_chain::Role::Approver,
+            grantor: GENESIS_ACCOUNT.into(),
+            expires: 10,
+        },
+    ];
+    let granted = |id: &str, secret: &[u8; 32]| {
+        arkhe_chain::ArkheNode::new_with_grants(
+            id,
+            secret,
+            common::validators(),
+            accounts.clone(),
+            grants.clone(),
+        )
+        .unwrap()
+    };
+    let source = granted("validator-a", &common::SECRET_A);
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut request = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [12; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Request {
+            task: [0; 32],
+            budget: 0,
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut request, &common::GENESIS_SECRET).unwrap();
+    let request_id = request.id();
+    let mut artifact = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: "author-node".into(),
+        nonce: [13; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Artifact {
+            request: request_id,
+            artifact: [1; 32],
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut artifact, &AUTHOR_SECRET).unwrap();
+    let mut evaluation = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: "attacker-node".into(),
+        nonce: [14; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Evaluation {
+            artifact: [1; 32],
+            suite: [0; 32],
+            environment: [0; 32],
+            evidence: [0; 32],
+            passed: true,
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut evaluation, &common::ATTACKER_SECRET).unwrap();
+    let evaluation_id = evaluation.id();
+    let mut approval = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [15; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Approval {
+            action: [1; 32],
+            artifact: [1; 32],
+            evaluation: evaluation_id,
+            policy: source.attest_policy_digest().unwrap(),
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut approval, &common::GENESIS_SECRET).unwrap();
+    let approval_id = approval.id();
+    block.attestations = vec![
+        arkhe_chain::AttestOp::Admit(request),
+        arkhe_chain::AttestOp::Admit(artifact),
+        arkhe_chain::AttestOp::Admit(evaluation),
+        arkhe_chain::AttestOp::Admit(approval),
+        arkhe_chain::AttestOp::Execute {
+            approval: approval_id,
+            action: [1; 32],
+            artifact: [1; 32],
+        },
+        arkhe_chain::AttestOp::Execute {
+            approval: approval_id,
+            action: [1; 32],
+            artifact: [1; 32],
+        },
+    ];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) = listen_replies(
+        validator_a_key(),
+        source.genesis_hash(),
+        Some(hash.to_vec()),
+        Some(body),
+        "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+    )
+    .await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = granted("validator-b", &common::SECRET_B);
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("consumed"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(granted("validator-a", &common::SECRET_A));
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = granted("validator-b", &common::SECRET_B);
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-consumed-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let mut genesis = String::new();
+    for validator in common::validators() {
+        genesis.push_str(&format!(
+            "validator {} {}\n",
+            validator.id,
+            hex_key(&validator.public_key)
+        ));
+    }
+    for account in &accounts {
+        genesis.push_str(&format!(
+            "account {} {}",
+            account.id,
+            hex_key(&account.public_key)
+        ));
+        if let Some(key) = &account.mldsa_public_key {
+            genesis.push(' ');
+            genesis.push_str(&hex_key(key));
+        }
+        genesis.push('\n');
+    }
+    genesis.push_str("grant genesis-alloc requester genesis-alloc 10\n");
+    genesis.push_str("grant author-node author genesis-alloc 10\n");
+    genesis.push_str("grant attacker-node evaluator genesis-alloc 10\n");
+    genesis.push_str("grant genesis-alloc approver genesis-alloc 10\n");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the consumed approval sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("consumed"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open_with_grants(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        accounts.clone(),
+        grants.clone(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_shared_attest_signer_does_not_let_another_peer_seal() {
+    let grants = vec![
+        arkhe_chain::Grant {
+            delegate: GENESIS_ACCOUNT.into(),
+            role: arkhe_chain::Role::Approver,
+            grantor: GENESIS_ACCOUNT.into(),
+            expires: 10,
+        },
+        arkhe_chain::Grant {
+            delegate: GENESIS_ACCOUNT.into(),
+            role: arkhe_chain::Role::Evaluator,
+            grantor: GENESIS_ACCOUNT.into(),
+            expires: 10,
+        },
+    ];
+    let granted = |id: &str, secret: &[u8; 32]| {
+        arkhe_chain::ArkheNode::new_with_grants(
+            id,
+            secret,
+            common::validators(),
+            common::accounts(),
+            grants.clone(),
+        )
+        .unwrap()
+    };
+    let source = granted("validator-a", &common::SECRET_A);
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut evaluation = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [10; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Evaluation {
+            artifact: [1; 32],
+            suite: [0; 32],
+            environment: [0; 32],
+            evidence: [0; 32],
+            passed: true,
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut evaluation, &common::GENESIS_SECRET).unwrap();
+    let evaluation_id = evaluation.id();
+    let mut approval = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [11; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Approval {
+            action: [1; 32],
+            artifact: [1; 32],
+            evaluation: evaluation_id,
+            policy: source.attest_policy_digest().unwrap(),
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut approval, &common::GENESIS_SECRET).unwrap();
+    let approval_id = approval.id();
+    block.attestations = vec![
+        arkhe_chain::AttestOp::Admit(evaluation),
+        arkhe_chain::AttestOp::Admit(approval),
+        arkhe_chain::AttestOp::Execute {
+            approval: approval_id,
+            action: [1; 32],
+            artifact: [1; 32],
+        },
+    ];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) = listen_replies(
+        validator_a_key(),
+        source.genesis_hash(),
+        Some(hash.to_vec()),
+        Some(body),
+        "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+    )
+    .await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = granted("validator-b", &common::SECRET_B);
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("separation"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(granted("validator-a", &common::SECRET_A));
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = granted("validator-b", &common::SECRET_B);
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-separation-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let mut genesis = operator_genesis();
+    genesis.push_str("grant genesis-alloc approver genesis-alloc 10\n");
+    genesis.push_str("grant genesis-alloc evaluator genesis-alloc 10\n");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the shared attest signer sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("separation"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open_with_grants(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+        grants.clone(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_failed_evaluation_does_not_let_another_peer_seal() {
+    let grant = arkhe_chain::Grant {
+        delegate: GENESIS_ACCOUNT.into(),
+        role: arkhe_chain::Role::Approver,
+        grantor: GENESIS_ACCOUNT.into(),
+        expires: 10,
+    };
+    let granted = |id: &str, secret: &[u8; 32]| {
+        arkhe_chain::ArkheNode::new_with_grants(
+            id,
+            secret,
+            common::validators(),
+            common::accounts(),
+            vec![grant.clone()],
+        )
+        .unwrap()
+    };
+    let source = granted("validator-a", &common::SECRET_A);
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut evaluation = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [8; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Evaluation {
+            artifact: [1; 32],
+            suite: [0; 32],
+            environment: [0; 32],
+            evidence: [0; 32],
+            passed: false,
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut evaluation, &common::GENESIS_SECRET).unwrap();
+    let evaluation_id = evaluation.id();
+    let mut approval = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [9; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Approval {
+            action: [1; 32],
+            artifact: [1; 32],
+            evaluation: evaluation_id,
+            policy: source.attest_policy_digest().unwrap(),
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut approval, &common::GENESIS_SECRET).unwrap();
+    let approval_id = approval.id();
+    block.attestations = vec![
+        arkhe_chain::AttestOp::Admit(evaluation),
+        arkhe_chain::AttestOp::Admit(approval),
+        arkhe_chain::AttestOp::Execute {
+            approval: approval_id,
+            action: [1; 32],
+            artifact: [1; 32],
+        },
+    ];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) = listen_replies(
+        validator_a_key(),
+        source.genesis_hash(),
+        Some(hash.to_vec()),
+        Some(body),
+        "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+    )
+    .await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = granted("validator-b", &common::SECRET_B);
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("evaluation"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(granted("validator-a", &common::SECRET_A));
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = granted("validator-b", &common::SECRET_B);
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-evaluation-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let mut genesis = operator_genesis();
+    genesis.push_str("grant genesis-alloc approver genesis-alloc 10\n");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the failed evaluation sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("evaluation"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open_with_grants(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+        vec![grant.clone()],
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_missing_evaluation_does_not_let_another_peer_seal() {
+    let grant = arkhe_chain::Grant {
+        delegate: GENESIS_ACCOUNT.into(),
+        role: arkhe_chain::Role::Approver,
+        grantor: GENESIS_ACCOUNT.into(),
+        expires: 10,
+    };
+    let granted = |id: &str, secret: &[u8; 32]| {
+        arkhe_chain::ArkheNode::new_with_grants(
+            id,
+            secret,
+            common::validators(),
+            common::accounts(),
+            vec![grant.clone()],
+        )
+        .unwrap()
+    };
+    let source = granted("validator-a", &common::SECRET_A);
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut att = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [7; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Approval {
+            action: [1; 32],
+            artifact: [1; 32],
+            evaluation: [0; 32],
+            policy: source.attest_policy_digest().unwrap(),
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut att, &common::GENESIS_SECRET).unwrap();
+    let id = att.id();
+    block.attestations = vec![
+        arkhe_chain::AttestOp::Admit(att),
+        arkhe_chain::AttestOp::Execute {
+            approval: id,
+            action: [1; 32],
+            artifact: [1; 32],
+        },
+    ];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) = listen_replies(
+        validator_a_key(),
+        source.genesis_hash(),
+        Some(hash.to_vec()),
+        Some(body),
+        "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+    )
+    .await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = granted("validator-b", &common::SECRET_B);
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("link"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(granted("validator-a", &common::SECRET_A));
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = granted("validator-b", &common::SECRET_B);
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-link-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let mut genesis = operator_genesis();
+    genesis.push_str("grant genesis-alloc approver genesis-alloc 10\n");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the missing evaluation sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("link"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open_with_grants(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+        vec![grant.clone()],
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_wrong_artifact_does_not_let_another_peer_seal() {
+    let grant = arkhe_chain::Grant {
+        delegate: GENESIS_ACCOUNT.into(),
+        role: arkhe_chain::Role::Approver,
+        grantor: GENESIS_ACCOUNT.into(),
+        expires: 10,
+    };
+    let granted = |id: &str, secret: &[u8; 32]| {
+        arkhe_chain::ArkheNode::new_with_grants(
+            id,
+            secret,
+            common::validators(),
+            common::accounts(),
+            vec![grant.clone()],
+        )
+        .unwrap()
+    };
+    let source = granted("validator-a", &common::SECRET_A);
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut att = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [6; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Approval {
+            action: [1; 32],
+            artifact: [1; 32],
+            evaluation: [0; 32],
+            policy: source.attest_policy_digest().unwrap(),
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut att, &common::GENESIS_SECRET).unwrap();
+    let id = att.id();
+    block.attestations = vec![
+        arkhe_chain::AttestOp::Admit(att),
+        arkhe_chain::AttestOp::Execute {
+            approval: id,
+            action: [1; 32],
+            artifact: [0; 32],
+        },
+    ];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) = listen_replies(
+        validator_a_key(),
+        source.genesis_hash(),
+        Some(hash.to_vec()),
+        Some(body),
+        "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+    )
+    .await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = granted("validator-b", &common::SECRET_B);
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("artifact"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(granted("validator-a", &common::SECRET_A));
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = granted("validator-b", &common::SECRET_B);
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-artifact-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let mut genesis = operator_genesis();
+    genesis.push_str("grant genesis-alloc approver genesis-alloc 10\n");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the wrong artifact sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("artifact"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open_with_grants(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+        vec![grant.clone()],
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_wrong_action_does_not_let_another_peer_seal() {
+    let grant = arkhe_chain::Grant {
+        delegate: GENESIS_ACCOUNT.into(),
+        role: arkhe_chain::Role::Approver,
+        grantor: GENESIS_ACCOUNT.into(),
+        expires: 10,
+    };
+    let granted = |id: &str, secret: &[u8; 32]| {
+        arkhe_chain::ArkheNode::new_with_grants(
+            id,
+            secret,
+            common::validators(),
+            common::accounts(),
+            vec![grant.clone()],
+        )
+        .unwrap()
+    };
+    let source = granted("validator-a", &common::SECRET_A);
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut att = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [5; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Approval {
+            action: [1; 32],
+            artifact: [0; 32],
+            evaluation: [0; 32],
+            policy: source.attest_policy_digest().unwrap(),
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut att, &common::GENESIS_SECRET).unwrap();
+    let id = att.id();
+    block.attestations = vec![
+        arkhe_chain::AttestOp::Admit(att),
+        arkhe_chain::AttestOp::Execute {
+            approval: id,
+            action: [0; 32],
+            artifact: [0; 32],
+        },
+    ];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) = listen_replies(
+        validator_a_key(),
+        source.genesis_hash(),
+        Some(hash.to_vec()),
+        Some(body),
+        "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+    )
+    .await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = granted("validator-b", &common::SECRET_B);
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("action"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(granted("validator-a", &common::SECRET_A));
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = granted("validator-b", &common::SECRET_B);
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-action-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let mut genesis = operator_genesis();
+    genesis.push_str("grant genesis-alloc approver genesis-alloc 10\n");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the wrong action sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("action"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open_with_grants(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+        vec![grant.clone()],
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_wrong_policy_does_not_let_another_peer_seal() {
+    let grant = arkhe_chain::Grant {
+        delegate: GENESIS_ACCOUNT.into(),
+        role: arkhe_chain::Role::Approver,
+        grantor: GENESIS_ACCOUNT.into(),
+        expires: 10,
+    };
+    let granted = |id: &str, secret: &[u8; 32]| {
+        arkhe_chain::ArkheNode::new_with_grants(
+            id,
+            secret,
+            common::validators(),
+            common::accounts(),
+            vec![grant.clone()],
+        )
+        .unwrap()
+    };
+    let source = granted("validator-a", &common::SECRET_A);
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut att = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [4; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Approval {
+            action: [0; 32],
+            artifact: [0; 32],
+            evaluation: [0; 32],
+            policy: [0; 32],
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut att, &common::GENESIS_SECRET).unwrap();
+    let id = att.id();
+    block.attestations = vec![
+        arkhe_chain::AttestOp::Admit(att),
+        arkhe_chain::AttestOp::Execute {
+            approval: id,
+            action: [0; 32],
+            artifact: [0; 32],
+        },
+    ];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) = listen_replies(
+        validator_a_key(),
+        source.genesis_hash(),
+        Some(hash.to_vec()),
+        Some(body),
+        "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+    )
+    .await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = granted("validator-b", &common::SECRET_B);
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("policy"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(granted("validator-a", &common::SECRET_A));
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = granted("validator-b", &common::SECRET_B);
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-policy-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let mut genesis = operator_genesis();
+    genesis.push_str("grant genesis-alloc approver genesis-alloc 10\n");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis,
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the wrong policy sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("policy"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open_with_grants(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+        vec![grant.clone()],
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_request_execution_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut att = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [3; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Request {
+            task: [0; 32],
+            budget: 0,
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut att, &common::GENESIS_SECRET).unwrap();
+    let id = att.id();
+    block.attestations = vec![
+        arkhe_chain::AttestOp::Admit(att),
+        arkhe_chain::AttestOp::Execute {
+            approval: id,
+            action: [0; 32],
+            artifact: [0; 32],
+        },
+    ];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("kind"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-kind-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the request execution sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("kind"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_unknown_approval_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    block.attestations = vec![arkhe_chain::AttestOp::Execute {
+        approval: [0; 32],
+        action: [0; 32],
+        artifact: [0; 32],
+    }];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("unknown"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-unknown-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the unknown approval sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("unknown"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_ungranted_revocation_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut att = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [2; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Revocation {
+            delegate: "bob".into(),
+            role: arkhe_chain::Role::Approver,
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut att, &common::GENESIS_SECRET).unwrap();
+    block.attestations = vec![arkhe_chain::AttestOp::Admit(att)];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("authority"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-authority-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the ungranted revocation sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("authority"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_replayed_attest_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    let mut att = arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: GENESIS_ACCOUNT.into(),
+        nonce: [1; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Request {
+            task: [0; 32],
+            budget: 0,
+        },
+        signature: [0; 64],
+    };
+    arkhe_chain::sign_attestation(&mut att, &common::GENESIS_SECRET).unwrap();
+    block.attestations = vec![
+        arkhe_chain::AttestOp::Admit(att.clone()),
+        arkhe_chain::AttestOp::Admit(att),
+    ];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("replay"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-replay-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the replayed attest sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("replay"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_closed_attest_window_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    block.attestations = vec![arkhe_chain::AttestOp::Admit(arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: arkhe_chain::CHAIN_ID.into(),
+        genesis: source.genesis_hash(),
+        audience: arkhe_chain::ATTEST_AUDIENCE.into(),
+        signer: "a".into(),
+        nonce: [0; 32],
+        not_before: 2,
+        expires: 3,
+        claim: arkhe_chain::Claim::Request {
+            task: [0; 32],
+            budget: 0,
+        },
+        signature: [0; 64],
+    })];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("window"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-window-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the closed attest window sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("window"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_foreign_attest_domain_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    block.attestations = vec![arkhe_chain::AttestOp::Admit(arkhe_chain::Attestation {
+        version: arkhe_chain::ATTEST_VERSION,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: "other".into(),
+        genesis: [0; 32],
+        audience: "a".into(),
+        signer: "a".into(),
+        nonce: [0; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Request {
+            task: [0; 32],
+            budget: 0,
+        },
+        signature: [0; 64],
+    })];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("domain"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-domain-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the foreign attest domain sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("domain"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_bad_attest_version_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions.clear();
+    block.attestations = vec![arkhe_chain::AttestOp::Admit(arkhe_chain::Attestation {
+        version: 0,
+        scheme: arkhe_chain::ATTEST_SCHEME_ED25519,
+        chain_id: "a".into(),
+        genesis: [0; 32],
+        audience: "a".into(),
+        signer: "a".into(),
+        nonce: [0; 32],
+        not_before: 0,
+        expires: 1,
+        claim: arkhe_chain::Claim::Request {
+            task: [0; 32],
+            budget: 0,
+        },
+        signature: [0; 64],
+    })];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Attest("version"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-attest-version-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the bad attest version sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Attest("version"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_bad_account_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
+    tx.sender = "bob!".into();
+    block.transactions = vec![tx];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::BadAccount);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-bad-account-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the bad account sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::BadAccount);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_short_mldsa_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
+    tx.signature_mldsa = vec![0];
+    block.transactions = vec![tx];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::BadSignatureLength);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-short-mldsa-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the short mldsa sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::BadSignatureLength);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_long_payload_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
+    tx.payload = vec![0; 4097];
+    block.transactions = vec![tx];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Malformed);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-long-payload-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the long payload sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Malformed);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_bad_verdict_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
+    tx.payload = vec![0];
+    block.transactions = vec![tx];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Admission("verdict"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-verdict-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the bad verdict sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Admission("verdict"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_foreign_subject_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
+    tx.payload = common::transfer(0, GENESIS_ACCOUNT, "bob", 2).payload;
+    block.transactions = vec![tx];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Admission("subject"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-subject-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the foreign subject sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Admission("subject"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_rejected_verdict_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions = vec![common::rejected_transfer(0, GENESIS_ACCOUNT, "bob", 1)];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::Admission("not-allow"));
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-reject-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the rejected verdict sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::Admission("not-allow"));
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_short_balance_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions = vec![common::transfer(0, GENESIS_ACCOUNT, "bob", GENESIS_SUPPLY + 1)];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::InsufficientBalance);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-balance-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the short balance sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::InsufficientBalance);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_self_transfer_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions = vec![common::transfer(0, GENESIS_ACCOUNT, GENESIS_ACCOUNT, 1)];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::SelfTransfer);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-self-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the self transfer sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::SelfTransfer);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_bad_nonce_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions = vec![common::transfer(1, GENESIS_ACCOUNT, "bob", 1)];
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::BadNonce);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-nonce-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the bad nonce sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::BadNonce);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_bad_sender_signature_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.transactions[0].sender_signature[0] ^= 0xff;
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::UnverifiedSignature);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-sender-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the bad sender signature sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::UnverifiedSignature);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_zero_timestamp_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.header.timestamp = 0;
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::BadTimestamp);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-time-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the zero timestamp sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::BadTimestamp);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_state_mismatch_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.header.state_root[0] ^= 0xff;
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::StateMismatch);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-state-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the state mismatch sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::StateMismatch);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn a_parent_mismatch_does_not_let_another_peer_seal() {
+    let source = common::node();
+    source
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 1))
+        .unwrap();
+    source.propose_and_seal_block(TS).unwrap();
+    let mut block = arkhe_chain::decode_block(
+        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+    )
+    .unwrap();
+    block.header.block_number = 2;
+    arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
+    let body = arkhe_chain::encode_block(&block);
+    let hash = arkhe_chain::block_hash(&body);
+    let (liar_id, liar_addr, task) =
+        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let liar = ConfiguredPeer {
+        addr: liar_addr,
+        peer_id: liar_id,
+    };
+    let alone = common::peer();
+    let alone_error = sync_configured(&alone, &[liar.clone()]).await.unwrap_err();
+    assert_eq!(alone_error, ChainError::ParentMismatch);
+    assert_eq!(alone.height().unwrap(), 0);
+    assert_eq!(alone.balance("bob").unwrap(), 0);
+    assert_eq!(alone.fork_count().unwrap(), 0);
+
+    let server_node = Arc::new(common::node());
+    server_node
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
+        .unwrap();
+    server_node.propose_and_seal_block(TS).unwrap();
+    let tip = server_node.tip().unwrap();
+    let server = spawn_server(Arc::clone(&server_node)).await.unwrap();
+    let live = ConfiguredPeer {
+        addr: server.listen_addr.clone(),
+        peer_id: server.local_peer_id,
+    };
+    let reader = common::peer();
+    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    assert_eq!(imported, 1);
+    assert_eq!(reader.height().unwrap(), 1);
+    assert_eq!(reader.tip().unwrap(), tip);
+    assert_eq!(reader.balance("bob").unwrap(), 4);
+    assert_eq!(reader.fork_count().unwrap(), 0);
+
+    let dir = std::env::temp_dir().join(format!(
+        "arkhe-chain-parent-seal-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    let data = dir.join("sealer");
+    let error = match run_operator(OperatorRequest {
+        data: data.clone(),
+        id: "validator-b".into(),
+        secret: common::SECRET_B,
+        genesis: operator_genesis(),
+        listen: "/ip4/127.0.0.1/tcp/0".parse().unwrap(),
+        peers: vec![
+            liar,
+            ConfiguredPeer {
+                addr: server.listen_addr.clone(),
+                peer_id: server.local_peer_id,
+            },
+        ],
+        once: true,
+        txs: encode_tx_list(&[common::transfer(0, GENESIS_ACCOUNT, "bob", 25)]).unwrap(),
+        seal_at: Some(TS),
+        announce: None,
+    })
+    .await
+    {
+        Ok(_) => panic!("the parent mismatch sealed"),
+        Err(error) => error,
+    };
+    assert_eq!(error, ChainError::ParentMismatch);
+    task.abort();
+    drop(server);
+    let opened = arkhe_chain::ArkheNode::open(
+        &data,
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        common::accounts(),
+    )
+    .unwrap();
+    assert_eq!(opened.height().unwrap(), 1);
+    assert_eq!(opened.tip().unwrap(), tip);
+    assert_eq!(opened.balance("bob").unwrap(), 4);
+    assert_eq!(opened.mempool_len().unwrap(), 0);
+    assert_eq!(opened.fork_count().unwrap(), 0);
+    assert_eq!(server_node.tip().unwrap(), tip);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
 async fn an_unknown_proposer_does_not_let_another_peer_seal() {
     let source = common::node();
     source
