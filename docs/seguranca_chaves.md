@@ -1,115 +1,115 @@
-# Política de Blindagem de Chaves Privadas (KMS/HSM) e Contingência de Governança
+# Private key hardening (KMS/HSM) and governance contingency
 
-Este documento lista requisitos de custódia que este crate ainda não cumpre. O processo do nó guarda a chave Ed25519 do proposer em memória. Não há HSM, não há roster k-de-n e não há imunidade a intervenção. Um administrador pode parar a publicação. Não pode, com o código atual, autorizar uma release sozinho, porque este crate não autoriza release.
-
----
-
-## 1. Princípios Fundamentais
-
-1. **Inexistência de Chave Mestra ou Backdoor:**
-   O protocolo Arkhe não possui chaves administrativas globais (*god keys*), portas dos fundos ou papéis com capacidade de anular regras de consenso, reverter blocos ou mover fundos unilateralmente.
-2. **Governança do Código como Lei (*Code-as-Law*):**
-   A governança é exercida exclusivamente através de vereditos de conformidade criptográfica (`DecisionVerdict` no domínio canônico `AKG:VERDICT:v1`) e pela validação de blocos acordada entre os validadores da rede.
-3. **Fail-Closed sob Qualquer Ambiguidade:**
-   Qualquer anomalia de assinatura, integridade de snapshot, formato de prova ZK ou configuração de contingência força o nó a rejeitar a transação ou paralisar o avanço do estado (`FAIL_CLOSED:`), impedindo a aceitação silenciosa de dados inválidos.
-4. **Isolamento e Não-Exportabilidade de Segredos:**
-   O nó atual guarda o signer Ed25519 na memória do processo. Custódia em HSM ou KMS é um requisito de um ambiente que ainda não foi validado, não uma propriedade deste crate.
+This document lists custody requirements this crate does not yet meet. The node process keeps the proposer Ed25519 key in memory. There is no HSM, no k-of-n roster, and no immunity to intervention. An administrator can stop publication. With current code they cannot authorize a release alone, because this crate does not authorize release.
 
 ---
 
-## 2. Arquitetura Criptográfica Híbrida e Requisitos de Chaves
+## 1. Core principles
 
-Conforme especificado em `docs/admissao.md` e `docs/consenso.md`, o `arkhe-chain` opera sob um modelo duplo:
+1. **No master key or backdoor:**
+   The Arkhe protocol has no global administrative keys (*god keys*), backdoors, or roles that can override consensus rules, revert blocks, or move funds unilaterally.
+2. **Code-as-law governance:**
+   Governance is exercised only through cryptographic compliance verdicts (`DecisionVerdict` in canonical domain `AKG:VERDICT:v1`) and block validation agreed among network validators.
+3. **Fail-closed under any ambiguity:**
+   Any signature anomaly, snapshot integrity issue, ZK proof format, or contingency configuration forces the node to reject the transaction or halt state advance (`FAIL_CLOSED:`), preventing silent acceptance of invalid data.
+4. **Secret isolation and non-exportability:**
+   The node currently keeps the Ed25519 signer in process memory. HSM or KMS custody is a requirement of an environment not yet validated, not a property of this crate.
 
-| Papel da Chave | Algoritmo | Tamanho da Chave / Assinatura | Domínio de Assinatura | Função no Protocolo |
+---
+
+## 2. Hybrid cryptography and key requirements
+
+As specified in `docs/admissao.md` and `docs/consenso.md`, `arkhe-chain` operates under a dual model:
+
+| Key role | Algorithm | Key / signature size | Signature domain | Protocol function |
 | --- | --- | --- | --- | --- |
-| **Proposer / Validador** | Ed25519 | Chave: 32 bytes<br>Assinatura: 64 bytes | `AKG:CHAIN:PROPOSER:v1`<br>`AKG:CHAIN:PRECOMMIT:v4` | Assinatura de blocos canônicos e atestações locais de precommit. `v4` liga a rodada, um único part e `arkhe-chain`. `v3`, `v2` e `v1` só reabrem arquivo antigo. Identidade de rede libp2p. |
-| **Transação (Remetente)** | Ed25519 | Chave: 32 bytes<br>Assinatura: 64 bytes | `AKG:CHAIN:SENDER:v1` | Assinatura sobre o `subject` da transação (`nonce`, `sender`, `recipient`, `value`, `signature_mldsa`). |
-| **Resistência Quântica (ML-DSA)** | ML-DSA-65 (FIPS 204) | Chave: 1952 bytes<br>Assinatura: 3309 bytes | `AKG:CHAIN:MLDSA65:v1` | Assinatura pós-quântica cobrindo os dados da transação (`nonce`, `sender`, `recipient`, `value`). |
-| **Governança EVM / Bridge** | Conta Ethereum / Multisig | Endereço: 20 bytes | N/A (EVM calls) | Atualização de contratos de verificação ZK (`setVerifier`) em `ArkheValidityBridge.sol`. |
+| **Proposer / validator** | Ed25519 | Key: 32 bytes<br>Signature: 64 bytes | `AKG:CHAIN:PROPOSER:v1`<br>`AKG:CHAIN:PRECOMMIT:v4` | Canonical block signatures and local precommit attestations. `v4` binds round, single part, and `arkhe-chain`. `v3`, `v2`, and `v1` only reopen old files. libp2p network identity. |
+| **Transaction (sender)** | Ed25519 | Key: 32 bytes<br>Signature: 64 bytes | `AKG:CHAIN:SENDER:v1` | Signature over transaction `subject` (`nonce`, `sender`, `recipient`, `value`, `signature_mldsa`). |
+| **Quantum resistance (ML-DSA)** | ML-DSA-65 (FIPS 204) | Key: 1952 bytes<br>Signature: 3309 bytes | `AKG:CHAIN:MLDSA65:v1` | Post-quantum signature over transaction data (`nonce`, `sender`, `recipient`, `value`). |
+| **EVM governance / bridge** | Ethereum account / multisig | Address: 20 bytes | N/A (EVM calls) | ZK verifier contract updates (`setVerifier`) in `ArkheValidityBridge.sol`. |
 
 ---
 
-## 3. Blindagem de Chaves Privadas (KMS / HSM)
+## 3. Private key hardening (KMS / HSM)
 
-Para garantir que operadores ou terceiros não possam coagir ou extrair credenciais criptográficas, todo ambiente de produção de nós validadores e sistemas de governança deve aderir aos seguintes requisitos de blindagem:
+To ensure operators or third parties cannot coerce or extract cryptographic credentials, every production validator node and governance system environment must meet the following hardening requirements:
 
-### 3.1. Requisitos de Hardware e Módulos de Segurança
-- **Certificação FIPS:** Uso obrigatório de módulos de segurança de hardware certificados sob **FIPS 140-2/140-3 Level 3 ou Level 4** (ou Common Criteria EAL 4+).
-- **Material Não-Exportável (*Non-Exportable Keys*):**
-  - Todas as chaves assimétricas devem ser geradas internamente no enclave de segurança via gerador de números aleatórios de hardware (TRNG).
-  - Os atributos da chave devem proibir terminantemente a exportação de texto claro (*wrap* desabilitado ou restrito a esquemas de quorum M-de-N com divisão de segredo Shamir).
-- **Operação de Assinatura Isolada:**
-  - O nó validador solicita a assinatura enviando exclusivamente a mensagem canônica pré-formatada no domínio Arkhe específico.
-  - O enclave criptográfico valida as restrições de formato antes de efetuar a computação da assinatura.
-- **Suporte Pós-Quântico no KMS:**
-  - Para as chaves ML-DSA-65 (FIPS 204), quando o KMS em nuvem não oferecer suporte nativo a primitivas pós-quânticas dentro do silício, deve ser utilizado um módulo criptográfico de isolamento baseado em Confidencial Computing (como AWS Nitro Enclaves, AMD SEV-SNP ou Intel SGX) com atestação remota criptografada, de modo que o material de semente nunca seja exposto ao sistema operacional host.
+### 3.1. Hardware and security module requirements
+- **FIPS certification:** Mandatory use of hardware security modules certified under **FIPS 140-2/140-3 Level 3 or Level 4** (or Common Criteria EAL 4+).
+- **Non-exportable material:**
+  - All asymmetric keys must be generated inside the security enclave via hardware random number generator (TRNG).
+  - Key attributes must prohibit plaintext export (*wrap* disabled or restricted to M-of-N quorum schemes with Shamir secret sharing).
+- **Isolated signing operation:**
+  - The validator node requests signature by sending only the canonical message preformatted in the specific Arkhe domain.
+  - The cryptographic enclave validates format restrictions before computing the signature.
+- **Post-quantum support in KMS:**
+  - For ML-DSA-65 keys (FIPS 204), when cloud KMS does not offer native post-quantum primitives in silicon, use an isolation-based cryptographic module on Confidential Computing (such as AWS Nitro Enclaves, AMD SEV-SNP, or Intel SGX) with encrypted remote attestation, so seed material is never exposed to the host operating system.
 
-### 3.2. Segregação de Funções e Controles de Acesso (IAM / RBAC)
-- Princípio do Menor Privilégio (*Least Privilege*): A identidade de execução do processo `ArkheNode` possui apenas permissão `kms:Sign` sobre o ARN específico de sua chave de validador.
-- Políticas de KMS imutáveis e protegidas contra deleção imediata (*Key Deletion Protection* com quarentena mandatória de 30 dias).
-- Desativação de permissões administrativas diretas para contas de usuário individuais em ambientes de produção.
-
----
-
-## 4. Descentralização que o código ainda não entrega
-
-Para assegurar que o desenvolvimento e a governança do código não sejam capturados ou paralisados por entidades únicas, aplicam-se os seguintes pilares:
-
-### 4.1. Conjunto Distribuído de Validadores
-- **Diversidade Jurisdicional e Geográfica:**
-  - Os validadores registrados em `validators` devem ser operados por organizações e operadores independentes situados em jurisdições legais distintas.
-  - Nenhum operador único pode controlar a maioria dos validadores ativos.
-- **Imunidade a Reorganizações e Bifurcações:**
-  - Conforme arquitetura do `arkhe-chain`, um bloco irmão emitido por outro proposer é registrado como `Fork` e **nunca substitui a ponta canônica** já adotada.
-  - Proposers que tentem submeter blocos divergentes na mesma altura são sumariamente marcados com `Equivocation`.
-- **Ausência de Quórum Unilateral:**
-  - `bft_commit` só passa quando a rodada mais alta do hash canônico excede dois terços dos validadores configurados. O precommit novo exige um único part igual ao hash do bloco e o identificador `arkhe-chain`. A ponta não se move. Não há `CanonicalVote`.
-
-### 4.2. Governança do Código-Fonte e Lançamento de Releases
-- **Multi-Assinatura para Modificações de Código:**
-  - Commits para repositórios canônicos e criação de releases de software exigem assinaturas criptográficas Ed25519/GPG de pelo menos $M$-de-$N$ mantenedores independentes.
-- **Auditoria e Homologação Reproduzível:**
-  - O dossiê `docs/homologacao.md` registra que a segunda pessoa ainda não reexecutou o gate e que o checkout isolado não é o comando de teste. A marca de homologação não foi concedida.
-- **Distribuição Descentralizada de Código e Estado:**
-  - Espelhamento permanente em protocolos descentralizados e imutáveis (como Hashtree/Nostr via `htree://` e git peer-to-peer), eliminando pontos únicos de censura em plataformas centralizadas.
-
-### 4.3. Governança de Smart Contracts (Bridge)
-- Em `contracts/ArkheValidityBridge.sol`, o parâmetro `governance` é imutável (`address public immutable governance`).
-- O endereço de governança deve ser obrigatoriamente um contrato de Multi-Sig (ex: Gnosis Safe com timelock) mantido por entidades descentralizadas com quórum mínimo qualificado.
-- A única prerrogativa do endereço de governança é atualizar o contrato de verificação ZK (`setVerifier`), evento auditável via `VerifierUpdated`. Não há métodos para resgate ou modificação retroativa de blocos liquidados (`settledBlocks`).
+### 3.2. Separation of duties and access controls (IAM / RBAC)
+- Least privilege: the `ArkheNode` process execution identity has only `kms:Sign` permission on the ARN of its specific validator key.
+- Immutable KMS policies protected against immediate deletion (*Key Deletion Protection* with mandatory 30-day quarantine).
+- Direct administrative permissions disabled for individual user accounts in production environments.
 
 ---
 
-## 5. Política de Contingência e Modos de Falha (*Fail-Closed*)
+## 4. Decentralization the code does not deliver yet
 
-A continuidade operacional e a proteção do patrimônio repousam em regras de contingência estritas:
+To ensure code development and governance are not captured or stalled by single entities, the following pillars apply:
 
-### 5.1. Parada de Emergência Determinística (`emergency.halt`)
-- **Mecanismo:** Definido através de `arkhe-chain.properties` (`emergency.halt=true`).
-- **Comportamento:**
-  - Bloqueio total e imediato de novas admissões na mempool (`ingest`), proposição e selamento de blocos (`propose_and_seal_block`), e adoção de blocos externos (`import_block`).
-  - O estado, os saldos e os registros MMR permanecem 100% conservados e inalterados.
-- **Fail-Closed em Caso de Configuração Inválida:**
-  - Se o arquivo de propriedades for corrompido, removido ou configurado com valor diferente de `true` ou `false`, o método `load_emergency_halt` retorna `HaltConfig` e o nó é colocado em estado de paralisação preventiva (`inner.emergency_halt = true`).
+### 4.1. Distributed validator set
+- **Jurisdictional and geographic diversity:**
+  - Validators registered in `validators` must be operated by independent organizations in distinct legal jurisdictions.
+  - No single operator may control a majority of active validators.
+- **Immunity to reorgs and forks:**
+  - Per `arkhe-chain` architecture, a sibling block from another proposer is recorded as `Fork` and **never replaces the adopted canonical tip**.
+  - Proposers attempting divergent blocks at the same height are marked `Equivocation`.
+- **No unilateral quorum:**
+  - `bft_commit` passes only when the highest round of the canonical hash exceeds two thirds of configured validators. New precommit requires a single part equal to block hash and identifier `arkhe-chain`. The tip does not move. There is no `CanonicalVote`.
 
-### 5.2. Contingência em Liquidação ZK e Falhas de RPC
-- Quando uma prova de liquidação for submetida sem que o verificador Groth16 esteja ativo ou caso ocorra indisponibilidade de transporte RPC:
-  - O protocolo aciona `hold_for_absent_verifier`, criando uma `SettlementContingency` em memória.
-  - A âncora Bitcoin permanece local (`broadcast = false`), nenhum saldo é alterado e nenhum recibo espúrio é forjado (`receipt = None`).
-  - A contingência aguarda resolução descentralizada sem comprometer o livro-razão local.
+### 4.2. Source governance and release process
+- **Multi-signature for code changes:**
+  - Commits to canonical repositories and software releases require Ed25519/GPG cryptographic signatures from at least M-of-N independent maintainers.
+- **Audit and reproducible homologation:**
+  - Dossier `docs/homologacao.md` records that a second person has not yet rerun the gate and that isolated checkout is not the test command. Homologation mark was not granted.
+- **Decentralized code and state distribution:**
+  - Permanent mirroring on decentralized immutable protocols (such as Hashtree/Nostr via `htree://` and git peer-to-peer), eliminating single points of censorship on centralized platforms.
 
-### 5.3. Rotação de Chaves em Caso de Suspeita de Comprometimento
-1. **Identificação e Isolamento:**
-   Se uma chave de validador apresentar suspeita de vazamento, o operador deve revogar imediatamente o acesso ao KMS/HSM correspondente e notificar o conjunto de validadores.
-2. **Substituição sem Ruptura de Consenso:**
-   - A substituição do conjunto de validadores é refletida na inicialização de nós com a nova configuração de chaves públicas autorizadas.
-   - Tentativas da chave antiga de assinar blocos na cadeia atual são automaticamente descartadas pelos nós atualizados (`NotProposer` ou `BadProposerSignature`).
-3. **Persistência Segura:**
-   O arquivo escrito agora é `AKGCHNS7`. `AKGCHNS6` e `AKGCHNS5` ainda abrem. Um arquivo adulterado que não reproduz o estado devolve `ChainError::Snapshot`.
+### 4.3. Smart contract governance (bridge)
+- In `contracts/ArkheValidityBridge.sol`, parameter `governance` is immutable (`address public immutable governance`).
+- Governance address must be a multi-sig contract (e.g. Gnosis Safe with timelock) maintained by decentralized entities with qualified minimum quorum.
+- The only prerogative of the governance address is updating the ZK verifier contract (`setVerifier`), auditable via `VerifierUpdated`. There are no methods to redeem or retroactively modify settled blocks (`settledBlocks`).
 
 ---
 
-## 6. Resumo de Conformidade
+## 5. Contingency policy and failure modes (fail-closed)
 
-Este texto não assegura imunidade. O que o crate faz hoje é recusar assinatura ausente, exigir mais de dois terços dos validadores na rodada mais alta de `bft_commit` e parar quando `emergency.halt` está ligado. HSM, FIPS 140, Nitro, SGX e multisig de release não estão neste repositório.
+Operational continuity and asset protection rest on strict contingency rules:
+
+### 5.1. Deterministic emergency halt (`emergency.halt`)
+- **Mechanism:** Defined via `arkhe-chain.properties` (`emergency.halt=true`).
+- **Behavior:**
+  - Total immediate block on new mempool admission (`ingest`), block proposal and seal (`propose_and_seal_block`), and external block adoption (`import_block`).
+  - State, balances, and MMR records remain 100% preserved and unchanged.
+- **Fail-closed on invalid configuration:**
+  - If the properties file is corrupted, removed, or set to a value other than `true` or `false`, `load_emergency_halt` returns `HaltConfig` and the node enters preventive halt (`inner.emergency_halt = true`).
+
+### 5.2. ZK settlement contingency and RPC failures
+- When a settlement proof is submitted without an active Groth16 verifier or transport RPC is unavailable:
+  - The protocol triggers `hold_for_absent_verifier`, creating an in-memory `SettlementContingency`.
+  - Bitcoin anchor remains local (`broadcast = false`), no balance changes, and no spurious receipt is forged (`receipt = None`).
+  - Contingency waits for decentralized resolution without compromising the local ledger.
+
+### 5.3. Key rotation on suspected compromise
+1. **Identification and isolation:**
+   If a validator key is suspected leaked, the operator must immediately revoke KMS/HSM access and notify the validator set.
+2. **Replacement without consensus rupture:**
+   - Validator set replacement is reflected in node startup with the new authorized public key configuration.
+   - Attempts by the old key to sign blocks on the current chain are discarded by updated nodes (`NotProposer` or `BadProposerSignature`).
+3. **Secure persistence:**
+   File written now is `AKGCHNS7`. `AKGCHNS6` and `AKGCHNS5` still open. Tampered file that does not reproduce state returns `ChainError::Snapshot`.
+
+---
+
+## 6. Compliance summary
+
+This text does not guarantee immunity. What the crate does today is refuse missing signature, require more than two thirds of validators on the highest round of `bft_commit`, and stop when `emergency.halt` is on. HSM, FIPS 140, Nitro, SGX, and release multisig are not in this repository.

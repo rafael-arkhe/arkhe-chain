@@ -1,163 +1,169 @@
-# Devnet local do Arkhe
+# arkhe-chain local testnet
 
-Este guia descreve a devnet local de `arkhe-chain`: quatro processos validadores numa só máquina, com chaves que estão neste repositório. Não é uma testnet pública. O crate não está homologado; as pendências estão em [homologacao.md](homologacao.md).
+Scaffolding in `testnet/`. **Not homologated.** There is no automatic peer discovery. Two processes with `--seal` in parallel may fork: only one node seals.
 
-## 1. O que a devnet faz e o que não faz
+Private keys live only in `testnet/local/` (gitignored). Do not copy those keys into the repository. Public reference tip `rafael-arkhe/arkhe-chain` at `1182b4ff` publishes keys in `testnet/keys/`; this monorepo keeps the opposite hygiene.
 
-Um único processo sela. Os outros três seguem.
-
-- `val1` sobe com `--seal`. Ele lê listas de transações e de atestados de um diretório, uma vez por segundo, e sela um bloco com o que espera.
-- `val2`, `val3` e `val4` sincronizam os blocos de `val1` e assinam um precommit para cada altura.
-- Uma altura é registrada como confirmada quando `votos × 3 > validadores × 2`. Com quatro validadores, são três votos. `--status` mostra essa altura na linha `committed`.
-
-O que isso não é:
-
-- Não é um protocolo BFT completo. Não há escolha de proposer, não há rodada posterior à 0, não há travamento de voto e não há reorg. O limiar de precommit registra a confirmação e não move a ponta. Ver [consenso.md](consenso.md), pendências C1 e C2.
-- A rede não progride com um validador fora do ar. `val1` só sela depois de ouvir todos os pares nomeados na passagem. Com um par parado, as transações ficam na mempool até ele voltar.
-- Dois processos com `--seal` podem bifurcar, e um irmão fica como `Fork` sem trocar a ponta. Por isso a devnet nomeia exatamente um selador.
-- Não há descoberta de pares. Cada nó disca os endereços do arquivo de pares.
-- Não há RPC, faucet em execução nem explorador. A entrada de transações e de atestados é o diretório descrito nas seções 4.3 e 4.4.
-
-As regras de acordo, progresso e recuperação, com o teste de cada uma, estão em [regras.md](regras.md).
-
-## 2. As chaves são públicas
-
-`testnet/keys/` guarda as chaves privadas dos quatro validadores, a chave e a semente ML-DSA-65 da conta `genesis-alloc`, e as chaves das seis contas `devnet-*` do fluxo de atestados. Elas estão num repositório público. Qualquer pessoa pode assinar como qualquer validador e gastar a conta de gênese. Essas chaves servem para uma devnet local e para nada exposto à rede. Uma rede pública precisa de chaves geradas fora do repositório e de outro gênese.
-
-`observer.key` e `observer.env` não são usados. `observer` não está no gênese, e um processo com um identificador fora do conjunto de validadores encerra com `NOT_PROPOSER`.
-
-## 3. Arquivos
+## Layout
 
 ```text
 testnet/
-├── docker/Dockerfile          # imagem do nó
-├── docker-compose.yml         # quatro validadores numa rede bridge
-├── environments/val{1..4}.env # variáveis para a unidade systemd
-├── keys/                      # chaves da devnet (públicas, ver seção 2)
-├── systemd/arkhe-node@.service
-├── genesis.txt                # validadores, contas e concessões de papel
-├── peers.txt                  # pares em 127.0.0.1, para os scripts locais
-└── peers.docker.txt           # pares em 172.28.0.x, para o compose
-scripts/
-├── init_testnet.sh            # confere o gênese e os pares
-├── run_local_testnet.sh       # sobe os quatro processos; val1 sela
-├── send_tx.sh                 # põe transferências do faucet na caixa de val1
-├── send_attest.sh             # põe um fluxo de atestados na caixa de val1
-├── check_status.sh            # --status de cada nó
-├── stop_testnet.sh
-├── devnet_smoke.sh            # sobe do zero e confere a devnet de ponta a ponta
-└── compose_smoke.sh           # o mesmo fluxo básico dentro do Docker Compose
-examples/devnet_tx.rs          # escreve uma lista de transações assinadas
-examples/devnet_attest.rs      # escreve um fluxo de atestados assinados
+  node1.env.example … observer.env.example
+  peers.txt.example
+  peers.docker.txt.example
+  docker-compose.yml
+  docker/Dockerfile
+  scripts/          # gen-keys, init-local, start-node, collect-peers, write-peers-docker,
+                    # status, faucet-tx, send-attest, check-status, run-local,
+                    # run-background, stop-background, smoke-local, clean-local
+  systemd/          # example unit; not run here
+  local/            # generated: genesis.txt, peers.txt, keys/, data/, inbox/, *.env, *.log
 ```
 
-Uma conta assina cada transação com Ed25519 (64 bytes) e ML-DSA-65 (3309 bytes). Os validadores usam só Ed25519.
+Genesis (`local/genesis.txt`) follows operator format:
 
-## 4. Operação local
+- `validator <id> <ed25519 hex>`
+- `account <id> <ed25519 hex> [mldsa65 hex]`
+- blank lines and `#` are ignored
 
-### 4.1. Conferir o gênese
+`genesis-alloc` receives genesis supply in code (`GENESIS_SUPPLY`). Faucet accounts use Ed25519 + ML-DSA-65.
+
+## 1. Generate keys and genesis
+
+At the Arkhe monorepo root:
+
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\gen-keys.ps1
+```
 
 ```bash
-cargo run --bin arkhe-chain -- --show-genesis --genesis testnet/genesis.txt
+kernel/arkhe-chain/testnet/scripts/gen-keys.sh
 ```
+
+Or:
 
 ```text
-validators 4
-accounts 7
-blake3 2018b454a46466ef86535a353bb2eb5d8881f8687f709196d2e23f0a685cdc2f
+cargo run -p arkhe-chain --example testnet_gen_keys
 ```
 
-### 4.2. Subir e parar
+This creates `local/genesis.txt`, `local/keys/*.key`, `local/inbox/`, `local/node1.env` … `local/observer.env`, and a `local/peers.txt` still without multiaddresses. The sealer (`node1`) gets `ARKHE_INBOX`.
 
-```bash
-bash scripts/run_local_testnet.sh
+Check BLAKE3:
+
+```text
+cargo run -p arkhe-chain -- --show-genesis --genesis kernel/arkhe-chain/testnet/local/genesis.txt
+cargo run -p arkhe-chain -- --show-peers --genesis kernel/arkhe-chain/testnet/local/genesis.txt
 ```
 
-```bash
-bash scripts/check_status.sh
+## 2. Native startup (recommended on Windows)
+
+1. Start each node once with `-Once` / `--once` to write the announce. In that mode scripts **do not** pass `--seal` (empty mempool would return `MempoolEmpty`):
+
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node1 -Once
+.\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node2 -Once
+.\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node3 -Once
+.\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node observer -Once
 ```
 
-```bash
-bash scripts/stop_testnet.sh
+Shortcut: `.\kernel\arkhe-chain\testnet\scripts\init-local.ps1` (gen-keys if missing, show-genesis, announce `--once`, collect-peers). `run-local.ps1` does only announce+collect.
+
+2. Collect multiaddresses (if not done yet):
+
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\collect-peers.ps1
 ```
 
-O script compila o binário, sobe `val2`, `val3` e `val4`, espera dois segundos e sobe `val1` com `--seal --time <agora> --inbox testnet/data/inbox`. `--time` é o timestamp do bloco 1. Cada bloco seguinte usa o timestamp do pai mais um; não é o relógio.
+3. Start nodes persistently (only `node1` has `ARKHE_SEAL=1` and `--inbox`). `ARKHE_TIME=now` resolves to unix time at startup (block 1 timestamp; then parent+1):
 
-Os dados ficam em `testnet/data/`, que o `.gitignore` cobre. Parar e subir de novo retoma a cadeia. Apagar `testnet/data/` recomeça do gênese.
-
-Um nó encerrado no meio de uma gravação deixa `<id>.arkhe-tmp` ao lado do arquivo da cadeia. O nó recusa subir enquanto esse temporário existir e devolve `SNAPSHOT`. O arquivo da cadeia é trocado inteiro ou não é trocado, então o temporário órfão pode ser removido. `run_local_testnet.sh` faz isso antes de subir cada nó e avisa na saída. Ao subir um nó à mão, remova o temporário antes.
-
-No Git Bash do Windows, um argumento que começa com barra é reescrito como caminho. Os scripts definem `MSYS2_ARG_CONV_EXCL` para os multiaddrs. Ao chamar o binário à mão nesse shell, defina a mesma variável.
-
-### 4.3. Enviar transações
-
-```bash
-bash scripts/send_tx.sh bob 25 0
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node1
+# other terminals:
+.\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node2
+.\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node node3
+.\kernel\arkhe-chain\testnet\scripts\start-node.ps1 -Node observer
 ```
 
-Os argumentos são destinatário, valor, nonce e, opcionalmente, quantas transferências consecutivas. O nonce é o próximo da conta `genesis-alloc`: 0 numa devnet nova e mais um a cada transferência selada.
+Or in background (followers first, then sealer):
 
-O script chama `examples/devnet_tx.rs`, que assina as transferências com as chaves do faucet e escreve uma lista em `testnet/data/inbox/<nome>.txs`. O payload de cada transação é um veredito `Allow` que a própria ferramenta emite, a partir de uma política de uma regra, pelo resolvedor de desenvolvimento. Nenhum serviço de política é consultado.
-
-`val1` lê a caixa a cada segundo. Uma lista que entra inteira vira `<nome>.txs.done` e o log de `val1` mostra `inbox <nome> ingested <n>`. Uma lista recusada vira `<nome>.txs.rejected` e o log mostra o erro, por exemplo `BAD_NONCE`; os itens anteriores ao recusado ficam na mempool. O bloco é selado na mesma passagem, se todos os pares responderam.
-
-A caixa é um diretório local. Quem pode escrever nele pode enviar; não há outra autenticação. Quem escreve precisa renomear o arquivo pronto para `*.txs`, porque um arquivo pela metade é lido como está. `--inbox` só é aceito junto com `--seal` e sem `--once`.
-
-### 4.4. Enviar um fluxo de atestados
-
-```bash
-bash scripts/send_attest.sh 1
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\run-background.ps1
+.\kernel\arkhe-chain\testnet\scripts\check-status.ps1
+.\kernel\arkhe-chain\testnet\scripts\stop-background.ps1
 ```
 
-O argumento é o número da rodada; cada número é um fluxo diferente. O script chama `examples/devnet_attest.rs`, que escreve em `testnet/data/inbox/<nome>.ops` cinco atestados: pedido, proposta, avaliação, aprovação e execução. Cada um é assinado pela conta `devnet-*` que tem aquele papel no gênese. A avaliação diz `passed` porque a ferramenta a escreve; nada é avaliado. Os detalhes estão em [atestados.md](atestados.md).
+Each process prints `listen …` and `--status` lines when state changes. The sealer reads `local/inbox/*.txs` and `*.ops` once per second and seals what waits if all named peers answered.
 
-O log de `val1` mostra `inbox <nome>.ops ingested 5` e o bloco seguinte carrega os cinco. Um seguidor só adota um bloco cujos atestados reexecutam até a raiz do cabeçalho, então a mesma ponta nos quatro nós significa que os quatro aplicaram o fluxo. A mesma rodada de novo é recusada com `ATTEST: replay`.
+## 3. Status
 
-`--status` não mostra o registro de atestados.
-
-### 4.5. Conferir de ponta a ponta
-
-```bash
-bash scripts/devnet_smoke.sh
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\status.ps1 -Node node1
 ```
 
-O script apaga `testnet/data/`, sobe os quatro processos e confere, nesta ordem: uma transferência selada com os quatro na mesma ponta; um fluxo de atestados selado; o mesmo fluxo recusado como replay; com `val4` parado, uma transferência esperando e nenhum bloco; com `val4` de volta, essa transferência selada; depois de parar e subir tudo, a mesma cadeia nos quatro e mais um bloco. Ele termina com código diferente de zero na primeira verificação que não vale.
+Equivalent:
 
-Em 12 de novembro de 2026, no Windows, o script terminou com `PASS: devnet smoke`. Essa execução não deixou log neste repositório. O job `devnet` do GitHub Actions roda o mesmo script no Linux.
+```text
+cargo run -p arkhe-chain -- --status --data <ARKHE_DATA> --genesis <ARKHE_GENESIS>
+```
+
+Output: `height`, `committed`, `tip`, `mempool`, `forks`, `genesis`.
+
+## 4. Faucet / transfer transaction
+
+Writes a file in the sealer inbox (atomic rename to `*.txs`):
+
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\faucet-tx.ps1 -Nonce 0 -Recipient alice -Value 100
+```
+
+`node1` log shows `inbox <name>.txs ingested <n>` (or `rejected`). Sender is `genesis-alloc`. Payload is CBOR `DecisionVerdict` Allow in the domain tests use. Nonce must be sender’s next.
+
+`--inbox` is accepted only with `--seal` and without `--once`. Whoever can write the directory can submit; there is no other authentication.
+
+## 4.1. Attest flow in the inbox
+
+`testnet_gen_keys` creates accounts `testnet-{root,requester,author,evaluator,approver}` and matching `grant` lines. Without Executor role: in the local crate execution is sealer `AttestOp::Execute` (`submit_execution`), not a fifth attestation in the inbox.
+
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\send-attest.ps1 -Run 1
+```
+
+This writes `local/inbox/flow-1.ops` (four attestations; atomic rename). The sealer admits them in the next block if peers answered. Evaluation comes with `passed: true` because the tool writes it; nothing is actually evaluated.
 
 ## 5. Docker Compose
 
-```bash
-bash scripts/compose_smoke.sh
+```text
+cargo build -p arkhe-chain
+kernel/arkhe-chain/testnet/scripts/gen-keys.sh
+docker compose -f kernel/arkhe-chain/testnet/docker-compose.yml up
 ```
 
-O script cria `testnet/data/inbox`, sobe o compose, envia uma transferência e um fluxo de atestados pela caixa e confere que os quatro contêineres chegam à mesma ponta. À mão:
+Compose mounts the monorepo and runs the binary from `target/debug` or `target/release`. Ports: 19001–19004. Stop and remove:
 
-```bash
-mkdir -p testnet/data/inbox
+```text
+docker compose -f kernel/arkhe-chain/testnet/docker-compose.yml down
 ```
 
-```bash
-docker compose -f testnet/docker-compose.yml up -d --build
+In Docker, `peers.txt` lines must use service hostname (`node1`, `node2`, …) or bridge IP, not only host `127.0.0.1`. In compose-mounted `.env`, use `ARKHE_LISTEN=/ip4/0.0.0.0/tcp/…` (native `gen-keys` writes `127.0.0.1`). After native collect-peers:
+
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\write-peers-docker.ps1
 ```
 
-O compose usa `peers.docker.txt`, com os endereços da rede bridge, sobe `val1` com `--seal` e monta `testnet/data/inbox` como caixa de `val1`. `send_tx.sh` e `send_attest.sh` escrevem nesse mesmo diretório. A imagem de build usa a mesma versão do Rust que o CI.
+## 6. Local smoke (does not homologate)
 
-O compose não foi executado na máquina onde essas mudanças foram feitas, que não tem Docker. O job `compose` do GitHub Actions roda `scripts/compose_smoke.sh`; o resultado dele é o que vale.
-
-## 6. systemd
-
-1. Copie o binário para `/usr/local/bin/arkhe-chain`.
-2. Instale `testnet/systemd/arkhe-node@.service` em `/etc/systemd/system/`.
-3. Instale cada `.env` como `/etc/arkhe/testnet-<id>.env`. O de `val1` traz `EXTRA_ARGS` com `--seal`, `--time` e `--inbox`; crie o diretório da caixa antes.
-4. Ajuste o arquivo de pares para os endereços reais das máquinas.
-
-```bash
-sudo systemctl daemon-reload
+```powershell
+.\kernel\arkhe-chain\testnet\scripts\smoke-local.ps1
 ```
 
-```bash
-sudo systemctl enable --now arkhe-node@val1 arkhe-node@val2 arkhe-node@val3 arkhe-node@val4
-```
+Starts background, sends one faucet transfer and a 4-attest flow via inbox, waits for agreement at heights 1 and 2, then stops. Exits with `PASS: local smoke (transfer + attest admit). Not homologation.` — does not close A3 or mark the testnet homologated. Without Executor: execution remains sealer `submit_execution`, outside this smoke.
 
-A unidade systemd não foi executada depois dessas mudanças.
+## Honest limits
+
+- No Kademlia/mDNS: only `--peer` / `--peer-file`.
+- No proposer election: `--seal` on more than one process may fork.
+- `bft_commit` does not move the tip; there is no `CanonicalVote`.
+- Settlement (Groth16 / Bitcoin broadcast / Ethereum settled) remains refused in the crate.
+- This folder does not close A3 or mark the chain homologated.
+- Public tip aligned for documentation: `1182b4ff` (`rafael-arkhe/arkhe-chain`). Local ports: `--inbox`, seal with `attest_pool`, `testnet/` layout, `Admission("policy")`, commit certificate preserved on reopen, A/P/R rules in [regras.md](regras.md), smoke with replay/halt/catch-up/restart. No key commit and no `executor` role.
+- Gate evidence outside checkout: `python kernel/arkhe-chain/scripts/audit_gate.py --output ../arkhe-gate-result` (requires clean `kernel/arkhe-chain`).
