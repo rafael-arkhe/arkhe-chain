@@ -37,7 +37,7 @@ After **C2** (`4ff40ef7`, `tests/c2_canonical_vote.rs`), the development branch 
 | A3 | **PENDING** | Third-person rerun on published **T′**; `arkhen` on this machine does not close A3 |
 | A4 | **PENDING** | Third-person rerun on published root when applicable |
 | C1 | Open | Sibling stays `Fork`; precommit threshold does not move the tip |
-| C2 | Partial LEMMA | `CanonicalVote` + pure `consensus::bft_commit` and 4096-leaf `rotation_proof` paths tested; live **Precommit v4** and `ArkheNode::bft_commit` on the tip unchanged; **CanonicalVote** is not the live wire yet |
+| C2 | Partial LEMMA | `CanonicalVote` + `consensus::bft_commit` and `ArkheNode::canonical_commit_verdict` (v4→verdict bridge) tested in CI via `.github/workflows/arkhe-chain-gate.yml`; live **Precommit v4** and tip unchanged; **CanonicalVote on the wire** still PENDING |
 | F1 | Open | Guest ELF, 32-byte `image_id`, verification key |
 | F2 | Open | No Bitcoin payout the crate declares; `broadcast` stays false |
 | F3 | Open | `settled` stays false; confirmation does not enter the file |

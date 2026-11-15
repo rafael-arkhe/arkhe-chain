@@ -1,10 +1,14 @@
 //! Falsifiers for C2 canonical votes, quorum commit and attestation rotation.
 
+mod common;
+
 use std::collections::HashMap;
 
-use arkhe_chain::{check_rotation, RotationOutcome, MAX_LEAVES};
-use arkhe_chain::{bft_commit, CommitVerdict};
-use arkhe_chain::{CanonicalVote, VoteType};
+use arkhe_chain::{
+    check_rotation, encode_block, sign_precommit, ArkheNode, ChainError, CommitVerdict,
+    CanonicalVote, Precommit, RotationOutcome, Validator, VoteType, CHAIN_ID, GENESIS_ACCOUNT,
+    MAX_LEAVES, bft_commit,
+};
 
 fn mk_vote(part: &str, h: u64, bid: [u8; 32], vt: VoteType) -> CanonicalVote {
     CanonicalVote::new(part, h, 1, Some(bid), 1_000_000, vt)
@@ -195,4 +199,62 @@ fn c2_sign_bytes_are_deterministic() {
     let a = mk_vote("val1", 3, [4u8; 32], VoteType::Precommit);
     let b = a.clone();
     assert_eq!(a.sign_bytes(), b.sign_bytes());
+}
+
+const TS: u64 = 1_700_000_000;
+const IDS: [&str; 4] = ["val1", "val2", "val3", "val4"];
+
+fn secret(index: usize) -> [u8; 32] {
+    [0xA1 + index as u8; 32]
+}
+
+fn validators() -> Vec<Validator> {
+    (0..4)
+        .map(|index| Validator {
+            id: IDS[index].to_string(),
+            public_key: arkhe_chain::public_key(&secret(index)).unwrap(),
+        })
+        .collect()
+}
+
+fn node(index: usize) -> ArkheNode {
+    ArkheNode::new(IDS[index], &secret(index), validators(), common::accounts()).unwrap()
+}
+
+fn vote(index: usize, height: u64, hash: [u8; 32]) -> Precommit {
+    let mut vote = Precommit {
+        validator_id: IDS[index].to_string(),
+        height,
+        round: 0,
+        block_hash: hash,
+        parts: 1,
+        part_hash: hash,
+        chain_id: CHAIN_ID.to_string(),
+        signature: [0u8; 64],
+    };
+    sign_precommit(&mut vote, &secret(index)).unwrap();
+    vote
+}
+
+#[test]
+fn c2_stored_v4_precommits_map_to_commit_verdict() {
+    let observer = node(0);
+    observer.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 5)).unwrap();
+    let block = observer.propose_and_seal_block(TS).unwrap().block.unwrap();
+    let _ = encode_block(&block);
+    let tip = observer.tip().unwrap();
+    assert_eq!(observer.bft_commit(1), Err(ChainError::QuorumAbsent));
+    for index in 0..2 {
+        observer.note_precommit(&vote(index, 1, tip)).unwrap();
+    }
+    assert!(matches!(
+        observer.canonical_commit_verdict(1).unwrap(),
+        CommitVerdict::QuorumAbsent { height: 1, .. }
+    ));
+    observer.note_precommit(&vote(2, 1, tip)).unwrap();
+    let verdict = observer.canonical_commit_verdict(1).unwrap();
+    assert!(matches!(verdict, CommitVerdict::Commit { height: 1, block_id, .. } if block_id == tip));
+    observer.bft_commit(1).unwrap();
+    assert_eq!(observer.committed_height().unwrap(), 1);
+    assert_eq!(observer.tip().unwrap(), tip);
 }

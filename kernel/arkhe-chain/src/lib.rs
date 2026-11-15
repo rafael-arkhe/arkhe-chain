@@ -46,7 +46,8 @@ pub use attest::{
 };
 pub use codec::{decode_block, encode_block};
 pub use consensus::{
-    bft_commit, total_validator_power, CanonicalVote, CommitVerdict, VoteType, CANONICAL_CHAIN_ID,
+    bft_commit, commit_verdict_from_precommits, precommit_to_canonical_vote, total_validator_power,
+    CanonicalVote, CommitVerdict, VoteType, CANONICAL_CHAIN_ID,
 };
 pub use contingency::{hold_for_absent_verifier, SettlementContingency};
 pub use error::ChainError;
@@ -862,6 +863,50 @@ impl ArkheNode {
             }
         }
         Ok(())
+    }
+
+    /// Derive a C2 [`CommitVerdict`] from stored v4 precommits through
+    /// [`CanonicalVote`] aggregation. Does not move the tip or invoke live commit persistence.
+    pub fn canonical_commit_verdict(&self, height: u64) -> Result<CommitVerdict, ChainError> {
+        let inner = self.lock()?;
+        let canonical = inner
+            .by_height
+            .get(&height)
+            .copied()
+            .ok_or(ChainError::UnknownBlock)?;
+        let mut precommits = Vec::new();
+        for ((stored_height, validator_id), stored) in &inner.precommits {
+            if *stored_height != height || stored.preimage != 4 || stored.block_hash != canonical {
+                continue;
+            }
+            precommits.push(Precommit {
+                validator_id: validator_id.clone(),
+                height,
+                round: stored.round,
+                block_hash: stored.block_hash,
+                parts: 1,
+                part_hash: stored.block_hash,
+                chain_id: CHAIN_ID.to_string(),
+                signature: stored.signature,
+            });
+        }
+        let validator_power = self
+            .validators
+            .keys()
+            .map(|id| (id.clone(), 1))
+            .collect();
+        let validator_keys: std::collections::HashMap<_, _> = self
+            .validators
+            .iter()
+            .map(|(id, key)| (id.clone(), key.clone()))
+            .collect();
+        Ok(commit_verdict_from_precommits(
+            height,
+            canonical,
+            &precommits,
+            &validator_power,
+            &validator_keys,
+        ))
     }
 
     pub fn encoded_block(&self, hash: &[u8; 32]) -> Result<Option<Vec<u8>>, ChainError> {

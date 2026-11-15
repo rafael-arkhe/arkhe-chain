@@ -1,0 +1,65 @@
+name: arkhe-chain gate (C2)
+
+on:
+  pull_request:
+    paths:
+      - 'kernel/arkhe-chain/**'
+      - 'kernel/arkhe-core/**'
+      - 'governance/arkhe-governance/**'
+      - 'verification/crates/arkhe-verify-core/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/arkhe-chain-gate.yml'
+  push:
+    branches:
+      - main
+      - corvo-persona-and-learning-slice
+      - feat/a1-gate-homologacao
+    paths:
+      - 'kernel/arkhe-chain/**'
+      - 'kernel/arkhe-core/**'
+      - 'governance/arkhe-governance/**'
+      - 'verification/crates/arkhe-verify-core/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/arkhe-chain-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  c2-quick:
+    name: C2 falsifiers (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: C2 canonical vote tests
+        run: cargo test --locked -p arkhe-chain --test c2_canonical_vote -- --nocapture
+
+  chain-suite:
+    name: Full arkhe-chain suite (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: cargo test -p arkhe-chain (A1 thread model)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked -p arkhe-chain -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/arkhe-chain-gate.log"
+          grep -E '^test result: ok\. [0-9]+ passed;' "$RUNNER_TEMP/arkhe-chain-gate.log"
+      - name: Preserve log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arkhe-chain-gate-${{ matrix.os }}-${{ github.sha }}
+          path: ${{ runner.temp }}/arkhe-chain-gate.log
+          if-no-files-found: error

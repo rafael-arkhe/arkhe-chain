@@ -1,0 +1,25 @@
+# Standalone layout (crate at repository root with vendor/).
+# The published GitHub monorepo runs `.github/workflows/arkhe-chain-gate.yml` at workspace root instead.
+
+name: arkhe-chain gate (C2)
+
+on:
+  pull_request:
+  push:
+    branches: [main, corvo-persona-and-learning-slice, feat/a1-gate-homologacao]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  c2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: C2 falsifiers
+        run: cargo test --locked --test c2_canonical_vote
+      - name: Full suite (single-threaded)
+        run: cargo test --locked -- --test-threads=1

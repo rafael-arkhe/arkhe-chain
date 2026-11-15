@@ -29,6 +29,17 @@ A virtual machine does not close full reorg, production `CanonicalVote`↔precom
 - `cite_ethereum_execution` stores caller-supplied number and hash. `confirm_ethereum_execution` confirms when client returns the same hash. Without client, response is `RpcAbsent`. `HttpExecutionRpc` opens HTTP and, on `https`, TLS with system certificate store. No authentication. `AbsentExecutionRpc` does not open socket. `settled` stays false. Confirmation does not enter the file.
 - A local regtest node accepted a 37-byte OP_RETURN with prefix `ARKHE` and 32 zero bytes. The crate did not send that transaction. It is not mainnet.
 
+## Production binaries (four gates)
+
+| # | Gate | Status | Notes |
+| --- | --- | --- | --- |
+| 1 | C2 `Commit` in public CI | **In progress** | `consensus::bft_commit` returns `CommitVerdict::Commit` under C2 tests; `ArkheNode::canonical_commit_verdict` maps stored v4 precommits through `CanonicalVote` without moving the tip. GitHub workflow `.github/workflows/arkhe-chain-gate.yml` runs `cargo test -p arkhe-chain` (includes `c2_canonical_vote`) on the Arkhe workspace published as `rafael-arkhe/arkhe-chain`. Standalone `vendor/` layout may use `kernel/arkhe-chain/.github/workflows/c2-gate.yml` when the crate is repository root. Live wire still uses `Precommit` v4 only; **CanonicalVote on the wire remains PENDING**. |
+| 2 | C1 reorg tested | **Open** | Sibling stays `Fork`; no fake tip replace. Depends on honest C2 `Commit` semantics first. |
+| 3 | AuditBundle + external inclusion | **Open** | Not started in this crate (no Rekor/Hippius deploy). |
+| 4 | A3 / A4 | **PENDING** | Human third party; see below. |
+
+Public CI green on a published commit is necessary but not sufficient for production #1 until A3 accepts the same **T′** record.
+
 ## Open items
 
 | ID | What is missing |
@@ -36,7 +47,7 @@ A virtual machine does not close full reorg, production `CanonicalVote`↔precom
 | A3 | **PENDING.** A third person runs `cargo test -p arkhe-chain` on the published commit containing this record (**T′**). Reruns on the same machine or by account `arkhen` do not sign A3. On 10 November, `arkhen` on this machine got 79 passed, 0 failures, and 1 ignored on an unpublished tree; that does not close A3. |
 | A4 | **PENDING.** A third person reruns `cargo test -p arkhe-chain` on published commit containing this record (**T′**), including published root when applicable. Reruns on the same machine or by `arkhen` do not sign A4. Historical reference: `105101c0` with `vendor/` and 77 tests at root; the WSL rerun was not that commit. |
 | C1 | A sibling remains `Fork`. The precommit threshold does not change the tip. |
-| C2 | **Partial LEMMA (tested paths).** `CanonicalVote` + `consensus::bft_commit` (quorum &gt;2/3, fail-closed). `Precommit` v4 and `ArkheNode::bft_commit` unchanged on tip. Rotation at 4096 leaves: block with attest op needs `rotation_proof` or remains `Attest("full")`. Does not close homologation or A3. |
+| C2 | **Partial LEMMA (tested paths + bridge).** `CanonicalVote` + `consensus::bft_commit` (quorum &gt;2/3, fail-closed). `ArkheNode::canonical_commit_verdict` maps stored v4 precommits to `CommitVerdict` under test; live `Precommit` v4, `ArkheNode::bft_commit`, and tip behavior unchanged. Rotation at 4096 leaves: block with attest op needs `rotation_proof` or remains `Attest("full")`. Does not close homologation or A3. |
 | F1 | Guest ELF, 32-byte image id, and verification key. Set `image_id` still does not load. |
 | F2 | A Bitcoin transaction pays on network the crate declares. Local regtest accepted `925b5f276408c0b8442e1a247e48228843dd144416d4561edab3a29950578a0f`, 37-byte OP_RETURN (`ARKHE` and 32 zero bytes), with 1 confirmation in block 102. `broadcast` stays false. |
 | F3 | Finality of an execution node we do not operate. The suite confirms block 21, hash `ab` repeated 32 times, against local JSON-RPC. `settled` stays false and confirmation does not enter the file. Earlier, `ethereum.publicnode.com` returned block `26385337`, hash `1f9dd1637278722b2647bcb7f5d828d0848be35fa15cc56b2d051985790fb8d9`, and `geth` v1.17.10 on `--dev` returned block 1 `c6f3353e6a18a0d8a849530218478f38a0cdcb5357fa8a4accf56ff88d75bcec`. Those two reads are not in the gate. |
