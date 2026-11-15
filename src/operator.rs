@@ -262,6 +262,9 @@ pub struct PeerFile {
 /// is not one `/p2p/<id>` address is `Malformed`.
 pub fn read_peer_file(path: &Path) -> Result<PeerFile, ChainError> {
     let text = std::fs::read_to_string(path).map_err(|_| ChainError::Snapshot)?;
+    // PowerShell `Set-Content -Encoding utf8` may prefix a BOM; that must not
+    // turn `# genesis <hash>` into a peer line.
+    let text = text.strip_prefix('\u{feff}').unwrap_or(text.as_str());
     let mut peers = Vec::new();
     let mut genesis = None;
     for raw in text.lines() {

@@ -15,7 +15,9 @@ pub const SYNC_PROTOCOL: &str = "/arkhe/block-sync/1";
 pub const PRECOMMIT_PROTOCOL: &str = "/arkhe/precommit/1";
 pub const TX_PROTOCOL: &str = "/arkhe/tx/1";
 const TX_BODY_LIMIT: usize = 16 * 1024;
-const VOTE_BLOCK_LIMIT: usize = 1024 * 1024;
+const VOTE_REQUEST_LIMIT: usize = 1024 * 1024;
+const VOTE_ENVELOPE_BUDGET: usize = 4096;
+const VOTE_BLOCK_LIMIT: usize = VOTE_REQUEST_LIMIT - VOTE_ENVELOPE_BUDGET;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 enum SyncRequest {
@@ -600,7 +602,8 @@ pub(crate) async fn sync_pass(
 /// stored, the reply carries the receiver's own v4 precommit, if it has one.
 /// The sender stores its own vote before dialing when that vote verifies,
 /// stores the returned vote, and tries the same height. The request carries
-/// the voted block when that body is at most 1 MiB. The receiver imports it
+/// the voted block when that body fits in the 1 MiB vote request after the
+/// envelope. The receiver imports it
 /// only when it extends the receiver's tip by one height and the body hash
 /// is the vote hash. A sibling is stored as `Fork` and does not replace the
 /// tip. A body that skips a height is ignored and stores nothing.
@@ -622,10 +625,7 @@ pub async fn submit_precommit(
     if node.note_precommit(vote).is_ok() {
         let _ = node.bft_commit(vote.height);
     }
-    let block = match node.encoded_block(&vote.block_hash)? {
-        Some(body) if body.len() <= VOTE_BLOCK_LIMIT => Some(body),
-        _ => None,
-    };
+    let block = vote_body_for_request(node.encoded_block(&vote.block_hash)?);
     let request = vote_request(vote, node.genesis_hash(), block);
     let key = node.network_keypair();
     let mut swarm = build(key)?;
@@ -634,6 +634,13 @@ pub async fn submit_precommit(
     match tokio::time::timeout(Duration::from_secs(30), deliver(&mut swarm, node, peer, request)).await {
         Ok(result) => result,
         Err(_) => Err(ChainError::P2p("timeout")),
+    }
+}
+
+fn vote_body_for_request(body: Option<Vec<u8>>) -> Option<Vec<u8>> {
+    match body {
+        Some(body) if body.len() <= VOTE_BLOCK_LIMIT => Some(body),
+        _ => None,
     }
 }
 
@@ -1338,4 +1345,20 @@ fn build(key: identity::Keypair) -> Result<Swarm<Behaviour>, ChainError> {
         .map_err(|err| match err {})?
         .with_swarm_config(|config| config.with_idle_connection_timeout(Duration::from_secs(60)))
         .build())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{vote_body_for_request, VOTE_BLOCK_LIMIT, VOTE_REQUEST_LIMIT};
+
+    #[test]
+    fn a_body_that_would_overflow_the_vote_request_is_left_out() {
+        let small = vote_body_for_request(Some(vec![1]));
+        assert_eq!(small.unwrap().len(), 1);
+        let budget = vote_body_for_request(Some(vec![1; VOTE_BLOCK_LIMIT]));
+        assert_eq!(budget.unwrap().len(), VOTE_BLOCK_LIMIT);
+        assert!(vote_body_for_request(Some(vec![1; VOTE_BLOCK_LIMIT + 1])).is_none());
+        assert!(vote_body_for_request(Some(vec![1; VOTE_REQUEST_LIMIT])).is_none());
+        assert!(vote_body_for_request(None).is_none());
+    }
 }

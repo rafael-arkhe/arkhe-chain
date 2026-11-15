@@ -1159,6 +1159,14 @@ fn a_peer_file_lists_only_the_named_addresses() {
     assert_eq!(read.peers.len(), 1);
     assert_eq!(read.peers[0].addr.to_string(), "/ip4/127.0.0.1/tcp/9");
     assert_eq!(read.genesis, None);
+    // A UTF-8 BOM must not turn `# genesis <hash>` into a multiaddr.
+    let hash = [0xab; 32];
+    let mut bombed = vec![0xef, 0xbb, 0xbf];
+    bombed.extend_from_slice(format!("# genesis {}\n{line}\n", hex(&hash)).as_bytes());
+    std::fs::write(&peers, bombed).unwrap();
+    let read = read_peer_file(&peers).unwrap();
+    assert_eq!(read.peers.len(), 1);
+    assert_eq!(read.genesis, Some(hash));
     std::fs::write(&peers, format!("{line}\nnot-an-address\n")).unwrap();
     assert_eq!(read_peer_file(&peers).unwrap_err(), ChainError::Malformed);
     assert_eq!(
