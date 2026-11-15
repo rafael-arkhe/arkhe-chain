@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Syne:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Syne', ui-sans-serif, sans-serif;
+  --font-body: 'Instrument Sans', ui-sans-serif, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --color-surface: #0c0f12;
+  --color-surface-raised: #141a1f;
+  --color-surface-line: #243038;
+  --color-ink: #e8ecef;
+  --color-ink-muted: #8a9aa6;
+  --color-accent: #3d8f8a;
+  --color-accent-dim: #2a6561;
+  --color-warn: #c4a35a;
+  --color-open: #6b7c8a;
+  --color-logged: #4d9e7a;
+
+  --ease-amicro: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    @apply bg-surface text-ink antialiased;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply m-0 min-h-dvh font-body;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
