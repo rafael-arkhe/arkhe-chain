@@ -1,5 +1,7 @@
 # arkhe-chain
 
+**Presentation site (GitHub Pages):** build from [`site/`](site/) — expected at <https://rafael-arkhe.github.io/arkhe-chain/> after Pages is enabled (Settings → Pages → GitHub Actions). See [`site/README.md`](site/README.md).
+
 **arkhe-chain** is a local node that extends a tip. Admission is `ArkheNode::ingest`. Transaction payload is canonical CBOR of `DecisionVerdict` in domain `AKG:VERDICT:v1`.
 
 There is no type `ArkheChain` and no function `ingest_transaction`. The crate is **not homologated**. Gates **A3** and **A4** remain **PENDING** (a third person must rerun on the published commit). Full gate history, logs, and open items are in [docs/homologacao.md](docs/homologacao.md)—not summarized here.
