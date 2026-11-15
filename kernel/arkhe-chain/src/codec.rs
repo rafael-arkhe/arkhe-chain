@@ -40,6 +40,7 @@ pub fn encode_block(block: &Block) -> Vec<u8> {
         write_tx(&mut out, tx);
     }
     write_ops(&mut out, &block.attestations);
+    write_rotation_proof(&mut out, block.rotation_proof.as_deref());
     out
 }
 
@@ -55,6 +56,7 @@ pub fn decode_block(bytes: &[u8]) -> Result<Block, ChainError> {
         transactions.push(read_tx(&mut rd)?);
     }
     let attestations = read_ops(&mut rd)?;
+    let rotation_proof = read_rotation_proof(&mut rd)?;
     if rd.i != bytes.len() || (transactions.is_empty() && attestations.is_empty()) {
         return Err(ChainError::Malformed);
     }
@@ -62,6 +64,7 @@ pub fn decode_block(bytes: &[u8]) -> Result<Block, ChainError> {
         header,
         transactions,
         attestations,
+        rotation_proof,
     })
 }
 
@@ -87,7 +90,37 @@ pub(crate) fn proposer_message(block: &Block) -> Vec<u8> {
         write_tx(&mut out, tx);
     }
     write_ops(&mut out, &block.attestations);
+  write_rotation_proof(&mut out, block.rotation_proof.as_deref());
     out
+}
+
+const ROTATION_PROOF_TAG: u8 = 0x52;
+
+fn write_rotation_proof(out: &mut Vec<u8>, proof: Option<&[u8]>) {
+    let Some(proof) = proof else {
+        return;
+    };
+    if proof.is_empty() {
+        return;
+    }
+    out.push(ROTATION_PROOF_TAG);
+    push_u32(out, proof.len() as u32);
+    out.extend_from_slice(proof);
+}
+
+fn read_rotation_proof(rd: &mut Rd<'_>) -> Result<Option<Vec<u8>>, ChainError> {
+    if rd.i >= rd.buf.len() {
+        return Ok(None);
+    }
+    if rd.buf[rd.i] != ROTATION_PROOF_TAG {
+        return Ok(None);
+    }
+    rd.i += 1;
+    let len = rd.u32()? as usize;
+    if len == 0 || len > 4096 {
+        return Err(ChainError::Malformed);
+    }
+    Ok(Some(rd.bytes(len)?))
 }
 
 /// Nothing is written for a block without ops, so such a block keeps the
@@ -120,6 +153,9 @@ fn write_ops(out: &mut Vec<u8>, ops: &[AttestOp]) {
 
 fn read_ops(rd: &mut Rd<'_>) -> Result<Vec<AttestOp>, ChainError> {
     if rd.i == rd.buf.len() {
+        return Ok(Vec::new());
+    }
+    if rd.buf[rd.i] == ROTATION_PROOF_TAG {
         return Ok(Vec::new());
     }
     let n = rd.u32()? as usize;

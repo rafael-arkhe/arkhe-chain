@@ -95,16 +95,17 @@ struct Flow {
 fn flow_with(evaluator: &str, approver: &str, passed: bool) -> Flow {
     let mut reg = registry();
     let request = reg
-        .admit(&signed("requester", 1, Claim::Request { task: [0x7A; 32], budget: 5 }), H)
+        .admit(&signed("requester", 1, Claim::Request { task: [0x7A; 32], budget: 5 }), H, None)
         .unwrap();
-    reg.admit(&signed("author", 1, Claim::Artifact { request, artifact: ARTIFACT }), H)
+    reg.admit(&signed("author", 1, Claim::Artifact { request, artifact: ARTIFACT }), H, None)
         .unwrap();
-    let evaluation = reg.admit(&signed(evaluator, 1, evaluation(ARTIFACT, passed)), H).unwrap();
+    let evaluation = reg.admit(&signed(evaluator, 1, evaluation(ARTIFACT, passed)), H, None).unwrap();
     let policy = reg.policy_digest();
     let approval = reg
         .admit(
             &signed(approver, 2, Claim::Approval { action: ACTION, artifact: ARTIFACT, evaluation, policy }),
             H,
+            None,
         )
         .unwrap();
     Flow { reg, evaluation, approval }
@@ -115,13 +116,13 @@ fn flow() -> Flow {
 }
 
 fn run(reg: &mut AttestRegistry, approval: &[u8; 32], height: u64) -> Result<(), ChainError> {
-    reg.execute(approval, &ACTION, &ARTIFACT, height, |_| Ok(())).map(|_| ())
+    reg.execute(approval, &ACTION, &ARTIFACT, height, None, |_| Ok(())).map(|_| ())
 }
 
 #[test]
 fn full_flow_yields_one_receipt_with_inclusion_proofs() {
     let Flow { mut reg, evaluation, approval } = flow();
-    let (receipt, applied) = reg.execute(&approval, &ACTION, &ARTIFACT, H, |r| Ok(r.leaf)).unwrap();
+    let (receipt, applied) = reg.execute(&approval, &ACTION, &ARTIFACT, H, None, |r| Ok(r.leaf)).unwrap();
     assert_eq!(applied, 4);
     assert_eq!(receipt.evaluation, evaluation);
     assert_eq!(reg.receipt(&approval), Some(&receipt));
@@ -184,14 +185,14 @@ fn integrity_every_field_is_covered_by_the_signature() {
         let mut att = base.clone();
         edit(&mut att);
         assert_ne!(att, base, "edit {i}");
-        assert_eq!(registry().admit(&att, H), Err(ChainError::UnverifiedSignature), "edit {i}");
+        assert_eq!(registry().admit(&att, H, None), Err(ChainError::UnverifiedSignature), "edit {i}");
     }
     let mut eval = signed("evaluator", 3, evaluation(ARTIFACT, false));
     if let Claim::Evaluation { passed, .. } = &mut eval.claim {
         *passed = true;
     }
-    assert_eq!(registry().admit(&eval, H), Err(ChainError::UnverifiedSignature));
-    registry().admit(&base, H).unwrap();
+    assert_eq!(registry().admit(&eval, H, None), Err(ChainError::UnverifiedSignature));
+    registry().admit(&base, H, None).unwrap();
 }
 
 #[test]
@@ -205,16 +206,16 @@ fn context_a_signature_for_another_domain_is_rejected() {
         let mut att = signed("requester", 1, Claim::Request { task: [1; 32], budget: 1 });
         edit(&mut att);
         sign_attestation(&mut att, &secret("requester")).unwrap();
-        assert_eq!(registry().admit(&att, H), Err(ChainError::Attest("domain")));
+        assert_eq!(registry().admit(&att, H, None), Err(ChainError::Attest("domain")));
     }
     let mut att = signed("requester", 1, Claim::Request { task: [1; 32], budget: 1 });
     att.version = 2;
     sign_attestation(&mut att, &secret("requester")).unwrap();
-    assert_eq!(registry().admit(&att, H), Err(ChainError::Attest("version")));
+    assert_eq!(registry().admit(&att, H, None), Err(ChainError::Attest("version")));
     att.version = ATTEST_VERSION;
     att.scheme = 2;
     sign_attestation(&mut att, &secret("requester")).unwrap();
-    assert_eq!(registry().admit(&att, H), Err(ChainError::Attest("version")));
+    assert_eq!(registry().admit(&att, H, None), Err(ChainError::Attest("version")));
 }
 
 #[test]
@@ -237,7 +238,7 @@ fn single_use_concurrent_executions_produce_one_effect() {
             std::thread::spawn(move || {
                 reg.lock()
                     .unwrap()
-                    .execute(&approval, &ACTION, &ARTIFACT, H, |_| {
+                    .execute(&approval, &ACTION, &ARTIFACT, H, None, |_| {
                         effects.fetch_add(1, Ordering::SeqCst);
                         Ok(())
                     })
@@ -254,7 +255,7 @@ fn single_use_concurrent_executions_produce_one_effect() {
 fn single_use_failed_effect_leaves_the_approval_unused() {
     let Flow { mut reg, approval, .. } = flow();
     let (root, count) = (reg.root().unwrap(), reg.count());
-    let failed = reg.execute(&approval, &ACTION, &ARTIFACT, H, |_| Err::<(), _>(ChainError::Busy));
+    let failed = reg.execute(&approval, &ACTION, &ARTIFACT, H, None, |_| Err::<(), _>(ChainError::Busy));
     assert_eq!(failed.unwrap_err(), ChainError::Busy);
     assert_eq!((reg.root().unwrap(), reg.count()), (root, count));
     assert_eq!(reg.status(&approval, H).unwrap().execution_recorded, None);
@@ -284,25 +285,25 @@ fn authority_revoked_grant_stops_later_executions() {
         let revoke = |signer: &str| {
             signed(signer, 9, Claim::Revocation { delegate: delegate.to_string(), role })
         };
-        assert_eq!(reg.admit(&revoke("outsider"), 12), Err(ChainError::Attest("authority")));
-        assert_eq!(reg.admit(&revoke(delegate), 12), Err(ChainError::Attest("authority")));
-        reg.admit(&revoke("root"), 12).unwrap();
+        assert_eq!(reg.admit(&revoke("outsider"), 12, None), Err(ChainError::Attest("authority")));
+        assert_eq!(reg.admit(&revoke(delegate), 12, None), Err(ChainError::Attest("authority")));
+        reg.admit(&revoke("root"), 12, None).unwrap();
         let expected = if role == Role::Author { "link" } else { "authority" };
         assert_eq!(run(&mut reg, &approval, 12), Err(ChainError::Attest(expected)));
         assert_eq!(run(&mut reg, &approval, 13), Err(ChainError::Attest(expected)));
     }
     let mut reg = registry();
     let unknown = signed("root", 9, Claim::Revocation { delegate: "outsider".to_string(), role: Role::Approver });
-    assert_eq!(reg.admit(&unknown, H), Err(ChainError::Attest("authority")));
+    assert_eq!(reg.admit(&unknown, H, None), Err(ChainError::Attest("authority")));
 }
 
 #[test]
 fn binding_approval_of_a_does_not_execute_b() {
     let Flow { mut reg, approval, evaluation } = flow();
     let other = [0xB2; 32];
-    let wrong_artifact = reg.execute(&approval, &ACTION, &other, H, |_| Ok(()));
+    let wrong_artifact = reg.execute(&approval, &ACTION, &other, H, None, |_| Ok(()));
     assert_eq!(wrong_artifact.unwrap_err(), ChainError::Attest("artifact"));
-    let wrong_action = reg.execute(&approval, &other, &ARTIFACT, H, |_| Ok(()));
+    let wrong_action = reg.execute(&approval, &other, &ARTIFACT, H, None, |_| Ok(()));
     assert_eq!(wrong_action.unwrap_err(), ChainError::Attest("action"));
     assert_eq!(run(&mut reg, &evaluation, H), Err(ChainError::Attest("kind")));
     assert_eq!(run(&mut reg, &other, H), Err(ChainError::Attest("unknown")));
@@ -310,9 +311,9 @@ fn binding_approval_of_a_does_not_execute_b() {
     // An approval of B that cites the evaluation of A.
     let policy = reg.policy_digest();
     let crossed = reg
-        .admit(&signed("approver", 4, Claim::Approval { action: ACTION, artifact: other, evaluation, policy }), H)
+        .admit(&signed("approver", 4, Claim::Approval { action: ACTION, artifact: other, evaluation, policy }), H, None)
         .unwrap();
-    let out = reg.execute(&crossed, &ACTION, &other, H, |_| Ok(()));
+    let out = reg.execute(&crossed, &ACTION, &other, H, None, |_| Ok(()));
     assert_eq!(out.unwrap_err(), ChainError::Attest("link"));
 
     // An approval that cites another policy, and one that cites no evaluation.
@@ -320,7 +321,7 @@ fn binding_approval_of_a_does_not_execute_b() {
         [(5, evaluation, [0; 32], "policy"), (6, approval, policy, "link"), (7, [3; 32], policy, "link")]
     {
         let claim = Claim::Approval { action: ACTION, artifact: ARTIFACT, evaluation, policy };
-        let id = reg.admit(&signed("approver", nonce, claim), H).unwrap();
+        let id = reg.admit(&signed("approver", nonce, claim), H, None).unwrap();
         assert_eq!(run(&mut reg, &id, H), Err(ChainError::Attest(expected)));
     }
     run(&mut reg, &approval, H).unwrap();
@@ -332,10 +333,10 @@ fn binding_failed_evaluation_and_missing_proposal_do_not_execute() {
     assert_eq!(run(&mut reg, &approval, H), Err(ChainError::Attest("evaluation")));
 
     let mut reg = registry();
-    let evaluation = reg.admit(&signed("evaluator", 1, evaluation(ARTIFACT, true)), H).unwrap();
+    let evaluation = reg.admit(&signed("evaluator", 1, evaluation(ARTIFACT, true)), H, None).unwrap();
     let policy = reg.policy_digest();
     let claim = Claim::Approval { action: ACTION, artifact: ARTIFACT, evaluation, policy };
-    let approval = reg.admit(&signed("approver", 1, claim), H).unwrap();
+    let approval = reg.admit(&signed("approver", 1, claim), H, None).unwrap();
     assert_eq!(run(&mut reg, &approval, H), Err(ChainError::Attest("link")));
 }
 
@@ -350,7 +351,7 @@ fn separation_one_account_cannot_evaluate_and_approve() {
 fn traceability_a_false_signed_statement_gets_only_the_proven_states() {
     let mut reg = registry();
     // Nobody ran anything. The signer has a key and no evaluator role.
-    let id = reg.admit(&signed("outsider", 1, evaluation(ARTIFACT, true)), H).unwrap();
+    let id = reg.admit(&signed("outsider", 1, evaluation(ARTIFACT, true)), H, None).unwrap();
     let status = reg.status(&id, H).unwrap();
     assert!(status.signature_valid);
     assert!(!status.authority_confirmed);
@@ -364,20 +365,20 @@ fn traceability_a_false_signed_statement_gets_only_the_proven_states() {
 fn limits_replay_window_unknown_key_and_quota() {
     let mut reg = registry();
     let att = signed("requester", 1, Claim::Request { task: [1; 32], budget: 1 });
-    assert_eq!(reg.admit(&att, 51), Err(ChainError::Attest("window")));
-    reg.admit(&att, H).unwrap();
-    assert_eq!(reg.admit(&att, H), Err(ChainError::Attest("replay")));
+    assert_eq!(reg.admit(&att, 51, None), Err(ChainError::Attest("window")));
+    reg.admit(&att, H, None).unwrap();
+    assert_eq!(reg.admit(&att, H, None), Err(ChainError::Attest("replay")));
     let same_nonce = signed("requester", 1, Claim::Request { task: [2; 32], budget: 1 });
-    assert_eq!(reg.admit(&same_nonce, H), Err(ChainError::Attest("replay")));
+    assert_eq!(reg.admit(&same_nonce, H, None), Err(ChainError::Attest("replay")));
 
     let mut stranger = signed("requester", 2, Claim::Request { task: [1; 32], budget: 1 });
     stranger.signer = "nobody".to_string();
-    assert_eq!(reg.admit(&stranger, H), Err(ChainError::UnverifiedSignature));
+    assert_eq!(reg.admit(&stranger, H, None), Err(ChainError::UnverifiedSignature));
 
     for nonce in 2..=ATTEST_SIGNER_QUOTA as u8 {
-        reg.admit(&signed("requester", nonce, Claim::Request { task: [1; 32], budget: 1 }), H).unwrap();
+        reg.admit(&signed("requester", nonce, Claim::Request { task: [1; 32], budget: 1 }), H, None).unwrap();
     }
     let over = signed("requester", 200, Claim::Request { task: [1; 32], budget: 1 });
-    assert_eq!(reg.admit(&over, H), Err(ChainError::Attest("quota")));
-    reg.admit(&signed("author", 1, Claim::Artifact { request: [0; 32], artifact: ARTIFACT }), H).unwrap();
+    assert_eq!(reg.admit(&over, H, None), Err(ChainError::Attest("quota")));
+    reg.admit(&signed("author", 1, Claim::Artifact { request: [0; 32], artifact: ARTIFACT }), H, None).unwrap();
 }

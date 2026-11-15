@@ -11,6 +11,14 @@ use arkhe_core::Digest32;
 use arkhe_verify_core::rbb::mmr::{self, Frontier, Proof};
 use libp2p::identity::ed25519;
 
+mod rotation;
+
+#[allow(unused_imports)]
+pub use rotation::{
+    build_rotation_proof, check_rotation, rotation_commitment, RotationOutcome, EMPTY_SEGMENT_ROOT,
+    MAX_LEAVES, ROTATION_PROOF_LEN,
+};
+
 use crate::error::ChainError;
 use crate::tx::account_id;
 
@@ -383,8 +391,13 @@ impl AttestRegistry {
     }
 
     /// Record a signed statement. Order: version and scheme, domain, shape,
-    /// window, signature, replay, quota, revocation authority, MMR.
-    pub fn admit(&mut self, att: &Attestation, height: u64) -> Result<[u8; 32], ChainError> {
+    /// window, signature, replay, quota, rotation, revocation authority, MMR.
+    pub fn admit(
+        &mut self,
+        att: &Attestation,
+        height: u64,
+        rotation_proof: Option<&[u8]>,
+    ) -> Result<[u8; 32], ChainError> {
         if att.version != ATTEST_VERSION || att.scheme != ATTEST_SCHEME_ED25519 {
             return Err(ChainError::Attest("version"));
         }
@@ -416,9 +429,7 @@ impl AttestRegistry {
         if self.nonces.contains(&nonce) {
             return Err(ChainError::Attest("replay"));
         }
-        if self.records.len() >= ATTEST_MAX_RECORDS {
-            return Err(ChainError::Attest("full"));
-        }
+        self.ensure_capacity(rotation_proof)?;
         let used = self.per_signer.get(&att.signer).copied().unwrap_or(0);
         if used >= ATTEST_SIGNER_QUOTA {
             return Err(ChainError::Attest("quota"));
@@ -455,8 +466,10 @@ impl AttestRegistry {
         action: &[u8; 32],
         artifact: &[u8; 32],
         height: u64,
+        rotation_proof: Option<&[u8]>,
         effect: impl FnOnce(&Receipt) -> Result<T, ChainError>,
     ) -> Result<(Receipt, T), ChainError> {
+        self.ensure_capacity(rotation_proof)?;
         let (approved, _) = self
             .attestations
             .get(approval)
@@ -518,9 +531,6 @@ impl AttestRegistry {
         let author = self.proposal_author(artifact, height)?;
         if author == approved.signer || author == evaluated.signer {
             return Err(ChainError::Attest("separation"));
-        }
-        if self.records.len() >= ATTEST_MAX_RECORDS {
-            return Err(ChainError::Attest("full"));
         }
         let mut receipt = Receipt {
             approval: *approval,

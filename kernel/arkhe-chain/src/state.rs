@@ -76,16 +76,22 @@ impl ChainState {
     }
 
     /// Apply one block op at `height`. Nothing changes when it is refused.
-    pub fn apply_op(&mut self, op: &AttestOp, height: u64) -> Result<(), ChainError> {
+    pub fn apply_op(
+        &mut self,
+        op: &AttestOp,
+        height: u64,
+        rotation_proof: &mut Option<&[u8]>,
+    ) -> Result<(), ChainError> {
+        let proof = rotation_proof.take();
         match op {
-            AttestOp::Admit(att) => self.attest.admit(att, height).map(|_| ()),
+            AttestOp::Admit(att) => self.attest.admit(att, height, proof).map(|_| ()),
             AttestOp::Execute {
                 approval,
                 action,
                 artifact,
             } => self
                 .attest
-                .execute(approval, action, artifact, height, |_| Ok(()))
+                .execute(approval, action, artifact, height, proof, |_| Ok(()))
                 .map(|_| ()),
         }
     }

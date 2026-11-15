@@ -22,6 +22,7 @@
 mod anchor;
 mod attest;
 mod codec;
+mod consensus;
 mod contingency;
 mod error;
 mod ethereum;
@@ -38,11 +39,15 @@ mod validity_bridge;
 
 pub use anchor::{btc_op_return, check_btc_op_return, AnchorPlan, AnchorPublisher, BTC_OP_RETURN_LEN};
 pub use attest::{
-    sign_attestation, AttestOp, AttestPolicy, AttestRegistry, AttestStatus, Attestation, Claim, Grant,
-    Receipt, Role, ATTEST_AUDIENCE, ATTEST_MAX_OPS_PER_BLOCK, ATTEST_MAX_RECORDS, ATTEST_POOL_CAPACITY,
-    ATTEST_SCHEME_ED25519, ATTEST_SIGNER_QUOTA, ATTEST_VERSION,
+    build_rotation_proof, check_rotation, sign_attestation, AttestOp, AttestPolicy, AttestRegistry,
+    AttestStatus, Attestation, Claim, Grant, Receipt, Role, RotationOutcome, ATTEST_AUDIENCE,
+    ATTEST_MAX_OPS_PER_BLOCK, ATTEST_MAX_RECORDS, ATTEST_POOL_CAPACITY, ATTEST_SCHEME_ED25519,
+    ATTEST_SIGNER_QUOTA, ATTEST_VERSION, MAX_LEAVES,
 };
 pub use codec::{decode_block, encode_block};
+pub use consensus::{
+    bft_commit, total_validator_power, CanonicalVote, CommitVerdict, VoteType, CANONICAL_CHAIN_ID,
+};
 pub use contingency::{hold_for_absent_verifier, SettlementContingency};
 pub use error::ChainError;
 pub use ethereum::{
@@ -485,10 +490,11 @@ impl ArkheNode {
         }
         let height = inner.state.height + 1;
         let mut trial = inner.state.clone();
+        let mut none = None;
         for queued in &inner.attest_pool {
-            trial.apply_op(queued, height)?;
+            trial.apply_op(queued, height, &mut none)?;
         }
-        trial.apply_op(&op, height)?;
+        trial.apply_op(&op, height, &mut none)?;
         if inner.attest_pool.len() >= ATTEST_POOL_CAPACITY {
             return Err(ChainError::MempoolFull);
         }
@@ -1048,11 +1054,22 @@ impl ArkheNode {
             }
         }
         let mut ops = Vec::new();
+        let block_rotation = if working.attest().count() >= ATTEST_MAX_RECORDS as u64
+            && inner
+                .attest_pool
+                .iter()
+                .any(|op| matches!(op, AttestOp::Admit(_) | AttestOp::Execute { .. }))
+        {
+            Some(crate::attest::build_rotation_proof(working.attest())?)
+        } else {
+            None
+        };
+        let mut proof_slot = block_rotation.as_deref();
         while ops.len() < ATTEST_MAX_OPS_PER_BLOCK {
             let Some(op) = inner.attest_pool.pop_front() else {
                 break;
             };
-            match working.apply_op(&op, working.height + 1) {
+            match working.apply_op(&op, working.height + 1, &mut proof_slot) {
                 Ok(()) => ops.push(op),
                 Err(error) => rejected.push(error),
             }
@@ -1076,6 +1093,7 @@ impl ArkheNode {
             header,
             transactions: accepted,
             attestations: ops,
+            rotation_proof: block_rotation,
         };
         sign_block(&mut block, &self.signer)?;
         let bytes = encode_block(&block);
@@ -1179,8 +1197,9 @@ impl ArkheNode {
         for tx in &block.transactions {
             working.apply_tx(tx)?;
         }
+        let mut rotation = block.rotation_proof.as_deref();
         for op in &block.attestations {
-            working.apply_op(op, block.header.block_number)?;
+            working.apply_op(op, block.header.block_number, &mut rotation)?;
         }
         if working.state_commitment()? != block.header.state_root
             || working.frontier.count != block.header.mmr_count
@@ -1370,8 +1389,9 @@ fn reject_sibling(inner: &Inner, block: &Block, parent_height: u64) -> Result<()
         for tx in &parent.transactions {
             trial.apply_tx(tx)?;
         }
+        let mut parent_rotation = parent.rotation_proof.as_deref();
         for op in &parent.attestations {
-            trial.apply_op(op, parent.header.block_number)?;
+            trial.apply_op(op, parent.header.block_number, &mut parent_rotation)?;
         }
         if height == parent_height && block.header.timestamp <= parent.header.timestamp {
             return Err(ChainError::BadTimestamp);
@@ -1385,8 +1405,9 @@ fn reject_sibling(inner: &Inner, block: &Block, parent_height: u64) -> Result<()
     for tx in &block.transactions {
         trial.apply_tx(tx)?;
     }
+    let mut block_rotation = block.rotation_proof.as_deref();
     for op in &block.attestations {
-        trial.apply_op(op, block.header.block_number)?;
+        trial.apply_op(op, block.header.block_number, &mut block_rotation)?;
     }
     if trial.state_commitment()? != block.header.state_root
         || trial.frontier.count != block.header.mmr_count
@@ -1444,8 +1465,9 @@ fn commit_extension(
     let queued = std::mem::take(&mut inner.attest_pool);
     let mut trial = working.clone();
     let next = working.height + 1;
+    let mut none = None;
     for op in queued {
-        if trial.apply_op(&op, next).is_ok() {
+        if trial.apply_op(&op, next, &mut none).is_ok() {
             inner.attest_pool.push_back(op);
         }
     }

@@ -36,6 +36,8 @@ pub struct Block {
     pub transactions: Vec<Transaction>,
     /// Attestation ops, applied after the transactions at this block's height.
     pub attestations: Vec<crate::attest::AttestOp>,
+    /// Consistency witness for the attestation MMR when the registry is full.
+    pub rotation_proof: Option<Vec<u8>>,
 }
 
 pub fn account_id(s: &str) -> bool {
