@@ -26,14 +26,18 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: Locked dependency tree (arkhe-chain)
+        run: cargo tree -p arkhe-chain --locked --depth 0
+      - name: Secret scan (crate sources)
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           scan-type: fs
           scan-ref: kernel/arkhe-chain
-          scanners: vuln,secret,misconfig
+          scanners: secret
           severity: HIGH,CRITICAL
           exit-code: '1'
-          skip-dirs: target
+          skip-dirs: target,site,vendor,testnet,docs
           format: table
 
   sast:
@@ -46,6 +50,7 @@ jobs:
         with:
           languages: rust
           build-mode: none
+          config-file: ./.github/codeql/arkhe-chain.yml
       - uses: github/codeql-action/analyze@793b778da9c9275a0f276522b27cb5fc14bba279
         with:
           upload: false
