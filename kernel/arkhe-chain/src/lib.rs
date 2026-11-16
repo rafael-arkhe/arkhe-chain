@@ -21,6 +21,7 @@
 
 mod anchor;
 mod audit_bundle;
+mod rekor_trust;
 mod rekor_witness;
 mod rfc6962;
 mod attest;
@@ -46,8 +47,9 @@ pub use audit_bundle::{
     OfflineVerificationBundle, RegistryCheckpoint, OFFLINE_BUNDLE_VERSION,
 };
 pub use rekor_witness::{
-    synthetic_witness_for_digest, verify_recorded_witness, witness_from_rekor_entry_json,
-    RekorInclusionWitness, DEFAULT_REKOR_BASE_URL, DEFAULT_REKOR_ORIGIN,
+    hashedrekord_sha256_digest, synthetic_witness_for_digest, verify_recorded_witness,
+    verify_recorded_witness_rekor_log, witness_from_rekor_entry_json, RekorInclusionWitness,
+    DEFAULT_REKOR_BASE_URL, DEFAULT_REKOR_ORIGIN,
 };
 pub use attest::{
     build_rotation_proof, check_rotation, sign_attestation, AttestOp, AttestPolicy, AttestRegistry,

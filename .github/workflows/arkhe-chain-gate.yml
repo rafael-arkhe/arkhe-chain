@@ -48,8 +48,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.96.0
-      - name: C3 audit bundle tests
-        run: cargo test --locked -p arkhe-chain --test audit_bundle -- --nocapture
+      - name: C3 audit bundle + Rekor fixture tests
+        run: |
+          cargo test --locked -p arkhe-chain --test audit_bundle -- --nocapture
+          cargo test --locked -p arkhe-chain --test rekor_fixture -- --nocapture
 
   # Production binary #1: `CommitVerdict::Commit` under `tests/c2_canonical_vote.rs`.
   c2-quick:
