@@ -4,6 +4,7 @@ use arkhe_chain::{
     hashedrekord_sha256_digest, verify_recorded_witness, witness_from_rekor_entry_json,
     ChainError, DEFAULT_REKOR_BASE_URL, DEFAULT_REKOR_ORIGIN,
 };
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use sha2::{Digest, Sha256};
 
 const ENTRY_JSON: &[u8] = include_bytes!("fixtures/rekor_entry_arkhe_verify_wasm.json");
@@ -29,13 +30,13 @@ fn committed_public_rekor_entry_merkle_and_checkpoint_offline() {
     let artifact = hashedrekord_sha256_digest(&witness.leaf_body).expect("hashedrekord digest");
     let mut bound = witness;
     bound.anchored_digest = artifact;
-    // Strip SET so Merkle + checkpoint path is exercised; SET remains set-pending.
+    // Strip SET so Merkle + checkpoint path is exercised without SET.
     bound.signed_entry_timestamp = None;
     verify_recorded_witness(&artifact, &bound).expect("merkle + checkpoint");
 }
 
 #[test]
-fn fixture_with_set_fails_closed_as_set_pending() {
+fn committed_public_rekor_entry_with_set_offline() {
     fixture_digest_matches();
     let witness = witness_from_rekor_entry_json(
         &[0u8; 32],
@@ -48,9 +49,26 @@ fn fixture_with_set_fails_closed_as_set_pending() {
     let mut bound = witness;
     bound.anchored_digest = artifact;
     assert!(bound.signed_entry_timestamp.is_some());
+    verify_recorded_witness(&artifact, &bound).expect("merkle + checkpoint + SET");
+}
+
+#[test]
+fn fixture_with_forged_set_fails_closed() {
+    fixture_digest_matches();
+    let witness = witness_from_rekor_entry_json(
+        &[0u8; 32],
+        DEFAULT_REKOR_BASE_URL,
+        DEFAULT_REKOR_ORIGIN,
+        ENTRY_JSON,
+    )
+    .expect("parse fixture");
+    let artifact = hashedrekord_sha256_digest(&witness.leaf_body).unwrap();
+    let mut bound = witness;
+    bound.anchored_digest = artifact;
+    bound.signed_entry_timestamp = Some(STANDARD.encode([0u8; 72]));
     assert_eq!(
         verify_recorded_witness(&artifact, &bound),
-        Err(ChainError::ExternalAnchorRekor("set-pending"))
+        Err(ChainError::ExternalAnchorRekor("set-sig"))
     );
 }
 

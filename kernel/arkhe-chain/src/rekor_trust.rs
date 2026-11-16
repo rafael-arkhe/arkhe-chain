@@ -6,10 +6,13 @@
 use crate::error::ChainError;
 use crate::rekor_witness::RekorInclusionWitness;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
+use p256::ecdsa::signature::Verifier as _;
+use p256::ecdsa::{Signature, VerifyingKey};
+use p256::pkcs8::DecodePublicKey;
 use sigstore_crypto::{verify_signature_auto, Checkpoint};
 use sigstore_trust_root::TrustedRoot;
 use sigstore_types::bundle::{CheckpointData, InclusionProof};
-use sigstore_types::{LogKeyId, Sha256Hash, SignatureBytes};
+use sigstore_types::{DerPublicKey, LogKeyId, Sha256Hash, SignatureBytes};
 use std::sync::OnceLock;
 
 const TRUSTED_ROOT_JSON: &str = include_str!("../fixtures/sigstore/rekor_trusted_root.json");
@@ -44,17 +47,12 @@ pub(crate) fn verify_witness_log_signatures(witness: &RekorInclusionWitness) -> 
         let inclusion_proof = inclusion_proof_for_witness(witness)?;
         verify_checkpoint_signature(&witness.checkpoint_envelope, &inclusion_proof, root)?;
     }
-    if witness.signed_entry_timestamp.is_some() {
-        // Checkpoint + Merkle are verified above. SET (signedEntryTimestamp) against
-        // `verify_signature_auto` does not yet accept Rekor's DER ECDSA payloads for this
-        // fixture (Python/cryptography verifies; tracked as set-pending — not a silent skip
-        // of absent SET material).
-        return Err(ChainError::ExternalAnchorRekor("set-pending"));
+    if let Some(set_b64) = witness.signed_entry_timestamp.as_deref() {
+        verify_set_signature(witness, set_b64, root)?;
     }
     Ok(())
 }
 
-#[allow(dead_code)] // SET verify path retained; production returns set-pending until DER ECDSA lands.
 fn rekor_set_canonical_bytes(body_b64: &str, integrated_time: i64, log_index: i64, log_id_hex: &str) -> Vec<u8> {
     // Matches Rekor / Python `json.dumps(..., sort_keys=True, separators=(',', ':'))`.
     format!(
@@ -63,7 +61,19 @@ fn rekor_set_canonical_bytes(body_b64: &str, integrated_time: i64, log_index: i6
     .into_bytes()
 }
 
-#[allow(dead_code)] // Kept for the pending SET DER path; see set-pending above.
+/// Rekor SET uses DER-encoded ECDSA P-256 / SHA-256 over the canonical JSON payload.
+/// Sigstore's `verify_signature_auto` (aws-lc-rs) rejects some Rekor SET signatures that
+/// Python/cryptography accepts; verify with the `p256` crate instead.
+fn verify_set_der_ecdsa(public_key: &DerPublicKey, signature: &[u8], message: &[u8]) -> bool {
+    let Ok(verifying_key) = VerifyingKey::from_public_key_der(public_key.as_bytes()) else {
+        return false;
+    };
+    let Ok(sig) = Signature::from_der(signature) else {
+        return false;
+    };
+    verifying_key.verify(message, &sig).is_ok()
+}
+
 fn verify_set_signature(
     witness: &RekorInclusionWitness,
     set_b64: &str,
@@ -102,7 +112,7 @@ fn verify_set_signature(
     );
     if let Some(key_id) = witness.log_id_key_id.as_deref() {
         if let Ok(log_key) = trusted_root.rekor_key_for_log(&LogKeyId::new(key_id.to_string())) {
-            if verify_signature_auto(&log_key, &signature, &canonical_json).is_ok() {
+            if verify_set_der_ecdsa(&log_key, signature.as_bytes(), &canonical_json) {
                 return Ok(());
             }
         }
@@ -111,7 +121,7 @@ fn verify_set_signature(
         .rekor_keys_with_hints()
         .map_err(|_| ChainError::ExternalAnchorRekor("trust-root"))?;
     for (_hint, public_key) in &rekor_keys {
-        if verify_signature_auto(public_key, &signature, &canonical_json).is_ok() {
+        if verify_set_der_ecdsa(public_key, signature.as_bytes(), &canonical_json) {
             return Ok(());
         }
     }
@@ -190,9 +200,6 @@ mod tests {
         verify_checkpoint_signature(&witness.checkpoint_envelope, &inclusion_proof, root)
             .expect("checkpoint");
         assert!(witness.signed_entry_timestamp.is_some());
-        assert_eq!(
-            verify_witness_log_signatures(&witness),
-            Err(ChainError::ExternalAnchorRekor("set-pending"))
-        );
+        verify_witness_log_signatures(&witness).expect("SET DER ECDSA");
     }
 }

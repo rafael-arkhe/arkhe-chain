@@ -43,7 +43,7 @@ Every `ChainError` variant is fail-closed. Stable text starts with `FAIL_CLOSED:
 | `AuditBundle` | Offline bundle version, checkpoint, receipt, or leaf index mismatch |
 | `ExternalAnchorAbsent` | No public transparency-log proof attached |
 | `ExternalAnchorStub` | Documented offline stub (e.g. `rekor:dryrun:`); not a production trust root |
-| `ExternalAnchorRekor` | Recorded Rekor witness failed digest, checkpoint binding, Merkle inclusion, checkpoint signature (`checkpoint-sig`), or SET policy (`set-pending` until SET verification ships) |
+| `ExternalAnchorRekor` | Recorded Rekor witness failed digest, checkpoint binding, Merkle inclusion, checkpoint signature (`checkpoint-sig`), or SET signature (`set-sig`) |
 | `VerifierAbsent` | Groth16 verifier not deployed |
 | `RpcAbsent` | Settlement client absent |
 | `RpcTimeout` | Settlement did not respond in time |
