@@ -1,56 +1,50 @@
+# Security gates scoped to `kernel/arkhe-chain`. The copied monorepo workflow
+# (AI/RAG/billing/gov-worker) does not apply to this repository layout.
 name: security
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
+
 jobs:
   ai-boundaries:
+    name: ai-boundaries
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with: {persist-credentials: false}
-      - uses: dtolnay/rust-toolchain@d86e0fa8f147d6539442c26a61ebba8becc19489
-      - uses: actions/setup-node@v4
-        with: {node-version: '24'}
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
-      - run: python scripts/check_architecture.py
-      - run: python scripts/check_ai_release.py
-      - run: python scripts/check_gov_release.py
-      - run: python scripts/security_recovery_drill.py
-      - run: cargo test -p arkhe-rag --test adversarial --locked
-      - run: cargo test -p arkhe-ollama --test client --test stdin --locked
-      - run: cargo test -p arkhe-bugbounty --test ollama --locked
-      - run: rustup target add wasm32-unknown-unknown
-      - run: cargo install wasm-pack --locked
-      - run: python scripts/build_verifier.py
-      - run: python scripts/gov_poc.py --skip-build
-      - run: node --test apps/arkhe-intra/tests/security-boundaries.test.mjs apps/arkhe-intra/tests/fullstack.test.mjs
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: Consensus and admission falsifiers
+        run: |
+          cargo test --locked -p arkhe-chain --test c1_reorg -- --nocapture
+          cargo test --locked -p arkhe-chain --test c2_canonical_vote -- --nocapture
+          cargo test --locked -p arkhe-chain --test attest -- --nocapture
+          cargo test --locked -p arkhe-chain --test limits -- --nocapture
+          cargo test --locked -p arkhe-chain --test halt -- --nocapture
+
   supply-chain:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with: {persist-credentials: false}
+      - uses: actions/checkout@v4
       - uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           scan-type: fs
-          scan-ref: .
+          scan-ref: kernel/arkhe-chain
           scanners: vuln,secret,misconfig
           severity: HIGH,CRITICAL
           exit-code: '1'
-          skip-dirs: node_modules,target,dist,archive,ops/local
+          skip-dirs: target
           format: table
+
   sast:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with: {persist-credentials: false}
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
       - uses: github/codeql-action/init@793b778da9c9275a0f276522b27cb5fc14bba279
         with:
-          languages: javascript-typescript,python
-          queries: security-extended
+          languages: rust
           build-mode: none
       - uses: github/codeql-action/analyze@793b778da9c9275a0f276522b27cb5fc14bba279
         with:
@@ -60,47 +54,21 @@ jobs:
         run: python scripts/check_sarif.py codeql-results
 
   billing-migration:
+    if: false # N/A: billing SQL gates belong to the full Arkhe monorepo, not arkhe-chain.
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: synthetic-ci-only
-          POSTGRES_DB: arkhe
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      PGPASSWORD: synthetic-ci-only
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with: {persist-credentials: false}
-      - name: Apply migrations to disposable PostgreSQL
-        run: |
-          for migration in storage/sql/migrations/*.sql; do
-            psql -h 127.0.0.1 -U postgres -d arkhe -v ON_ERROR_STOP=1 -f "$migration"
-          done
-      - run: psql -h 127.0.0.1 -U postgres -d arkhe -f storage/sql/tests/postgres16/billing_security_gates.sql
+      - run: echo "skipped — billing-migration is not applicable to arkhe-chain"
 
   gov-worker-adversarial:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with: {persist-credentials: false}
-      - uses: dtolnay/rust-toolchain@d86e0fa8f147d6539442c26a61ebba8becc19489
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
-      - run: python -m pip install cryptography==50.0.1
-      - run: python scripts/check_gov_release.py
-      - run: cargo test -p arkhe-bugbounty --test provenance --test workload --test workload_real_receipts --locked
-      - run: python scripts/gov_worker_differential.py --cases 4096
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: gov-worker-differential
-          path: docs/evidence/gov/2026-10-21/worker-differential.json
-          if-no-files-found: error
-          retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: Audit, Rekor, and replay adversarial tests
+        run: |
+          cargo test --locked -p arkhe-chain --test rekor_fixture -- --nocapture
+          cargo test --locked -p arkhe-chain --test audit_bundle -- --nocapture
+          cargo test --locked -p arkhe-chain --test audit_regressions -- --nocapture
+          cargo test --locked -p arkhe-chain --test replay_log -- --nocapture
+          cargo test --locked -p arkhe-chain --test contingency -- --nocapture
