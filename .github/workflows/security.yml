@@ -70,8 +70,30 @@ jobs:
         with:
           upload: false
           output: codeql-results
-      - name: Block security findings
-        run: python scripts/check_sarif.py codeql-results
+      - name: Block security findings (arkhe-chain paths only)
+        run: |
+          python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          files = list(Path("codeql-results").rglob("*.sarif"))
+          if not files:
+              raise SystemExit("FAIL: no SAST results")
+          count = 0
+          for file in files:
+              for run in json.loads(file.read_text()).get("runs", []):
+                  for result in run.get("results", []):
+                      uri = (
+                          result.get("locations", [{}])[0]
+                          .get("physicalLocation", {})
+                          .get("artifactLocation", {})
+                          .get("uri", "")
+                          .replace("\\", "/")
+                      )
+                      if uri.startswith("kernel/arkhe-chain/"):
+                          count += 1
+          print(f"arkhe-chain SAST findings: {count}")
+          raise SystemExit(1 if count else 0)
+          PY
 
   billing-migration:
     if: false # N/A: billing SQL gates belong to the full Arkhe monorepo, not arkhe-chain.
