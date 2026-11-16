@@ -13,6 +13,15 @@ permissions:
   contents: read
 
 jobs:
+  c1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: C1 reorg falsifiers
+        run: cargo test --locked --test c1_reorg
+
   c2:
     runs-on: ubuntu-latest
     timeout-minutes: 90

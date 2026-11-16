@@ -25,7 +25,7 @@ const GATE_ROWS: GateRow[] = [
     label: 'Partial LEMMA',
     detail: 'CanonicalVote + bft_commit tested; live wire unchanged',
   },
-  { id: 'C1', status: 'open', label: 'Open', detail: 'Sibling stays Fork; precommit does not move tip' },
+  { id: 'C1', status: 'verified', label: 'VERIFIED (REFUTED)', detail: 'tests/c1_reorg.rs: Fork holds; no tip-replacing reorg in live import_block' },
   { id: 'F1', status: 'open', label: 'Open', detail: 'Guest ELF / image_id / verification key' },
   { id: 'F2', status: 'open', label: 'Open', detail: 'broadcast stays false' },
   { id: 'F3', status: 'open', label: 'Open', detail: 'settled stays false' },

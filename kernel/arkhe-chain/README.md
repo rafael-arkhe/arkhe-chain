@@ -27,7 +27,7 @@ cargo test -p arkhe-chain -- --test-threads=1
 
 **Latest documented A1 gate** (15 November 2026): [docs/gate-2026-11-15-a1-tree.log](docs/gate-2026-11-15-a1-tree.log) — exit 0, **236** passed, **0** failed, **0** ignored; tree **T** at commit `076c9459a8f60117a3883a45b020312598c49009`. The homologation record and log are **T′** artifacts on the branch that contains them.
 
-After **C2** (`4ff40ef7`, `tests/c2_canonical_vote.rs`), the development branch reports **248** passed locally with the same command; there is **no published A1 log** yet for that suite size. Incremental Windows logs (e.g. 217 tests) are not the A1 source of truth—see [docs/homologacao.md](docs/homologacao.md).
+After **C2** and **C1** (`tests/c2_canonical_vote.rs`, `tests/c1_reorg.rs`), the development branch reports **253** passed locally with the same command; there is **no published A1 log** yet for that suite size. Incremental Windows logs (e.g. 217 tests) are not the A1 source of truth—see [docs/homologacao.md](docs/homologacao.md).
 
 ## Gate status (summary)
 
@@ -36,7 +36,7 @@ After **C2** (`4ff40ef7`, `tests/c2_canonical_vote.rs`), the development branch 
 | A1 | Logged (**T**) | 236/0/0 at `076c9459`; log SHA256 in [homologacao.md](docs/homologacao.md) |
 | A3 | **PENDING** | Third-person rerun on published **T′**; `arkhen` on this machine does not close A3 |
 | A4 | **PENDING** | Third-person rerun on published root when applicable |
-| C1 | Open | Sibling stays `Fork`; precommit threshold does not move the tip |
+| C1 | **τ: VERIFIED (REFUTED)** | `tests/c1_reorg.rs` + CI C1 job: sibling stays `Fork`; quorum/`canonical_commit_verdict` do not tip-replace; no live reorg path |
 | C2 | Partial LEMMA | `CanonicalVote` + `consensus::bft_commit` and `ArkheNode::canonical_commit_verdict` (v4→verdict bridge) tested in CI via `.github/workflows/arkhe-chain-gate.yml`; live **Precommit v4** and tip unchanged; **CanonicalVote on the wire** still PENDING |
 | F1 | Open | Guest ELF, 32-byte `image_id`, verification key |
 | F2 | Open | No Bitcoin payout the crate declares; `broadcast` stays false |

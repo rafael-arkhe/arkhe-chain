@@ -29,6 +29,17 @@ permissions:
   contents: read
 
 jobs:
+  # Production binary #2: no tip-replacing reorg; falsifiers in `tests/c1_reorg.rs`.
+  c1-quick:
+    name: C1 reorg falsifiers (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: C1 reorg tests
+        run: cargo test --locked -p arkhe-chain --test c1_reorg -- --nocapture
+
   # Production binary #1: `CommitVerdict::Commit` under `tests/c2_canonical_vote.rs`.
   c2-quick:
     name: C2 falsifiers (ubuntu)
