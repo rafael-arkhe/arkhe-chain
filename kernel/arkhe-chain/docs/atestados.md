@@ -90,13 +90,13 @@ Admission does not require role and does not check links or content. A false eva
 
 `inclusion_proof(leaf)` returns proof, leaf, and root. Verification is `arkhe_verify_core::rbb::mmr::verify`.
 
-`OfflineVerificationBundle::from_registry` exports one executed approval, its receipt, and an MMR inclusion proof against a `RegistryCheckpoint`. `verify_inclusion` replays `arkhe_verify_core::rbb::mmr::verify` with a checkpoint obtained independently of the bundle. `verify_external_anchoring` is fail-closed: no Rekor witness, no mainnet broadcast, and documented stubs (`rekor:dryrun`, `BtcOpReturnPlan` with `broadcast: false`) return `ExternalAnchorAbsent` or `ExternalAnchorStub` only.
+`OfflineVerificationBundle::from_registry` exports one executed approval, its receipt, and an MMR inclusion proof against a `RegistryCheckpoint`. `verify_inclusion` replays `arkhe_verify_core::rbb::mmr::verify` with a checkpoint obtained independently of the bundle. `verify_external_anchoring`: `ExternalAnchoringProof::RekorWitness` verifies a recorded Rekor inclusion proof against `digest()`; stubs (`rekor:dryrun`), absent anchors, and `BtcOpReturnPlan` without a broadcast still fail closed (`ExternalAnchorAbsent` / `ExternalAnchorStub` / `ExternalAnchorRekor`). Mainnet broadcast is not implemented.
 
 ## Tests
 
 `cargo test -p arkhe-chain --test attest` runs 14 tests. Each invariant has at least one rejection: field changed after signature, signature from another domain, second execution, 16 concurrent executions with one effect, key without role, expired grant, revoked grant, approval for A used on B, and false statement that only gets provable statuses.
 
-`cargo test -p arkhe-chain --test audit_bundle` runs 3 tests: local MMR inclusion on an exported bundle, tampered checkpoint/leaf rejection, and fail-closed external anchoring variants.
+`cargo test -p arkhe-chain --test audit_bundle` runs 5 tests: local MMR inclusion, tampered checkpoint/leaf rejection, fail-closed stub variants, recorded Rekor witness acceptance, and witness falsifiers. `cargo test -p arkhe-chain --test rekor_online` skips unless `ARKHE_REKOR_ONLINE=1`.
 
 `cargo test -p arkhe-chain --test attest_chain` runs 5 tests with two nodes: the second replays operations and reaches the same root and receipt; a resigned block with one fewer operation, wrong order, other artifact, or repeated execution is rejected; transfer and operation share a block; reopened file rebuilds registry and refuses other grants.
 

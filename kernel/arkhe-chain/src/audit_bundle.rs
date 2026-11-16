@@ -1,10 +1,11 @@
 //! Offline export of one attestation receipt and its registry MMR inclusion proof.
 //!
 //! Local verification uses [`arkhe_verify_core::rbb::mmr`]. External trust roots
-//! (Rekor, Bitcoin mainnet broadcast, Hippius) are not implemented: anchoring
-//! proofs fail closed and must not pass as production LEMMA.
+//! Bitcoin mainnet broadcast and Hippius are not implemented. Recorded Rekor
+//! witnesses verify offline; stubs and absent anchors fail closed.
 
 use crate::attest::{AttestRegistry, Receipt};
+use crate::rekor_witness::{verify_recorded_witness, RekorInclusionWitness};
 use crate::error::ChainError;
 use arkhe_core::Digest32;
 use arkhe_verify_core::rbb::mmr::{self, Proof};
@@ -88,6 +89,10 @@ pub enum ExternalAnchoringProof {
     BtcOpReturnPlan {
         op_return: Vec<u8>,
         broadcast: bool,
+    },
+    /// RFC 6962 inclusion witness against a public Rekor log (recorded or fetched).
+    RekorWitness {
+        witness: RekorInclusionWitness,
     },
 }
 
@@ -186,11 +191,15 @@ impl OfflineVerificationBundle {
         .map_err(|_| ChainError::Mmr)
     }
 
-    /// Fail closed. Real Rekor/Bitcoin mainnet witnesses are not implemented.
+    /// Stubs and absent anchors fail closed. A verified [`ExternalAnchoringProof::RekorWitness`]
+    /// returns `Ok(())` when the witness matches [`Self::digest`] and the Merkle proof checks out.
     pub fn verify_external_anchoring(&self) -> Result<(), ChainError> {
         match &self.external {
             ExternalAnchoringProof::Absent => Err(ChainError::ExternalAnchorAbsent),
             ExternalAnchoringProof::RekorDryrunStub { .. } => Err(ChainError::ExternalAnchorStub),
+            ExternalAnchoringProof::RekorWitness { witness } => {
+                verify_recorded_witness(&self.digest(), witness)
+            }
             ExternalAnchoringProof::BtcOpReturnPlan {
                 op_return,
                 broadcast,

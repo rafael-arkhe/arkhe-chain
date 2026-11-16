@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
 use arkhe_chain::{
-    public_key, sign_attestation, AttestPolicy, AttestRegistry, Attestation, ChainError, Claim,
-    ExternalAnchoringProof, Grant, OfflineVerificationBundle, Receipt, RegistryCheckpoint, Role,
-    ATTEST_SCHEME_ED25519, ATTEST_VERSION,
+    public_key, sign_attestation, synthetic_witness_for_digest, AttestPolicy, AttestRegistry,
+    Attestation, ChainError, Claim, ExternalAnchoringProof, Grant, OfflineVerificationBundle,
+    Receipt, RegistryCheckpoint, Role, ATTEST_SCHEME_ED25519, ATTEST_VERSION,
 };
 use arkhe_verify_core::rbb::mmr;
 
@@ -224,5 +224,53 @@ fn external_anchoring_fail_closed() {
     assert_eq!(
         fake_broadcast.verify_external_anchoring(),
         Err(ChainError::ExternalAnchorStub)
+    );
+}
+
+#[test]
+fn recorded_rekor_witness_passes_when_digest_and_merkle_match() {
+    let mut reg = AttestRegistry::new(CHAIN, GENESIS, AUDIENCE, policy()).unwrap();
+    let (approval, _) = flow(&mut reg);
+    let mut bundle = OfflineVerificationBundle::from_registry(
+        &reg,
+        &approval,
+        ExternalAnchoringProof::Absent,
+    )
+    .unwrap();
+    let witness = synthetic_witness_for_digest(&bundle.digest());
+    bundle.external = ExternalAnchoringProof::RekorWitness { witness };
+    bundle.verify_external_anchoring().unwrap();
+}
+
+#[test]
+fn rekor_witness_rejects_wrong_digest_or_sibling() {
+    let mut reg = AttestRegistry::new(CHAIN, GENESIS, AUDIENCE, policy()).unwrap();
+    let (approval, _) = flow(&mut reg);
+    let bundle = OfflineVerificationBundle::from_registry(
+        &reg,
+        &approval,
+        ExternalAnchoringProof::Absent,
+    )
+    .unwrap();
+    let mut witness = synthetic_witness_for_digest(&bundle.digest());
+    witness.anchored_digest[0] ^= 1;
+    let bad = OfflineVerificationBundle {
+        external: ExternalAnchoringProof::RekorWitness { witness },
+        ..bundle.clone()
+    };
+    assert_eq!(
+        bad.verify_external_anchoring(),
+        Err(ChainError::ExternalAnchorRekor("digest"))
+    );
+
+    let mut witness = synthetic_witness_for_digest(&bundle.digest());
+    witness.sibling_hashes.push([9u8; 32]);
+    let bad = OfflineVerificationBundle {
+        external: ExternalAnchoringProof::RekorWitness { witness },
+        ..bundle
+    };
+    assert_eq!(
+        bad.verify_external_anchoring(),
+        Err(ChainError::ExternalAnchorRekor("inclusion"))
     );
 }

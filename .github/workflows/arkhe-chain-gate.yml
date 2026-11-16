@@ -40,6 +40,17 @@ jobs:
       - name: C1 reorg tests
         run: cargo test --locked -p arkhe-chain --test c1_reorg -- --nocapture
 
+  # Production binary #3: offline audit bundle + fail-closed stubs (`tests/audit_bundle.rs`).
+  c3-audit-bundle:
+    name: C3 audit bundle (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - name: C3 audit bundle tests
+        run: cargo test --locked -p arkhe-chain --test audit_bundle -- --nocapture
+
   # Production binary #1: `CommitVerdict::Commit` under `tests/c2_canonical_vote.rs`.
   c2-quick:
     name: C2 falsifiers (ubuntu)

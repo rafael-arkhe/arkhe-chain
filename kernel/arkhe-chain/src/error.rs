@@ -85,6 +85,8 @@ pub enum ChainError {
     /// Documented offline stub (e.g. `rekor:dryrun:`); not a production trust root.
     #[error("FAIL_CLOSED: EXTERNAL_ANCHOR_STUB")]
     ExternalAnchorStub,
+    #[error("FAIL_CLOSED: EXTERNAL_ANCHOR_REKOR: {0}")]
+    ExternalAnchorRekor(&'static str),
     #[error("FAIL_CLOSED: VERIFIER_ABSENT")]
     VerifierAbsent,
     #[error("FAIL_CLOSED: RPC_ABSENT")]
