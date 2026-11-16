@@ -40,6 +40,9 @@ Every `ChainError` variant is fail-closed. Stable text starts with `FAIL_CLOSED:
 | `InvalidSelector` | Selector other than `73c457ba` |
 | `InvalidSealLength` | Seal other than 260 bytes |
 | `InvalidAnchorPrefix` | Buffer other than `ARKHE` plus `state_root` |
+| `AuditBundle` | Offline bundle version, checkpoint, receipt, or leaf index mismatch |
+| `ExternalAnchorAbsent` | No public transparency-log proof (expected until Rekor/mainnet is wired) |
+| `ExternalAnchorStub` | Documented offline stub (e.g. `rekor:dryrun:`); not a production trust root |
 | `VerifierAbsent` | Groth16 verifier not deployed |
 | `RpcAbsent` | Settlement client absent |
 | `RpcTimeout` | Settlement did not respond in time |

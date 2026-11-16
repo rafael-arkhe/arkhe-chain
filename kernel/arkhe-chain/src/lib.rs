@@ -20,6 +20,7 @@
 //! pairing.
 
 mod anchor;
+mod audit_bundle;
 mod attest;
 mod codec;
 mod consensus;
@@ -38,6 +39,10 @@ mod validity;
 mod validity_bridge;
 
 pub use anchor::{btc_op_return, check_btc_op_return, AnchorPlan, AnchorPublisher, BTC_OP_RETURN_LEN};
+pub use audit_bundle::{
+    AuditBundle, AuditInclusionProof, BundleReceipt, ExternalAnchoringProof,
+    OfflineVerificationBundle, RegistryCheckpoint, OFFLINE_BUNDLE_VERSION,
+};
 pub use attest::{
     build_rotation_proof, check_rotation, sign_attestation, AttestOp, AttestPolicy, AttestRegistry,
     AttestStatus, Attestation, Claim, Grant, Receipt, Role, RotationOutcome, ATTEST_AUDIENCE,

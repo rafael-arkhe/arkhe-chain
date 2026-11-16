@@ -78,6 +78,13 @@ pub enum ChainError {
     InvalidSealLength { expected: usize, got: usize },
     #[error("FAIL_CLOSED: INVALID_ANCHOR_PREFIX")]
     InvalidAnchorPrefix,
+    #[error("FAIL_CLOSED: AUDIT_BUNDLE: {0}")]
+    AuditBundle(&'static str),
+    #[error("FAIL_CLOSED: EXTERNAL_ANCHOR_ABSENT")]
+    ExternalAnchorAbsent,
+    /// Documented offline stub (e.g. `rekor:dryrun:`); not a production trust root.
+    #[error("FAIL_CLOSED: EXTERNAL_ANCHOR_STUB")]
+    ExternalAnchorStub,
     #[error("FAIL_CLOSED: VERIFIER_ABSENT")]
     VerifierAbsent,
     #[error("FAIL_CLOSED: RPC_ABSENT")]

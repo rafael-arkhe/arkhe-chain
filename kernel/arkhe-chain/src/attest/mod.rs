@@ -378,6 +378,14 @@ impl AttestRegistry {
         }
     }
 
+    pub fn chain_id(&self) -> &str {
+        &self.chain_id
+    }
+
+    pub fn genesis(&self) -> &[u8; 32] {
+        &self.genesis
+    }
+
     pub fn policy_digest(&self) -> [u8; 32] {
         self.policy_digest
     }
