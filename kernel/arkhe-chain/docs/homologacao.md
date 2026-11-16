@@ -33,7 +33,7 @@ A virtual machine does not close full reorg, production `CanonicalVote`↔precom
 
 | # | Gate | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | C2 `Commit` in public CI | **In progress** | `consensus::bft_commit` returns `CommitVerdict::Commit` under C2 tests; `ArkheNode::canonical_commit_verdict` maps stored v4 precommits through `CanonicalVote` without moving the tip. GitHub workflow `.github/workflows/arkhe-chain-gate.yml` runs `cargo test -p arkhe-chain` (includes `c2_canonical_vote`) on the Arkhe workspace published as `rafael-arkhe/arkhe-chain`. Standalone `vendor/` layout may use `kernel/arkhe-chain/.github/workflows/c2-gate.yml` when the crate is repository root. Live wire still uses `Precommit` v4 only; **CanonicalVote on the wire remains PENDING**. |
+| 1 | C2 `Commit` in public CI | **Partial (C2 job green)** | On published `0b552200`, Actions workflow `arkhe-chain gate (C2)` job **C2 falsifiers (ubuntu)** passed (13 tests, including `c2_stored_v4_precommits_map_to_commit_verdict`: three-of-four v4 precommits → `CommitVerdict::Commit`, quorum via `canonical_commit_verdict`). Full-suite job on ubuntu failed one pre-existing `block_sync` flake (`io` vs `rr-timeout` on Linux); windows full suite passed. **CanonicalVote on the live wire remains PENDING**; tip/`ArkheNode::bft_commit` unchanged. |
 | 2 | C1 reorg tested | **Open** | Sibling stays `Fork`; no fake tip replace. Depends on honest C2 `Commit` semantics first. |
 | 3 | AuditBundle + external inclusion | **Open** | Not started in this crate (no Rekor/Hippius deploy). |
 | 4 | A3 / A4 | **PENDING** | Human third party; see below. |
