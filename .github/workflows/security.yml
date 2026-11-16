@@ -45,6 +45,21 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Physical limit: CodeQL Rust still walks a full monorepo checkout
+          # even with paths filters, which blows past the gate budget.
+          sparse-checkout: |
+            .github/codeql
+            scripts/check_sarif.py
+            rust-toolchain.toml
+            Cargo.toml
+            Cargo.lock
+            kernel/arkhe-chain
+            kernel/arkhe-core
+            kernel/arkhe-kernel
+            governance/arkhe-governance
+            verification/crates/arkhe-verify-core
+          sparse-checkout-cone-mode: true
       - uses: dtolnay/rust-toolchain@1.96.0
       - uses: github/codeql-action/init@793b778da9c9275a0f276522b27cb5fc14bba279
         with:
