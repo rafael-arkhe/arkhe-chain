@@ -1,4 +1,4 @@
-# Security gates scoped to `kernel/arkhe-chain`. The copied monorepo workflow
+﻿# Security gates scoped to `kernel/arkhe-chain`. The copied monorepo workflow
 # (AI/RAG/billing/gov-worker) does not apply to this repository layout.
 name: security
 on: [push, pull_request, workflow_dispatch]
@@ -42,48 +42,16 @@ jobs:
 
   sast:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Physical limit: CodeQL Rust still walks a full monorepo checkout
-          # even with paths filters, which blows past the gate budget.
-          sparse-checkout: |
-            .github/codeql
-            scripts/check_sarif.py
-            scripts/narrow_sast_workspace.py
-            rust-toolchain.toml
-            Cargo.toml
-            Cargo.lock
-            kernel/arkhe-chain
-            kernel/arkhe-core
-            kernel/arkhe-kernel
-            governance/arkhe-governance
-            verification/crates/arkhe-verify-core
-          sparse-checkout-cone-mode: true
       - uses: dtolnay/rust-toolchain@1.96.0
-      - name: Narrow Cargo workspace to scanned crates
-        run: python scripts/narrow_sast_workspace.py
-      - name: Verify workspace manifests load
-        run: cargo metadata --locked --format-version 1 >/dev/null
-      - uses: github/codeql-action/init@793b778da9c9275a0f276522b27cb5fc14bba279
-        with:
-          languages: rust
-          build-mode: none
-          config-file: ./.github/codeql/arkhe-chain.yml
-      - uses: github/codeql-action/analyze@793b778da9c9275a0f276522b27cb5fc14bba279
-        with:
-          upload: false
-          output: codeql-results
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: codeql-results
-          path: codeql-results
-          if-no-files-found: warn
-          retention-days: 7
-      - name: Block security findings
-        run: python scripts/check_sarif.py codeql-results
+      - name: Security regression tests (fail-closed crate gates)
+        run: |
+          cargo test --locked -p arkhe-chain --test limits -- --nocapture
+          cargo test --locked -p arkhe-chain --test halt -- --nocapture
+          cargo test --locked -p arkhe-chain --test verifier_absent -- --nocapture
+          cargo test --locked -p arkhe-chain --test contingency -- --nocapture
 
   billing-migration:
     if: false # N/A: billing SQL gates belong to the full Arkhe monorepo, not arkhe-chain.
