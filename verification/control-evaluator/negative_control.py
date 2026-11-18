@@ -87,6 +87,26 @@ def scenarios(A, commit, fresh, stale):
         clear(a)
         a["tests"][0]["covers"] = ["INV-DOES-NOT-EXIST"]
 
+    def ungated_threats(a):
+        inv = {i["id"] for i in a["invariants"]}
+        return [t for t in a["threat_model"]
+                if not [m for m in t.get("mitigated_by", []) or [] if m in inv]]
+
+    def mark_ineligible_only(a):
+        """Out of scope for the venue, but nobody accepted the risk."""
+        clear(a)
+        for t in ungated_threats(a):
+            t["eligible"] = False
+            t.pop("accepted_residual", None)
+
+    def mark_accepted(a):
+        """The risk itself is explicitly accepted."""
+        clear(a)
+        for t in ungated_threats(a):
+            t["accepted_residual"] = True
+
+    strict = bind + ["--strict-threats"]
+
     return [
         ("sanity_admit", ok, clear, bind,
          "ADMITTED", "ADMITTED", "the gate must be able to say yes"),
@@ -118,6 +138,13 @@ def scenarios(A, commit, fresh, stale):
         # and a hard error in one that parses the verdict. 0.2 fails closed.
         ("malformed_forge", None, clear, bind,
          "CRASH", "EXCLUDED", "unparseable forge output (0.1 crashes)"),
+        # --- eligible:false is NOT accepted_residual:true. These two hold the
+        #     keys apart so a later edit cannot quietly conflate them. 0.2-only:
+        #     0.1 has no --strict-threats flag.
+        ("threat_ineligible_only", ok, mark_ineligible_only, strict,
+         None, "EXCLUDED", "eligible:false alone must NOT excuse an ungated threat"),
+        ("threat_accepted_residual", ok, mark_accepted, strict,
+         None, "ADMITTED", "accepted_residual:true is the only thing that does"),
     ]
 
 
@@ -149,12 +176,17 @@ def main():
     for tag, forge, mutate, extra, exp1, exp2, why in scenarios(A, commit, fresh, stale):
         raw = raw_bad if tag == "malformed_forge" else None
         v2, r2 = new.run(tag, forge, mutate, extra, raw_forge=raw)
-        if old:
+        if old and exp1 is not None:
             # 0.1 has none of the provenance flags
             v1, _ = old.run(tag, forge, mutate, (), raw_forge=raw)
         else:
-            v1 = "-"
-        match1 = v1.startswith("CRASH") if exp1 == "CRASH" else v1 == exp1
+            v1 = "n/a" if exp1 is None else "-"
+        if exp1 is None:
+            match1 = True
+        elif exp1 == "CRASH":
+            match1 = v1.startswith("CRASH")
+        else:
+            match1 = v1 == exp1
         good = (v2 == exp2) and (not old or match1)
         if not good:
             failures.append(f"{tag}: got 0.1={v1} 0.2={v2}, expected {exp1}/{exp2}")

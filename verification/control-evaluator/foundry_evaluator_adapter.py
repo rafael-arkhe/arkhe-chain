@@ -56,6 +56,11 @@ reported, and --strict-threats turns it into a blocker unless the threat
 carries `"accepted_residual": true`. Silence blocks; explicit acceptance
 passes and is visible inside the signed construction_root.
 
+`eligible: false` does NOT excuse an ungated threat, and never will. It is a
+fact about the review venue, not a claim about the risk. See
+check_threat_gating for why, and negative_control.py for the two scenarios
+that hold the two keys apart.
+
 STILL TRUE AFTER 0.2: the verdict rests on `coverage.undetermined`, which the
 author writes by hand. Emptying it yields ADMITTED with no new evidence. No
 code in this file can detect an undetermined item that was never declared.
@@ -218,14 +223,37 @@ def check_binding_directions(assessment):
 
 
 def check_threat_gating(assessment):
-    """Threats that no invariant can ever falsify."""
+    """Threats that no invariant can ever falsify.
+
+    `eligible: false` and `accepted_residual: true` are NOT synonyms and this
+    function never treats them as such. `eligible: false` is a fact about the
+    review venue -- this contest does not pay for this class of issue.
+    `accepted_residual: true` is a claim about the risk -- we have looked at
+    it and we accept it. A manager who freezes matured withdrawals is a real
+    exposure for depositors whether or not a contest rewards reporting it.
+    Reading venue scope as risk acceptance would let the commercial boundary
+    of a contest launder technical risk, which is the move this whole
+    evaluator exists to prevent.
+
+    So only `accepted_residual` excuses an ungated threat. A threat carrying
+    `eligible: false` and nothing else is reported with scope_not_acceptance,
+    which names the gap instead of closing it.
+    """
     inv_ids = {i["id"] for i in assessment.get("invariants", [])}
     ungated = []
     for th in assessment.get("threat_model", []):
         if not [m for m in th.get("mitigated_by", []) or [] if m in inv_ids]:
-            ungated.append({"threat": th["id"],
-                            "mitigated_by": th.get("mitigated_by", []),
-                            "accepted_residual": bool(th.get("accepted_residual"))})
+            accepted = bool(th.get("accepted_residual"))
+            eligible = th.get("eligible", None)
+            ungated.append({
+                "threat": th["id"],
+                "mitigated_by": th.get("mitigated_by", []),
+                "accepted_residual": accepted,
+                "eligible": eligible,
+                # marked out of scope for the venue, but nobody has said the
+                # risk itself is accepted
+                "scope_not_acceptance": (eligible is False) and not accepted,
+            })
     return ungated
 
 
@@ -324,11 +352,17 @@ def evaluate(assessment, suites, evidence_hash, ttl_hours, prov,
     # 6. threat gating (reported always; blocking only under --strict-threats)
     ungated = check_threat_gating(assessment)
     for u in ungated:
-        events.append({"type": "ungated_threat",
-                       "reason": "no invariant in mitigated_by, so no test can "
-                                 "ever falsify this threat",
+        reason = ("no invariant in mitigated_by, so no test can ever falsify "
+                  "this threat")
+        if u["scope_not_acceptance"]:
+            reason += ("; eligible:false marks it out of scope for the venue, "
+                       "which is not a claim that the risk is accepted -- set "
+                       "accepted_residual:true for that")
+        events.append({"type": "ungated_threat", "reason": reason,
                        "threat": u["threat"], "mitigated_by": u["mitigated_by"],
                        "accepted_residual": u["accepted_residual"],
+                       "eligible": u["eligible"],
+                       "scope_not_acceptance": u["scope_not_acceptance"],
                        "ts": iso(evaluated)})
     if strict_threats and any(not u["accepted_residual"] for u in ungated):
         reasons.append("ungated_threat")

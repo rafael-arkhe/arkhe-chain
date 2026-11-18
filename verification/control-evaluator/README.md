@@ -57,6 +57,30 @@ state. `--strict-threats` makes it block unless the threat carries
 `"accepted_residual": true` — silence blocks, explicit acceptance passes and is
 then visible inside the signed `construction_root`.
 
+### `eligible: false` is not `accepted_residual: true`
+
+Only `accepted_residual` excuses an ungated threat. `eligible: false` never
+does, and the two are deliberately not aliases:
+
+- `eligible: false` is a fact about the **venue**. This contest does not pay
+  for this class of issue.
+- `accepted_residual: true` is a claim about the **risk**. We looked at it and
+  we accept it.
+
+A manager who freezes matured withdrawals is a real exposure for depositors
+whether or not a contest rewards reporting it. Letting venue scope stand in for
+risk acceptance would allow the commercial boundary of a contest to launder
+technical risk, which is the move this evaluator exists to prevent.
+
+A threat carrying `eligible: false` and no `accepted_residual` is therefore
+reported with `scope_not_acceptance: true`, and the event text says which key
+would actually close it. Two scenarios in `negative_control.py`
+(`threat_ineligible_only`, `threat_accepted_residual`) hold the keys apart, so
+a later edit cannot quietly merge them.
+
+To record both facts, set both keys. They end up side by side inside the
+signed `construction_root`, and a later reader can tell which is which.
+
 Separately, the schema references 13 `ENF-*` enforcement ids and defines none
 of them. Nothing binds an `ENF-*` id to code or to a test.
 
