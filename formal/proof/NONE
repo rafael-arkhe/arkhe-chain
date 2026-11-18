@@ -1,0 +1,46 @@
+One checker has accepted one theorem in this directory. Until 2026-11-18 none
+had, and this file said so.
+
+ACCEPTED
+
+  DetInferProof.SpecSafety  ==  Spec => []Safety
+
+  Accepted by tlapm 1.6.0-pre (rev bf665f4) and independently by tlapm 1.5.0,
+  all 133 obligations, 2026-11-18. Non-bounded: it holds for all Value, Hash
+  and Infer satisfying HashInjective, not for one finite instance.
+
+    module     detinfer/DetInferProof.tla
+    log        detinfer/tlapm.out
+    reproduce  detinfer/run_tlapm.sh
+    falsified  a fail-open mutant of Verify fails 1/133 obligations, at the
+               leaf that forces "ADMITTED" into the all-resolvable branch.
+               The proof is load-bearing, not vacuous.
+
+  Corroborated, NOT established, by TLC 2.19 on detinfer/DetInferMC.tla:
+  209,410 distinct states, no error. One instance is weaker than all
+  instances; this line is insurance against a tlapm misconfiguration, and is
+  not itself the result.
+
+NOT ACCEPTED
+
+  Nothing else in this directory is an accepted theorem. formal/spec holds
+  skeletons that no checker has read.
+
+  No checker has accepted the hardware bridge. SpecSafety is conditional on
+  two premises, and no formal tool discharges either:
+
+    - HashInjective is an ASSUME. Real soundness is SHA-256 collision
+      resistance, which is a cryptographic assumption, not a theorem. The
+      finite instance verifies the premise mechanically for its own toy Hash,
+      which shows the premise is satisfiable -- not that SHA-256 satisfies it.
+
+    - Infer purity on real hardware is a CONJECTURE. The spec treats Infer as
+      a function. A GPU with non-deterministic reduction order is not one.
+
+  An attacker attacks the bridge, not the model. Proving SpecSafety moved the
+  remaining risk entirely into these two premises; it did not reduce it.
+
+This file is pinned by config/architecture.json (formal_proof.must_contain) and
+checked by scripts/check_architecture.py. The pinned string is the hardware
+bridge disclaimer, so the disclaimer cannot be dropped to make the repository
+look stronger than it is.
