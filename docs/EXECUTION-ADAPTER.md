@@ -79,10 +79,10 @@ exits 0. `cargo clippy` over this crate cannot complete: it fails earlier in
 - **No HTTP surface.** `arkhe_runtime::run_report` admits a WER that says a run
   happened (`output_digest: ZERO`, no evidence refs). Admitting a `TaskSpec` +
   `RunReport` over `POST /v1/runs` would be the next step and does not exist.
-- **No invariant library.** The test carries one example (a JSON object with
-  required fields). The invariants that would matter for real work — a filed
-  document matching the source record, a migration that round-trips, a payment
-  file reconciling to a total — are not written.
+- **One invariant, not a library.** `invariants::NoDirectIdentifier` is real —
+  see below. The others that would matter for actual work (a filed document
+  matching its source record, a migration that round-trips, a payment file
+  reconciling to a total) are not written.
 - **The join is one-sided.** `arkhe-flow` can now discharge
   `llm_output_unverified` when handed a signed invariant verdict, but nothing
   turns an `Admission` from this crate into one. `arkhe-exec-adapter` still has
@@ -221,6 +221,48 @@ Gate 0 fixture now ships an `artifact`, an `agent-action` and an `invariant`
 receipt, so a third party can reproduce the discharge from files alone —
 `packaging/core/HOW_TO_AUDIT.md`. The `arkhe-flow` CLI itself still has no
 `verify`; it only emits.
+
+## The first real invariant
+
+Until `invariants::NoDirectIdentifier`, every `impl Invariant` in the repository
+was in this crate's own tests. The sentence above — that the automatable
+fraction of a job is the part someone can write a decidable invariant for — had
+no instance.
+
+It is not new code. `arkhe_anonymize::release` was already a pure function of a
+JSON value returning a binary verdict with a closed reason. Wiring it was
+finding it.
+
+`release` suppresses and *then* checks, so the decidable property over an
+agent's output is whether anything **had** to be suppressed: an output needing
+no redaction never carried an identifier. A `Refused` status is worse — a
+pattern survived suppression — and is reported separately. The counters are
+categories, not field names: `labeled` when a field's key is a known identifier
+label, and `cpf`, `email`, `phone` for a value pattern found anywhere, including
+inside free text under an innocuous key. `a_cpf_buried_in_free_text_is_excluded`
+covers that last case, which is the realistic failure: nothing in the field name
+warns anyone.
+
+**The version is an obligation.** An auditor replays `check` and must reach the
+same verdict, and this one delegates to `arkhe-anonymize`, whose label set
+decides it. Changing that set changes the verdict for the same bytes, so
+`NO_DIRECT_IDENTIFIER_VERSION` has to change with it, or two different checks
+will claim to be the same one. Nothing enforces that; it is a stated obligation.
+
+### How it is linked, and why that is an exception
+
+`arkhe-anonymize` lives in `packaging/core`, which the next section says cannot
+be a path dependency of this workspace. This one crate can, because everything
+it inherits with `workspace = true` — `anyhow`, `clap`, `serde`, `serde_json` —
+is also in the root `[workspace.dependencies]`. `arkhe-flow` cannot, because of
+`rand`. So the blocker is per-crate, not absolute: it bites exactly when the
+inner manifest inherits something the outer workspace does not declare.
+
+The direction is worth noting: the monorepo now depends on a crate in the
+packaging bundle, which is backwards if the bundle is meant to be downstream.
+Relocating the suppression engine, or declaring the missing dependencies at the
+root, would both fix that, and both are decisions about how the bundle relates
+to the monorepo.
 
 ## Emitting the verdict: what the adapter does and does not hold
 

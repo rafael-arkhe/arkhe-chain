@@ -383,6 +383,7 @@ impl InvariantProfile {
     }
 }
 
+pub mod invariants;
 pub mod receipt;
 
 impl PolicyResolver for InvariantProfile {
