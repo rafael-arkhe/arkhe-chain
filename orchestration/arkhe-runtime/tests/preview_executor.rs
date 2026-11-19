@@ -29,21 +29,16 @@ fn effective_container_policy_rejects_expanded_privileges_limits_and_mounts() {
                     {"PathOnHost":"/dev/nvidia0","PathInContainer":"/dev/nvidia0"}
                 ])
             }
-            8 => {
-                v["HostConfig"]["DeviceRequests"] = serde_json::json!([
-                    {"Driver":"nvidia","Count":1,"Capabilities":[["gpu"]]}
-                ])
-            }
+            8 => v["HostConfig"]["DeviceRequests"] = serde_json::json!([
+                {"Driver":"nvidia","Count":1,"Capabilities":[["gpu"]]}
+            ]),
             9 => v["HostConfig"]["DeviceCgroupRules"] = serde_json::json!(["c 195:* rwm"]),
             // Without the inventory, device absence is not established.
             _ => {
                 v["HostConfig"].as_object_mut().unwrap().remove("Devices");
             }
         }
-        assert!(
-            verify_container_policy(&v, &request.spec).is_err(),
-            "{change}"
-        );
+        assert!(verify_container_policy(&v, &request.spec).is_err(), "{change}");
     }
 }
 // These fixtures test enforcement of an external qualification signature. They
