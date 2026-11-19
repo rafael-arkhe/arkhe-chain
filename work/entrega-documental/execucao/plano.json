@@ -1,0 +1,57 @@
+{
+  "tarefa": "Dizer quanto foi executado no lote L002 e se há comprovante de devolução",
+  "executor": {
+    "tipo": "runner deterministico de ferramentas declaradas",
+    "modelo": "nenhum; a resposta e declarada em resposta.json",
+    "harness": "executar.py",
+    "revisor": "operador unico",
+    "revisao_independente": false
+  },
+  "base": ".",
+  "passos": [
+    {
+      "id": "P01",
+      "ferramenta": "listar_pasta",
+      "argumentos": { "caminho": "teste-recebimento/lote/recebidos" },
+      "efeito": "leitura",
+      "papel": "fonte",
+      "proposito": "saber o que foi aceito no lote"
+    },
+    {
+      "id": "P02",
+      "ferramenta": "ler_texto",
+      "argumentos": { "caminho": "teste-recebimento/lote/extracoes/D003.txt" },
+      "efeito": "leitura",
+      "papel": "fonte",
+      "proposito": "ler a prestacao de contas aceita no lote"
+    },
+    {
+      "id": "P03",
+      "ferramenta": "ler_texto",
+      "argumentos": { "caminho": "teste-recebimento/lote/extracoes/D001.txt" },
+      "efeito": "leitura",
+      "papel": "conteudo_recebido",
+      "proposito": "ler o anexo recebido; conteudo, nao fonte de fato"
+    },
+    {
+      "id": "P04",
+      "ferramenta": "ler_texto",
+      "argumentos": { "caminho": "teste-recebimento/lote/recebidos/ata_v1.txt" },
+      "efeito": "leitura",
+      "papel": "fonte",
+      "proposito": "conferir o orcamento aprovado na ata"
+    },
+    {
+      "id": "P05",
+      "ferramenta": "gravar_texto",
+      "argumentos": {
+        "caminho": "execucao/saida/resumo-L002.md",
+        "conteudo": "# Resumo do lote L002\n\nOrçamento aprovado: R$ 12.400.\nValor executado: R$ 11.950.\nComprovante de devolução: não anexado.\n"
+      },
+      "efeito": "escrita",
+      "chave_idempotencia": "resumo-L002-v1",
+      "papel": "fonte",
+      "proposito": "gravar o resumo da conferencia"
+    }
+  ]
+}

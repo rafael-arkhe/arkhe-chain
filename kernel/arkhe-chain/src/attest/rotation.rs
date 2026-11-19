@@ -51,10 +51,20 @@ pub fn verify_rotation_proof_bytes(
     if proof.len() != ROTATION_PROOF_LEN {
         return Err(ChainError::Attest("full"));
     }
-    let previous_root: [u8; 32] = proof[0..32].try_into().map_err(|_| ChainError::Attest("full"))?;
-    let previous_count = u64::from_be_bytes(proof[32..40].try_into().map_err(|_| ChainError::Attest("full"))?);
-    let commitment: [u8; 32] = proof[40..72].try_into().map_err(|_| ChainError::Attest("full"))?;
-    let new_root: [u8; 32] = proof[72..104].try_into().map_err(|_| ChainError::Attest("full"))?;
+    let previous_root: [u8; 32] = proof[0..32]
+        .try_into()
+        .map_err(|_| ChainError::Attest("full"))?;
+    let previous_count = u64::from_be_bytes(
+        proof[32..40]
+            .try_into()
+            .map_err(|_| ChainError::Attest("full"))?,
+    );
+    let commitment: [u8; 32] = proof[40..72]
+        .try_into()
+        .map_err(|_| ChainError::Attest("full"))?;
+    let new_root: [u8; 32] = proof[72..104]
+        .try_into()
+        .map_err(|_| ChainError::Attest("full"))?;
 
     if previous_count != registry.count() || previous_root != registry.root()? {
         return Err(ChainError::Attest("full"));

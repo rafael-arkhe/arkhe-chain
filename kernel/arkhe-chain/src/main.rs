@@ -4,8 +4,8 @@ use std::process::ExitCode;
 
 use arkhe_chain::{
     format_genesis, format_status, genesis_fingerprint, genesis_peer_lines, next_status_line,
-    parse_configured_peer,
-    read_operator_files, read_peer_file, read_status, run_operator, ChainError, OperatorRequest,
+    parse_configured_peer, read_operator_files, read_peer_file, read_status, run_operator,
+    ChainError, OperatorRequest,
 };
 
 enum CliError {
@@ -200,7 +200,8 @@ fn parse_args(
         }
         let status = read_status(std::path::Path::new(data)).map_err(failed)?;
         if let Some(genesis) = genesis.as_deref() {
-            let text = std::fs::read_to_string(genesis).map_err(|_| failed(ChainError::Snapshot))?;
+            let text =
+                std::fs::read_to_string(genesis).map_err(|_| failed(ChainError::Snapshot))?;
             let fingerprint = genesis_fingerprint(&text).map_err(failed)?;
             match status.genesis {
                 Some(stored) if stored == fingerprint.hash => {}
@@ -279,9 +280,11 @@ fn parse_args(
         _ => return Err(CliError::Usage),
     };
     let listen = listen.parse().map_err(|_| failed(ChainError::Malformed))?;
-    let (secret, genesis) =
-        read_operator_files(PathBuf::from(key).as_path(), PathBuf::from(genesis).as_path())
-            .map_err(failed)?;
+    let (secret, genesis) = read_operator_files(
+        PathBuf::from(key).as_path(),
+        PathBuf::from(genesis).as_path(),
+    )
+    .map_err(failed)?;
     let txs = match txs {
         Some(path) => std::fs::read(path).map_err(|_| failed(ChainError::Snapshot))?,
         None => Vec::new(),

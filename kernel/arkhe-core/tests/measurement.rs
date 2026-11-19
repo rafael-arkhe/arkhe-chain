@@ -1,7 +1,6 @@
 use arkhe_core::{
     measurement::{
-        check_comparable, coverage, MeasurementError, MeasurementRecord, Reach,
-        MEASUREMENT_VERSION,
+        check_comparable, coverage, MeasurementError, MeasurementRecord, Reach, MEASUREMENT_VERSION,
     },
     CanonicalEncode, Digest32,
 };
@@ -72,10 +71,7 @@ fn the_weak_reaches_never_substitute_for_each_other_or_for_real_work() {
 
 #[test]
 fn a_synthetic_window_cannot_join_a_series_of_real_work() {
-    let records = [
-        window(T0),
-        record(Reach::Synthetic, T0 + MINUTE, MINUTE),
-    ];
+    let records = [window(T0), record(Reach::Synthetic, T0 + MINUTE, MINUTE)];
     assert_eq!(
         check_comparable(&records),
         Err(MeasurementError::Incomparable("reach"))

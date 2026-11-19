@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { db, transaction } from './store.mjs';
 import { verifySignature } from './crypto.mjs';
+import { externalRelease, qualifications } from './govtech-gates.mjs';
 const fail = (ok, status, message) => { if (!ok) throw Object.assign(new Error(message), { status }); };
 const hash = value => createHash('sha256').update(value).digest('hex');
 const zero = '0'.repeat(64);
@@ -44,7 +45,7 @@ export function govState(user) {
   init(); const cfg=config(), cases=all().filter(c=>elevated(user)||c.authorId===user.id);
   const logs=db().prepare('SELECT * FROM gov_events ORDER BY seq').all(); let previous=zero;
   const integrity=logs.every(e=>{const valid=e.previous===previous&&hash(e.previous+'\n'+e.payload)===e.hash;previous=e.hash;return valid;});
-  return {user,agencies,kinds,config:cfg,cases,pilot:elevated(user)?JSON.parse(db().prepare('SELECT value FROM gov_pilot WHERE id=1').get().value):null,integrity,eventCount:logs.length,events:elevated(user)?logs.slice(-100).reverse().map(e=>({...e,event:JSON.parse(e.payload)})):[],journal:db().prepare('SELECT value FROM gov_journal ORDER BY rowid DESC').all().map(r=>JSON.parse(r.value)).filter(j=>cases.some(c=>c.id===j.caseId)),mode:'synthetic',organizationMode:'single-org',connectors:[{name:'SIAFE / e-GP / SEI',state:'Simulado',detail:'Execução local persistente; nenhum ato enviado ao Estado.'},{name:'gov.br / ICP-Brasil',state:'Pendente',detail:'Sessão local e assinatura Ed25519; sem identidade jurídica validada.'},{name:'TEE / HSM nacional',state:'Pendente',detail:'Infraestrutura protegida não provisionada.'},{name:'SCITT / WIMSE / pós-quântica',state:'Planejado',detail:'Sem declaração de conformidade ou envelope híbrido.'}]};
+  return {user,agencies,kinds,config:cfg,cases,pilot:elevated(user)?JSON.parse(db().prepare('SELECT value FROM gov_pilot WHERE id=1').get().value):null,integrity,eventCount:logs.length,events:elevated(user)?logs.slice(-100).reverse().map(e=>({...e,event:JSON.parse(e.payload)})):[],journal:db().prepare('SELECT value FROM gov_journal ORDER BY rowid DESC').all().map(r=>JSON.parse(r.value)).filter(j=>cases.some(c=>c.id===j.caseId)),mode:'synthetic',organizationMode:'single-org',qualifications,connectors:[{name:'SIAFE / e-GP / SEI',state:'Simulado',detail:'Execução local persistente; nenhum ato enviado ao Estado.'},{name:'gov.br / ICP-Brasil',state:'Pendente',detail:'Sessão local e assinatura Ed25519; sem identidade jurídica validada.'},{name:'TEE / HSM nacional',state:'Pendente',detail:'Infraestrutura protegida não provisionada.'},{name:'SCITT / WIMSE / pós-quântica',state:'Planejado',detail:'Sem declaração de conformidade ou envelope híbrido.'}]};
 }
 export function govPilot(user,input) {
   init();fail(user.role==='owner',403,'Plano de piloto exige governança.');
@@ -107,8 +108,10 @@ export function govAction(user,id,input) {
       fail(c.status==='authorized',409,'Processo sem autorização.');const proof=validate(user,c);
       fail(c.review&&c.proof.policyRevision===proof.policyRevision&&c.proof.policyDigest===proof.policyDigest,409,'Política alterada; solicite nova revisão.');
       // Local effect + journal + evidence share one SQLite transaction. No remote exactly-once claim.
+      const release=externalRelease();
+      fail(release.released===false,409,'Efeito externo não habilitado.');
       const operationId=hash('arkhe-govtech/operation/v1\n'+c.id+'\n'+c.digest);
-      c.receipt={domain:'arkhe-govtech/synthetic-receipt/v1',operationId,caseId:c.id,proposalDigest:c.digest,policyDigest:proof.policyDigest,target:kinds.find(k=>k.id===c.kind).target,total:proof.total,at:new Date().toISOString(),externalEffect:false};
+      c.receipt={domain:'arkhe-govtech/synthetic-receipt/v1',operationId,caseId:c.id,proposalDigest:c.digest,policyDigest:proof.policyDigest,target:kinds.find(k=>k.id===c.kind).target,total:proof.total,at:new Date().toISOString(),externalEffect:release.released};
       db().prepare('INSERT INTO gov_journal VALUES(?,?,?)').run(operationId,c.id,JSON.stringify(c.receipt));c.status='executed';
     } else if(input.action==='resubmit') {
       fail(user.id===c.authorId&&c.status==='authorized',403,'Somente o autor pode solicitar nova revisão.');c.review=null;c.proof=validate(user,c);c.status='review';

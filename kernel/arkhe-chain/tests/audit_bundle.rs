@@ -78,13 +78,27 @@ fn evaluation(artifact: [u8; 32], passed: bool) -> Claim {
 fn flow(reg: &mut AttestRegistry) -> ([u8; 32], Receipt) {
     let request = reg
         .admit(
-            &signed("requester", 1, Claim::Request { task: [0x7A; 32], budget: 5 }),
+            &signed(
+                "requester",
+                1,
+                Claim::Request {
+                    task: [0x7A; 32],
+                    budget: 5,
+                },
+            ),
             H,
             None,
         )
         .unwrap();
     reg.admit(
-        &signed("author", 1, Claim::Artifact { request, artifact: ARTIFACT }),
+        &signed(
+            "author",
+            1,
+            Claim::Artifact {
+                request,
+                artifact: ARTIFACT,
+            },
+        ),
         H,
         None,
     )
@@ -124,12 +138,9 @@ fn offline_bundle_verifies_mmr_inclusion_locally() {
         leaf_count: reg.count(),
     };
 
-    let bundle = OfflineVerificationBundle::from_registry(
-        &reg,
-        &approval,
-        ExternalAnchoringProof::Absent,
-    )
-    .unwrap();
+    let bundle =
+        OfflineVerificationBundle::from_registry(&reg, &approval, ExternalAnchoringProof::Absent)
+            .unwrap();
     assert_eq!(bundle.receipt.leaf, receipt.leaf);
     bundle.verify_inclusion(&trusted).unwrap();
 
@@ -231,12 +242,9 @@ fn external_anchoring_fail_closed() {
 fn recorded_rekor_witness_passes_when_digest_and_merkle_match() {
     let mut reg = AttestRegistry::new(CHAIN, GENESIS, AUDIENCE, policy()).unwrap();
     let (approval, _) = flow(&mut reg);
-    let mut bundle = OfflineVerificationBundle::from_registry(
-        &reg,
-        &approval,
-        ExternalAnchoringProof::Absent,
-    )
-    .unwrap();
+    let mut bundle =
+        OfflineVerificationBundle::from_registry(&reg, &approval, ExternalAnchoringProof::Absent)
+            .unwrap();
     let witness = synthetic_witness_for_digest(&bundle.digest());
     bundle.external = ExternalAnchoringProof::RekorWitness { witness };
     bundle.verify_external_anchoring().unwrap();
@@ -246,12 +254,9 @@ fn recorded_rekor_witness_passes_when_digest_and_merkle_match() {
 fn rekor_witness_rejects_wrong_digest_or_sibling() {
     let mut reg = AttestRegistry::new(CHAIN, GENESIS, AUDIENCE, policy()).unwrap();
     let (approval, _) = flow(&mut reg);
-    let bundle = OfflineVerificationBundle::from_registry(
-        &reg,
-        &approval,
-        ExternalAnchoringProof::Absent,
-    )
-    .unwrap();
+    let bundle =
+        OfflineVerificationBundle::from_registry(&reg, &approval, ExternalAnchoringProof::Absent)
+            .unwrap();
     let mut witness = synthetic_witness_for_digest(&bundle.digest());
     witness.anchored_digest[0] ^= 1;
     let bad = OfflineVerificationBundle {

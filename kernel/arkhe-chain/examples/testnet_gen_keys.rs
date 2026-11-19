@@ -103,13 +103,14 @@ fn main() {
     std::fs::write(&genesis_path, &genesis).expect("genesis");
 
     let peers_example = local.join("peers.txt");
-    let mut peers = String::from(
-        "# Preencha com as linhas listen após o arranque (ou use collect-peers).\n",
-    );
+    let mut peers =
+        String::from("# Preencha com as linhas listen após o arranque (ou use collect-peers).\n");
     let fingerprint = arkhe_chain::genesis_fingerprint(&genesis).expect("fingerprint");
     peers.push_str(&format!("# genesis {}\n", hex(&fingerprint.hash)));
     for (id, peer) in &peer_ids {
-        peers.push_str(&format!("# {id} peer id {peer} — falta /ip4/.../tcp/.../p2p/...\n"));
+        peers.push_str(&format!(
+            "# {id} peer id {peer} — falta /ip4/.../tcp/.../p2p/...\n"
+        ));
     }
     std::fs::write(&peers_example, peers).expect("peers");
 

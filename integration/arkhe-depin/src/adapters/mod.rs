@@ -22,7 +22,10 @@ pub fn validate_native_receipt(receipt: &NativeReceipt) -> Result<(), Error> {
     }
 }
 
-pub(crate) fn ensure_match(normalized: &NativeReceipt, receipt: &NativeReceipt) -> Result<(), Error> {
+pub(crate) fn ensure_match(
+    normalized: &NativeReceipt,
+    receipt: &NativeReceipt,
+) -> Result<(), Error> {
     if normalized.receipt_hash != receipt.receipt_hash
         || normalized.payload != receipt.payload
         || normalized.issued_at != receipt.issued_at

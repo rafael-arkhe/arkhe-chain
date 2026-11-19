@@ -1,0 +1,85 @@
+{
+  "tarefa": "Conferir o lote L002 com hierarquia de recuperação e permissão por estágio",
+  "_nota_tempos": "relogio_inicial 1000, avanco_por_estagio 5. Cada passo com recurso consome T1, T2, T3 (e T4 se exportar). P01: 1005/1010/1015. P02: 1020/1025/1030. P03: 1035/1040/1045. P04: 1050/1055/1060/1065. A revogacao de anexo-D001 em +27 (1027) cai ENTRE o T2 e o T3 de P02, o que produz usado_mas_suprimido. A de lote-L002 em +62 (1062) cai entre o T3 e o T4 de P04, o que produz suprimido_na_exportacao.",
+  "executor": {
+    "tipo": "runner deterministico com oraculo de permissao local",
+    "modelo": "nenhum; a resposta e declarada em resposta-v3.json",
+    "harness": "executar.py",
+    "revisor": "operador unico do exemplo",
+    "revisao_independente": false
+  },
+  "base": ".",
+  "principal": "analista",
+  "relogio_inicial": 1000,
+  "avanco_por_estagio": 5,
+  "permissoes_iniciais": [
+    { "recurso": "lote-L002", "papel": "leitor", "sensibilidade": 1 },
+    { "recurso": "anexo-D001", "papel": "leitor", "sensibilidade": 2 }
+  ],
+  "eventos_agendados": [
+    { "recurso": "anexo-D001", "tipo": "revogado", "em_segundos": 27 },
+    { "recurso": "lote-L002", "tipo": "revogado", "em_segundos": 62 }
+  ],
+  "passos": [
+    {
+      "id": "P01",
+      "ferramenta": "recuperar",
+      "argumentos": {
+        "candidatos": [
+          {
+            "id": "C1",
+            "caminho": "teste-recebimento/lote/extracoes/D003.txt",
+            "fornecido": true
+          },
+          {
+            "id": "C2",
+            "caminho": "teste-recebimento/lote/recebidos/ata_v1.txt",
+            "fornecido": true
+          },
+          {
+            "id": "C3",
+            "caminho": "teste-recebimento/lote/extracoes/D001.txt",
+            "fornecido": false,
+            "motivo_descarte": "Anexo recebido de terceiro; fora do contexto desta geração por decisão do operador"
+          }
+        ]
+      },
+      "efeito": "leitura",
+      "papel": "fonte",
+      "recurso": "lote-L002",
+      "proposito": "montar o contexto a partir dos candidatos escolhidos"
+    },
+    {
+      "id": "P02",
+      "ferramenta": "ler_texto",
+      "argumentos": { "caminho": "teste-recebimento/lote/extracoes/D001.txt" },
+      "efeito": "leitura",
+      "papel": "conteudo_recebido",
+      "recurso": "anexo-D001",
+      "proposito": "ler o anexo recebido; permissao sera revogada entre T2 e T3"
+    },
+    {
+      "id": "P03",
+      "ferramenta": "ler_texto",
+      "argumentos": { "caminho": "teste-recebimento/lote/recebidos/ata_v1.txt" },
+      "efeito": "leitura",
+      "papel": "fonte",
+      "recurso": "lote-L002",
+      "proposito": "conferir o orcamento aprovado na ata"
+    },
+    {
+      "id": "P04",
+      "ferramenta": "gravar_texto",
+      "argumentos": {
+        "caminho": "execucao/saida/resumo-v3.md",
+        "conteudo": "# Resumo do lote L002\n\nOrçamento aprovado: R$ 12.400.\nValor executado: R$ 11.950.\nComprovante de devolução: não anexado.\n"
+      },
+      "efeito": "escrita",
+      "chave_idempotencia": "resumo-v3-L002",
+      "papel": "fonte",
+      "recurso": "lote-L002",
+      "exportar": true,
+      "proposito": "gravar e exportar o resumo; permissao sera revogada entre T3 e T4"
+    }
+  ]
+}

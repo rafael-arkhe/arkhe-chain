@@ -70,8 +70,8 @@ impl NrasAttestationPort {
 
     /// Load a pinned JWKS fixture. Only `oct` / HS256 keys are accepted in this slice.
     pub fn from_jwks_json(json: &str) -> Result<Self, Error> {
-        let doc: JwksDocument =
-            serde_json::from_str(json).map_err(|_| Error::InvalidAttestation("invalid JWKS JSON"))?;
+        let doc: JwksDocument = serde_json::from_str(json)
+            .map_err(|_| Error::InvalidAttestation("invalid JWKS JSON"))?;
         let key = doc
             .keys
             .into_iter()
@@ -83,8 +83,8 @@ impl NrasAttestationPort {
             })
             .ok_or(Error::InvalidAttestation("no usable HS256 oct key in JWKS"))?;
         let secret = key.k.as_ref().expect("checked above");
-        let raw = b64url_decode(secret)
-            .ok_or(Error::InvalidAttestation("JWKS key is not base64url"))?;
+        let raw =
+            b64url_decode(secret).ok_or(Error::InvalidAttestation("JWKS key is not base64url"))?;
         if raw.len() < 32 {
             return Err(Error::InvalidAttestation("JWKS secret too short"));
         }
@@ -99,9 +99,7 @@ impl NrasAttestationPort {
     pub fn verify(&self, jwt: &str, challenge: &NrasChallenge, now: i64) -> AttestationVerdict {
         match &self.mode {
             PortMode::Unsupported => AttestationVerdict::Unsupported,
-            PortMode::Fixture { kid, key } => {
-                self.verify_fixture(jwt, challenge, now, kid, key)
-            }
+            PortMode::Fixture { kid, key } => self.verify_fixture(jwt, challenge, now, kid, key),
         }
     }
 
@@ -238,12 +236,7 @@ mod tests {
     fn mint(claims: &FixtureClaims) -> String {
         let mut header = Header::new(Algorithm::HS256);
         header.kid = Some("arkhe-nras-fixture-1".into());
-        encode(
-            &header,
-            claims,
-            &EncodingKey::from_secret(SECRET),
-        )
-        .unwrap()
+        encode(&header, claims, &EncodingKey::from_secret(SECRET)).unwrap()
     }
 
     #[test]

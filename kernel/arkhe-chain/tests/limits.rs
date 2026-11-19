@@ -58,7 +58,12 @@ fn open(name: &str) -> (std::path::PathBuf, ArkheNode) {
 #[test]
 fn a_node_refuses_an_empty_set_a_bad_id_and_a_mismatched_key() {
     assert_eq!(
-        refused("validator-a", &common::SECRET_A, Vec::new(), common::accounts()),
+        refused(
+            "validator-a",
+            &common::SECRET_A,
+            Vec::new(),
+            common::accounts()
+        ),
         ChainError::EmptyValidators
     );
     assert_eq!(
@@ -80,7 +85,12 @@ fn a_node_refuses_an_empty_set_a_bad_id_and_a_mismatched_key() {
         ChainError::BadAccount
     );
     assert_eq!(
-        refused("", &common::SECRET_A, common::validators(), common::accounts()),
+        refused(
+            "",
+            &common::SECRET_A,
+            common::validators(),
+            common::accounts()
+        ),
         ChainError::BadAccount
     );
     assert_eq!(
@@ -122,7 +132,12 @@ fn a_node_refuses_an_empty_set_a_bad_id_and_a_mismatched_key() {
     let mut zero_key = common::validators();
     zero_key[0].public_key = [0; 32];
     assert_eq!(
-        refused("validator-a", &common::SECRET_A, zero_key, common::accounts()),
+        refused(
+            "validator-a",
+            &common::SECRET_A,
+            zero_key,
+            common::accounts()
+        ),
         ChainError::BadProposerKey
     );
 
@@ -170,11 +185,13 @@ fn a_node_refuses_an_empty_set_a_bad_id_and_a_mismatched_key() {
 fn shape_rejects_a_long_payload_a_bad_account_and_a_missing_key() {
     let node = common::node();
     assert_eq!(
-        node.ingest(shaped("bob ops", "carol", Vec::new())).unwrap_err(),
+        node.ingest(shaped("bob ops", "carol", Vec::new()))
+            .unwrap_err(),
         ChainError::BadAccount
     );
     assert_eq!(
-        node.ingest(shaped("bob_ops", "carol", Vec::new())).unwrap_err(),
+        node.ingest(shaped("bob_ops", "carol", Vec::new()))
+            .unwrap_err(),
         ChainError::UnverifiedSignature
     );
     assert_eq!(
@@ -204,7 +221,8 @@ fn shape_rejects_a_long_payload_a_bad_account_and_a_missing_key() {
         ChainError::UnverifiedSignature
     );
     assert_eq!(
-        node.ingest(shaped("stranger", "bob", Vec::new())).unwrap_err(),
+        node.ingest(shaped("stranger", "bob", Vec::new()))
+            .unwrap_err(),
         ChainError::UnverifiedSignature
     );
 
@@ -231,12 +249,10 @@ fn shape_rejects_a_long_payload_a_bad_account_and_a_missing_key() {
 #[test]
 fn an_oversized_or_empty_body_is_malformed_and_does_not_move_the_tip() {
     let node = common::node();
+    assert_eq!(node.import_block(&[]).unwrap_err(), ChainError::Malformed);
     assert_eq!(
-        node.import_block(&[]).unwrap_err(),
-        ChainError::Malformed
-    );
-    assert_eq!(
-        node.import_block(&vec![0; 2 * 1024 * 1024 + 1]).unwrap_err(),
+        node.import_block(&vec![0; 2 * 1024 * 1024 + 1])
+            .unwrap_err(),
         ChainError::Malformed
     );
     assert_eq!(node.height().unwrap(), 0);
@@ -280,11 +296,17 @@ fn the_canonical_child_is_only_the_next_sealed_block() {
     let block = node.propose_and_seal_block(TS).unwrap().block.unwrap();
     let bytes = encode_block(&block);
     let tip = node.tip().unwrap();
-    assert_eq!(node.canonical_child(&[0; 32]).unwrap().as_deref(), Some(bytes.as_slice()));
+    assert_eq!(
+        node.canonical_child(&[0; 32]).unwrap().as_deref(),
+        Some(bytes.as_slice())
+    );
     assert_eq!(node.canonical_child(&tip).unwrap(), None);
     assert_eq!(node.canonical_child(&[9; 32]).unwrap(), None);
     assert_eq!(node.header_at(1).unwrap(), block.header);
-    assert_eq!(node.encoded_block(&tip).unwrap().as_deref(), Some(bytes.as_slice()));
+    assert_eq!(
+        node.encoded_block(&tip).unwrap().as_deref(),
+        Some(bytes.as_slice())
+    );
     assert_eq!(node.header_at(2).unwrap_err(), ChainError::UnknownBlock);
 }
 
@@ -344,7 +366,10 @@ fn a_precommit_on_a_fork_is_not_stored_and_a_repeat_vote_stays_one() {
     node.note_precommit(&vote).unwrap();
     node.note_precommit(&vote).unwrap();
     assert_eq!(node.precommit_count(1).unwrap(), 1);
-    assert_eq!(node.precommit_count(2).unwrap_err(), ChainError::UnknownBlock);
+    assert_eq!(
+        node.precommit_count(2).unwrap_err(),
+        ChainError::UnknownBlock
+    );
     assert_eq!(node.bft_commit(1).unwrap_err(), ChainError::QuorumAbsent);
 
     let other = common::peer();

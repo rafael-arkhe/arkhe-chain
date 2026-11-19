@@ -108,9 +108,8 @@ impl HttpExecutionRpc {
     }
 
     fn rpc(&self, method: &str, params: &str) -> Result<serde_json::Value, ChainError> {
-        let body = format!(
-            "{{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"{method}\",\"params\":{params}}}"
-        );
+        let body =
+            format!("{{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"{method}\",\"params\":{params}}}");
         let raw = post_json(&self.endpoint, &body)?;
         let value: serde_json::Value =
             serde_json::from_str(&raw).map_err(|_| ChainError::RpcUnavailable)?;
@@ -123,10 +122,7 @@ impl HttpExecutionRpc {
 
 impl ExecutionRpc for HttpExecutionRpc {
     fn execution_hash(&self, number: u64) -> Result<[u8; 32], ChainError> {
-        let value = self.rpc(
-            "eth_getBlockByNumber",
-            &format!("[\"0x{number:x}\",false]"),
-        )?;
+        let value = self.rpc("eth_getBlockByNumber", &format!("[\"0x{number:x}\",false]"))?;
         let Some(text) = value.pointer("/result/hash").and_then(|item| item.as_str()) else {
             return Err(ChainError::RpcUnavailable);
         };
@@ -152,10 +148,9 @@ fn post_json(endpoint: &str, body: &str) -> Result<String, ChainError> {
         return Err(ChainError::RpcUnavailable);
     };
     let (host_port, path) = rest.split_once('/').unwrap_or((rest, ""));
-    let (host, port) = host_port.split_once(':').unwrap_or((
-        host_port,
-        if secure { "443" } else { "80" },
-    ));
+    let (host, port) = host_port
+        .split_once(':')
+        .unwrap_or((host_port, if secure { "443" } else { "80" }));
     let port: u16 = port.parse().map_err(|_| ChainError::RpcUnavailable)?;
     let mut stream =
         std::net::TcpStream::connect((host, port)).map_err(|_| ChainError::RpcUnavailable)?;
@@ -189,7 +184,8 @@ fn read_response<S: std::io::Read + std::io::Write>(
     stream: &mut S,
     request: &str,
 ) -> Result<Vec<u8>, ChainError> {
-    std::io::Write::write_all(stream, request.as_bytes()).map_err(|_| ChainError::RpcUnavailable)?;
+    std::io::Write::write_all(stream, request.as_bytes())
+        .map_err(|_| ChainError::RpcUnavailable)?;
     let mut buf = Vec::new();
     let mut tmp = [0u8; 4096];
     loop {
@@ -275,7 +271,8 @@ fn decode_chunked(mut payload: &[u8]) -> Result<Option<Vec<u8>>, ChainError> {
         let Some(line_end) = payload.windows(2).position(|mark| mark == b"\r\n") else {
             return Ok(None);
         };
-        let line = std::str::from_utf8(&payload[..line_end]).map_err(|_| ChainError::RpcUnavailable)?;
+        let line =
+            std::str::from_utf8(&payload[..line_end]).map_err(|_| ChainError::RpcUnavailable)?;
         let size_hex = line.split(';').next().unwrap_or(line).trim();
         let size = usize::from_str_radix(size_hex, 16).map_err(|_| ChainError::RpcUnavailable)?;
         if size > RPC_BODY_LIMIT {

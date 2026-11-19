@@ -66,10 +66,8 @@ fn assert_equal_scope(result: &SignatureVerification) {
 
 #[test]
 fn minimal_vector_signing_payload_is_pinned() {
-    let document: Value = serde_json::from_str(include_str!(
-        "../../../vectors/c2pa/valid-minimal.json"
-    ))
-    .unwrap();
+    let document: Value =
+        serde_json::from_str(include_str!("../../../vectors/c2pa/valid-minimal.json")).unwrap();
     let payload = signing_payload(
         &document["input"]["claim_v2"],
         "signer-1",

@@ -280,7 +280,10 @@ fn write_sync(out: &mut Vec<u8>, sync: &SyncView<'_>) -> Result<(), ChainError> 
             return Err(ChainError::Snapshot);
         }
         out.extend_from_slice(hash);
-        push_u32(out, u32::try_from(body.len()).map_err(|_| ChainError::Snapshot)?);
+        push_u32(
+            out,
+            u32::try_from(body.len()).map_err(|_| ChainError::Snapshot)?,
+        );
         out.extend_from_slice(body);
     }
     Ok(())
@@ -342,9 +345,7 @@ fn write_ethereum_links(
     Ok(())
 }
 
-fn read_ethereum_links(
-    rd: &mut Rd<'_>,
-) -> Result<BTreeMap<u64, EthereumExecutionId>, ChainError> {
+fn read_ethereum_links(rd: &mut Rd<'_>) -> Result<BTreeMap<u64, EthereumExecutionId>, ChainError> {
     let n = rd.u32()? as usize;
     if n > 100_000 {
         return Err(ChainError::Snapshot);
@@ -357,7 +358,9 @@ fn read_ethereum_links(
         let number = rd.u64()?;
         let hash = rd.arr32()?;
         if height == 0
-            || links.last_key_value().is_some_and(|(stored, _)| height <= *stored)
+            || links
+                .last_key_value()
+                .is_some_and(|(stored, _)| height <= *stored)
             || number == 0
             || number <= previous_number
             || hash == [0u8; 32]
@@ -367,10 +370,7 @@ fn read_ethereum_links(
         }
         previous_number = number;
         seen_hashes.push(hash);
-        links.insert(
-            height,
-            EthereumExecutionId { number, hash },
-        );
+        links.insert(height, EthereumExecutionId { number, hash });
     }
     Ok(links)
 }

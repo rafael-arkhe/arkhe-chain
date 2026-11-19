@@ -1,0 +1,80 @@
+{
+  "delegacao_id": "del-L002-0001",
+  "orquestrador_id": "orq-local-teste",
+  "acao": "conferir_lote",
+  "escopo": {
+    "recursos": [
+      "lote-L002",
+      "anexo-D001"
+    ],
+    "max_acoes": 5,
+    "expira_em": 2000
+  },
+  "veredicto": "permite",
+  "razoes_da_recusa": [],
+  "decidido_em": 1000,
+  "valido_de": 1000,
+  "valido_ate": 1120,
+  "conferencias": [
+    {
+      "id": "D0",
+      "verificacao": "contrato completo",
+      "resultado": "passa",
+      "detalhe": "todos os campos obrigatorios presentes"
+    },
+    {
+      "id": "D7",
+      "verificacao": "politica declarada existe",
+      "resultado": "passa",
+      "detalhe": "politica pol-lote-documental v1 encontrada"
+    },
+    {
+      "id": "D1",
+      "verificacao": "politica cobre a acao",
+      "resultado": "passa",
+      "detalhe": "acao conferir_lote coberta para 2 recursos"
+    },
+    {
+      "id": "D6",
+      "verificacao": "escopo utilizavel",
+      "resultado": "passa",
+      "detalhe": "escopo com 2 recursos e max_acoes 5"
+    },
+    {
+      "id": "D4",
+      "verificacao": "contrato vigente na decisao",
+      "resultado": "passa",
+      "detalhe": "decidido em 1000, expira em 2000"
+    },
+    {
+      "id": "D3",
+      "verificacao": "orquestrador identificado",
+      "resultado": "passa",
+      "detalhe": "orquestrador na allowlist do verificador como orquestrador de teste deste exemplo"
+    },
+    {
+      "id": "D8",
+      "verificacao": "ancoragem externa declarada",
+      "resultado": "passa",
+      "detalhe": "sem ancoragem externa; a identidade vale apenas pela allowlist local"
+    },
+    {
+      "id": "D2",
+      "verificacao": "prova referencia este contrato",
+      "resultado": "passa",
+      "detalhe": "a prova de tipo politica_assinada referencia este contrato"
+    }
+  ],
+  "limites": [
+    "sem ancoragem externa: a identidade do orquestrador vale apenas pela allowlist deste verificador, que e confianca local e nao raiz de confianca",
+    "a prova de tipo politica_assinada nao foi verificada: um hash prova associacao, nao validade, e nenhum verificador de politica_assinada esta registrado neste gate"
+  ],
+  "gate": "delegacao.py",
+  "versao_gate": "1",
+  "registro_digest": "137ba7e1f3d438982e6e073f8dfd862715970268b2038a83262a4352a7a9e364",
+  "registro_assinatura": {
+    "algoritmo": "HMAC-SHA256",
+    "chave_id": "local-1983c6f2",
+    "mac": "2ea0d6c74a9cfab49ffafe3f9860a06624d83f00a151499b942c3d0d8e43780f"
+  }
+}

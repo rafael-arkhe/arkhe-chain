@@ -138,7 +138,10 @@ fn c1_longer_competing_chain_does_not_replace_committed_tip() {
     }
     observer.bft_commit(1).unwrap();
 
-    assert_eq!(observer.import_block(&block_b2), Err(ChainError::ParentMismatch));
+    assert_eq!(
+        observer.import_block(&block_b2),
+        Err(ChainError::ParentMismatch)
+    );
     assert_eq!(
         (observer.height().unwrap(), observer.tip().unwrap()),
         (1, hash_a)

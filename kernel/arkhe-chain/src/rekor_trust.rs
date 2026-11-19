@@ -19,9 +19,8 @@ const TRUSTED_ROOT_JSON: &str = include_str!("../fixtures/sigstore/rekor_trusted
 
 fn pinned_trusted_root() -> Result<&'static TrustedRoot, ChainError> {
     static ROOT: OnceLock<Result<TrustedRoot, String>> = OnceLock::new();
-    let slot = ROOT.get_or_init(|| {
-        TrustedRoot::from_json(TRUSTED_ROOT_JSON).map_err(|e| e.to_string())
-    });
+    let slot =
+        ROOT.get_or_init(|| TrustedRoot::from_json(TRUSTED_ROOT_JSON).map_err(|e| e.to_string()));
     slot.as_ref()
         .map_err(|_| ChainError::ExternalAnchorRekor("trust-root"))
 }
@@ -41,7 +40,9 @@ pub(crate) fn checkpoint_envelope_has_signature(envelope: &str) -> bool {
     false
 }
 
-pub(crate) fn verify_witness_log_signatures(witness: &RekorInclusionWitness) -> Result<(), ChainError> {
+pub(crate) fn verify_witness_log_signatures(
+    witness: &RekorInclusionWitness,
+) -> Result<(), ChainError> {
     let root = pinned_trusted_root()?;
     if checkpoint_envelope_has_signature(&witness.checkpoint_envelope) {
         let inclusion_proof = inclusion_proof_for_witness(witness)?;
@@ -53,7 +54,12 @@ pub(crate) fn verify_witness_log_signatures(witness: &RekorInclusionWitness) -> 
     Ok(())
 }
 
-fn rekor_set_canonical_bytes(body_b64: &str, integrated_time: i64, log_index: i64, log_id_hex: &str) -> Vec<u8> {
+fn rekor_set_canonical_bytes(
+    body_b64: &str,
+    integrated_time: i64,
+    log_index: i64,
+    log_id_hex: &str,
+) -> Vec<u8> {
     // Matches Rekor / Python `json.dumps(..., sort_keys=True, separators=(',', ':'))`.
     format!(
         r#"{{"body":"{body_b64}","integratedTime":{integrated_time},"logID":"{log_id_hex}","logIndex":{log_index}}}"#
@@ -104,7 +110,8 @@ fn verify_set_signature(
         })
         .ok_or(ChainError::ExternalAnchorRekor("set-sig"))?
         .to_ascii_lowercase();
-    let canonical_json = rekor_set_canonical_bytes(&body_b64, integrated_time, log_index, &log_id_hex);
+    let canonical_json =
+        rekor_set_canonical_bytes(&body_b64, integrated_time, log_index, &log_id_hex);
     let signature = SignatureBytes::new(
         STANDARD
             .decode(set_b64)
@@ -128,13 +135,17 @@ fn verify_set_signature(
     Err(ChainError::ExternalAnchorRekor("set-sig"))
 }
 
-fn inclusion_proof_for_witness(witness: &RekorInclusionWitness) -> Result<InclusionProof, ChainError> {
+fn inclusion_proof_for_witness(
+    witness: &RekorInclusionWitness,
+) -> Result<InclusionProof, ChainError> {
     let root_hash = Sha256Hash::try_from_slice(&witness.root_hash)
         .map_err(|_| ChainError::ExternalAnchorRekor("checkpoint-root"))?;
     let hashes = witness
         .sibling_hashes
         .iter()
-        .map(|h| Sha256Hash::try_from_slice(h).map_err(|_| ChainError::ExternalAnchorRekor("inclusion")))
+        .map(|h| {
+            Sha256Hash::try_from_slice(h).map_err(|_| ChainError::ExternalAnchorRekor("inclusion"))
+        })
         .collect::<Result<Vec<_>, _>>()?;
     Ok(InclusionProof {
         log_index: witness.log_index.into(),

@@ -1,0 +1,32 @@
+{
+  "_nota": "Política por ferramenta. Um traço de LLM não diz qual observação é fonte, qual passo tem efeito, nem qual chave torna o efeito idempotente: nada disso é inferível do traço. Esta política é a declaração do operador, e ferramenta sem entrada aqui é recusada pelo adaptador.",
+  "ferramentas": {
+    "ler_documento": {
+      "papel": "fonte",
+      "efeito": "leitura",
+      "justificativa": "Documento aceito no lote, com índice e original preservado"
+    },
+    "ler_anexo": {
+      "papel": "conteudo_recebido",
+      "efeito": "leitura",
+      "justificativa": "Anexo recebido de terceiro; conteúdo do lote, não fonte de fato"
+    },
+    "buscar_na_web": {
+      "papel": "conteudo_recebido",
+      "efeito": "leitura",
+      "justificativa": "Página pública não conferida; não sustenta afirmação sobre o lote"
+    },
+    "gravar_resumo": {
+      "papel": "fonte",
+      "efeito": "escrita",
+      "chave_de": ["caminho"],
+      "justificativa": "Grava arquivo de saída; a chave vem do caminho de destino"
+    },
+    "enviar_email": {
+      "papel": "fonte",
+      "efeito": "escrita",
+      "chave_de": ["para", "assunto"],
+      "justificativa": "Efeito externo irreversível; a chave vem do destinatário e assunto"
+    }
+  }
+}

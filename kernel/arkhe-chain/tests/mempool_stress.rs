@@ -98,7 +98,10 @@ fn the_mempool_stops_at_one_thousand_and_a_block_seals_two_hundred_fifty() {
     }
     assert_eq!(node.mempool_len().unwrap(), 1_000);
     assert_eq!(node.height().unwrap(), 0);
-    assert_eq!(node.ingest(prepared[1_000].1.clone()).unwrap_err(), ChainError::MempoolFull);
+    assert_eq!(
+        node.ingest(prepared[1_000].1.clone()).unwrap_err(),
+        ChainError::MempoolFull
+    );
     assert_eq!(node.mempool_len().unwrap(), 1_000);
 
     let block = node.propose_and_seal_block(TS).unwrap().block.unwrap();

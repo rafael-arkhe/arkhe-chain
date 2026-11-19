@@ -46,8 +46,7 @@ fn authorized_chunk_binds_and_a_forged_digest_does_not() {
 
     let mut forged = cite(&stored);
     forged.chunk_digest = Digest32::blake3(b"AKG:RAG:CHUNK:v1\0", b"Melbourne opened in 1957");
-    let (unbound, record) =
-        bind_citations(b"when", b"1957", vec![forged], &allowed).unwrap();
+    let (unbound, record) = bind_citations(b"when", b"1957", vec![forged], &allowed).unwrap();
     assert!(!unbound.grounded);
     assert_eq!(
         record.uncertainty_note.as_deref(),

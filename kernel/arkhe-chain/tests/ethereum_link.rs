@@ -290,13 +290,7 @@ fn an_http_execution_client_confirms_without_settling() {
         .unwrap();
     node.propose_and_seal_block(TS).unwrap();
     let stored = node
-        .cite_ethereum_execution(
-            1,
-            EthereumExecutionId {
-                number: 21,
-                hash,
-            },
-        )
+        .cite_ethereum_execution(1, EthereumExecutionId { number: 21, hash })
         .unwrap();
     assert!(!stored.confirmed);
     let confirmed = node.confirm_ethereum_execution(1, &rpc).unwrap();

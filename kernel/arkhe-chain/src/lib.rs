@@ -20,11 +20,8 @@
 //! pairing.
 
 mod anchor;
-mod audit_bundle;
-mod rekor_trust;
-mod rekor_witness;
-mod rfc6962;
 mod attest;
+mod audit_bundle;
 mod codec;
 mod consensus;
 mod contingency;
@@ -35,27 +32,27 @@ mod operator;
 mod p2p;
 mod persist;
 mod proof_verification;
+mod rekor_trust;
+mod rekor_witness;
 mod replay_log;
+mod rfc6962;
 mod state;
 mod tx;
 mod validity;
 mod validity_bridge;
 
-pub use anchor::{btc_op_return, check_btc_op_return, AnchorPlan, AnchorPublisher, BTC_OP_RETURN_LEN};
-pub use audit_bundle::{
-    AuditBundle, AuditInclusionProof, BundleReceipt, ExternalAnchoringProof,
-    OfflineVerificationBundle, RegistryCheckpoint, OFFLINE_BUNDLE_VERSION,
-};
-pub use rekor_witness::{
-    hashedrekord_sha256_digest, synthetic_witness_for_digest, verify_recorded_witness,
-    verify_recorded_witness_rekor_log, witness_from_rekor_entry_json, RekorInclusionWitness,
-    DEFAULT_REKOR_BASE_URL, DEFAULT_REKOR_ORIGIN,
+pub use anchor::{
+    btc_op_return, check_btc_op_return, AnchorPlan, AnchorPublisher, BTC_OP_RETURN_LEN,
 };
 pub use attest::{
     build_rotation_proof, check_rotation, sign_attestation, AttestOp, AttestPolicy, AttestRegistry,
     AttestStatus, Attestation, Claim, Grant, Receipt, Role, RotationOutcome, ATTEST_AUDIENCE,
     ATTEST_MAX_OPS_PER_BLOCK, ATTEST_MAX_RECORDS, ATTEST_POOL_CAPACITY, ATTEST_SCHEME_ED25519,
     ATTEST_SIGNER_QUOTA, ATTEST_VERSION, MAX_LEAVES,
+};
+pub use audit_bundle::{
+    AuditBundle, AuditInclusionProof, BundleReceipt, ExternalAnchoringProof,
+    OfflineVerificationBundle, RegistryCheckpoint, OFFLINE_BUNDLE_VERSION,
 };
 pub use codec::{decode_block, encode_block};
 pub use consensus::{
@@ -70,11 +67,11 @@ pub use ethereum::{
 };
 pub use halt::load_emergency_halt;
 pub use operator::{
-    encode_attestation_list, encode_tx_list, genesis_peer_lines, ingest_tx_list,
-    parse_configured_peer, parse_genesis, parse_genesis_grants, format_genesis, format_status,
-    genesis_fingerprint, next_status_line, read_peer_file, read_status, submit_attestation_list,
-    ChainStatus, GenesisFingerprint, InboxFile, PeerFile, parse_secret_hex, read_operator_files,
-    run_operator, OperatorHandle, OperatorRequest,
+    encode_attestation_list, encode_tx_list, format_genesis, format_status, genesis_fingerprint,
+    genesis_peer_lines, ingest_tx_list, next_status_line, parse_configured_peer, parse_genesis,
+    parse_genesis_grants, parse_secret_hex, read_operator_files, read_peer_file, read_status,
+    run_operator, submit_attestation_list, ChainStatus, GenesisFingerprint, InboxFile,
+    OperatorHandle, OperatorRequest, PeerFile,
 };
 pub use p2p::{
     attest_configured, import_synced, spawn_server, spawn_server_on, submit_precommit, submit_tx,
@@ -84,11 +81,16 @@ pub use p2p::{
 pub use proof_verification::{
     check_shape, Groth16Verifier, RejectingVerifier, UndeployedVerifier, PHASE0_SELECTOR, SEAL_LEN,
 };
+pub use rekor_witness::{
+    hashedrekord_sha256_digest, synthetic_witness_for_digest, verify_recorded_witness,
+    verify_recorded_witness_rekor_log, witness_from_rekor_entry_json, RekorInclusionWitness,
+    DEFAULT_REKOR_BASE_URL, DEFAULT_REKOR_ORIGIN,
+};
 pub use replay_log::{format_replay, parse_replay, ReplayRecord};
 pub use state::{apply_transfer, ChainState, GENESIS_ACCOUNT, GENESIS_SUPPLY};
 pub use tx::{
-    mldsa_message, sign_mldsa, block_hash, Block, BlockHeader, Transaction, MLDSA65_CONTEXT, MLDSA65_PK_LEN,
-    MLDSA65_SIG_LEN,
+    block_hash, mldsa_message, sign_mldsa, Block, BlockHeader, Transaction, MLDSA65_CONTEXT,
+    MLDSA65_PK_LEN, MLDSA65_SIG_LEN,
 };
 pub use validity::{load_circuit, read_journal, ProofJournal, ValidityCircuit};
 pub use validity_bridge::{AbsentRpc, RpcOutcome, SettleRequest, SettlementRpc, ValidityBridge};
@@ -409,7 +411,9 @@ impl ArkheNode {
     }
 
     pub(crate) fn accepts_peer(&self, peer: &libp2p::PeerId) -> bool {
-        self.accepted_peers().iter().any(|accepted| &accepted.peer_id == peer)
+        self.accepted_peers()
+            .iter()
+            .any(|accepted| &accepted.peer_id == peer)
     }
 
     pub fn emergency_halt(&self) -> Result<bool, ChainError> {
@@ -458,7 +462,7 @@ impl ArkheNode {
         inner.mempool.push_back(tx);
         if let Some(path) = path.as_deref() {
             let written = encode_from(&inner.state, &inner, &inner.mempool)
-            .and_then(|encoded| persist::write_atomic(path, &encoded));
+                .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
                 inner.mempool.pop_back();
                 return Err(error);
@@ -693,7 +697,7 @@ impl ArkheNode {
         );
         if let Some(path) = path.as_deref() {
             let written = encode_from(&inner.state, &inner, &inner.mempool)
-            .and_then(|encoded| persist::write_atomic(path, &encoded));
+                .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
                 match previous {
                     Some(stored) => {
@@ -722,7 +726,11 @@ impl ArkheNode {
     }
 
     /// Round stored for this validator at `height`. `Ok(None)` means no vote.
-    pub fn precommit_round(&self, height: u64, validator_id: &str) -> Result<Option<u64>, ChainError> {
+    pub fn precommit_round(
+        &self,
+        height: u64,
+        validator_id: &str,
+    ) -> Result<Option<u64>, ChainError> {
         let inner = self.lock()?;
         if !inner.by_height.contains_key(&height) {
             return Err(ChainError::UnknownBlock);
@@ -903,11 +911,7 @@ impl ArkheNode {
                 signature: stored.signature,
             });
         }
-        let validator_power = self
-            .validators
-            .keys()
-            .map(|id| (id.clone(), 1))
-            .collect();
+        let validator_power = self.validators.keys().map(|id| (id.clone(), 1)).collect();
         let validator_keys: std::collections::HashMap<_, _> = self
             .validators
             .iter()
@@ -1008,18 +1012,21 @@ impl ArkheNode {
             }
             return Err(ChainError::EthereumConflict);
         }
-        if inner.ethereum_links.values().any(|stored| {
-            stored.number == execution.number || stored.hash == execution.hash
-        }) || inner.ethereum_links.iter().any(|(stored_height, stored)| {
-            (*stored_height < height && stored.number >= execution.number)
-                || (*stored_height > height && stored.number <= execution.number)
-        }) {
+        if inner
+            .ethereum_links
+            .values()
+            .any(|stored| stored.number == execution.number || stored.hash == execution.hash)
+            || inner.ethereum_links.iter().any(|(stored_height, stored)| {
+                (*stored_height < height && stored.number >= execution.number)
+                    || (*stored_height > height && stored.number <= execution.number)
+            })
+        {
             return Err(ChainError::EthereumConflict);
         }
         inner.ethereum_links.insert(height, execution);
         if let Some(path) = path.as_deref() {
             let written = encode_from(&inner.state, &inner, &inner.mempool)
-            .and_then(|encoded| persist::write_atomic(path, &encoded));
+                .and_then(|encoded| persist::write_atomic(path, &encoded));
             if let Err(error) = written {
                 inner.ethereum_links.remove(&height);
                 return Err(error);
@@ -1233,7 +1240,7 @@ impl ArkheNode {
                         inner.fork_blocks.push(bytes.to_vec());
                         if let Some(path) = path.as_deref() {
                             let written = encode_from(&inner.state, &inner, &inner.mempool)
-                            .and_then(|encoded| persist::write_atomic(path, &encoded));
+                                .and_then(|encoded| persist::write_atomic(path, &encoded));
                             if let Err(error) = written {
                                 inner.forks.pop();
                                 inner.fork_blocks.pop();
@@ -1441,7 +1448,8 @@ fn reject_sibling(inner: &Inner, block: &Block, parent_height: u64) -> Result<()
             .ok_or(ChainError::UnknownBlock)?;
         let bytes = inner.blocks.get(&hash).ok_or(ChainError::UnknownBlock)?;
         let parent = decode_block(bytes)?;
-        if parent.header.parent_hash != trial.tip || parent.header.block_number != trial.height + 1 {
+        if parent.header.parent_hash != trial.tip || parent.header.block_number != trial.height + 1
+        {
             return Err(ChainError::ParentMismatch);
         }
         for tx in &parent.transactions {
@@ -1564,7 +1572,8 @@ fn accept_timestamp(inner: &Inner, timestamp: u64) -> Result<(), ChainError> {
 }
 
 pub(crate) fn peer_id_from_bytes(bytes: &[u8; 32]) -> Result<libp2p::PeerId, ChainError> {
-    let public = ed25519::PublicKey::try_from_bytes(bytes).map_err(|_| ChainError::BadProposerKey)?;
+    let public =
+        ed25519::PublicKey::try_from_bytes(bytes).map_err(|_| ChainError::BadProposerKey)?;
     Ok(validator_peer_id(&public))
 }
 
@@ -1689,7 +1698,10 @@ pub fn sign_round_precommit(vote: &mut Precommit, secret_key: &[u8; 32]) -> Resu
     Ok(())
 }
 
-pub fn sign_historical_precommit(vote: &mut Precommit, secret_key: &[u8; 32]) -> Result<(), ChainError> {
+pub fn sign_historical_precommit(
+    vote: &mut Precommit,
+    secret_key: &[u8; 32],
+) -> Result<(), ChainError> {
     if vote.round != 0 {
         return Err(ChainError::BadProposerSignature);
     }
@@ -1714,7 +1726,8 @@ pub fn sign_sender(tx: &mut Transaction, secret_key: &[u8; 32]) -> Result<(), Ch
 
 fn signer_from(secret_key: &[u8; 32]) -> Result<ed25519::Keypair, ChainError> {
     let mut bytes = *secret_key;
-    let secret = ed25519::SecretKey::try_from_bytes(&mut bytes).map_err(|_| ChainError::BadProposerKey)?;
+    let secret =
+        ed25519::SecretKey::try_from_bytes(&mut bytes).map_err(|_| ChainError::BadProposerKey)?;
     Ok(ed25519::Keypair::from(secret))
 }
 

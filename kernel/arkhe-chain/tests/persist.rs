@@ -22,7 +22,14 @@ fn validators() -> Vec<arkhe_chain::Validator> {
 #[test]
 fn a_reopened_file_replays_the_same_tip_balances_and_mmr() {
     let path = path("reopen");
-    let node = ArkheNode::open(&path, "validator-a", &common::SECRET_A, validators(), common::accounts()).unwrap();
+    let node = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
     node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
         .unwrap();
     node.propose_and_seal_block(TS).unwrap();
@@ -33,7 +40,14 @@ fn a_reopened_file_replays_the_same_tip_balances_and_mmr() {
     let root = node.mmr_root().unwrap();
     drop(node);
 
-    let again = ArkheNode::open(&path, "validator-a", &common::SECRET_A, validators(), common::accounts()).unwrap();
+    let again = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
     assert_eq!(again.height().unwrap(), 2);
     assert_eq!(again.tip().unwrap(), tip);
     assert_eq!(again.mmr_root().unwrap(), root);
@@ -48,7 +62,14 @@ fn a_reopened_file_replays_the_same_tip_balances_and_mmr() {
 #[test]
 fn a_tampered_snapshot_does_not_open() {
     let path = path("tamper");
-    let node = ArkheNode::open(&path, "validator-a", &common::SECRET_A, validators(), common::accounts()).unwrap();
+    let node = ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    )
+    .unwrap();
     node.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
         .unwrap();
     node.propose_and_seal_block(TS).unwrap();
@@ -57,7 +78,13 @@ fn a_tampered_snapshot_does_not_open() {
     let mut bytes = std::fs::read(&path).unwrap();
     bytes.pop();
     std::fs::write(&path, bytes).unwrap();
-    match ArkheNode::open(&path, "validator-a", &common::SECRET_A, validators(), common::accounts()) {
+    match ArkheNode::open(
+        &path,
+        "validator-a",
+        &common::SECRET_A,
+        validators(),
+        common::accounts(),
+    ) {
         Ok(_) => panic!("truncated snapshot opened"),
         Err(error) => assert_eq!(error, ChainError::Snapshot),
     }
@@ -154,10 +181,7 @@ fn a_reopened_file_keeps_the_unsealed_mempool() {
     assert_eq!(again.balance("bob").unwrap(), 25);
     assert_eq!(again.balance("carol").unwrap(), 10);
     assert_eq!(again.mempool_len().unwrap(), 0);
-    assert_eq!(
-        again.balance(GENESIS_ACCOUNT).unwrap(),
-        GENESIS_SUPPLY - 35
-    );
+    assert_eq!(again.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY - 35);
     drop(again);
 
     let sealed = ArkheNode::open(
@@ -266,10 +290,7 @@ fn a_reopened_file_keeps_a_fork_and_the_first_tip() {
         .unwrap();
     let rival = other.propose_and_seal_block(TS).unwrap().block.unwrap();
     let encoded = arkhe_chain::encode_block(&rival);
-    assert_eq!(
-        node.import_block(&encoded).unwrap_err(),
-        ChainError::Fork
-    );
+    assert_eq!(node.import_block(&encoded).unwrap_err(), ChainError::Fork);
     assert_eq!(node.fork_count().unwrap(), 1);
     assert_eq!(node.tip().unwrap(), tip);
     drop(node);
@@ -287,10 +308,7 @@ fn a_reopened_file_keeps_a_fork_and_the_first_tip() {
     assert_eq!(again.tip().unwrap(), tip);
     assert_eq!(again.balance("bob").unwrap(), 25);
     assert_eq!(again.balance("carol").unwrap(), 0);
-    assert_eq!(
-        again.import_block(&encoded).unwrap_err(),
-        ChainError::Fork
-    );
+    assert_eq!(again.import_block(&encoded).unwrap_err(), ChainError::Fork);
     assert_eq!(again.fork_count().unwrap(), 1);
     let _ = std::fs::remove_file(&path);
 }

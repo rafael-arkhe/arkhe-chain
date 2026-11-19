@@ -74,5 +74,8 @@ fn duplicates_and_outsiders_are_refused() {
         "signature"
     );
     let doubled = [keyset[0], keyset[0]];
-    assert_eq!(admit(&digest, &doubled, 2, &[repeated]).unwrap_err(), "keyset");
+    assert_eq!(
+        admit(&digest, &doubled, 2, &[repeated]).unwrap_err(),
+        "keyset"
+    );
 }

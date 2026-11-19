@@ -5,8 +5,8 @@ use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 
 use crate::p2p::{attest_pass, listen_on, seal_timestamp, sync_pass, RemoteSeal};
 use crate::{
-    codec, spawn_server_on, submit_tx, Account, ArkheNode, Attestation, ChainError,
-    ConfiguredPeer, Grant, Role, SyncServer, Transaction, Validator,
+    codec, spawn_server_on, submit_tx, Account, ArkheNode, Attestation, ChainError, ConfiguredPeer,
+    Grant, Role, SyncServer, Transaction, Validator,
 };
 
 /// Read the operator genesis. A validator line is `validator <id> <ed25519 hex>`.
@@ -27,7 +27,9 @@ pub fn parse_genesis_grants(text: &str) -> Result<Vec<Grant>, ChainError> {
     Ok(parse_genesis_lines(text)?.2)
 }
 
-fn parse_genesis_lines(text: &str) -> Result<(Vec<Validator>, Vec<Account>, Vec<Grant>), ChainError> {
+fn parse_genesis_lines(
+    text: &str,
+) -> Result<(Vec<Validator>, Vec<Account>, Vec<Grant>), ChainError> {
     let mut validators = Vec::new();
     let mut accounts = Vec::new();
     let mut grants = Vec::new();
@@ -65,7 +67,10 @@ fn parse_genesis_lines(text: &str) -> Result<(Vec<Validator>, Vec<Account>, Vec<
             }
             Some("grant") => {
                 let delegate = parts.next().ok_or(ChainError::Malformed)?;
-                let role = parts.next().and_then(Role::from_name).ok_or(ChainError::Malformed)?;
+                let role = parts
+                    .next()
+                    .and_then(Role::from_name)
+                    .ok_or(ChainError::Malformed)?;
                 let grantor = parts.next().ok_or(ChainError::Malformed)?;
                 let expires = parts.next().ok_or(ChainError::Malformed)?;
                 // Only the digits `u64` prints, so the line and the hash agree.
@@ -327,9 +332,7 @@ impl OperatorHandle {
     /// The bound address plus this validator's peer id. The result is a
     /// `--peer` value. It does not discover anyone.
     pub fn listen_line(&self) -> Multiaddr {
-        self.listen
-            .clone()
-            .with(Protocol::P2p(self.peer_id))
+        self.listen.clone().with(Protocol::P2p(self.peer_id))
     }
 
     /// Height, committed height, tip, mempool, forks, and the genesis hash of
@@ -484,7 +487,11 @@ impl OperatorHandle {
         let mut names = Vec::new();
         for entry in std::fs::read_dir(dir).map_err(|_| ChainError::Snapshot)? {
             let path = entry.map_err(|_| ChainError::Snapshot)?.path();
-            if path.extension().is_some_and(|ext| ext == "txs" || ext == "ops") && path.is_file() {
+            if path
+                .extension()
+                .is_some_and(|ext| ext == "txs" || ext == "ops")
+                && path.is_file()
+            {
                 names.push(path);
             }
         }
@@ -501,7 +508,11 @@ impl OperatorHandle {
                     }
                 });
             let mut moved = path.clone().into_os_string();
-            moved.push(if outcome.is_ok() { ".done" } else { ".rejected" });
+            moved.push(if outcome.is_ok() {
+                ".done"
+            } else {
+                ".rejected"
+            });
             std::fs::rename(&path, PathBuf::from(moved)).map_err(|_| ChainError::Snapshot)?;
             taken.push(InboxFile {
                 name: path
@@ -573,8 +584,11 @@ pub fn submit_attestation_list(node: &ArkheNode, bytes: &[u8]) -> Result<usize, 
         if bytes.len() - i < 4 {
             return Err(ChainError::Malformed);
         }
-        let len = u32::from_be_bytes(bytes[i..i + 4].try_into().map_err(|_| ChainError::Malformed)?)
-            as usize;
+        let len = u32::from_be_bytes(
+            bytes[i..i + 4]
+                .try_into()
+                .map_err(|_| ChainError::Malformed)?,
+        ) as usize;
         i += 4;
         if len == 0 || bytes.len() - i < len {
             return Err(ChainError::Malformed);
@@ -594,8 +608,11 @@ pub fn decode_tx_list(bytes: &[u8]) -> Result<Vec<Transaction>, ChainError> {
         if bytes.len() - i < 4 {
             return Err(ChainError::Malformed);
         }
-        let len = u32::from_be_bytes(bytes[i..i + 4].try_into().map_err(|_| ChainError::Malformed)?)
-            as usize;
+        let len = u32::from_be_bytes(
+            bytes[i..i + 4]
+                .try_into()
+                .map_err(|_| ChainError::Malformed)?,
+        ) as usize;
         i += 4;
         if len == 0 || bytes.len() - i < len {
             return Err(ChainError::Malformed);
@@ -615,8 +632,11 @@ pub fn ingest_tx_list(node: &ArkheNode, bytes: &[u8]) -> Result<usize, ChainErro
         if bytes.len() - i < 4 {
             return Err(ChainError::Malformed);
         }
-        let len = u32::from_be_bytes(bytes[i..i + 4].try_into().map_err(|_| ChainError::Malformed)?)
-            as usize;
+        let len = u32::from_be_bytes(
+            bytes[i..i + 4]
+                .try_into()
+                .map_err(|_| ChainError::Malformed)?,
+        ) as usize;
         i += 4;
         if len == 0 || bytes.len() - i < len {
             return Err(ChainError::Malformed);
@@ -736,10 +756,7 @@ pub async fn run_operator(request: OperatorRequest) -> Result<OperatorHandle, Ch
     Ok(handle)
 }
 
-async fn heard_every_peer(
-    node: &ArkheNode,
-    peers: &[ConfiguredPeer],
-) -> Result<bool, ChainError> {
+async fn heard_every_peer(node: &ArkheNode, peers: &[ConfiguredPeer]) -> Result<bool, ChainError> {
     if peers.is_empty() {
         return Ok(true);
     }

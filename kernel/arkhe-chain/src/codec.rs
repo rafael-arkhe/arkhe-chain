@@ -90,7 +90,7 @@ pub(crate) fn proposer_message(block: &Block) -> Vec<u8> {
         write_tx(&mut out, tx);
     }
     write_ops(&mut out, &block.attestations);
-  write_rotation_proof(&mut out, block.rotation_proof.as_deref());
+    write_rotation_proof(&mut out, block.rotation_proof.as_deref());
     out
 }
 

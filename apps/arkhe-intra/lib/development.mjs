@@ -35,9 +35,10 @@ export function catalog() {
     const packageSection = manifest.match(/^\[package\]\s*\r?\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1];
     const id = packageSection?.match(/^name\s*=\s*"([A-Za-z0-9_-]+)"\s*$/m)?.[1];
     demand(id, 503, 'Missing explicit Cargo package name: ' + path);
+    const skeleton = new Set(architecture.skeleton_members || []);
     return { id, path,
-    boundary: path.startsWith('cognition/') ? 'reference' : 'implemented-baseline',
-    criterion: criteria[path.split('/').at(-1)] || 'Preservar contratos e limites de autoridade; acrescentar testes de integração, falhas e regressões.',
+    boundary: path.startsWith('cognition/') ? 'reference' : skeleton.has(path) ? 'skeleton' : 'implemented-baseline',
+    criterion: skeleton.has(path) ? 'Limite sem efeito. Não autoriza transição e não é baseline de produto.' : criteria[path.split('/').at(-1)] || 'Preservar contratos e limites de autoridade; acrescentar testes de integração, falhas e regressões.',
     test: 'cargo test --locked --offline -p ' + id,
   }; });
 }
@@ -66,9 +67,12 @@ export function validateProposal(value, module) {
 // Only public source trees enter the container. No ops, environment, DB, keys,
 // package caches, socket mounts or inherited host environment enter the sandbox.
 export function sourceSnapshot(destination) {
+  const architecture = JSON.parse(readFileSync(resolve(sourceRoot, 'config/architecture.json'), 'utf8'));
+  const independent = new Set((architecture.independent_workspaces || []).map(item => item.path));
   const baseline = {}; let total = 0, count = 0;
   const allowed = new Set(['.rs', '.toml', '.lock', '.json', '.sql', '.md', '.txt', '.csv']);
   function walk(relative) {
+    if (independent.has(relative)) return;
     const path = resolve(sourceRoot, relative), stat = lstatSync(path);
     demand(!stat.isSymbolicLink(), 422, 'Links não são permitidos no snapshot.');
     if (stat.isDirectory()) {
@@ -80,7 +84,7 @@ export function sourceSnapshot(destination) {
       mkdirSync(dirname(join(destination, relative)), { recursive: true }); writeFileSync(join(destination, relative), bytes);
     }
   }
-  for (const path of ['Cargo.toml','Cargo.lock','kernel','cognition','governance','work','evidence','orchestration','storage/sql','verification/crates','integration','integrations/arkhe-python-runtime/bridge']) walk(path);
+  for (const path of ['Cargo.toml','Cargo.lock','.cargo','kernel','barrier','state','probes','cognition','governance','work','evidence','orchestration','storage/sql','verification/crates','integration','integrations/arkhe-python-runtime/bridge','apps/arkhe-ask']) walk(path);
   return baseline;
 }
 function engine() { return ['--connection', process.env.ARKHE_SANDBOX_CONNECTION || configuration.connection || 'arkhe-runtime']; }
@@ -107,6 +111,7 @@ export async function startRun(user, input) {
   owner(user); demand(!busy, 409, 'Já existe uma execução em andamento.');
   const module = catalog().find(item => item.id === input.moduleId);
   demand(module && typeof input.objective === 'string' && input.objective.trim().length >= 10 && input.objective.length <= 2000, 400, 'Escolha um módulo e um objetivo entre 10 e 2000 caracteres.');
+  demand(module.boundary !== 'skeleton', 409, 'O esqueleto não entra na bancada de evolução.');
   try { readFileSync(join(sourceRoot, 'Cargo.toml')); } catch { demand(false, 503, 'Configure ARKHE_DEVELOPMENT_ROOT com o workspace fonte para desenvolver a partir do aplicativo instalado.'); }
   if(input.studyId) {
     demand(typeof input.studyId==='string'&&/^[a-f0-9-]{36}$/.test(input.studyId),400,'Estudo inválido.');

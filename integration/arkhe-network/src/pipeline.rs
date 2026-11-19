@@ -120,8 +120,10 @@ impl NetworkPipeline {
         ) {
             return Err(Error::InvalidBundle);
         }
-        if !matches!(anchored.bundle.attestation, AttestationVerdict::Verified { .. })
-            && anchored.proof.attested.hardware_attestation.is_some()
+        if !matches!(
+            anchored.bundle.attestation,
+            AttestationVerdict::Verified { .. }
+        ) && anchored.proof.attested.hardware_attestation.is_some()
         {
             return Err(Error::InvalidBundle);
         }

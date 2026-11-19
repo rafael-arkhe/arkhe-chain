@@ -1,0 +1,151 @@
+{
+  "data": "2026-11-14",
+  "linhas": [
+    {
+      "id": "I1",
+      "invariante": "I1",
+      "verificacao": "bytes recebidos = bytes entregues",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "3 originais identicos byte a byte, 3 somas coerentes"
+    },
+    {
+      "id": "I1b",
+      "invariante": "I1",
+      "verificacao": "cadeia origem-recebimento-entrega",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "lote sem registro de recebimento; cadeia nao se aplica"
+    },
+    {
+      "id": "I1c",
+      "invariante": "I1",
+      "verificacao": "extracao de PDF igual a conferida",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "lote sem PDF; nenhuma extracao a conferir"
+    },
+    {
+      "id": "I2",
+      "invariante": "I2",
+      "verificacao": "afirmacao localizada ou pendente",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "8 localizacoes conferidas em 4 afirmacoes"
+    },
+    {
+      "id": "I2b",
+      "invariante": "I2",
+      "verificacao": "campo alterado com origem conferivel",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "4 campos com origem conferivel"
+    },
+    {
+      "id": "I3a",
+      "invariante": "I3",
+      "verificacao": "codigo nao executa conteudo de fonte",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "montar.py sem processo externo; receber.py com uma chamada de argv fixo ao extrator, sem shell"
+    },
+    {
+      "id": "E1",
+      "invariante": "escopo",
+      "verificacao": "limite excedido fica registrado",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "4 afirmacoes dentro do limite de 20; nenhum limite excedido"
+    },
+    {
+      "id": "I4",
+      "invariante": "I4",
+      "verificacao": "nenhuma versao sobrescrita",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "3 originais em pastas por ID"
+    },
+    {
+      "id": "I5",
+      "invariante": "I5",
+      "verificacao": "revisor, data e alcance declarados",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "revisor, data e alcance declarados no relatorio"
+    },
+    {
+      "id": "I6",
+      "invariante": "I6",
+      "verificacao": "pacote legivel sem rede e sem servico",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "somente texto, caminhos relativos, nenhuma tentativa de rede"
+    },
+    {
+      "id": "I7",
+      "invariante": "I7",
+      "verificacao": "autorizacao e destino registrados",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "autorizacao, ambiente e destinatarios registrados; nenhuma exclusao declarada como concluida"
+    },
+    {
+      "id": "T-BYTE",
+      "invariante": "I1",
+      "verificacao": "byte alterado no original entregue",
+      "resultado": "PASSOU",
+      "esperado": "falhar",
+      "evidencia": "D002: 298 bytes recebidos != 298 bytes entregues, sha 0a9f0ad7d128 != 20deae623abd; soma divergente para originais/D002/relatorio_v2.txt"
+    },
+    {
+      "id": "T-SOMA",
+      "invariante": "I1",
+      "verificacao": "arquivo e soma substituidos juntos",
+      "resultado": "PASSOU",
+      "esperado": "falhar",
+      "evidencia": "D003: 200 bytes recebidos != 205 bytes entregues, sha 27f85e124e70 != 5d44a027d195"
+    },
+    {
+      "id": "T-FONTE",
+      "invariante": "I2",
+      "verificacao": "fonte removida com mapa inalterado",
+      "resultado": "PASSOU",
+      "esperado": "falhar",
+      "evidencia": "A001: fonte D003 ausente do pacote mas afirmacao segue compativel; A002: fonte D003 ausente do pacote mas afirmacao segue compativel; A003: fonte D003 ausente do pacote mas afirmacao segue compativel"
+    },
+    {
+      "id": "T-FONTE-MAPA",
+      "invariante": "I2",
+      "verificacao": "mapa gerado sem resultado positivo antigo",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "nenhuma linha 'Compatível' no mapa; fonte marcada como ausente"
+    },
+    {
+      "id": "T-INJECAO",
+      "invariante": "I3",
+      "verificacao": "documento com instrucao operacional",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "instrucao registrada como conteudo; mapa, pendencias e aceite inalterados; nenhum envio; anexo preservado"
+    },
+    {
+      "id": "T-NOME",
+      "invariante": "I4",
+      "verificacao": "duas versoes com nome igual em lotes diferentes",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "D002 e D005 preservados em pastas distintas, conteudos diferentes, ambos no indice e nas somas"
+    },
+    {
+      "id": "T-REVISOR",
+      "invariante": "I5",
+      "verificacao": "lote sem revisor ou data",
+      "resultado": "PASSOU",
+      "esperado": "passar",
+      "evidencia": "relatorio declara revisao nao concluida; revisor ausente e relatorio declara revisao nao concluida"
+    }
+  ],
+  "falhas": 0,
+  "tentativas_de_rede": 0
+}

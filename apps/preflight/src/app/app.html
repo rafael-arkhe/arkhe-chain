@@ -1,7 +1,13 @@
 <div class="min-h-screen bg-[#090d16] text-slate-100 flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200 font-sans">
+  <a
+    href="#preflight-main"
+    class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-cyan-500 focus:text-slate-950 focus:font-semibold focus:shadow-lg">
+    Pular para o conteúdo principal
+  </a>
+
   <!-- Toast notification -->
   @if (copyNotification()) {
-    <div class="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-slate-900/95 border border-cyan-500/50 text-cyan-200 text-sm px-4 py-2.5 rounded-xl shadow-2xl backdrop-blur-md transition-all">
+    <div role="status" aria-live="polite" class="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-slate-900/95 border border-cyan-500/50 text-cyan-200 text-sm px-4 py-2.5 rounded-xl shadow-2xl backdrop-blur-md transition-all">
       <mat-icon class="text-cyan-400 text-lg">check_circle</mat-icon>
       <span>{{ copyNotification() }}</span>
     </div>
@@ -123,9 +129,11 @@
 
     <!-- Navigation tabs bar -->
     <div class="border-t border-slate-800/60 bg-slate-950/40">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 flex overflow-x-auto no-scrollbar gap-1 text-xs">
+      <div role="tablist" aria-label="Navegação do Preflight Studio" class="max-w-7xl mx-auto px-4 sm:px-6 flex overflow-x-auto no-scrollbar gap-1 text-xs">
         <button 
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'cockpit'"
           (click)="setTab('cockpit')"
           class="px-3.5 py-2.5 border-b-2 font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
           [class.border-cyan-400]="activeTab() === 'cockpit'"
@@ -139,6 +147,8 @@
 
         <button 
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'audio'"
           (click)="setTab('audio')"
           class="px-3.5 py-2.5 border-b-2 font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
           [class.border-cyan-400]="activeTab() === 'audio'"
@@ -152,6 +162,8 @@
 
         <button 
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'matrix'"
           (click)="setTab('matrix')"
           class="px-3.5 py-2.5 border-b-2 font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
           [class.border-cyan-400]="activeTab() === 'matrix'"
@@ -166,6 +178,8 @@
 
         <button 
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'mmr'"
           (click)="setTab('mmr')"
           class="px-3.5 py-2.5 border-b-2 font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
           [class.border-cyan-400]="activeTab() === 'mmr'"
@@ -179,6 +193,8 @@
 
         <button 
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'c2pa'"
           (click)="setTab('c2pa')"
           class="px-3.5 py-2.5 border-b-2 font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
           [class.border-cyan-400]="activeTab() === 'c2pa'"
@@ -192,6 +208,8 @@
 
         <button 
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'solana'"
           (click)="setTab('solana')"
           class="px-3.5 py-2.5 border-b-2 font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
           [class.border-cyan-400]="activeTab() === 'solana'"
@@ -205,6 +223,8 @@
 
         <button 
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'calibration'"
           (click)="setTab('calibration')"
           class="px-3.5 py-2.5 border-b-2 font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
           [class.border-cyan-400]="activeTab() === 'calibration'"
@@ -218,6 +238,8 @@
 
         <button 
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'selftest'"
           (click)="setTab('selftest')"
           class="px-3.5 py-2.5 border-b-2 font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
           [class.border-cyan-400]="activeTab() === 'selftest'"
@@ -231,6 +253,8 @@
 
         <button 
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'editor'"
           (click)="setTab('editor')"
           class="px-3.5 py-2.5 border-b-2 font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
           [class.border-cyan-400]="activeTab() === 'editor'"
@@ -246,7 +270,7 @@
   </header>
 
   <!-- Main Content Area -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+  <main id="preflight-main" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
 
     <!-- ========================================== -->
     <!-- TAB 1: COCKPIT GERAL                       -->

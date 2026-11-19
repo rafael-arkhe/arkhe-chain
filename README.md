@@ -5,7 +5,9 @@ verificação, aplicações e adapters seguem uma arquitetura comum na raiz.
 
 | Pasta | Responsabilidade |
 |---|---|
-| `kernel/` | Identidade canônica, contratos e ContainmentGate |
+| `kernel/` | Identidade canônica, contratos e ContainmentGate. `arkhe-gate` é espécime e não autoriza |
+| `barrier/`, `state/`, `probes/` | Esqueleto no workspace: segura efeito, não retoma, mede a barreira |
+| `models/`, `formal/`, `eval/` | Cliente sem snapshot, prova por escrever, avaliação fora do write set |
 | `cognition/` | Módulos substituíveis que produzem WER, sem autoridade de escrita |
 | `governance/`, `work/` | Resolução de política, pedidos e dados privados |
 | `evidence/`, `orchestration/` | WormGraph, memória e runtime HTTP |
@@ -135,3 +137,7 @@ Rekor assinada, usando a mesma inspeção binária Rust para GGUF.
 ## Arkhe GovTech
 
 Aplicação local em `/govtech`: processos, revisão assinada, políticas por órgão, parada de emergência, journal do simulador e verificação offline. Inicie com `pnpm dev:govtech` em `http://127.0.0.1:3012/govtech`, usando banco próprio em `ops/local/govtech`. [Fluxo, contas e limites](docs/GOVTECH-APP.md).
+
+## Oferta
+
+A frase de produto, o que a demo do Intra sustenta, o deck com lacunas explícitas e o piloto de uma conversa estão em [docs/mercado](docs/mercado/README.md). Preço, tração e tamanho de mercado continuam em aberto. Esse pacote prepara a primeira conversa. Não qualifica produção nem uma rodada.

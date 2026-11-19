@@ -1,0 +1,30 @@
+# On-prem template. The network is internal and no host port is published.
+# This is one host. It does not create a multi-site mesh.
+# Replace change-me before use and do not commit the replacement.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: arkhe
+      POSTGRES_PASSWORD: change-me
+      POSTGRES_DB: arkhe
+    networks: [private]
+    volumes: [pg:/var/lib/postgresql/data]
+  verify:
+    image: arkhe-provenance-mcp:local
+    environment:
+      DATABASE_URL: postgres://arkhe:change-me@postgres:5432/arkhe
+      ARKHE_SEATS: /config/seats.json
+      ARKHE_METER_DIR: /var/arkhe/meter
+    volumes:
+      - ./seats.example.json:/config/seats.json:ro
+      - meter:/var/arkhe/meter
+    command: ["serve", "--bind", "0.0.0.0:8080"]
+    networks: [private]
+    depends_on: [postgres]
+networks:
+  private:
+    internal: true
+volumes:
+  pg: {}
+  meter: {}

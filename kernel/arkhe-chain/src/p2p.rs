@@ -116,9 +116,10 @@ pub(crate) async fn listen_on(
     listen: Multiaddr,
     seal: Option<RemoteSeal>,
 ) -> Result<SyncServer, ChainError> {
-    if listen.iter().any(|protocol| {
-        matches!(protocol, libp2p::multiaddr::Protocol::P2p(_))
-    }) {
+    if listen
+        .iter()
+        .any(|protocol| matches!(protocol, libp2p::multiaddr::Protocol::P2p(_)))
+    {
         return Err(ChainError::P2p("listen"));
     }
     let key = node.network_keypair();
@@ -225,11 +226,7 @@ pub async fn sync_canonical(
     }
 }
 
-async fn sync_one(
-    node: &ArkheNode,
-    addr: Multiaddr,
-    peer: PeerId,
-) -> Result<Heard, ChainError> {
+async fn sync_one(node: &ArkheNode, addr: Multiaddr, peer: PeerId) -> Result<Heard, ChainError> {
     if peer == node.peer_id() {
         return Err(ChainError::P2p("self"));
     }
@@ -552,9 +549,9 @@ async fn deliver_configured(
             *reached = true;
             Ok(())
         }
-        Err(ChainError::P2p("self"))
-        | Err(ChainError::UnknownBlock)
-        | Err(ChainError::Fork) => Ok(()),
+        Err(ChainError::P2p("self")) | Err(ChainError::UnknownBlock) | Err(ChainError::Fork) => {
+            Ok(())
+        }
         Err(ChainError::P2p("timeout")) => {
             unanswered.push(peer.clone());
             Ok(())
@@ -1079,7 +1076,8 @@ pub(crate) async fn sync_pass(
             Err(error) => return Err(error),
         }
     }
-    let missed = saw_timeout || saw_dial || saw_closed || saw_rr || saw_io || saw_limit || saw_silent;
+    let missed =
+        saw_timeout || saw_dial || saw_closed || saw_rr || saw_io || saw_limit || saw_silent;
     if saw_peer {
         Ok(SyncPass {
             imported: imported_total,
@@ -1249,7 +1247,12 @@ pub async fn submit_precommit(
     let mut swarm = build(key)?;
     let dial = addr.with(libp2p::multiaddr::Protocol::P2p(peer));
     swarm.dial(dial).map_err(|_| ChainError::P2p("dial"))?;
-    match tokio::time::timeout(Duration::from_secs(30), deliver(&mut swarm, node, peer, request)).await {
+    match tokio::time::timeout(
+        Duration::from_secs(30),
+        deliver(&mut swarm, node, peer, request),
+    )
+    .await
+    {
         Ok(result) => result,
         Err(_) => Err(ChainError::P2p("timeout")),
     }
@@ -1262,11 +1265,7 @@ fn vote_body_for_request(body: Option<Vec<u8>>) -> Option<Vec<u8>> {
     }
 }
 
-fn vote_request(
-    vote: &crate::Precommit,
-    genesis: [u8; 32],
-    block: Option<Vec<u8>>,
-) -> VoteRequest {
+fn vote_request(vote: &crate::Precommit, genesis: [u8; 32], block: Option<Vec<u8>>) -> VoteRequest {
     VoteRequest {
         validator_id: vote.validator_id.clone(),
         height: vote.height,
@@ -1336,16 +1335,16 @@ async fn deliver(
 fn apply_echo(node: &ArkheNode, reply: VoteReply) -> Result<u64, ChainError> {
     if !(reply.stored && reply.reason.is_none()) {
         return Err(match reply.reason.as_deref() {
-        Some("signature") => ChainError::BadProposerSignature,
-        Some("unknown") => ChainError::UnknownBlock,
-        Some("fork") => ChainError::Fork,
-        Some("equivocation") => ChainError::Equivocation,
-        Some("round") => ChainError::RoundRegression,
-        Some("part") => ChainError::BadPartSet,
-        Some("chain-id") => ChainError::ChainId,
-        Some("genesis") => ChainError::P2p("genesis"),
-        Some("proposer") => ChainError::NotProposer,
-        _ => ChainError::P2p("vote"),
+            Some("signature") => ChainError::BadProposerSignature,
+            Some("unknown") => ChainError::UnknownBlock,
+            Some("fork") => ChainError::Fork,
+            Some("equivocation") => ChainError::Equivocation,
+            Some("round") => ChainError::RoundRegression,
+            Some("part") => ChainError::BadPartSet,
+            Some("chain-id") => ChainError::ChainId,
+            Some("genesis") => ChainError::P2p("genesis"),
+            Some("proposer") => ChainError::NotProposer,
+            _ => ChainError::P2p("vote"),
         });
     }
     if let Some(echo) = reply.echo {
@@ -1754,7 +1753,12 @@ async fn follow(
         match swarm.select_next_some().await {
             libp2p::swarm::SwarmEvent::ConnectionEstablished { peer_id, .. } if peer_id == peer => {
                 if request_id.is_none() {
-                    request_id = Some(swarm.behaviour_mut().sync.send_request(&peer, SyncRequest::Tip));
+                    request_id = Some(
+                        swarm
+                            .behaviour_mut()
+                            .sync
+                            .send_request(&peer, SyncRequest::Tip),
+                    );
                 }
             }
             libp2p::swarm::SwarmEvent::OutgoingConnectionError { peer_id, .. }
@@ -1764,14 +1768,14 @@ async fn follow(
             }
             libp2p::swarm::SwarmEvent::Behaviour(NodeBehaviourEvent::Sync(
                 request_response::Event::Message {
-                peer: responder,
-                message:
-                    request_response::Message::Response {
-                        request_id: response_id,
-                        response,
-                    },
-                ..
-            },
+                    peer: responder,
+                    message:
+                        request_response::Message::Response {
+                            request_id: response_id,
+                            response,
+                        },
+                    ..
+                },
             )) if responder == peer && Some(response_id) == request_id => match stage {
                 Stage::Tip => {
                     let remote = response.genesis.ok_or(ChainError::P2p("genesis"))?;
@@ -1794,10 +1798,10 @@ async fn follow(
                             }
                             stage = Stage::Have;
                             request_id = Some(
-                                swarm.behaviour_mut().sync.send_request(
-                                    &peer,
-                                    SyncRequest::Block { hash: local_tip },
-                                ),
+                                swarm
+                                    .behaviour_mut()
+                                    .sync
+                                    .send_request(&peer, SyncRequest::Block { hash: local_tip }),
                             );
                             continue;
                         }
@@ -1899,10 +1903,10 @@ async fn follow(
             },
             libp2p::swarm::SwarmEvent::Behaviour(NodeBehaviourEvent::Sync(
                 request_response::Event::OutboundFailure {
-                peer: responder,
-                error,
-                ..
-            },
+                    peer: responder,
+                    error,
+                    ..
+                },
             )) if responder == peer => {
                 return Err(ChainError::P2p(outbound_reason(error)));
             }

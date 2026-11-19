@@ -43,14 +43,7 @@ fn verify_v4_precommit(
     let Ok(signature): Result<[u8; 64], _> = signature.try_into() else {
         return false;
     };
-    let message = precommit_message(
-        vote.height,
-        round,
-        &block_id,
-        1,
-        &block_id,
-        &vote.chain_id,
-    );
+    let message = precommit_message(vote.height, round, &block_id, 1, &block_id, &vote.chain_id);
     public.verify(&message, &signature)
 }
 

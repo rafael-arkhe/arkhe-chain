@@ -117,9 +117,7 @@ pub fn ground_retrieved(
         if !seen.insert(hit.id.clone()) {
             return Err("duplicate retrieval hit");
         }
-        let document = index
-            .document(&hit.id)
-            .ok_or("hit is outside snapshot")?;
+        let document = index.document(&hit.id).ok_or("hit is outside snapshot")?;
         if document.id != hit.id {
             return Err("hit is outside snapshot");
         }
@@ -162,14 +160,9 @@ pub fn ground_included(
         .and_then(|hit| index.document(&hit.id))
         .ok_or("invalid MMR leaf position")?;
     let leaf_bytes = leaf.text.as_bytes();
-    let included = arkhe_verify_core::mmr::verify_proof_at(
-        leaf_bytes,
-        hits.len(),
-        leaf_index,
-        proof,
-        root,
-    )
-    .map_err(|_| "invalid MMR proof")?;
+    let included =
+        arkhe_verify_core::mmr::verify_proof_at(leaf_bytes, hits.len(), leaf_index, proof, root)
+            .map_err(|_| "invalid MMR proof")?;
     let cited = response.citations.iter().all(|citation| {
         citation.chunk_digest == Digest32::blake3(b"AKG:RAG:CHUNK:v1\0", leaf_bytes)
             && citation.source_ref == Digest32::blake3(b"AKG:RAG:SOURCE:v1\0", leaf.id.as_bytes())

@@ -1,4 +1,11 @@
 <div class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
+  <a
+    href="#melodic-main"
+    class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-amber-500 focus:text-slate-950 focus:font-bold"
+  >
+    Skip to main content
+  </a>
+
   <!-- Application Header -->
   <app-header
     (viewScript)="showScriptModal.set(true)"
@@ -6,60 +13,70 @@
   />
 
   <!-- Main Content Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <main id="melodic-main" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
     <!-- Hero Context Header -->
     <app-case-hero />
 
     <!-- Navigation Tabs Bar -->
     <div class="flex items-center justify-between border-b border-slate-800 pb-2 overflow-x-auto text-xs font-mono">
-      <div class="flex items-center space-x-1 sm:space-x-2">
+      <div class="flex items-center space-x-1 sm:space-x-2" role="tablist" aria-label="Melodic Lab views">
         <button
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'workbench'"
           (click)="activeTab.set('workbench')"
           class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
           [class]="activeTab() === 'workbench' ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
         >
-          <mat-icon class="text-base text-amber-400">graphic_eq</mat-icon>
+          <mat-icon class="text-base text-amber-400" aria-hidden="true">graphic_eq</mat-icon>
           <span>Forensic Workbench</span>
         </button>
 
         <button
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'calibration'"
           (click)="activeTab.set('calibration')"
           class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
           [class]="activeTab() === 'calibration' ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
         >
-          <mat-icon class="text-base text-purple-400">tune</mat-icon>
+          <mat-icon class="text-base text-purple-400" aria-hidden="true">tune</mat-icon>
           <span>Conformal Calibration</span>
         </button>
 
         <button
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'report'"
           (click)="activeTab.set('report')"
           class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
           [class]="activeTab() === 'report' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
         >
-          <mat-icon class="text-base text-emerald-400">verified</mat-icon>
+          <mat-icon class="text-base text-emerald-400" aria-hidden="true">verified</mat-icon>
           <span>Cryptographic Report & Hashes</span>
         </button>
 
         <button
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'cases'"
           (click)="activeTab.set('cases')"
           class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
           [class]="activeTab() === 'cases' ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
         >
-          <mat-icon class="text-base text-sky-400">folder_special</mat-icon>
+          <mat-icon class="text-base text-sky-400" aria-hidden="true">folder_special</mat-icon>
           <span>Case Benchmark Library</span>
         </button>
 
         <button
           type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'youtube'"
           (click)="activeTab.set('youtube')"
           class="flex items-center space-x-2 px-3.5 py-2 rounded-xl transition cursor-pointer font-bold"
           [class]="activeTab() === 'youtube' ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'"
         >
-          <mat-icon class="text-base text-rose-400">play_circle_filled</mat-icon>
+          <mat-icon class="text-base text-rose-400" aria-hidden="true">play_circle_filled</mat-icon>
           <span>YouTube Music</span>
         </button>
       </div>
@@ -67,10 +84,11 @@
       <!-- Quick Custom Melodic Comparator Button -->
       <button
         type="button"
+        aria-label="Open Custom Input Comparator"
         (click)="showCustomModal.set(true)"
         class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono transition ml-2 shrink-0"
       >
-        <mat-icon class="text-sm text-amber-400">edit_note</mat-icon>
+        <mat-icon class="text-sm text-amber-400" aria-hidden="true">edit_note</mat-icon>
         <span class="hidden sm:inline">Custom Input Comparator</span>
       </button>
     </div>
@@ -87,31 +105,55 @@
         <!-- Dual Monophonic Skyline Piano Roll -->
         <app-piano-roll-view />
 
-        <!-- D3-based Melodic Contour & Skyline Motif Comparator -->
-        <app-melodic-contour-d3 />
+        <!-- D3-based Melodic Contour & Skyline Motif Comparator (deferred to split D3 from initial chunk) -->
+        @defer (on idle) {
+          <app-melodic-contour-d3 />
+        } @placeholder {
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-xs font-mono text-slate-400">
+            Loading melodic contour visualization…
+          </div>
+        }
 
         <!-- Smith-Waterman Dynamic Programming Alignment Matrix -->
-        <app-smith-waterman-view />
+        @defer (on idle) {
+          <app-smith-waterman-view />
+        } @placeholder {
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-xs font-mono text-slate-400">
+            Loading Smith-Waterman alignment matrix…
+          </div>
+        }
 
         <!-- Aligned Relative Interval Trace -->
         <app-interval-alignment-view />
 
         <!-- YouTube Music Real Melodies Comparison -->
-        <app-youtube-music-explorer />
+        @defer (on viewport) {
+          <app-youtube-music-explorer />
+        } @placeholder {
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-xs font-mono text-slate-400">
+            Scroll to load YouTube Music comparative references…
+          </div>
+        }
       </div>
     }
 
     <!-- Tab 2: Conformal Calibration -->
     @if (activeTab() === 'calibration') {
       <div class="space-y-6">
-        <app-calibration-view />
+        @defer {
+          <app-calibration-view />
+        } @placeholder {
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-xs font-mono text-slate-400">
+            Loading conformal calibration view…
+          </div>
+        }
 
         <!-- Detailed Empirical Dataset Explorer -->
         <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-4">
           <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
               <h3 class="text-base font-bold text-white flex items-center gap-2">
-                <mat-icon class="text-amber-400 text-lg">dataset</mat-icon>
+                <mat-icon class="text-amber-400 text-lg" aria-hidden="true">dataset</mat-icon>
                 Empirical Calibration Benchmark Pairs (Positives & Negatives)
               </h3>
               <p class="text-xs text-slate-400">
@@ -153,7 +195,13 @@
     <!-- Tab 3: Cryptographic Report & Hashes -->
     @if (activeTab() === 'report') {
       <div class="space-y-6">
-        <app-report-export-view />
+        @defer {
+          <app-report-export-view />
+        } @placeholder {
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-xs font-mono text-slate-400">
+            Loading cryptographic report…
+          </div>
+        }
       </div>
     }
 
@@ -163,7 +211,7 @@
         <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-4">
           <div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <mat-icon class="text-sky-400 text-lg">history_edu</mat-icon>
+              <mat-icon class="text-sky-400 text-lg" aria-hidden="true">history_edu</mat-icon>
               Landmark Musicological Copyright Precedents
             </h3>
             <p class="text-xs text-slate-400">
@@ -207,18 +255,28 @@
     <!-- Tab 5: YouTube Music Audio Proof -->
     @if (activeTab() === 'youtube') {
       <div class="space-y-6">
-        <app-youtube-music-explorer />
+        @defer {
+          <app-youtube-music-explorer />
+        } @placeholder {
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-xs font-mono text-slate-400">
+            Loading YouTube Music explorer…
+          </div>
+        }
       </div>
     }
   </main>
 
   <!-- Modals -->
   @if (showScriptModal()) {
-    <app-script-viewer-modal (closeModal)="showScriptModal.set(false)" />
+    @defer {
+      <app-script-viewer-modal (closeModal)="showScriptModal.set(false)" />
+    }
   }
 
   @if (showCustomModal()) {
-    <app-custom-benchmark-modal (closeModal)="showCustomModal.set(false)" />
+    @defer {
+      <app-custom-benchmark-modal (closeModal)="showCustomModal.set(false)" />
+    }
   }
 
   <!-- Footer -->

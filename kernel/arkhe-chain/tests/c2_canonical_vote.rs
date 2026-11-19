@@ -5,9 +5,9 @@ mod common;
 use std::collections::HashMap;
 
 use arkhe_chain::{
-    check_rotation, encode_block, sign_precommit, ArkheNode, ChainError, CommitVerdict,
-    CanonicalVote, Precommit, RotationOutcome, Validator, VoteType, CHAIN_ID, GENESIS_ACCOUNT,
-    MAX_LEAVES, bft_commit,
+    bft_commit, check_rotation, encode_block, sign_precommit, ArkheNode, CanonicalVote, ChainError,
+    CommitVerdict, Precommit, RotationOutcome, Validator, VoteType, CHAIN_ID, GENESIS_ACCOUNT,
+    MAX_LEAVES,
 };
 
 fn mk_vote(part: &str, h: u64, bid: [u8; 32], vt: VoteType) -> CanonicalVote {
@@ -43,14 +43,19 @@ fn c2_below_quorum_returns_absent_not_commitgap() {
     let votes = vec![mk_vote("a", 10, bid, VoteType::Precommit)];
     let sigs = vec![b"ok".to_vec()];
     let verdict = bft_commit(&votes, &sigs, &power_1_1_1(), accepts_sig);
-    assert!(matches!(verdict, CommitVerdict::QuorumAbsent { height: 10, .. }));
+    assert!(matches!(
+        verdict,
+        CommitVerdict::QuorumAbsent { height: 10, .. }
+    ));
 }
 
 #[test]
 fn c2_duplicate_part_conflicting_precommits_are_invalid() {
     let a = [1u8; 32];
     let b = [2u8; 32];
-    let power = [("a".into(), 2u64), ("b".into(), 2u64)].into_iter().collect();
+    let power = [("a".into(), 2u64), ("b".into(), 2u64)]
+        .into_iter()
+        .collect();
     let votes = vec![
         mk_vote("a", 10, a, VoteType::Precommit),
         mk_vote("a", 10, b, VoteType::Precommit),
@@ -162,7 +167,10 @@ fn c2_registry_admits_after_rotation_with_block_proof() {
                 nonce,
                 not_before: 0,
                 expires: 200,
-                claim: Claim::Request { task: [0; 32], budget: 1 },
+                claim: Claim::Request {
+                    task: [0; 32],
+                    budget: 1,
+                },
                 signature: [0; 64],
             };
             sign_attestation(&mut att, secret).unwrap();
@@ -182,7 +190,10 @@ fn c2_registry_admits_after_rotation_with_block_proof() {
         nonce: [0xAB; 32],
         not_before: 0,
         expires: 200,
-        claim: Claim::Request { task: [1; 32], budget: 1 },
+        claim: Claim::Request {
+            task: [1; 32],
+            budget: 1,
+        },
         signature: [0; 64],
     };
     sign_attestation(&mut att, secret).unwrap();
@@ -239,7 +250,9 @@ fn vote(index: usize, height: u64, hash: [u8; 32]) -> Precommit {
 #[test]
 fn c2_stored_v4_precommits_map_to_commit_verdict() {
     let observer = node(0);
-    observer.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 5)).unwrap();
+    observer
+        .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 5))
+        .unwrap();
     let block = observer.propose_and_seal_block(TS).unwrap().block.unwrap();
     let _ = encode_block(&block);
     let tip = observer.tip().unwrap();
@@ -253,7 +266,9 @@ fn c2_stored_v4_precommits_map_to_commit_verdict() {
     ));
     observer.note_precommit(&vote(2, 1, tip)).unwrap();
     let verdict = observer.canonical_commit_verdict(1).unwrap();
-    assert!(matches!(verdict, CommitVerdict::Commit { height: 1, block_id, .. } if block_id == tip));
+    assert!(
+        matches!(verdict, CommitVerdict::Commit { height: 1, block_id, .. } if block_id == tip)
+    );
     observer.bft_commit(1).unwrap();
     assert_eq!(observer.committed_height().unwrap(), 1);
     assert_eq!(observer.tip().unwrap(), tip);

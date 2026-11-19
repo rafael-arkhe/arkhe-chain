@@ -1,0 +1,58 @@
+{
+  "id": "arkheGateWorkflow",
+  "name": "Arkhe conferir pacote e avisar",
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1b2c3d4-e5f6-4789-a111-111111111111",
+      "name": "Quando chamado",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "command": "node \"__SCRIPT__\" \"__BUNDLE__\" \"__TRUST__\""
+      },
+      "id": "a1b2c3d4-e5f6-4789-a222-222222222222",
+      "name": "Conferir pacote",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [280, 0],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "command": "echo avisou>>\"__NOTICE__\""
+      },
+      "id": "a1b2c3d4-e5f6-4789-a333-333333333333",
+      "name": "Avisar",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [560, -80]
+    },
+    {
+      "parameters": {
+        "errorMessage": "Pacote não conferido. Aviso não enviado."
+      },
+      "id": "a1b2c3d4-e5f6-4789-a444-444444444444",
+      "name": "Parar",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [560, 120]
+    }
+  ],
+  "connections": {
+    "Quando chamado": {
+      "main": [[{ "node": "Conferir pacote", "type": "main", "index": 0 }]]
+    },
+    "Conferir pacote": {
+      "main": [
+        [{ "node": "Avisar", "type": "main", "index": 0 }],
+        [{ "node": "Parar", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

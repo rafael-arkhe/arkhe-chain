@@ -4,9 +4,7 @@ use arkhe_depin::{
     proof::Mmr,
     types::HardwareAttestation,
 };
-use arkhe_network::{
-    DistributionObservation, NetworkBundle, NetworkPipeline, RequireAttestation,
-};
+use arkhe_network::{DistributionObservation, NetworkBundle, NetworkPipeline, RequireAttestation};
 use arkhe_p2p::verify::{DualVerifier, ExpectedDigests};
 use arkhe_p2p::Limits;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
@@ -66,11 +64,8 @@ async fn pipeline_roundtrip_with_p2p_and_verified_nras() {
     };
     let verifier = DualVerifier::new(expected, limits).unwrap();
     let blob = verifier.verify(&bytes[..]).await.unwrap();
-    let distribution = DistributionObservation::from_verified(
-        &blob,
-        1,
-        Some("npub-synthetic-publisher".into()),
-    );
+    let distribution =
+        DistributionObservation::from_verified(&blob, 1, Some("npub-synthetic-publisher".into()));
 
     let now = 1_780_000_000i64;
     let challenge = NrasChallenge {
@@ -104,8 +99,7 @@ async fn pipeline_roundtrip_with_p2p_and_verified_nras() {
     pipeline.verify(&anchored, &trusted).unwrap();
 
     let exported = serde_json::to_vec(&anchored).unwrap();
-    let imported: arkhe_network::AnchoredNetworkBundle =
-        serde_json::from_slice(&exported).unwrap();
+    let imported: arkhe_network::AnchoredNetworkBundle = serde_json::from_slice(&exported).unwrap();
     pipeline.verify(&imported, &trusted).unwrap();
 }
 
@@ -166,9 +160,7 @@ fn verified_policy_rejects_unsupported_and_tamper_breaks_verify() {
         nonce: challenge.nonce,
         gpu_measurement: None,
     };
-    let anchored = pipeline
-        .compose(bundle, Some(hardware), &mut mmr)
-        .unwrap();
+    let anchored = pipeline.compose(bundle, Some(hardware), &mut mmr).unwrap();
     let trusted = mmr.checkpoint().unwrap();
 
     let mut tampered = anchored.clone();

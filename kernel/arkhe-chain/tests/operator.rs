@@ -9,10 +9,7 @@ use arkhe_chain::{
 #[test]
 fn a_genesis_file_names_validators_and_account_keys() {
     let text = "\n# comment\nvalidator validator-a 11\n";
-    assert!(matches!(
-        parse_genesis(text),
-        Err(ChainError::Malformed)
-    ));
+    assert!(matches!(parse_genesis(text), Err(ChainError::Malformed)));
     assert!(matches!(
         parse_genesis(""),
         Err(ChainError::EmptyValidators)
@@ -93,13 +90,21 @@ fn the_operator_process_listens_once_and_writes_the_file() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(ran.status.code(), Some(0), "{}", String::from_utf8_lossy(&ran.stderr));
+    assert_eq!(
+        ran.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
     let stdout = String::from_utf8(ran.stdout).unwrap();
     assert!(stdout.starts_with("listen /ip4/127.0.0.1/tcp/"), "{stdout}");
     assert!(stdout.contains("/p2p/12D3KooW"), "{stdout}");
     assert!(stdout.contains("height 0\n"), "{stdout}");
     assert!(stdout.contains("committed 0\n"), "{stdout}");
-    assert!(stdout.contains(&format!("tip {}\n", "0".repeat(64))), "{stdout}");
+    assert!(
+        stdout.contains(&format!("tip {}\n", "0".repeat(64))),
+        "{stdout}"
+    );
     assert!(stdout.contains("mempool 0\n"), "{stdout}");
     assert!(stdout.contains("forks 0\n"), "{stdout}");
     assert!(std::fs::read(&data).unwrap().starts_with(b"AKGCHNS7"));
@@ -199,7 +204,10 @@ fn status_reads_the_file_without_rewriting_it() {
     let text = String::from_utf8(status.stdout).unwrap();
     assert!(text.contains("height 0\n"), "{text}");
     assert!(text.contains("committed 0\n"), "{text}");
-    assert!(text.contains(&format!("tip {}\n", "0".repeat(64))), "{text}");
+    assert!(
+        text.contains(&format!("tip {}\n", "0".repeat(64))),
+        "{text}"
+    );
     assert!(text.contains("mempool 0\n"), "{text}");
     assert!(text.contains("forks 0\n"), "{text}");
     assert_eq!(std::fs::read(&data).unwrap(), before);
@@ -243,7 +251,12 @@ fn status_prints_the_stored_genesis_without_rewriting_the_file() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(ran.status.code(), Some(0), "{}", String::from_utf8_lossy(&ran.stderr));
+    assert_eq!(
+        ran.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
     let hash = genesis_fingerprint(&text).unwrap().hash;
     let mut hex_hash = String::with_capacity(64);
     for byte in hash {
@@ -258,8 +271,13 @@ fn status_prints_the_stored_genesis_without_rewriting_the_file() {
         .unwrap();
     assert_eq!(status.status.code(), Some(0));
     let text_out = String::from_utf8(status.stdout).unwrap();
-    assert!(text_out.contains(&format!("genesis {hex_hash}\n")), "{text_out}");
-    assert!(String::from_utf8(ran.stdout).unwrap().contains(&format!("genesis {hex_hash}\n")));
+    assert!(
+        text_out.contains(&format!("genesis {hex_hash}\n")),
+        "{text_out}"
+    );
+    assert!(String::from_utf8(ran.stdout)
+        .unwrap()
+        .contains(&format!("genesis {hex_hash}\n")));
     assert_eq!(std::fs::read(&data).unwrap(), before);
     let mut old = before.clone();
     old.truncate(old.len() - 32);
@@ -271,7 +289,9 @@ fn status_prints_the_stored_genesis_without_rewriting_the_file() {
         .output()
         .unwrap();
     assert_eq!(absent.status.code(), Some(0));
-    assert!(String::from_utf8(absent.stdout).unwrap().contains("genesis absent\n"));
+    assert!(String::from_utf8(absent.stdout)
+        .unwrap()
+        .contains("genesis absent\n"));
     assert_eq!(std::fs::read(&data).unwrap(), old);
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -308,10 +328,22 @@ fn status_checks_the_genesis_text_without_rewriting_the_file() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(ran.status.code(), Some(0), "{}", String::from_utf8_lossy(&ran.stderr));
+    assert_eq!(
+        ran.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
     let before = std::fs::read(&data).unwrap();
     let same = dir.join("same");
-    std::fs::write(&same, format!("\n# note\nvalidator validator-b {}\n", public.to_uppercase())).unwrap();
+    std::fs::write(
+        &same,
+        format!(
+            "\n# note\nvalidator validator-b {}\n",
+            public.to_uppercase()
+        ),
+    )
+    .unwrap();
     let hash = genesis_fingerprint(&text).unwrap().hash;
     let mut hex_hash = String::with_capacity(64);
     for byte in hash {
@@ -325,8 +357,15 @@ fn status_checks_the_genesis_text_without_rewriting_the_file() {
         .arg(&same)
         .output()
         .unwrap();
-    assert_eq!(checked.status.code(), Some(0), "{}", String::from_utf8_lossy(&checked.stderr));
-    assert!(String::from_utf8(checked.stdout).unwrap().contains(&format!("genesis {hex_hash}\n")));
+    assert_eq!(
+        checked.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&checked.stderr)
+    );
+    assert!(String::from_utf8(checked.stdout)
+        .unwrap()
+        .contains(&format!("genesis {hex_hash}\n")));
     assert_eq!(std::fs::read(&data).unwrap(), before);
     let other = dir.join("other");
     std::fs::write(&other, format!("{text}validator validator-a {public}\n")).unwrap();
@@ -407,9 +446,19 @@ fn the_process_does_not_adopt_a_file_without_the_genesis_hash() {
             .unwrap()
     };
     let created = start(&genesis);
-    assert_eq!(created.status.code(), Some(0), "{}", String::from_utf8_lossy(&created.stderr));
+    assert_eq!(
+        created.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&created.stderr)
+    );
     let again = start(&genesis);
-    assert_eq!(again.status.code(), Some(0), "{}", String::from_utf8_lossy(&again.stderr));
+    assert_eq!(
+        again.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&again.stderr)
+    );
     let bound = std::fs::read(&data).unwrap();
     let other = dir.join("other");
     std::fs::write(&other, format!("validator validator-a {public}\n")).unwrap();
@@ -462,22 +511,22 @@ fn a_second_process_does_not_open_the_file_the_first_still_holds() {
     }
     let mut child = Stop(
         std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"))
-        .arg("--data")
-        .arg(&data)
-        .arg("--id")
-        .arg("validator-b")
-        .arg("--key")
-        .arg(&key)
-        .arg("--genesis")
-        .arg(&genesis)
-        .arg("--listen")
-        .arg("/ip4/127.0.0.1/tcp/0")
-        .arg("--announce")
-        .arg(&announce)
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn()
-        .unwrap(),
+            .arg("--data")
+            .arg(&data)
+            .arg("--id")
+            .arg("validator-b")
+            .arg("--key")
+            .arg(&key)
+            .arg("--genesis")
+            .arg(&genesis)
+            .arg("--listen")
+            .arg("/ip4/127.0.0.1/tcp/0")
+            .arg("--announce")
+            .arg(&announce)
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .unwrap(),
     );
     let mut held = false;
     for _ in 0..50 {
@@ -508,7 +557,10 @@ fn a_second_process_does_not_open_the_file_the_first_still_holds() {
         .unwrap();
     assert_eq!(second.status.code(), Some(1));
     assert!(second.stdout.is_empty());
-    assert_eq!(String::from_utf8(second.stderr).unwrap(), "FAIL_CLOSED: BUSY\n");
+    assert_eq!(
+        String::from_utf8(second.stderr).unwrap(),
+        "FAIL_CLOSED: BUSY\n"
+    );
     assert_eq!(std::fs::read(&data).unwrap(), before);
     let status = std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"))
         .arg("--status")
@@ -517,7 +569,9 @@ fn a_second_process_does_not_open_the_file_the_first_still_holds() {
         .output()
         .unwrap();
     assert_eq!(status.status.code(), Some(0));
-    assert!(String::from_utf8(status.stdout).unwrap().contains("height 0\n"));
+    assert!(String::from_utf8(status.stdout)
+        .unwrap()
+        .contains("height 0\n"));
     assert_eq!(std::fs::read(&data).unwrap(), before);
     drop(child);
     let restarted = std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"))
@@ -671,7 +725,12 @@ fn announce_writes_the_listen_address_as_a_peer_value() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(ran.status.code(), Some(0), "{}", String::from_utf8_lossy(&ran.stderr));
+    assert_eq!(
+        ran.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
     let stdout = String::from_utf8(ran.stdout).unwrap();
     let line = stdout
         .lines()
@@ -758,7 +817,12 @@ fn a_different_announced_genesis_does_not_create_the_chain_file() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(ran.status.code(), Some(0), "{}", String::from_utf8_lossy(&ran.stderr));
+    assert_eq!(
+        ran.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
     let hash = genesis_fingerprint(&text).unwrap().hash;
     assert_eq!(read_peer_file(&announce).unwrap().genesis, Some(hash));
     let follower = dir.join("follower");
@@ -840,7 +904,12 @@ fn a_different_announced_genesis_does_not_create_the_chain_file() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(created.status.code(), Some(0), "{}", String::from_utf8_lossy(&created.stderr));
+    assert_eq!(
+        created.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&created.stderr)
+    );
     assert!(dir.join("fourth").exists());
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -956,7 +1025,12 @@ fn a_synced_seal_uses_the_parent_timestamp_plus_one() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(ran.status.code(), Some(0), "{}", String::from_utf8_lossy(&ran.stderr));
+    assert_eq!(
+        ran.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
     assert!(ran.stderr.is_empty());
     let opened = arkhe_chain::ArkheNode::open(
         &client,
@@ -1009,7 +1083,11 @@ fn a_failed_first_dial_removes_the_file_it_just_created() {
     let mut server_text = String::new();
     let mut client_text = String::new();
     for validator in common::validators() {
-        let line = format!("validator {} {}\n", validator.id, hex(&validator.public_key));
+        let line = format!(
+            "validator {} {}\n",
+            validator.id,
+            hex(&validator.public_key)
+        );
         server_text.push_str(&line);
         client_text.push_str(&line);
     }
@@ -1073,7 +1151,10 @@ fn a_failed_first_dial_removes_the_file_it_just_created() {
         }
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
-    assert!(peer.contains("/p2p/"), "the server exited before announcing");
+    assert!(
+        peer.contains("/p2p/"),
+        "the server exited before announcing"
+    );
     let fresh = dir.join("fresh");
     let refused = std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"))
         .arg("--data")
@@ -1091,7 +1172,12 @@ fn a_failed_first_dial_removes_the_file_it_just_created() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(refused.status.code(), Some(1), "{}", String::from_utf8_lossy(&refused.stderr));
+    assert_eq!(
+        refused.status.code(),
+        Some(1),
+        "{}",
+        String::from_utf8_lossy(&refused.stderr)
+    );
     assert!(refused.stdout.is_empty());
     assert_eq!(
         String::from_utf8(refused.stderr).unwrap(),
@@ -1113,7 +1199,12 @@ fn a_failed_first_dial_removes_the_file_it_just_created() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(created.status.code(), Some(0), "{}", String::from_utf8_lossy(&created.stderr));
+    assert_eq!(
+        created.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&created.stderr)
+    );
     let before = std::fs::read(&kept).unwrap();
     let again = std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"))
         .arg("--data")
@@ -1197,7 +1288,12 @@ fn a_peer_file_lists_only_the_named_addresses() {
         .arg("--once")
         .output()
         .unwrap();
-    assert_eq!(ran.status.code(), Some(0), "{}", String::from_utf8_lossy(&ran.stderr));
+    assert_eq!(
+        ran.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
     std::fs::write(&peers, "not-an-address\n").unwrap();
     let bad = dir.join("bad-chain");
     let failed = std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"))
@@ -1331,13 +1427,22 @@ fn show_genesis_hashes_the_parsed_file_and_opens_nothing() {
     let genesis = dir.join("genesis");
     let public = hex(&arkhe_chain::public_key(&common::SECRET_B).unwrap());
     let text = format!("validator validator-b {public}\n");
-    let commented = format!("\n# comment\nvalidator validator-b {}\n\n", public.to_uppercase());
+    let commented = format!(
+        "\n# comment\nvalidator validator-b {}\n\n",
+        public.to_uppercase()
+    );
     let fingerprint = genesis_fingerprint(&text).unwrap();
-    assert_eq!(genesis_fingerprint(&commented).unwrap().hash, fingerprint.hash);
+    assert_eq!(
+        genesis_fingerprint(&commented).unwrap().hash,
+        fingerprint.hash
+    );
     assert_eq!(fingerprint.validators, 1);
     assert_eq!(fingerprint.accounts, 0);
     let changed = format!("{text}validator validator-a {public}\n");
-    assert_ne!(genesis_fingerprint(&changed).unwrap().hash, fingerprint.hash);
+    assert_ne!(
+        genesis_fingerprint(&changed).unwrap().hash,
+        fingerprint.hash
+    );
     std::fs::write(&genesis, commented).unwrap();
     let ran = std::process::Command::new(env!("CARGO_BIN_EXE_arkhe-chain"))
         .arg("--show-genesis")
@@ -1449,13 +1554,19 @@ fn a_genesis_grant_line_is_parsed_hashed_and_opened_by_the_process() {
     use arkhe_chain::{parse_genesis_grants, ArkheNode, Role};
 
     let public = hex(&arkhe_chain::public_key(&common::SECRET_B).unwrap());
-    let base = format!("validator validator-b {public}\naccount bob {public}\naccount root {public}\n");
+    let base =
+        format!("validator validator-b {public}\naccount bob {public}\naccount root {public}\n");
     let text = format!("{base}# roles\ngrant bob approver root 500\ngrant bob evaluator root 7\n");
 
     let grants = parse_genesis_grants(&text).unwrap();
     assert_eq!(grants.len(), 2);
     assert_eq!(
-        (grants[0].delegate.as_str(), grants[0].role, grants[0].grantor.as_str(), grants[0].expires),
+        (
+            grants[0].delegate.as_str(),
+            grants[0].role,
+            grants[0].grantor.as_str(),
+            grants[0].expires
+        ),
         ("bob", Role::Approver, "root", 500)
     );
     assert_eq!((grants[1].role, grants[1].expires), (Role::Evaluator, 7));
@@ -1473,15 +1584,28 @@ fn a_genesis_grant_line_is_parsed_hashed_and_opened_by_the_process() {
         "grant bob approver root -1",
     ] {
         let text = format!("{base}{bad}\n");
-        assert!(matches!(parse_genesis(&text), Err(ChainError::Malformed)), "{bad}");
-        assert!(matches!(parse_genesis_grants(&text), Err(ChainError::Malformed)), "{bad}");
+        assert!(
+            matches!(parse_genesis(&text), Err(ChainError::Malformed)),
+            "{bad}"
+        );
+        assert!(
+            matches!(parse_genesis_grants(&text), Err(ChainError::Malformed)),
+            "{bad}"
+        );
     }
 
     let with = genesis_fingerprint(&text).unwrap();
     let without = genesis_fingerprint(&base).unwrap();
     assert_ne!(with.hash, without.hash);
     assert_eq!((with.validators, with.accounts), (1, 2));
-    let node = ArkheNode::new_with_grants("validator-b", &common::SECRET_B, validators, accounts, grants).unwrap();
+    let node = ArkheNode::new_with_grants(
+        "validator-b",
+        &common::SECRET_B,
+        validators,
+        accounts,
+        grants,
+    )
+    .unwrap();
     assert_eq!(node.genesis_hash(), with.hash);
 
     let dir = std::env::temp_dir().join(format!(
@@ -1520,8 +1644,15 @@ fn a_genesis_grant_line_is_parsed_hashed_and_opened_by_the_process() {
     assert!(!data.exists());
 
     let ran = run(&text);
-    assert_eq!(ran.status.code(), Some(0), "{}", String::from_utf8_lossy(&ran.stderr));
-    assert!(String::from_utf8(ran.stdout).unwrap().contains(&format!("genesis {}\n", hex(&with.hash))));
+    assert_eq!(
+        ran.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
+    assert!(String::from_utf8(ran.stdout)
+        .unwrap()
+        .contains(&format!("genesis {}\n", hex(&with.hash))));
 
     // The stored file opens only with the same grants.
     let other = run(&base);
@@ -1533,7 +1664,14 @@ fn a_genesis_grant_line_is_parsed_hashed_and_opened_by_the_process() {
 
     let open = |grants| {
         let (validators, accounts) = parse_genesis(&text).unwrap();
-        ArkheNode::open_with_grants(&data, "validator-b", &common::SECRET_B, validators, accounts, grants)
+        ArkheNode::open_with_grants(
+            &data,
+            "validator-b",
+            &common::SECRET_B,
+            validators,
+            accounts,
+            grants,
+        )
     };
     assert!(matches!(open(Vec::new()), Err(ChainError::Genesis)));
     let node = open(parse_genesis_grants(&text).unwrap()).unwrap();
@@ -1631,8 +1769,8 @@ async fn the_sealing_operator_takes_lists_from_the_inbox_and_seals_them() {
 #[tokio::test]
 async fn the_sealing_operator_takes_attestation_lists_from_the_inbox() {
     use arkhe_chain::{
-        encode_attestation_list, run_operator, sign_attestation, Attestation, Claim, OperatorRequest,
-        ATTEST_AUDIENCE, ATTEST_SCHEME_ED25519, ATTEST_VERSION, CHAIN_ID,
+        encode_attestation_list, run_operator, sign_attestation, Attestation, Claim,
+        OperatorRequest, ATTEST_AUDIENCE, ATTEST_SCHEME_ED25519, ATTEST_VERSION, CHAIN_ID,
     };
 
     let dir = std::env::temp_dir().join(format!(

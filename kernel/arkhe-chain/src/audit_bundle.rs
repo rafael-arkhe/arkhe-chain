@@ -5,8 +5,8 @@
 //! witnesses verify offline; stubs and absent anchors fail closed.
 
 use crate::attest::{AttestRegistry, Receipt};
-use crate::rekor_witness::{verify_recorded_witness, RekorInclusionWitness};
 use crate::error::ChainError;
+use crate::rekor_witness::{verify_recorded_witness, RekorInclusionWitness};
 use arkhe_core::Digest32;
 use arkhe_verify_core::rbb::mmr::{self, Proof};
 use serde::{Deserialize, Serialize};
@@ -82,18 +82,11 @@ pub enum ExternalAnchoringProof {
     Absent,
     /// Same naming convention as the learn-slice `rekor:dryrun:` stub. Documents
     /// intent only; does not verify against a real Rekor witness.
-    RekorDryrunStub {
-        trust_root_id: String,
-    },
+    RekorDryrunStub { trust_root_id: String },
     /// Shape checked by [`crate::anchor`]; `broadcast` must be false in this crate.
-    BtcOpReturnPlan {
-        op_return: Vec<u8>,
-        broadcast: bool,
-    },
+    BtcOpReturnPlan { op_return: Vec<u8>, broadcast: bool },
     /// RFC 6962 inclusion witness against a public Rekor log (recorded or fetched).
-    RekorWitness {
-        witness: RekorInclusionWitness,
-    },
+    RekorWitness { witness: RekorInclusionWitness },
 }
 
 /// Alias used in production-binary #3 documentation.
@@ -135,10 +128,7 @@ impl OfflineVerificationBundle {
                 root,
                 leaf_count: reg.count(),
             },
-            inclusion: AuditInclusionProof {
-                proof,
-                leaf_record,
-            },
+            inclusion: AuditInclusionProof { proof, leaf_record },
             external,
         })
     }
@@ -173,7 +163,8 @@ impl OfflineVerificationBundle {
         if self.version != OFFLINE_BUNDLE_VERSION {
             return Err(ChainError::AuditBundle("version"));
         }
-        if self.checkpoint.root != trusted.root || self.checkpoint.leaf_count != trusted.leaf_count {
+        if self.checkpoint.root != trusted.root || self.checkpoint.leaf_count != trusted.leaf_count
+        {
             return Err(ChainError::AuditBundle("checkpoint"));
         }
         if self.receipt.record() != self.inclusion.leaf_record {

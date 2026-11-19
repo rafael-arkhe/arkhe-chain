@@ -16,8 +16,8 @@ pub enum CommitVerdict {
         max_power: u64,
         needed: u64,
     },
-  /// Two distinct block ids each hold strictly more than two thirds of the
-  /// total configured validator power (impossible without double-voting parts).
+    /// Two distinct block ids each hold strictly more than two thirds of the
+    /// total configured validator power (impossible without double-voting parts).
     Equivocation {
         height: u64,
         conflicting: Vec<[u8; 32]>,
@@ -37,7 +37,8 @@ fn strictly_more_than_two_thirds(power: u64, total: u64) -> bool {
 
 fn needed_power(total: u64) -> u64 {
     // Smallest power that strictly exceeds two thirds of `total`.
-    total.saturating_mul(2)
+    total
+        .saturating_mul(2)
         .checked_div(3)
         .unwrap_or(0)
         .saturating_add(1)

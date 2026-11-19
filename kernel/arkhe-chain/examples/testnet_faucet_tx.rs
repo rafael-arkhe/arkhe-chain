@@ -36,21 +36,14 @@ impl EventPolicySource for Source {
 
 fn main() {
     let mut args = std::env::args().skip(1);
-    let nonce: u64 = args
-        .next()
-        .expect("nonce")
-        .parse()
-        .expect("nonce u64");
+    let nonce: u64 = args.next().expect("nonce").parse().expect("nonce u64");
     let recipient = args.next().expect("recipient");
-    let value: u64 = args
-        .next()
-        .expect("value")
-        .parse()
-        .expect("value u64");
+    let value: u64 = args.next().expect("value").parse().expect("value u64");
     let out = args.next().map(PathBuf::from).unwrap_or_else(|| {
-        network_root().join("local").join("inbox").join(format!(
-            "faucet-{nonce}-to-{recipient}-{value}.txs"
-        ))
+        network_root()
+            .join("local")
+            .join("inbox")
+            .join(format!("faucet-{nonce}-to-{recipient}-{value}.txs"))
     });
 
     let keys = network_root().join("local").join("keys");
@@ -109,8 +102,7 @@ fn network_root() -> PathBuf {
 }
 
 fn read_secret(path: &Path) -> [u8; 32] {
-    let text = std::fs::read_to_string(path).unwrap_or_else(|err| {
-        panic!("missing {}: {err} (rode testnet_gen_keys)", path.display())
-    });
+    let text = std::fs::read_to_string(path)
+        .unwrap_or_else(|err| panic!("missing {}: {err} (rode testnet_gen_keys)", path.display()));
     parse_secret_hex(&text).expect("secret hex")
 }

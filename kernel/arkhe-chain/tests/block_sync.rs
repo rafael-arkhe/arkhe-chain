@@ -4,15 +4,14 @@ use std::sync::Arc;
 
 use arkhe_chain::{
     attest_configured, encode_tx_list, read_peer_file, read_status, run_operator, spawn_server,
-    spawn_server_on,
-    submit_precommit,
-    submit_tx,
-    sync_canonical, sync_configured, ChainError, ConfiguredPeer, OperatorRequest, GENESIS_ACCOUNT,
-    GENESIS_SUPPLY,
+    spawn_server_on, submit_precommit, submit_tx, sync_canonical, sync_configured, ChainError,
+    ConfiguredPeer, OperatorRequest, GENESIS_ACCOUNT, GENESIS_SUPPLY,
 };
 use futures::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use futures::StreamExt;
-use libp2p::{identity, noise, request_response, tcp, yamux, Multiaddr, PeerId, StreamProtocol, SwarmBuilder};
+use libp2p::{
+    identity, noise, request_response, tcp, yamux, Multiaddr, PeerId, StreamProtocol, SwarmBuilder,
+};
 use serde::{Deserialize, Serialize};
 
 const TS: u64 = 1_700_000_000;
@@ -487,7 +486,10 @@ async fn a_caught_up_peer_does_not_hide_a_longer_one() {
         .ingest(common::transfer(1, GENESIS_ACCOUNT, "bob", 1))
         .unwrap();
     client.propose_and_seal_block(TS + 1).unwrap();
-    let second = client.encoded_block(&client.tip().unwrap()).unwrap().unwrap();
+    let second = client
+        .encoded_block(&client.tip().unwrap())
+        .unwrap()
+        .unwrap();
     long.import_block(&second).unwrap();
     long.ingest(common::transfer(2, GENESIS_ACCOUNT, "bob", 1))
         .unwrap();
@@ -930,13 +932,8 @@ async fn a_later_block_is_sent_when_the_height_does_not_commit() {
     )
     .unwrap();
     let bob = Arc::new(
-        arkhe_chain::ArkheNode::new(
-            "validator-b",
-            &common::SECRET_B,
-            validators,
-            accounts,
-        )
-        .unwrap(),
+        arkhe_chain::ArkheNode::new("validator-b", &common::SECRET_B, validators, accounts)
+            .unwrap(),
     );
     sealer
         .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
@@ -1659,8 +1656,7 @@ async fn an_outsider_does_not_let_another_peer_seal() {
 
 #[tokio::test]
 async fn a_missing_body_does_not_let_another_peer_seal() {
-    let (missing_id, missing_addr, task) =
-        listen_with_replies(Some(vec![0xab; 32]), None).await;
+    let (missing_id, missing_addr, task) = listen_with_replies(Some(vec![0xab; 32]), None).await;
     let server_node = Arc::new(common::node());
     server_node
         .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
@@ -1794,8 +1790,7 @@ async fn a_short_announced_tip_does_not_let_another_peer_seal() {
 async fn a_malformed_body_does_not_let_another_peer_seal() {
     let body = b"nope".to_vec();
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let server_node = Arc::new(common::node());
     server_node
         .ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 4))
@@ -1905,9 +1900,7 @@ async fn a_full_registry_does_not_let_another_peer_seal() {
             arkhe_chain::sign_attestation(&mut att, secret).unwrap();
             source.submit_attestation(att).unwrap();
         }
-        source
-            .propose_and_seal_block(TS + round as u64)
-            .unwrap();
+        source.propose_and_seal_block(TS + round as u64).unwrap();
         let tip = source.tip().unwrap();
         bodies.push(source.encoded_block(&tip).unwrap().unwrap());
     }
@@ -1990,7 +1983,9 @@ async fn a_full_registry_does_not_let_another_peer_seal() {
     for body in &bodies {
         reader.import_block(body).unwrap();
     }
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(
         reader.height().unwrap(),
@@ -2143,8 +2138,7 @@ async fn a_signer_over_quota_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -2172,7 +2166,9 @@ async fn a_signer_over_quota_does_not_let_another_peer_seal() {
     };
     let reader = common::peer();
     reader.import_block(&tip_body).unwrap();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 2);
     assert_eq!(reader.tip().unwrap(), live_tip);
@@ -2294,7 +2290,10 @@ async fn a_consumed_approval_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -2424,7 +2423,9 @@ async fn a_consumed_approval_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = granted("validator-b", &common::SECRET_B);
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -2541,7 +2542,10 @@ async fn a_shared_attest_signer_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -2629,7 +2633,9 @@ async fn a_shared_attest_signer_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = granted("validator-b", &common::SECRET_B);
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -2717,7 +2723,10 @@ async fn a_failed_evaluation_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -2805,7 +2814,9 @@ async fn a_failed_evaluation_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = granted("validator-b", &common::SECRET_B);
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -2892,7 +2903,10 @@ async fn a_missing_evaluation_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -2958,7 +2972,9 @@ async fn a_missing_evaluation_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = granted("validator-b", &common::SECRET_B);
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -3045,7 +3061,10 @@ async fn a_wrong_artifact_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -3111,7 +3130,9 @@ async fn a_wrong_artifact_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = granted("validator-b", &common::SECRET_B);
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -3198,7 +3219,10 @@ async fn a_wrong_action_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -3264,7 +3288,9 @@ async fn a_wrong_action_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = granted("validator-b", &common::SECRET_B);
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -3351,7 +3377,10 @@ async fn a_wrong_policy_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -3417,7 +3446,9 @@ async fn a_wrong_policy_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = granted("validator-b", &common::SECRET_B);
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -3488,7 +3519,10 @@ async fn a_request_execution_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -3521,8 +3555,7 @@ async fn a_request_execution_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -3546,7 +3579,9 @@ async fn a_request_execution_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -3614,7 +3649,10 @@ async fn a_unknown_approval_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -3626,8 +3664,7 @@ async fn a_unknown_approval_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -3651,7 +3688,9 @@ async fn a_unknown_approval_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -3719,7 +3758,10 @@ async fn a_ungranted_revocation_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -3744,8 +3786,7 @@ async fn a_ungranted_revocation_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -3769,7 +3810,9 @@ async fn a_ungranted_revocation_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -3837,7 +3880,10 @@ async fn a_replayed_attest_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -3865,8 +3911,7 @@ async fn a_replayed_attest_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -3890,7 +3935,9 @@ async fn a_replayed_attest_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -3958,7 +4005,10 @@ async fn a_closed_attest_window_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -3981,8 +4031,7 @@ async fn a_closed_attest_window_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4006,7 +4055,9 @@ async fn a_closed_attest_window_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -4074,7 +4125,10 @@ async fn a_foreign_attest_domain_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -4097,8 +4151,7 @@ async fn a_foreign_attest_domain_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4122,7 +4175,9 @@ async fn a_foreign_attest_domain_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -4190,7 +4245,10 @@ async fn a_bad_attest_version_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions.clear();
@@ -4213,8 +4271,7 @@ async fn a_bad_attest_version_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4238,7 +4295,9 @@ async fn a_bad_attest_version_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -4306,7 +4365,10 @@ async fn a_bad_account_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
@@ -4315,8 +4377,7 @@ async fn a_bad_account_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4340,7 +4401,9 @@ async fn a_bad_account_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -4408,7 +4471,10 @@ async fn a_short_mldsa_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
@@ -4417,8 +4483,7 @@ async fn a_short_mldsa_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4442,7 +4507,9 @@ async fn a_short_mldsa_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -4510,7 +4577,10 @@ async fn a_long_payload_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
@@ -4519,8 +4589,7 @@ async fn a_long_payload_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4544,7 +4613,9 @@ async fn a_long_payload_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -4612,7 +4683,10 @@ async fn a_bad_verdict_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
@@ -4621,8 +4695,7 @@ async fn a_bad_verdict_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4646,7 +4719,9 @@ async fn a_bad_verdict_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -4714,7 +4789,10 @@ async fn a_foreign_subject_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     let mut tx = common::transfer(0, GENESIS_ACCOUNT, "bob", 1);
@@ -4723,8 +4801,7 @@ async fn a_foreign_subject_does_not_let_another_peer_seal() {
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4748,7 +4825,9 @@ async fn a_foreign_subject_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -4816,15 +4895,17 @@ async fn a_rejected_verdict_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions = vec![common::rejected_transfer(0, GENESIS_ACCOUNT, "bob", 1)];
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4848,7 +4929,9 @@ async fn a_rejected_verdict_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -4916,15 +4999,22 @@ async fn a_short_balance_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
-    block.transactions = vec![common::transfer(0, GENESIS_ACCOUNT, "bob", GENESIS_SUPPLY + 1)];
+    block.transactions = vec![common::transfer(
+        0,
+        GENESIS_ACCOUNT,
+        "bob",
+        GENESIS_SUPPLY + 1,
+    )];
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -4948,7 +5038,9 @@ async fn a_short_balance_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -5016,15 +5108,17 @@ async fn a_self_transfer_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions = vec![common::transfer(0, GENESIS_ACCOUNT, GENESIS_ACCOUNT, 1)];
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -5048,7 +5142,9 @@ async fn a_self_transfer_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -5116,15 +5212,17 @@ async fn a_bad_nonce_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions = vec![common::transfer(1, GENESIS_ACCOUNT, "bob", 1)];
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -5148,7 +5246,9 @@ async fn a_bad_nonce_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -5216,15 +5316,17 @@ async fn a_bad_sender_signature_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.transactions[0].sender_signature[0] ^= 0xff;
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -5248,7 +5350,9 @@ async fn a_bad_sender_signature_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -5316,15 +5420,17 @@ async fn a_zero_timestamp_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.header.timestamp = 0;
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -5348,7 +5454,9 @@ async fn a_zero_timestamp_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -5416,15 +5524,17 @@ async fn a_state_mismatch_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.header.state_root[0] ^= 0xff;
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -5448,7 +5558,9 @@ async fn a_state_mismatch_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -5516,15 +5628,17 @@ async fn a_parent_mismatch_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.header.block_number = 2;
     arkhe_chain::sign_proposer(&mut block, &common::SECRET_A).unwrap();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -5548,7 +5662,9 @@ async fn a_parent_mismatch_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -5616,14 +5732,16 @@ async fn an_unknown_proposer_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.header.proposer = "stranger".into();
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -5647,7 +5765,9 @@ async fn an_unknown_proposer_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -5715,14 +5835,16 @@ async fn a_bad_proposer_signature_does_not_let_another_peer_seal() {
         .unwrap();
     source.propose_and_seal_block(TS).unwrap();
     let mut block = arkhe_chain::decode_block(
-        &source.encoded_block(&source.tip().unwrap()).unwrap().unwrap(),
+        &source
+            .encoded_block(&source.tip().unwrap())
+            .unwrap()
+            .unwrap(),
     )
     .unwrap();
     block.header.proposer_signature[0] ^= 0xff;
     let body = arkhe_chain::encode_block(&block);
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -5746,7 +5868,9 @@ async fn a_bad_proposer_signature_does_not_let_another_peer_seal() {
         peer_id: server.local_peer_id,
     };
     let reader = common::peer();
-    let imported = sync_configured(&reader, &[liar.clone(), live]).await.unwrap();
+    let imported = sync_configured(&reader, &[liar.clone(), live])
+        .await
+        .unwrap();
     assert_eq!(imported, 1);
     assert_eq!(reader.height().unwrap(), 1);
     assert_eq!(reader.tip().unwrap(), tip);
@@ -6071,7 +6195,9 @@ async fn a_submitted_transaction_does_not_wait_on_a_silent_peer() {
     assert_eq!(waiting.tip, [0u8; 32]);
     task.abort();
     let server_node = Arc::new(common::node());
-    let server = spawn_server_on(Arc::clone(&server_node), addr).await.unwrap();
+    let server = spawn_server_on(Arc::clone(&server_node), addr)
+        .await
+        .unwrap();
     let finished = sealer.catch_up().await.unwrap();
     assert_eq!(finished, 1);
     let status = sealer.status().unwrap();
@@ -6143,7 +6269,9 @@ async fn a_seal_waits_until_a_named_peer_has_answered() {
         .unwrap();
     server_node.propose_and_seal_block(TS).unwrap();
     let tip = server_node.tip().unwrap();
-    let server = spawn_server_on(Arc::clone(&server_node), addr).await.unwrap();
+    let server = spawn_server_on(Arc::clone(&server_node), addr)
+        .await
+        .unwrap();
     let finished = handle.catch_up().await.unwrap();
     assert_eq!(finished, 1);
     let status = handle.status().unwrap();
@@ -6219,7 +6347,9 @@ async fn a_refused_dial_keeps_the_operator_up_until_the_peer_answers() {
         .unwrap();
     server_node.propose_and_seal_block(TS).unwrap();
     let tip = server_node.tip().unwrap();
-    let server = spawn_server_on(Arc::clone(&server_node), addr).await.unwrap();
+    let server = spawn_server_on(Arc::clone(&server_node), addr)
+        .await
+        .unwrap();
     let finished = handle.catch_up().await.unwrap();
     assert_eq!(finished, 1);
     let status = handle.status().unwrap();
@@ -6427,10 +6557,7 @@ async fn a_changed_announced_tip_discards_the_retained_bodies() {
     assert_eq!(imported, 1);
     assert_eq!(client.height().unwrap(), 1);
     assert_eq!(client.balance("bob").unwrap(), 7);
-    assert_eq!(
-        client.balance(GENESIS_ACCOUNT).unwrap(),
-        GENESIS_SUPPLY - 7
-    );
+    assert_eq!(client.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY - 7);
     assert_eq!(client.mmr_count().unwrap(), 1);
     assert_eq!(client.supply().unwrap(), GENESIS_SUPPLY);
     assert_eq!(client.tip().unwrap(), short_node.tip().unwrap());
@@ -6618,9 +6745,14 @@ async fn a_remote_precommit_records_the_height_without_changing_the_tip() {
 
     let outsider = common::outsider();
     assert_eq!(
-        submit_precommit(&outsider, server.listen_addr.clone(), server.local_peer_id, &local)
-            .await
-            .unwrap_err(),
+        submit_precommit(
+            &outsider,
+            server.listen_addr.clone(),
+            server.local_peer_id,
+            &local
+        )
+        .await
+        .unwrap_err(),
         ChainError::P2p("peer")
     );
 
@@ -6739,8 +6871,8 @@ async fn a_receiver_signs_the_canonical_height_it_had_not_voted() {
         server.local_peer_id,
         &remote,
     )
-        .await
-        .unwrap();
+    .await
+    .unwrap();
     assert_eq!(committed, 1);
     assert_eq!(server_node.committed_height().unwrap(), 1);
     assert_eq!(server_node.precommit_count(1).unwrap(), 2);
@@ -6977,7 +7109,9 @@ async fn a_sealed_block_is_synced_and_attested_by_the_named_peer() {
     assert_eq!(followed.committed_height().unwrap(), 1);
     assert_eq!(followed.tip().unwrap(), tip);
     assert_eq!(followed.balance("bob").unwrap(), 25);
-    assert!(std::fs::read(dir.join("follower")).unwrap().starts_with(b"AKGCHNS9"));
+    assert!(std::fs::read(dir.join("follower"))
+        .unwrap()
+        .starts_with(b"AKGCHNS9"));
     drop(sealer);
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -7010,14 +7144,9 @@ async fn a_named_peer_submits_the_transaction_the_sealer_was_waiting_for() {
     let outsider = common::outsider();
     let good = common::transfer(0, GENESIS_ACCOUNT, "bob", 25);
     assert_eq!(
-        submit_tx(
-            &outsider,
-            sealer.listen.clone(),
-            sealer.peer_id,
-            &good
-        )
-        .await
-        .unwrap_err(),
+        submit_tx(&outsider, sealer.listen.clone(), sealer.peer_id, &good)
+            .await
+            .unwrap_err(),
         ChainError::P2p("peer")
     );
     let mut bad = good.clone();
@@ -8140,7 +8269,10 @@ async fn listen_sync_tip_vote_reason(
             match swarm.select_next_some().await {
                 libp2p::swarm::SwarmEvent::Behaviour(GenesisVoteBehaviourEvent::Sync(
                     request_response::Event::Message {
-                        message: request_response::Message::Request { request, channel, .. },
+                        message:
+                            request_response::Message::Request {
+                                request, channel, ..
+                            },
                         ..
                     },
                 )) => {
@@ -8364,7 +8496,10 @@ async fn listen_with_garbage() -> (PeerId, Multiaddr, tokio::task::JoinHandle<()
                         ..
                     },
                 )) => {
-                    let _ = swarm.behaviour_mut().sync.send_response(channel, Vec::new());
+                    let _ = swarm
+                        .behaviour_mut()
+                        .sync
+                        .send_response(channel, Vec::new());
                 }
                 libp2p::swarm::SwarmEvent::Behaviour(GarbageBehaviourEvent::Vote(
                     request_response::Event::Message {
@@ -8372,7 +8507,10 @@ async fn listen_with_garbage() -> (PeerId, Multiaddr, tokio::task::JoinHandle<()
                         ..
                     },
                 )) => {
-                    let _ = swarm.behaviour_mut().vote.send_response(channel, Vec::new());
+                    let _ = swarm
+                        .behaviour_mut()
+                        .vote
+                        .send_response(channel, Vec::new());
                 }
                 _ => {}
             }
@@ -8415,7 +8553,9 @@ async fn a_short_announced_tip_does_not_hide_a_peer_that_extends_the_local_tip()
         peer_id: short_id,
     };
     let client = common::peer();
-    let alone = sync_configured(&client, &[short.clone()]).await.unwrap_err();
+    let alone = sync_configured(&client, &[short.clone()])
+        .await
+        .unwrap_err();
     assert_eq!(alone, ChainError::P2p("tip"));
     assert_eq!(client.height().unwrap(), 0);
     assert_eq!(client.balance("bob").unwrap(), 0);
@@ -8456,7 +8596,8 @@ async fn a_short_announced_tip_does_not_hide_a_peer_that_extends_the_local_tip()
 
 #[tokio::test]
 async fn a_body_that_does_not_match_its_hash_is_refused() {
-    let (peer_id, addr, task) = listen_with_replies(Some(vec![0x44; 32]), Some(b"nope".to_vec())).await;
+    let (peer_id, addr, task) =
+        listen_with_replies(Some(vec![0x44; 32]), Some(b"nope".to_vec())).await;
     let client = common::peer();
     let started = std::time::Instant::now();
     let error = sync_canonical(&client, addr, peer_id).await.unwrap_err();
@@ -8519,8 +8660,7 @@ async fn a_bad_body_hash_does_not_hide_a_peer_that_extends_the_local_tip() {
 async fn a_malformed_body_does_not_hide_a_peer_that_extends_the_local_tip() {
     let body = b"nope".to_vec();
     let hash = arkhe_chain::block_hash(&body);
-    let (liar_id, liar_addr, task) =
-        listen_with_replies(Some(hash.to_vec()), Some(body)).await;
+    let (liar_id, liar_addr, task) = listen_with_replies(Some(hash.to_vec()), Some(body)).await;
     let liar = ConfiguredPeer {
         addr: liar_addr,
         peer_id: liar_id,
@@ -8591,13 +8731,8 @@ async fn a_missing_body_does_not_hide_a_peer_that_extends_the_local_tip() {
     )
     .unwrap();
     let server_node = Arc::new(
-        arkhe_chain::ArkheNode::new(
-            "validator-a",
-            &common::SECRET_A,
-            validators,
-            accounts,
-        )
-        .unwrap(),
+        arkhe_chain::ArkheNode::new("validator-a", &common::SECRET_A, validators, accounts)
+            .unwrap(),
     );
     let mut raw = secret_c;
     let secret = identity::ed25519::SecretKey::try_from_bytes(&mut raw).unwrap();
@@ -8614,7 +8749,9 @@ async fn a_missing_body_does_not_hide_a_peer_that_extends_the_local_tip() {
         addr: missing_addr,
         peer_id: missing_id,
     };
-    let alone = sync_configured(&client, &[missing.clone()]).await.unwrap_err();
+    let alone = sync_configured(&client, &[missing.clone()])
+        .await
+        .unwrap_err();
     assert_eq!(alone, ChainError::P2p("fork"));
     assert_eq!(client.height().unwrap(), 0);
     assert_eq!(client.fork_count().unwrap(), 0);

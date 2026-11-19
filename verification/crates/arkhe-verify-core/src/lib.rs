@@ -15,6 +15,7 @@ pub mod mmr;
 pub mod output_proof;
 pub mod payment;
 pub mod policy;
+pub mod provenance_broker;
 pub mod rbb;
 pub mod reconciliation;
 pub mod release;

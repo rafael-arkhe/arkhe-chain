@@ -349,9 +349,7 @@ fn import_drops_stale_mempool_entries_and_keeps_the_next_nonce() {
     tampered.transactions[0].payload[last] ^= 0xff;
     common::sign(&mut tampered);
     assert_eq!(
-        replica
-            .import_block(&encode_block(&tampered))
-            .unwrap_err(),
+        replica.import_block(&encode_block(&tampered)).unwrap_err(),
         ChainError::Admission("policy")
     );
     assert_eq!(replica.mempool_len().unwrap(), 2);
@@ -365,7 +363,11 @@ fn import_drops_stale_mempool_entries_and_keeps_the_next_nonce() {
         replica.balance(GENESIS_ACCOUNT).unwrap(),
         GENESIS_SUPPLY - 25
     );
-    let block = replica.propose_and_seal_block(TS + 1).unwrap().block.unwrap();
+    let block = replica
+        .propose_and_seal_block(TS + 1)
+        .unwrap()
+        .block
+        .unwrap();
     assert_eq!(block.transactions.len(), 1);
     assert_eq!(block.transactions[0].nonce, 1);
     assert_eq!(replica.balance("carol").unwrap(), 10);
@@ -390,7 +392,10 @@ fn state_root_covers_balances_and_nonces() {
     let replica = common::node();
     replica.import_block(&encode_block(&sealed)).unwrap();
     assert_eq!(replica.balance("bob").unwrap(), 25);
-    assert_eq!(replica.header_at(1).unwrap().state_root, sealed.header.state_root);
+    assert_eq!(
+        replica.header_at(1).unwrap().state_root,
+        sealed.header.state_root
+    );
 
     let mut forged = sealed.clone();
     forged.header.state_root = source.mmr_root().unwrap();
@@ -488,10 +493,7 @@ fn a_second_block_by_the_same_proposer_at_the_same_height_is_equivocation() {
     assert_eq!(node.height().unwrap(), 1);
     assert_eq!(node.balance("bob").unwrap(), 25);
     assert_eq!(node.balance("carol").unwrap(), 0);
-    assert_eq!(
-        node.balance(GENESIS_ACCOUNT).unwrap(),
-        GENESIS_SUPPLY - 25
-    );
+    assert_eq!(node.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY - 25);
     assert_eq!(node.supply().unwrap(), GENESIS_SUPPLY);
     assert_eq!(node.tip().unwrap(), tip);
 }
@@ -507,7 +509,10 @@ fn canonical_depth_is_the_only_finality() {
     node.propose_and_seal_block(TS).unwrap();
     assert_eq!(
         node.finality(1).unwrap(),
-        arkhe_chain::Finality { height: 1, depth: 0 }
+        arkhe_chain::Finality {
+            height: 1,
+            depth: 0
+        }
     );
 
     node.ingest(common::transfer(1, GENESIS_ACCOUNT, "carol", 10))
@@ -515,11 +520,17 @@ fn canonical_depth_is_the_only_finality() {
     node.propose_and_seal_block(TS + 1).unwrap();
     assert_eq!(
         node.finality(1).unwrap(),
-        arkhe_chain::Finality { height: 1, depth: 1 }
+        arkhe_chain::Finality {
+            height: 1,
+            depth: 1
+        }
     );
     assert_eq!(
         node.finality(2).unwrap(),
-        arkhe_chain::Finality { height: 2, depth: 0 }
+        arkhe_chain::Finality {
+            height: 2,
+            depth: 0
+        }
     );
     assert_eq!(node.finality(3).unwrap_err(), ChainError::UnknownBlock);
 
@@ -534,7 +545,10 @@ fn canonical_depth_is_the_only_finality() {
     );
     assert_eq!(
         node.finality(1).unwrap(),
-        arkhe_chain::Finality { height: 1, depth: 1 }
+        arkhe_chain::Finality {
+            height: 1,
+            depth: 1
+        }
     );
     assert_eq!(node.balance("bob").unwrap(), 25);
     assert_eq!(node.balance("carol").unwrap(), 10);
@@ -573,7 +587,10 @@ fn two_local_precommits_meet_the_weight_threshold_without_moving_the_tip() {
     node.bft_commit(1).unwrap();
     assert_eq!(
         node.finality(1).unwrap(),
-        arkhe_chain::Finality { height: 1, depth: 0 }
+        arkhe_chain::Finality {
+            height: 1,
+            depth: 0
+        }
     );
     assert_eq!(node.tip().unwrap(), tip);
     assert_eq!(node.balance("bob").unwrap(), 25);
@@ -647,10 +664,7 @@ fn a_sibling_block_is_a_fork_and_the_first_tip_stays() {
     assert_eq!(node.tip().unwrap(), tip);
     assert_eq!(node.balance("bob").unwrap(), 25);
     assert_eq!(node.balance("carol").unwrap(), 0);
-    assert_eq!(
-        node.balance(GENESIS_ACCOUNT).unwrap(),
-        GENESIS_SUPPLY - 25
-    );
+    assert_eq!(node.balance(GENESIS_ACCOUNT).unwrap(), GENESIS_SUPPLY - 25);
     assert_eq!(node.supply().unwrap(), GENESIS_SUPPLY);
 
     let mut detached = rival;
@@ -788,7 +802,10 @@ fn only_the_highest_round_counts_toward_the_weight_threshold() {
     assert_eq!(node.height().unwrap(), 1);
     assert_eq!(
         node.finality(1).unwrap(),
-        arkhe_chain::Finality { height: 1, depth: 0 }
+        arkhe_chain::Finality {
+            height: 1,
+            depth: 0
+        }
     );
 }
 

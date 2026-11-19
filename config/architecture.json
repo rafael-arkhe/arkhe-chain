@@ -12,8 +12,12 @@
     "integration/arkhe-ollama",
     "integration/arkhe-bugbounty",
     "kernel/arkhe-core",
+    "kernel/arkhe-gate",
     "kernel/arkhe-kernel",
     "kernel/arkhe-chain",
+    "barrier/arkhe-barrier",
+    "state/arkhe-state",
+    "probes/arkhe-probes",
     "evidence/arkhe-wormgraph",
     "evidence/arkhe-memory",
     "governance/arkhe-governance",
@@ -37,6 +41,12 @@
     "integrations/arkhe-python-runtime/bridge",
     "apps/arkhe-ask"
   ],
+  "skeleton_members": [
+    "kernel/arkhe-gate",
+    "barrier/arkhe-barrier",
+    "state/arkhe-state",
+    "probes/arkhe-probes"
+  ],
   "node_packages": [
     "apps/preflight",
     "apps/melodic-lab",
@@ -55,6 +65,69 @@
       "layer": "kernel",
       "status": "active",
       "authority": true
+    },
+    {
+      "id": "barrier",
+      "path": "barrier",
+      "layer": "barrier",
+      "status": "skeleton",
+      "authority": false
+    },
+    {
+      "id": "state",
+      "path": "state",
+      "layer": "state",
+      "status": "skeleton",
+      "authority": false
+    },
+    {
+      "id": "models",
+      "path": "models",
+      "layer": "models",
+      "status": "skeleton",
+      "authority": false
+    },
+    {
+      "id": "formal",
+      "path": "formal",
+      "layer": "formal",
+      "status": "skeleton",
+      "authority": false
+    },
+    {
+      "id": "eval",
+      "path": "eval",
+      "layer": "eval",
+      "status": "skeleton",
+      "authority": false
+    },
+    {
+      "id": "probes",
+      "path": "probes",
+      "layer": "probes",
+      "status": "skeleton",
+      "authority": false
+    },
+    {
+      "id": "salesforce-native",
+      "path": "integration/salesforce-arkhe-integration/native",
+      "layer": "integration",
+      "status": "independent-workspace",
+      "authority": false
+    },
+    {
+      "id": "a1-pr",
+      "path": "work/a1-pr",
+      "layer": "work",
+      "status": "independent-workspace",
+      "authority": false
+    },
+    {
+      "id": "chain-devnet",
+      "path": "work/arkhe-chain-devnet",
+      "layer": "work",
+      "status": "independent-workspace",
+      "authority": false
     },
     {
       "id": "cognition",
@@ -97,6 +170,13 @@
       "layer": "storage",
       "status": "active",
       "migrations": "storage/sql/migrations"
+    },
+    {
+      "id": "integration",
+      "path": "integration",
+      "layer": "integration",
+      "status": "active",
+      "authority": false
     },
     {
       "id": "verification",
@@ -223,6 +303,27 @@
       "status": "local-prototype",
       "authority": false,
       "description": "Pacote Node privado para provas e testes locais Solana/Meteora; referências externas em vendor_roots."
+    },
+    {
+      "id": "near-agent-market",
+      "path": "integrations/near-agent-market",
+      "layer": "integration",
+      "status": "local-adapter",
+      "authority": false
+    },
+    {
+      "id": "arkhe-python-bridge",
+      "path": "integrations/arkhe-python-runtime/bridge",
+      "layer": "integration",
+      "status": "active-adapter",
+      "authority": false
+    },
+    {
+      "id": "arkhe-ask",
+      "path": "apps/arkhe-ask",
+      "layer": "application",
+      "status": "local-service",
+      "authority": false
     }
   ],
   "services": {
@@ -255,6 +356,215 @@
     "policy": "governance/arkhe-governance",
     "persistence": "storage/sql/migrations",
     "mmr_profile": "verification/crates/arkhe-verify-core/src/mmr/profile.rs"
+  },
+  "edges": [
+    {
+      "from": "cognition",
+      "to": "orchestration",
+      "carries": "proposal",
+      "releases_effect": false
+    },
+    {
+      "from": "orchestration",
+      "to": "governance",
+      "carries": "proposal",
+      "releases_effect": false
+    },
+    {
+      "from": "governance",
+      "to": "kernel",
+      "carries": "policy",
+      "releases_effect": false
+    },
+    {
+      "from": "kernel",
+      "to": "evidence",
+      "carries": "admission",
+      "releases_effect": false
+    },
+    {
+      "from": "orchestration",
+      "to": "evidence",
+      "carries": "receipt",
+      "releases_effect": false
+    },
+    {
+      "from": "barrier",
+      "to": "world",
+      "carries": "effect",
+      "releases_effect": true,
+      "status": "unwired"
+    }
+  ],
+  "dependency_walls": [
+    {
+      "id": "cognition-proposes",
+      "from_prefixes": ["cognition/"],
+      "forbids": ["arkhe-wormgraph", "arkhe-memory", "arkhe-kernel", "arkhe-chain", "arkhe-sql", "arkhe-barrier", "arkhe-state", "arkhe-gate"]
+    },
+    {
+      "id": "verification-does-not-authorize",
+      "from_prefixes": ["verification/"],
+      "forbids": ["arkhe-kernel", "arkhe-wormgraph", "arkhe-memory", "arkhe-chain", "arkhe-barrier", "arkhe-state", "arkhe-gate"]
+    },
+    {
+      "id": "evidence-is-history",
+      "from_prefixes": ["evidence/"],
+      "forbids": ["arkhe-kernel", "arkhe-chain", "arkhe-barrier", "arkhe-state", "arkhe-gate", "arkhe-agent", "arkhe-perception", "arkhe-rag", "arkhe-metacognition", "arkhe-world-model", "arkhe-learning", "arkhe-cognition-sdk"]
+    },
+    {
+      "id": "resume-is-not-history",
+      "from_prefixes": ["state/"],
+      "forbids": ["arkhe-wormgraph", "arkhe-memory", "arkhe-chain", "arkhe-kernel", "arkhe-sql"]
+    },
+    {
+      "id": "consensus-is-not-the-gate",
+      "from_members": ["kernel/arkhe-chain"],
+      "groups": ["dependencies", "build-dependencies"],
+      "forbids": ["arkhe-kernel", "arkhe-barrier", "arkhe-state", "arkhe-wormgraph"]
+    },
+    {
+      "id": "runtime-does-not-release",
+      "from_members": ["orchestration/arkhe-runtime"],
+      "forbids": ["arkhe-barrier", "arkhe-state", "arkhe-gate"]
+    },
+    {
+      "id": "policy-does-not-record",
+      "from_members": ["governance/arkhe-governance"],
+      "forbids": ["arkhe-barrier", "arkhe-state", "arkhe-gate", "arkhe-wormgraph", "arkhe-chain"]
+    }
+  ],
+  "unpinned_client": {
+    "path": "models/pins/unpinned.toml",
+    "id": "unpinned",
+    "snapshot": "",
+    "weights_in_git": false,
+    "may_sign": false,
+    "authority": false
+  },
+  "eval_task": {
+    "path": "eval/tasks/none.json",
+    "id": "none",
+    "frozen": false,
+    "human_hours": null,
+    "write_set_excludes": ["eval/tasks", "eval/verifiers"]
+  },
+  "formal_proof": {
+    "path": "formal/proof/NONE",
+    "must_contain": "No checker has accepted the hardware bridge"
+  },
+  "receipt": {
+    "file": "orchestration/arkhe-runtime/src/lib.rs",
+    "function": "commit_proposed_work",
+    "forbids": ["Command", "std::process", "tokio::process", "arkhe_barrier", "arkhe_gate", "arkhe_state"]
+  },
+  "unwired_sources": {
+    "trees": ["kernel/arkhe-kernel/src", "kernel/arkhe-core/src", "governance/arkhe-governance/src"],
+    "forbids": ["arkhe_barrier", "arkhe_gate", "arkhe_state"]
+  },
+  "process_launch": {
+    "tree": "orchestration/arkhe-runtime/src",
+    "token": "Command::new",
+    "allowed": ["orchestration/arkhe-runtime/src/preview/executor.rs"]
+  },
+  "event_decision": {
+    "file": "kernel/arkhe-kernel/src/lib.rs",
+    "function": "decide_event",
+    "requires": ["reason == DecisionReason::RuleAllowed", "Decision::Allow", "Decision::Reject", "self.emergency_stop"]
+  },
+  "authorization_allow": {
+    "file": "kernel/arkhe-kernel/src/lib.rs",
+    "function": "authorize_checked_with_proof",
+    "construct": "AuthorizationDecision::Allow {"
+  },
+  "emergency_stop": {
+    "file": "kernel/arkhe-kernel/src/lib.rs",
+    "field": "emergency_stop: bool",
+    "setter": "set_emergency_stop",
+    "tree": "kernel/arkhe-kernel/src",
+    "forbids": ["SIGSTOP", "SIGKILL", "Command::new", "libc::kill"]
+  },
+  "unsigned_producers": {
+    "prefixes": ["cognition/"],
+    "token": "SigningKey"
+  },
+  "pure_verifier": {
+    "member": "verification/crates/arkhe-verify-core",
+    "forbid_dependencies": ["reqwest", "tokio", "sqlx", "chrono", "rusqlite", "arkhe-sql", "arkhe-kernel"],
+    "src_forbids": ["std::fs", "std::net", "std::time", "SystemTime", "AuthorizationDecision::Allow", "Decision::Allow"]
+  },
+  "formal_spec": {
+    "path": "formal/spec/admit.tla",
+    "requires": ["TLC has not checked", "Unmediated", "No theorem is discharged"],
+    "forbids": ["= \"Released\""]
+  },
+  "skeleton_texts": [
+    {
+      "path": "barrier/arkhe-barrier/src/preempt.rs",
+      "requires": ["NotImplemented"],
+      "forbids": ["SIGSTOP", "SIGKILL", "Command::new", "libc::kill"]
+    },
+    {
+      "path": "formal/spec/resume.tla",
+      "requires": ["TLC has not checked", "NotImplemented", "No theorem is discharged"],
+      "forbids": ["= \"Resumed\""]
+    },
+    {
+      "path": "formal/spec/decide.tla",
+      "requires": ["TLC has not checked", "RuleAllowed", "No theorem is discharged"],
+      "forbids": ["= \"AlwaysAllow\""]
+    },
+    {
+      "path": "formal/refine/state.txt",
+      "requires": ["TLC has not checked"],
+      "forbids": ["theorem accepted"]
+    },
+    {
+      "path": "formal/refine/decide.txt",
+      "requires": ["TLC has not checked", "RuleAllowed"],
+      "forbids": ["theorem accepted"]
+    },
+    {
+      "path": "eval/verifiers/refuse.py",
+      "requires": ["not scored"],
+      "forbids": ["score ="]
+    }
+  ],
+  "model_client": {
+    "path": "models/client.toml",
+    "pin": "pins/unpinned.toml",
+    "holds_keys": false,
+    "writes_evidence": false,
+    "releases_effect": false
+  },
+  "eval_verifier": {
+    "path": "eval/verifiers/FROZEN",
+    "must_contain": "The agent write set excludes this directory."
+  },
+  "mmr_reexport": {
+    "reexport": "storage/sql/crates/arkhe-sql/src/mmr/profile.rs",
+    "defines": ["pub const PROFILE_ID", "pub const PROFILE_VERSION", "pub const PROFILE_DIGEST_HEX", "pub fn mmr_size"],
+    "names": ["mmr_size", "PROFILE_DIGEST_HEX", "PROFILE_ID", "PROFILE_VERSION"],
+    "tree": "storage/sql/crates/arkhe-sql/src",
+    "forbid_local": ["pub const PROFILE_ID", "pub const PROFILE_VERSION", "pub const PROFILE_DIGEST_HEX", "pub fn mmr_size"]
+  },
+  "health_scaffold": {
+    "file": "integrations/mcp-server/src/index.js",
+    "requires": ["authority: \"none\"", "createHealthServer"],
+    "forbids": ["decide_event", "AuthorizationDecision"]
+  },
+  "work_identity": {
+    "types": {
+      "WorkIntent": "kernel/arkhe-core/src/work.rs",
+      "WorkerExecutionRecord": "kernel/arkhe-core/src/worker.rs"
+    },
+    "canonical": "kernel/arkhe-core/src/canonical.rs",
+    "canonical_marker": "AKG-CBOR-v1",
+    "operational": ["scripts/live_runtime.py", "ops/runtime/Dockerfile"]
+  },
+  "policy_verdict": {
+    "definition": "governance/arkhe-governance/src/lib.rs",
+    "silent_prefixes": ["cognition/", "evidence/", "verification/", "state/", "barrier/", "kernel/arkhe-gate"]
   },
   "source_maps": [
     "docs/architecture/moves.json",
@@ -300,6 +610,22 @@
     {
       "path": "work/rbb-arkhe/arkhe/protocol",
       "reason": "Protocolo Arkhe-RBB com workspace próprio."
+    },
+    {
+      "path": "integration/salesforce-arkhe-integration/native",
+      "reason": "Cópia nativa do bridge Salesforce, com workspace e lock próprios. Não é o crate ativo integration/arkhe-crm-bridge."
+    },
+    {
+      "path": "work/a1-pr",
+      "reason": "Pacote isolado de cadeia com cópias locais dos crates e lock próprio. Não substitui kernel/arkhe-chain."
+    },
+    {
+      "path": "work/arkhe-chain-devnet",
+      "reason": "Pacote isolado de devnet com cópias locais dos crates e lock próprio. Não substitui kernel/arkhe-chain."
+    },
+    {
+      "path": "packaging/core",
+      "reason": "Core empacotado das semanas 0 a 6: recibo, armazenamento em diretório e endpoint de verificação. Workspace e lock próprios. Não substitui o runtime nem o verify-core."
     }
   ]
 }

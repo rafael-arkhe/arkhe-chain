@@ -58,9 +58,14 @@ impl Role {
     }
 
     pub(crate) fn from_name(name: &str) -> Option<Self> {
-        [Self::Requester, Self::Author, Self::Evaluator, Self::Approver]
-            .into_iter()
-            .find(|role| role.name() == name)
+        [
+            Self::Requester,
+            Self::Author,
+            Self::Evaluator,
+            Self::Approver,
+        ]
+        .into_iter()
+        .find(|role| role.name() == name)
     }
 
     pub(crate) fn name(self) -> &'static str {
@@ -91,7 +96,10 @@ pub enum Claim {
     /// "I request this task, within this budget."
     Request { task: [u8; 32], budget: u64 },
     /// "I produced this artifact for that request."
-    Artifact { request: [u8; 32], artifact: [u8; 32] },
+    Artifact {
+        request: [u8; 32],
+        artifact: [u8; 32],
+    },
     /// "I ran this suite in this environment on this artifact."
     Evaluation {
         artifact: [u8; 32],
@@ -409,7 +417,10 @@ impl AttestRegistry {
         if att.version != ATTEST_VERSION || att.scheme != ATTEST_SCHEME_ED25519 {
             return Err(ChainError::Attest("version"));
         }
-        if att.chain_id != self.chain_id || att.genesis != self.genesis || att.audience != self.audience {
+        if att.chain_id != self.chain_id
+            || att.genesis != self.genesis
+            || att.audience != self.audience
+        {
             return Err(ChainError::Attest("domain"));
         }
         if !account_id(&att.signer) {
@@ -444,7 +455,9 @@ impl AttestRegistry {
         }
         let revokes = match &att.claim {
             Claim::Revocation { delegate, role } => {
-                let grant = self.grant(delegate, *role).ok_or(ChainError::Attest("authority"))?;
+                let grant = self
+                    .grant(delegate, *role)
+                    .ok_or(ChainError::Attest("authority"))?;
                 if grant.grantor != att.signer {
                     return Err(ChainError::Attest("authority"));
                 }

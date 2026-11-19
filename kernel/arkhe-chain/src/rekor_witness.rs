@@ -67,9 +67,7 @@ pub fn synthetic_witness_for_digest(digest: &[u8; 32]) -> RekorInclusionWitness 
     let leaf_body = synthetic_anchor_leaf(digest);
     let root = hash_leaf(&leaf_body);
     let root_b64 = STANDARD.encode(root);
-    let checkpoint_envelope = format!(
-        "{DEFAULT_REKOR_ORIGIN}\n1\n{root_b64}\n"
-    );
+    let checkpoint_envelope = format!("{DEFAULT_REKOR_ORIGIN}\n1\n{root_b64}\n");
     RekorInclusionWitness {
         log_origin: DEFAULT_REKOR_ORIGIN.into(),
         rekor_base_url: DEFAULT_REKOR_BASE_URL.into(),
@@ -147,7 +145,11 @@ fn verify_checkpoint_envelope(
     if size != expected_size {
         return Err(ChainError::ExternalAnchorRekor("checkpoint-size"));
     }
-    let root = decode_hash_line(lines.next().ok_or(ChainError::ExternalAnchorRekor("checkpoint-root"))?)?;
+    let root = decode_hash_line(
+        lines
+            .next()
+            .ok_or(ChainError::ExternalAnchorRekor("checkpoint-root"))?,
+    )?;
     if root != *expected_root {
         return Err(ChainError::ExternalAnchorRekor("checkpoint-root"));
     }
@@ -166,7 +168,8 @@ fn decode_hash_line(s: &str) -> Result<[u8; 32], ChainError> {
     let s = s.trim();
     if s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit()) {
         let mut out = [0u8; 32];
-        hex::decode_to_slice(s, &mut out).map_err(|_| ChainError::ExternalAnchorRekor("checkpoint-root"))?;
+        hex::decode_to_slice(s, &mut out)
+            .map_err(|_| ChainError::ExternalAnchorRekor("checkpoint-root"))?;
         return Ok(out);
     }
     STANDARD
@@ -184,7 +187,7 @@ pub fn witness_from_rekor_entry_json(
     entry_json: &[u8],
 ) -> Result<RekorInclusionWitness, ChainError> {
     #[derive(Deserialize)]
-  struct Root {
+    struct Root {
         #[serde(flatten)]
         entries: std::collections::BTreeMap<String, Entry>,
     }
@@ -261,9 +264,10 @@ pub fn witness_from_rekor_entry_json(
         .decode(&body_b64)
         .map_err(|_| ChainError::ExternalAnchorRekor("body"))?;
     let (log_id_hex, log_id_key_id) = match log_id.as_deref() {
-        Some(id) if id.len() == 64 && id.chars().all(|c| c.is_ascii_hexdigit()) => {
-            (Some(id.to_ascii_lowercase()), Some(log_id_hex_to_key_id(id)))
-        }
+        Some(id) if id.len() == 64 && id.chars().all(|c| c.is_ascii_hexdigit()) => (
+            Some(id.to_ascii_lowercase()),
+            Some(log_id_hex_to_key_id(id)),
+        ),
         Some(id) => (None, Some(id.to_string())),
         None => (None, None),
     };

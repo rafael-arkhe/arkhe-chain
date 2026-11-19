@@ -239,7 +239,12 @@ pub fn fresh_zero_transfer(index: u16) -> (arkhe_chain::Account, Transaction) {
 }
 
 #[allow(dead_code)]
-pub fn mldsa_transfer(nonce: u64, sender: &str, recipient: &str, value: u64) -> (Transaction, [u8; arkhe_chain::MLDSA65_PK_LEN]) {
+pub fn mldsa_transfer(
+    nonce: u64,
+    sender: &str,
+    recipient: &str,
+    value: u64,
+) -> (Transaction, [u8; arkhe_chain::MLDSA65_PK_LEN]) {
     let mut bare = Transaction {
         nonce,
         sender: sender.into(),

@@ -1,9 +1,9 @@
 mod common;
 
 use arkhe_chain::{
-    encode_block, public_key, sign_attestation, sign_proposer, Account, ArkheNode, AttestOp, Attestation,
-    Block, ChainError, Claim, Grant, Role, ATTEST_AUDIENCE, ATTEST_SCHEME_ED25519, ATTEST_VERSION, CHAIN_ID,
-    GENESIS_ACCOUNT,
+    encode_block, public_key, sign_attestation, sign_proposer, Account, ArkheNode, AttestOp,
+    Attestation, Block, ChainError, Claim, Grant, Role, ATTEST_AUDIENCE, ATTEST_SCHEME_ED25519,
+    ATTEST_VERSION, CHAIN_ID, GENESIS_ACCOUNT,
 };
 use arkhe_verify_core::rbb::mmr;
 
@@ -49,11 +49,25 @@ fn grants() -> Vec<Grant> {
 }
 
 fn node_a() -> ArkheNode {
-    ArkheNode::new_with_grants("validator-a", &common::SECRET_A, common::validators(), accounts(), grants()).unwrap()
+    ArkheNode::new_with_grants(
+        "validator-a",
+        &common::SECRET_A,
+        common::validators(),
+        accounts(),
+        grants(),
+    )
+    .unwrap()
 }
 
 fn node_b() -> ArkheNode {
-    ArkheNode::new_with_grants("validator-b", &common::SECRET_B, common::validators(), accounts(), grants()).unwrap()
+    ArkheNode::new_with_grants(
+        "validator-b",
+        &common::SECRET_B,
+        common::validators(),
+        accounts(),
+        grants(),
+    )
+    .unwrap()
 }
 
 fn signed(genesis: [u8; 32], signer: &str, nonce: u8, claim: Claim) -> Attestation {
@@ -78,10 +92,26 @@ fn signed(genesis: [u8; 32], signer: &str, nonce: u8, claim: Claim) -> Attestati
 fn queue_flow(node: &ArkheNode) -> [u8; 32] {
     let genesis = node.genesis_hash();
     let request = node
-        .submit_attestation(signed(genesis, "requester", 1, Claim::Request { task: [7; 32], budget: 5 }))
+        .submit_attestation(signed(
+            genesis,
+            "requester",
+            1,
+            Claim::Request {
+                task: [7; 32],
+                budget: 5,
+            },
+        ))
         .unwrap();
-    node.submit_attestation(signed(genesis, "author", 1, Claim::Artifact { request, artifact: ARTIFACT }))
-        .unwrap();
+    node.submit_attestation(signed(
+        genesis,
+        "author",
+        1,
+        Claim::Artifact {
+            request,
+            artifact: ARTIFACT,
+        },
+    ))
+    .unwrap();
     let evaluation = node
         .submit_attestation(signed(
             genesis,
@@ -101,7 +131,12 @@ fn queue_flow(node: &ArkheNode) -> [u8; 32] {
         genesis,
         "approver",
         1,
-        Claim::Approval { action: ACTION, artifact: ARTIFACT, evaluation, policy },
+        Claim::Approval {
+            action: ACTION,
+            artifact: ARTIFACT,
+            evaluation,
+            policy,
+        },
     ))
     .unwrap()
 }
@@ -119,20 +154,39 @@ fn resigned(mut block: Block) -> Vec<u8> {
 
 #[test]
 fn grants_are_part_of_the_genesis_hash_and_no_grant_keeps_it() {
-    let plain = ArkheNode::new("validator-a", &common::SECRET_A, common::validators(), accounts()).unwrap();
-    let empty =
-        ArkheNode::new_with_grants("validator-a", &common::SECRET_A, common::validators(), accounts(), vec![])
-            .unwrap();
+    let plain = ArkheNode::new(
+        "validator-a",
+        &common::SECRET_A,
+        common::validators(),
+        accounts(),
+    )
+    .unwrap();
+    let empty = ArkheNode::new_with_grants(
+        "validator-a",
+        &common::SECRET_A,
+        common::validators(),
+        accounts(),
+        vec![],
+    )
+    .unwrap();
     assert_eq!(plain.genesis_hash(), empty.genesis_hash());
     assert_ne!(plain.genesis_hash(), node_a().genesis_hash());
 
     let mut longer = grants();
     longer[3].expires += 1;
-    let other =
-        ArkheNode::new_with_grants("validator-a", &common::SECRET_A, common::validators(), accounts(), longer)
-            .unwrap();
+    let other = ArkheNode::new_with_grants(
+        "validator-a",
+        &common::SECRET_A,
+        common::validators(),
+        accounts(),
+        longer,
+    )
+    .unwrap();
     assert_ne!(other.genesis_hash(), node_a().genesis_hash());
-    assert_ne!(other.attest_policy_digest().unwrap(), node_a().attest_policy_digest().unwrap());
+    assert_ne!(
+        other.attest_policy_digest().unwrap(),
+        node_a().attest_policy_digest().unwrap()
+    );
 }
 
 #[test]
@@ -161,9 +215,18 @@ fn a_second_node_replays_the_ops_to_the_same_root_and_receipt() {
     let second = seal(&a, TS + 1);
     b.import_block(&encode_block(&second)).unwrap();
     let receipt = b.attest_receipt(&approval).unwrap().unwrap();
-    assert_eq!(Some(&receipt), a.attest_receipt(&approval).unwrap().as_ref());
+    assert_eq!(
+        Some(&receipt),
+        a.attest_receipt(&approval).unwrap().as_ref()
+    );
     assert_eq!((receipt.height, receipt.leaf), (2, 4));
-    assert_eq!(b.attest_status(&approval).unwrap().unwrap().execution_recorded, Some(4));
+    assert_eq!(
+        b.attest_status(&approval)
+            .unwrap()
+            .unwrap()
+            .execution_recorded,
+        Some(4)
+    );
     assert_eq!(
         b.submit_execution(approval, ACTION, ARTIFACT),
         Err(ChainError::Attest("consumed"))
@@ -182,17 +245,26 @@ fn the_header_root_covers_the_registry() {
 
     let mut fewer = first.clone();
     fewer.attestations.pop();
-    assert_eq!(b.import_block(&resigned(fewer)), Err(ChainError::StateMismatch));
+    assert_eq!(
+        b.import_block(&resigned(fewer)),
+        Err(ChainError::StateMismatch)
+    );
 
     let mut swapped = first.clone();
     swapped.attestations.swap(0, 3);
-    assert_eq!(b.import_block(&resigned(swapped)), Err(ChainError::StateMismatch));
+    assert_eq!(
+        b.import_block(&resigned(swapped)),
+        Err(ChainError::StateMismatch)
+    );
 
     let mut edited = first.clone();
     if let AttestOp::Admit(att) = &mut edited.attestations[2] {
         att.expires += 1;
     }
-    assert_eq!(b.import_block(&resigned(edited)), Err(ChainError::UnverifiedSignature));
+    assert_eq!(
+        b.import_block(&resigned(edited)),
+        Err(ChainError::UnverifiedSignature)
+    );
     assert_eq!((b.height().unwrap(), b.attest_count().unwrap()), (0, 0));
 
     b.import_block(&encode_block(&first)).unwrap();
@@ -200,12 +272,22 @@ fn the_header_root_covers_the_registry() {
     let second = seal(&a, TS + 1);
 
     let mut other = second.clone();
-    other.attestations[0] = AttestOp::Execute { approval, action: ACTION, artifact: [0xB2; 32] };
-    assert_eq!(b.import_block(&resigned(other)), Err(ChainError::Attest("artifact")));
+    other.attestations[0] = AttestOp::Execute {
+        approval,
+        action: ACTION,
+        artifact: [0xB2; 32],
+    };
+    assert_eq!(
+        b.import_block(&resigned(other)),
+        Err(ChainError::Attest("artifact"))
+    );
 
     let mut twice = second.clone();
     twice.attestations.push(second.attestations[0].clone());
-    assert_eq!(b.import_block(&resigned(twice)), Err(ChainError::Attest("consumed")));
+    assert_eq!(
+        b.import_block(&resigned(twice)),
+        Err(ChainError::Attest("consumed"))
+    );
     assert_eq!(b.attest_receipt(&approval).unwrap(), None);
     b.import_block(&encode_block(&second)).unwrap();
 }
@@ -215,7 +297,15 @@ fn a_transfer_and_ops_share_a_block_and_a_refused_op_is_left_out() {
     let a = node_a();
     let genesis = a.genesis_hash();
     assert_eq!(
-        a.submit_attestation(signed([0; 32], "requester", 1, Claim::Request { task: [7; 32], budget: 5 })),
+        a.submit_attestation(signed(
+            [0; 32],
+            "requester",
+            1,
+            Claim::Request {
+                task: [7; 32],
+                budget: 5
+            }
+        )),
         Err(ChainError::Attest("domain"))
     );
     assert_eq!(
@@ -223,11 +313,23 @@ fn a_transfer_and_ops_share_a_block_and_a_refused_op_is_left_out() {
         Err(ChainError::Attest("unknown"))
     );
     assert_eq!(a.attest_pool_len().unwrap(), 0);
-    assert_eq!(a.propose_and_seal_block(TS).unwrap_err(), ChainError::MempoolEmpty);
+    assert_eq!(
+        a.propose_and_seal_block(TS).unwrap_err(),
+        ChainError::MempoolEmpty
+    );
 
-    a.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25)).unwrap();
-    a.submit_attestation(signed(genesis, "requester", 1, Claim::Request { task: [7; 32], budget: 5 }))
+    a.ingest(common::transfer(0, GENESIS_ACCOUNT, "bob", 25))
         .unwrap();
+    a.submit_attestation(signed(
+        genesis,
+        "requester",
+        1,
+        Claim::Request {
+            task: [7; 32],
+            budget: 5,
+        },
+    ))
+    .unwrap();
     let block = seal(&a, TS);
     assert_eq!((block.transactions.len(), block.attestations.len()), (1, 1));
     assert_eq!(block.header.mmr_count, 1);
@@ -251,7 +353,14 @@ fn a_reopened_file_rebuilds_the_registry_and_needs_the_same_grants() {
             .as_nanos()
     ));
     let open = |grants| {
-        ArkheNode::open_with_grants(&path, "validator-a", &common::SECRET_A, common::validators(), accounts(), grants)
+        ArkheNode::open_with_grants(
+            &path,
+            "validator-a",
+            &common::SECRET_A,
+            common::validators(),
+            accounts(),
+            grants,
+        )
     };
     let node = open(grants()).unwrap();
     let approval = queue_flow(&node);
@@ -266,7 +375,10 @@ fn a_reopened_file_rebuilds_the_registry_and_needs_the_same_grants() {
     drop(node);
 
     let again = open(grants()).unwrap();
-    assert_eq!((again.tip().unwrap(), again.attest_root().unwrap()), (tip, root));
+    assert_eq!(
+        (again.tip().unwrap(), again.attest_root().unwrap()),
+        (tip, root)
+    );
     assert_eq!(again.attest_count().unwrap(), 5);
     assert_eq!(again.attest_receipt(&approval).unwrap(), Some(receipt));
     drop(again);

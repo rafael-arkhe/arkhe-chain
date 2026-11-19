@@ -15,6 +15,8 @@ test('development boundaries: catalog, source isolation and strict proposals', a
   const architecture = JSON.parse(readFileSync(new URL('../../../config/architecture.json', import.meta.url), 'utf8'));
   assert.deepEqual(catalog().map(row => row.path), architecture.rust_members);
   assert.equal(catalog().filter(row => row.boundary === 'reference').length,7);
+  assert.deepEqual(catalog().filter(row => row.boundary === 'skeleton').map(row => row.path), architecture.skeleton_members);
+  await assert.rejects(() => startRun(owner, {moduleId:'arkhe-barrier', objective:'nao evoluir o esqueleto'}), /esqueleto/);
   const bridge = catalog().find(row => row.path === 'integrations/arkhe-python-runtime/bridge');
   assert.equal(bridge.id, 'arkhe-python-bridge');
   assert.equal(bridge.test, 'cargo test --locked --offline -p arkhe-python-bridge');
@@ -31,6 +33,11 @@ test('development boundaries: catalog, source isolation and strict proposals', a
   const baseline = sourceSnapshot(destination);
   assert.ok(baseline['cognition/arkhe-agent/src/lib.rs']);
   assert.ok(baseline['integrations/arkhe-python-runtime/bridge/Cargo.toml']);
+  assert.ok(baseline['barrier/arkhe-barrier/Cargo.toml']);
+  assert.ok(baseline['state/arkhe-state/Cargo.toml']);
+  assert.ok(baseline['probes/arkhe-probes/Cargo.toml']);
+  assert.ok(baseline['apps/arkhe-ask/Cargo.toml']);
+  assert.ok(!Object.keys(baseline).some(path => path.startsWith('work/a1-pr/') || path.startsWith('work/arkhe-chain-devnet/')));
   assert.ok(!Object.keys(baseline).some(path => path.startsWith('ops/') || path.endsWith('.pem') || path.includes('node_modules')));
   assert.equal(readFileSync(join(destination,'Cargo.lock'),'utf8'),readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8'));
   assert.throws(() => sandboxArguments('rust:latest','n','C:/snapshot',module));

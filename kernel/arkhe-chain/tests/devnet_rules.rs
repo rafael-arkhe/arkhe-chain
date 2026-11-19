@@ -8,8 +8,8 @@ use std::path::PathBuf;
 
 use arkhe_chain::{
     encode_block, encode_tx_list, genesis_peer_lines, import_synced, parse_configured_peer,
-    public_key, run_operator, sign_precommit, ArkheNode, ChainError, ConfiguredPeer, OperatorHandle,
-    OperatorRequest, Precommit, Validator, CHAIN_ID, GENESIS_ACCOUNT,
+    public_key, run_operator, sign_precommit, ArkheNode, ChainError, ConfiguredPeer,
+    OperatorHandle, OperatorRequest, Precommit, Validator, CHAIN_ID, GENESIS_ACCOUNT,
 };
 
 const TS: u64 = 1_700_000_000;
@@ -50,8 +50,14 @@ fn vote(index: usize, height: u64, hash: [u8; 32]) -> Precommit {
 
 /// Seal one transfer on `sealer` and return the block bytes and hash.
 fn seal(sealer: &ArkheNode, nonce: u64, recipient: &str, timestamp: u64) -> (Vec<u8>, [u8; 32]) {
-    sealer.ingest(common::transfer(nonce, GENESIS_ACCOUNT, recipient, 5)).unwrap();
-    let block = sealer.propose_and_seal_block(timestamp).unwrap().block.unwrap();
+    sealer
+        .ingest(common::transfer(nonce, GENESIS_ACCOUNT, recipient, 5))
+        .unwrap();
+    let block = sealer
+        .propose_and_seal_block(timestamp)
+        .unwrap()
+        .block
+        .unwrap();
     (encode_block(&block), sealer.tip().unwrap())
 }
 
@@ -65,7 +71,11 @@ fn a1_a_height_commits_only_with_more_than_two_thirds_of_the_validators() {
     for (index, expected) in [(0, 0), (1, 0), (2, 1), (3, 1)] {
         observer.note_precommit(&vote(index, 1, hash)).unwrap();
         let _ = observer.bft_commit(1);
-        assert_eq!(observer.committed_height().unwrap(), expected, "after vote {index}");
+        assert_eq!(
+            observer.committed_height().unwrap(),
+            expected,
+            "after vote {index}"
+        );
     }
     // Committing does not move the tip, and a height above the next one waits.
     assert_eq!(observer.tip().unwrap(), hash);
@@ -88,21 +98,39 @@ fn a2_a_node_counts_votes_only_for_its_own_canonical_block() {
 
     follower.import_block(&block_a).unwrap();
     assert_eq!(follower.import_block(&block_b), Err(ChainError::Fork));
-    assert_eq!((follower.tip().unwrap(), follower.fork_count().unwrap()), (hash_a, 1));
+    assert_eq!(
+        (follower.tip().unwrap(), follower.fork_count().unwrap()),
+        (hash_a, 1)
+    );
 
     // Votes for the sibling, for an unknown block, by an outsider, or with a
     // signature that is not the validator's are not stored.
-    assert_eq!(follower.note_precommit(&vote(1, 1, hash_b)), Err(ChainError::Fork));
-    assert_eq!(follower.note_precommit(&vote(1, 1, [7; 32])), Err(ChainError::UnknownBlock));
+    assert_eq!(
+        follower.note_precommit(&vote(1, 1, hash_b)),
+        Err(ChainError::Fork)
+    );
+    assert_eq!(
+        follower.note_precommit(&vote(1, 1, [7; 32])),
+        Err(ChainError::UnknownBlock)
+    );
     let mut outsider = vote(1, 1, hash_a);
     outsider.validator_id = "val9".to_string();
-    assert_eq!(follower.note_precommit(&outsider), Err(ChainError::NotProposer));
+    assert_eq!(
+        follower.note_precommit(&outsider),
+        Err(ChainError::NotProposer)
+    );
     let mut forged = vote(1, 1, hash_a);
     forged.validator_id = IDS[3].to_string();
-    assert_eq!(follower.note_precommit(&forged), Err(ChainError::BadProposerSignature));
+    assert_eq!(
+        follower.note_precommit(&forged),
+        Err(ChainError::BadProposerSignature)
+    );
     let mut elsewhere = vote(1, 1, hash_a);
     elsewhere.chain_id = "other-chain".to_string();
-    assert_eq!(follower.note_precommit(&elsewhere), Err(ChainError::ChainId));
+    assert_eq!(
+        follower.note_precommit(&elsewhere),
+        Err(ChainError::ChainId)
+    );
     assert_eq!(follower.precommit_count(1).unwrap(), 0);
 
     // The same vote twice counts once.
@@ -170,7 +198,10 @@ fn a5_a_committed_block_is_not_replaced_by_a_sibling_or_a_longer_chain() {
     let (block_b1, _) = seal(&second, 0, "carol", TS);
     let (block_b2, _) = seal(&second, 1, "carol", TS + 1);
     assert_eq!(first.import_block(&block_b1), Err(ChainError::Fork));
-    assert_eq!(first.import_block(&block_b2), Err(ChainError::ParentMismatch));
+    assert_eq!(
+        first.import_block(&block_b2),
+        Err(ChainError::ParentMismatch)
+    );
     assert_eq!((first.height().unwrap(), first.tip().unwrap()), (1, hash_a));
     assert_eq!(first.committed_height().unwrap(), 1);
     assert_eq!(first.block_hash_at(1).unwrap(), hash_a);
@@ -194,9 +225,15 @@ fn r4_a_synced_reimport_of_an_already_canonical_block_is_not_a_failed_walk() {
     assert_eq!(follower.tip().unwrap(), hash);
     // The sync walk asked for this body before a vote imported it. Re-import
     // answers ParentMismatch; the walk must not treat that as failure.
-    assert_eq!(follower.import_block(&body), Err(ChainError::ParentMismatch));
+    assert_eq!(
+        follower.import_block(&body),
+        Err(ChainError::ParentMismatch)
+    );
     import_synced(&follower, &body).unwrap();
-    assert_eq!((follower.height().unwrap(), follower.tip().unwrap()), (1, hash));
+    assert_eq!(
+        (follower.height().unwrap(), follower.tip().unwrap()),
+        (1, hash)
+    );
 
     let (foreign_body, _) = seal(&node(2), 0, "carol", TS);
     assert_eq!(
@@ -225,10 +262,19 @@ impl Net {
                 .as_nanos()
         ));
         std::fs::create_dir_all(dir.join("inbox")).unwrap();
-        let hex = |bytes: &[u8]| bytes.iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+        let hex = |bytes: &[u8]| {
+            bytes
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>()
+        };
         let mut genesis = String::new();
         for validator in validators() {
-            genesis.push_str(&format!("validator {} {}\n", validator.id, hex(&validator.public_key)));
+            genesis.push_str(&format!(
+                "validator {} {}\n",
+                validator.id,
+                hex(&validator.public_key)
+            ));
         }
         for account in common::accounts() {
             genesis.push_str(&format!(
@@ -240,9 +286,17 @@ impl Net {
         }
         // Ports the system just handed out and released.
         let ports = std::array::from_fn(|_| {
-            std::net::TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap().port()
+            std::net::TcpListener::bind("127.0.0.1:0")
+                .unwrap()
+                .local_addr()
+                .unwrap()
+                .port()
         });
-        Self { dir, genesis, ports }
+        Self {
+            dir,
+            genesis,
+            ports,
+        }
     }
 
     fn data(&self, index: usize) -> PathBuf {
@@ -257,7 +311,11 @@ impl Net {
             .filter(|(other, _)| *other != index)
             .map(|(other, line)| {
                 let peer = line.split_whitespace().nth(1).unwrap();
-                parse_configured_peer(&format!("/ip4/127.0.0.1/tcp/{}/p2p/{peer}", self.ports[other])).unwrap()
+                parse_configured_peer(&format!(
+                    "/ip4/127.0.0.1/tcp/{}/p2p/{peer}",
+                    self.ports[other]
+                ))
+                .unwrap()
             })
             .collect()
     }
@@ -268,7 +326,9 @@ impl Net {
             id: IDS[index].to_string(),
             secret: secret(index),
             genesis: self.genesis.clone(),
-            listen: format!("/ip4/127.0.0.1/tcp/{}", self.ports[index]).parse().unwrap(),
+            listen: format!("/ip4/127.0.0.1/tcp/{}", self.ports[index])
+                .parse()
+                .unwrap(),
             peers: self.peers(index),
             once: false,
             txs: Vec::new(),
@@ -317,17 +377,19 @@ async fn settle(nodes: &[&OperatorHandle], height: u64) -> [u8; 32] {
             node.catch_up().await.unwrap();
         }
         let seen: Vec<_> = nodes.iter().map(|node| node.status().unwrap()).collect();
-        if seen
-            .iter()
-            .all(|status| status.height == height && status.committed == height && status.tip == seen[0].tip)
-        {
+        if seen.iter().all(|status| {
+            status.height == height && status.committed == height && status.tip == seen[0].tip
+        }) {
             return seen[0].tip;
         }
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     }
     let seen: Vec<_> = nodes
         .iter()
-        .map(|node| node.status().map(|status| (status.height, status.committed)))
+        .map(|node| {
+            node.status()
+                .map(|status| (status.height, status.committed))
+        })
         .collect();
     panic!("the nodes did not settle at height {height}: {seen:?}");
 }
@@ -406,7 +468,10 @@ async fn r2_a_restarted_node_resumes_from_its_file() {
     drop(val1);
     let val1 = net.start(0).await;
     let resumed = val1.status().unwrap();
-    assert_eq!((resumed.height, resumed.committed, resumed.mempool), (1, 1, 1));
+    assert_eq!(
+        (resumed.height, resumed.committed, resumed.mempool),
+        (1, 1, 1)
+    );
     assert_eq!(resumed.tip, tip);
 
     // A leftover temporary file keeps a node from starting until it is removed.

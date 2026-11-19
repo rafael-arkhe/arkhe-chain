@@ -336,3 +336,46 @@ fn bounded_release_read(path: &str, limit: usize) -> anyhow::Result<Vec<u8>> {
     anyhow::ensure!(bytes.len() <= limit, "release input exceeds limit");
     Ok(bytes)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::CommandFactory;
+
+    #[test]
+    fn cli_definition_and_subcommands_are_valid() {
+        Cli::command().debug_assert();
+        let parsed = Cli::try_parse_from(["arkhe-verify", "blake3", "616263"]).unwrap();
+        assert!(matches!(parsed.command, Command::Blake3 { hex } if hex == "616263"));
+        assert!(Cli::try_parse_from(["arkhe-verify", "license", "status"]).is_ok());
+        assert!(Cli::try_parse_from(["arkhe-verify", "nonexistent"]).is_err());
+    }
+
+    #[test]
+    fn bounded_release_read_enforces_exact_limit_and_rejects_oversize() {
+        let dir =
+            std::env::temp_dir().join(format!("arkhe-verify-cli-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("sample.bin");
+        std::fs::write(&file, b"12345").unwrap();
+        let path_str = file.to_str().unwrap();
+
+        assert_eq!(bounded_release_read(path_str, 5).unwrap(), b"12345");
+        let err = bounded_release_read(path_str, 4).unwrap_err();
+        assert!(err.to_string().contains("release input exceeds limit"));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn entitlement_fails_closed_without_build_time_issuer_keys() {
+        if option_env!("ARKHE_LICENSE_PUBKEYS")
+            .unwrap_or("")
+            .trim()
+            .is_empty()
+        {
+            let err = check_entitlement(b"{}").unwrap_err();
+            assert!(err.to_string().contains("no trusted license issuer"));
+        }
+    }
+}

@@ -15,7 +15,9 @@ pub mod worker {
     pub use arkhe_core::worker::WorkerExecutionRecord;
 }
 pub mod work {
-    pub use arkhe_core::work::WorkIntent;
+    pub use arkhe_core::work::{
+        ContextEntry, ContextKind, RequestIdentity, WorkIntent, WorkIntentType,
+    };
 }
 
 mod sealed {
@@ -310,12 +312,12 @@ mod tests {
         let owned = payload.to_vec();
         let record_bytes = [b"record-".as_slice(), &[byte]].concat();
         let subject_bytes = [b"subject-".as_slice(), &[byte]].concat();
-        let digest = Digest32::blake3(b"AKG:TEST:PAYLOAD:v1\0", &owned);
+        let digest = Digest32::blake3(b"AKG:SDK:TEST:PAYLOAD:v1\0", &owned);
         (
             EvidenceEnvelope {
-                record_hash: Digest32::blake3(b"AKG:TEST:RECORD:v1\0", &record_bytes),
+                record_hash: Digest32::blake3(b"AKG:SDK:TEST:RECORD:v1\0", &record_bytes),
                 kind: "observed".into(),
-                subject: Digest32::blake3(b"AKG:TEST:SUBJECT:v1\0", &subject_bytes),
+                subject: Digest32::blake3(b"AKG:SDK:TEST:SUBJECT:v1\0", &subject_bytes),
                 payload_digest: digest,
                 policy_digest: None,
                 causal_parents: parents,
@@ -334,11 +336,11 @@ mod tests {
     ) -> PresentedEvidence<'a> {
         PresentedEvidence {
             envelope: envelope.clone(),
-            payload_domain: b"AKG:TEST:PAYLOAD:v1\0",
+            payload_domain: b"AKG:SDK:TEST:PAYLOAD:v1\0",
             payload,
-            record_domain: b"AKG:TEST:RECORD:v1\0",
+            record_domain: b"AKG:SDK:TEST:RECORD:v1\0",
             record_bytes,
-            subject_domain: b"AKG:TEST:SUBJECT:v1\0",
+            subject_domain: b"AKG:SDK:TEST:SUBJECT:v1\0",
             subject_bytes,
             policy_domain: b"",
             policy: b"",
@@ -395,7 +397,7 @@ mod tests {
                 &first,
                 &first_payload,
                 &first_record,
-                &first_subject
+                &first_subject,
             )])
             .unwrap();
         assert_eq!(reader.get(first.record_hash).unwrap().kind, "observed");
@@ -413,8 +415,13 @@ mod tests {
         flipped[0] ^= 1;
         let (other, _, other_record, other_subject) = presented(4, b"other", vec![]);
         assert_eq!(
-            host.admit(vec![present(&other, &flipped, &other_record, &other_subject)])
-                .unwrap_err(),
+            host.admit(vec![present(
+                &other,
+                &flipped,
+                &other_record,
+                &other_subject
+            )])
+            .unwrap_err(),
             "payload digest does not match presented bytes"
         );
         let mut flipped_record = first_record.clone();
@@ -447,14 +454,15 @@ mod tests {
         let (mut policy_env, policy_payload, policy_record, policy_subject) =
             presented(9, b"policy", vec![]);
         let policy_bytes = b"policy-body".to_vec();
-        policy_env.policy_digest = Some(Digest32::blake3(b"AKG:TEST:POLICY:v1\0", &policy_bytes));
+        policy_env.policy_digest =
+            Some(Digest32::blake3(b"AKG:SDK:TEST:POLICY:v1\0", &policy_bytes));
         let mut policy_item = present(
             &policy_env,
             &policy_payload,
             &policy_record,
             &policy_subject,
         );
-        policy_item.policy_domain = b"AKG:TEST:POLICY:v1\0";
+        policy_item.policy_domain = b"AKG:SDK:TEST:POLICY:v1\0";
         let mut flipped_policy = policy_bytes.clone();
         flipped_policy[0] ^= 1;
         policy_item.policy = &flipped_policy;
@@ -468,7 +476,7 @@ mod tests {
             &policy_record,
             &policy_subject,
         );
-        policy_item.policy_domain = b"AKG:TEST:POLICY:v1\0";
+        policy_item.policy_domain = b"AKG:SDK:TEST:POLICY:v1\0";
         let (open_env, open_payload, open_record, open_subject) = presented(10, b"open", vec![]);
         let mut open_item = present(&open_env, &open_payload, &open_record, &open_subject);
         open_item.policy = b"x";
@@ -496,7 +504,7 @@ mod tests {
             &fresh,
             &fresh_payload,
             &fresh_record,
-            &fresh_subject
+            &fresh_subject,
         )])
         .unwrap();
         let (child, child_payload, child_record, child_subject) =
@@ -522,15 +530,11 @@ mod tests {
                 &child,
                 &child_payload,
                 &child_record,
-                &child_subject
+                &child_subject,
             )])
             .unwrap();
         assert_eq!(
-            reader
-                .get(child.record_hash)
-                .unwrap()
-                .causal_parents
-                .len(),
+            reader.get(child.record_hash).unwrap().causal_parents.len(),
             1
         );
         assert_eq!(reader.get(first.record_hash).unwrap().kind, "observed");
@@ -556,7 +560,12 @@ mod tests {
             .unwrap();
         assert!(parent_reader.get(late.record_hash).is_none());
         let late_reader = host
-            .admit(vec![present(&late, &late_payload, &late_record, &late_subject)])
+            .admit(vec![present(
+                &late,
+                &late_payload,
+                &late_record,
+                &late_subject,
+            )])
             .unwrap();
         assert_eq!(
             late_reader.get(late.record_hash).unwrap().causal_parents,

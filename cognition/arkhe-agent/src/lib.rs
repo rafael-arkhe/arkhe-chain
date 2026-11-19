@@ -1,6 +1,7 @@
 use arkhe_cognition_sdk::{work::WorkIntent, worker::WorkerExecutionRecord, Digest32};
 
 pub mod budget_pco;
+pub mod eval_learning;
 
 #[derive(Debug, Clone)]
 pub struct PlanStep {

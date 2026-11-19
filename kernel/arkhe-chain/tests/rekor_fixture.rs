@@ -1,8 +1,8 @@
 //! Offline verification of a committed public Rekor entry (no network in CI).
 
 use arkhe_chain::{
-    hashedrekord_sha256_digest, verify_recorded_witness, witness_from_rekor_entry_json,
-    ChainError, DEFAULT_REKOR_BASE_URL, DEFAULT_REKOR_ORIGIN,
+    hashedrekord_sha256_digest, verify_recorded_witness, witness_from_rekor_entry_json, ChainError,
+    DEFAULT_REKOR_BASE_URL, DEFAULT_REKOR_ORIGIN,
 };
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use sha2::{Digest, Sha256};
@@ -14,7 +14,10 @@ fn fixture_digest_matches() {
     let mut hasher = Sha256::new();
     hasher.update(ENTRY_JSON);
     let digest = format!("{:x}", hasher.finalize());
-    assert_eq!(digest, ENTRY_SHA256, "fixture bytes must match committed digest");
+    assert_eq!(
+        digest, ENTRY_SHA256,
+        "fixture bytes must match committed digest"
+    );
 }
 
 #[test]
@@ -94,8 +97,7 @@ fn set_canonical_payload_digest_is_stable() {
     );
     let digest = hex::encode(Sha256::digest(canonical.as_bytes()));
     assert_eq!(
-        digest,
-        "361218e3cf73eb4ffa2e56ffe252520e0c7d11089f38da650b36678e9548bb6b",
+        digest, "361218e3cf73eb4ffa2e56ffe252520e0c7d11089f38da650b36678e9548bb6b",
         "SET canonical payload"
     );
 }
