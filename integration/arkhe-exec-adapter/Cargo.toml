@@ -1,0 +1,21 @@
+[package]
+name = "arkhe-exec-adapter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Turns an agent run into admitted evidence or an explicit exclusion. It does not authorize."
+
+[dependencies]
+arkhe-core = { path = "../../kernel/arkhe-core" }
+arkhe-governance = { path = "../../governance/arkhe-governance" }
+serde.workspace = true
+serde_json.workspace = true
+# The receipt log names its fields `*_sha256`, so a claim carries sha256 of the
+# same bytes the kernel saw under blake3. See `src/receipt.rs`.
+sha2.workspace = true
+hex.workspace = true
+
+[dev-dependencies]
+arkhe-kernel = { path = "../../kernel/arkhe-kernel" }
+arkhe-wormgraph = { path = "../../evidence/arkhe-wormgraph" }
+tokio.workspace = true
