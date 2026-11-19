@@ -51,6 +51,17 @@ pub struct VerifyRequest {
     pub policy_sha256: Option<String>,
     pub admission_id: Option<String>,
     pub commit_id: Option<String>,
+    pub artifact_sha256: Option<String>,
+    pub model_sha256: Option<String>,
+    pub data_sha256: Option<String>,
+    pub pipeline_sha256: Option<String>,
+    pub plan_sha256: Option<String>,
+    pub output_sha256: Option<String>,
+    pub action_id: Option<String>,
+    /// A signed invariant verdict offered to discharge the axiom.
+    pub invariant: Option<Receipt>,
+    /// The invariant id the caller requires. Without it nothing discharges.
+    pub expect_invariant: Option<String>,
 }
 
 pub async fn connect_if_configured() -> anyhow::Result<Option<PgPool>> {
@@ -98,7 +109,16 @@ pub fn handle_mcp_message(message: &Value) -> Option<Value> {
                         "subject_sha256": { "type": "string" },
                         "policy_sha256": { "type": "string" },
                         "admission_id": { "type": "string" },
-                        "commit_id": { "type": "string" }
+                        "commit_id": { "type": "string" },
+                        "artifact_sha256": { "type": "string" },
+                        "model_sha256": { "type": "string" },
+                        "data_sha256": { "type": "string" },
+                        "pipeline_sha256": { "type": "string" },
+                        "plan_sha256": { "type": "string" },
+                        "output_sha256": { "type": "string" },
+                        "action_id": { "type": "string" },
+                        "invariant": { "type": "object" },
+                        "expect_invariant": { "type": "string" }
                     }
                 }
             }]
@@ -200,15 +220,15 @@ pub fn judge(request: &VerifyRequest) -> Verdict {
         policy_sha256: request.policy_sha256.as_deref(),
         admission_id: request.admission_id.as_deref(),
         commit_id: request.commit_id.as_deref(),
-        artifact_sha256: None,
-        model_sha256: None,
-        data_sha256: None,
-        pipeline_sha256: None,
-        plan_sha256: None,
-        output_sha256: None,
-        action_id: None,
-        invariant: None,
-        expect_invariant: None,
+        artifact_sha256: request.artifact_sha256.as_deref(),
+        model_sha256: request.model_sha256.as_deref(),
+        data_sha256: request.data_sha256.as_deref(),
+        pipeline_sha256: request.pipeline_sha256.as_deref(),
+        plan_sha256: request.plan_sha256.as_deref(),
+        output_sha256: request.output_sha256.as_deref(),
+        action_id: request.action_id.as_deref(),
+        invariant: request.invariant.as_ref(),
+        expect_invariant: request.expect_invariant.as_deref(),
     })
 }
 
@@ -307,11 +327,68 @@ mod tests {
             policy_sha256: Some(sha256_hex(&policy_bytes())),
             admission_id: None,
             commit_id: None,
+            artifact_sha256: None,
+            model_sha256: None,
+            data_sha256: None,
+            pipeline_sha256: None,
+            plan_sha256: None,
+            output_sha256: None,
+            action_id: None,
+            invariant: None,
+            expect_invariant: None,
         };
         let verdict = judge(&request);
         assert_eq!(verdict.overall, "PASS");
         assert_eq!(verdict.persistence, "NOT_PERFORMED");
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    /// The discharge over the same entry point the HTTP route and the MCP tool
+    /// use. The action alone is inconclusive; named, with its verdict beside
+    /// it, it passes. No database is involved in either.
+    #[test]
+    fn judge_discharges_the_axiom_only_with_a_named_verdict() {
+        let stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let dir = std::env::temp_dir().join(format!("arkhe-mcp-agent-{stamp}"));
+        emit_gate0(&dir).unwrap();
+        let trust: arkhe_flow::Trust = arkhe_flow::read_json(&dir.join("trust.json")).unwrap();
+        let action: Receipt = arkhe_flow::read_json(&dir.join("action.json")).unwrap();
+        let signed_verdict: Receipt = arkhe_flow::read_json(&dir.join("verdict.json")).unwrap();
+        let artifact = sha256_hex(&std::fs::read(dir.join("artifact.bin")).unwrap());
+        let plan = sha256_hex(&std::fs::read(dir.join("plan.json")).unwrap());
+        let model = sha256_hex(&std::fs::read(dir.join("model.json")).unwrap());
+        let _ = std::fs::remove_dir_all(&dir);
+
+        let request = |invariant: Option<Receipt>, expect: Option<&str>| VerifyRequest {
+            receipt: action.clone(),
+            trust: trust.clone(),
+            expect_purpose: Some(GATE0_PURPOSE.to_string()),
+            subject_sha256: None,
+            policy_sha256: None,
+            admission_id: None,
+            commit_id: None,
+            artifact_sha256: Some(artifact.clone()),
+            model_sha256: Some(model.clone()),
+            data_sha256: None,
+            pipeline_sha256: None,
+            plan_sha256: Some(plan.clone()),
+            output_sha256: Some(artifact.clone()),
+            action_id: None,
+            invariant,
+            expect_invariant: expect.map(str::to_owned),
+        };
+
+        let bare = judge(&request(None, None));
+        assert_eq!(bare.components["llm_output"], "INCONCLUSIVE");
+        assert_eq!(bare.overall, "INCONCLUSIVE");
+
+        let named = judge(&request(
+            Some(signed_verdict),
+            Some(arkhe_flow::GATE0_INVARIANT_ID),
+        ));
+        assert_eq!(named.components["llm_output"], "PASS");
+        assert_eq!(named.overall, "PASS");
+        assert_eq!(named.persistence, "NOT_PERFORMED");
     }
 
     #[tokio::test]

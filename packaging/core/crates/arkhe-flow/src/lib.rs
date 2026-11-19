@@ -29,6 +29,17 @@ pub const GATE0_ANCHOR_SEED: [u8; 32] = [0x03; 32];
 pub const GATE0_INVARIANT_SEED: [u8; 32] = [0x04; 32];
 pub const GATE0_PURPOSE: &str = "gate0-lab";
 pub const GATE0_SUBJECT: &[u8] = b"gate0-subject";
+/// The artifact the Gate 0 agent action claims to have produced, and the three
+/// manifests its receipt binds. Byte constants, so the fixture is the same
+/// everywhere and a third party can recompute every digest from these files.
+pub const GATE0_ARTIFACT: &[u8] = br#"{"cnpj":"00.000.000/0001-91","valor":1250}"#;
+pub const GATE0_PLAN: &[u8] = br#"{"schema":"arkhe-plan/v1","task":"emit one record carrying cnpj and valor"}"#;
+pub const GATE0_MODEL: &[u8] = br#"{"model":"gate0-lab","schema":"arkhe-manifest/v1"}"#;
+pub const GATE0_DATA: &[u8] = br#"{"schema":"arkhe-manifest/v1","source":"synthetic"}"#;
+pub const GATE0_PIPELINE: &[u8] = br#"{"schema":"arkhe-manifest/v1","steps":["suppress","release"]}"#;
+pub const GATE0_AGENT: &str = "claude.computer-use";
+pub const GATE0_INVARIANT_ID: &str = "invariant.valor-present";
+pub const GATE0_INVARIANT_VERSION: &str = "1.0.0";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -561,7 +572,16 @@ pub fn emit_gate0(out: &Path) -> anyhow::Result<()> {
     let flow = secret_from_seed("flow", GATE0_FLOW_SEED)?;
     let storage = secret_from_seed("storage", GATE0_STORAGE_SEED)?;
     let anchor = secret_from_seed("anchor", GATE0_ANCHOR_SEED)?;
-    let trust = trust_from_secrets(GATE0_PURPOSE, &[flow.clone(), storage.clone(), anchor.clone()])?;
+    let invariant = secret_from_seed("invariant", GATE0_INVARIANT_SEED)?;
+    let trust = trust_from_secrets(
+        GATE0_PURPOSE,
+        &[
+            flow.clone(),
+            storage.clone(),
+            anchor.clone(),
+            invariant.clone(),
+        ],
+    )?;
     let subject_path = out.join("subject.bin");
     let policy = policy_bytes();
     fs::write(&subject_path, GATE0_SUBJECT)?;
@@ -590,6 +610,72 @@ pub fn emit_gate0(out: &Path) -> anyhow::Result<()> {
         &anchor_body(&commit.id, "none", "", "pending")?,
     )?;
     write_json(&out.join("anchor.json"), &anchor_receipt)?;
+
+    // The agent action and what checked it. The artifact leaf sits at index 1
+    // of three, so its proof carries both a left and a right step and a wrong
+    // index cannot fold by accident.
+    let artifact_sha = sha256_hex(GATE0_ARTIFACT);
+    let model_sha = sha256_hex(GATE0_MODEL);
+    let data_sha = sha256_hex(GATE0_DATA);
+    let pipeline_sha = sha256_hex(GATE0_PIPELINE);
+    let statements = [
+        artifact_statement(
+            &sha256_hex(b"gate0-neighbour-leaf-0"),
+            &model_sha,
+            &data_sha,
+            &pipeline_sha,
+        ),
+        artifact_statement(&artifact_sha, &model_sha, &data_sha, &pipeline_sha),
+        artifact_statement(
+            &sha256_hex(b"gate0-neighbour-leaf-2"),
+            &model_sha,
+            &data_sha,
+            &pipeline_sha,
+        ),
+    ];
+    let (root, proof) = prove_merkle(&statements, 1)?;
+
+    fs::write(out.join("artifact.bin"), GATE0_ARTIFACT)?;
+    fs::write(out.join("plan.json"), GATE0_PLAN)?;
+    fs::write(out.join("model.json"), GATE0_MODEL)?;
+    fs::write(out.join("data.json"), GATE0_DATA)?;
+    fs::write(out.join("pipeline.json"), GATE0_PIPELINE)?;
+
+    let artifact = sign_body(
+        &storage,
+        &artifact_body(
+            &artifact_sha,
+            &model_sha,
+            &data_sha,
+            &pipeline_sha,
+            1,
+            &root,
+            &proof,
+        )?,
+    )?;
+    write_json(&out.join("artifact.json"), &artifact)?;
+
+    let action = sign_body(
+        &flow,
+        &agent_action_body(&sha256_hex(GATE0_PLAN), &artifact_sha, &model_sha, GATE0_AGENT)?,
+    )?;
+    write_json(&out.join("action.json"), &action)?;
+
+    // Signed by the invariant role, never by `flow`. Without this file the
+    // action verifies as signed and stays inconclusive; with it, named, the
+    // axiom discharges. Both commands are in HOW_TO_AUDIT.md.
+    let verdict = sign_body(
+        &invariant,
+        &invariant_body(
+            &action.id,
+            &artifact_sha,
+            GATE0_INVARIANT_ID,
+            GATE0_INVARIANT_VERSION,
+            true,
+        )?,
+    )?;
+    write_json(&out.join("verdict.json"), &verdict)?;
+
     Ok(())
 }
 
@@ -738,7 +824,8 @@ fn check_agent_action(input: &VerifyInput<'_>, components: &mut BTreeMap<String,
         bind_hash(name, Some(stated(key)), supplied, components, notes, missing);
     }
 
-    match discharge(input, stated("output_sha256")) {
+    let output_binding = components.get("output").cloned().unwrap_or_default();
+    match discharge(input, stated("output_sha256"), &output_binding) {
         Discharge::Verified(invariant_id) => {
             components.insert("llm_output".into(), "PASS".into());
             notes.push(format!(
@@ -824,7 +911,11 @@ enum Discharge {
 /// adequate test of the task. `expect_invariant` pushes that question back to
 /// the caller, the same way `expect_purpose` does for the trust roster. A
 /// caller who names no invariant gets `INCONCLUSIVE`, never `PASS`.
-fn discharge(input: &VerifyInput<'_>, action_output: &str) -> Discharge {
+fn discharge(
+    input: &VerifyInput<'_>,
+    action_output: &str,
+    output_binding: &str,
+) -> Discharge {
     let Some(verdict) = input.invariant else {
         return Discharge::Absent(format!(
             "receipt carries {LLM_OUTPUT_UNVERIFIED} and no invariant verdict was supplied, so the output is signed, not verified"
@@ -835,6 +926,25 @@ fn discharge(input: &VerifyInput<'_>, action_output: &str) -> Discharge {
             "a verdict was supplied but the caller did not name the invariant this action must satisfy".into(),
         );
     };
+    // A verdict names a digest. Unless the caller confirmed that digest against
+    // bytes it actually holds, discharging it would be a true statement about a
+    // declaration and a false one about the artifact. Found by flipping one bit
+    // of the Gate 0 artifact: `output` read FAIL while `llm_output` read PASS.
+    match output_binding {
+        "PASS" => {}
+        "FAIL" => {
+            return Discharge::Refused(
+                "the artifact in hand is not the output this action declares, so the verdict is about bytes you do not have"
+                    .into(),
+            )
+        }
+        _ => {
+            return Discharge::Absent(
+                "the output was not supplied, so a verdict about its digest cannot be confirmed against anything you hold"
+                    .into(),
+            )
+        }
+    }
     if verdict.schema != RECEIPT_SCHEMA {
         return Discharge::Refused("invariant verdict schema is not arkhe-receipt/v1".into());
     }
@@ -1688,7 +1798,11 @@ mod tests {
     /// against, however valid the receipt is on its own.
     #[test]
     fn a_verdict_outside_the_roster_is_refused() {
-        let (gate0_trust, _, _, _) = gate0();
+        let flow = secret_from_seed("flow", GATE0_FLOW_SEED).unwrap();
+        let storage = secret_from_seed("storage", GATE0_STORAGE_SEED).unwrap();
+        let anchor = secret_from_seed("anchor", GATE0_ANCHOR_SEED).unwrap();
+        let gate0_trust =
+            trust_from_secrets(GATE0_PURPOSE, &[flow, storage, anchor]).unwrap();
         let (plan, output, model) = action_digests();
         let action = agent_receipt(&plan, &output, &model);
         let verdict = verdict_for(&action, &output, true);
@@ -1759,5 +1873,105 @@ mod tests {
         });
         assert_eq!(result.components["held"], "FAIL");
         assert_eq!(result.overall, "FAIL");
+    }
+
+    /// The published fixture, read back the way an auditor reads it: no secret,
+    /// no database, only the files. The action alone stays inconclusive; the
+    /// same action with the named verdict beside it passes.
+    #[test]
+    fn the_gate0_fixture_discharges_only_with_its_verdict() {
+        let dir = std::env::temp_dir().join(format!(
+            "arkhe-gate0-agent-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        emit_gate0(&dir).unwrap();
+        let trust: Trust = read_json(&dir.join("trust.json")).unwrap();
+        let action: Receipt = read_json(&dir.join("action.json")).unwrap();
+        let artifact: Receipt = read_json(&dir.join("artifact.json")).unwrap();
+        let verdict: Receipt = read_json(&dir.join("verdict.json")).unwrap();
+        let artifact_sha = sha256_hex(&fs::read(dir.join("artifact.bin")).unwrap());
+        let plan_sha = sha256_hex(&fs::read(dir.join("plan.json")).unwrap());
+        let model_sha = sha256_hex(&fs::read(dir.join("model.json")).unwrap());
+        let data_sha = sha256_hex(&fs::read(dir.join("data.json")).unwrap());
+        let pipeline_sha = sha256_hex(&fs::read(dir.join("pipeline.json")).unwrap());
+        let _ = fs::remove_dir_all(&dir);
+
+        // The artifact receipt: every file in hand, and the proof folds.
+        let artifact_verdict = verify(VerifyInput {
+            receipt: &artifact,
+            trust: &trust,
+            expect_purpose: Some(GATE0_PURPOSE),
+            subject_sha256: None,
+            policy_sha256: None,
+            admission_id: None,
+            commit_id: None,
+            artifact_sha256: Some(&artifact_sha),
+            model_sha256: Some(&model_sha),
+            data_sha256: Some(&data_sha),
+            pipeline_sha256: Some(&pipeline_sha),
+            plan_sha256: None,
+            output_sha256: None,
+            action_id: None,
+            invariant: None,
+            expect_invariant: None,
+        });
+        assert_eq!(artifact_verdict.components["merkle"], "PASS");
+        assert_eq!(artifact_verdict.overall, "PASS");
+
+        // The action without its verdict: the axiom stands.
+        let bare = verify(discharge_input(
+            &action, &trust, &plan_sha, &artifact_sha, &model_sha, None, None,
+        ));
+        assert_eq!(bare.components["llm_output"], "INCONCLUSIVE");
+        assert_eq!(bare.overall, "INCONCLUSIVE");
+        assert_eq!(bare.exit_code(), 2);
+
+        // The same action with the verdict, named: discharged.
+        let discharged = verify(discharge_input(
+            &action,
+            &trust,
+            &plan_sha,
+            &artifact_sha,
+            &model_sha,
+            Some(&verdict),
+            Some(GATE0_INVARIANT_ID),
+        ));
+        assert_eq!(discharged.components["llm_output"], "PASS");
+        assert_eq!(discharged.components["produced"], "PASS");
+        assert_eq!(discharged.overall, "PASS");
+        assert_eq!(discharged.exit_code(), 0);
+    }
+
+    /// Found by flipping one bit of the Gate 0 artifact: the discharge read
+    /// PASS while the `output` binding read FAIL, because a verdict is about
+    /// the digest the action *declares*. True about the declaration, misleading
+    /// about the bytes. A verdict can only discharge an output the auditor
+    /// actually confirmed.
+    #[test]
+    fn a_verdict_cannot_discharge_an_output_you_do_not_hold() {
+        let trust = trust_with_invariant();
+        let (plan, output, model) = action_digests();
+        let action = agent_receipt(&plan, &output, &model);
+        let verdict = verdict_for(&action, &output, true);
+        let in_hand = sha256_hex(b"a different artifact");
+
+        // Bytes that are not what the action declares.
+        let swapped = verify(VerifyInput {
+            output_sha256: Some(&in_hand),
+            ..discharge_input(&action, &trust, &plan, &output, &model, Some(&verdict), Some(CHECKER))
+        });
+        assert_eq!(swapped.components["output"], "FAIL");
+        assert_eq!(swapped.components["llm_output"], "FAIL");
+        assert_eq!(swapped.overall, "FAIL");
+
+        // No bytes at all: nothing to confirm the verdict against.
+        let absent = verify(VerifyInput {
+            output_sha256: None,
+            ..discharge_input(&action, &trust, &plan, &output, &model, Some(&verdict), Some(CHECKER))
+        });
+        assert_eq!(absent.components["output"], "NOT_PERFORMED");
+        assert_eq!(absent.components["llm_output"], "INCONCLUSIVE");
+        assert_eq!(absent.overall, "INCONCLUSIVE");
     }
 }

@@ -13,6 +13,11 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     /// Recompute one receipt. This command does not open PostgreSQL.
+    ///
+    /// Files are hashed; receipts are read for their id. `--artifact` is the
+    /// bytes storage committed and `--output` the bytes the action says it
+    /// produced: for one artifact they are the same file, and passing both is
+    /// what makes the two claims meet rather than be assumed equal.
     Verify {
         #[arg(long)]
         receipt: PathBuf,
@@ -28,6 +33,27 @@ enum Command {
         admission: Option<PathBuf>,
         #[arg(long)]
         commit: Option<PathBuf>,
+        #[arg(long)]
+        artifact: Option<PathBuf>,
+        #[arg(long)]
+        model: Option<PathBuf>,
+        #[arg(long)]
+        data: Option<PathBuf>,
+        #[arg(long)]
+        pipeline: Option<PathBuf>,
+        #[arg(long)]
+        plan: Option<PathBuf>,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        /// An agent-action receipt, for a verdict that claims to be about it.
+        #[arg(long)]
+        action: Option<PathBuf>,
+        /// A signed invariant verdict offered to discharge the axiom.
+        #[arg(long)]
+        invariant: Option<PathBuf>,
+        /// The invariant id you require. Without it nothing discharges.
+        #[arg(long)]
+        expect_invariant: Option<String>,
     },
     /// Serve GET /health and POST /v1/verify.
     /// DATABASE_URL is optional. When it is set, the process connects and
@@ -43,33 +69,59 @@ enum Command {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
-        Command::Verify { receipt, trust, expect_purpose, subject, policy, admission, commit } => {
+        Command::Verify {
+            receipt,
+            trust,
+            expect_purpose,
+            subject,
+            policy,
+            admission,
+            commit,
+            artifact,
+            model,
+            data,
+            pipeline,
+            plan,
+            output,
+            action,
+            invariant,
+            expect_invariant,
+        } => {
             let receipt: Receipt = read_json(&receipt)?;
             let trust: Trust = read_json(&trust)?;
-            let subject_sha256 = match subject {
-                Some(path) => Some(sha256_hex(&std::fs::read(path)?)),
-                None => None,
-            };
-            let policy_sha256 = match policy {
-                Some(path) => Some(sha256_hex(&std::fs::read(path)?)),
-                None => None,
-            };
-            let admission_id = match admission {
-                Some(path) => Some(read_json::<Receipt>(&path)?.id),
-                None => None,
-            };
-            let commit_id = match commit {
-                Some(path) => Some(read_json::<Receipt>(&path)?.id),
+            fn hash_of(path: Option<PathBuf>) -> anyhow::Result<Option<String>> {
+                match path {
+                    Some(path) => Ok(Some(sha256_hex(&std::fs::read(path)?))),
+                    None => Ok(None),
+                }
+            }
+            fn id_of(path: Option<PathBuf>) -> anyhow::Result<Option<String>> {
+                match path {
+                    Some(path) => Ok(Some(read_json::<Receipt>(&path)?.id)),
+                    None => Ok(None),
+                }
+            }
+            let invariant = match invariant {
+                Some(path) => Some(read_json::<Receipt>(&path)?),
                 None => None,
             };
             let verdict = judge(&VerifyRequest {
                 receipt,
                 trust,
                 expect_purpose: Some(expect_purpose),
-                subject_sha256,
-                policy_sha256,
-                admission_id,
-                commit_id,
+                subject_sha256: hash_of(subject)?,
+                policy_sha256: hash_of(policy)?,
+                admission_id: id_of(admission)?,
+                commit_id: id_of(commit)?,
+                artifact_sha256: hash_of(artifact)?,
+                model_sha256: hash_of(model)?,
+                data_sha256: hash_of(data)?,
+                pipeline_sha256: hash_of(pipeline)?,
+                plan_sha256: hash_of(plan)?,
+                output_sha256: hash_of(output)?,
+                action_id: id_of(action)?,
+                invariant,
+                expect_invariant,
             });
             println!("{}", serde_json::to_string_pretty(&verdict)?);
             std::process::exit(verdict.exit_code());

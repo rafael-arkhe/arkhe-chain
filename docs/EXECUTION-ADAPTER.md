@@ -214,10 +214,13 @@ changed here: `crates/arkhe-storage/src/lib.rs:140` (`needless_borrow`) and
 those two files were three `None` fields each, where `VerifyInput` grew
 `action_id`, `invariant` and `expect_invariant`.
 
-Not wired, still: nothing signs a verdict outside the tests. `arkhe-flow` has no
-CLI for it, and `arkhe_provenance_mcp::judge` passes `invariant: None` and
-`expect_invariant: None`, so the discharge is unreachable over MCP — its
-`VerifyRequest` would need both fields to expose it.
+Wired since: `arkhe_provenance_mcp` carries the fields for every kind, its
+`verify` command takes `--artifact --model --data --pipeline --plan --output
+--action --invariant --expect-invariant`, and the MCP tool advertises them. The
+Gate 0 fixture now ships an `artifact`, an `agent-action` and an `invariant`
+receipt, so a third party can reproduce the discharge from files alone —
+`packaging/core/HOW_TO_AUDIT.md`. The `arkhe-flow` CLI itself still has no
+`verify`; it only emits.
 
 ## Emitting the verdict: what the adapter does and does not hold
 
