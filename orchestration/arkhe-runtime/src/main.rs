@@ -1,11 +1,16 @@
 use arkhe_core::CanonicalEncode;
 use arkhe_core::{
-    evidence::EvidenceReader, work::WorkIntent, worker::WorkerExecutionRecord, Digest32,
+    evidence::EvidenceReader,
+    work::{WorkIntent, WorkIntentType},
+    worker::WorkerExecutionRecord,
+    Digest32,
 };
+use arkhe_exec_adapter::{invariants::NoDirectIdentifier, InvariantProfile, Registry};
 use arkhe_governance::{DevPolicyResolver, PolicyBinding};
 use arkhe_kernel::ContainmentGate;
 use arkhe_runtime::{
     run_report::{self, RunEndpoint},
+    task_admission::{self, TaskEndpoint},
     Runtime, WorkCommitError,
 };
 use arkhe_verify_core::absence::ExpectationSpec;
@@ -209,6 +214,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         token: token.clone(),
         actor: actor.clone(),
     }));
+    // A development profile, exactly as unproven as the policy below: one task
+    // class, one invariant, written in the binary. A real deployment supplies a
+    // signed profile and does not hardcode which invariant may stand as the
+    // analysis for which transition.
+    let tasks = task_admission::router(Arc::new(TaskEndpoint {
+        store: store.clone(),
+        token: token.clone(),
+        actor: actor.clone(),
+        registry: Registry::new().with(Box::new(NoDirectIdentifier)),
+        profile: InvariantProfile {
+            policy_id: "exec-adapter-dev-v1".into(),
+            version: 1,
+            allowed: vec![(
+                WorkIntentType::Publish,
+                "invariant.no-direct-identifier".into(),
+            )],
+        },
+    }));
     let policy = PolicyBinding {
         policy_id: "development-unprotected-v1".into(),
         version: 1,
@@ -236,6 +259,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )
     .with_state(state)
     .merge(runs)
+    .merge(tasks)
     .layer(DefaultBodyLimit::max(262144));
     let listener = tokio::net::TcpListener::bind(
         env::var("ARKHE_LISTEN").unwrap_or_else(|_| "127.0.0.1:8788".into()),

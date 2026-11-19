@@ -76,9 +76,11 @@ exits 0. `cargo clippy` over this crate cannot complete: it fails earlier in
 - **No executor.** Nothing here launches a skill or a computer-use session. The
   adapter takes a finished run; capturing one is the caller side, and it is
   plain Claude with no Arkhe in it.
-- **No HTTP surface.** `arkhe_runtime::run_report` admits a WER that says a run
-  happened (`output_digest: ZERO`, no evidence refs). Admitting a `TaskSpec` +
-  `RunReport` over `POST /v1/runs` would be the next step and does not exist.
+- **The profile is hardcoded in the binary.** `POST /v1/tasks` exists — see
+  below — but `main.rs` writes its `InvariantProfile` inline, one task class to
+  one invariant, exactly as unproven as the `DevPolicyResolver` policy beside
+  it. A real deployment supplies a signed profile rather than compiling in which
+  invariant may stand as the analysis for which transition.
 - **One invariant, not a library.** `invariants::NoDirectIdentifier` is real —
   see below. The others that would matter for actual work (a filed document
   matching its source record, a migration that round-trips, a payment file
@@ -221,6 +223,43 @@ Gate 0 fixture now ships an `artifact`, an `agent-action` and an `invariant`
 receipt, so a third party can reproduce the discharge from files alone —
 `packaging/core/HOW_TO_AUDIT.md`. The `arkhe-flow` CLI itself still has no
 `verify`; it only emits.
+
+## The endpoint: POST /v1/tasks
+
+`arkhe_runtime::task_admission`, merged into the runtime router beside
+`/v1/runs` and sharing its bearer token.
+
+The difference between the two is the whole point. `/v1/runs` admits a WER
+saying a run *happened* — `output_digest: ZERO`, no evidence refs — which proves
+a bearer of the token said so. `/v1/tasks` runs the invariant the task names
+over what the run actually produced, and answers with an authorization or an
+exclusion carrying its reason.
+
+`requested_by` is the authenticated actor and is not a body field. A bearer of
+the token cannot propose work as someone else, and because the request is
+`deny_unknown_fields`, trying to send one is a 422 rather than a silent
+override — `a_caller_cannot_name_the_requester`.
+
+The status codes carry the distinction, so a client that reads only the status
+cannot mistake an exclusion for success:
+
+| | |
+|---|---|
+| `200` | ADMITTED. The invariant held and the kernel authorized. The body carries `authorization_ref` and the `analysis`, `source`, `output` and `operation_id` digests an auditor replays from. |
+| `403` | EXCLUDED. Well-formed, understood, refused: a failed invariant, an invariant this process does not have, or a kernel rejection. The body is the reason. |
+| `400` | The request names something unusable — a target that is not a digest, an output that is not hex, an identifier out of range. |
+| `401` / `422` | No token or the wrong one / malformed or unknown fields. |
+| `503` | Evidence could not be committed. Infrastructure, not a verdict about the run, and the store's own reason stays out of the response. |
+
+### Observed
+
+`cargo test -p arkhe-runtime`, 2026-11-18: 37 passed, 0 failed, 2 ignored (the
+PostgreSQL cases), of which 8 are this endpoint — a suppressed record admitted;
+a record carrying an identifier excluded at 403; an invariant the process does
+not have; a task class outside the profile refused by the kernel with `missing
+worker evidence policy`; three auth cases; a caller trying to name the
+requester; three unusable fields; and a retry reaching the same `operation_id`
+and the same `authorization_ref`.
 
 ## The first real invariant
 
