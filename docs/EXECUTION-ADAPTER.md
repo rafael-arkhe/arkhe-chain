@@ -218,3 +218,69 @@ Not wired, still: nothing signs a verdict outside the tests. `arkhe-flow` has no
 CLI for it, and `arkhe_provenance_mcp::judge` passes `invariant: None` and
 `expect_invariant: None`, so the discharge is unreachable over MCP — its
 `VerifyRequest` would need both fields to expose it.
+
+## Emitting the verdict: what the adapter does and does not hold
+
+`receipt::VerdictClaim` produces the body of an `invariant` receipt from an
+`Admission`. It **does not sign and holds no key.** Signing belongs to the
+invariant role, whose secret is the concern of whoever runs the log, and the
+point of a separate role is that this process cannot clear its own work. An
+emitter that took a key would undo the three layers above in one line.
+
+`held` is not a parameter anywhere. It comes from which constructor ran:
+`from_admission` always `true`, `from_failure` always `false`. A caller cannot
+state it.
+
+`Admission` carries a private field. A struct with one cannot be constructed
+outside its module, so `admit` is the only way to obtain one, and
+`from_admission` is therefore holding something an invariant actually produced
+rather than a value a caller assembled to look like one. That cost the test
+suite a refactor: the adversarial cases used to rebuild an `Admission` with one
+field swapped, and now pass a mutated `WorkIntent` straight to the gate, which
+is what the gate decides on anyway.
+
+`from_admission` also recomputes the run digest and compares it to
+`admission.source`, so a verdict cannot be emitted for one run using the bytes
+of another — `a_claim_built_from_another_run_is_refused`. Only
+`Exclusion::InvariantFailed` yields a failure claim; the other exclusions never
+reached a checker, so the invariant role has nothing to say about them.
+
+### The digest families, carried rather than unified
+
+The claim carries sha256 of the artifact next to the blake3 the kernel saw, and
+`a_claim_carries_both_digests_of_the_same_bytes` asserts the two differ, so
+neither can be mistaken for the other. This is the cheap reconciliation, not the
+honest one. The honest one is a profile field on the receipt body
+(`digest_algorithm`), so a verifier knows which algorithm it is checking instead
+of inferring it from a field name. That changes the `arkhe-flow` schema and is
+not done.
+
+### What is still half
+
+The two crates cannot be linked by Cargo. `arkhe-flow` is in `packaging/core`,
+`arkhe-exec-adapter` in the root workspace, and both manifests inherit
+dependencies with `workspace = true`, which Cargo resolves against the
+**outermost** workspace: a path dependency from the root into `packaging/core`
+fails with `dependency.rand was not found in workspace.dependencies`, and the
+mirror direction fails the same way on `blake3`, `async-trait` and `thiserror`.
+Observed, 2026-11-18, by adding the dev-dependency and reverting it.
+
+So no single test crosses admission, emission and consumption. The body shape is
+asserted literally in `tests/flow_receipt.rs` and enforced on the other side by
+`require_keys` in the `invariant` arm of `arkhe_flow::validate_body` — a drift
+between the two would be caught by neither. A vector read by both suites would
+catch it, and does not exist. Closing it properly means making `packaging/core`
+a member of the root workspace, or pinning explicit versions in one of the two
+manifests; both are decisions about how the bundle relates to the monorepo.
+
+### Observed
+
+`cargo test -p arkhe-exec-adapter`, 2026-11-18: 14 passed, 0 failed — the 9
+admission cases plus 5 for the emitter (both digests over the same bytes and the
+exact body; a claim from another run; a malformed action id; a `held: false`
+claim from a failed invariant; an exclusion that never reached a checker).
+
+`cargo clippy -p arkhe-exec-adapter` cannot run: it fails earlier in
+`verification/crates/arkhe-verify-core/src/provenance_broker.rs:209`
+(`needless_lifetimes`), an untracked file from other work in progress on this
+branch.
