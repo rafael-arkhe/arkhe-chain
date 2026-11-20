@@ -1,5 +1,6 @@
 use arkhe_core::{work::WorkIntent, Digest32};
 pub mod authenticated;
+pub mod mandate;
 pub mod policy_bundle;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
