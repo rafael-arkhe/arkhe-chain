@@ -1,5 +1,6 @@
 pub mod absence;
 pub mod action_proof;
+pub mod aid;
 pub mod c2pa;
 pub mod cbor;
 pub mod custody;
