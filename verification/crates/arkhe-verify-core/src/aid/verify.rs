@@ -139,6 +139,15 @@ pub fn is_instant(value: &str) -> bool {
         && marks.iter().all(|&(i, c)| bytes[i] == c)
 }
 
+/// What the bundle says about its link to a previous snapshot.
+enum Link<'a> {
+    /// `previous_aid` is null: there is no edge to verify.
+    Genesis,
+    /// `previous_aid` is declared and no predecessor is presented.
+    Missing,
+    Present(Payload, &'a super::types::Predecessor),
+}
+
 /// Where verification stopped, and whether the stop is a contradiction (`FAIL`)
 /// or missing evidence (`INCONCLUSIVE`).
 enum Stop {
@@ -247,20 +256,19 @@ fn run(
     }
 
     // Stage 3: the predecessor's aid, recomputed before any signature.
+    //
+    // A predecessor that is merely absent is missing evidence, not a
+    // contradiction, so it does not stop the run: continuity is reported
+    // inconclusive and the dimensions that can still be verified are.
     let predecessor = match (&payload.previous_aid, &envelope.predecessor) {
-        (None, None) => None,
+        (None, None) => Link::Genesis,
         (None, Some(_)) => {
             return Err(Stop::Fail(
                 FailureStage::Continuity,
                 "previous_aid is null but a predecessor is presented".into(),
             ))
         }
-        (Some(_), None) => {
-            return Err(Stop::Inconclusive(
-                FailureStage::Continuity,
-                "previous_aid is declared without an authenticated predecessor".into(),
-            ))
-        }
+        (Some(_), None) => Link::Missing,
         (Some(previous), Some(predecessor)) => {
             let predecessor_strict = strict
                 .get("predecessor")
@@ -297,7 +305,7 @@ fn run(
                 ));
             }
             check_signature_encoding(&predecessor.signatures)?;
-            Some((predecessor_payload, predecessor))
+            Link::Present(predecessor_payload, predecessor)
         }
     };
 
@@ -346,8 +354,14 @@ fn run(
     dimensions.insert(
         "continuity".into(),
         match predecessor {
-            None => DimensionStatus::Pass,
-            Some((predecessor_payload, predecessor)) => {
+            // A genesis has no predecessor to link. The signed declaration that
+            // there is none is what passes; whether it is the agent's *only*
+            // genesis is a different question, and no registry answers it here.
+            Link::Genesis => DimensionStatus::Pass,
+            Link::Missing => DimensionStatus::Inconclusive {
+                reason: "previous_aid is declared without an authenticated predecessor".into(),
+            },
+            Link::Present(predecessor_payload, predecessor) => {
                 check_required_roles(&predecessor.signatures, predecessor_payload.operation)
                     .map_err(|stop| match stop {
                         Stop::Fail(_, reason) => {
