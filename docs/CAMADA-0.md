@@ -19,11 +19,13 @@ usá-lo: até agora não havia **um único** produtor ou consumidor de
 | `governance/camada0/MANDATE-evidence-v1.json` | Mandato da célula de evidências — o do piloto —, 30 dias, sem gasto |
 | `governance/camada0/DEV-TRUST-STORE.json` | A âncora de confiança do *deployment* de desenvolvimento |
 | `governance/arkhe-governance/src/mandate.rs` | A interpretação: o que uma constituição diz e o que um mandato pode herdar |
+| `governance/arkhe-governance/src/activation.rs` | O protocolo que move a política em vigor — ver §4 |
 | `governance/arkhe-governance/tests/camada0.rs` | 15 testes sobre os ficheiros comitados |
+| `governance/arkhe-governance/tests/activation_cycle.rs` | 12 testes sobre o protocolo de ativação |
 | `governance/arkhe-governance/examples/camada0_fixture.rs` | O gerador |
 
 ```powershell
-cargo test -p arkhe-governance --test camada0
+cargo test -p arkhe-governance --test camada0 --test activation_cycle
 ```
 
 ## 1. O que a constituição diz
@@ -103,7 +105,61 @@ segundo signatário real — conselheiro, advogado, cônjuge com instruções �
 independência verdadeira e introduz uma pessoa no caminho crítico. O registo
 tem de declarar qual das duas é, porque um auditor vai perguntar.
 
-## 4. O que a Camada 0 ainda não é
+## 4. Ativação: o que move a política em vigor
+
+O `policy_bundle` autentica uma política e o `mandate` interpreta-a. Nenhum dos
+dois diz qual está **em vigor** — e nada neste repositório guardava isso. O
+`verify` recebe o `current_version` como argumento, portanto o piso
+anti-rollback valia exactamente o que o chamador se lembrasse, e procurando
+`current_version` em todo o repositório ele aparecia só dentro do próprio
+`policy_bundle.rs`. O `activation.rs` é a outra metade.
+
+Três recusas, cada uma independente das outras:
+
+| Recusa | Quando | Porque não basta a outra |
+|:---|:---|:---|
+| **Consumo** (`AlreadyConsumed`) | O `proposal_id` já foi activado uma vez | Corre **antes** do compare-and-swap, de propósito: continua a disparar quando o digest activo foi reposto no valor que a proposta nomeia — uma reversão, um restauro, um leitor que não viu o commit. Um nonce assinado e nunca registado é inerte, e o CAS apanhar uma repetição é um acidente de ordem, não protecção contra repetição |
+| **Compare-and-swap** (`ConcurrencyConflict`) | O artefacto em vigor não é o que a proposta diz substituir | Duas propostas a disputar o mesmo predecessor: uma activa, a outra recebe conflito |
+| **Versão** (`StaleVersion`) | Não é estritamente maior que a activa | O `policy_bundle::verify` admite versão **igual**, o que deixava duas políticas diferentes partilharem um número. Aqui não podem |
+
+A proposta viaja como um `SignedPolicyBundle` normal — com os `statements`
+tipados pelo esquema `arkhe.governance.proposal/1` — portanto a assinatura, o
+emissor, a janela de validade e o piso de versão são os que já existiam. O que
+o esquema acrescenta é só o que a activação precisa: `proposal_id`,
+`previous_candidate_digest`, `target_kind`, `candidate_digest`,
+`context_digest` e `scope`. Os bytes do candidato viajam à parte e o digest é
+recomputado antes da troca: entregar outros bytes dá `CandidateDigestMismatch`.
+
+O campo chama-se `previous_candidate_digest` e não `previous_payload_digest`
+porque é o que o compare-and-swap compara: o digest do **artefacto em vigor**,
+não o da proposta que o pôs lá. É também o digest que um recibo de execução terá
+de carregar, portanto a cadeia e o recibo falam da mesma coisa.
+
+**A decisão de camada.** O `rusqlite` existe no workspace, mas o
+`arkhe-governance` é puro — `now` é parâmetro, a trust store é injectada, não há
+I/O — e pôr uma base de dados aqui dentro quebrava isso. O protocolo é puro e
+todo o efeito passa por um `trait ActivationStore`, cujo implementador é dono da
+transacção: consumir a proposta, comparar e trocar o registo activo, e anexar o
+evento, ou nenhuma das três. As verificações do `activate` são *fail-fast*; as
+autoritativas são as do store, porque só ele as consegue segurar contra um
+escritor concorrente.
+
+**O que esta camada não consegue provar.** O `MemoryActivationStore` é a
+semântica de referência e não é durável: nada ali sobrevive a um processo. Logo,
+nenhum destes doze testes diz coisa alguma sobre falha e reinício. Essa é uma
+propriedade do *backend* e exige um teste que mate um subprocesso entre o commit
+e a projecção, com reabertura do mesmo ficheiro noutro processo. O
+`ActivationError` já distingue `ConcurrencyConflict` de `Storage` para que o
+chamador saiba qual recuperação aplicar — reler o estado, ou perguntar se a
+proposta foi consumida.
+
+E um limite que nenhum armazenamento local resolve: a garantia de uso único vale
+no âmbito do armazenamento autoritativo. Um restauro anterior ao consumo apaga o
+registo junto com o resto, e dois nós com bases independentes aceitam a mesma
+autorização. Para isso é preciso um registo de consumo partilhado ou uma âncora
+externa — a `arkhe-chain`, que tem altura e consenso.
+
+## 5. O que a Camada 0 ainda não é
 
 **Nada no repositório consulta estes ficheiros num ponto de efeito.** A
 constituição e os mandatos verificam, a contenção é decidível, e o gate não os
@@ -115,7 +171,7 @@ Isto é a mesma distinção que o AID tem entre verificar uma transição e
 reconhecer a ponta, e vale repeti-la aqui porque é fácil de perder: um mandato
 assinado e verificável diz o que *estava autorizado*. Não impede nada por si.
 
-## 5. O piloto medido
+## 6. O piloto medido
 
 A rotina do §6 do whitepaper, com o mandato `MANDATE-evidence-v1` a cobri-la:
 preparação de evidências documentais para revisão interna. O mesmo lote, o
@@ -154,12 +210,17 @@ menos tempo, o revisor reproduziu as conclusões a partir dos pacotes, e as
 exceções foram tratadas como a política previa. Qualquer um em falta, o escopo
 não aumenta.
 
-## 6. Classificação τ
+## 7. Classificação τ
 
 | Afirmação | τ | Nota |
 |:---|:---|:---|
 | A constituição e os mandatos são pacotes assinados que verificam sob a postura de produção | `LEMMA` local | 15 testes sobre os ficheiros comitados |
-| Uma política retirada não pode ser reinstalada | `LEMMA` local | Piso de versão, já no `policy_bundle`, agora com uma instância |
+| A função recusa reinstalar uma política retirada | `LEMMA` local | Piso de versão no `policy_bundle`, com uma instância |
+| Um *deployment* recusa reinstalar uma política retirada | `PENDING` | O piso compara contra o `current_version` que o chamador passa. Até ao `activation.rs` nada o guardava; agora o `activate` lê-o do store, e o único store que existe é em memória |
+| Uma proposta activa uma vez só, mesmo com o digest anterior reposto | `LEMMA` local para o protocolo | Consumo verificado antes do compare-and-swap, 12 testes. Vale no âmbito do armazenamento autoritativo: um restauro ou um segundo nó exigem âncora externa |
+| Duas políticas não podem partilhar um número de versão | `LEMMA` local | `StaleVersion`, que é mais estrito que o `>=` do `policy_bundle` |
+| Conflito de concorrência e falha de armazenamento são respostas diferentes | `LEMMA` local | Variantes distintas do `ActivationError`, com teste |
+| A ativação sobrevive a uma falha e reinício | `PENDING` | O store de referência é em memória; exige um *backend* durável e um teste que mate um subprocesso |
 | Editar um tecto depois de assinar quebra a assinatura | `LEMMA` local | Teste dedicado |
 | Um mandato só pode estreitar aquilo de que descende | `LEMMA` local | Contenção de efeitos, tectos, moeda, janela e decisões reservadas |
 | Uma subdelegação herda do pai, não da constituição | `LEMMA` local | Teste dedicado |
