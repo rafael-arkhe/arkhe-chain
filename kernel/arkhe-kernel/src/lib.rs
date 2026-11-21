@@ -512,6 +512,8 @@ impl<R: PolicyResolver> ContainmentGate<R> {
         }
     }
 }
+#[cfg(feature = "sqlite-activation")]
+pub mod activation_sqlite;
 pub mod authenticated_transport;
 pub mod broker;
 #[cfg(feature = "sqlite-broker")]

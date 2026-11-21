@@ -23,9 +23,12 @@ usá-lo: até agora não havia **um único** produtor ou consumidor de
 | `governance/arkhe-governance/tests/camada0.rs` | 15 testes sobre os ficheiros comitados |
 | `governance/arkhe-governance/tests/activation_cycle.rs` | 12 testes sobre o protocolo de ativação |
 | `governance/arkhe-governance/examples/camada0_fixture.rs` | O gerador |
+| `kernel/arkhe-kernel/src/activation_sqlite.rs` | O *backend* durável SQLite WAL (`feature = "sqlite-activation"`) com outbox reconciliável |
+| `kernel/arkhe-kernel/tests/activation_i5b.rs` | 5 testes duráveis (corrida, replay/restrição, crash pré/pós-commit, reentrega e projetores concorrentes) |
 
 ```powershell
 cargo test -p arkhe-governance --test camada0 --test activation_cycle
+cargo test -p arkhe-kernel --features sqlite-activation --test activation_i5b -- --nocapture
 ```
 
 ## 1. O que a constituição diz
@@ -144,14 +147,41 @@ evento, ou nenhuma das três. As verificações do `activate` são *fail-fast*; 
 autoritativas são as do store, porque só ele as consegue segurar contra um
 escritor concorrente.
 
-**O que esta camada não consegue provar.** O `MemoryActivationStore` é a
+**O que a camada pura não consegue provar.** O `MemoryActivationStore` é a
 semântica de referência e não é durável: nada ali sobrevive a um processo. Logo,
-nenhum destes doze testes diz coisa alguma sobre falha e reinício. Essa é uma
-propriedade do *backend* e exige um teste que mate um subprocesso entre o commit
-e a projecção, com reabertura do mesmo ficheiro noutro processo. O
-`ActivationError` já distingue `ConcurrencyConflict` de `Storage` para que o
-chamador saiba qual recuperação aplicar — reler o estado, ou perguntar se a
-proposta foi consumida.
+os doze testes em `activation_cycle.rs` não dizem coisa alguma sobre falha e
+reinício. O `ActivationError` já distingue `ConcurrencyConflict` de `Storage`
+para que o chamador saiba qual recuperação aplicar — reler o estado, ou
+perguntar se a proposta foi consumida.
+
+**O *backend* durável (`arkhe-kernel::activation_sqlite`).** Preservando o
+`arkhe-governance` puro, o *backend* durável vive em `arkhe-kernel` atrás da
+feature `sqlite-activation` e implementa o `trait ActivationStore` sobre SQLite
+WAL em disco (`PRAGMA journal_mode = WAL`, `PRAGMA synchronous = FULL`,
+`busy_timeout`, `BEGIN IMMEDIATE`). Numa única transacção, o `commit` regista o
+consumo em `activation_consumed` via `INSERT ... ON CONFLICT(proposal_id) DO
+NOTHING` (deixando outros erros SQLite, como violações de `CHECK`, em
+`CommitError::Storage`), executa o compare-and-swap sobre `activation_active` e
+insere o evento pendente em `activation_outbox` (`projected = 0`) com o digest
+canónico `blake3` de `ActivationEvent`. O `reconcile_outbox` devolve o número de
+eventos efectivamente marcados `0 -> 1` pelo `UPDATE ... WHERE projected = 0`.
+
+A suíte `kernel/arkhe-kernel/tests/activation_i5b.rs` (5/5 aprovados localmente
+em Windows com `cargo 1.96.0`) cobre corrida concorrente `RACE-SEQ-94d72e43` e
+encadeamento (`t01`), replay pós-restauro e preservação de erro `CHECK` (`t02`),
+crash real de subprocesso via `std::process::abort()` antes e depois do `COMMIT`
+com marcador exato `ARKHE_FAULT_ARMED:<tag>` em `stderr` (`t03`), reentrega da
+outbox provada por leitura intermediária do destino com `projected = 0` (`t04`)
+e dois projetores concorrentes colidindo dentro do callback (`t05`).
+
+Duas fronteiras explícitas desta evidência: (1) a deduplicação concorrente de
+`t05` pressupõe que o banco de destino externo já foi inicializado em modo WAL
+antes da disputa (`init_external_log`); a inicialização simultânea de um banco
+novo por duas conexões (transição rollback→WAL) fica fora dessa evidência, e
+`SqliteActivationStore::open()` evita reconfigurar WAL ou recriar tabelas quando
+o banco já está pronto; (2) em Windows, `assert_armed_abort` confirma término
+anormal com `exit != 101` (excluindo `panic!`) e marcador exato, enquanto a
+verificação explícita de `SIGABRT` (`#[cfg(unix)]`) fica `PENDING` de CI Linux.
 
 E um limite que nenhum armazenamento local resolve: a garantia de uso único vale
 no âmbito do armazenamento autoritativo. Um restauro anterior ao consumo apaga o
@@ -216,11 +246,13 @@ não aumenta.
 |:---|:---|:---|
 | A constituição e os mandatos são pacotes assinados que verificam sob a postura de produção | `LEMMA` local | 15 testes sobre os ficheiros comitados |
 | A função recusa reinstalar uma política retirada | `LEMMA` local | Piso de versão no `policy_bundle`, com uma instância |
-| Um *deployment* recusa reinstalar uma política retirada | `PENDING` | O piso compara contra o `current_version` que o chamador passa. Até ao `activation.rs` nada o guardava; agora o `activate` lê-o do store, e o único store que existe é em memória |
-| Uma proposta activa uma vez só, mesmo com o digest anterior reposto | `LEMMA` local para o protocolo | Consumo verificado antes do compare-and-swap, 12 testes. Vale no âmbito do armazenamento autoritativo: um restauro ou um segundo nó exigem âncora externa |
+| Um *deployment* recusa reinstalar uma política retirada | `PENDING` | `SqliteActivationStore` já persiste `version` em disco entre processos, mas nenhum ponto de efeito em produção ainda consulta o store |
+| Uma proposta activa uma vez só, mesmo com o digest anterior reposto | `LEMMA` local | Consumo verificado antes do compare-and-swap (12 testes no protocolo puro + `t02` em SQLite WAL via `ON CONFLICT(proposal_id)`). Vale no âmbito do armazenamento autoritativo: um restauro anterior ao consumo ou um segundo nó exigem âncora externa |
 | Duas políticas não podem partilhar um número de versão | `LEMMA` local | `StaleVersion`, que é mais estrito que o `>=` do `policy_bundle` |
-| Conflito de concorrência e falha de armazenamento são respostas diferentes | `LEMMA` local | Variantes distintas do `ActivationError`, com teste |
-| A ativação sobrevive a uma falha e reinício | `PENDING` | O store de referência é em memória; exige um *backend* durável e um teste que mate um subprocesso |
+| Conflito de concorrência e falha de armazenamento são respostas diferentes | `LEMMA` local | Variantes distintas do `ActivationError`/`CommitError`, com testes em memória e em SQLite WAL (`t01`, `t02`) |
+| A ativação sobrevive a uma falha e reinício (I5b-A..D) | `LEMMA` local (Windows) | 5/5 em `arkhe-kernel` (`--features sqlite-activation --test activation_i5b`): corrida `Barrier(3)`, replay/`CHECK`, crash pré/pós-commit com `ARKHE_FAULT_ARMED`, reentrega com leitura intermediária e projetores concorrentes sobre destino WAL pré-inicializado |
+| Verificação explícita de `SIGABRT` nos crashes de subprocesso | `PENDING` | Ramo `#[cfg(unix)]` (`status.signal() == Some(6)`) implementado em `activation_i5b.rs`; aguarda execução em CI Linux |
+| Ciclo I1–I7 ponta a ponta (política assinada → gate → recibo → MMR) | `PENDING` | Próximo marco: ativar `SignedPolicyBundle` no store durável, autorizar no gate sob a política carregada e verificar recibo assinado + inclusão no MMR |
 | Editar um tecto depois de assinar quebra a assinatura | `LEMMA` local | Teste dedicado |
 | Um mandato só pode estreitar aquilo de que descende | `LEMMA` local | Contenção de efeitos, tectos, moeda, janela e decisões reservadas |
 | Uma subdelegação herda do pai, não da constituição | `LEMMA` local | Teste dedicado |
