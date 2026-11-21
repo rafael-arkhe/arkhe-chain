@@ -91,6 +91,7 @@ fn build_policy_bundle(
     let doc = ActivePolicyDocument {
         schema: ACTIVE_POLICY_SCHEMA.into(),
         allowed_intents,
+        review_required_intents: vec![],
     };
     let candidate_bytes = doc.to_bytes().unwrap();
     let proposal = Proposal {
@@ -475,7 +476,9 @@ fn i1_i7_03_expired_active_policy_blocks_action_and_records_refusal() {
                 "expected Expired reason, got: {reason}"
             );
         }
-        ReceiptOutcome::Executed { .. } => panic!("expired policy must never execute"),
+        ReceiptOutcome::Executed { .. } | ReceiptOutcome::ReviewRequired { .. } => {
+            panic!("expired policy must never execute or route to review")
+        }
     }
     assert!(outcome.output.is_none());
     assert_eq!(
@@ -568,6 +571,7 @@ fn i1_i7_04_tampered_receipt_forged_resigned_receipt_and_storage_tamper_fail() {
             _ => unreachable!(),
         },
         observed_output_digest: format!("blake3:{}", "00".repeat(32)),
+        approval_id: None,
     };
     assert_ne!(tampered.leaf_hash(), outcome.receipt.leaf_hash());
     assert_eq!(
@@ -623,6 +627,7 @@ fn i1_i7_04_tampered_receipt_forged_resigned_receipt_and_storage_tamper_fail() {
         let evil_doc = ActivePolicyDocument {
             schema: ACTIVE_POLICY_SCHEMA.into(),
             allowed_intents: vec![WorkIntentType::DraftDocument, WorkIntentType::Simulate],
+            review_required_intents: vec![],
         };
         let conn = Connection::open(&store_path).unwrap();
         conn.execute(
@@ -652,7 +657,7 @@ fn i1_i7_04_tampered_receipt_forged_resigned_receipt_and_storage_tamper_fail() {
                 "expected digest mismatch refusal, got: {reason}"
             );
         }
-        ReceiptOutcome::Executed { .. } => {
+        ReceiptOutcome::Executed { .. } | ReceiptOutcome::ReviewRequired { .. } => {
             panic!("tampered candidate bytes in SQLite must never execute")
         }
     }

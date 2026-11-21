@@ -22,10 +22,25 @@ use serde_json::{json, Value};
 pub const ACTIVE_POLICY_SCHEMA: &str = "arkhe.kernel.active-policy/1";
 pub const EXECUTION_RECEIPT_SCHEMA: &str = "arkhe.kernel.execution-receipt/1";
 pub const MMR_CHECKPOINT_SCHEMA: &str = "arkhe.kernel.mmr-checkpoint/1";
+pub const REVIEW_APPROVAL_SCHEMA: &str = "arkhe.kernel.review-approval/1";
 
 const DOMAIN_ACTION_INPUT: &[u8] = b"AKG:ACTION:INPUT:v1\0";
 const DOMAIN_ACTION_OUTPUT: &[u8] = b"AKG:ACTION:OUTPUT:v1\0";
+const DOMAIN_GOVERNED_ACTION: &[u8] = b"AKG:GOVERNED:ACTION:v1\0";
 const DOMAIN_RECEIPT_LEAF: &[u8] = b"AKG:EXECUTION:RECEIPT:LEAF:v1\0";
+
+/// Compute the canonical `blake3:<64hex>` action digest binding both a
+/// `WorkIntent` digest and the exact action input digest.
+pub fn compute_action_digest(intent_digest: &str, action_input_digest: &str) -> String {
+    let encoded = canonical::encode_value(&json!({
+        "intent_digest": intent_digest,
+        "action_input_digest": action_input_digest,
+    }));
+    format!(
+        "blake3:{}",
+        Digest32::blake3(DOMAIN_GOVERNED_ACTION, &encoded).to_hex()
+    )
+}
 
 /// Declarative default-deny policy document carried inside the candidate bytes
 /// of an activated `SignedPolicyBundle`.
@@ -34,6 +49,10 @@ const DOMAIN_RECEIPT_LEAF: &[u8] = b"AKG:EXECUTION:RECEIPT:LEAF:v1\0";
 pub struct ActivePolicyDocument {
     pub schema: String,
     pub allowed_intents: Vec<WorkIntentType>,
+    /// Subset of `allowed_intents` that require a signed, exact, single-use
+    /// [`ReviewApproval`] before any effect may execute.
+    #[serde(default)]
+    pub review_required_intents: Vec<WorkIntentType>,
 }
 
 impl ActivePolicyDocument {
@@ -56,6 +75,10 @@ impl ActivePolicyDocument {
 pub struct ActivePolicyResolver(pub ActivePolicyDocument);
 
 impl PolicyResolver for ActivePolicyResolver {
+    fn review_routing_required(&self, intent: &WorkIntent, _binding: &PolicyBinding) -> bool {
+        self.0.review_required_intents.contains(&intent.intent_type)
+    }
+
     fn resolve(&self, intent: &WorkIntent, _binding: &PolicyBinding) -> PolicyVerdict {
         if self.0.allowed_intents.contains(&intent.intent_type) {
             PolicyVerdict::Allow
@@ -68,6 +91,80 @@ impl PolicyResolver for ActivePolicyResolver {
     }
 }
 
+/// Signed single-use approval binding an exact action digest to the exact
+/// active policy digest and committed activation event digest.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReviewApproval {
+    pub schema: String,
+    /// 32 lowercase hex characters: single-use nonce consumed atomically in SQLite WAL.
+    pub approval_id: String,
+    pub action_digest: String,
+    pub policy_digest: String,
+    pub activation_event_digest: String,
+    pub issued_at: i64,
+    pub expires_at: i64,
+    pub reviewer_key_id: String,
+    pub signature_hex: String,
+}
+
+impl CanonicalEncode for ReviewApproval {
+    const DOMAIN_OBJECT: &'static [u8] = b"AKG:REVIEW:APPROVAL:v1\0";
+
+    fn unsigned_projection(&self) -> Value {
+        json!({
+            "schema": self.schema,
+            "approval_id": self.approval_id,
+            "action_digest": self.action_digest,
+            "policy_digest": self.policy_digest,
+            "activation_event_digest": self.activation_event_digest,
+            "issued_at": self.issued_at,
+            "expires_at": self.expires_at,
+            "reviewer_key_id": self.reviewer_key_id,
+        })
+    }
+}
+
+impl ReviewApproval {
+    pub fn sign(&mut self, signer: &SigningKey) {
+        let sig = signer.sign(&self.canonical_bytes());
+        self.signature_hex = hex::encode(sig.to_bytes());
+    }
+
+    pub fn verify(&self, trust: &TrustStore, now: i64) -> Result<(), String> {
+        if self.schema != REVIEW_APPROVAL_SCHEMA {
+            return Err(format!("unknown review approval schema {:?}", self.schema));
+        }
+        if self.approval_id.len() != 32
+            || !self
+                .approval_id
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        {
+            return Err("approval_id must be 32 lowercase hex characters".into());
+        }
+        if self.issued_at > self.expires_at {
+            return Err("malformed approval validity window".into());
+        }
+        if now < self.issued_at {
+            return Err("review approval not yet valid".into());
+        }
+        if now >= self.expires_at {
+            return Err("review approval expired".into());
+        }
+        if trust.is_empty() {
+            return Err("reviewer trust store is empty".into());
+        }
+        let sig_bytes =
+            decode_sig64(&self.signature_hex).ok_or("malformed review approval signature")?;
+        let key = trust
+            .get(&self.reviewer_key_id)
+            .ok_or_else(|| format!("unknown reviewer key {}", self.reviewer_key_id))?;
+        key.verify_strict(&self.canonical_bytes(), &Signature::from_bytes(&sig_bytes))
+            .map_err(|_| "invalid review approval signature".to_string())
+    }
+}
+
 /// Outcome bound into a signed [`ExecutionReceipt`].
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -75,6 +172,14 @@ pub enum ReceiptOutcome {
     Executed {
         authorization_ref: String,
         observed_output_digest: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        approval_id: Option<String>,
+    },
+    ReviewRequired {
+        action_digest: String,
+        policy_digest: String,
+        activation_event_digest: String,
+        reason: String,
     },
     Rejected {
         reason: String,
@@ -224,6 +329,7 @@ impl MmrCheckpoint {
 pub enum MmrLeafKind {
     ActivationEvent,
     ExecutionReceiptExecuted,
+    ExecutionReceiptReviewRequired,
     ExecutionReceiptRejected,
 }
 
@@ -377,6 +483,42 @@ pub fn execute_governed<F>(
 where
     F: FnOnce(&WorkIntent, &[u8]) -> Result<Vec<u8>, String>,
 {
+    execute_governed_with_review(
+        store,
+        mmr,
+        policy_id,
+        intent,
+        action_input,
+        None,
+        policy_trust,
+        &TrustStore::new(),
+        receipt_key_id,
+        receipt_signer,
+        now,
+        execute_effect,
+    )
+}
+
+/// Normal kernel entry point for governed action execution with mandatory
+/// review routing and exact, single-use [`ReviewApproval`] verification.
+#[allow(clippy::too_many_arguments)]
+pub fn execute_governed_with_review<F>(
+    store: &mut SqliteActivationStore,
+    mmr: &mut MmrLog,
+    policy_id: &str,
+    intent: &WorkIntent,
+    action_input: &[u8],
+    approval: Option<&ReviewApproval>,
+    policy_trust: &TrustStore,
+    reviewer_trust: &TrustStore,
+    receipt_key_id: &str,
+    receipt_signer: &SigningKey,
+    now: i64,
+    execute_effect: F,
+) -> Result<GovernedOutcome, String>
+where
+    F: FnOnce(&WorkIntent, &[u8]) -> Result<Vec<u8>, String>,
+{
     store
         .reconcile_outbox(|rec| mmr.project_outbox_record(rec).map(|_| ()))
         .map_err(|e| format!("outbox reconciliation failed: {e:?}"))?;
@@ -386,6 +528,7 @@ where
         "blake3:{}",
         Digest32::blake3(DOMAIN_ACTION_INPUT, action_input).to_hex()
     );
+    let action_digest = compute_action_digest(&intent_digest, &action_input_digest);
 
     let loaded = match store.load_active_bundle(policy_id)? {
         Some(bundle) => bundle,
@@ -487,7 +630,9 @@ where
     };
 
     // Pass through the real kernel ContainmentGate.
-    let gate = ContainmentGate::new(ActivePolicyResolver(doc));
+    let resolver = ActivePolicyResolver(doc);
+    let review_required = resolver.review_routing_required(intent, &binding);
+    let gate = ContainmentGate::new(resolver);
     let authorization_ref = match gate.authorize(intent, None, &binding) {
         AuthorizationDecision::Allow { authorization_ref } => {
             format!("blake3:{}", authorization_ref.to_hex())
@@ -511,6 +656,137 @@ where
         }
     };
 
+    // Enforce mandatory review routing when declared by the active policy.
+    let approved_id = if review_required {
+        let Some(appr) = approval else {
+            return record_outcome(
+                mmr,
+                policy_id,
+                policy_version,
+                policy_bundle_digest,
+                active_candidate_digest,
+                activation_event_digest,
+                activation_leaf_index,
+                intent_digest,
+                action_input_digest,
+                ReceiptOutcome::ReviewRequired {
+                    action_digest,
+                    policy_digest: loaded.active.candidate_digest.clone(),
+                    activation_event_digest: loaded.activation_event_digest.clone(),
+                    reason: format!(
+                        "mandatory review required for intent {:?}",
+                        intent.intent_type
+                    ),
+                },
+                MmrLeafKind::ExecutionReceiptReviewRequired,
+                now,
+                receipt_key_id,
+                receipt_signer,
+            );
+        };
+
+        if let Err(reason) = appr.verify(reviewer_trust, now) {
+            return record_rejection(
+                mmr,
+                policy_id,
+                policy_version,
+                policy_bundle_digest,
+                active_candidate_digest,
+                activation_event_digest,
+                activation_leaf_index,
+                intent_digest,
+                action_input_digest,
+                reason,
+                now,
+                receipt_key_id,
+                receipt_signer,
+            );
+        }
+
+        if appr.action_digest != action_digest {
+            return record_rejection(
+                mmr,
+                policy_id,
+                policy_version,
+                policy_bundle_digest,
+                active_candidate_digest,
+                activation_event_digest,
+                activation_leaf_index,
+                intent_digest,
+                action_input_digest,
+                "review approval action_digest mismatch".into(),
+                now,
+                receipt_key_id,
+                receipt_signer,
+            );
+        }
+
+        if appr.policy_digest != loaded.active.candidate_digest {
+            return record_rejection(
+                mmr,
+                policy_id,
+                policy_version,
+                policy_bundle_digest,
+                active_candidate_digest,
+                activation_event_digest,
+                activation_leaf_index,
+                intent_digest,
+                action_input_digest,
+                "review approval policy_digest mismatch".into(),
+                now,
+                receipt_key_id,
+                receipt_signer,
+            );
+        }
+
+        if appr.activation_event_digest != loaded.activation_event_digest {
+            return record_rejection(
+                mmr,
+                policy_id,
+                policy_version,
+                policy_bundle_digest,
+                active_candidate_digest,
+                activation_event_digest,
+                activation_leaf_index,
+                intent_digest,
+                action_input_digest,
+                "review approval activation_event_digest mismatch".into(),
+                now,
+                receipt_key_id,
+                receipt_signer,
+            );
+        }
+
+        let newly_consumed = store.consume_review_approval(
+            &appr.approval_id,
+            &action_digest,
+            &loaded.active.candidate_digest,
+            &loaded.activation_event_digest,
+            now,
+        )?;
+        if !newly_consumed {
+            return record_rejection(
+                mmr,
+                policy_id,
+                policy_version,
+                policy_bundle_digest,
+                active_candidate_digest,
+                activation_event_digest,
+                activation_leaf_index,
+                intent_digest,
+                action_input_digest,
+                "review approval already consumed".into(),
+                now,
+                receipt_key_id,
+                receipt_signer,
+            );
+        }
+
+        Some(appr.approval_id.clone())
+    } else {
+        None
+    };
+
     let output = execute_effect(intent, action_input)?;
     let observed_output_digest = format!(
         "blake3:{}",
@@ -529,6 +805,7 @@ where
         outcome: ReceiptOutcome::Executed {
             authorization_ref,
             observed_output_digest,
+            approval_id: approved_id,
         },
         executed_at: now,
         signer_key_id: receipt_key_id.into(),
@@ -570,6 +847,41 @@ fn record_rejection(
     receipt_key_id: &str,
     receipt_signer: &SigningKey,
 ) -> Result<GovernedOutcome, String> {
+    record_outcome(
+        mmr,
+        policy_id,
+        policy_version,
+        policy_bundle_digest,
+        active_candidate_digest,
+        activation_event_digest,
+        activation_leaf_index,
+        intent_digest,
+        action_input_digest,
+        ReceiptOutcome::Rejected { reason },
+        MmrLeafKind::ExecutionReceiptRejected,
+        now,
+        receipt_key_id,
+        receipt_signer,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn record_outcome(
+    mmr: &mut MmrLog,
+    policy_id: &str,
+    policy_version: Option<u64>,
+    policy_bundle_digest: Option<String>,
+    active_candidate_digest: Option<String>,
+    activation_event_digest: Option<String>,
+    activation_leaf_index: Option<u64>,
+    intent_digest: String,
+    action_input_digest: String,
+    outcome: ReceiptOutcome,
+    leaf_kind: MmrLeafKind,
+    now: i64,
+    receipt_key_id: &str,
+    receipt_signer: &SigningKey,
+) -> Result<GovernedOutcome, String> {
     let mut receipt = ExecutionReceipt {
         schema: EXECUTION_RECEIPT_SCHEMA.into(),
         policy_id: policy_id.into(),
@@ -579,7 +891,7 @@ fn record_rejection(
         activation_event_digest,
         intent_digest,
         action_input_digest,
-        outcome: ReceiptOutcome::Rejected { reason },
+        outcome,
         executed_at: now,
         signer_key_id: receipt_key_id.into(),
         signature_hex: String::new(),
@@ -588,13 +900,8 @@ fn record_rejection(
 
     let leaf = receipt.leaf_hash();
     let receipt_leaf_index = mmr
-        .append_idempotent(
-            format!("receipt:{}", hex::encode(leaf)),
-            MmrLeafKind::ExecutionReceiptRejected,
-            leaf,
-            0,
-        )
-        .map_err(|e| format!("append rejected receipt to mmr: {e:?}"))?;
+        .append_idempotent(format!("receipt:{}", hex::encode(leaf)), leaf_kind, leaf, 0)
+        .map_err(|e| format!("append receipt to mmr: {e:?}"))?;
 
     Ok(GovernedOutcome {
         receipt,

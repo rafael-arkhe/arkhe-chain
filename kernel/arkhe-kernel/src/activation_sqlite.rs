@@ -127,13 +127,14 @@ impl SqliteActivationStore {
 
         let schema_ready: bool = conn
             .query_row(
-                "SELECT COUNT(*) = 4 FROM sqlite_master
+                "SELECT COUNT(*) = 5 FROM sqlite_master
                  WHERE type = 'table'
                    AND name IN (
                      'activation_active',
                      'activation_consumed',
                      'activation_outbox',
-                     'activation_bundles'
+                     'activation_bundles',
+                     'review_approvals_consumed'
                    )",
                 [],
                 |r| r.get(0),
@@ -182,6 +183,14 @@ impl SqliteActivationStore {
                     bundle_digest TEXT NOT NULL,
                     candidate_digest TEXT NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS review_approvals_consumed (
+                    approval_id TEXT PRIMARY KEY CHECK(length(approval_id) = 32),
+                    action_digest TEXT NOT NULL,
+                    policy_digest TEXT NOT NULL,
+                    activation_event_digest TEXT NOT NULL,
+                    consumed_at INTEGER NOT NULL
+                );
                 ",
             )
             .map_err(|e| format_sqlite_err(&e))?;
@@ -197,6 +206,41 @@ impl SqliteActivationStore {
     /// Arm a controlled crash point for subprocess durability tests.
     pub fn set_fault_injection(&mut self, fault: FaultInjection) {
         self.fault = fault;
+    }
+
+    /// Atomically consume a single-use review approval bound to `(action_digest,
+    /// policy_digest, activation_event_digest)` inside a `BEGIN IMMEDIATE` SQLite
+    /// WAL transaction. Returns `Ok(true)` if newly consumed, `Ok(false)` if this
+    /// `approval_id` was already consumed.
+    pub fn consume_review_approval(
+        &mut self,
+        approval_id: &str,
+        action_digest: &str,
+        policy_digest: &str,
+        activation_event_digest: &str,
+        consumed_at: i64,
+    ) -> Result<bool, String> {
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|e| format_sqlite_err(&e))?;
+        let inserted = tx
+            .execute(
+                "INSERT INTO review_approvals_consumed
+                    (approval_id, action_digest, policy_digest, activation_event_digest, consumed_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5)
+                 ON CONFLICT(approval_id) DO NOTHING",
+                params![
+                    approval_id,
+                    action_digest,
+                    policy_digest,
+                    activation_event_digest,
+                    consumed_at
+                ],
+            )
+            .map_err(|e| format_sqlite_err(&e))?;
+        tx.commit().map_err(|e| format_sqlite_err(&e))?;
+        Ok(inserted == 1)
     }
 
     /// Run [`arkhe_governance::activation::activate`] while atomically persisting

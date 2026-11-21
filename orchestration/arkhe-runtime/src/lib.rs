@@ -4,6 +4,8 @@ use arkhe_kernel::{AuthorizationDecision, ContainmentGate};
 
 #[cfg(feature = "sqlite-dispatch")]
 pub mod authenticated_dispatch;
+#[cfg(feature = "sqlite-activation")]
+pub mod governed_gateway;
 pub mod http_routes;
 pub mod portable_wer;
 pub mod preview;
