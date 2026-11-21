@@ -25,12 +25,14 @@ pub const EXECUTION_RECEIPT_SCHEMA: &str = "arkhe.kernel.execution-receipt/1";
 pub const MMR_CHECKPOINT_SCHEMA: &str = "arkhe.kernel.mmr-checkpoint/1";
 pub const REVIEW_APPROVAL_SCHEMA: &str = "arkhe.kernel.review-approval/1";
 pub const CONTESTATION_RECORD_SCHEMA: &str = "arkhe.kernel.contestation-record/1";
+pub const CORRECTION_RECORD_SCHEMA: &str = "arkhe.kernel.correction-record/1";
 
 const DOMAIN_ACTION_INPUT: &[u8] = b"AKG:ACTION:INPUT:v1\0";
 const DOMAIN_ACTION_OUTPUT: &[u8] = b"AKG:ACTION:OUTPUT:v1\0";
 const DOMAIN_GOVERNED_ACTION: &[u8] = b"AKG:GOVERNED:ACTION:v1\0";
 const DOMAIN_RECEIPT_LEAF: &[u8] = b"AKG:EXECUTION:RECEIPT:LEAF:v1\0";
 const DOMAIN_CONTESTATION_LEAF: &[u8] = b"AKG:CONTESTATION:RECORD:LEAF:v1\0";
+const DOMAIN_CORRECTION_LEAF: &[u8] = b"AKG:CORRECTION:RECORD:LEAF:v1\0";
 
 /// Compute the canonical `blake3:<64hex>` action digest binding both a
 /// `WorkIntent` digest and the exact action input digest.
@@ -379,6 +381,110 @@ pub enum ContestationError {
     Storage(String),
 }
 
+/// Signed append-only superseding correction proposal referencing an active
+/// [`ContestationRecord`] and the disputed [`ExecutionReceipt`] without
+/// mutating prior evidence or lifting the active contestation block.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CorrectionRecord {
+    pub schema: String,
+    /// 32 lowercase hex characters identifying this correction record.
+    pub correction_id: String,
+    /// `blake3:<64hex>` MMR leaf digest of the active contestation being addressed.
+    pub contestation_digest: String,
+    /// `blake3:<64hex>` MMR leaf digest of the original receipt being superseded.
+    pub superseded_receipt_digest: String,
+    /// `blake3:<64hex>` active policy candidate digest bound to the original execution.
+    pub policy_digest: String,
+    /// `blake3:<64hex>` digest of the proposed corrected output/content.
+    pub corrected_output_digest: String,
+    pub justification: String,
+    pub corrected_at: i64,
+    pub corrector_key_id: String,
+    pub signature_hex: String,
+}
+
+impl CanonicalEncode for CorrectionRecord {
+    const DOMAIN_OBJECT: &'static [u8] = b"AKG:CORRECTION:RECORD:v1\0";
+
+    fn unsigned_projection(&self) -> Value {
+        json!({
+            "schema": self.schema,
+            "correction_id": self.correction_id,
+            "contestation_digest": self.contestation_digest,
+            "superseded_receipt_digest": self.superseded_receipt_digest,
+            "policy_digest": self.policy_digest,
+            "corrected_output_digest": self.corrected_output_digest,
+            "justification": self.justification,
+            "corrected_at": self.corrected_at,
+            "corrector_key_id": self.corrector_key_id,
+        })
+    }
+}
+
+impl CorrectionRecord {
+    pub fn sign(&mut self, signer: &SigningKey) {
+        let sig = signer.sign(&self.canonical_bytes());
+        self.signature_hex = hex::encode(sig.to_bytes());
+    }
+
+    pub fn verify(&self, trust: &TrustStore) -> Result<(), OfflineVerifyError> {
+        if self.schema != CORRECTION_RECORD_SCHEMA {
+            return Err(OfflineVerifyError::InvalidCorrectionSchema(
+                self.schema.clone(),
+            ));
+        }
+        if self.correction_id.len() != 32
+            || !self
+                .correction_id
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        {
+            return Err(OfflineVerifyError::InvalidCorrectionSignature);
+        }
+        if parse_blake3_digest(&self.corrected_output_digest).is_none() {
+            return Err(OfflineVerifyError::InvalidCorrectionSignature);
+        }
+        if self.justification.trim().is_empty() {
+            return Err(OfflineVerifyError::InvalidCorrectionSignature);
+        }
+        let sig_bytes = decode_sig64(&self.signature_hex)
+            .ok_or(OfflineVerifyError::InvalidCorrectionSignature)?;
+        let key = trust.get(&self.corrector_key_id).ok_or_else(|| {
+            OfflineVerifyError::UnknownCorrectorKey(self.corrector_key_id.clone())
+        })?;
+        key.verify_strict(&self.canonical_bytes(), &Signature::from_bytes(&sig_bytes))
+            .map_err(|_| OfflineVerifyError::InvalidCorrectionSignature)
+    }
+
+    pub fn canonical_signed_bytes(&self) -> Vec<u8> {
+        canonical::encode_value(&json!({
+            "unsigned": self.unsigned_projection(),
+            "signature_hex": self.signature_hex,
+        }))
+    }
+
+    pub fn leaf_hash(&self) -> [u8; 32] {
+        Digest32::blake3(DOMAIN_CORRECTION_LEAF, &self.canonical_signed_bytes()).0
+    }
+
+    pub fn leaf_digest_str(&self) -> String {
+        format!("blake3:{}", hex::encode(self.leaf_hash()))
+    }
+}
+
+/// Admission errors returned when a [`CorrectionRecord`] lacks a verifiable
+/// active contestation basis or fails binding/signature checks.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CorrectionError {
+    InvalidRecord(String),
+    ContestationNotFound,
+    ContestationNotActive,
+    ReceiptDigestMismatch { expected: String, found: String },
+    PolicyDigestMismatch { expected: String, found: String },
+    Storage(String),
+}
+
 /// Signed MMR root checkpoint used by an independent offline verifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -453,6 +559,7 @@ pub enum MmrLeafKind {
     ExecutionReceiptContestedBlocked,
     ExecutionReceiptRejected,
     ContestationRecord,
+    CorrectionRecord,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -474,18 +581,26 @@ struct StoredReceipt {
 #[derive(Debug, Clone)]
 struct StoredContestation {
     leaf_index: u64,
+    record: ContestationRecord,
+    canonical_bytes: Vec<u8>,
+}
+
+#[derive(Debug, Clone)]
+struct StoredCorrection {
+    leaf_index: u64,
     canonical_bytes: Vec<u8>,
 }
 
 /// Append-only MMR log backed by [`arkhe_verify_core::rbb::mmr::Frontier`] with
-/// idempotent projection of activation outbox records, execution receipts, and
-/// append-only contestation records.
+/// idempotent projection of activation outbox records, execution receipts,
+/// append-only contestation records, and superseding correction records.
 #[derive(Debug, Default)]
 pub struct MmrLog {
     frontier: Frontier,
     entries: Vec<MmrEntry>,
     receipts: HashMap<[u8; 32], StoredReceipt>,
     contestations: HashMap<[u8; 32], StoredContestation>,
+    corrections: HashMap<[u8; 32], StoredCorrection>,
     /// Active contestations indexed by disputed receipt leaf hash (`receipt_leaf -> contestation_leaf`).
     active_contestations_by_receipt: HashMap<[u8; 32], [u8; 32]>,
     /// Trusted server-side target scope index (`target -> (receipt_leaf, contestation_leaf)`),
@@ -622,6 +737,7 @@ impl MmrLog {
             .entry(contestation_leaf)
             .or_insert_with(|| StoredContestation {
                 leaf_index,
+                record: record.clone(),
                 canonical_bytes,
             });
         self.active_contestations_by_receipt
@@ -632,6 +748,78 @@ impl MmrLog {
         }
 
         Ok(leaf_index)
+    }
+
+    /// Admit a signed superseding [`CorrectionRecord`] and append it as a single
+    /// new typed leaf (`MmrLeafKind::CorrectionRecord`) without mutating prior
+    /// records or lifting the active contestation block (C3.1–C3.3).
+    pub fn admit_correction(
+        &mut self,
+        record: &CorrectionRecord,
+        corrector_trust: &TrustStore,
+    ) -> Result<u64, CorrectionError> {
+        record
+            .verify(corrector_trust)
+            .map_err(|e| CorrectionError::InvalidRecord(format!("{e:?}")))?;
+
+        let contestation_leaf = parse_blake3_digest(&record.contestation_digest)
+            .ok_or(CorrectionError::ContestationNotFound)?;
+        let stored_cont = self
+            .contestations
+            .get(&contestation_leaf)
+            .ok_or(CorrectionError::ContestationNotFound)?;
+
+        let expected_receipt_digest = stored_cont.record.receipt_digest.clone();
+        let expected_policy_digest = stored_cont.record.policy_digest.clone();
+
+        if record.superseded_receipt_digest != expected_receipt_digest {
+            return Err(CorrectionError::ReceiptDigestMismatch {
+                expected: expected_receipt_digest,
+                found: record.superseded_receipt_digest.clone(),
+            });
+        }
+
+        if record.policy_digest != expected_policy_digest {
+            return Err(CorrectionError::PolicyDigestMismatch {
+                expected: expected_policy_digest,
+                found: record.policy_digest.clone(),
+            });
+        }
+
+        let receipt_leaf = parse_blake3_digest(&expected_receipt_digest)
+            .ok_or(CorrectionError::ContestationNotActive)?;
+        if self.active_contestations_by_receipt.get(&receipt_leaf) != Some(&contestation_leaf) {
+            return Err(CorrectionError::ContestationNotActive);
+        }
+
+        let correction_leaf = record.leaf_hash();
+        let canonical_bytes = record.canonical_signed_bytes();
+        let leaf_index = self
+            .append_idempotent(
+                format!("correction:{}", record.correction_id),
+                MmrLeafKind::CorrectionRecord,
+                correction_leaf,
+                0,
+            )
+            .map_err(|e| CorrectionError::Storage(format!("{e:?}")))?;
+
+        self.corrections
+            .entry(correction_leaf)
+            .or_insert_with(|| StoredCorrection {
+                leaf_index,
+                canonical_bytes,
+            });
+
+        // C3.3: Deliberately keep active_contestations_by_receipt and
+        // active_contestations_by_target intact until an explicit ResolutionRecord.
+        Ok(leaf_index)
+    }
+
+    /// Return the immutable `(leaf_index, canonical_bytes)` stored for a correction leaf.
+    pub fn correction_evidence(&self, leaf_hash: &[u8; 32]) -> Option<(u64, &[u8])> {
+        self.corrections
+            .get(leaf_hash)
+            .map(|s| (s.leaf_index, s.canonical_bytes.as_slice()))
     }
 
     /// Check whether `intent` falls under an active contestation, either via
@@ -1244,8 +1432,13 @@ pub enum OfflineVerifyError {
     UnknownContesterKey(String),
     InvalidContestationSignature,
     ContestationBindingMismatch(&'static str),
+    InvalidCorrectionSchema(String),
+    UnknownCorrectorKey(String),
+    InvalidCorrectionSignature,
+    CorrectionBindingMismatch(&'static str),
     ReceiptNotInMmr,
     ContestationNotInMmr,
+    CorrectionNotInMmr,
     ActivationNotInMmr,
     ActivationDigestMismatch,
 }
@@ -1404,6 +1597,68 @@ pub fn verify_offline_contestation_block_bundle(
         &root,
     )
     .map_err(|_| OfflineVerifyError::ReceiptNotInMmr)?;
+
+    Ok(())
+}
+
+/// Independent offline verification for C3/C4: validates signatures,
+/// supersession chain bindings (`ExecutionReceipt -> ContestationRecord -> CorrectionRecord`),
+/// and MMR inclusion proofs of all three records against the same posterior
+/// [`MmrCheckpoint`], with zero access to operational storage.
+#[allow(clippy::too_many_arguments)]
+pub fn verify_offline_correction_bundle(
+    original_receipt: &ExecutionReceipt,
+    original_receipt_proof: &Proof,
+    contestation: &ContestationRecord,
+    contestation_proof: &Proof,
+    correction: &CorrectionRecord,
+    correction_proof: &Proof,
+    checkpoint: &MmrCheckpoint,
+    receipt_trust: &TrustStore,
+    contester_trust: &TrustStore,
+    corrector_trust: &TrustStore,
+    checkpoint_trust: &TrustStore,
+) -> Result<(), OfflineVerifyError> {
+    verify_offline_contestation_bundle(
+        original_receipt,
+        original_receipt_proof,
+        contestation,
+        contestation_proof,
+        checkpoint,
+        receipt_trust,
+        contester_trust,
+        checkpoint_trust,
+    )?;
+
+    let root = checkpoint.verify(checkpoint_trust)?;
+    correction.verify(corrector_trust)?;
+
+    if correction.contestation_digest != contestation.leaf_digest_str() {
+        return Err(OfflineVerifyError::CorrectionBindingMismatch(
+            "contestation_digest",
+        ));
+    }
+    if correction.superseded_receipt_digest != original_receipt.leaf_digest_str() {
+        return Err(OfflineVerifyError::CorrectionBindingMismatch(
+            "superseded_receipt_digest",
+        ));
+    }
+    if original_receipt.active_candidate_digest.as_deref()
+        != Some(correction.policy_digest.as_str())
+    {
+        return Err(OfflineVerifyError::CorrectionBindingMismatch(
+            "policy_digest",
+        ));
+    }
+
+    let correction_leaf = correction.leaf_hash();
+    mmr::verify(
+        &correction_leaf,
+        correction_proof,
+        checkpoint.leaf_count,
+        &root,
+    )
+    .map_err(|_| OfflineVerifyError::CorrectionNotInMmr)?;
 
     Ok(())
 }

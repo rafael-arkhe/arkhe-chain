@@ -25,7 +25,8 @@ use arkhe_governance::policy_bundle::{SignaturePolicy, SignedPolicyBundle, Trust
 use arkhe_kernel::activation_sqlite::SqliteActivationStore;
 use arkhe_kernel::governed_execution::{
     execute_governed_with_review, parse_blake3_digest, ContestationError, ContestationRecord,
-    ExecutionReceipt, MmrCheckpoint, MmrLeafKind, MmrLog, ReceiptOutcome, ReviewApproval,
+    CorrectionError, CorrectionRecord, ExecutionReceipt, MmrCheckpoint, MmrLeafKind, MmrLog,
+    ReceiptOutcome, ReviewApproval,
 };
 use arkhe_verify_core::rbb::mmr::Proof;
 use axum::extract::State;
@@ -54,6 +55,7 @@ pub struct MmrCounts {
     pub contested_blocked_receipts: usize,
     pub rejected_receipts: usize,
     pub contestation_records: usize,
+    pub correction_records: usize,
 }
 
 /// Shared state for the governed HTTP gateway.
@@ -65,6 +67,7 @@ pub struct GovernedGatewayState {
     pub policy_trust: TrustStore,
     pub reviewer_trust: TrustStore,
     pub contester_trust: TrustStore,
+    pub corrector_trust: TrustStore,
     pub receipt_key_id: String,
     pub receipt_signer: SigningKey,
     pub checkpoint_key_id: String,
@@ -98,6 +101,7 @@ impl GovernedGatewayState {
             policy_trust,
             reviewer_trust,
             contester_trust: TrustStore::new(),
+            corrector_trust: TrustStore::new(),
             receipt_key_id: receipt_key_id.into(),
             receipt_signer,
             checkpoint_key_id: checkpoint_key_id.into(),
@@ -110,6 +114,12 @@ impl GovernedGatewayState {
     /// Configure the trust store of authorized contestation signers.
     pub fn with_contester_trust(mut self, trust: TrustStore) -> Self {
         self.contester_trust = trust;
+        self
+    }
+
+    /// Configure the trust store of authorized superseding correction signers.
+    pub fn with_corrector_trust(mut self, trust: TrustStore) -> Self {
+        self.corrector_trust = trust;
         self
     }
 
@@ -127,6 +137,7 @@ impl GovernedGatewayState {
                 .count_kind(MmrLeafKind::ExecutionReceiptContestedBlocked),
             rejected_receipts: core.mmr.count_kind(MmrLeafKind::ExecutionReceiptRejected),
             contestation_records: core.mmr.count_kind(MmrLeafKind::ContestationRecord),
+            correction_records: core.mmr.count_kind(MmrLeafKind::CorrectionRecord),
         }
     }
 
@@ -143,6 +154,14 @@ impl GovernedGatewayState {
         let core = self.core.lock().expect("governed core lock");
         core.mmr
             .contestation_evidence(leaf_hash)
+            .map(|(idx, bytes)| (idx, bytes.to_vec()))
+    }
+
+    /// Snapshot the immutable `(leaf_index, canonical_bytes)` stored for a correction.
+    pub fn correction_snapshot(&self, leaf_hash: &[u8; 32]) -> Option<(u64, Vec<u8>)> {
+        let core = self.core.lock().expect("governed core lock");
+        core.mmr
+            .correction_evidence(leaf_hash)
             .map(|(idx, bytes)| (idx, bytes.to_vec()))
     }
 
@@ -165,14 +184,37 @@ impl GovernedGatewayState {
     }
 }
 
-/// Build the Axum router for the governed policy activation, execution, and contestation routes.
+/// Build the Axum router for the governed policy activation, execution, contestation,
+/// and superseding correction routes.
 pub fn router(state: Arc<GovernedGatewayState>) -> Router {
     Router::new()
         .route("/v1/policies/activate", post(activate_policy))
         .route("/v1/governed/execute", post(governed_execute))
         .route("/v1/governed/contest", post(governed_contest))
+        .route("/v1/governed/correct", post(governed_correct))
         .route("/v1/governed/checkpoint", get(governed_checkpoint))
         .with_state(state)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CorrectReceiptRequest {
+    pub correction: CorrectionRecord,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CorrectReceiptResponse {
+    pub decision: String,
+    pub correction_leaf_index: u64,
+    pub contestation_leaf_index: u64,
+    pub original_receipt_leaf_index: u64,
+    pub original_receipt_bytes_hex: String,
+    pub contestation_bytes_hex: String,
+    pub original_receipt_proof: Proof,
+    pub contestation_proof: Proof,
+    pub correction: CorrectionRecord,
+    pub correction_proof: Proof,
+    pub checkpoint: MmrCheckpoint,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -614,6 +656,156 @@ async fn governed_contest(
             original_receipt_proof,
             contestation: req.contestation,
             contestation_proof,
+            checkpoint,
+        }),
+    ))
+}
+
+async fn governed_correct(
+    State(state): State<Arc<GovernedGatewayState>>,
+    headers: HeaderMap,
+    Json(req): Json<CorrectReceiptRequest>,
+) -> Result<(StatusCode, Json<CorrectReceiptResponse>), (StatusCode, Json<Value>)> {
+    authenticate(&headers, &state)?;
+    let now = (state.clock)();
+
+    let mut core = state.core.lock().map_err(|_| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": "governed store lock poisoned" })),
+        )
+    })?;
+
+    let correction_leaf_index = core
+        .mmr
+        .admit_correction(&req.correction, &state.corrector_trust)
+        .map_err(|err| match err {
+            CorrectionError::ContestationNotFound => (
+                StatusCode::NOT_FOUND,
+                Json(json!({
+                    "decision": "REJECTED",
+                    "error": "MISSING_VERIFIABLE_BASIS",
+                    "reason": "referenced contestation_digest not found in MMR",
+                })),
+            ),
+            CorrectionError::ContestationNotActive => (
+                StatusCode::FORBIDDEN,
+                Json(json!({
+                    "decision": "REJECTED",
+                    "error": "INVALID_CORRECTION_BINDING",
+                    "reason": "referenced contestation is not active",
+                })),
+            ),
+            CorrectionError::ReceiptDigestMismatch { expected, found } => (
+                StatusCode::FORBIDDEN,
+                Json(json!({
+                    "decision": "REJECTED",
+                    "error": "INVALID_CORRECTION_BINDING",
+                    "reason": format!("superseded_receipt_digest mismatch: expected={expected}, found={found}"),
+                })),
+            ),
+            CorrectionError::PolicyDigestMismatch { expected, found } => (
+                StatusCode::FORBIDDEN,
+                Json(json!({
+                    "decision": "REJECTED",
+                    "error": "INVALID_CORRECTION_BINDING",
+                    "reason": format!("policy_digest mismatch: expected={expected}, found={found}"),
+                })),
+            ),
+            CorrectionError::InvalidRecord(reason) => (
+                StatusCode::FORBIDDEN,
+                Json(json!({
+                    "decision": "REJECTED",
+                    "error": "INVALID_CORRECTION_RECORD",
+                    "reason": reason,
+                })),
+            ),
+            CorrectionError::Storage(reason) => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({
+                    "decision": "STORAGE_ERROR",
+                    "reason": reason,
+                })),
+            ),
+        })?;
+
+    let orig_leaf_bytes = parse_blake3_digest(&req.correction.superseded_receipt_digest)
+        .ok_or_else(|| {
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "error": "malformed admitted receipt digest" })),
+            )
+        })?;
+    let (original_receipt_leaf_index, orig_bytes) = core
+        .mmr
+        .receipt_evidence(&orig_leaf_bytes)
+        .map(|(idx, bytes)| (idx, bytes.to_vec()))
+        .ok_or_else(|| {
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "error": "original receipt disappeared from MMR" })),
+            )
+        })?;
+
+    let cont_leaf_bytes =
+        parse_blake3_digest(&req.correction.contestation_digest).ok_or_else(|| {
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "error": "malformed admitted contestation digest" })),
+            )
+        })?;
+    let (contestation_leaf_index, cont_bytes) = core
+        .mmr
+        .contestation_evidence(&cont_leaf_bytes)
+        .map(|(idx, bytes)| (idx, bytes.to_vec()))
+        .ok_or_else(|| {
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "error": "contestation disappeared from MMR" })),
+            )
+        })?;
+
+    let original_receipt_proof = core.mmr.prove(original_receipt_leaf_index).map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": format!("mmr prove original receipt failed: {e}") })),
+        )
+    })?;
+    let contestation_proof = core.mmr.prove(contestation_leaf_index).map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": format!("mmr prove contestation failed: {e}") })),
+        )
+    })?;
+    let correction_proof = core.mmr.prove(correction_leaf_index).map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": format!("mmr prove correction failed: {e}") })),
+        )
+    })?;
+    let checkpoint = core
+        .mmr
+        .sign_checkpoint(now, &state.checkpoint_key_id, &state.checkpoint_signer)
+        .map_err(|e| {
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "error": format!("mmr checkpoint failed: {e}") })),
+            )
+        })?;
+
+    Ok((
+        StatusCode::OK,
+        Json(CorrectReceiptResponse {
+            decision: "CORRECTED".into(),
+            correction_leaf_index,
+            contestation_leaf_index,
+            original_receipt_leaf_index,
+            original_receipt_bytes_hex: hex::encode(orig_bytes),
+            contestation_bytes_hex: hex::encode(cont_bytes),
+            original_receipt_proof,
+            contestation_proof,
+            correction: req.correction,
+            correction_proof,
             checkpoint,
         }),
     ))
