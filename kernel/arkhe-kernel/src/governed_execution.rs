@@ -18,16 +18,19 @@ use arkhe_verify_core::rbb::mmr::{self, Frontier, Proof};
 use ed25519_dalek::{Signature, Signer, SigningKey};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::collections::HashMap;
 
 pub const ACTIVE_POLICY_SCHEMA: &str = "arkhe.kernel.active-policy/1";
 pub const EXECUTION_RECEIPT_SCHEMA: &str = "arkhe.kernel.execution-receipt/1";
 pub const MMR_CHECKPOINT_SCHEMA: &str = "arkhe.kernel.mmr-checkpoint/1";
 pub const REVIEW_APPROVAL_SCHEMA: &str = "arkhe.kernel.review-approval/1";
+pub const CONTESTATION_RECORD_SCHEMA: &str = "arkhe.kernel.contestation-record/1";
 
 const DOMAIN_ACTION_INPUT: &[u8] = b"AKG:ACTION:INPUT:v1\0";
 const DOMAIN_ACTION_OUTPUT: &[u8] = b"AKG:ACTION:OUTPUT:v1\0";
 const DOMAIN_GOVERNED_ACTION: &[u8] = b"AKG:GOVERNED:ACTION:v1\0";
 const DOMAIN_RECEIPT_LEAF: &[u8] = b"AKG:EXECUTION:RECEIPT:LEAF:v1\0";
+const DOMAIN_CONTESTATION_LEAF: &[u8] = b"AKG:CONTESTATION:RECORD:LEAF:v1\0";
 
 /// Compute the canonical `blake3:<64hex>` action digest binding both a
 /// `WorkIntent` digest and the exact action input digest.
@@ -248,15 +251,127 @@ impl ExecutionReceipt {
             .map_err(|_| OfflineVerifyError::InvalidReceiptSignature)
     }
 
+    /// Canonical serialized bytes covering both the unsigned receipt payload and
+    /// its signature. Used for byte-exact preservation checks and MMR leaf hashing.
+    pub fn canonical_signed_bytes(&self) -> Vec<u8> {
+        canonical::encode_value(&json!({
+            "unsigned": self.unsigned_projection(),
+            "signature_hex": self.signature_hex,
+        }))
+    }
+
     /// Canonical 32-byte MMR leaf digest covering both the unsigned receipt
     /// payload and its signature so any tampering breaks MMR inclusion.
     pub fn leaf_hash(&self) -> [u8; 32] {
-        let full = canonical::encode_value(&json!({
+        Digest32::blake3(DOMAIN_RECEIPT_LEAF, &self.canonical_signed_bytes()).0
+    }
+
+    /// Formatted `blake3:<64hex>` MMR leaf digest of this receipt.
+    pub fn leaf_digest_str(&self) -> String {
+        format!("blake3:{}", hex::encode(self.leaf_hash()))
+    }
+}
+
+/// Signed append-only contestation record disputing an existing receipt without
+/// mutating, removing, or reordering the original receipt in the MMR.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContestationRecord {
+    pub schema: String,
+    /// 32 lowercase hex characters identifying this contestation record.
+    pub contestation_id: String,
+    /// `blake3:<64hex>` MMR leaf digest of the disputed receipt.
+    pub receipt_digest: String,
+    /// `blake3:<64hex>` active policy candidate digest bound to the disputed receipt.
+    pub policy_digest: String,
+    /// `blake3:<64hex>` activation event digest bound to the disputed receipt.
+    pub activation_event_digest: String,
+    pub reason: String,
+    pub contested_at: i64,
+    pub contester_key_id: String,
+    pub signature_hex: String,
+}
+
+impl CanonicalEncode for ContestationRecord {
+    const DOMAIN_OBJECT: &'static [u8] = b"AKG:CONTESTATION:RECORD:v1\0";
+
+    fn unsigned_projection(&self) -> Value {
+        json!({
+            "schema": self.schema,
+            "contestation_id": self.contestation_id,
+            "receipt_digest": self.receipt_digest,
+            "policy_digest": self.policy_digest,
+            "activation_event_digest": self.activation_event_digest,
+            "reason": self.reason,
+            "contested_at": self.contested_at,
+            "contester_key_id": self.contester_key_id,
+        })
+    }
+}
+
+impl ContestationRecord {
+    pub fn sign(&mut self, signer: &SigningKey) {
+        let sig = signer.sign(&self.canonical_bytes());
+        self.signature_hex = hex::encode(sig.to_bytes());
+    }
+
+    pub fn verify(&self, trust: &TrustStore) -> Result<(), OfflineVerifyError> {
+        if self.schema != CONTESTATION_RECORD_SCHEMA {
+            return Err(OfflineVerifyError::InvalidContestationSchema(
+                self.schema.clone(),
+            ));
+        }
+        if self.contestation_id.len() != 32
+            || !self
+                .contestation_id
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        {
+            return Err(OfflineVerifyError::InvalidContestationSignature);
+        }
+        if self.reason.trim().is_empty() {
+            return Err(OfflineVerifyError::InvalidContestationSignature);
+        }
+        let sig_bytes = decode_sig64(&self.signature_hex)
+            .ok_or(OfflineVerifyError::InvalidContestationSignature)?;
+        let key = trust.get(&self.contester_key_id).ok_or_else(|| {
+            OfflineVerifyError::UnknownContesterKey(self.contester_key_id.clone())
+        })?;
+        key.verify_strict(&self.canonical_bytes(), &Signature::from_bytes(&sig_bytes))
+            .map_err(|_| OfflineVerifyError::InvalidContestationSignature)
+    }
+
+    pub fn canonical_signed_bytes(&self) -> Vec<u8> {
+        canonical::encode_value(&json!({
             "unsigned": self.unsigned_projection(),
             "signature_hex": self.signature_hex,
-        }));
-        Digest32::blake3(DOMAIN_RECEIPT_LEAF, &full).0
+        }))
     }
+
+    pub fn leaf_hash(&self) -> [u8; 32] {
+        Digest32::blake3(DOMAIN_CONTESTATION_LEAF, &self.canonical_signed_bytes()).0
+    }
+
+    pub fn leaf_digest_str(&self) -> String {
+        format!("blake3:{}", hex::encode(self.leaf_hash()))
+    }
+}
+
+/// Admission errors returned when a [`ContestationRecord`] fails signature or
+/// triple-binding checks against existing MMR evidence.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ContestationError {
+    InvalidRecord(String),
+    ReceiptNotFound,
+    PolicyDigestMismatch {
+        expected: Option<String>,
+        found: String,
+    },
+    ActivationEventDigestMismatch {
+        expected: Option<String>,
+        found: String,
+    },
+    Storage(String),
 }
 
 /// Signed MMR root checkpoint used by an independent offline verifier.
@@ -331,6 +446,7 @@ pub enum MmrLeafKind {
     ExecutionReceiptExecuted,
     ExecutionReceiptReviewRequired,
     ExecutionReceiptRejected,
+    ContestationRecord,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -341,12 +457,21 @@ pub struct MmrEntry {
     pub record: [u8; 32],
 }
 
+#[derive(Debug, Clone)]
+struct StoredReceipt {
+    leaf_index: u64,
+    receipt: ExecutionReceipt,
+    canonical_bytes: Vec<u8>,
+}
+
 /// Append-only MMR log backed by [`arkhe_verify_core::rbb::mmr::Frontier`] with
-/// idempotent projection of activation outbox records and execution receipts.
+/// idempotent projection of activation outbox records, execution receipts, and
+/// append-only contestation records.
 #[derive(Debug, Default)]
 pub struct MmrLog {
     frontier: Frontier,
     entries: Vec<MmrEntry>,
+    receipts: HashMap<[u8; 32], StoredReceipt>,
 }
 
 impl MmrLog {
@@ -386,6 +511,91 @@ impl MmrLog {
             record,
         });
         Ok(leaf_index)
+    }
+
+    /// Append a signed [`ExecutionReceipt`] and retain its exact canonical bytes
+    /// and leaf index for immutable audit and contestation binding verification.
+    pub fn append_receipt(
+        &mut self,
+        receipt: &ExecutionReceipt,
+        kind: MmrLeafKind,
+    ) -> Result<u64, OutboxError> {
+        let leaf = receipt.leaf_hash();
+        let canonical_bytes = receipt.canonical_signed_bytes();
+        let leaf_index =
+            self.append_idempotent(format!("receipt:{}", hex::encode(leaf)), kind, leaf, 0)?;
+        self.receipts.entry(leaf).or_insert_with(|| StoredReceipt {
+            leaf_index,
+            receipt: receipt.clone(),
+            canonical_bytes,
+        });
+        Ok(leaf_index)
+    }
+
+    /// Admit a signed [`ContestationRecord`] and append it as a new typed MMR leaf
+    /// without modifying, removing, or reordering the disputed receipt.
+    ///
+    /// Enforces C1.1 before appending: signature validity plus exact match of
+    /// `(receipt_digest, policy_digest, activation_event_digest)` against the
+    /// stored original receipt.
+    pub fn admit_contestation(
+        &mut self,
+        record: &ContestationRecord,
+        contester_trust: &TrustStore,
+    ) -> Result<u64, ContestationError> {
+        record
+            .verify(contester_trust)
+            .map_err(|e| ContestationError::InvalidRecord(format!("{e:?}")))?;
+
+        let receipt_leaf = parse_blake3_digest(&record.receipt_digest)
+            .ok_or(ContestationError::ReceiptNotFound)?;
+        let stored = self
+            .receipts
+            .get(&receipt_leaf)
+            .ok_or(ContestationError::ReceiptNotFound)?;
+
+        if stored.receipt.active_candidate_digest.as_deref() != Some(record.policy_digest.as_str())
+        {
+            return Err(ContestationError::PolicyDigestMismatch {
+                expected: stored.receipt.active_candidate_digest.clone(),
+                found: record.policy_digest.clone(),
+            });
+        }
+
+        if stored.receipt.activation_event_digest.as_deref()
+            != Some(record.activation_event_digest.as_str())
+        {
+            return Err(ContestationError::ActivationEventDigestMismatch {
+                expected: stored.receipt.activation_event_digest.clone(),
+                found: record.activation_event_digest.clone(),
+            });
+        }
+
+        let contestation_leaf = record.leaf_hash();
+        self.append_idempotent(
+            format!("contestation:{}", record.contestation_id),
+            MmrLeafKind::ContestationRecord,
+            contestation_leaf,
+            0,
+        )
+        .map_err(|e| ContestationError::Storage(format!("{e:?}")))
+    }
+
+    /// Return the immutable `(leaf_index, canonical_bytes)` stored for a receipt leaf.
+    pub fn receipt_evidence(&self, leaf_hash: &[u8; 32]) -> Option<(u64, &[u8])> {
+        self.receipts
+            .get(leaf_hash)
+            .map(|s| (s.leaf_index, s.canonical_bytes.as_slice()))
+    }
+
+    pub fn root(&self) -> Result<[u8; 32], String> {
+        self.frontier
+            .root()
+            .map_err(|e| format!("mmr root failed: {e}"))
+    }
+
+    pub fn leaf_count(&self) -> u64 {
+        self.frontier.count
     }
 
     /// Project an activation outbox record into the MMR as a 32-byte leaf.
@@ -813,14 +1023,8 @@ where
     };
     receipt.sign(receipt_signer);
 
-    let leaf = receipt.leaf_hash();
     let receipt_leaf_index = mmr
-        .append_idempotent(
-            format!("receipt:{}", hex::encode(leaf)),
-            MmrLeafKind::ExecutionReceiptExecuted,
-            leaf,
-            0,
-        )
+        .append_receipt(&receipt, MmrLeafKind::ExecutionReceiptExecuted)
         .map_err(|e| format!("append executed receipt to mmr: {e:?}"))?;
 
     Ok(GovernedOutcome {
@@ -898,9 +1102,8 @@ fn record_outcome(
     };
     receipt.sign(receipt_signer);
 
-    let leaf = receipt.leaf_hash();
     let receipt_leaf_index = mmr
-        .append_idempotent(format!("receipt:{}", hex::encode(leaf)), leaf_kind, leaf, 0)
+        .append_receipt(&receipt, leaf_kind)
         .map_err(|e| format!("append receipt to mmr: {e:?}"))?;
 
     Ok(GovernedOutcome {
@@ -919,7 +1122,12 @@ pub enum OfflineVerifyError {
     InvalidReceiptSchema(String),
     UnknownReceiptKey(String),
     InvalidReceiptSignature,
+    InvalidContestationSchema(String),
+    UnknownContesterKey(String),
+    InvalidContestationSignature,
+    ContestationBindingMismatch(&'static str),
     ReceiptNotInMmr,
+    ContestationNotInMmr,
     ActivationNotInMmr,
     ActivationDigestMismatch,
 }
@@ -950,6 +1158,67 @@ pub fn verify_offline_bundle(
         mmr::verify(&act_leaf, act_proof, checkpoint.leaf_count, &root)
             .map_err(|_| OfflineVerifyError::ActivationNotInMmr)?;
     }
+
+    Ok(())
+}
+
+/// Independent offline verification proving that both the untouched original
+/// [`ExecutionReceipt`] and the appended [`ContestationRecord`] are validly
+/// signed, bound across `(receipt_digest, policy_digest, activation_event_digest)`,
+/// and included in the same posterior [`MmrCheckpoint`].
+#[allow(clippy::too_many_arguments)]
+pub fn verify_offline_contestation_bundle(
+    original_receipt: &ExecutionReceipt,
+    original_receipt_proof: &Proof,
+    contestation: &ContestationRecord,
+    contestation_proof: &Proof,
+    checkpoint: &MmrCheckpoint,
+    receipt_trust: &TrustStore,
+    contester_trust: &TrustStore,
+    checkpoint_trust: &TrustStore,
+) -> Result<(), OfflineVerifyError> {
+    let root = checkpoint.verify(checkpoint_trust)?;
+    original_receipt.verify(receipt_trust)?;
+    contestation.verify(contester_trust)?;
+
+    let receipt_leaf = original_receipt.leaf_hash();
+    let expected_receipt_digest = format!("blake3:{}", hex::encode(receipt_leaf));
+    if contestation.receipt_digest != expected_receipt_digest {
+        return Err(OfflineVerifyError::ContestationBindingMismatch(
+            "receipt_digest",
+        ));
+    }
+    if original_receipt.active_candidate_digest.as_deref()
+        != Some(contestation.policy_digest.as_str())
+    {
+        return Err(OfflineVerifyError::ContestationBindingMismatch(
+            "policy_digest",
+        ));
+    }
+    if original_receipt.activation_event_digest.as_deref()
+        != Some(contestation.activation_event_digest.as_str())
+    {
+        return Err(OfflineVerifyError::ContestationBindingMismatch(
+            "activation_event_digest",
+        ));
+    }
+
+    mmr::verify(
+        &receipt_leaf,
+        original_receipt_proof,
+        checkpoint.leaf_count,
+        &root,
+    )
+    .map_err(|_| OfflineVerifyError::ReceiptNotInMmr)?;
+
+    let contestation_leaf = contestation.leaf_hash();
+    mmr::verify(
+        &contestation_leaf,
+        contestation_proof,
+        checkpoint.leaf_count,
+        &root,
+    )
+    .map_err(|_| OfflineVerifyError::ContestationNotInMmr)?;
 
     Ok(())
 }

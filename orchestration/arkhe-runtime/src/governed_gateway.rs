@@ -24,8 +24,8 @@ use arkhe_governance::activation::ActivationError;
 use arkhe_governance::policy_bundle::{SignaturePolicy, SignedPolicyBundle, TrustStore};
 use arkhe_kernel::activation_sqlite::SqliteActivationStore;
 use arkhe_kernel::governed_execution::{
-    execute_governed_with_review, ExecutionReceipt, MmrCheckpoint, MmrLeafKind, MmrLog,
-    ReceiptOutcome, ReviewApproval,
+    execute_governed_with_review, parse_blake3_digest, ContestationError, ContestationRecord,
+    ExecutionReceipt, MmrCheckpoint, MmrLeafKind, MmrLog, ReceiptOutcome, ReviewApproval,
 };
 use arkhe_verify_core::rbb::mmr::Proof;
 use axum::extract::State;
@@ -52,6 +52,7 @@ pub struct MmrCounts {
     pub executed_receipts: usize,
     pub review_required_receipts: usize,
     pub rejected_receipts: usize,
+    pub contestation_records: usize,
 }
 
 /// Shared state for the governed HTTP gateway.
@@ -62,6 +63,7 @@ pub struct GovernedGatewayState {
     pub actor: String,
     pub policy_trust: TrustStore,
     pub reviewer_trust: TrustStore,
+    pub contester_trust: TrustStore,
     pub receipt_key_id: String,
     pub receipt_signer: SigningKey,
     pub checkpoint_key_id: String,
@@ -94,6 +96,7 @@ impl GovernedGatewayState {
             actor: actor.into(),
             policy_trust,
             reviewer_trust,
+            contester_trust: TrustStore::new(),
             receipt_key_id: receipt_key_id.into(),
             receipt_signer,
             checkpoint_key_id: checkpoint_key_id.into(),
@@ -101,6 +104,12 @@ impl GovernedGatewayState {
             clock,
             effect,
         }
+    }
+
+    /// Configure the trust store of authorized contestation signers.
+    pub fn with_contester_trust(mut self, trust: TrustStore) -> Self {
+        self.contester_trust = trust;
+        self
     }
 
     /// Snapshot counts of MMR leaves by kind (for audits and integration tests).
@@ -113,17 +122,52 @@ impl GovernedGatewayState {
                 .mmr
                 .count_kind(MmrLeafKind::ExecutionReceiptReviewRequired),
             rejected_receipts: core.mmr.count_kind(MmrLeafKind::ExecutionReceiptRejected),
+            contestation_records: core.mmr.count_kind(MmrLeafKind::ContestationRecord),
         }
+    }
+
+    /// Snapshot the immutable `(leaf_index, canonical_bytes)` stored for a receipt.
+    pub fn receipt_snapshot(&self, leaf_hash: &[u8; 32]) -> Option<(u64, Vec<u8>)> {
+        let core = self.core.lock().expect("governed core lock");
+        core.mmr
+            .receipt_evidence(leaf_hash)
+            .map(|(idx, bytes)| (idx, bytes.to_vec()))
+    }
+
+    /// Snapshot the current MMR `(root, leaf_count)`.
+    pub fn mmr_root_and_count(&self) -> Result<([u8; 32], u64), String> {
+        let core = self.core.lock().expect("governed core lock");
+        Ok((core.mmr.root()?, core.mmr.leaf_count()))
     }
 }
 
-/// Build the Axum router for the governed policy activation and execution routes.
+/// Build the Axum router for the governed policy activation, execution, and contestation routes.
 pub fn router(state: Arc<GovernedGatewayState>) -> Router {
     Router::new()
         .route("/v1/policies/activate", post(activate_policy))
         .route("/v1/governed/execute", post(governed_execute))
+        .route("/v1/governed/contest", post(governed_contest))
         .route("/v1/governed/checkpoint", get(governed_checkpoint))
         .with_state(state)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContestReceiptRequest {
+    pub contestation: ContestationRecord,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContestReceiptResponse {
+    pub decision: String,
+    pub contestation_leaf_index: u64,
+    pub original_receipt_leaf_index: u64,
+    pub original_receipt_bytes_hex: String,
+    pub original_receipt_digest: String,
+    pub original_receipt_proof: Proof,
+    pub contestation: ContestationRecord,
+    pub contestation_proof: Proof,
+    pub checkpoint: MmrCheckpoint,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -397,6 +441,122 @@ async fn governed_execute(
     };
 
     Ok((status, Json(body)))
+}
+
+async fn governed_contest(
+    State(state): State<Arc<GovernedGatewayState>>,
+    headers: HeaderMap,
+    Json(req): Json<ContestReceiptRequest>,
+) -> Result<(StatusCode, Json<ContestReceiptResponse>), (StatusCode, Json<Value>)> {
+    authenticate(&headers, &state)?;
+    let now = (state.clock)();
+
+    let mut core = state.core.lock().map_err(|_| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": "governed store lock poisoned" })),
+        )
+    })?;
+
+    let contestation_leaf_index = core
+        .mmr
+        .admit_contestation(&req.contestation, &state.contester_trust)
+        .map_err(|err| match err {
+            ContestationError::ReceiptNotFound => (
+                StatusCode::NOT_FOUND,
+                Json(json!({
+                    "decision": "REJECTED",
+                    "error": "receipt_not_found",
+                    "reason": "disputed receipt digest not found in MMR",
+                })),
+            ),
+            ContestationError::PolicyDigestMismatch { expected, found } => (
+                StatusCode::FORBIDDEN,
+                Json(json!({
+                    "decision": "REJECTED",
+                    "error": "policy_digest_mismatch",
+                    "reason": format!("expected={expected:?}, found={found}"),
+                })),
+            ),
+            ContestationError::ActivationEventDigestMismatch { expected, found } => (
+                StatusCode::FORBIDDEN,
+                Json(json!({
+                    "decision": "REJECTED",
+                    "error": "activation_event_digest_mismatch",
+                    "reason": format!("expected={expected:?}, found={found}"),
+                })),
+            ),
+            ContestationError::InvalidRecord(reason) => (
+                StatusCode::FORBIDDEN,
+                Json(json!({
+                    "decision": "REJECTED",
+                    "error": "invalid_contestation_record",
+                    "reason": reason,
+                })),
+            ),
+            ContestationError::Storage(reason) => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({
+                    "decision": "STORAGE_ERROR",
+                    "reason": reason,
+                })),
+            ),
+        })?;
+
+    let orig_leaf_bytes =
+        parse_blake3_digest(&req.contestation.receipt_digest).ok_or_else(|| {
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "error": "malformed admitted receipt digest" })),
+            )
+        })?;
+    let (original_receipt_leaf_index, orig_bytes) = core
+        .mmr
+        .receipt_evidence(&orig_leaf_bytes)
+        .map(|(idx, bytes)| (idx, bytes.to_vec()))
+        .ok_or_else(|| {
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "error": "admitted receipt disappeared from MMR" })),
+            )
+        })?;
+
+    let original_receipt_proof = core.mmr.prove(original_receipt_leaf_index).map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": format!("mmr prove original receipt failed: {e}") })),
+        )
+    })?;
+    let contestation_proof = core.mmr.prove(contestation_leaf_index).map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": format!("mmr prove contestation failed: {e}") })),
+        )
+    })?;
+    let checkpoint = core
+        .mmr
+        .sign_checkpoint(now, &state.checkpoint_key_id, &state.checkpoint_signer)
+        .map_err(|e| {
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "error": format!("mmr checkpoint failed: {e}") })),
+            )
+        })?;
+
+    Ok((
+        StatusCode::OK,
+        Json(ContestReceiptResponse {
+            decision: "CONTESTED".into(),
+            contestation_leaf_index,
+            original_receipt_leaf_index,
+            original_receipt_bytes_hex: hex::encode(orig_bytes),
+            original_receipt_digest: req.contestation.receipt_digest.clone(),
+            original_receipt_proof,
+            contestation: req.contestation,
+            contestation_proof,
+            checkpoint,
+        }),
+    ))
 }
 
 async fn governed_checkpoint(

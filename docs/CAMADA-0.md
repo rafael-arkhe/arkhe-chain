@@ -27,13 +27,14 @@ usá-lo: até agora não havia **um único** produtor ou consumidor de
 | `kernel/arkhe-kernel/src/governed_execution.rs` | Entrada governada do kernel (`SignedPolicyBundle` → `ContainmentGate` → revisão obrigatória/aprovação exata → recibo Ed25519 → `rbb::mmr` → verificador offline) |
 | `kernel/arkhe-kernel/tests/activation_i5b.rs` | 5 testes duráveis (corrida, replay/restrição, crash pré/pós-commit, reentrega e projetores concorrentes) |
 | `kernel/arkhe-kernel/tests/end_to_end_cycle.rs` | 4 testes ponta a ponta I1–I7 (positivo, assinatura inválida, política ativa expirada e adulteração/forja) |
-| `orchestration/arkhe-runtime/src/governed_gateway.rs` | Gateway HTTP governado (`/v1/policies/activate`, `/v1/governed/execute`, `/v1/governed/checkpoint`) |
+| `orchestration/arkhe-runtime/src/governed_gateway.rs` | Gateway HTTP governado (`/v1/policies/activate`, `/v1/governed/execute`, `/v1/governed/contest`, `/v1/governed/checkpoint`) |
 | `orchestration/arkhe-runtime/tests/governed_gateway_http.rs` | 5 testes HTTP (revisão obrigatória `409`, aprovação exata de uso único, execução permitida, política expirada e assinatura inválida) |
+| `orchestration/arkhe-runtime/tests/c1_contestation.rs` | 4 testes C1 (contestação append-only sem mutação + 3 controles negativos de vínculo e assinatura) |
 
 ```powershell
 cargo test -p arkhe-governance --test camada0 --test activation_cycle
 cargo test -p arkhe-kernel --features sqlite-activation --test activation_i5b --test end_to_end_cycle -- --nocapture
-cargo test -p arkhe-runtime --features sqlite-activation --test governed_gateway_http -- --nocapture
+cargo test -p arkhe-runtime --features sqlite-activation --test governed_gateway_http --test c1_contestation -- --nocapture
 ```
 
 ## 1. O que a constituição diz
@@ -258,7 +259,8 @@ não aumenta.
 | A ativação sobrevive a uma falha e reinício (I5b-A..D) | `LEMMA` local (Windows) | 5/5 em `arkhe-kernel` (`--features sqlite-activation --test activation_i5b`): corrida `Barrier(3)`, replay/`CHECK`, crash pré/pós-commit com `ARKHE_FAULT_ARMED`, reentrega com leitura intermediária e projetores concorrentes sobre destino WAL pré-inicializado |
 | Verificação explícita de `SIGABRT` nos crashes de subprocesso | `PENDING` | Ramo `#[cfg(unix)]` (`status.signal() == Some(6)`) implementado em `activation_i5b.rs`; aguarda execução em CI Linux |
 | Ciclo I1–I7 ponta a ponta no kernel (`execute_governed`, Ed25519 + `rbb::mmr`) | `LEMMA` local | 4/4 em `arkhe-kernel` (`--features sqlite-activation --test end_to_end_cycle`): ativação de `SignedPolicyBundle` → `ContainmentGate` → efeito observável → recibo Ed25519 + checkpoint assinados → `rbb::mmr::verify` offline; controles negativos separados para assinatura inválida, expiração pós-ativação (recusa registada no MMR com 0 efeitos) e adulteração/forja de recibo ou bytes em SQLite |
-| Gateway HTTP governado (`arkhe-runtime`) + revisão obrigatória de uso único | `LEMMA` local | 5/5 em `arkhe-runtime` (`--features sqlite-activation --test governed_gateway_http`): rota real `/v1/governed/execute` delega a `execute_governed_with_review()`; ação revisável sem aprovação retorna `409 REVIEW_REQUIRED` com 0 efeitos e folha verificável no MMR; aprovação assinada vinculada a `(action_digest, policy_digest, activation_event_digest)` bloqueia reuso em outra ação, permite exatamente uma execução (consumo atômico em `review_approvals_consumed`) e bloqueia replay; expiração e assinatura inválida falham fechadas no gateway. Montagem no binário `main.rs` em produção, recibos ML-DSA-65 e contestação/correção C1–C6 permanecem `PENDING` |
+| Gateway HTTP governado (`arkhe-runtime`) + revisão obrigatória de uso único | `LEMMA` local | 5/5 em `arkhe-runtime` (`--features sqlite-activation --test governed_gateway_http`): rota real `/v1/governed/execute` delega a `execute_governed_with_review()`; ação revisável sem aprovação retorna `409 REVIEW_REQUIRED` com 0 efeitos e folha verificável no MMR; aprovação assinada vinculada a `(action_digest, policy_digest, activation_event_digest)` bloqueia reuso em outra ação, permite exatamente uma execução (consumo atômico em `review_approvals_consumed`) e bloqueia replay; expiração e assinatura inválida falham fechadas no gateway. Montagem no binário `main.rs` em produção e recibos ML-DSA-65 permanecem `PENDING` |
+| C1 — Contestação append-only sem mutação (`c1_contestation`) | `LEMMA` local | 4/4 em `arkhe-runtime` (`--features sqlite-activation --test c1_contestation`): `POST /v1/governed/contest` admite `ContestationRecord` assinado após conferir `(receipt_digest, policy_digest, activation_event_digest)`, acrescenta uma nova folha ao `MmrLog`, preserva bytes/digest/posição do recibo original e verifica ambos offline contra o mesmo checkpoint posterior; mutações isoladas de cada vínculo ou assinatura deixam raiz e contagem de folhas intactas. Bloqueio de progresso sob contestação ativa (C2) e correção supersessora (C3+) permanecem `PENDING` |
 | Editar um tecto depois de assinar quebra a assinatura | `LEMMA` local | Teste dedicado |
 | Um mandato só pode estreitar aquilo de que descende | `LEMMA` local | Contenção de efeitos, tectos, moeda, janela e decisões reservadas |
 | Uma subdelegação herda do pai, não da constituição | `LEMMA` local | Teste dedicado |
