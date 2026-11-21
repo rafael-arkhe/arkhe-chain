@@ -7,6 +7,8 @@ license.workspace = true
 [dependencies]
 rusqlite = { version = "=0.32.1", features = ["bundled"], optional = true }
 uuid = { workspace = true, optional = true }
+ed25519-dalek = { workspace = true, optional = true }
+hex = { workspace = true, optional = true }
 arkhe-core = { path = "../arkhe-core" }
 arkhe-governance = { path = "../../governance/arkhe-governance" }
 arkhe-verify-core = { path = "../../verification/crates/arkhe-verify-core" }
@@ -16,7 +18,7 @@ async-trait.workspace = true
 
 [features]
 sqlite-broker = ["dep:rusqlite", "dep:uuid"]
-sqlite-activation = ["dep:rusqlite"]
+sqlite-activation = ["dep:rusqlite", "dep:ed25519-dalek", "dep:hex"]
 
 [dev-dependencies]
 base64 = "0.22"

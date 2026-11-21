@@ -8,7 +8,10 @@
 //! `PRAGMA synchronous = FULL`.
 
 use arkhe_core::CanonicalEncode;
-use arkhe_governance::activation::{ActivationEvent, ActivationStore, Active, CommitError};
+use arkhe_governance::activation::{
+    activate, Activated, ActivationError, ActivationEvent, ActivationStore, Active, CommitError,
+};
+use arkhe_governance::policy_bundle::{SignaturePolicy, SignedPolicyBundle, TrustStore};
 use rusqlite::{params, Connection, Error as SqliteError, OptionalExtension, TransactionBehavior};
 use std::io::Write;
 use std::path::Path;
@@ -75,10 +78,28 @@ impl From<SqliteError> for OutboxError {
     }
 }
 
+/// Active policy record loaded together with its persisted signed bundle,
+/// candidate bytes, and committed activation event digest.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LoadedActiveBundle {
+    pub active: Active,
+    pub bundle: SignedPolicyBundle,
+    pub candidate_bytes: Vec<u8>,
+    pub activation_event_digest: String,
+}
+
+struct StagedBundle {
+    bundle_json: String,
+    candidate_bytes: Vec<u8>,
+    bundle_digest: String,
+    candidate_digest: String,
+}
+
 /// SQLite WAL-backed durable [`ActivationStore`] with idempotent outbox reconciliation.
 pub struct SqliteActivationStore {
     conn: Connection,
     fault: FaultInjection,
+    staged_bundle: Option<StagedBundle>,
 }
 
 impl SqliteActivationStore {
@@ -106,9 +127,14 @@ impl SqliteActivationStore {
 
         let schema_ready: bool = conn
             .query_row(
-                "SELECT COUNT(*) = 3 FROM sqlite_master
+                "SELECT COUNT(*) = 4 FROM sqlite_master
                  WHERE type = 'table'
-                   AND name IN ('activation_active', 'activation_consumed', 'activation_outbox')",
+                   AND name IN (
+                     'activation_active',
+                     'activation_consumed',
+                     'activation_outbox',
+                     'activation_bundles'
+                   )",
                 [],
                 |r| r.get(0),
             )
@@ -147,6 +173,15 @@ impl SqliteActivationStore {
                     event_digest TEXT NOT NULL,
                     projected INTEGER NOT NULL DEFAULT 0 CHECK(projected IN (0, 1))
                 );
+
+                CREATE TABLE IF NOT EXISTS activation_bundles (
+                    proposal_id TEXT PRIMARY KEY CHECK(length(proposal_id) = 32),
+                    policy_id TEXT NOT NULL,
+                    bundle_json TEXT NOT NULL,
+                    candidate_bytes BLOB NOT NULL,
+                    bundle_digest TEXT NOT NULL,
+                    candidate_digest TEXT NOT NULL
+                );
                 ",
             )
             .map_err(|e| format_sqlite_err(&e))?;
@@ -155,12 +190,90 @@ impl SqliteActivationStore {
         Ok(Self {
             conn,
             fault: FaultInjection::None,
+            staged_bundle: None,
         })
     }
 
     /// Arm a controlled crash point for subprocess durability tests.
     pub fn set_fault_injection(&mut self, fault: FaultInjection) {
         self.fault = fault;
+    }
+
+    /// Run [`arkhe_governance::activation::activate`] while atomically persisting
+    /// the signed bundle and candidate bytes inside the same SQLite WAL transaction.
+    pub fn activate_bundle(
+        &mut self,
+        bundle: &SignedPolicyBundle,
+        candidate_bytes: &[u8],
+        trust_store: &TrustStore,
+        signature_policy: SignaturePolicy,
+        now: i64,
+    ) -> Result<Activated, ActivationError> {
+        let bundle_json = serde_json::to_string(bundle)
+            .map_err(|e| ActivationError::Storage(format!("serialize bundle: {e}")))?;
+        let bundle_digest = format!("blake3:{}", bundle.digest().to_hex());
+        let cand_digest = arkhe_governance::activation::candidate_digest(candidate_bytes);
+        self.staged_bundle = Some(StagedBundle {
+            bundle_json,
+            candidate_bytes: candidate_bytes.to_vec(),
+            bundle_digest,
+            candidate_digest: cand_digest,
+        });
+        let result = activate(
+            self,
+            bundle,
+            candidate_bytes,
+            trust_store,
+            signature_policy,
+            now,
+        );
+        self.staged_bundle = None;
+        result
+    }
+
+    /// Load the active policy record together with its persisted signed bundle,
+    /// candidate bytes, and committed activation event digest directly from SQLite.
+    pub fn load_active_bundle(
+        &self,
+        policy_id: &str,
+    ) -> Result<Option<LoadedActiveBundle>, String> {
+        let Some(active) = self.active(policy_id)? else {
+            return Ok(None);
+        };
+        let row: Option<(String, Vec<u8>, String, String)> = self
+            .conn
+            .query_row(
+                "SELECT b.bundle_json, b.candidate_bytes, b.candidate_digest, o.event_digest
+                 FROM activation_bundles b
+                 INNER JOIN activation_outbox o ON o.proposal_id = b.proposal_id
+                 WHERE b.proposal_id = ?1 AND b.policy_id = ?2",
+                params![&active.proposal_id, policy_id],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+            )
+            .optional()
+            .map_err(|e| format_sqlite_err(&e))?;
+
+        let (bundle_json, candidate_bytes, stored_cand_digest, activation_event_digest) = row
+            .ok_or_else(|| {
+                format!(
+                    "missing persisted bundle/outbox record for active proposal {}",
+                    active.proposal_id
+                )
+            })?;
+
+        if stored_cand_digest != active.candidate_digest {
+            return Err("stored bundle candidate_digest diverges from active state".into());
+        }
+
+        let bundle: SignedPolicyBundle = serde_json::from_str(&bundle_json)
+            .map_err(|e| format!("corrupted persisted SignedPolicyBundle JSON: {e}"))?;
+
+        Ok(Some(LoadedActiveBundle {
+            active,
+            bundle,
+            candidate_bytes,
+            activation_event_digest,
+        }))
     }
 
     /// Inspect active policy, total consumed proposals, and all outbox events.
@@ -326,6 +439,8 @@ impl ActivationStore for SqliteActivationStore {
         next: &Active,
         event: &ActivationEvent,
     ) -> Result<(), CommitError> {
+        let staged = self.staged_bundle.take();
+
         if next.policy_id != event.policy_id
             || next.version != event.version
             || next.proposal_id != event.proposal_id
@@ -429,6 +544,28 @@ impl ActivationStore for SqliteActivationStore {
             ],
         )
         .map_err(|e| CommitError::Storage(format_sqlite_err(&e)))?;
+
+        if let Some(bundle_art) = staged {
+            if bundle_art.candidate_digest != next.candidate_digest {
+                return Err(CommitError::Storage(
+                    "staged bundle candidate_digest diverges from active record".into(),
+                ));
+            }
+            tx.execute(
+                "INSERT INTO activation_bundles
+                    (proposal_id, policy_id, bundle_json, candidate_bytes, bundle_digest, candidate_digest)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![
+                    &next.proposal_id,
+                    &next.policy_id,
+                    &bundle_art.bundle_json,
+                    &bundle_art.candidate_bytes,
+                    &bundle_art.bundle_digest,
+                    &bundle_art.candidate_digest
+                ],
+            )
+            .map_err(|e| CommitError::Storage(format_sqlite_err(&e)))?;
+        }
 
         if self.fault == FaultInjection::BeforeCommit {
             trigger_armed_abort("pre_commit");

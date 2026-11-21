@@ -24,11 +24,13 @@ usá-lo: até agora não havia **um único** produtor ou consumidor de
 | `governance/arkhe-governance/tests/activation_cycle.rs` | 12 testes sobre o protocolo de ativação |
 | `governance/arkhe-governance/examples/camada0_fixture.rs` | O gerador |
 | `kernel/arkhe-kernel/src/activation_sqlite.rs` | O *backend* durável SQLite WAL (`feature = "sqlite-activation"`) com outbox reconciliável |
+| `kernel/arkhe-kernel/src/governed_execution.rs` | Entrada governada do kernel (`SignedPolicyBundle` → `ContainmentGate` → recibo Ed25519 → `rbb::mmr` → verificador offline) |
 | `kernel/arkhe-kernel/tests/activation_i5b.rs` | 5 testes duráveis (corrida, replay/restrição, crash pré/pós-commit, reentrega e projetores concorrentes) |
+| `kernel/arkhe-kernel/tests/end_to_end_cycle.rs` | 4 testes ponta a ponta I1–I7 (positivo, assinatura inválida, política ativa expirada e adulteração/forja) |
 
 ```powershell
 cargo test -p arkhe-governance --test camada0 --test activation_cycle
-cargo test -p arkhe-kernel --features sqlite-activation --test activation_i5b -- --nocapture
+cargo test -p arkhe-kernel --features sqlite-activation --test activation_i5b --test end_to_end_cycle -- --nocapture
 ```
 
 ## 1. O que a constituição diz
@@ -252,7 +254,7 @@ não aumenta.
 | Conflito de concorrência e falha de armazenamento são respostas diferentes | `LEMMA` local | Variantes distintas do `ActivationError`/`CommitError`, com testes em memória e em SQLite WAL (`t01`, `t02`) |
 | A ativação sobrevive a uma falha e reinício (I5b-A..D) | `LEMMA` local (Windows) | 5/5 em `arkhe-kernel` (`--features sqlite-activation --test activation_i5b`): corrida `Barrier(3)`, replay/`CHECK`, crash pré/pós-commit com `ARKHE_FAULT_ARMED`, reentrega com leitura intermediária e projetores concorrentes sobre destino WAL pré-inicializado |
 | Verificação explícita de `SIGABRT` nos crashes de subprocesso | `PENDING` | Ramo `#[cfg(unix)]` (`status.signal() == Some(6)`) implementado em `activation_i5b.rs`; aguarda execução em CI Linux |
-| Ciclo I1–I7 ponta a ponta (política assinada → gate → recibo → MMR) | `PENDING` | Próximo marco: ativar `SignedPolicyBundle` no store durável, autorizar no gate sob a política carregada e verificar recibo assinado + inclusão no MMR |
+| Ciclo I1–I7 ponta a ponta no kernel (`execute_governed`, Ed25519 + `rbb::mmr`) | `LEMMA` local | 4/4 em `arkhe-kernel` (`--features sqlite-activation --test end_to_end_cycle`): ativação de `SignedPolicyBundle` → `ContainmentGate` → efeito observável → recibo Ed25519 + checkpoint assinados → `rbb::mmr::verify` offline; controles negativos separados para assinatura inválida, expiração pós-ativação (recusa registada no MMR com 0 efeitos) e adulteração/forja de recibo ou bytes em SQLite. Recibos ML-DSA-65 e ligação às rotas HTTP do `arkhe-runtime` permanecem `PENDING` |
 | Editar um tecto depois de assinar quebra a assinatura | `LEMMA` local | Teste dedicado |
 | Um mandato só pode estreitar aquilo de que descende | `LEMMA` local | Contenção de efeitos, tectos, moeda, janela e decisões reservadas |
 | Uma subdelegação herda do pai, não da constituição | `LEMMA` local | Teste dedicado |

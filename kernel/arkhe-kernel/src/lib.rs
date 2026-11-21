@@ -518,3 +518,5 @@ pub mod authenticated_transport;
 pub mod broker;
 #[cfg(feature = "sqlite-broker")]
 pub mod broker_sqlite;
+#[cfg(feature = "sqlite-activation")]
+pub mod governed_execution;
