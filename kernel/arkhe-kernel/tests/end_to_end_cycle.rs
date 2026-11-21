@@ -476,7 +476,9 @@ fn i1_i7_03_expired_active_policy_blocks_action_and_records_refusal() {
                 "expected Expired reason, got: {reason}"
             );
         }
-        ReceiptOutcome::Executed { .. } | ReceiptOutcome::ReviewRequired { .. } => {
+        ReceiptOutcome::Executed { .. }
+        | ReceiptOutcome::ReviewRequired { .. }
+        | ReceiptOutcome::ContestedBlocked { .. } => {
             panic!("expired policy must never execute or route to review")
         }
     }
@@ -657,7 +659,9 @@ fn i1_i7_04_tampered_receipt_forged_resigned_receipt_and_storage_tamper_fail() {
                 "expected digest mismatch refusal, got: {reason}"
             );
         }
-        ReceiptOutcome::Executed { .. } | ReceiptOutcome::ReviewRequired { .. } => {
+        ReceiptOutcome::Executed { .. }
+        | ReceiptOutcome::ReviewRequired { .. }
+        | ReceiptOutcome::ContestedBlocked { .. } => {
             panic!("tampered candidate bytes in SQLite must never execute")
         }
     }

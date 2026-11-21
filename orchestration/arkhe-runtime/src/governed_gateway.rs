@@ -51,6 +51,7 @@ pub struct MmrCounts {
     pub activation_events: usize,
     pub executed_receipts: usize,
     pub review_required_receipts: usize,
+    pub contested_blocked_receipts: usize,
     pub rejected_receipts: usize,
     pub contestation_records: usize,
 }
@@ -121,6 +122,9 @@ impl GovernedGatewayState {
             review_required_receipts: core
                 .mmr
                 .count_kind(MmrLeafKind::ExecutionReceiptReviewRequired),
+            contested_blocked_receipts: core
+                .mmr
+                .count_kind(MmrLeafKind::ExecutionReceiptContestedBlocked),
             rejected_receipts: core.mmr.count_kind(MmrLeafKind::ExecutionReceiptRejected),
             contestation_records: core.mmr.count_kind(MmrLeafKind::ContestationRecord),
         }
@@ -132,6 +136,26 @@ impl GovernedGatewayState {
         core.mmr
             .receipt_evidence(leaf_hash)
             .map(|(idx, bytes)| (idx, bytes.to_vec()))
+    }
+
+    /// Snapshot the immutable `(leaf_index, canonical_bytes)` stored for a contestation.
+    pub fn contestation_snapshot(&self, leaf_hash: &[u8; 32]) -> Option<(u64, Vec<u8>)> {
+        let core = self.core.lock().expect("governed core lock");
+        core.mmr
+            .contestation_evidence(leaf_hash)
+            .map(|(idx, bytes)| (idx, bytes.to_vec()))
+    }
+
+    /// Generate an MMR inclusion proof for any existing leaf against the current frontier.
+    pub fn prove_leaf(&self, leaf_index: u64) -> Result<Proof, String> {
+        let core = self.core.lock().expect("governed core lock");
+        core.mmr.prove(leaf_index)
+    }
+
+    /// Check whether a single-use review approval nonce has been consumed in SQLite WAL.
+    pub fn is_review_approval_consumed(&self, approval_id: &str) -> Result<bool, String> {
+        let core = self.core.lock().expect("governed core lock");
+        core.store.is_review_approval_consumed(approval_id)
     }
 
     /// Snapshot the current MMR `(root, leaf_count)`.
@@ -187,6 +211,10 @@ pub struct GovernedExecuteRequest {
     pub request_key: String,
     pub claimed_created_at: i64,
     pub action_input_hex: String,
+    /// Authenticated causal dependencies (e.g., prior receipt digests as `blake3:<64hex>`
+    /// or bare 64-hex) hashed into `WorkIntent::context_refs` and bound into any `ReviewApproval`.
+    #[serde(default)]
+    pub context_refs_hex: Vec<String>,
     #[serde(default)]
     pub approval: Option<ReviewApproval>,
 }
@@ -202,6 +230,10 @@ pub struct GovernedExecuteResponse {
     pub policy_digest: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub activation_event_digest: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub contested_receipt_digest: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub contestation_digest: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub output_hex: Option<String>,
     pub receipt: ExecutionReceipt,
@@ -325,6 +357,21 @@ async fn governed_execute(
         )
     })?;
 
+    let mut context_refs = Vec::with_capacity(req.context_refs_hex.len());
+    for raw in &req.context_refs_hex {
+        let stripped = raw.strip_prefix("blake3:").unwrap_or(raw.as_str());
+        let bytes: [u8; 32] = hex::decode(stripped)
+            .ok()
+            .and_then(|b| b.try_into().ok())
+            .ok_or_else(|| {
+                (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!({ "error": "context_refs_hex entries must be 64 hex characters or blake3:<64hex>" })),
+                )
+            })?;
+        context_refs.push(Digest32(bytes));
+    }
+
     let now = (state.clock)();
     let intent = WorkIntent {
         requested_by: state.actor.clone(),
@@ -332,7 +379,7 @@ async fn governed_execute(
         target: Digest32(target_bytes),
         parameters_digest: Digest32::blake3(b"AKG:HTTP:PARAMS:v1\0", &action_input),
         context: vec![],
-        context_refs: vec![],
+        context_refs,
         request_identity: RequestIdentity::new(req.request_key.as_bytes()),
         claimed_created_at: req.claimed_created_at,
     };
@@ -400,31 +447,42 @@ async fn governed_execute(
             )
         })?;
 
-    let (status, decision, reason, action_digest, policy_digest, activation_event_digest) =
-        match &outcome.receipt.outcome {
-            ReceiptOutcome::Executed { .. } => (StatusCode::OK, "ALLOWED", None, None, None, None),
-            ReceiptOutcome::ReviewRequired {
-                action_digest,
-                policy_digest,
-                activation_event_digest,
-                reason,
-            } => (
-                StatusCode::CONFLICT,
-                "REVIEW_REQUIRED",
-                Some(reason.clone()),
-                Some(action_digest.clone()),
-                Some(policy_digest.clone()),
-                Some(activation_event_digest.clone()),
-            ),
-            ReceiptOutcome::Rejected { reason } => (
-                StatusCode::FORBIDDEN,
-                "DENIED",
-                Some(reason.clone()),
-                None,
-                None,
-                None,
-            ),
-        };
+    let mut reason = None;
+    let mut action_digest = None;
+    let mut policy_digest = None;
+    let mut activation_event_digest = None;
+    let mut contested_receipt_digest = None;
+    let mut contestation_digest = None;
+
+    let (status, decision) = match &outcome.receipt.outcome {
+        ReceiptOutcome::Executed { .. } => (StatusCode::OK, "ALLOWED"),
+        ReceiptOutcome::ReviewRequired {
+            action_digest: ad,
+            policy_digest: pd,
+            activation_event_digest: aed,
+            reason: r,
+        } => {
+            reason = Some(r.clone());
+            action_digest = Some(ad.clone());
+            policy_digest = Some(pd.clone());
+            activation_event_digest = Some(aed.clone());
+            (StatusCode::CONFLICT, "REVIEW_REQUIRED")
+        }
+        ReceiptOutcome::ContestedBlocked {
+            contested_receipt_digest: crd,
+            contestation_digest: cd,
+            reason: r,
+        } => {
+            reason = Some(r.clone());
+            contested_receipt_digest = Some(crd.clone());
+            contestation_digest = Some(cd.clone());
+            (StatusCode::CONFLICT, "CONTESTATION_ACTIVE")
+        }
+        ReceiptOutcome::Rejected { reason: r } => {
+            reason = Some(r.clone());
+            (StatusCode::FORBIDDEN, "DENIED")
+        }
+    };
 
     let body = GovernedExecuteResponse {
         decision: decision.into(),
@@ -432,6 +490,8 @@ async fn governed_execute(
         action_digest,
         policy_digest,
         activation_event_digest,
+        contested_receipt_digest,
+        contestation_digest,
         output_hex: outcome.output.map(hex::encode),
         receipt: outcome.receipt,
         receipt_proof,

@@ -243,6 +243,17 @@ impl SqliteActivationStore {
         Ok(inserted == 1)
     }
 
+    /// Check whether a single-use review approval nonce has already been consumed.
+    pub fn is_review_approval_consumed(&self, approval_id: &str) -> Result<bool, String> {
+        self.conn
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM review_approvals_consumed WHERE approval_id = ?1)",
+                params![approval_id],
+                |r| r.get(0),
+            )
+            .map_err(|e| format_sqlite_err(&e))
+    }
+
     /// Run [`arkhe_governance::activation::activate`] while atomically persisting
     /// the signed bundle and candidate bytes inside the same SQLite WAL transaction.
     pub fn activate_bundle(

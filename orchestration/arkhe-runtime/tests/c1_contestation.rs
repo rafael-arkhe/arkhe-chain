@@ -204,6 +204,7 @@ async fn setup_executed_receipt(
         request_key: format!("c1-req-{nonce}"),
         claimed_created_at: NOW,
         action_input_hex: hex::encode(b"evidence-document-v1"),
+        context_refs_hex: vec![],
         approval: None,
     };
     let (s_exec, body_exec) = post_json(&app, "/v1/governed/execute", &exec_req).await;

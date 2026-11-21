@@ -184,6 +184,11 @@ pub enum ReceiptOutcome {
         activation_event_digest: String,
         reason: String,
     },
+    ContestedBlocked {
+        contested_receipt_digest: String,
+        contestation_digest: String,
+        reason: String,
+    },
     Rejected {
         reason: String,
     },
@@ -445,6 +450,7 @@ pub enum MmrLeafKind {
     ActivationEvent,
     ExecutionReceiptExecuted,
     ExecutionReceiptReviewRequired,
+    ExecutionReceiptContestedBlocked,
     ExecutionReceiptRejected,
     ContestationRecord,
 }
@@ -462,6 +468,13 @@ struct StoredReceipt {
     leaf_index: u64,
     receipt: ExecutionReceipt,
     canonical_bytes: Vec<u8>,
+    target: Option<Digest32>,
+}
+
+#[derive(Debug, Clone)]
+struct StoredContestation {
+    leaf_index: u64,
+    canonical_bytes: Vec<u8>,
 }
 
 /// Append-only MMR log backed by [`arkhe_verify_core::rbb::mmr::Frontier`] with
@@ -472,6 +485,12 @@ pub struct MmrLog {
     frontier: Frontier,
     entries: Vec<MmrEntry>,
     receipts: HashMap<[u8; 32], StoredReceipt>,
+    contestations: HashMap<[u8; 32], StoredContestation>,
+    /// Active contestations indexed by disputed receipt leaf hash (`receipt_leaf -> contestation_leaf`).
+    active_contestations_by_receipt: HashMap<[u8; 32], [u8; 32]>,
+    /// Trusted server-side target scope index (`target -> (receipt_leaf, contestation_leaf)`),
+    /// ensuring clients cannot bypass active contestation by omitting receipt references.
+    active_contestations_by_target: HashMap<Digest32, ([u8; 32], [u8; 32])>,
 }
 
 impl MmrLog {
@@ -520,6 +539,17 @@ impl MmrLog {
         receipt: &ExecutionReceipt,
         kind: MmrLeafKind,
     ) -> Result<u64, OutboxError> {
+        self.append_receipt_with_target(receipt, kind, None)
+    }
+
+    /// Append a signed [`ExecutionReceipt`] associated with a trusted `WorkIntent::target`
+    /// so target-scoped active contestations cannot be bypassed by omitting client references.
+    pub fn append_receipt_with_target(
+        &mut self,
+        receipt: &ExecutionReceipt,
+        kind: MmrLeafKind,
+        target: Option<Digest32>,
+    ) -> Result<u64, OutboxError> {
         let leaf = receipt.leaf_hash();
         let canonical_bytes = receipt.canonical_signed_bytes();
         let leaf_index =
@@ -528,6 +558,7 @@ impl MmrLog {
             leaf_index,
             receipt: receipt.clone(),
             canonical_bytes,
+            target,
         });
         Ok(leaf_index)
     }
@@ -537,7 +568,8 @@ impl MmrLog {
     ///
     /// Enforces C1.1 before appending: signature validity plus exact match of
     /// `(receipt_digest, policy_digest, activation_event_digest)` against the
-    /// stored original receipt.
+    /// stored original receipt. Marks the contestation active for both explicit
+    /// receipt dependency (`context_refs`) and trusted target-scope tracking.
     pub fn admit_contestation(
         &mut self,
         record: &ContestationRecord,
@@ -549,41 +581,96 @@ impl MmrLog {
 
         let receipt_leaf = parse_blake3_digest(&record.receipt_digest)
             .ok_or(ContestationError::ReceiptNotFound)?;
-        let stored = self
-            .receipts
-            .get(&receipt_leaf)
-            .ok_or(ContestationError::ReceiptNotFound)?;
+        let (stored_policy, stored_activation, stored_target) = {
+            let stored = self
+                .receipts
+                .get(&receipt_leaf)
+                .ok_or(ContestationError::ReceiptNotFound)?;
+            (
+                stored.receipt.active_candidate_digest.clone(),
+                stored.receipt.activation_event_digest.clone(),
+                stored.target,
+            )
+        };
 
-        if stored.receipt.active_candidate_digest.as_deref() != Some(record.policy_digest.as_str())
-        {
+        if stored_policy.as_deref() != Some(record.policy_digest.as_str()) {
             return Err(ContestationError::PolicyDigestMismatch {
-                expected: stored.receipt.active_candidate_digest.clone(),
+                expected: stored_policy,
                 found: record.policy_digest.clone(),
             });
         }
 
-        if stored.receipt.activation_event_digest.as_deref()
-            != Some(record.activation_event_digest.as_str())
-        {
+        if stored_activation.as_deref() != Some(record.activation_event_digest.as_str()) {
             return Err(ContestationError::ActivationEventDigestMismatch {
-                expected: stored.receipt.activation_event_digest.clone(),
+                expected: stored_activation,
                 found: record.activation_event_digest.clone(),
             });
         }
 
         let contestation_leaf = record.leaf_hash();
-        self.append_idempotent(
-            format!("contestation:{}", record.contestation_id),
-            MmrLeafKind::ContestationRecord,
-            contestation_leaf,
-            0,
-        )
-        .map_err(|e| ContestationError::Storage(format!("{e:?}")))
+        let canonical_bytes = record.canonical_signed_bytes();
+        let leaf_index = self
+            .append_idempotent(
+                format!("contestation:{}", record.contestation_id),
+                MmrLeafKind::ContestationRecord,
+                contestation_leaf,
+                0,
+            )
+            .map_err(|e| ContestationError::Storage(format!("{e:?}")))?;
+
+        self.contestations
+            .entry(contestation_leaf)
+            .or_insert_with(|| StoredContestation {
+                leaf_index,
+                canonical_bytes,
+            });
+        self.active_contestations_by_receipt
+            .insert(receipt_leaf, contestation_leaf);
+        if let Some(target) = stored_target {
+            self.active_contestations_by_target
+                .insert(target, (receipt_leaf, contestation_leaf));
+        }
+
+        Ok(leaf_index)
+    }
+
+    /// Check whether `intent` falls under an active contestation, either via
+    /// authenticated causal dependency (`intent.context_refs`) or trusted
+    /// server-side target scope (`intent.target`).
+    pub fn active_contestation_for(
+        &self,
+        intent: &WorkIntent,
+    ) -> Option<(String, String, &'static str)> {
+        for ctx_ref in &intent.context_refs {
+            if let Some(cont_leaf) = self.active_contestations_by_receipt.get(&ctx_ref.0) {
+                return Some((
+                    format!("blake3:{}", hex::encode(ctx_ref.0)),
+                    format!("blake3:{}", hex::encode(cont_leaf)),
+                    "dependent on actively contested receipt",
+                ));
+            }
+        }
+        if let Some((rec_leaf, cont_leaf)) = self.active_contestations_by_target.get(&intent.target)
+        {
+            return Some((
+                format!("blake3:{}", hex::encode(rec_leaf)),
+                format!("blake3:{}", hex::encode(cont_leaf)),
+                "target has an actively contested receipt",
+            ));
+        }
+        None
     }
 
     /// Return the immutable `(leaf_index, canonical_bytes)` stored for a receipt leaf.
     pub fn receipt_evidence(&self, leaf_hash: &[u8; 32]) -> Option<(u64, &[u8])> {
         self.receipts
+            .get(leaf_hash)
+            .map(|s| (s.leaf_index, s.canonical_bytes.as_slice()))
+    }
+
+    /// Return the immutable `(leaf_index, canonical_bytes)` stored for a contestation leaf.
+    pub fn contestation_evidence(&self, leaf_hash: &[u8; 32]) -> Option<(u64, &[u8])> {
+        self.contestations
             .get(leaf_hash)
             .map(|s| (s.leaf_index, s.canonical_bytes.as_slice()))
     }
@@ -866,6 +953,33 @@ where
         }
     };
 
+    // C2.0: Active contestation MUST block BEFORE consuming any single-use review
+    // approval or executing any external effect.
+    if let Some((contested_receipt_digest, contestation_digest, scope_reason)) =
+        mmr.active_contestation_for(intent)
+    {
+        return record_outcome(
+            mmr,
+            policy_id,
+            policy_version,
+            policy_bundle_digest,
+            active_candidate_digest,
+            activation_event_digest,
+            activation_leaf_index,
+            intent_digest,
+            action_input_digest,
+            ReceiptOutcome::ContestedBlocked {
+                contested_receipt_digest,
+                contestation_digest,
+                reason: format!("blocked by active contestation: {scope_reason}"),
+            },
+            MmrLeafKind::ExecutionReceiptContestedBlocked,
+            now,
+            receipt_key_id,
+            receipt_signer,
+        );
+    }
+
     // Enforce mandatory review routing when declared by the active policy.
     let approved_id = if review_required {
         let Some(appr) = approval else {
@@ -1024,7 +1138,11 @@ where
     receipt.sign(receipt_signer);
 
     let receipt_leaf_index = mmr
-        .append_receipt(&receipt, MmrLeafKind::ExecutionReceiptExecuted)
+        .append_receipt_with_target(
+            &receipt,
+            MmrLeafKind::ExecutionReceiptExecuted,
+            Some(intent.target),
+        )
         .map_err(|e| format!("append executed receipt to mmr: {e:?}"))?;
 
     Ok(GovernedOutcome {
@@ -1219,6 +1337,73 @@ pub fn verify_offline_contestation_bundle(
         &root,
     )
     .map_err(|_| OfflineVerifyError::ContestationNotInMmr)?;
+
+    Ok(())
+}
+
+/// Independent offline verification for C2: proves that the untouched original
+/// receipt, the active [`ContestationRecord`], and the resulting `ContestedBlocked`
+/// refusal receipt are all validly signed, cross-linked by exact digests, and
+/// included in the same posterior [`MmrCheckpoint`].
+#[allow(clippy::too_many_arguments)]
+pub fn verify_offline_contestation_block_bundle(
+    original_receipt: &ExecutionReceipt,
+    original_receipt_proof: &Proof,
+    contestation: &ContestationRecord,
+    contestation_proof: &Proof,
+    blocked_receipt: &ExecutionReceipt,
+    blocked_receipt_proof: &Proof,
+    checkpoint: &MmrCheckpoint,
+    receipt_trust: &TrustStore,
+    contester_trust: &TrustStore,
+    checkpoint_trust: &TrustStore,
+) -> Result<(), OfflineVerifyError> {
+    verify_offline_contestation_bundle(
+        original_receipt,
+        original_receipt_proof,
+        contestation,
+        contestation_proof,
+        checkpoint,
+        receipt_trust,
+        contester_trust,
+        checkpoint_trust,
+    )?;
+
+    let root = checkpoint.verify(checkpoint_trust)?;
+    blocked_receipt.verify(receipt_trust)?;
+
+    match &blocked_receipt.outcome {
+        ReceiptOutcome::ContestedBlocked {
+            contested_receipt_digest,
+            contestation_digest,
+            ..
+        } => {
+            if *contested_receipt_digest != original_receipt.leaf_digest_str() {
+                return Err(OfflineVerifyError::ContestationBindingMismatch(
+                    "contested_receipt_digest",
+                ));
+            }
+            if *contestation_digest != contestation.leaf_digest_str() {
+                return Err(OfflineVerifyError::ContestationBindingMismatch(
+                    "contestation_digest",
+                ));
+            }
+        }
+        _ => {
+            return Err(OfflineVerifyError::ContestationBindingMismatch(
+                "expected ContestedBlocked receipt outcome",
+            ));
+        }
+    }
+
+    let blocked_leaf = blocked_receipt.leaf_hash();
+    mmr::verify(
+        &blocked_leaf,
+        blocked_receipt_proof,
+        checkpoint.leaf_count,
+        &root,
+    )
+    .map_err(|_| OfflineVerifyError::ReceiptNotInMmr)?;
 
     Ok(())
 }

@@ -263,6 +263,7 @@ async fn http_review_required_blocks_without_approval() {
         request_key: "req-review-1".into(),
         claimed_created_at: NOW,
         action_input_hex: hex::encode(b"sensitive-draft-A"),
+        context_refs_hex: vec![],
         approval: None,
     };
     let (status, body) = post_json(&app, "/v1/governed/execute", Some(TOKEN), &exec_req).await;
@@ -326,6 +327,7 @@ async fn http_exact_approval_allows_once() {
         request_key: "req-action-A".into(),
         claimed_created_at: NOW,
         action_input_hex: hex::encode(b"payload-A"),
+        context_refs_hex: vec![],
         approval: None,
     };
     let (status_pending, val_pending) =
@@ -360,6 +362,7 @@ async fn http_exact_approval_allows_once() {
         request_key: "req-action-B".into(),
         claimed_created_at: NOW,
         action_input_hex: hex::encode(b"payload-B-different"),
+        context_refs_hex: vec![],
         approval: Some(approval_a.clone()),
     };
     let (status_b, val_b) = post_json(
@@ -451,6 +454,7 @@ async fn http_allowed_action_executes_and_verifies() {
         request_key: "req-direct-1".into(),
         claimed_created_at: NOW,
         action_input_hex: hex::encode(b"direct-allowed-doc"),
+        context_refs_hex: vec![],
         approval: None,
     };
 
@@ -508,6 +512,7 @@ async fn http_expired_policy_blocks_at_gateway() {
         request_key: "req-expired-http".into(),
         claimed_created_at: EXPIRES_AT,
         action_input_hex: hex::encode(b"after-expiry"),
+        context_refs_hex: vec![],
         approval: None,
     };
     let (status, val) = post_json(&app, "/v1/governed/execute", Some(TOKEN), &req).await;
@@ -593,6 +598,7 @@ async fn http_invalid_signature_blocks_at_gateway() {
         request_key: "req-sim-blocked".into(),
         claimed_created_at: NOW,
         action_input_hex: hex::encode(b"sim-under-bad-v2"),
+        context_refs_hex: vec![],
         approval: None,
     };
     let (s3, val3) = post_json(&app, "/v1/governed/execute", Some(TOKEN), &sim_req).await;
