@@ -18,7 +18,7 @@ use arkhe_verify_core::rbb::mmr::{self, Frontier, Proof};
 use ed25519_dalek::{Signature, Signer, SigningKey};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub const ACTIVE_POLICY_SCHEMA: &str = "arkhe.kernel.active-policy/1";
 pub const EXECUTION_RECEIPT_SCHEMA: &str = "arkhe.kernel.execution-receipt/1";
@@ -26,6 +26,7 @@ pub const MMR_CHECKPOINT_SCHEMA: &str = "arkhe.kernel.mmr-checkpoint/1";
 pub const REVIEW_APPROVAL_SCHEMA: &str = "arkhe.kernel.review-approval/1";
 pub const CONTESTATION_RECORD_SCHEMA: &str = "arkhe.kernel.contestation-record/1";
 pub const CORRECTION_RECORD_SCHEMA: &str = "arkhe.kernel.correction-record/1";
+pub const RESOLUTION_RECORD_SCHEMA: &str = "arkhe.kernel.resolution-record/1";
 
 const DOMAIN_ACTION_INPUT: &[u8] = b"AKG:ACTION:INPUT:v1\0";
 const DOMAIN_ACTION_OUTPUT: &[u8] = b"AKG:ACTION:OUTPUT:v1\0";
@@ -33,6 +34,7 @@ const DOMAIN_GOVERNED_ACTION: &[u8] = b"AKG:GOVERNED:ACTION:v1\0";
 const DOMAIN_RECEIPT_LEAF: &[u8] = b"AKG:EXECUTION:RECEIPT:LEAF:v1\0";
 const DOMAIN_CONTESTATION_LEAF: &[u8] = b"AKG:CONTESTATION:RECORD:LEAF:v1\0";
 const DOMAIN_CORRECTION_LEAF: &[u8] = b"AKG:CORRECTION:RECORD:LEAF:v1\0";
+const DOMAIN_RESOLUTION_LEAF: &[u8] = b"AKG:RESOLUTION:RECORD:LEAF:v1\0";
 
 /// Compute the canonical `blake3:<64hex>` action digest binding both a
 /// `WorkIntent` digest and the exact action input digest.
@@ -485,6 +487,128 @@ pub enum CorrectionError {
     Storage(String),
 }
 
+/// Governance decision recorded by a [`ResolutionRecord`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ResolutionOutcome {
+    /// Dispute closed by accepting a verified superseding [`CorrectionRecord`].
+    ResolvedWithSupersession,
+    /// Dispute dismissed after audit; closes this specific contestation.
+    ContestationDismissed,
+    /// Dispute upheld; keeps this contestation active until a subsequent
+    /// authorized transition (e.g., superseding correction + resolution).
+    ContestationUpheld,
+}
+
+/// Signed append-only governance resolution record closing (or upholding) one
+/// specific [`ContestationRecord`] without mutating prior evidence.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResolutionRecord {
+    pub schema: String,
+    /// 32 lowercase hex characters identifying this resolution decision.
+    pub resolution_id: String,
+    /// `blake3:<64hex>` MMR leaf digest of the contestation being decided.
+    pub contestation_digest: String,
+    /// `blake3:<64hex>` MMR leaf digest of the disputed original receipt.
+    pub receipt_digest: String,
+    /// `blake3:<64hex>` active policy candidate digest bound to the dispute.
+    pub policy_digest: String,
+    /// Required for `ResolvedWithSupersession`; optional otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub correction_digest: Option<String>,
+    pub outcome: ResolutionOutcome,
+    pub rationale: String,
+    pub resolved_at: i64,
+    pub resolver_key_id: String,
+    pub signature_hex: String,
+}
+
+impl CanonicalEncode for ResolutionRecord {
+    const DOMAIN_OBJECT: &'static [u8] = b"AKG:RESOLUTION:RECORD:v1\0";
+
+    fn unsigned_projection(&self) -> Value {
+        json!({
+            "schema": self.schema,
+            "resolution_id": self.resolution_id,
+            "contestation_digest": self.contestation_digest,
+            "receipt_digest": self.receipt_digest,
+            "policy_digest": self.policy_digest,
+            "correction_digest": self.correction_digest,
+            "outcome": self.outcome,
+            "rationale": self.rationale,
+            "resolved_at": self.resolved_at,
+            "resolver_key_id": self.resolver_key_id,
+        })
+    }
+}
+
+impl ResolutionRecord {
+    pub fn sign(&mut self, signer: &SigningKey) {
+        let sig = signer.sign(&self.canonical_bytes());
+        self.signature_hex = hex::encode(sig.to_bytes());
+    }
+
+    pub fn verify(&self, trust: &TrustStore) -> Result<(), OfflineVerifyError> {
+        if self.schema != RESOLUTION_RECORD_SCHEMA {
+            return Err(OfflineVerifyError::InvalidResolutionSchema(
+                self.schema.clone(),
+            ));
+        }
+        if self.resolution_id.len() != 32
+            || !self
+                .resolution_id
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        {
+            return Err(OfflineVerifyError::InvalidResolutionSignature);
+        }
+        if self.rationale.trim().is_empty() {
+            return Err(OfflineVerifyError::InvalidResolutionSignature);
+        }
+        let sig_bytes = decode_sig64(&self.signature_hex)
+            .ok_or(OfflineVerifyError::InvalidResolutionSignature)?;
+        let key = trust
+            .get(&self.resolver_key_id)
+            .ok_or_else(|| OfflineVerifyError::UnknownResolverKey(self.resolver_key_id.clone()))?;
+        key.verify_strict(&self.canonical_bytes(), &Signature::from_bytes(&sig_bytes))
+            .map_err(|_| OfflineVerifyError::InvalidResolutionSignature)
+    }
+
+    pub fn canonical_signed_bytes(&self) -> Vec<u8> {
+        canonical::encode_value(&json!({
+            "unsigned": self.unsigned_projection(),
+            "signature_hex": self.signature_hex,
+        }))
+    }
+
+    pub fn leaf_hash(&self) -> [u8; 32] {
+        Digest32::blake3(DOMAIN_RESOLUTION_LEAF, &self.canonical_signed_bytes()).0
+    }
+
+    pub fn leaf_digest_str(&self) -> String {
+        format!("blake3:{}", hex::encode(self.leaf_hash()))
+    }
+}
+
+/// Admission errors returned when a [`ResolutionRecord`] fails authority
+/// separation, binding, replay, or state checks.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ResolutionError {
+    InvalidRecord(String),
+    ConflictingAuthority(String),
+    ContestationNotFound,
+    ContestationAlreadyResolved,
+    ResolutionAlreadyRecorded,
+    ContestationNotActive,
+    ReceiptDigestMismatch { expected: String, found: String },
+    PolicyDigestMismatch { expected: String, found: String },
+    CorrectionRequired,
+    CorrectionNotFound,
+    CorrectionBindingMismatch(String),
+    Storage(String),
+}
+
 /// Signed MMR root checkpoint used by an independent offline verifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -560,6 +684,7 @@ pub enum MmrLeafKind {
     ExecutionReceiptRejected,
     ContestationRecord,
     CorrectionRecord,
+    ResolutionRecord,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -583,17 +708,28 @@ struct StoredContestation {
     leaf_index: u64,
     record: ContestationRecord,
     canonical_bytes: Vec<u8>,
+    target: Option<Digest32>,
 }
 
 #[derive(Debug, Clone)]
 struct StoredCorrection {
     leaf_index: u64,
+    record: CorrectionRecord,
     canonical_bytes: Vec<u8>,
 }
 
+#[derive(Debug, Clone)]
+struct StoredResolution {
+    leaf_index: u64,
+    canonical_bytes: Vec<u8>,
+}
+
+type ActiveTargetContestation = ([u8; 32], [u8; 32]);
+
 /// Append-only MMR log backed by [`arkhe_verify_core::rbb::mmr::Frontier`] with
 /// idempotent projection of activation outbox records, execution receipts,
-/// append-only contestation records, and superseding correction records.
+/// append-only contestation records, superseding correction records, and
+/// governance resolution records.
 #[derive(Debug, Default)]
 pub struct MmrLog {
     frontier: Frontier,
@@ -601,11 +737,16 @@ pub struct MmrLog {
     receipts: HashMap<[u8; 32], StoredReceipt>,
     contestations: HashMap<[u8; 32], StoredContestation>,
     corrections: HashMap<[u8; 32], StoredCorrection>,
-    /// Active contestations indexed by disputed receipt leaf hash (`receipt_leaf -> contestation_leaf`).
-    active_contestations_by_receipt: HashMap<[u8; 32], [u8; 32]>,
-    /// Trusted server-side target scope index (`target -> (receipt_leaf, contestation_leaf)`),
-    /// ensuring clients cannot bypass active contestation by omitting receipt references.
-    active_contestations_by_target: HashMap<Digest32, ([u8; 32], [u8; 32])>,
+    resolutions: HashMap<[u8; 32], StoredResolution>,
+    /// Active contestations per receipt (`receipt_leaf -> Vec<contestation_leaf>`).
+    active_contestations_by_receipt: HashMap<[u8; 32], Vec<[u8; 32]>>,
+    /// Trusted server-side target scope index (`target -> Vec<(receipt_leaf, contestation_leaf)>`),
+    /// supporting multiple simultaneous contestations per target without conflating them.
+    active_contestations_by_target: HashMap<Digest32, Vec<ActiveTargetContestation>>,
+    /// Contestations terminally closed by `ResolvedWithSupersession` or `ContestationDismissed`.
+    resolved_contestations: HashSet<[u8; 32]>,
+    /// Resolution IDs already recorded (prevents replaying even `ContestationUpheld`).
+    recorded_resolution_ids: HashSet<String>,
 }
 
 impl MmrLog {
@@ -739,12 +880,24 @@ impl MmrLog {
                 leaf_index,
                 record: record.clone(),
                 canonical_bytes,
+                target: stored_target,
             });
-        self.active_contestations_by_receipt
-            .insert(receipt_leaf, contestation_leaf);
+        let receipt_entry = self
+            .active_contestations_by_receipt
+            .entry(receipt_leaf)
+            .or_default();
+        if !receipt_entry.contains(&contestation_leaf) {
+            receipt_entry.push(contestation_leaf);
+        }
         if let Some(target) = stored_target {
-            self.active_contestations_by_target
-                .insert(target, (receipt_leaf, contestation_leaf));
+            let target_entry = self
+                .active_contestations_by_target
+                .entry(target)
+                .or_default();
+            let pair = (receipt_leaf, contestation_leaf);
+            if !target_entry.contains(&pair) {
+                target_entry.push(pair);
+            }
         }
 
         Ok(leaf_index)
@@ -788,7 +941,11 @@ impl MmrLog {
 
         let receipt_leaf = parse_blake3_digest(&expected_receipt_digest)
             .ok_or(CorrectionError::ContestationNotActive)?;
-        if self.active_contestations_by_receipt.get(&receipt_leaf) != Some(&contestation_leaf) {
+        let is_active = self
+            .active_contestations_by_receipt
+            .get(&receipt_leaf)
+            .is_some_and(|list| list.contains(&contestation_leaf));
+        if !is_active {
             return Err(CorrectionError::ContestationNotActive);
         }
 
@@ -807,6 +964,7 @@ impl MmrLog {
             .entry(correction_leaf)
             .or_insert_with(|| StoredCorrection {
                 leaf_index,
+                record: record.clone(),
                 canonical_bytes,
             });
 
@@ -815,9 +973,192 @@ impl MmrLog {
         Ok(leaf_index)
     }
 
+    /// Admit a signed [`ResolutionRecord`] under a single consistency boundary
+    /// (C5.1–C5.4): verifies resolver authority AND effective key separation
+    /// from contester and corrector, validates active contestation and optional
+    /// superseding correction bindings, rejects replay (including `ContestationUpheld`),
+    /// appends exactly one `MmrLeafKind::ResolutionRecord` leaf, and updates
+    /// only this specific contestation's active state atomically.
+    pub fn admit_resolution(
+        &mut self,
+        record: &ResolutionRecord,
+        resolver_trust: &TrustStore,
+        contester_trust: &TrustStore,
+        corrector_trust: &TrustStore,
+    ) -> Result<u64, ResolutionError> {
+        record
+            .verify(resolver_trust)
+            .map_err(|e| ResolutionError::InvalidRecord(format!("{e:?}")))?;
+
+        if self.recorded_resolution_ids.contains(&record.resolution_id) {
+            return Err(ResolutionError::ResolutionAlreadyRecorded);
+        }
+
+        let contestation_leaf = parse_blake3_digest(&record.contestation_digest)
+            .ok_or(ResolutionError::ContestationNotFound)?;
+        let stored_cont = self
+            .contestations
+            .get(&contestation_leaf)
+            .ok_or(ResolutionError::ContestationNotFound)?
+            .clone();
+
+        if self.resolved_contestations.contains(&contestation_leaf) {
+            return Err(ResolutionError::ContestationAlreadyResolved);
+        }
+
+        let expected_receipt_digest = stored_cont.record.receipt_digest.clone();
+        let expected_policy_digest = stored_cont.record.policy_digest.clone();
+
+        if record.receipt_digest != expected_receipt_digest {
+            return Err(ResolutionError::ReceiptDigestMismatch {
+                expected: expected_receipt_digest,
+                found: record.receipt_digest.clone(),
+            });
+        }
+        if record.policy_digest != expected_policy_digest {
+            return Err(ResolutionError::PolicyDigestMismatch {
+                expected: expected_policy_digest,
+                found: record.policy_digest.clone(),
+            });
+        }
+
+        let receipt_leaf = parse_blake3_digest(&expected_receipt_digest)
+            .ok_or(ResolutionError::ContestationNotActive)?;
+        let is_active = self
+            .active_contestations_by_receipt
+            .get(&receipt_leaf)
+            .is_some_and(|list| list.contains(&contestation_leaf));
+        if !is_active {
+            return Err(ResolutionError::ContestationNotActive);
+        }
+
+        // Enforce effective authority separation from the contester — checking BOTH
+        // key_id AND the actual Ed25519 verifying key bytes (blocks misconfiguration
+        // where the same public key was inserted into multiple trust stores).
+        let resolver_pub = resolver_trust
+            .get(&record.resolver_key_id)
+            .ok_or_else(|| ResolutionError::InvalidRecord("resolver key missing".into()))?
+            .to_bytes();
+        if record.resolver_key_id == stored_cont.record.contester_key_id {
+            return Err(ResolutionError::ConflictingAuthority(
+                "resolver_key_id cannot equal contester_key_id".into(),
+            ));
+        }
+        if let Some(contester_key) = contester_trust.get(&stored_cont.record.contester_key_id) {
+            if contester_key.to_bytes() == resolver_pub {
+                return Err(ResolutionError::ConflictingAuthority(
+                    "resolver public key cannot match contester public key".into(),
+                ));
+            }
+        }
+
+        // Validate superseding correction binding (required for ResolvedWithSupersession)
+        // and enforce authority separation from the corrector whenever a correction is linked.
+        match (record.outcome, &record.correction_digest) {
+            (ResolutionOutcome::ResolvedWithSupersession, None) => {
+                return Err(ResolutionError::CorrectionRequired);
+            }
+            (_, Some(corr_digest)) => {
+                let corr_leaf =
+                    parse_blake3_digest(corr_digest).ok_or(ResolutionError::CorrectionNotFound)?;
+                let stored_corr = self
+                    .corrections
+                    .get(&corr_leaf)
+                    .ok_or(ResolutionError::CorrectionNotFound)?;
+
+                if stored_corr.record.contestation_digest != record.contestation_digest {
+                    return Err(ResolutionError::CorrectionBindingMismatch(
+                        "correction contestation_digest mismatch".into(),
+                    ));
+                }
+                if stored_corr.record.superseded_receipt_digest != record.receipt_digest {
+                    return Err(ResolutionError::CorrectionBindingMismatch(
+                        "correction superseded_receipt_digest mismatch".into(),
+                    ));
+                }
+                if stored_corr.record.policy_digest != record.policy_digest {
+                    return Err(ResolutionError::CorrectionBindingMismatch(
+                        "correction policy_digest mismatch".into(),
+                    ));
+                }
+
+                if record.resolver_key_id == stored_corr.record.corrector_key_id {
+                    return Err(ResolutionError::ConflictingAuthority(
+                        "resolver_key_id cannot equal corrector_key_id".into(),
+                    ));
+                }
+                if let Some(corrector_key) =
+                    corrector_trust.get(&stored_corr.record.corrector_key_id)
+                {
+                    if corrector_key.to_bytes() == resolver_pub {
+                        return Err(ResolutionError::ConflictingAuthority(
+                            "resolver public key cannot match corrector public key".into(),
+                        ));
+                    }
+                }
+            }
+            (_, None) => {}
+        }
+
+        // Single consistency boundary: append ResolutionRecord leaf and update active
+        // contestation indices strictly for THIS contestation_leaf.
+        let resolution_leaf = record.leaf_hash();
+        let canonical_bytes = record.canonical_signed_bytes();
+        let leaf_index = self
+            .append_idempotent(
+                format!("resolution:{}", record.resolution_id),
+                MmrLeafKind::ResolutionRecord,
+                resolution_leaf,
+                0,
+            )
+            .map_err(|e| ResolutionError::Storage(format!("{e:?}")))?;
+
+        self.resolutions
+            .entry(resolution_leaf)
+            .or_insert_with(|| StoredResolution {
+                leaf_index,
+                canonical_bytes,
+            });
+        self.recorded_resolution_ids
+            .insert(record.resolution_id.clone());
+
+        match record.outcome {
+            ResolutionOutcome::ResolvedWithSupersession
+            | ResolutionOutcome::ContestationDismissed => {
+                self.resolved_contestations.insert(contestation_leaf);
+                if let Some(list) = self.active_contestations_by_receipt.get_mut(&receipt_leaf) {
+                    list.retain(|c| c != &contestation_leaf);
+                    if list.is_empty() {
+                        self.active_contestations_by_receipt.remove(&receipt_leaf);
+                    }
+                }
+                if let Some(target) = stored_cont.target {
+                    if let Some(list) = self.active_contestations_by_target.get_mut(&target) {
+                        list.retain(|(r, c)| !(r == &receipt_leaf && c == &contestation_leaf));
+                        if list.is_empty() {
+                            self.active_contestations_by_target.remove(&target);
+                        }
+                    }
+                }
+            }
+            ResolutionOutcome::ContestationUpheld => {
+                // Deliberately keep this contestation active in both indices.
+            }
+        }
+
+        Ok(leaf_index)
+    }
+
     /// Return the immutable `(leaf_index, canonical_bytes)` stored for a correction leaf.
     pub fn correction_evidence(&self, leaf_hash: &[u8; 32]) -> Option<(u64, &[u8])> {
         self.corrections
+            .get(leaf_hash)
+            .map(|s| (s.leaf_index, s.canonical_bytes.as_slice()))
+    }
+
+    /// Return the immutable `(leaf_index, canonical_bytes)` stored for a resolution leaf.
+    pub fn resolution_evidence(&self, leaf_hash: &[u8; 32]) -> Option<(u64, &[u8])> {
+        self.resolutions
             .get(leaf_hash)
             .map(|s| (s.leaf_index, s.canonical_bytes.as_slice()))
     }
@@ -830,7 +1171,11 @@ impl MmrLog {
         intent: &WorkIntent,
     ) -> Option<(String, String, &'static str)> {
         for ctx_ref in &intent.context_refs {
-            if let Some(cont_leaf) = self.active_contestations_by_receipt.get(&ctx_ref.0) {
+            if let Some(cont_leaf) = self
+                .active_contestations_by_receipt
+                .get(&ctx_ref.0)
+                .and_then(|list| list.first())
+            {
                 return Some((
                     format!("blake3:{}", hex::encode(ctx_ref.0)),
                     format!("blake3:{}", hex::encode(cont_leaf)),
@@ -838,7 +1183,10 @@ impl MmrLog {
                 ));
             }
         }
-        if let Some((rec_leaf, cont_leaf)) = self.active_contestations_by_target.get(&intent.target)
+        if let Some((rec_leaf, cont_leaf)) = self
+            .active_contestations_by_target
+            .get(&intent.target)
+            .and_then(|list| list.first())
         {
             return Some((
                 format!("blake3:{}", hex::encode(rec_leaf)),
@@ -1436,9 +1784,16 @@ pub enum OfflineVerifyError {
     UnknownCorrectorKey(String),
     InvalidCorrectionSignature,
     CorrectionBindingMismatch(&'static str),
+    InvalidResolutionSchema(String),
+    UnknownResolverKey(String),
+    InvalidResolutionSignature,
+    ResolutionBindingMismatch(&'static str),
+    ConflictingAuthority(&'static str),
+    CausalOrderViolation,
     ReceiptNotInMmr,
     ContestationNotInMmr,
     CorrectionNotInMmr,
+    ResolutionNotInMmr,
     ActivationNotInMmr,
     ActivationDigestMismatch,
 }
@@ -1659,6 +2014,155 @@ pub fn verify_offline_correction_bundle(
         &root,
     )
     .map_err(|_| OfflineVerifyError::CorrectionNotInMmr)?;
+
+    Ok(())
+}
+
+/// Independent offline verification for C5/C6: validates signatures, chained
+/// digests, **strict causal MMR leaf-index ordering**
+/// (`receipt < contestation [< correction] < resolution`), and MMR inclusion
+/// proofs of the dispute lifecycle against the same authenticated
+/// [`MmrCheckpoint`], with zero access to operational storage.
+///
+/// Scope note (OVB): this bundle proves the lifecycle and resolution of the
+/// specific dispute presented; proving global absence of *other* active
+/// contestations on a target requires additional evidence covering the active
+/// contestation set at that checkpoint.
+#[allow(clippy::too_many_arguments)]
+pub fn verify_offline_resolution_bundle(
+    original_receipt: &ExecutionReceipt,
+    original_receipt_proof: &Proof,
+    contestation: &ContestationRecord,
+    contestation_proof: &Proof,
+    correction: Option<(&CorrectionRecord, &Proof)>,
+    resolution: &ResolutionRecord,
+    resolution_proof: &Proof,
+    checkpoint: &MmrCheckpoint,
+    receipt_trust: &TrustStore,
+    contester_trust: &TrustStore,
+    corrector_trust: &TrustStore,
+    resolver_trust: &TrustStore,
+    checkpoint_trust: &TrustStore,
+) -> Result<(), OfflineVerifyError> {
+    let root = checkpoint.verify(checkpoint_trust)?;
+
+    if original_receipt_proof.leaf_index >= contestation_proof.leaf_index {
+        return Err(OfflineVerifyError::CausalOrderViolation);
+    }
+
+    match (resolution.outcome, correction) {
+        (ResolutionOutcome::ResolvedWithSupersession, None) => {
+            return Err(OfflineVerifyError::ResolutionBindingMismatch(
+                "correction_required_for_supersession",
+            ));
+        }
+        (_, Some((corr, corr_proof))) => {
+            if contestation_proof.leaf_index >= corr_proof.leaf_index
+                || corr_proof.leaf_index >= resolution_proof.leaf_index
+            {
+                return Err(OfflineVerifyError::CausalOrderViolation);
+            }
+            verify_offline_correction_bundle(
+                original_receipt,
+                original_receipt_proof,
+                contestation,
+                contestation_proof,
+                corr,
+                corr_proof,
+                checkpoint,
+                receipt_trust,
+                contester_trust,
+                corrector_trust,
+                checkpoint_trust,
+            )?;
+            if resolution.correction_digest.as_deref() != Some(corr.leaf_digest_str().as_str()) {
+                return Err(OfflineVerifyError::ResolutionBindingMismatch(
+                    "correction_digest",
+                ));
+            }
+        }
+        (_, None) => {
+            if resolution.correction_digest.is_some() {
+                return Err(OfflineVerifyError::ResolutionBindingMismatch(
+                    "missing_correction_evidence",
+                ));
+            }
+            if contestation_proof.leaf_index >= resolution_proof.leaf_index {
+                return Err(OfflineVerifyError::CausalOrderViolation);
+            }
+            verify_offline_contestation_bundle(
+                original_receipt,
+                original_receipt_proof,
+                contestation,
+                contestation_proof,
+                checkpoint,
+                receipt_trust,
+                contester_trust,
+                checkpoint_trust,
+            )?;
+        }
+    }
+
+    resolution.verify(resolver_trust)?;
+
+    // Enforce effective authority separation offline (both key_id and raw Ed25519 key bytes).
+    let resolver_pub = resolver_trust
+        .get(&resolution.resolver_key_id)
+        .ok_or_else(|| OfflineVerifyError::UnknownResolverKey(resolution.resolver_key_id.clone()))?
+        .to_bytes();
+    if resolution.resolver_key_id == contestation.contester_key_id {
+        return Err(OfflineVerifyError::ConflictingAuthority(
+            "resolver_key_id_matches_contester",
+        ));
+    }
+    if let Some(contester_key) = contester_trust.get(&contestation.contester_key_id) {
+        if contester_key.to_bytes() == resolver_pub {
+            return Err(OfflineVerifyError::ConflictingAuthority(
+                "resolver_pubkey_matches_contester",
+            ));
+        }
+    }
+    if let Some((corr, _)) = correction {
+        if resolution.resolver_key_id == corr.corrector_key_id {
+            return Err(OfflineVerifyError::ConflictingAuthority(
+                "resolver_key_id_matches_corrector",
+            ));
+        }
+        if let Some(corrector_key) = corrector_trust.get(&corr.corrector_key_id) {
+            if corrector_key.to_bytes() == resolver_pub {
+                return Err(OfflineVerifyError::ConflictingAuthority(
+                    "resolver_pubkey_matches_corrector",
+                ));
+            }
+        }
+    }
+
+    if resolution.contestation_digest != contestation.leaf_digest_str() {
+        return Err(OfflineVerifyError::ResolutionBindingMismatch(
+            "contestation_digest",
+        ));
+    }
+    if resolution.receipt_digest != original_receipt.leaf_digest_str() {
+        return Err(OfflineVerifyError::ResolutionBindingMismatch(
+            "receipt_digest",
+        ));
+    }
+    if original_receipt.active_candidate_digest.as_deref()
+        != Some(resolution.policy_digest.as_str())
+    {
+        return Err(OfflineVerifyError::ResolutionBindingMismatch(
+            "policy_digest",
+        ));
+    }
+
+    let resolution_leaf = resolution.leaf_hash();
+    mmr::verify(
+        &resolution_leaf,
+        resolution_proof,
+        checkpoint.leaf_count,
+        &root,
+    )
+    .map_err(|_| OfflineVerifyError::ResolutionNotInMmr)?;
 
     Ok(())
 }

@@ -43,7 +43,7 @@ jobs:
       - run: python scripts/record_gate.py clippy -- cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: python scripts/record_gate.py broker-predicates -- cargo test --locked -p arkhe-kernel --features sqlite-broker --test formal_predicates --test broker_durable --test action_broker
       - run: python scripts/record_gate.py activation-durable -- cargo test --locked -p arkhe-kernel --features sqlite-activation --test activation_i5b --test end_to_end_cycle -- --nocapture
-      - run: python scripts/record_gate.py governed-gateway-http -- cargo test --locked -p arkhe-runtime --features sqlite-activation --test governed_gateway_http --test c1_contestation --test c2_contestation_blocking --test c3_correction_supersession -- --nocapture
+      - run: python scripts/record_gate.py governed-gateway-http -- cargo test --locked -p arkhe-runtime --features sqlite-activation --test governed_gateway_http --test c1_contestation --test c2_contestation_blocking --test c3_correction_supersession --test c5_resolution_and_resumption -- --nocapture
       - run: python scripts/record_gate.py cargo-test -- cargo test --workspace --locked
       - name: Preview admission and transactional outbox on disposable PostgreSQL
         env:
