@@ -172,6 +172,8 @@ fn network_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("testnet")
 }
 
+// Devnet fixture generator helper taking individual env-file fields.
+#[allow(clippy::too_many_arguments)]
 fn write_node_env(
     path: &Path,
     id: &str,

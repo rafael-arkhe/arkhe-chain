@@ -13,7 +13,7 @@
 
 use arkhe_core::CanonicalEncode;
 use arkhe_governance::activation::{
-    activate, candidate_digest, Active, ActivationError, ActivationStore, MemoryActivationStore,
+    activate, candidate_digest, ActivationError, ActivationStore, Active, MemoryActivationStore,
     Proposal, TargetKind, PROPOSAL_SCHEMA,
 };
 use arkhe_governance::policy_bundle::{
@@ -40,12 +40,7 @@ fn trust_store() -> TrustStore {
     store
 }
 
-fn proposal(
-    nonce: u8,
-    previous: Option<&str>,
-    candidate: &[u8],
-    target: TargetKind,
-) -> Proposal {
+fn proposal(nonce: u8, previous: Option<&str>, candidate: &[u8], target: TargetKind) -> Proposal {
     Proposal {
         schema: PROPOSAL_SCHEMA.into(),
         proposal_id: format!("{nonce:02x}").repeat(16),
@@ -109,16 +104,19 @@ fn t01_a_first_activation_records_state_consumption_and_an_event() {
     .expect("activates");
 
     assert_eq!(activated.active.version, 2);
-    assert_eq!(activated.active.candidate_digest, candidate_digest(&candidate));
+    assert_eq!(
+        activated.active.candidate_digest,
+        candidate_digest(&candidate)
+    );
     assert_eq!(activated.binding.policy_id, POLICY_ID);
     assert_eq!(activated.binding.version, 2);
-    assert_eq!(store.consumed(), [proposal.proposal_id.clone()]);
+    assert_eq!(
+        store.consumed(),
+        std::slice::from_ref(&proposal.proposal_id)
+    );
     assert_eq!(store.events().len(), 1);
     assert_eq!(store.events()[0], activated.event);
-    assert_eq!(
-        store.active(POLICY_ID).unwrap().map(|a| a.version),
-        Some(2)
-    );
+    assert_eq!(store.active(POLICY_ID).unwrap().map(|a| a.version), Some(2));
 }
 
 #[test]
@@ -303,7 +301,10 @@ fn t06_the_bytes_must_be_the_artifact_the_proposal_authorized() {
         })
     );
     assert!(store.active(POLICY_ID).unwrap().is_none());
-    assert!(store.consumed().is_empty(), "a refused proposal is not spent");
+    assert!(
+        store.consumed().is_empty(),
+        "a refused proposal is not spent"
+    );
 }
 
 #[test]

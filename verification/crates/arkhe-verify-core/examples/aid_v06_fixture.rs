@@ -67,7 +67,8 @@ fn main() {
     let predecessor_payload = payload(None, &predecessor_manifest, "2026-11-20T10:00:00Z");
     let (predecessor_aid, predecessor_canonical) =
         aid::compute_aid(&serde_json::to_vec(&predecessor_payload).unwrap()).unwrap();
-    let predecessor_signature = hex::encode(key.sign(&aid::signed_bytes(&predecessor_aid)).to_bytes());
+    let predecessor_signature =
+        hex::encode(key.sign(&aid::signed_bytes(&predecessor_aid)).to_bytes());
 
     let successor_payload = payload(
         Some(&predecessor_aid),

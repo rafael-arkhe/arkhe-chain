@@ -206,7 +206,7 @@ fn min_expires_at(expires_at: &Value) -> Option<u64> {
     Some(min_val)
 }
 
-fn state_verdict<'a>(data: &'a Value) -> &'a str {
+fn state_verdict(data: &Value) -> &str {
     let b = &data["observations"]["bundle"]["body"];
     let p = &data["policy"];
     let Some(now) = data["clock_ms"].as_u64() else {

@@ -1,3 +1,6 @@
+// Pre-existing 8.8k-line P2P test harness uses `&[peer.clone()]` uniformly across 56 scenarios.
+#![allow(clippy::cloned_ref_to_slice_refs)]
+
 mod common;
 
 use std::sync::Arc;

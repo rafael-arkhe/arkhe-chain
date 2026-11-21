@@ -138,7 +138,10 @@ pub enum ActivationError {
     /// A target this phase does not validate.
     UnsupportedTarget(TargetKind),
     /// The bytes handed over are not the artifact the proposal authorized.
-    CandidateDigestMismatch { authorized: String, recomputed: String },
+    CandidateDigestMismatch {
+        authorized: String,
+        recomputed: String,
+    },
     /// This proposal has already been activated once.
     AlreadyConsumed { proposal_id: String },
     /// Another activation won the race for the same predecessor.
@@ -208,9 +211,7 @@ pub fn activate<S: ActivationStore>(
     let proposal = read_proposal(bundle)?;
     let policy_id = bundle.payload.policy_id.clone();
 
-    let active = store
-        .active(&policy_id)
-        .map_err(ActivationError::Storage)?;
+    let active = store.active(&policy_id).map_err(ActivationError::Storage)?;
     let current_version = active.as_ref().map(|a| a.version).unwrap_or(0);
 
     // Signature, authority, window and rollback floor.
@@ -342,7 +343,10 @@ fn is_digest(value: &str) -> bool {
 }
 
 fn is_lower_hex(value: &str, len: usize) -> bool {
-    value.len() == len && value.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    value.len() == len
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
 /// The reference semantics of [`ActivationStore`], in memory.

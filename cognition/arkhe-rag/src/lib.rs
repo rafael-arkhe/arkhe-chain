@@ -135,6 +135,8 @@ pub fn ground_retrieved(
 
 /// Grounds a retrieved hit only when that hit's text is included under the
 /// supplied `arkhe-mmr` root. The root is not a checkpoint and is not authenticated.
+// Preserved public signature used by retrieval-envelope tests without wrapping in a request struct.
+#[allow(clippy::too_many_arguments)]
 pub fn ground_included(
     query: &[u8],
     answer: &[u8],

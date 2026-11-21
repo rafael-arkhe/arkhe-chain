@@ -186,8 +186,12 @@ fn main() {
         }
         "V03" => {
             let trust_root = policy_for(AGENT_ID);
-            let expected =
-                evaluate(&orphan_envelope, &trust_root, &orphan_aid, &orphan_canonical);
+            let expected = evaluate(
+                &orphan_envelope,
+                &trust_root,
+                &orphan_aid,
+                &orphan_canonical,
+            );
             let mut document = header(
                 "V03",
                 "previous_aid is declared and no predecessor is presented",
@@ -208,8 +212,7 @@ fn main() {
                 &genesis_aid,
                 &genesis_canonical,
             );
-            let mut document =
-                header("V04", "The signing key is authorized for another agent_id");
+            let mut document = header("V04", "The signing key is authorized for another agent_id");
             let fields = document.as_object_mut().unwrap();
             fields.insert("trust_root".into(), trust_root);
             fields.insert("envelope".into(), genesis_envelope);

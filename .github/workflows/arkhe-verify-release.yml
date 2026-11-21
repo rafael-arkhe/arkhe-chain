@@ -1,0 +1,73 @@
+name: arkhe-verify-release
+on:
+  push:
+    tags:
+      - "arkhe-verify-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-and-package:
+    name: build-${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            ext: ""
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            ext: ".exe"
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            ext: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+        with:
+          components: clippy
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test and lint packaging/core
+        working-directory: packaging/core
+        run: |
+          cargo test --locked --workspace
+          cargo test --locked -p arkhe-flow --features external-signer
+          cargo clippy --all-targets --locked -- -D warnings
+          python -B audit_receipt.py fixtures/gate0
+      - name: Build deterministic release binaries
+        working-directory: packaging/core
+        env:
+          RUSTFLAGS: "--remap-path-prefix=${{ github.workspace }}=/arkhe-src"
+        run: |
+          cargo build --locked --release -p arkhe-provenance-mcp -p arkhe-flow -p arkhe-platform -p arkhe-anonymize
+      - name: Package self-contained Gate 0 buyer kit and verify checksums
+        working-directory: packaging/core
+        run: |
+          python -B scripts/package_buyer_kit.py --profile release --out dist/arkhe-verify-gate0-${{ matrix.target }}
+          python -B scripts/verify_release.py --kit dist/arkhe-verify-gate0-${{ matrix.target }} --run-gate0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arkhe-verify-${{ matrix.target }}
+          path: |
+            packaging/core/dist/arkhe-verify-gate0-${{ matrix.target }}.zip
+            packaging/core/dist/arkhe-verify-gate0-${{ matrix.target }}/SHA256SUMS
+          retention-days: 30
+
+  docker-image:
+    name: build-docker-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build arkhe-provenance-mcp:local image from packaging/core/deploy/Dockerfile
+        working-directory: packaging/core
+        run: |
+          docker build -f deploy/Dockerfile -t arkhe-provenance-mcp:local .
+          docker run --rm arkhe-provenance-mcp:local --help

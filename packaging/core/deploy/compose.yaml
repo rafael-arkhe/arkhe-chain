@@ -1,27 +1,41 @@
 # On-prem template. The network is internal and no host port is published.
 # This is one host. It does not create a multi-site mesh.
-# Replace change-me before use and do not commit the replacement.
+# Copy .env.example to .env (untracked) and set a strong POSTGRES_PASSWORD before running.
 services:
   postgres:
     image: postgres:16
     environment:
       POSTGRES_USER: arkhe
-      POSTGRES_PASSWORD: change-me
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in untracked .env}
       POSTGRES_DB: arkhe
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arkhe -d arkhe"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks: [private]
     volumes: [pg:/var/lib/postgresql/data]
   verify:
     image: arkhe-provenance-mcp:local
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
     environment:
-      DATABASE_URL: postgres://arkhe:change-me@postgres:5432/arkhe
+      DATABASE_URL: postgres://arkhe:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in untracked .env}@postgres:5432/arkhe
       ARKHE_SEATS: /config/seats.json
       ARKHE_METER_DIR: /var/arkhe/meter
+      ARKHE_CALLER_AUTH_KEY: /config/caller-auth.pub.json
+      ARKHE_TENANT_ROSTERS: /config/tenant-rosters.json
     volumes:
       - ./seats.example.json:/config/seats.json:ro
+      - ./caller-auth.example.pub.json:/config/caller-auth.pub.json:ro
+      - ./tenant-rosters.example.json:/config/tenant-rosters.json:ro
       - meter:/var/arkhe/meter
     command: ["serve", "--bind", "0.0.0.0:8080"]
     networks: [private]
-    depends_on: [postgres]
+    depends_on:
+      postgres:
+        condition: service_healthy
 networks:
   private:
     internal: true

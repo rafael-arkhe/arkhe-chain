@@ -75,6 +75,8 @@ impl BundleReceipt {
 }
 
 /// External anchoring is optional metadata. None of these variants close F2/F3.
+// Single metadata field per serialized bundle; boxing would change public pattern-matching API.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ExternalAnchoringProof {

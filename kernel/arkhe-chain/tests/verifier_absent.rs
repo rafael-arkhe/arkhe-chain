@@ -41,6 +41,6 @@ fn proof(number: &[u8], root: &[u8; 32], parent: &[u8; 32]) -> Vec<u8> {
     out.extend_from_slice(number);
     out.extend_from_slice(root);
     out.extend_from_slice(parent);
-    out.extend(std::iter::repeat(0u8).take(260));
+    out.extend(std::iter::repeat_n(0u8, 260));
     out
 }

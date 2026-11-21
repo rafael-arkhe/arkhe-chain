@@ -650,13 +650,13 @@ fosse recibo de produção.
 
 Marcos com critério de saída que outra pessoa pode apontar. Intenção não é marco.
 
-| Marco | Entrega | Critério de saída | Estado em 19/11/2026 |
+| Marco | Entrega | Critério de saída | Estado em 21/11/2026 |
 |---|---|---|---|
 | **M0** | O que já existe | 34 testes, fixture pública, demo de um byte, procedimento escrito | **Feito** |
-| **M1 — Gate 0** | P-10, P-04 | Um terceiro, sem `DATABASE_URL`, sem PostgreSQL, sem semente e sem a máquina do emissor, reexecuta os sete comandos de `HOW_TO_AUDIT.md` e obtém a tabela | **Aberto** |
-| **M2 — Implantável** | P-01, P-03, P-04, P-05, P-08 | O compose sobe numa rede do operador, com autenticação de chamador, chave em custódia dele, e os quatro gates do repositório verdes | Aberto |
-| **M3 — Âncora e invariante** | P-02, P-06 | `anchor: PASS` existe contra checkpoint configurado à parte; um invariante é executado por um runner isolado e o recibo dele fecha o contraste | Aberto |
-| **M4 — Gate 1** | P-07, P-09 | Um cliente, que não é o autor, paga por verificação em produção: recibo e raiz de confiança **dele**, no processo **dele**, com pagamento identificável | **Aberto** |
+| **M1 — Gate 0** | P-10, P-04 | Um terceiro, sem `DATABASE_URL`, sem PostgreSQL, sem semente e sem a máquina do emissor, reexecuta os sete comandos de `HOW_TO_AUDIT.md` e obtém a tabela | **Aberto (kit local pronto)** — `package_buyer_kit.py` + `verify_release.py` + `AUDIT-1-PAGE.md` validados em 21/11/2026; aguarda execução por terceiro fora desta máquina e release multiplataforma no CI |
+| **M2 — Implantável** | P-01, P-03, P-04, P-05, P-08 | O compose sobe numa rede do operador, com autenticação de chamador, chave em custódia dele, e os quatro gates do repositório verdes | **Parcial (engenharia local verde)** — P-01 (`ReceiptSigner` + `external-signer`), P-03 (`CallerToken` 401/403 antes do medidor), P-05 (`TenantRosters`), P-08 (3/3 gates da raiz verdes) implementados e testados; build Docker e triagem QA-003 pendentes |
+| **M3 — Âncora e invariante** | P-02, P-06 | `anchor: PASS` existe contra checkpoint configurado à parte; um invariante é executado por um runner isolado e o recibo dele fecha o contraste | **Feito localmente (21/11/2026)** — P-02 (RFC 6962 contra `AnchorCheckpoint` configurado à parte) e P-06 (`arkhe-anonymize` sem chave + assinatura separada do papel `invariant`, positivo e byte invertido) verdes em `cargo test --locked --workspace` |
+| **M4 — Gate 1** | P-07, P-09 | Um cliente, que não é o autor, paga por verificação em produção: recibo e raiz de confiança **dele**, no processo **dele**, com pagamento identificável | **Aberto** — P-07 (`arkhe-platform reconcile`) implementado e testado; P-09 permanece bloqueado por regra até haver cliente pagante externo |
 
 O que explicitamente **não** sobe de conjectura a lema: interesse, piloto, preço
 dito numa entrevista, fatura emitida pelo próprio autor, verificação do fixture
@@ -1222,15 +1222,17 @@ COFINS — são o que a documentação do repositório diz, não leitura da lei.
 
 | Afirmação | Estado | Onde se confere |
 |---|---|---|
-| 34 testes passam em `packaging/core`, nenhum reprovado, nenhum ignorado | FACT, 19/11/2026 | `cd packaging\core; cargo test --locked --workspace` |
-| A ação de agente vai de `INCONCLUSIVE` a `PASS` só com veredito nomeado | FACT, 19/11/2026 | os dois comandos de `HOW_TO_AUDIT.md`, seção Gate 0 |
-| As dezoito condições do auditor Python recomputam | FACT, 19/11/2026 | `python audit_receipt.py fixtures\gate0` |
-| Um byte invertido deixa assinatura `PASS` e assunto `FAIL` | FACT | `python demo\tamper.py` |
+| 41 testes passam em `packaging/core` (42 com `--features external-signer`), Clippy `-D warnings` verde, 0 reprovados | FACT, 21/11/2026 | `cd packaging\core; cargo test --locked --workspace` + `docs/evidence/2026-11-21-arkhe-verify-commercial-readiness/RESULTS.md` |
+| P-01 (`ReceiptSigner` + `external-signer` + recusa env), P-02 (inclusão RFC 6962 contra checkpoint configurado), P-03 (auth 401/403 separada do assento), P-05 (rosters multi-tenant + rotação), P-06 (laço `invariant.no-direct-identifier` sem chave no runner), P-07 (`reconcile`) passam | FACT, 21/11/2026 | `docs/evidence/2026-11-21-arkhe-verify-commercial-readiness/RESULTS.md` |
+| Kit autocontido Gate 0 (`arkhe-verify-gate0-kit.zip`) gera `SHA256SUMS`, 0 segredos privados e passa nos 7 comandos Gate 0 | FACT, 21/11/2026 | `cd packaging\core; python -B scripts/verify_release.py --kit dist/arkhe-verify-gate0-kit --run-gate0` |
+| Clippy (`--workspace --all-targets --locked -- -D warnings`), `cargo fmt --all --check` e `check_architecture.py` passam na raiz | FACT, 21/11/2026 | `docs/evidence/2026-11-21-arkhe-verify-commercial-readiness/RESULTS.md` |
+| A ação de agente vai de `INCONCLUSIVE` a `PASS` só com veredito nomeado | FACT, 21/11/2026 | os dois comandos de `HOW_TO_AUDIT.md`, seção Gate 0 |
+| As dezoito condições do auditor Python recomputam | FACT, 21/11/2026 | `python -B audit_receipt.py fixtures\gate0` |
+| Um byte invertido deixa assinatura `PASS` e assunto `FAIL` | FACT, 21/11/2026 | `python -B demo\tamper.py` |
 | O produto compila e verifica sem banco e sem rede | FACT | `verify` não lê `DATABASE_URL`; `serve` sobe com `postgres: absent` |
 | Um invariante determinístico roda de verdade, com registro fail-closed, e 21 testes passam | FACT, 19/11/2026 | `cargo test -p arkhe-exec-adapter --locked` |
-| Clippy, `fmt` e o auditor de arquitetura reprovam na raiz | FACT, 19/11/2026 | os três comandos da tabela de P-08 |
 | O lock de migrações está completo | FACT, 19/11/2026 | `20261026000018_wormgraph_fencing.sql` em `config/migrations.lock.json` |
-| A imagem `arkhe-provenance-mcp:local` foi construída | **FALSO hoje** | P-04 |
+| A imagem `arkhe-provenance-mcp:local` foi construída | **FALSO localmente** | workflow `.github/workflows/arkhe-verify-release.yml` pronto; aguarda execução em CI/Docker |
 | Um terceiro reexecutou os recibos fora deste ambiente | **FALSO hoje** | Gate 0 / M1 |
 | Existe disposição a pagar por verificação | CONJECTURE | Gate 1 / M4, tabela vazia |
 | O ICP #1 é o comprador certo | CONJECTURE, confiança 0,55–0,70 | `docs/mercado/experimento-01.md`, 0 conversas |

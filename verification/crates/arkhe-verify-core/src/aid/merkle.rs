@@ -104,7 +104,9 @@ pub fn verify_consistency(
     proof: &[[u8; 32]],
 ) -> Result<(), String> {
     if first > second {
-        return Err(format!("the history shrank from {first} to {second} leaves"));
+        return Err(format!(
+            "the history shrank from {first} to {second} leaves"
+        ));
     }
     if first == second {
         if first_root != second_root {

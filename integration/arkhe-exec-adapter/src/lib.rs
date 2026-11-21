@@ -195,6 +195,9 @@ impl Exclusion {
 /// Anything downstream that accepts one — `receipt::VerdictClaim`, say — is
 /// therefore holding something an invariant actually produced, not a value a
 /// caller assembled to look like one.
+// Private `checked: ()` field intentionally prevents external construction
+// outside this module while keeping exhaustive pattern matching internal.
+#[allow(clippy::manual_non_exhaustive)]
 #[derive(Debug, Clone)]
 pub struct Admission {
     pub intent: WorkIntent,

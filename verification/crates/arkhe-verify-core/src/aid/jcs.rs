@@ -161,7 +161,7 @@ impl<'de> Visitor<'de> for StrictVisitor {
     }
 
     fn visit_i64<E: de::Error>(self, v: i64) -> Result<Strict, E> {
-        if v < -MAX_SAFE_INT || v > MAX_SAFE_INT {
+        if !(-MAX_SAFE_INT..=MAX_SAFE_INT).contains(&v) {
             return Err(E::custom(format!("integer {v} outside the safe range")));
         }
         Ok(Strict::Int(v))

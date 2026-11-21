@@ -18,7 +18,7 @@ pub mod types;
 pub mod verify;
 
 pub use types::{
-    AidError, Algorithm, DimensionStatus, Descriptor, Envelope, Evidence, FailureStage,
+    AidError, Algorithm, Descriptor, DimensionStatus, Envelope, Evidence, FailureStage,
     HistoryDimension, ModelDimension, Operation, Payload, Predecessor, Profile, Role,
     SignatureEntry, TrustRoot, TrustedKey, Verdict, VerificationResult, DOMAIN_AID, DOMAIN_SIG,
     SCHEMA_VERSION,

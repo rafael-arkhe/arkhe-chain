@@ -141,44 +141,41 @@ pub(crate) async fn listen_on(
                         let _ = sender.send(address);
                     }
                 }
-                libp2p::swarm::SwarmEvent::Behaviour(NodeBehaviourEvent::Sync(event)) => {
-                    if let request_response::Event::Message {
+                libp2p::swarm::SwarmEvent::Behaviour(NodeBehaviourEvent::Sync(
+                    request_response::Event::Message {
                         message:
                             request_response::Message::Request {
                                 request, channel, ..
                             },
                         ..
-                    } = event
-                    {
-                        let response = answer(&node, request);
-                        let _ = swarm.behaviour_mut().sync.send_response(channel, response);
-                    }
+                    },
+                )) => {
+                    let response = answer(&node, request);
+                    let _ = swarm.behaviour_mut().sync.send_response(channel, response);
                 }
-                libp2p::swarm::SwarmEvent::Behaviour(NodeBehaviourEvent::Vote(event)) => {
-                    if let request_response::Event::Message {
+                libp2p::swarm::SwarmEvent::Behaviour(NodeBehaviourEvent::Vote(
+                    request_response::Event::Message {
                         message:
                             request_response::Message::Request {
                                 request, channel, ..
                             },
                         ..
-                    } = event
-                    {
-                        let response = answer_vote(&node, request);
-                        let _ = swarm.behaviour_mut().vote.send_response(channel, response);
-                    }
+                    },
+                )) => {
+                    let response = answer_vote(&node, request);
+                    let _ = swarm.behaviour_mut().vote.send_response(channel, response);
                 }
-                libp2p::swarm::SwarmEvent::Behaviour(NodeBehaviourEvent::Tx(event)) => {
-                    if let request_response::Event::Message {
+                libp2p::swarm::SwarmEvent::Behaviour(NodeBehaviourEvent::Tx(
+                    request_response::Event::Message {
                         message:
                             request_response::Message::Request {
                                 request, channel, ..
                             },
                         ..
-                    } = event
-                    {
-                        let response = answer_tx(&node, &seal, request).await;
-                        let _ = swarm.behaviour_mut().tx.send_response(channel, response);
-                    }
+                    },
+                )) => {
+                    let response = answer_tx(&node, &seal, request).await;
+                    let _ = swarm.behaviour_mut().tx.send_response(channel, response);
                 }
                 _ => {}
             }
@@ -507,6 +504,8 @@ pub struct ConfiguredPeer {
     pub peer_id: PeerId,
 }
 
+// Internal P2P error-bucket fan-out helper; kept explicit to avoid bundling mutable slices.
+#[allow(clippy::too_many_arguments)]
 async fn deliver_configured(
     node: &ArkheNode,
     peer: &ConfiguredPeer,
@@ -1455,8 +1454,8 @@ fn answer_vote(node: &ArkheNode, request: VoteRequest) -> VoteReply {
         chain_id: request.chain_id,
         signature,
     };
-    if vote_can_import(&node, &vote) {
-        if let Err(error) = import_voted_block(&node, vote.block_hash, body.as_deref()) {
+    if vote_can_import(node, &vote) {
+        if let Err(error) = import_voted_block(node, vote.block_hash, body.as_deref()) {
             return VoteReply {
                 stored: false,
                 reason: Some(vote_reason(&error).to_string()),

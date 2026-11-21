@@ -81,7 +81,10 @@ fn v07_the_operation_is_covered_by_the_digest() {
     // aid returns. Nothing else in the payload was touched.
     let vector = vector();
     let mut payload = vector["v07a"]["envelope"]["payload"].clone();
-    assert_eq!(payload["operation"], vector["swapped_snapshot"]["operation"]);
+    assert_eq!(
+        payload["operation"],
+        vector["swapped_snapshot"]["operation"]
+    );
     payload["operation"] = vector["signed_snapshot"]["operation"].clone();
     let (restored_aid, restored_canonical) =
         aid::compute_aid(&serde_json::to_vec(&payload).unwrap()).unwrap();

@@ -93,11 +93,21 @@ fn a_retired_constitution_cannot_be_reinstated() {
 fn the_constitution_has_an_end_and_a_beginning() {
     let bundle = bundle(CONSTITUTION);
     assert_eq!(
-        bundle.verify(&trust_store(), 1, SignaturePolicy::Required, bundle.issued_at - 1),
+        bundle.verify(
+            &trust_store(),
+            1,
+            SignaturePolicy::Required,
+            bundle.issued_at - 1
+        ),
         Err(PolicyBundleError::NotYetValid)
     );
     assert_eq!(
-        bundle.verify(&trust_store(), 1, SignaturePolicy::Required, bundle.expires_at),
+        bundle.verify(
+            &trust_store(),
+            1,
+            SignaturePolicy::Required,
+            bundle.expires_at
+        ),
         Err(PolicyBundleError::Expired),
         "expires_at is exclusive, so a yearly review is not optional"
     );
@@ -186,7 +196,9 @@ fn a_mandate_cannot_permit_what_the_constitution_omits() {
             bundle.issued_at,
             bundle.expires_at
         ),
-        Err(MandateError::EffectNotPermitted("send_external_email".into()))
+        Err(MandateError::EffectNotPermitted(
+            "send_external_email".into()
+        ))
     );
 }
 

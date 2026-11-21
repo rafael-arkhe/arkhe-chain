@@ -169,7 +169,7 @@ pub const CHAIN_ID: &str = "arkhe-chain";
 /// [`precommit_message`] binds `AKG:CHAIN:PRECOMMIT:v4`, the height, the round,
 /// the block hash, a one-part header whose hash is that block, and
 /// [`CHAIN_ID`]. The block is not split. Each configured validator has weight
-/// 1. One validator keeps a single vote per height: a later round for the
+/// one. One validator keeps a single vote per height: a later round for the
 /// same hash replaces it, and an earlier round is refused.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Precommit {

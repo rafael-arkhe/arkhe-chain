@@ -74,11 +74,17 @@ pub struct Mandate {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MandateError {
     /// The statements do not declare the schema this module interprets.
-    SchemaMismatch { expected: &'static str, found: String },
+    SchemaMismatch {
+        expected: &'static str,
+        found: String,
+    },
     /// The mandate descends from another constitution.
     ConstitutionMismatch { expected: String, found: String },
     /// A subdelegation that does not name its parent, or names another.
-    ParentMismatch { expected: String, found: Option<String> },
+    ParentMismatch {
+        expected: String,
+        found: Option<String>,
+    },
     /// A mandate with no effect authorizes nothing and should not exist.
     EmptyScope,
     /// An effect the parent does not permit.

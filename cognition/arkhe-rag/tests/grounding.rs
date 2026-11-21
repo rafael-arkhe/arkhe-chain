@@ -231,7 +231,16 @@ fn empty_hit_and_blank_identity_fail_closed() {
         score: 1.0,
     };
     assert_eq!(
-        ground_retrieved(b"q", b"a", vec![], &index, &[hit.clone()], " ", "alice").unwrap_err(),
+        ground_retrieved(
+            b"q",
+            b"a",
+            vec![],
+            &index,
+            std::slice::from_ref(&hit),
+            " ",
+            "alice"
+        )
+        .unwrap_err(),
         "identity required"
     );
     assert_eq!(

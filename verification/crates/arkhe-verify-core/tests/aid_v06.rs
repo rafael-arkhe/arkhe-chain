@@ -30,10 +30,7 @@ fn case(vector: &Value, name: &str) -> Case {
         envelope: serde_json::to_vec(envelope).unwrap(),
         expected: vector[name]["expected"].clone(),
         predecessor_payload: serde_json::to_vec(&envelope["predecessor"]["payload"]).unwrap(),
-        predecessor_declared_aid: envelope["predecessor"]["aid"]
-            .as_str()
-            .unwrap()
-            .to_owned(),
+        predecessor_declared_aid: envelope["predecessor"]["aid"].as_str().unwrap().to_owned(),
     }
 }
 
@@ -64,7 +61,9 @@ fn v06_frozen_bytes_and_signatures_are_reproducible() {
         aid::compute_aid(&serde_json::to_vec(&envelope["payload"]).unwrap()).unwrap();
     assert_eq!(
         hex::encode(&successor_canonical),
-        control.expected["payload_canonical_bytes_hex"].as_str().unwrap(),
+        control.expected["payload_canonical_bytes_hex"]
+            .as_str()
+            .unwrap(),
         "the frozen canonical payload bytes no longer reproduce"
     );
     assert_eq!(successor_aid, envelope["aid"].as_str().unwrap());

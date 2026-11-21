@@ -96,7 +96,9 @@ pub fn validate_payload(strict: &Strict) -> Result<Payload, AidError> {
     }
     if let Some(previous) = &payload.previous_aid {
         if !is_aid(previous) {
-            return Err(AidError::Schema("previous_aid is not sha256:<64hex>".into()));
+            return Err(AidError::Schema(
+                "previous_aid is not sha256:<64hex>".into(),
+            ));
         }
     }
     for digest in [
@@ -123,7 +125,10 @@ pub fn is_aid(value: &str) -> bool {
 }
 
 fn is_lower_hex(value: &str, len: usize) -> bool {
-    value.len() == len && value.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    value.len() == len
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
 /// `YYYY-MM-DDTHH:MM:SSZ` exactly: 20 characters, UTC, second resolution. The
@@ -134,12 +139,21 @@ pub fn is_instant(value: &str) -> bool {
         return false;
     }
     let digits = [0, 1, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18];
-    let marks = [(4, b'-'), (7, b'-'), (10, b'T'), (13, b':'), (16, b':'), (19, b'Z')];
-    digits.iter().all(|&i| bytes[i].is_ascii_digit())
-        && marks.iter().all(|&(i, c)| bytes[i] == c)
+    let marks = [
+        (4, b'-'),
+        (7, b'-'),
+        (10, b'T'),
+        (13, b':'),
+        (16, b':'),
+        (19, b'Z'),
+    ];
+    digits.iter().all(|&i| bytes[i].is_ascii_digit()) && marks.iter().all(|&(i, c)| bytes[i] == c)
 }
 
 /// What the bundle says about its link to a previous snapshot.
+// Single stack-local value per verification call (never stored in collections);
+// boxing `Payload` would add a heap allocation on the hot verify path for no gain.
+#[allow(clippy::large_enum_variant)]
 enum Link<'a> {
     /// `previous_aid` is null: there is no edge to verify.
     Genesis,
@@ -278,8 +292,7 @@ fn run(
                 })?;
             let predecessor_payload = validate_payload(predecessor_strict)
                 .map_err(|e| Stop::Fail(FailureStage::Schema, e.to_string()))?;
-            let predecessor_recomputed =
-                aid_from_canonical(&predecessor_strict.canonical_bytes());
+            let predecessor_recomputed = aid_from_canonical(&predecessor_strict.canonical_bytes());
             if predecessor_recomputed != predecessor.aid {
                 return Err(Stop::Fail(
                     FailureStage::PredecessorAidRecomputation,
@@ -413,7 +426,9 @@ fn run(
                     let status = outcome.map_err(|stop| match stop {
                         Stop::Fail(_, reason) => Stop::Fail(
                             FailureStage::Continuity,
-                            format!("the predecessor's own {what} contradicts its payload: {reason}"),
+                            format!(
+                                "the predecessor's own {what} contradicts its payload: {reason}"
+                            ),
                         ),
                         Stop::Inconclusive(_, reason) => Stop::Inconclusive(
                             FailureStage::Continuity,
@@ -523,17 +538,15 @@ fn consistency_status(
 ) -> Result<DimensionStatus, Stop> {
     let fail = |reason: String| Stop::Fail(FailureStage::HistoryConsistency, reason);
     if m < n {
-        return Err(fail(format!(
-            "the history shrank from {n} to {m} events"
-        )));
+        return Err(fail(format!("the history shrank from {n} to {m} events")));
     }
     let (Ok(first), Ok(second)) = (usize::try_from(n), usize::try_from(m)) else {
         return Err(fail("an event count is not representable".into()));
     };
     let previous_root = root_bytes(previous_root)
         .ok_or_else(|| fail("the predecessor's history root is not sha256:<64hex>".into()))?;
-    let root = root_bytes(root)
-        .ok_or_else(|| fail("the history root is not sha256:<64hex>".into()))?;
+    let root =
+        root_bytes(root).ok_or_else(|| fail("the history root is not sha256:<64hex>".into()))?;
     let mut steps = Vec::with_capacity(proof.len());
     for step in proof {
         let step: [u8; 32] = hex::decode(step)
@@ -575,7 +588,10 @@ fn check_signature_encoding(signatures: &[SignatureEntry]) -> Result<(), Stop> {
                 "signature_bytes is not lowercase hex of the length the algorithm fixes".into(),
             ));
         }
-        if !is_lower_hex(&signature.public_key, signature.algorithm.public_key_hex_len()) {
+        if !is_lower_hex(
+            &signature.public_key,
+            signature.algorithm.public_key_hex_len(),
+        ) {
             return Err(Stop::Fail(
                 FailureStage::Parse,
                 "public_key is not lowercase hex of the length the algorithm fixes".into(),
@@ -772,10 +788,7 @@ fn stopped(
 
 /// The global verdict: `PASS` only if every required dimension passed.
 /// `NOT_REQUIRED` dimensions contribute nothing either way.
-fn finish(
-    dimensions: BTreeMap<String, DimensionStatus>,
-    profile: Profile,
-) -> VerificationResult {
+fn finish(dimensions: BTreeMap<String, DimensionStatus>, profile: Profile) -> VerificationResult {
     let mut pending: Option<String> = None;
     for name in DIMENSIONS {
         if !profile.requires(name) {

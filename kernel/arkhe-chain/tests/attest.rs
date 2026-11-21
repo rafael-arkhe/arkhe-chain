@@ -209,7 +209,8 @@ fn integrity_every_field_is_covered_by_the_signature() {
             policy: [2; 32],
         },
     );
-    let edits: Vec<Box<dyn Fn(&mut Attestation)>> = vec![
+    type AttestationEdit = Box<dyn Fn(&mut Attestation)>;
+    let edits: Vec<AttestationEdit> = vec![
         Box::new(|a| a.nonce[0] ^= 1),
         Box::new(|a| a.not_before = 1),
         Box::new(|a| a.expires = 51),
@@ -265,7 +266,8 @@ fn integrity_every_field_is_covered_by_the_signature() {
 
 #[test]
 fn context_a_signature_for_another_domain_is_rejected() {
-    let edits: Vec<Box<dyn Fn(&mut Attestation)>> = vec![
+    type AttestationEdit = Box<dyn Fn(&mut Attestation)>;
+    let edits: Vec<AttestationEdit> = vec![
         Box::new(|a| a.chain_id = "arkhe-testnet".to_string()),
         Box::new(|a| a.genesis = [8; 32]),
         Box::new(|a| a.audience = "treasury".to_string()),

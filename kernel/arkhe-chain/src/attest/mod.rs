@@ -79,6 +79,8 @@ impl Role {
 }
 
 /// What a block carries after its transactions.
+// Kept unboxed so block encoding/decoding and test fixtures avoid extra indirection.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AttestOp {
     Admit(Attestation),

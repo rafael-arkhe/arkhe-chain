@@ -27,9 +27,9 @@ pub fn parse_genesis_grants(text: &str) -> Result<Vec<Grant>, ChainError> {
     Ok(parse_genesis_lines(text)?.2)
 }
 
-fn parse_genesis_lines(
-    text: &str,
-) -> Result<(Vec<Validator>, Vec<Account>, Vec<Grant>), ChainError> {
+type GenesisLines = (Vec<Validator>, Vec<Account>, Vec<Grant>);
+
+fn parse_genesis_lines(text: &str) -> Result<GenesisLines, ChainError> {
     let mut validators = Vec::new();
     let mut accounts = Vec::new();
     let mut grants = Vec::new();
@@ -714,8 +714,8 @@ pub async fn run_operator(request: OperatorRequest) -> Result<OperatorHandle, Ch
     if !request.txs.is_empty() && !forward {
         ingest_tx_list(&node, &request.txs)?;
     }
-    if request.seal_at.is_some() && !wait_for_tx && heard {
-        let timestamp = seal_timestamp(&node, request.seal_at.expect("seal_at"))?;
+    if let (Some(seal_at), false, true) = (request.seal_at, wait_for_tx, heard) {
+        let timestamp = seal_timestamp(&node, seal_at)?;
         let proposal = node.propose_and_seal_block(timestamp)?;
         if proposal.block.is_none() {
             return Err(proposal
@@ -882,6 +882,7 @@ fn lock_chain(path: &Path) -> Result<File, ChainError> {
         .read(true)
         .write(true)
         .create(true)
+        .truncate(false)
         .open(chain_lock_path(path))
         .map_err(|_| ChainError::Snapshot)?;
     match file.try_lock() {

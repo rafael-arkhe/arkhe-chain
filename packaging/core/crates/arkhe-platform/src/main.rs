@@ -1,4 +1,5 @@
-use arkhe_platform::{bill, load_seats, observe_sla, PriceBook, Probe, SlaSpec};
+use arkhe_platform::{bill, load_seats, observe_sla, reconcile, ObservationRow, PriceBook, Probe, SlaSpec};
+use chrono::{DateTime, Utc};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -29,6 +30,18 @@ enum Command {
         #[arg(long)]
         probes: PathBuf,
     },
+    /// Reconcile events.jsonl (billing source) against exported provenance_observations rows (P-07).
+    /// Exits non-zero when any discrepancy exists.
+    Reconcile {
+        #[arg(long)]
+        meter: PathBuf,
+        #[arg(long)]
+        observations: PathBuf,
+        #[arg(long)]
+        from: Option<DateTime<Utc>>,
+        #[arg(long)]
+        to: Option<DateTime<Utc>>,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -58,6 +71,20 @@ fn main() -> anyhow::Result<()> {
             }
             let report = observe_sla(&spec, &parsed)?;
             println!("{}", serde_json::to_string_pretty(&report)?);
+        }
+        Command::Reconcile { meter, observations, from, to } => {
+            let mut rows = Vec::new();
+            for line in std::fs::read_to_string(observations)?.lines() {
+                if line.trim().is_empty() {
+                    continue;
+                }
+                rows.push(serde_json::from_str::<ObservationRow>(line)?);
+            }
+            let report = reconcile(&meter, &rows, from, to)?;
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            if !report.ok {
+                std::process::exit(1);
+            }
         }
     }
     Ok(())

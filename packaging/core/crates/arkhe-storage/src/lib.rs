@@ -54,6 +54,8 @@ pub fn append(dir: &Path, admission_path: &Path, secret: &Secret, trust: &Trust)
         action_id: None,
         invariant: None,
         expect_invariant: None,
+        anchor_checkpoint: None,
+        anchor_inclusion: None,
     });
     if verdict.overall != "PASS" || admission.body.get("kind").and_then(|value| value.as_str()) != Some("admission") {
         anyhow::bail!("admission did not verify against the supplied trust");
@@ -137,7 +139,7 @@ mod tests {
         assert_eq!(first.commit.id, second.commit.id);
         assert_eq!(root_of(&dir).unwrap(), first.commit.body["root"].as_str().unwrap());
 
-        let mut tampered = fs::read(&fixture.join("admission.json")).unwrap();
+        let mut tampered = fs::read(fixture.join("admission.json")).unwrap();
         tampered.push(b' ');
         let bad = fixture.join("admission-bad.json");
         fs::write(&bad, tampered).unwrap();

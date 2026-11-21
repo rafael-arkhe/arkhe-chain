@@ -31,7 +31,7 @@ fn expected_inclusion_proof_length(leaf_index: u64, tree_size: u64) -> usize {
             count += 1;
         }
         index /= 2;
-        size = (size + 1) / 2;
+        size = size.div_ceil(2);
     }
     count
 }

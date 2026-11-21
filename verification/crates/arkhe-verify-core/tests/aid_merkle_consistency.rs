@@ -22,9 +22,8 @@ fn every_prefix_of_every_tree_up_to_twelve_leaves_verifies() {
         for first in 0..=second {
             let first_root = tree_hash(&all[..first]);
             let proof = consistency_proof(&all, first).expect("proof generates");
-            verify_consistency(first, second, &first_root, &second_root, &proof).unwrap_or_else(
-                |e| panic!("{first} -> {second} should be consistent: {e}"),
-            );
+            verify_consistency(first, second, &first_root, &second_root, &proof)
+                .unwrap_or_else(|e| panic!("{first} -> {second} should be consistent: {e}"));
         }
     }
 }

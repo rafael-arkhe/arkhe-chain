@@ -290,8 +290,12 @@ impl Verdict {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DimensionStatus {
     Pass,
-    Fail { reason: String },
-    Inconclusive { reason: String },
+    Fail {
+        reason: String,
+    },
+    Inconclusive {
+        reason: String,
+    },
     /// Outside the profile's scope: neither verified nor contradicted.
     NotRequired,
 }
