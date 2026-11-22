@@ -1,0 +1,49 @@
+{
+  "all_passed": true,
+  "limits": [
+    "Proves pure state-transition logic only; does not prove SQLite C internals, filesystem permissions, OS UID enforcement (L1), or host integrity.",
+    "Rust-to-SMT correspondence is manual; cargo kani verifies the Rust functions directly (V-AGI-03)."
+  ],
+  "negative_control": {
+    "check": "N1_non_vacuity_buggy_fail_open_detected",
+    "counterexample": "[buggy_slot = 0, buggy_has_row = False]",
+    "expected": "sat",
+    "passed": true,
+    "z3_result": "sat"
+  },
+  "rust_source": "kernel/arkhe-kernel/src/kill_switch_model.rs",
+  "scope": "L3_Z3_STATE_TRANSITION_MODEL_ONLY",
+  "theorems": [
+    {
+      "claim": "Missing or non-binary kill-switch singleton always rejects reservation fail-closed",
+      "proved": true,
+      "theorem": "T1_unavailable_state_refuses_reserve",
+      "z3_result": "unsat"
+    },
+    {
+      "claim": "Confirmed halt blocks new reservations inductively across all steps without authorized disengage",
+      "proved": true,
+      "theorem": "T2_engaged_blocks_reserves_until_authorized_disengage",
+      "z3_result": "unsat"
+    },
+    {
+      "claim": "Completion commits iff slot is Uncertain with matching owner, independent of kill-switch state",
+      "proved": true,
+      "theorem": "T3_previously_reserved_owner_completion_iff",
+      "z3_result": "unsat"
+    },
+    {
+      "claim": "Conservative halted init refuses Acquire until authorized disengage with epoch > 0",
+      "proved": true,
+      "theorem": "T4_conservative_init_requires_authorized_activation_and_monotonic_epoch",
+      "z3_result": "unsat"
+    },
+    {
+      "claim": "Reopening an existing DB with deleted singleton row preserves unavailability and refuses Acquire",
+      "proved": true,
+      "theorem": "T5_deleted_singleton_reopen_never_fails_open",
+      "z3_result": "unsat"
+    }
+  ],
+  "z3_version": "4.16.0"
+}

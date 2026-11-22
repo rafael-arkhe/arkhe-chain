@@ -1,0 +1,159 @@
+name: arkhe-native-control-lab-l1
+on:
+  push:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "kernel/arkhe-core/**"
+      - "kernel/arkhe-kernel/**"
+      - "governance/arkhe-governance/**"
+      - "verification/crates/arkhe-verify-core/**"
+      - "verification/arkhe-native-control-lab/**"
+      - "formal/proof/kill_switch/**"
+      - ".github/workflows/arkhe-native-control-lab-l1.yml"
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "kernel/arkhe-core/**"
+      - "kernel/arkhe-kernel/**"
+      - "governance/arkhe-governance/**"
+      - "verification/crates/arkhe-verify-core/**"
+      - "verification/arkhe-native-control-lab/**"
+      - "formal/proof/kill_switch/**"
+      - ".github/workflows/arkhe-native-control-lab-l1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  l1-l2-linux-enforcement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+        with:
+          components: rustfmt, clippy
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python verifier dependency
+        run: python3 -m pip install -r verification/arkhe-native-control-lab/requirements.txt
+
+      - name: Format and Clippy (arkhe-kernel + arkhe-native-lab)
+        run: |
+          cargo fmt -p arkhe-kernel -p arkhe-native-lab -- --check
+          cargo clippy --locked -p arkhe-kernel --features sqlite-broker --all-targets -- -D warnings
+          cargo clippy --locked -p arkhe-native-lab --all-targets -- -D warnings
+
+      - name: Verify kernel tests and budget_pco example (V-AGI-06)
+        run: |
+          cargo build --locked -p arkhe-kernel --features sqlite-broker --example budget_pco
+          cargo test --locked -p arkhe-kernel --features sqlite-broker --lib --tests
+
+      - name: Build and unit-test arkhe-native-lab
+        run: |
+          cargo test --locked -p arkhe-native-lab
+          cargo build --locked -p arkhe-native-lab
+
+      - name: Run 7 native persistence and L2 kill-switch tests
+        run: |
+          python3 verification/arkhe-native-control-lab/test_native.py \
+            --binary target/debug/arkhe-native-lab
+
+      - name: Run 9-case Linux native control matrix (inotify + unshare + V-AGI-02 + V-AGI-07)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          mkdir -p artifacts
+          python3 verification/arkhe-native-control-lab/run_native.py \
+            --binary target/debug/arkhe-native-lab \
+            --repository . \
+            --output artifacts/ci-native \
+            | tee artifacts/native-execution.log
+          KEY=$(grep '^LAB_PUBLIC_KEY_BASE64=' artifacts/native-execution.log | cut -d= -f2)
+          python3 verification/arkhe-native-control-lab/verify.py \
+            artifacts/ci-native \
+            --trusted-key-base64 "$KEY" \
+            | tee artifacts/native-verification.log
+
+      - name: Run L1 multi-UID OS enforcement suite (5 distinct UIDs, SO_PEERCRED, EACCES, EPERM)
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYBIN="$(command -v python3)"
+          sudo rm -rf /tmp/arkhe-ci-l1
+          sudo "$PYBIN" verification/arkhe-native-control-lab/run_l1_linux.py \
+            --binary target/debug/arkhe-native-lab \
+            --repository . \
+            --output /tmp/arkhe-ci-l1 \
+            --executor-uid 2000 \
+            --agent-uid 2001 \
+            --operator-uid 2002 \
+            --observer-uid 2003 \
+            --stranger-uid 2004 \
+            | tee artifacts/l1-execution.log
+          KEY=$(grep '^LAB_PUBLIC_KEY_BASE64=' artifacts/l1-execution.log | cut -d= -f2)
+          "$PYBIN" verification/arkhe-native-control-lab/verify.py \
+            /tmp/arkhe-ci-l1 \
+            --trusted-key-base64 "$KEY" \
+            | tee artifacts/l1-verification.log
+          sudo cp -r /tmp/arkhe-ci-l1 artifacts/ci-l1
+          sudo chmod -R a+rX artifacts/ci-l1
+
+      - name: Upload signed Linux L1 and L2 evidence bundles
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arkhe-native-control-lab-l1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/ci-native/
+            artifacts/ci-l1/
+            artifacts/*.log
+          if-no-files-found: warn
+          retention-days: 30
+
+  l3-formal-z3-and-kani:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install z3-solver
+        run: python3 -m pip install z3-solver
+
+      - name: Run L3 Z3 SMT proofs (5 theorems + non-vacuity check)
+        run: |
+          mkdir -p artifacts/l3
+          python3 formal/proof/kill_switch/verify_kill_switch_z3.py \
+            --output artifacts/l3/z3_proof_report.json
+
+      - name: Install Kani verifier and run 4/4 arkhe-kernel kill_switch_model harnesses (V-AGI-03)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo install --locked kani-verifier
+          cargo kani setup
+          cargo kani -p arkhe-kernel --exact --harness kill_switch_model::kani_proofs::proof_unavailable_kill_switch_always_refuses_reserve \
+            | tee artifacts/l3/kani-1.log
+          cargo kani -p arkhe-kernel --exact --harness kill_switch_model::kani_proofs::proof_engaged_kill_switch_blocks_all_new_reserves_until_resumed \
+            | tee artifacts/l3/kani-2.log
+          cargo kani -p arkhe-kernel --exact --harness kill_switch_model::kani_proofs::proof_previously_reserved_owner_can_complete_even_when_engaged \
+            | tee artifacts/l3/kani-3.log
+          cargo kani -p arkhe-kernel --exact --harness kill_switch_model::kani_proofs::proof_fail_closed_acquire_and_epoch_monotonicity \
+            | tee artifacts/l3/kani-4.log
+
+      - name: Upload L3 formal verification artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arkhe-l3-formal-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/l3/
+          if-no-files-found: warn
+          retention-days: 30

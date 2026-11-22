@@ -18,6 +18,11 @@ pub enum Reservation {
 /// An acquired entry remains uncertain after cancellation, panic or storage error.
 /// No in-memory implementation is installed as a production default.
 pub trait DispatchJournal {
+    /// Fail-closed check for a persisted global kill switch. Durable journals MUST
+    /// also enforce the kill switch atomically inside their reservation transaction.
+    fn check_global_kill_switch(&self) -> Result<(), String> {
+        Ok(())
+    }
     /// Atomically consumes a caller nonce and reserves dispatch. No fallback to
     /// an old journal that lacks nonce uniqueness is permitted.
     fn reserve_authenticated(
@@ -74,6 +79,52 @@ pub trait CapabilityExecutor {
 impl<R: PolicyResolver, X: CapabilityExecutor>
     CapabilityBroker<R, crate::broker_sqlite::SqliteDispatchJournal, X>
 {
+    pub fn global_kill_switch_state(
+        &self,
+    ) -> Result<crate::broker_sqlite::GlobalKillSwitchState, String> {
+        self.journal.global_kill_switch_state()
+    }
+
+    pub fn engage_global_kill_switch_as(
+        &mut self,
+        operator: &crate::broker_sqlite::AuthenticatedOperator,
+        reason: &str,
+        now_ns: i64,
+    ) -> Result<crate::broker_sqlite::GlobalKillSwitchState, String> {
+        self.journal
+            .engage_global_kill_switch_as(operator, reason, now_ns)
+    }
+
+    pub fn disengage_global_kill_switch_as(
+        &mut self,
+        operator: &crate::broker_sqlite::AuthenticatedOperator,
+        reason: &str,
+        now_ns: i64,
+    ) -> Result<crate::broker_sqlite::GlobalKillSwitchState, String> {
+        self.journal
+            .disengage_global_kill_switch_as(operator, reason, now_ns)
+    }
+
+    pub fn engage_global_kill_switch(
+        &mut self,
+        operator: &str,
+        reason: &str,
+        now_ns: i64,
+    ) -> Result<crate::broker_sqlite::GlobalKillSwitchState, String> {
+        self.journal
+            .engage_global_kill_switch(operator, reason, now_ns)
+    }
+
+    pub fn disengage_global_kill_switch(
+        &mut self,
+        operator: &str,
+        reason: &str,
+        now_ns: i64,
+    ) -> Result<crate::broker_sqlite::GlobalKillSwitchState, String> {
+        self.journal
+            .disengage_global_kill_switch(operator, reason, now_ns)
+    }
+
     /// Local SQLite effects only. External effects must use reserve-before-send
     /// and preserve uncertainty, or an actual provider idempotency contract.
     #[allow(clippy::too_many_arguments)]
@@ -93,6 +144,7 @@ impl<R: PolicyResolver, X: CapabilityExecutor>
             &arkhe_verify_core::policy::Action,
         ) -> Result<Vec<u8>, String>,
     {
+        self.journal.check_global_kill_switch()?;
         if self
             .gate
             .resolver
@@ -158,6 +210,7 @@ impl<R: PolicyResolver, J: DispatchJournal, X: CapabilityExecutor> CapabilityBro
         policy: &PolicyBinding,
         evidence: &E,
     ) -> Result<Vec<u8>, String> {
+        self.journal.check_global_kill_switch()?;
         if self
             .gate
             .resolver
@@ -221,6 +274,7 @@ impl<R: PolicyResolver, J: DispatchJournal, X: CapabilityExecutor> CapabilityBro
         proof: &ActionProof,
         trust: &Trust,
     ) -> Result<Vec<u8>, String> {
+        self.journal.check_global_kill_switch()?;
         if matches!(
             self.gate.resolver.required_formal_predicate(intent, policy),
             Some(arkhe_core::formal_proof::FormalPredicate::PaymentMandate(_))

@@ -520,3 +520,4 @@ pub mod broker;
 pub mod broker_sqlite;
 #[cfg(feature = "sqlite-activation")]
 pub mod governed_execution;
+pub mod kill_switch_model;
