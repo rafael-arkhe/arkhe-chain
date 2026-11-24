@@ -521,3 +521,5 @@ pub mod broker_sqlite;
 #[cfg(feature = "sqlite-activation")]
 pub mod governed_execution;
 pub mod kill_switch_model;
+#[cfg(feature = "sqlite-activation")]
+pub mod solana_swap_sqlite;

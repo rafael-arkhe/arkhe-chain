@@ -1,0 +1,109 @@
+﻿{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Arkhe x 0x Solana Swap Governed HTTP Gateway",
+    "version": "1.0.0",
+    "description": "Governed Rust HTTP gateway enforcing RFC 9421 Ed25519 0x verification, Rust MessageV0 + ALT policy evaluation, single-use signing boundary, MMR decision receipts, and on-chain confirmation reconciliation (dry-run only: zero real signatures, zero network broadcasts)."
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Server-configured ARKHE_SOLANA_SWAP_TOKEN verified in constant time."
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v1/solana/swap/health": {
+      "get": {
+        "summary": "Gateway health, SQLite WAL stats, MMR root, upstream flags, and safety counters"
+      }
+    },
+    "/v1/solana/swap/metrics": {
+      "get": {
+        "summary": "Prometheus text exposition metrics (text/plain; version=0.0.4)"
+      }
+    },
+    "/v1/solana/swap/openapi.json": {
+      "get": {
+        "summary": "OpenAPI 3.1.0 specification document"
+      }
+    },
+    "/v1/solana/swap/public-keys": {
+      "get": {
+        "summary": "Pinned Ed25519 public keys (auth, receipt, checkpoint) and trusted 0x key IDs"
+      }
+    },
+    "/v1/solana/swap/policy": {
+      "get": {
+        "summary": "Active server-pinned SolanaSwapPolicy and its BLAKE3 policyDigest"
+      }
+    },
+    "/v1/solana/swap/checkpoint": {
+      "get": {
+        "summary": "Latest Ed25519-signed BLAKE3 MMR checkpoint"
+      }
+    },
+    "/v1/solana/swap/compile": {
+      "post": {
+        "summary": "Pure-Rust Solana MessageV0 compiler with ALT compression"
+      }
+    },
+    "/v1/solana/swap/evaluate": {
+      "post": {
+        "summary": "Evaluate RFC 9421 0x response + MessageV0/ALTs against policy and emit signed MMR receipt"
+      }
+    },
+    "/v1/solana/swap/shadow-quote-and-evaluate": {
+      "post": {
+        "summary": "Shadow read-only 0x quote fetch + optional Solana RPC finalized ALT/blockhash fetch + evaluate"
+      }
+    },
+    "/v1/solana/swap/signing-boundary": {
+      "post": {
+        "summary": "Verify Ed25519 authorization, exact SHA-256/BLAKE3 MessageV0 match, and consume single-use in SQLite WAL (dry-run sink)"
+      }
+    },
+    "/v1/solana/swap/signing-boundary/events": {
+      "get": {
+        "summary": "Query durable signing boundary audit log (optional ?authId=...)"
+      }
+    },
+    "/v1/solana/swap/receipts": {
+      "get": {
+        "summary": "Paginated list of signed decision receipts (?limit=&offset=)"
+      }
+    },
+    "/v1/solana/swap/receipts/{receipt_id}/bundle": {
+      "get": {
+        "summary": "Export self-contained offline verification bundle (receipt + Ed25519 + rbb::mmr proof + checkpoint)"
+      }
+    },
+    "/v1/solana/swap/receipts/{receipt_id}/confirm": {
+      "post": {
+        "summary": "Evidence #3: Reconcile finalized on-chain confirmation evidence against authorized MessageV0 and policy bounds"
+      }
+    },
+    "/v1/solana/swap/receipts/{receipt_id}/reconcile-rpc": {
+      "post": {
+        "summary": "Evidence #3 via read-only Solana RPC getTransaction + reconcile against policy bounds"
+      }
+    },
+    "/v1/solana/swap/receipts/{receipt_id}/confirmation": {
+      "get": {
+        "summary": "Retrieve persisted Ed25519-signed on-chain confirmation reconciliation receipt"
+      }
+    },
+    "/v1/solana/swap/verify-bundle": {
+      "post": {
+        "summary": "Verify an exported SolanaSwapOfflineBundle against server public keys"
+      }
+    }
+  }
+}

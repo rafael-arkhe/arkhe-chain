@@ -228,6 +228,108 @@ pub fn verify_absence(
         .map_err(|m| JsValue::from_str(&m))
 }
 
+/// Authoritative Rust evaluation of raw Solana MessageV0 wire bytes against Arkhe swap policy.
+/// Parses the v0 wire bytes, resolves static + ALT accounts, interprets compiled instructions,
+/// and returns a JSON verdict (`ELEGÍVEL` | `BLOQUEADO` | `INCONCLUSIVO`) with accounting.
+/// Never trusts pre-interpreted summaries from JS/TS and never signs or broadcasts transactions.
+#[wasm_bindgen]
+pub fn evaluate_solana_swap_message_v0(
+    compiled_message_bytes: &[u8],
+    context_json: &str,
+) -> Result<String, JsValue> {
+    if compiled_message_bytes.len() > 4096 || context_json.len() > 262_144 {
+        return Err(JsValue::from_str("solana swap evaluation input too large"));
+    }
+    let ctx: arkhe_verify_core::solana_swap::EvaluationContext =
+        serde_json::from_str(context_json)
+            .map_err(|e| JsValue::from_str(&format!("invalid evaluation context JSON: {e}")))?;
+    let eval = arkhe_verify_core::solana_swap::evaluate_message_v0(compiled_message_bytes, &ctx)
+        .map_err(|e| JsValue::from_str(&e))?;
+    serde_json::to_string(&eval).map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+fn compile_solana_swap_inner(request_json: &str) -> Result<String, String> {
+    if request_json.len() > 262_144 {
+        return Err("solana swap compile input too large".to_string());
+    }
+    let val: serde_json::Value = serde_json::from_str(request_json)
+        .map_err(|e| format!("invalid compile request JSON: {e}"))?;
+    let payer = val
+        .get("payer")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "compile request missing 'payer' string".to_string())?;
+    let recent_blockhash = val
+        .get("recentBlockhash")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "compile request missing 'recentBlockhash' string".to_string())?;
+    let raw_payload = val
+        .get("swapInstructionsPayload")
+        .ok_or_else(|| "compile request missing 'swapInstructionsPayload'".to_string())?;
+    let alts: Vec<arkhe_verify_core::solana_swap::AddressLookupTableSnapshot> = match val
+        .get("addressLookupTables")
+    {
+        Some(v) if !v.is_null() => serde_json::from_value(v.clone())
+            .map_err(|e| format!("invalid 'addressLookupTables': {e}"))?,
+        _ => Vec::new(),
+    };
+    let normalized = arkhe_verify_core::solana_swap::normalize_raw_0x_payload(raw_payload)?;
+    let artifact = arkhe_verify_core::solana_swap::compile_solana_message_v0(
+        payer,
+        recent_blockhash,
+        &normalized,
+        &alts,
+    )?;
+    serde_json::to_string(&artifact).map_err(|e| e.to_string())
+}
+
+/// Pure-Rust Solana MessageV0 compiler exposed to JS/WASM (supports both camelCase fixtures
+/// and real `api.0x.org` byte-array payloads plus Address Lookup Table compression).
+#[wasm_bindgen]
+pub fn compile_solana_swap_message_v0(request_json: &str) -> Result<String, JsValue> {
+    compile_solana_swap_inner(request_json).map_err(|e| JsValue::from_str(&e))
+}
+
+fn reconcile_solana_swap_inner(request_json: &str) -> Result<String, String> {
+    if request_json.len() > 262_144 {
+        return Err("solana swap reconcile input too large".to_string());
+    }
+    let val: serde_json::Value = serde_json::from_str(request_json)
+        .map_err(|e| format!("invalid reconcile request JSON: {e}"))?;
+    let policy_val = val
+        .get("policy")
+        .ok_or_else(|| "reconcile request missing 'policy'".to_string())?;
+    let policy: arkhe_verify_core::solana_swap::SolanaSwapPolicy =
+        serde_json::from_value(policy_val.clone())
+            .map_err(|e| format!("invalid 'policy': {e}"))?;
+    let authorized_sha256 = val
+        .get("authorizedSha256")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "reconcile request missing 'authorizedSha256' string".to_string())?;
+    let authorized_blake3 = val
+        .get("authorizedBlake3")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "reconcile request missing 'authorizedBlake3' string".to_string())?;
+    let evidence_val = val
+        .get("evidence")
+        .ok_or_else(|| "reconcile request missing 'evidence'".to_string())?;
+    let evidence: arkhe_verify_core::solana_swap::OnChainConfirmationEvidence =
+        serde_json::from_value(evidence_val.clone())
+            .map_err(|e| format!("invalid 'evidence': {e}"))?;
+    let report = arkhe_verify_core::solana_swap::reconcile_solana_confirmation(
+        &policy,
+        authorized_sha256,
+        authorized_blake3,
+        &evidence,
+    )?;
+    serde_json::to_string(&report).map_err(|e| e.to_string())
+}
+
+/// Evidence #3: Post-execution on-chain confirmation verifier and policy reconciler in WASM.
+#[wasm_bindgen]
+pub fn reconcile_solana_swap_confirmation(request_json: &str) -> Result<String, JsValue> {
+    reconcile_solana_swap_inner(request_json).map_err(|e| JsValue::from_str(&e))
+}
+
 #[cfg(test)]
 mod absence_tests {
     use super::absence_check;
@@ -257,5 +359,106 @@ mod absence_tests {
         assert!(absence_check(SPEC, 1, &hash_for(2), 1_790_000_000 + 4 * 3600).is_err());
         assert!(absence_check("{}", 2, &hash_for(2), 1_790_000_000 + 4 * 3600).is_err());
         assert!(absence_check(&" ".repeat(40_000), 2, "", 0).is_err());
+    }
+
+    #[test]
+    fn wasm_solana_compile_and_reconcile_helpers_roundtrip() {
+        use super::{compile_solana_swap_inner, reconcile_solana_swap_inner};
+        use arkhe_verify_core::rfc9421::{base64_decode_strict, base64_encode};
+        use arkhe_verify_core::solana_swap::base58_encode;
+
+        let key = |s: u8| {
+            let mut b = [s; 32];
+            b[0] = s.wrapping_add(1);
+            base58_encode(&b)
+        };
+        let taker = key(11);
+        let taker_in = key(12);
+        let recipient = key(13);
+        let dest_ata = key(14);
+        let in_mint = key(21);
+        let out_mint = key(22);
+        let swap_prog = key(31);
+        let pool_in = key(41);
+        let pool_out = key(42);
+        let blockhash = base58_encode(&[77u8; 32]);
+        let disc = [0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x08];
+        let mut ix_data = Vec::new();
+        ix_data.extend_from_slice(&disc);
+        ix_data.extend_from_slice(&80_000_000u64.to_le_bytes());
+        ix_data.extend_from_slice(&96_000_000u64.to_le_bytes());
+
+        let compile_req = serde_json::json!({
+            "payer": taker,
+            "recentBlockhash": blockhash,
+            "swapInstructionsPayload": {
+                "network": "solana-mainnet-beta",
+                "instructions": [{
+                    "programId": swap_prog,
+                    "accounts": [
+                        { "pubkey": taker, "isSigner": true, "isWritable": true },
+                        { "pubkey": taker_in, "isSigner": false, "isWritable": true },
+                        { "pubkey": dest_ata, "isSigner": false, "isWritable": true },
+                        { "pubkey": in_mint, "isSigner": false, "isWritable": false },
+                        { "pubkey": out_mint, "isSigner": false, "isWritable": false },
+                        { "pubkey": pool_in, "isSigner": false, "isWritable": true },
+                        { "pubkey": pool_out, "isSigner": false, "isWritable": true },
+                        { "pubkey": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", "isSigner": false, "isWritable": false }
+                    ],
+                    "data": base64_encode(&ix_data)
+                }]
+            },
+            "addressLookupTables": []
+        });
+        let compiled_json = compile_solana_swap_inner(&compile_req.to_string()).unwrap();
+        let compiled: serde_json::Value = serde_json::from_str(&compiled_json).unwrap();
+        let msg_b64 = compiled["compiledMessageBase64"].as_str().unwrap();
+        assert_eq!(base64_decode_strict(msg_b64).unwrap()[0], 0x80);
+
+        let reconcile_req = serde_json::json!({
+            "policy": {
+                "policyId": "wasm-reconcile-test",
+                "network": "solana-mainnet-beta",
+                "taker": taker,
+                "takerInputTokenAccount": taker_in,
+                "authorizedRecipient": recipient,
+                "authorizedDestinationTokenAccount": dest_ata,
+                "inputMint": in_mint,
+                "outputMint": out_mint,
+                "maxInputAssetDebit": "100000000",
+                "maxSolAncillaryDebit": "3000000",
+                "minOutputNetCredit": "95000000",
+                "trustedAltAttesterKeys": {},
+                "coveredSwapPrograms": {}
+            },
+            "authorizedSha256": compiled["sha256"],
+            "authorizedBlake3": compiled["blake3"],
+            "evidence": {
+                "network": "solana-mainnet-beta",
+                "signature": "5WasmReconcileTestSig1111111111111111111111111111111111111111111111",
+                "slot": 310000050,
+                "confirmationStatus": "finalized",
+                "err": null,
+                "compiledMessageBase64": msg_b64,
+                "accountKeys": [taker, taker_in, dest_ata],
+                "feeLamports": 5000,
+                "preBalances": [1000000000, 2039280, 2039280],
+                "postBalances": [999995000, 2039280, 2039280],
+                "preTokenBalances": [
+                    { "accountIndex": 1, "mint": in_mint, "owner": taker, "amount": "200000000" },
+                    { "accountIndex": 2, "mint": out_mint, "owner": recipient, "amount": "0" }
+                ],
+                "postTokenBalances": [
+                    { "accountIndex": 1, "mint": in_mint, "owner": taker, "amount": "120000000" },
+                    { "accountIndex": 2, "mint": out_mint, "owner": recipient, "amount": "97000000" }
+                ]
+            }
+        });
+        let recon_json = reconcile_solana_swap_inner(&reconcile_req.to_string()).unwrap();
+        let recon: serde_json::Value = serde_json::from_str(&recon_json).unwrap();
+        assert_eq!(recon["status"], "CONFIRMED_WITHIN_POLICY");
+        assert_eq!(recon["exactMessageMatch"], true);
+        assert_eq!(recon["actualInputAssetDebit"], "80000000");
+        assert_eq!(recon["actualOutputNetCredit"], "97000000");
     }
 }

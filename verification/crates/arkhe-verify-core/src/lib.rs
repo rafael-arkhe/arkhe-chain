@@ -21,5 +21,7 @@ pub mod rbb;
 pub mod reconciliation;
 pub mod release;
 pub mod release_keyset;
+pub mod rfc9421;
+pub mod solana_swap;
 pub mod types;
 pub mod verification;

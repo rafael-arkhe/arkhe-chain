@@ -240,6 +240,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             b"DraftDocument|QueryKnowledgeBase|Simulate",
         ),
     };
+    let api_token_for_mount = token.clone();
     let state = Arc::new(LiveState {
         runtime: Runtime {
             gate: ContainmentGate::new(DevPolicyResolver),
@@ -261,6 +262,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .merge(runs)
     .merge(tasks)
     .layer(DefaultBodyLimit::max(262144));
+
+    #[cfg(feature = "sqlite-activation")]
+    let app = match arkhe_runtime::solana_swap_gateway::build_router_from_env(&api_token_for_mount)
+        .map_err(std::io::Error::other)?
+    {
+        Some((swap_state, swap_router)) => {
+            println!(
+                "Mounted /v1/solana/swap/* gateway (policyDigest={})",
+                swap_state.policy_digest_hex()
+            );
+            app.merge(swap_router)
+        }
+        None => app,
+    };
+    #[cfg(not(feature = "sqlite-activation"))]
+    let _ = api_token_for_mount;
+
     let listener = tokio::net::TcpListener::bind(
         env::var("ARKHE_LISTEN").unwrap_or_else(|_| "127.0.0.1:8788".into()),
     )

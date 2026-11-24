@@ -10,6 +10,10 @@ pub mod http_routes;
 pub mod portable_wer;
 pub mod preview;
 pub mod run_report;
+#[cfg(feature = "sqlite-activation")]
+pub mod solana_swap_gateway;
+#[cfg(feature = "sqlite-activation")]
+pub mod solana_swap_upstream;
 pub mod task_admission;
 
 pub struct Runtime<R: PolicyResolver> {

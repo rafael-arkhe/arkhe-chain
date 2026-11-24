@@ -12,7 +12,7 @@ arkhe-governance = { path = "../../governance/arkhe-governance" }
 arkhe-verify-core = { path = "../../verification/crates/arkhe-verify-core" }
 arkhe-agent = { path = "../../cognition/arkhe-agent" }
 arkhe-exec-adapter = { path = "../../integration/arkhe-exec-adapter" }
-tokio = { workspace = true, features = ["net", "process", "io-util"] }
+tokio = { workspace = true, features = ["net", "process", "io-util", "signal"] }
 
 arkhe-wormgraph = { path = "../../evidence/arkhe-wormgraph" }
 serde.workspace = true
@@ -26,11 +26,17 @@ arkhe-sql = { path = "../../storage/sql/crates/arkhe-sql" }
 async-trait.workspace = true
 clap.workspace = true
 uuid.workspace = true
+reqwest.workspace = true
 
 [features]
 sqlite-dispatch = ["arkhe-kernel/sqlite-broker"]
 sqlite-activation = ["arkhe-kernel/sqlite-activation"]
 postgres-integration = []
+
+[[bin]]
+name = "arkhe-solana-swap-gateway"
+path = "src/bin/arkhe-solana-swap-gateway.rs"
+required-features = ["sqlite-activation"]
 
 [dev-dependencies]
 uuid.workspace = true
