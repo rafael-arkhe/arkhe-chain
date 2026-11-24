@@ -59,7 +59,19 @@ pub struct SolanaSwapStoreStats {
     pub consumed_auth_count: u64,
     pub signing_boundary_event_count: u64,
     pub onchain_confirmation_count: u64,
+    pub pending_reconciliation_count: u64,
     pub mmr_root_hex: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PendingReconciliationRow {
+    pub receipt_id: String,
+    pub tx_signature: String,
+    pub enqueued_at: i64,
+    pub attempts: u64,
+    pub last_error: Option<String>,
+    pub completed: bool,
+    pub completed_at: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -156,6 +168,16 @@ impl SqliteSolanaSwapStore {
                 report_json           BLOB NOT NULL,
                 signature_hex         TEXT NOT NULL,
                 recorded_at           INTEGER NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS pending_reconciliations (
+                receipt_id    TEXT PRIMARY KEY,
+                tx_signature  TEXT NOT NULL,
+                enqueued_at   INTEGER NOT NULL,
+                attempts      INTEGER NOT NULL DEFAULT 0,
+                last_error    TEXT,
+                completed     INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0, 1)),
+                completed_at  INTEGER
             );
             ",
         )
@@ -447,6 +469,14 @@ impl SqliteSolanaSwapStore {
             .conn
             .query_row("SELECT COUNT(*) FROM onchain_confirmations", [], |r| r.get(0))
             .map_err(|e| format!("sqlite count onchain_confirmations failed: {e}"))?;
+        let pending_reconciliation_count: i64 = self
+            .conn
+            .query_row(
+                "SELECT COUNT(*) FROM pending_reconciliations WHERE completed = 0",
+                [],
+                |r| r.get(0),
+            )
+            .map_err(|e| format!("sqlite count pending_reconciliations failed: {e}"))?;
         let mmr_root_hex = if self.records.is_empty() {
             None
         } else {
@@ -464,8 +494,89 @@ impl SqliteSolanaSwapStore {
             consumed_auth_count: consumed_auth_count as u64,
             signing_boundary_event_count: signing_boundary_event_count as u64,
             onchain_confirmation_count: onchain_confirmation_count as u64,
+            pending_reconciliation_count: pending_reconciliation_count as u64,
             mmr_root_hex,
         })
+    }
+
+    pub fn enqueue_pending_reconciliation(
+        &mut self,
+        receipt_id: &str,
+        tx_signature: &str,
+        enqueued_at: i64,
+    ) -> Result<bool, String> {
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|e| format!("sqlite tx begin failed: {e}"))?;
+        let inserted = tx
+            .execute(
+                "INSERT OR IGNORE INTO pending_reconciliations (receipt_id, tx_signature, enqueued_at)
+                 VALUES (?1, ?2, ?3)",
+                params![receipt_id, tx_signature, enqueued_at],
+            )
+            .map_err(|e| format!("sqlite insert pending_reconciliations failed: {e}"))?;
+        tx.commit()
+            .map_err(|e| format!("sqlite tx commit failed: {e}"))?;
+        Ok(inserted == 1)
+    }
+
+    pub fn list_pending_reconciliations(
+        &self,
+        limit: u64,
+    ) -> Result<Vec<PendingReconciliationRow>, String> {
+        let clamped = limit.clamp(1, 200) as i64;
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT receipt_id, tx_signature, enqueued_at, attempts, last_error, completed, completed_at
+                 FROM pending_reconciliations
+                 WHERE completed = 0
+                 ORDER BY enqueued_at ASC LIMIT ?1",
+            )
+            .map_err(|e| format!("sqlite prepare pending_reconciliations failed: {e}"))?;
+        let rows = stmt
+            .query_map(params![clamped], |r| {
+                Ok(PendingReconciliationRow {
+                    receipt_id: r.get(0)?,
+                    tx_signature: r.get(1)?,
+                    enqueued_at: r.get(2)?,
+                    attempts: r.get::<_, i64>(3)? as u64,
+                    last_error: r.get(4)?,
+                    completed: r.get::<_, i64>(5)? != 0,
+                    completed_at: r.get(6)?,
+                })
+            })
+            .map_err(|e| format!("sqlite query pending_reconciliations failed: {e}"))?;
+        let mut out = Vec::new();
+        for row in rows {
+            out.push(row.map_err(|e| format!("sqlite row decode failed: {e}"))?);
+        }
+        Ok(out)
+    }
+
+    pub fn record_reconciliation_attempt(
+        &mut self,
+        receipt_id: &str,
+        last_error: Option<&str>,
+        completed: bool,
+        now_unix_seconds: i64,
+    ) -> Result<(), String> {
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|e| format!("sqlite tx begin failed: {e}"))?;
+        let completed_at = if completed { Some(now_unix_seconds) } else { None };
+        tx.execute(
+            "UPDATE pending_reconciliations
+             SET attempts = attempts + 1, last_error = ?2, completed = ?3, completed_at = ?4
+             WHERE receipt_id = ?1",
+            params![receipt_id, last_error, i64::from(completed), completed_at],
+        )
+        .map_err(|e| format!("sqlite update pending_reconciliations failed: {e}"))?;
+        tx.commit()
+            .map_err(|e| format!("sqlite tx commit failed: {e}"))?;
+        Ok(())
     }
 
     pub fn latest_mmr_state(&self) -> Result<Option<(u64, [u8; 32])>, String> {

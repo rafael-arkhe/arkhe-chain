@@ -394,6 +394,20 @@ pub struct CoveredSwapProgramProfile {
     pub guarantees: Vec<String>,
 }
 
+/// Optional trusted on-chain atomic balance guard (`ArkheSwapGuardV1`) pinned in policy.
+/// When configured, an opaque swap/Settler route can ONLY become `ELEGÍVEL` if strictly
+/// bracketed by `(PreCheck at index 0, PostCheck at last index)` sharing the same writable
+/// guard state PDA and enforcing `maxInputAssetDebit`, `minOutputNetCredit`, and `maxTotalSolDebit`.
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct SwapGuardProgramProfile {
+    pub program_id: String,
+    pub pre_check_discriminator_hex: String,
+    pub post_check_discriminator_hex: String,
+    #[serde(default)]
+    pub guarantees: Vec<String>,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SolanaSwapPolicy {
@@ -413,6 +427,8 @@ pub struct SolanaSwapPolicy {
     #[serde(default)]
     pub trusted_alt_attester_keys: BTreeMap<String, String>,
     pub covered_swap_programs: BTreeMap<String, CoveredSwapProgramProfile>,
+    #[serde(default)]
+    pub trusted_swap_guard_program: Option<SwapGuardProgramProfile>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -675,8 +691,31 @@ fn compare_compiled_against_0x(
     msg: &ParsedMessageV0,
     resolved: &[ResolvedAccount],
     payload: &Raw0xSwapPayload,
+    trusted_guard_program_id: Option<&str>,
 ) -> ResponseMatchReport {
-    if msg.instructions.len() != payload.instructions.len() {
+    let slice: &[CompiledInstruction] = if let Some(guard_pid) = trusted_guard_program_id {
+        if msg.instructions.len() == payload.instructions.len() + 2 {
+            let first_pid = resolved
+                .get(usize::from(msg.instructions[0].program_id_index))
+                .map(|a| a.pubkey.as_str());
+            let last_pid = resolved
+                .get(usize::from(
+                    msg.instructions[msg.instructions.len() - 1].program_id_index,
+                ))
+                .map(|a| a.pubkey.as_str());
+            if first_pid == Some(guard_pid) && last_pid == Some(guard_pid) {
+                &msg.instructions[1..msg.instructions.len() - 1]
+            } else {
+                &msg.instructions[..]
+            }
+        } else {
+            &msg.instructions[..]
+        }
+    } else {
+        &msg.instructions[..]
+    };
+
+    if slice.len() != payload.instructions.len() {
         return ResponseMatchReport {
             matches: false,
             detail: format!(
@@ -686,12 +725,7 @@ fn compare_compiled_against_0x(
             ),
         };
     }
-    for (i, (ci, raw)) in msg
-        .instructions
-        .iter()
-        .zip(payload.instructions.iter())
-        .enumerate()
-    {
+    for (i, (ci, raw)) in slice.iter().zip(payload.instructions.iter()).enumerate() {
         let compiled_program = resolved
             .get(usize::from(ci.program_id_index))
             .map(|a| a.pubkey.as_str());
@@ -1121,7 +1155,15 @@ pub fn evaluate_message_v0(
         }
     }
 
-    let response_match = compare_compiled_against_0x(&msg, &resolved_accounts, payload);
+    let response_match = compare_compiled_against_0x(
+        &msg,
+        &resolved_accounts,
+        payload,
+        policy
+            .trusted_swap_guard_program
+            .as_ref()
+            .map(|g| g.program_id.as_str()),
+    );
     if !response_match.matches {
         violations.push(PolicyViolation {
             code: "LOCAL_ASSEMBLY_DIVERGENCE_FROM_0X_RESPONSE".to_string(),
@@ -1139,6 +1181,9 @@ pub fn evaluate_message_v0(
     let mut swap_input_debit: u128 = 0;
     let mut enforced_min_output_net_credit: u128 = 0;
     let mut covered_swap_count: u64 = 0;
+    // Atomic on-chain balance guard tracking (ArkheSwapGuardV1): (ix_index, guard_state_pda)
+    let mut guard_pre_checks: Vec<(usize, String)> = Vec::new();
+    let mut guard_post_checks: Vec<(usize, String, u64, u64, u64)> = Vec::new();
 
     for (ix_index, ci) in msg.instructions.iter().enumerate() {
         let Some(prog_acc) = resolved_accounts.get(usize::from(ci.program_id_index)) else {
@@ -1715,6 +1760,139 @@ pub fn evaluate_message_v0(
             continue;
         }
 
+        if let Some(guard_cfg) = &policy.trusted_swap_guard_program {
+            if program_id == guard_cfg.program_id {
+                let is_pre = data.len() == 8
+                    && hex::encode(&data[0..8])
+                        .eq_ignore_ascii_case(&guard_cfg.pre_check_discriminator_hex);
+                let is_post = data.len() == 32
+                    && hex::encode(&data[0..8])
+                        .eq_ignore_ascii_case(&guard_cfg.post_check_discriminator_hex);
+
+                if (!is_pre && !is_post) || ix_accounts.len() < 6 {
+                    violations.push(PolicyViolation {
+                        code: "SWAP_GUARD_INVALID_INSTRUCTION".to_string(),
+                        instruction_index: Some(ix_index),
+                        detail: format!(
+                            "ArkheSwapGuardV1 instruction #{ix_index} has invalid discriminator/length (len={}, accounts={}).",
+                            data.len(),
+                            ix_accounts.len()
+                        ),
+                    });
+                    instruction_analysis.push(serde_json::json!({
+                        "instructionIndex": ix_index,
+                        "programId": program_id,
+                        "kind": "ArkheSwapGuardV1.Invalid",
+                        "status": VERDICT_BLOCKED,
+                    }));
+                    continue;
+                }
+
+                let taker_acc = ix_accounts[0];
+                let guard_pda = ix_accounts[1];
+                let src_ata = ix_accounts[2];
+                let dst_ata = ix_accounts[3];
+                let in_mint = ix_accounts[4];
+                let out_mint = ix_accounts[5];
+
+                let mut guard_errs = Vec::new();
+                if taker_acc.pubkey != policy.taker || !taker_acc.is_signer {
+                    guard_errs.push(format!("taker mismatch or unsigned ({})", taker_acc.pubkey));
+                }
+                if !guard_pda.is_writable {
+                    guard_errs.push(format!("guard state PDA {} must be writable", guard_pda.pubkey));
+                }
+                if src_ata.pubkey != policy.taker_input_token_account {
+                    guard_errs.push(format!(
+                        "source token account {} !== {}",
+                        src_ata.pubkey, policy.taker_input_token_account
+                    ));
+                }
+                if dst_ata.pubkey != policy.authorized_destination_token_account {
+                    guard_errs.push(format!(
+                        "destination token account {} !== {}",
+                        dst_ata.pubkey, policy.authorized_destination_token_account
+                    ));
+                }
+                if in_mint.pubkey != policy.input_mint {
+                    guard_errs.push(format!("inputMint {} !== {}", in_mint.pubkey, policy.input_mint));
+                }
+                if out_mint.pubkey != policy.output_mint {
+                    guard_errs.push(format!("outputMint {} !== {}", out_mint.pubkey, policy.output_mint));
+                }
+
+                if is_pre {
+                    if !guard_errs.is_empty() {
+                        violations.push(PolicyViolation {
+                            code: "SWAP_GUARD_SCOPE_MISMATCH".to_string(),
+                            instruction_index: Some(ix_index),
+                            detail: format!("ArkheSwapGuardV1.PreCheck #{ix_index}: {}", guard_errs.join("; ")),
+                        });
+                    } else {
+                        guard_pre_checks.push((ix_index, guard_pda.pubkey.clone()));
+                    }
+                    instruction_analysis.push(serde_json::json!({
+                        "instructionIndex": ix_index,
+                        "programId": program_id,
+                        "kind": "ArkheSwapGuardV1.PreCheck",
+                        "status": if guard_errs.is_empty() { "INTERPRETED" } else { VERDICT_BLOCKED },
+                        "guardStatePda": guard_pda.pubkey,
+                    }));
+                } else {
+                    let post_max_in = u64::from_le_bytes(data[8..16].try_into().unwrap());
+                    let post_min_out = u64::from_le_bytes(data[16..24].try_into().unwrap());
+                    let post_max_total_sol = u64::from_le_bytes(data[24..32].try_into().unwrap());
+
+                    if post_max_in > max_input_asset_debit {
+                        guard_errs.push(format!(
+                            "PostCheck maxInputAssetDebit ({post_max_in}) exceeds policy ({max_input_asset_debit})"
+                        ));
+                    }
+                    if post_min_out < min_output_net_credit {
+                        guard_errs.push(format!(
+                            "PostCheck minOutputNetCredit ({post_min_out}) below policy ({min_output_net_credit})"
+                        ));
+                    }
+                    if input_is_native_sol {
+                        if let Some(max_total) = max_total_sol_debit {
+                            if post_max_total_sol > max_total {
+                                guard_errs.push(format!(
+                                    "PostCheck maxTotalSolDebit ({post_max_total_sol}) exceeds policy ({max_total})"
+                                ));
+                            }
+                        }
+                    }
+
+                    if !guard_errs.is_empty() {
+                        violations.push(PolicyViolation {
+                            code: "SWAP_GUARD_BOUNDS_VIOLATION".to_string(),
+                            instruction_index: Some(ix_index),
+                            detail: format!("ArkheSwapGuardV1.PostCheck #{ix_index}: {}", guard_errs.join("; ")),
+                        });
+                    } else {
+                        guard_post_checks.push((
+                            ix_index,
+                            guard_pda.pubkey.clone(),
+                            post_max_in,
+                            post_min_out,
+                            post_max_total_sol,
+                        ));
+                    }
+                    instruction_analysis.push(serde_json::json!({
+                        "instructionIndex": ix_index,
+                        "programId": program_id,
+                        "kind": "ArkheSwapGuardV1.PostCheck",
+                        "status": if guard_errs.is_empty() { "INTERPRETED" } else { VERDICT_BLOCKED },
+                        "guardStatePda": guard_pda.pubkey,
+                        "enforcedMaxInputAssetDebit": post_max_in.to_string(),
+                        "enforcedMinOutputNetCredit": post_min_out.to_string(),
+                        "enforcedMaxTotalSolDebit": post_max_total_sol.to_string(),
+                    }));
+                }
+                continue;
+            }
+        }
+
         // Uninterpreted program -> INCONCLUSIVO (never authorize)
         indeterminate_factors.push(IndeterminateFactor {
             code: "UNINTERPRETED_PROGRAM".to_string(),
@@ -1732,6 +1910,69 @@ pub fn evaluate_message_v0(
             "status": VERDICT_INCONCLUSIVE,
             "accountCount": ix_accounts.len(),
         }));
+    }
+
+    // Resolve bracketed atomic on-chain balance guard (ArkheSwapGuardV1) ONLY if strictly paired
+    // around ALL opaque/Settler instructions with matching guard_state_pda and valid bounds.
+    if let Some(guard_cfg) = &policy.trusted_swap_guard_program {
+        if guard_pre_checks.len() == 1 && guard_post_checks.len() == 1 {
+            let (pre_idx, ref pre_pda) = guard_pre_checks[0];
+            let (post_idx, ref post_pda, _post_max_in, post_min_out, _post_max_total) =
+                guard_post_checks[0];
+            if pre_idx < post_idx && pre_pda == post_pda {
+                let mut guarded_indices = Vec::new();
+                let mut remaining_indeterminate = Vec::new();
+                for factor in indeterminate_factors {
+                    if factor.code == "UNINTERPRETED_PROGRAM" {
+                        if let Some(idx) = factor.instruction_index {
+                            if idx > pre_idx && idx < post_idx {
+                                guarded_indices.push(idx);
+                                continue;
+                            }
+                        }
+                    }
+                    remaining_indeterminate.push(factor);
+                }
+                indeterminate_factors = remaining_indeterminate;
+
+                if !guarded_indices.is_empty() {
+                    covered_swap_count += 1;
+                    enforced_min_output_net_credit =
+                        enforced_min_output_net_credit.max(u128::from(post_min_out));
+                    let mut guarantees = guard_cfg.guarantees.clone();
+                    if guarantees.is_empty() {
+                        guarantees.push(format!(
+                            "Atomic on-chain balance guard brackets instructions {:?} via PDA {pre_pda} (reverts if debit > maxInputAssetDebit or net credit < minOutputNetCredit).",
+                            guarded_indices
+                        ));
+                    }
+                    program_guarantees.push(ProgramGuaranteeRecord {
+                        instruction_index: post_idx,
+                        program_id: guard_cfg.program_id.clone(),
+                        program_name: "ArkheSwapGuardV1".to_string(),
+                        guarantees,
+                    });
+                }
+            } else {
+                violations.push(PolicyViolation {
+                    code: "SWAP_GUARD_BRACKET_MISMATCH".to_string(),
+                    instruction_index: None,
+                    detail: format!(
+                        "ArkheSwapGuardV1 PreCheck (#{pre_idx}, pda={pre_pda}) and PostCheck (#{post_idx}, pda={post_pda}) do not form a valid ordered bracket."
+                    ),
+                });
+            }
+        } else if !guard_pre_checks.is_empty() || !guard_post_checks.is_empty() {
+            violations.push(PolicyViolation {
+                code: "SWAP_GUARD_INCOMPLETE_BRACKET".to_string(),
+                instruction_index: None,
+                detail: format!(
+                    "ArkheSwapGuardV1 requires exactly 1 PreCheck and 1 PostCheck (found pre={}, post={}).",
+                    guard_pre_checks.len(),
+                    guard_post_checks.len()
+                ),
+            });
+        }
     }
 
     // Spend-cap accounting
@@ -2586,6 +2827,7 @@ mod tests {
                 min_output_net_credit: "95000000".to_string(),
                 trusted_alt_attester_keys: alt_keys,
                 covered_swap_programs: covered,
+                trusted_swap_guard_program: None,
             },
             address_lookup_tables: vec![alt_snap],
             swap_instructions_payload: Raw0xSwapPayload {
@@ -2882,6 +3124,7 @@ mod tests {
             min_output_net_credit: "7000000".to_string(),
             trusted_alt_attester_keys: BTreeMap::new(),
             covered_swap_programs: BTreeMap::new(),
+            trusted_swap_guard_program: None,
         };
 
         // 1. Above policy cap (100M > 50M) -> BLOQUEADO with INPUT_ASSET_CAP_EXCEEDED + rich Settler telemetry
@@ -2917,5 +3160,145 @@ mod tests {
         assert_eq!(eval_within.verdict, VERDICT_INCONCLUSIVE);
         assert_eq!(eval_within.reason_code, "UNINTERPRETED_PROGRAM");
         assert!(eval_within.violations.is_empty());
+    }
+
+    #[test]
+    fn atomic_swap_guard_brackets_settler_to_eligible_and_rejects_broken_brackets() {
+        let settler_data = hex::decode(
+            "002aa3c060be30ef0ae6d0094500e1f50500000000a3206e00000000000310221795fb0900ca9a3b024fae6e0000000000"
+        )
+        .unwrap();
+        let taker = key_bytes(11);
+        let taker_in_ata = key_bytes(12);
+        let auth_dest_ata = key_bytes(14);
+        let out_mint = key_bytes(22);
+        let guard_prog = key_bytes(61);
+        let guard_pda = key_bytes(62);
+        let pre_disc: [u8; 8] = [0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88];
+        let post_disc: [u8; 8] = [0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11];
+
+        let settler_ix = Raw0xInstruction {
+            program_id: ZEROX_SETTLER_PROGRAM_ID.to_string(),
+            accounts: vec![
+                Raw0xAccountMeta { pubkey: base58_encode(&taker_in_ata), is_signer: false, is_writable: true },
+                Raw0xAccountMeta { pubkey: base58_encode(&auth_dest_ata), is_signer: false, is_writable: true },
+                Raw0xAccountMeta { pubkey: base58_encode(&taker), is_signer: true, is_writable: true },
+                Raw0xAccountMeta { pubkey: TOKEN_PROGRAM_ID.to_string(), is_signer: false, is_writable: false },
+            ],
+            data: base64_encode(&settler_data),
+        };
+        let guard_accounts = vec![
+            Raw0xAccountMeta { pubkey: base58_encode(&taker), is_signer: true, is_writable: true },
+            Raw0xAccountMeta { pubkey: base58_encode(&guard_pda), is_signer: false, is_writable: true },
+            Raw0xAccountMeta { pubkey: base58_encode(&taker_in_ata), is_signer: false, is_writable: false },
+            Raw0xAccountMeta { pubkey: base58_encode(&auth_dest_ata), is_signer: false, is_writable: false },
+            Raw0xAccountMeta { pubkey: NATIVE_MINT_ID.to_string(), is_signer: false, is_writable: false },
+            Raw0xAccountMeta { pubkey: base58_encode(&out_mint), is_signer: false, is_writable: false },
+        ];
+        let pre_ix = Raw0xInstruction {
+            program_id: base58_encode(&guard_prog),
+            accounts: guard_accounts.clone(),
+            data: base64_encode(&pre_disc),
+        };
+        let mut post_data = Vec::new();
+        post_data.extend_from_slice(&post_disc);
+        post_data.extend_from_slice(&150_000_000u64.to_le_bytes()); // max_in <= 200M
+        post_data.extend_from_slice(&7_200_000u64.to_le_bytes());   // min_out >= 7M
+        post_data.extend_from_slice(&155_000_000u64.to_le_bytes()); // max_total_sol <= 205M
+        let post_ix = Raw0xInstruction {
+            program_id: base58_encode(&guard_prog),
+            accounts: guard_accounts,
+            data: base64_encode(&post_data),
+        };
+
+        let zero_x_payload = Raw0xSwapPayload {
+            network: Some("solana-mainnet-beta".to_string()),
+            genesis_hash: Some(TEST_GENESIS.to_string()),
+            address_lookup_table_addresses: vec![],
+            instructions: vec![settler_ix.clone()],
+        };
+        let wrapped_payload = Raw0xSwapPayload {
+            network: Some("solana-mainnet-beta".to_string()),
+            genesis_hash: Some(TEST_GENESIS.to_string()),
+            address_lookup_table_addresses: vec![],
+            instructions: vec![pre_ix.clone(), settler_ix.clone(), post_ix],
+        };
+        let compiled_wrapped = compile_solana_message_v0(
+            &base58_encode(&taker),
+            &base58_encode(&[77u8; 32]),
+            &wrapped_payload,
+            &[],
+        )
+        .unwrap();
+
+        let policy = SolanaSwapPolicy {
+            policy_id: "arkhe-guarded-settler-v1".to_string(),
+            network: "solana-mainnet-beta".to_string(),
+            genesis_hash: Some(TEST_GENESIS.to_string()),
+            taker: base58_encode(&taker),
+            taker_input_token_account: base58_encode(&taker_in_ata),
+            authorized_recipient: base58_encode(&taker),
+            authorized_destination_token_account: base58_encode(&auth_dest_ata),
+            input_mint: NATIVE_MINT_ID.to_string(),
+            output_mint: base58_encode(&out_mint),
+            max_input_asset_debit: "200000000".to_string(),
+            max_sol_ancillary_debit: "3000000".to_string(),
+            max_total_sol_debit: Some("205000000".to_string()),
+            min_output_net_credit: "7000000".to_string(),
+            trusted_alt_attester_keys: BTreeMap::new(),
+            covered_swap_programs: BTreeMap::new(),
+            trusted_swap_guard_program: Some(SwapGuardProgramProfile {
+                program_id: base58_encode(&guard_prog),
+                pre_check_discriminator_hex: hex::encode(pre_disc),
+                post_check_discriminator_hex: hex::encode(post_disc),
+                guarantees: vec!["Atomic on-chain balance assertion".to_string()],
+            }),
+        };
+
+        // 1. Valid [PreCheck, Settler, PostCheck] bracket unlocks ELEGÍVEL with ArkheSwapGuardV1 guarantee
+        let eval_ok = evaluate_message_v0(
+            &compiled_wrapped.compiled_message_bytes,
+            &EvaluationContext {
+                policy: policy.clone(),
+                address_lookup_tables: vec![],
+                swap_instructions_payload: zero_x_payload.clone(),
+            },
+        )
+        .unwrap();
+        assert_eq!(eval_ok.verdict, VERDICT_ELIGIBLE);
+        assert!(eval_ok.response_match.matches);
+        assert!(eval_ok
+            .program_guarantees
+            .iter()
+            .any(|g| g.program_name == "ArkheSwapGuardV1"));
+
+        // 2. Missing PostCheck -> BLOQUEADO (SWAP_GUARD_INCOMPLETE_BRACKET + divergence)
+        let broken_payload = Raw0xSwapPayload {
+            network: Some("solana-mainnet-beta".to_string()),
+            genesis_hash: Some(TEST_GENESIS.to_string()),
+            address_lookup_table_addresses: vec![],
+            instructions: vec![pre_ix, settler_ix],
+        };
+        let compiled_broken = compile_solana_message_v0(
+            &base58_encode(&taker),
+            &base58_encode(&[77u8; 32]),
+            &broken_payload,
+            &[],
+        )
+        .unwrap();
+        let eval_bad = evaluate_message_v0(
+            &compiled_broken.compiled_message_bytes,
+            &EvaluationContext {
+                policy,
+                address_lookup_tables: vec![],
+                swap_instructions_payload: zero_x_payload,
+            },
+        )
+        .unwrap();
+        assert_eq!(eval_bad.verdict, VERDICT_BLOCKED);
+        assert!(eval_bad
+            .violations
+            .iter()
+            .any(|v| v.code == "SWAP_GUARD_INCOMPLETE_BRACKET"));
     }
 }

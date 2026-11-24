@@ -18,10 +18,10 @@ use std::sync::Arc;
 
 use arkhe_kernel::solana_swap_sqlite::SqliteSolanaSwapStore;
 use arkhe_runtime::solana_swap_gateway::{
-    build_mounted_router, router, verify_solana_swap_confirmation_receipt,
-    verify_solana_swap_receipt_bundle, EvaluateSwapResponse, SignedConfirmationReceipt,
-    SigningBoundaryResponse, SolanaSwapGatewayState, SolanaSwapMountConfig,
-    SolanaSwapOfflineBundle,
+    build_mounted_router, reconcile_pending_once, router, verify_solana_swap_confirmation_receipt,
+    verify_solana_swap_receipt_bundle, EvaluateSwapResponse, IsolatedSigningSink,
+    SignedConfirmationReceipt, SigningBoundaryResponse, SigningSinkInvocation, SigningSinkOutcome,
+    SolanaSwapGatewayState, SolanaSwapMountConfig, SolanaSwapOfflineBundle,
 };
 use arkhe_runtime::solana_swap_upstream::{
     AltObserverSigner, SolanaRpcReadOnlyClient, ZeroXSwapClient, ADDRESS_LOOKUP_TABLE_PROGRAM_ID,
@@ -297,6 +297,7 @@ impl TestScenario {
             min_output_net_credit: "95000000".to_string(),
             trusted_alt_attester_keys: alt_keys,
             covered_swap_programs: covered,
+            trusted_swap_guard_program: None,
         };
 
         let alt_snapshot = make_attested_alt(
@@ -491,6 +492,7 @@ async fn test_official_0x_capture_http_and_durable_replay_across_restart() {
         min_output_net_credit: "7000000".to_string(),
         trusted_alt_attester_keys: BTreeMap::new(),
         covered_swap_programs: BTreeMap::new(),
+        trusted_swap_guard_program: None,
     };
 
     let tmp = TestTempDir::new("official-0x");
@@ -2136,4 +2138,334 @@ async fn test_main_arkhe_runtime_router_merge_mount_preserves_isolation() {
         swap_state.public_keys_document().auth_public_key_hex,
         swap_state2.public_keys_document().auth_public_key_hex
     );
+}
+
+struct MockEnclaveDryRunSink {
+    invocations: AtomicU64,
+}
+
+impl IsolatedSigningSink for MockEnclaveDryRunSink {
+    fn name(&self) -> &'static str {
+        "mock-enclave-dry-run-sink"
+    }
+
+    fn accept_authorized_message(
+        &self,
+        invocation: &SigningSinkInvocation<'_>,
+    ) -> Result<SigningSinkOutcome, String> {
+        // Independent enclave-side digest check
+        if invocation.compiled_message_sha256
+            != invocation.authorization.payload.compiled_message_sha256
+        {
+            return Err("enclave sha256 mismatch".to_string());
+        }
+        self.invocations.fetch_add(1, Ordering::SeqCst);
+        Ok(SigningSinkOutcome {
+            mode_label: "ACCEPTED_ENCLAVE_DRY_RUN".to_string(),
+            real_signature_produced: false,
+        })
+    }
+}
+
+#[tokio::test]
+async fn test_alt_multi_rpc_quorum_divergence_and_automatic_reconciliation_worker_and_isolated_sink() {
+    use axum::routing::post;
+    use axum::{Json, Router};
+    use std::sync::atomic::AtomicBool;
+    use std::sync::Mutex;
+
+    let sc = TestScenario::new();
+    let alt_key_str = base58_encode(&sc.alt_key);
+    let token_prog_bytes = base58_decode_32(TOKEN_PROGRAM_ID).unwrap();
+    let good_alt_bytes = encode_solana_alt_account_bytes(
+        u64::MAX,
+        &[sc.pool_in, sc.pool_out, sc.input_mint, sc.output_mint, token_prog_bytes],
+    );
+    let divergent_alt_bytes = encode_solana_alt_account_bytes(
+        u64::MAX,
+        &[sc.pool_in, sc.pool_out, sc.input_mint, key_bytes(99), token_prog_bytes],
+    );
+
+    let rpc2_diverge = Arc::new(AtomicBool::new(false));
+    let tx_ready = Arc::new(AtomicBool::new(false));
+    let stored_msg_b64: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+
+    // Spawn Mock Solana RPC #1 (honest, slot 310_000_010, also serves getTransaction when tx_ready=true)
+    let l1 = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr1 = l1.local_addr().unwrap();
+    let good_b64_1 = base64_encode(&good_alt_bytes);
+    let tx_ready_c = tx_ready.clone();
+    let stored_msg_c = stored_msg_b64.clone();
+    let pol_c = sc.policy.clone();
+    let p_in_c = base58_encode(&sc.pool_in);
+    let p_out_c = base58_encode(&sc.pool_out);
+    let rpc1_task = tokio::spawn(async move {
+        let app = Router::new().route(
+            "/",
+            post(move |Json(req): Json<Value>| {
+                let b64 = good_b64_1.clone();
+                let ready = tx_ready_c.clone();
+                let msg_lock = stored_msg_c.clone();
+                let pol = pol_c.clone();
+                let pin = p_in_c.clone();
+                let pout = p_out_c.clone();
+                async move {
+                    let method = req["method"].as_str().unwrap_or("");
+                    let result = match method {
+                        "getGenesisHash" => json!(GENESIS),
+                        "getAccountInfo" => json!({
+                            "context": { "slot": 310_000_010u64 },
+                            "value": {
+                                "owner": ADDRESS_LOOKUP_TABLE_PROGRAM_ID,
+                                "data": [b64, "base64"],
+                                "executable": false,
+                                "lamports": 2_000_000u64
+                            }
+                        }),
+                        "getTransaction" => {
+                            if !ready.load(Ordering::SeqCst) {
+                                Value::Null
+                            } else {
+                                let mb64 = msg_lock.lock().unwrap().clone().unwrap();
+                                let mbytes = base64_decode_strict(&mb64).unwrap();
+                                let mut tx_bytes = Vec::with_capacity(1 + 64 + mbytes.len());
+                                tx_bytes.push(1u8);
+                                tx_bytes.extend_from_slice(&[0xcd; 64]);
+                                tx_bytes.extend_from_slice(&mbytes);
+                                json!({
+                                    "slot": 310_000_099u64,
+                                    "blockTime": FIXED_NOW + 10,
+                                    "transaction": [base64_encode(&tx_bytes), "base64"],
+                                    "meta": {
+                                        "err": null,
+                                        "fee": 5000u64,
+                                        "preBalances":  [1_000_000_000u64, 2_039_280, 2_039_280, 1, 2_039_280, 2_039_280, 1, 1, 1],
+                                        "postBalances": [  999_995_000u64, 2_039_280, 2_039_280, 1, 2_039_280, 2_039_280, 1, 1, 1],
+                                        "preTokenBalances": [
+                                            { "accountIndex": 1, "mint": pol.input_mint, "owner": pol.taker, "uiTokenAmount": { "amount": "200000000" } },
+                                            { "accountIndex": 2, "mint": pol.output_mint, "owner": pol.authorized_recipient, "uiTokenAmount": { "amount": "10000000" } }
+                                        ],
+                                        "postTokenBalances": [
+                                            { "accountIndex": 1, "mint": pol.input_mint, "owner": pol.taker, "uiTokenAmount": { "amount": "120000000" } },
+                                            { "accountIndex": 2, "mint": pol.output_mint, "owner": pol.authorized_recipient, "uiTokenAmount": { "amount": "109000000" } }
+                                        ],
+                                        "loadedAddresses": {
+                                            "writable": [pin, pout],
+                                            "readonly": [pol.input_mint, pol.output_mint, TOKEN_PROGRAM_ID]
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                        other => panic!("unexpected rpc1 method {other}"),
+                    };
+                    Json(json!({ "jsonrpc": "2.0", "id": 1, "result": result }))
+                }
+            }),
+        );
+        let _ = axum::serve(l1, app).await;
+    });
+
+    // Spawn Mock Solana RPC #2 (independent observer; slot 310_000_005; toggles divergence)
+    let l2 = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr2 = l2.local_addr().unwrap();
+    let good_b64_2 = base64_encode(&good_alt_bytes);
+    let bad_b64_2 = base64_encode(&divergent_alt_bytes);
+    let div_flag = rpc2_diverge.clone();
+    let rpc2_task = tokio::spawn(async move {
+        let app = Router::new().route(
+            "/",
+            post(move |Json(req): Json<Value>| {
+                let gb64 = good_b64_2.clone();
+                let bb64 = bad_b64_2.clone();
+                let df = div_flag.clone();
+                async move {
+                    let method = req["method"].as_str().unwrap_or("");
+                    let result = match method {
+                        "getGenesisHash" => json!(GENESIS),
+                        "getAccountInfo" => {
+                            let data = if df.load(Ordering::SeqCst) { bb64 } else { gb64 };
+                            json!({
+                                "context": { "slot": 310_000_005u64 },
+                                "value": {
+                                    "owner": ADDRESS_LOOKUP_TABLE_PROGRAM_ID,
+                                    "data": [data, "base64"],
+                                    "executable": false,
+                                    "lamports": 2_000_000u64
+                                }
+                            })
+                        }
+                        other => panic!("unexpected rpc2 method {other}"),
+                    };
+                    Json(json!({ "jsonrpc": "2.0", "id": 1, "result": result }))
+                }
+            }),
+        );
+        let _ = axum::serve(l2, app).await;
+    });
+
+    let quorum_rpc = SolanaRpcReadOnlyClient::new_with_quorum(
+        vec![format!("http://{addr1}"), format!("http://{addr2}")],
+        2,
+        "solana-mainnet-beta",
+        Some(GENESIS.to_string()),
+        Some(AltObserverSigner {
+            key_id: TEST_ALT_KEY_ID.to_string(),
+            signing_key: alt_attester_signer(),
+        }),
+    )
+    .expect("2-of-2 quorum RPC client");
+
+    // 1a. Both independent RPCs agree -> attested snapshot anchored at conservative min slot (310_000_005)
+    let agreed = quorum_rpc
+        .fetch_alt_snapshot(&alt_key_str)
+        .await
+        .expect("2-of-2 agreement must succeed");
+    assert_eq!(agreed.slot, Some(310_000_005));
+    assert!(agreed.attestation.is_some());
+
+    // 1b. RPC #2 diverges on 1 address -> FAIL CLOSED with ALT_QUORUM_DIVERGENCE
+    rpc2_diverge.store(true, Ordering::SeqCst);
+    let div_err = quorum_rpc
+        .fetch_alt_snapshot(&alt_key_str)
+        .await
+        .expect_err("divergent RPC must fail closed");
+    assert!(
+        div_err.contains("ALT_QUORUM_DIVERGENCE"),
+        "expected ALT_QUORUM_DIVERGENCE, got: {div_err}"
+    );
+    rpc2_diverge.store(false, Ordering::SeqCst);
+
+    // 2. Wire gateway with MockEnclaveDryRunSink + 2-of-2 quorum RPC + automatic reconciliation worker
+    let tmp = TestTempDir::new("quorum-worker-sink");
+    let clock = Arc::new(AtomicI64::new(FIXED_NOW));
+    let mut keys = BTreeMap::new();
+    keys.insert(
+        TEST_0X_KEY_ID.to_string(),
+        test_0x_signer().verifying_key().to_bytes(),
+    );
+    let sink = Arc::new(MockEnclaveDryRunSink {
+        invocations: AtomicU64::new(0),
+    });
+    let store = SqliteSolanaSwapStore::open(tmp.db_path()).unwrap();
+    let clock_c = clock.clone();
+    let state = Arc::new(
+        SolanaSwapGatewayState::new(
+            store,
+            TOKEN,
+            sc.policy.clone(),
+            keys,
+            "auth-key-1",
+            auth_signer(),
+            "receipt-key-1",
+            receipt_signer(),
+            "checkpoint-key-1",
+            checkpoint_signer(),
+            Arc::new(move || clock_c.load(Ordering::SeqCst)),
+        )
+        .with_solana_rpc(quorum_rpc)
+        .with_signing_sink(sink.clone()),
+    );
+    let app = router(state.clone());
+
+    let (req_ev, res_ev, wire) =
+        sc.build_signed_exchange(80_000_000, 96_000_000, sc.auth_dest_ata, "qw1");
+    let (ev_st, ev_json) = post_json(
+        &app,
+        "/v1/solana/swap/evaluate",
+        &json!({
+            "caseId": "quorum-worker-eligible",
+            "provenance": "test-fixture",
+            "request": req_ev,
+            "response": res_ev,
+            "compiledMessageBase64": base64_encode(&wire),
+            "addressLookupTables": [agreed],
+        }),
+        Some(TOKEN),
+    )
+    .await;
+    assert_eq!(ev_st, StatusCode::OK);
+    let eval_resp: EvaluateSwapResponse = serde_json::from_value(ev_json).unwrap();
+    let auth = eval_resp.authorization.unwrap();
+    *stored_msg_b64.lock().unwrap() = Some(base64_encode(&wire));
+
+    // 2a. Signing boundary routes through IsolatedSigningSink
+    let (sb_st, sb_json) = post_json(
+        &app,
+        "/v1/solana/swap/signing-boundary",
+        &json!({
+            "compiledMessageBase64": base64_encode(&wire),
+            "authorization": auth,
+        }),
+        Some(TOKEN),
+    )
+    .await;
+    assert_eq!(sb_st, StatusCode::OK);
+    assert_eq!(sb_json["signingBoundaryOutcome"], "ACCEPTED_ENCLAVE_DRY_RUN");
+    assert_eq!(sink.invocations.load(Ordering::SeqCst), 1);
+    assert_eq!(sb_json["realSignaturesProduced"], 0);
+
+    // 3. Track tx for automatic Evidence #3 reconciliation worker
+    let (tr_st, tr_json) = post_json(
+        &app,
+        &format!("/v1/solana/swap/receipts/{}/track-tx", eval_resp.receipt_id),
+        &json!({ "txSignature": "5AutoWorkerSig111111111111111111111111111111111111111111111111111" }),
+        Some(TOKEN),
+    )
+    .await;
+    assert_eq!(tr_st, StatusCode::ACCEPTED);
+    assert_eq!(tr_json["tracked"], true);
+
+    // Tick 1 while tx is not yet finalized -> deferred
+    let tick1 = reconcile_pending_once(&state).await.unwrap();
+    assert_eq!(tick1.checked, 1);
+    assert_eq!(tick1.completed, 0);
+    assert_eq!(tick1.deferred, 1);
+
+    let (pend_st, pend_json) =
+        get_json(&app, "/v1/solana/swap/reconciliations/pending", Some(TOKEN)).await;
+    assert_eq!(pend_st, StatusCode::OK);
+    assert_eq!(pend_json["count"], 1);
+    assert_eq!(pend_json["pending"][0]["attempts"], 1);
+
+    // Tick 2 once tx is finalized on RPC -> completed & signed confirmation persisted
+    tx_ready.store(true, Ordering::SeqCst);
+    let tick2 = reconcile_pending_once(&state).await.unwrap();
+    assert_eq!(tick2.checked, 1);
+    assert_eq!(tick2.completed, 1);
+    assert_eq!(tick2.deferred, 0);
+
+    let (pend2_st, pend2_json) =
+        get_json(&app, "/v1/solana/swap/reconciliations/pending", Some(TOKEN)).await;
+    assert_eq!(pend2_st, StatusCode::OK);
+    assert_eq!(pend2_json["count"], 0);
+
+    let (conf_st, conf_json) = get_json(
+        &app,
+        &format!(
+            "/v1/solana/swap/receipts/{}/confirmation",
+            eval_resp.receipt_id
+        ),
+        Some(TOKEN),
+    )
+    .await;
+    assert_eq!(conf_st, StatusCode::OK);
+    let conf: SignedConfirmationReceipt = serde_json::from_value(conf_json).unwrap();
+    assert_eq!(conf.receipt.reconciliation.status, "CONFIRMED_WITHIN_POLICY");
+    assert_eq!(conf.receipt.reconciliation.actual_output_net_credit, "99000000");
+    verify_solana_swap_confirmation_receipt(&conf, &receipt_signer().verifying_key())
+        .expect("worker-reconciled confirmation must verify offline");
+
+    let (h_st, health) = get_json(&app, "/v1/solana/swap/health", Some(TOKEN)).await;
+    assert_eq!(h_st, StatusCode::OK);
+    assert_eq!(health["signingSink"], "mock-enclave-dry-run-sink");
+    assert_eq!(health["upstream"]["solanaRpcEndpointCount"], 2);
+    assert_eq!(health["upstream"]["altQuorumMin"], 2);
+    assert_eq!(health["pendingReconciliations"], 0);
+    assert_eq!(health["onchainConfirmations"], 1);
+    assert_eq!(health["realSignaturesProduced"], 0);
+    assert_eq!(health["broadcastCalls"], 0);
+
+    rpc1_task.abort();
+    rpc2_task.abort();
 }

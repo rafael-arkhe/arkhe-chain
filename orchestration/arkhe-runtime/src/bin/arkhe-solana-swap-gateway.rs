@@ -21,9 +21,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use arkhe_kernel::solana_swap_sqlite::SqliteSolanaSwapStore;
 use arkhe_runtime::solana_swap_gateway::{
-    openapi_spec, router, validate_solana_swap_policy, verify_solana_swap_confirmation_receipt,
-    verify_solana_swap_receipt_bundle, PublicKeysDocument, SignedConfirmationReceipt,
-    SolanaSwapGatewayState, SolanaSwapOfflineBundle,
+    openapi_spec, router, spawn_reconciliation_worker, validate_solana_swap_policy,
+    verify_solana_swap_confirmation_receipt, verify_solana_swap_receipt_bundle, PublicKeysDocument,
+    SignedConfirmationReceipt, SolanaSwapGatewayState, SolanaSwapOfflineBundle,
 };
 use arkhe_runtime::solana_swap_upstream::{
     AltObserverSigner, SolanaRpcReadOnlyClient, ZeroXSwapClient,
@@ -66,12 +66,18 @@ enum Commands {
         /// Upstream 0x API base URL for shadow read-only quotes (activated when ZEROX_API_KEY env var is set).
         #[arg(long, default_value = "https://api.0x.org")]
         zerox_base_url: String,
-        /// Optional read-only Solana JSON-RPC URL for finalized blockhash, ALT fetch, and getTransaction reconciliation.
+        /// Optional read-only Solana JSON-RPC URL(s) (repeatable for multi-RPC ALT quorum).
         #[arg(long)]
-        solana_rpc_url: Option<String>,
+        solana_rpc_url: Vec<String>,
+        /// Minimum agreeing independent Solana RPC providers required before attesting an ALT snapshot.
+        #[arg(long, default_value_t = 1)]
+        alt_quorum_min: usize,
         /// Optional ALT observer key id (activated when ARKHE_ALT_OBSERVER_KEY_HEX env var is set).
         #[arg(long)]
         alt_observer_key_id: Option<String>,
+        /// Background reconciliation worker poll interval in seconds (0 disables worker).
+        #[arg(long, default_value_t = 15)]
+        reconcile_interval_secs: u64,
     },
     /// Verify an exported SolanaSwapOfflineBundle completely offline against pinned public keys.
     VerifyBundle {
@@ -294,8 +300,10 @@ async fn run_serve(
     keys_dir: Option<PathBuf>,
     extra_0x_keys: Option<PathBuf>,
     zerox_base_url: String,
-    solana_rpc_url: Option<String>,
+    solana_rpc_urls: Vec<String>,
+    alt_quorum_min: usize,
     alt_observer_key_id: Option<String>,
+    reconcile_interval_secs: u64,
 ) -> Result<(), String> {
     let token = std::env::var("ARKHE_SOLANA_SWAP_TOKEN")
         .unwrap_or_default()
@@ -373,7 +381,7 @@ async fn run_serve(
         }
     }
 
-    if let Some(rpc_url) = solana_rpc_url {
+    if !solana_rpc_urls.is_empty() {
         let alt_observer = match (
             alt_observer_key_id,
             std::env::var("ARKHE_ALT_OBSERVER_KEY_HEX").ok(),
@@ -387,8 +395,9 @@ async fn run_serve(
             }
             _ => None,
         };
-        let rpc = SolanaRpcReadOnlyClient::new(
-            rpc_url,
+        let rpc = SolanaRpcReadOnlyClient::new_with_quorum(
+            solana_rpc_urls,
+            alt_quorum_min,
             policy_network,
             policy_genesis,
             alt_observer,
@@ -400,11 +409,31 @@ async fn run_serve(
     let public_keys = state.public_keys_document();
     let zerox_configured = state.zerox_client.is_some();
     let rpc_configured = state.solana_rpc.is_some();
+    let rpc_endpoint_count = state
+        .solana_rpc
+        .as_ref()
+        .map(|r| r.rpc_endpoint_count())
+        .unwrap_or(0);
+    let effective_quorum = state
+        .solana_rpc
+        .as_ref()
+        .map(|r| r.min_alt_quorum())
+        .unwrap_or(0);
     let alt_obs_configured = state
         .solana_rpc
         .as_ref()
         .map(|r| r.has_alt_observer())
         .unwrap_or(false);
+
+    let worker_handle = if rpc_configured && reconcile_interval_secs > 0 {
+        Some(spawn_reconciliation_worker(
+            state.clone(),
+            std::time::Duration::from_secs(reconcile_interval_secs),
+        ))
+    } else {
+        None
+    };
+
     let app = router(state);
     let listener = tokio::net::TcpListener::bind(bind)
         .await
@@ -423,17 +452,24 @@ async fn run_serve(
             "upstream": {
                 "zeroxConfigured": zerox_configured,
                 "solanaRpcConfigured": rpc_configured,
+                "solanaRpcEndpointCount": rpc_endpoint_count,
+                "altQuorumMin": effective_quorum,
                 "altObserverConfigured": alt_obs_configured,
+                "reconcileWorkerEnabled": worker_handle.is_some(),
             },
             "publicKeys": public_keys,
         }))
         .unwrap()
     );
 
-    axum::serve(listener, app)
+    let serve_res = axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await
-        .map_err(|e| format!("server error: {e}"))?;
+        .map_err(|e| format!("server error: {e}"));
+    if let Some(h) = worker_handle {
+        h.abort();
+    }
+    serve_res?;
     Ok(())
 }
 
@@ -449,7 +485,9 @@ async fn main() {
             extra_0x_keys,
             zerox_base_url,
             solana_rpc_url,
+            alt_quorum_min,
             alt_observer_key_id,
+            reconcile_interval_secs,
         } => {
             run_serve(
                 bind,
@@ -459,7 +497,9 @@ async fn main() {
                 extra_0x_keys,
                 zerox_base_url,
                 solana_rpc_url,
+                alt_quorum_min,
                 alt_observer_key_id,
+                reconcile_interval_secs,
             )
             .await
         }

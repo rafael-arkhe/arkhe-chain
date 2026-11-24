@@ -199,7 +199,8 @@ pub struct AltObserverSigner {
 #[derive(Clone)]
 pub struct SolanaRpcReadOnlyClient {
     client: Client,
-    rpc_url: String,
+    rpc_urls: Vec<String>,
+    min_alt_quorum: usize,
     network: String,
     expected_genesis_hash: Option<String>,
     alt_observer: Option<AltObserverSigner>,
@@ -212,16 +213,53 @@ impl SolanaRpcReadOnlyClient {
         expected_genesis_hash: Option<String>,
         alt_observer: Option<AltObserverSigner>,
     ) -> Result<Self, String> {
-        let rpc_url = rpc_url.into().trim().to_string();
-        let parsed = reqwest::Url::parse(&rpc_url)
-            .map_err(|e| format!("invalid Solana RPC URL '{rpc_url}': {e}"))?;
-        let scheme = parsed.scheme();
-        if scheme != "https" && scheme != "http" {
-            return Err(format!("unsupported Solana RPC URL scheme '{scheme}'"));
+        Self::new_with_quorum(
+            vec![rpc_url.into()],
+            1,
+            network,
+            expected_genesis_hash,
+            alt_observer,
+        )
+    }
+
+    /// Creates a read-only Solana RPC client backed by one or more independent RPC providers.
+    /// When `min_alt_quorum >= 2`, `fetch_alt_snapshot` queries every configured RPC provider
+    /// and requires strict agreement on `(genesis_hash, deactivation_slot, addresses)` across
+    /// at least `min_alt_quorum` independent providers before attesting an ALT snapshot.
+    pub fn new_with_quorum(
+        rpc_urls: Vec<String>,
+        min_alt_quorum: usize,
+        network: impl Into<String>,
+        expected_genesis_hash: Option<String>,
+        alt_observer: Option<AltObserverSigner>,
+    ) -> Result<Self, String> {
+        let mut cleaned = Vec::new();
+        for u in rpc_urls {
+            let trimmed = u.trim().to_string();
+            if trimmed.is_empty() {
+                continue;
+            }
+            let parsed = reqwest::Url::parse(&trimmed)
+                .map_err(|e| format!("invalid Solana RPC URL '{trimmed}': {e}"))?;
+            let scheme = parsed.scheme();
+            if scheme != "https" && scheme != "http" {
+                return Err(format!("unsupported Solana RPC URL scheme '{scheme}'"));
+            }
+            cleaned.push(trimmed);
+        }
+        if cleaned.is_empty() {
+            return Err("at least one Solana RPC URL must be provided".to_string());
+        }
+        if min_alt_quorum == 0 || min_alt_quorum > cleaned.len() {
+            return Err(format!(
+                "min_alt_quorum ({min_alt_quorum}) must be in 1..={}",
+                cleaned.len()
+            ));
         }
         Ok(Self {
             client: build_hardened_client()?,
-            rpc_url,
+            rpc_urls: cleaned,
+            min_alt_quorum,
             network: network.into(),
             expected_genesis_hash,
             alt_observer,
@@ -232,7 +270,15 @@ impl SolanaRpcReadOnlyClient {
         self.alt_observer.is_some()
     }
 
-    async fn rpc_call(&self, method: &str, params: Value) -> Result<Value, String> {
+    pub fn rpc_endpoint_count(&self) -> usize {
+        self.rpc_urls.len()
+    }
+
+    pub fn min_alt_quorum(&self) -> usize {
+        self.min_alt_quorum
+    }
+
+    async fn rpc_call_at(&self, url: &str, method: &str, params: Value) -> Result<Value, String> {
         // Hard compile-time/runtime guard: ONLY strictly read-only methods are permitted.
         match method {
             "getGenesisHash" | "getLatestBlockhash" | "getAccountInfo" | "getTransaction" => {}
@@ -250,7 +296,7 @@ impl SolanaRpcReadOnlyClient {
         });
         let resp = self
             .client
-            .post(&self.rpc_url)
+            .post(url)
             .header("content-type", "application/json")
             .json(&body)
             .send()
@@ -272,6 +318,10 @@ impl SolanaRpcReadOnlyClient {
         Ok(parsed.get("result").cloned().unwrap_or(Value::Null))
     }
 
+    async fn rpc_call(&self, method: &str, params: Value) -> Result<Value, String> {
+        self.rpc_call_at(&self.rpc_urls[0], method, params).await
+    }
+
     pub async fn get_genesis_hash(&self) -> Result<String, String> {
         let res = self.rpc_call("getGenesisHash", json!([])).await?;
         res.as_str()
@@ -289,19 +339,23 @@ impl SolanaRpcReadOnlyClient {
             .ok_or_else(|| "getLatestBlockhash missing value.blockhash".to_string())
     }
 
-    /// Fetches a finalized Solana Address Lookup Table account via `getAccountInfo`, verifies
-    /// owner and binary layout, and binds `(network, genesis_hash, slot, deactivation_slot, addresses)`.
-    /// Attests with Ed25519 ONLY if an `AltObserverSigner` is explicitly configured.
-    pub async fn fetch_alt_snapshot(
+    async fn fetch_single_rpc_alt(
         &self,
+        url: &str,
         alt_pubkey: &str,
-    ) -> Result<AddressLookupTableSnapshot, String> {
+    ) -> Result<(String, u64, u64, Vec<String>), String> {
         let genesis_hash = match &self.expected_genesis_hash {
             Some(g) => g.clone(),
-            None => self.get_genesis_hash().await?,
+            None => self
+                .rpc_call_at(url, "getGenesisHash", json!([]))
+                .await?
+                .as_str()
+                .map(ToString::to_string)
+                .ok_or_else(|| "getGenesisHash did not return a string".to_string())?,
         };
         let res = self
-            .rpc_call(
+            .rpc_call_at(
+                url,
                 "getAccountInfo",
                 json!([
                     alt_pubkey,
@@ -330,8 +384,49 @@ impl SolanaRpcReadOnlyClient {
             .ok_or_else(|| format!("ALT account '{alt_pubkey}' missing base64 data[0]"))?;
         let data = base64_decode_strict(data_b64)
             .map_err(|e| format!("ALT account '{alt_pubkey}' invalid base64 data: {e}"))?;
-
         let (deactivation_slot, addresses) = decode_solana_alt_account_data(owner, &data)?;
+        Ok((genesis_hash, slot, deactivation_slot, addresses))
+    }
+
+    /// Fetches a finalized Solana Address Lookup Table account across all configured independent
+    /// RPC endpoints, enforces strict quorum agreement on `(genesis_hash, deactivation_slot, addresses)`,
+    /// and attests with Ed25519 ONLY if an `AltObserverSigner` is explicitly configured.
+    pub async fn fetch_alt_snapshot(
+        &self,
+        alt_pubkey: &str,
+    ) -> Result<AddressLookupTableSnapshot, String> {
+        let mut observations: Vec<(String, u64, u64, Vec<String>)> = Vec::new();
+        let mut errors: Vec<String> = Vec::new();
+        for url in &self.rpc_urls {
+            match self.fetch_single_rpc_alt(url, alt_pubkey).await {
+                Ok(obs) => observations.push(obs),
+                Err(e) => errors.push(e),
+            }
+        }
+        if observations.len() < self.min_alt_quorum {
+            return Err(format!(
+                "ALT_QUORUM_NOT_MET: only {} of {} required RPC providers returned ALT '{alt_pubkey}' (errors: {})",
+                observations.len(),
+                self.min_alt_quorum,
+                errors.join("; ")
+            ));
+        }
+
+        let (ref genesis_hash, first_slot, deactivation_slot, ref addresses) = observations[0];
+        let mut min_slot = first_slot;
+        for (g, s, deact, addrs) in observations.iter().skip(1) {
+            if g != genesis_hash || *deact != deactivation_slot || addrs != addresses {
+                return Err(format!(
+                    "ALT_QUORUM_DIVERGENCE: independent Solana RPC providers disagreed on finalized ALT '{alt_pubkey}' (genesis/deactivation/addresses mismatch)"
+                ));
+            }
+            if *s < min_slot {
+                min_slot = *s;
+            }
+        }
+        let slot = min_slot;
+        let genesis_hash = genesis_hash.clone();
+        let addresses = addresses.clone();
 
         let attestation = if let Some(observer) = &self.alt_observer {
             let canonical = canonical_alt_snapshot_bytes(

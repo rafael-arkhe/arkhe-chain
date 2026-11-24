@@ -306,6 +306,72 @@ pub struct ReconcileRpcRequest {
     pub tx_signature: String,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TrackTransactionRequest {
+    pub tx_signature: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ReconciliationTickSummary {
+    pub checked: usize,
+    pub completed: usize,
+    pub deferred: usize,
+}
+
+/// Contract for an isolated downstream signing boundary (HSM / KMS / enclave).
+/// Implementations MUST independently verify `authorization` Ed25519 signature and
+/// `compiled_message_sha256` / `compiled_message_blake3` inside the enclave before signing.
+pub struct SigningSinkInvocation<'a> {
+    pub auth_id: &'a str,
+    pub compiled_message_bytes: &'a [u8],
+    pub compiled_message_sha256: &'a str,
+    pub compiled_message_blake3: &'a str,
+    pub authorization: &'a SignedSwapTestAuthorization,
+}
+
+#[derive(Debug, Clone)]
+pub struct SigningSinkOutcome {
+    pub mode_label: String,
+    pub real_signature_produced: bool,
+}
+
+pub trait IsolatedSigningSink: Send + Sync {
+    fn name(&self) -> &'static str;
+    fn accept_authorized_message(
+        &self,
+        invocation: &SigningSinkInvocation<'_>,
+    ) -> Result<SigningSinkOutcome, String>;
+}
+
+/// Default fail-safe dry-run signing sink: NEVER signs a real Solana transaction and NEVER broadcasts.
+#[derive(Debug, Default)]
+pub struct DryRunSigningSink;
+
+impl IsolatedSigningSink for DryRunSigningSink {
+    fn name(&self) -> &'static str {
+        "dry-run-sink"
+    }
+
+    fn accept_authorized_message(
+        &self,
+        invocation: &SigningSinkInvocation<'_>,
+    ) -> Result<SigningSinkOutcome, String> {
+        if invocation.compiled_message_sha256
+            != invocation.authorization.payload.compiled_message_sha256
+            || invocation.compiled_message_blake3
+                != invocation.authorization.payload.compiled_message_blake3
+        {
+            return Err("sink invariant failed: message digest mismatch".to_string());
+        }
+        Ok(SigningSinkOutcome {
+            mode_label: "ACCEPTED_DRY_RUN".to_string(),
+            real_signature_produced: false,
+        })
+    }
+}
+
 pub struct SolanaSwapGatewayState {
     store: Mutex<SqliteSolanaSwapStore>,
     pub token: String,
@@ -324,6 +390,7 @@ pub struct SolanaSwapGatewayState {
     pub clock: Arc<ClockFn>,
     pub zerox_client: Option<ZeroXSwapClient>,
     pub solana_rpc: Option<SolanaRpcReadOnlyClient>,
+    pub signing_sink: Arc<dyn IsolatedSigningSink>,
     pub test_signer_calls: AtomicU64,
     pub real_signatures_produced: AtomicU64,
     pub broadcast_calls: AtomicU64,
@@ -360,6 +427,7 @@ impl SolanaSwapGatewayState {
             clock,
             zerox_client: None,
             solana_rpc: None,
+            signing_sink: Arc::new(DryRunSigningSink),
             test_signer_calls: AtomicU64::new(0),
             real_signatures_produced: AtomicU64::new(0),
             broadcast_calls: AtomicU64::new(0),
@@ -373,6 +441,11 @@ impl SolanaSwapGatewayState {
 
     pub fn with_solana_rpc(mut self, rpc: SolanaRpcReadOnlyClient) -> Self {
         self.solana_rpc = Some(rpc);
+        self
+    }
+
+    pub fn with_signing_sink(mut self, sink: Arc<dyn IsolatedSigningSink>) -> Self {
+        self.signing_sink = sink;
         self
     }
 
@@ -685,13 +758,25 @@ async fn health(
         "consumedAuthorizations": stats.consumed_auth_count,
         "signingBoundaryEvents": stats.signing_boundary_event_count,
         "onchainConfirmations": stats.onchain_confirmation_count,
+        "pendingReconciliations": stats.pending_reconciliation_count,
         "mmrRootHex": stats.mmr_root_hex,
+        "signingSink": state.signing_sink.name(),
         "testSignerCalls": state.test_signer_calls.load(Ordering::SeqCst),
         "realSignaturesProduced": state.real_signatures_produced.load(Ordering::SeqCst),
         "broadcastCalls": state.broadcast_calls.load(Ordering::SeqCst),
         "upstream": {
             "zeroxConfigured": state.zerox_client.is_some(),
             "solanaRpcConfigured": state.solana_rpc.is_some(),
+            "solanaRpcEndpointCount": state
+                .solana_rpc
+                .as_ref()
+                .map(|r| r.rpc_endpoint_count())
+                .unwrap_or(0),
+            "altQuorumMin": state
+                .solana_rpc
+                .as_ref()
+                .map(|r| r.min_alt_quorum())
+                .unwrap_or(0),
             "altObserverConfigured": state
                 .solana_rpc
                 .as_ref()
@@ -1154,13 +1239,31 @@ async fn signing_boundary(
             )
         })?;
 
-    // 4. Dry-run key sink: increments test counter; NEVER signs or broadcasts a real transaction
+    // 4. Isolated signing sink (defaults to DryRunSigningSink: 0 real signatures, 0 broadcasts)
+    let sink_outcome = state
+        .signing_sink
+        .accept_authorized_message(&SigningSinkInvocation {
+            auth_id: &auth_id,
+            compiled_message_bytes: &msg_bytes,
+            compiled_message_sha256: &received_sha256,
+            compiled_message_blake3: &received_blake3,
+            authorization: &req.authorization,
+        })
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": format!("signing sink error: {e}") })),
+            )
+        })?;
     let calls = state.test_signer_calls.fetch_add(1, Ordering::SeqCst) + 1;
+    if sink_outcome.real_signature_produced {
+        state.real_signatures_produced.fetch_add(1, Ordering::SeqCst);
+    }
     Ok((
         StatusCode::OK,
         Json(SigningBoundaryResponse {
             accepted: true,
-            signing_boundary_outcome: "ACCEPTED_DRY_RUN".to_string(),
+            signing_boundary_outcome: sink_outcome.mode_label,
             reject_code: None,
             reject_detail: None,
             received_message_sha256: received_sha256,
@@ -1821,6 +1924,29 @@ pub fn validate_solana_swap_policy(policy: &SolanaSwapPolicy) -> Result<String, 
         }
     }
 
+    if let Some(guard) = &policy.trusted_swap_guard_program {
+        base58_decode_32(&guard.program_id)
+            .map_err(|e| format!("trustedSwapGuardProgram.programId invalid base58: {e}"))?;
+        let pre = hex::decode(guard.pre_check_discriminator_hex.trim()).map_err(|e| {
+            format!("trustedSwapGuardProgram.preCheckDiscriminatorHex invalid hex: {e}")
+        })?;
+        let post = hex::decode(guard.post_check_discriminator_hex.trim()).map_err(|e| {
+            format!("trustedSwapGuardProgram.postCheckDiscriminatorHex invalid hex: {e}")
+        })?;
+        if pre.len() != 8 || post.len() != 8 {
+            return Err(
+                "trustedSwapGuardProgram preCheck/postCheck discriminators must each be 8 bytes (16 hex chars)"
+                    .to_string(),
+            );
+        }
+        if pre == post {
+            return Err(
+                "trustedSwapGuardProgram preCheck and postCheck discriminators must be distinct"
+                    .to_string(),
+            );
+        }
+    }
+
     let raw = serde_json::to_vec(policy).map_err(|e| e.to_string())?;
     let mut buf = Vec::with_capacity(21 + raw.len());
     buf.extend_from_slice(b"ARKHE:SWAP-POLICY:v1\0");
@@ -1893,6 +2019,12 @@ pub fn openapi_spec() -> Value {
             },
             "/v1/solana/swap/receipts/{receipt_id}/reconcile-rpc": {
                 "post": { "summary": "Evidence #3 via read-only Solana RPC getTransaction + reconcile against policy bounds" }
+            },
+            "/v1/solana/swap/receipts/{receipt_id}/track-tx": {
+                "post": { "summary": "Enqueue a Solana txSignature for automatic background finalized reconciliation (Evidence #3)" }
+            },
+            "/v1/solana/swap/reconciliations/pending": {
+                "get": { "summary": "List incomplete transactions awaiting automatic finalized reconciliation" }
             },
             "/v1/solana/swap/receipts/{receipt_id}/confirmation": {
                 "get": { "summary": "Retrieve persisted Ed25519-signed on-chain confirmation reconciliation receipt" }
@@ -1975,6 +2107,9 @@ async fn get_metrics_prometheus(
             "# HELP arkhe_solana_swap_onchain_confirmations_total Total finalized on-chain confirmation reconciliations recorded\n",
             "# TYPE arkhe_solana_swap_onchain_confirmations_total counter\n",
             "arkhe_solana_swap_onchain_confirmations_total {}\n",
+            "# HELP arkhe_solana_swap_pending_reconciliations Pending transactions awaiting automatic finalized reconciliation\n",
+            "# TYPE arkhe_solana_swap_pending_reconciliations gauge\n",
+            "arkhe_solana_swap_pending_reconciliations {}\n",
             "# HELP arkhe_solana_swap_test_signer_calls_total Dry-run test signer sink invocations\n",
             "# TYPE arkhe_solana_swap_test_signer_calls_total counter\n",
             "arkhe_solana_swap_test_signer_calls_total {}\n",
@@ -1991,6 +2126,7 @@ async fn get_metrics_prometheus(
         stats.consumed_auth_count,
         stats.signing_boundary_event_count,
         stats.onchain_confirmation_count,
+        stats.pending_reconciliation_count,
         state.test_signer_calls.load(Ordering::SeqCst),
         state.real_signatures_produced.load(Ordering::SeqCst),
         state.broadcast_calls.load(Ordering::SeqCst),
@@ -2140,6 +2276,18 @@ pub fn build_mounted_router(
     }
 
     if let Some(rpc_url) = cfg.solana_rpc_url.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        let mut urls: Vec<String> = rpc_url
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+        if urls.is_empty() {
+            urls.push(rpc_url.to_string());
+        }
+        let quorum = std::env::var("ARKHE_SOLANA_SWAP_ALT_QUORUM_MIN")
+            .ok()
+            .and_then(|v| v.trim().parse::<usize>().ok())
+            .unwrap_or(1);
         let observer = match (
             cfg.alt_observer_key_id.as_deref().map(str::trim).filter(|s| !s.is_empty()),
             cfg.alt_observer_key_hex.as_deref().map(str::trim).filter(|s| !s.is_empty()),
@@ -2153,7 +2301,9 @@ pub fn build_mounted_router(
             }),
             _ => None,
         };
-        state = state.with_solana_rpc(SolanaRpcReadOnlyClient::new(rpc_url, net, gen, observer)?);
+        state = state.with_solana_rpc(SolanaRpcReadOnlyClient::new_with_quorum(
+            urls, quorum, net, gen, observer,
+        )?);
     }
 
     let state = Arc::new(state);
@@ -2214,6 +2364,237 @@ pub fn build_router_from_env(
     }
 }
 
+/// Runs one pass of the automatic Evidence #3 reconciliation worker across all pending tracked
+/// transactions in SQLite WAL. Finalized transactions are reconciled via `confirm_receipt_internal`
+/// and marked completed; unfinalized or not-yet-indexed transactions remain queued for retry.
+pub async fn reconcile_pending_once(
+    state: &SolanaSwapGatewayState,
+) -> Result<ReconciliationTickSummary, String> {
+    let Some(rpc) = &state.solana_rpc else {
+        return Ok(ReconciliationTickSummary {
+            checked: 0,
+            completed: 0,
+            deferred: 0,
+        });
+    };
+
+    let pending = {
+        let store = state
+            .store
+            .lock()
+            .map_err(|_| "store lock poisoned".to_string())?;
+        store.list_pending_reconciliations(50)?
+    };
+
+    let mut summary = ReconciliationTickSummary {
+        checked: pending.len(),
+        completed: 0,
+        deferred: 0,
+    };
+
+    for row in pending {
+        let now = (state.clock)();
+        match rpc.fetch_transaction_confirmation(&row.tx_signature).await {
+            Ok(evidence) => {
+                match confirm_receipt_internal(state, row.receipt_id.clone(), evidence) {
+                    Ok((status, _)) if status == StatusCode::UNPROCESSABLE_ENTITY => {
+                        let mut store = state
+                            .store
+                            .lock()
+                            .map_err(|_| "store lock poisoned".to_string())?;
+                        store.record_reconciliation_attempt(
+                            &row.receipt_id,
+                            Some("CONFIRMATION_NOT_FINALIZED"),
+                            false,
+                            now,
+                        )?;
+                        summary.deferred += 1;
+                    }
+                    Ok(_) => {
+                        let mut store = state
+                            .store
+                            .lock()
+                            .map_err(|_| "store lock poisoned".to_string())?;
+                        store.record_reconciliation_attempt(&row.receipt_id, None, true, now)?;
+                        summary.completed += 1;
+                    }
+                    Err((StatusCode::CONFLICT, _)) => {
+                        // Already confirmed or receipt not eligible -> terminal
+                        let mut store = state
+                            .store
+                            .lock()
+                            .map_err(|_| "store lock poisoned".to_string())?;
+                        store.record_reconciliation_attempt(
+                            &row.receipt_id,
+                            Some("TERMINAL_CONFLICT"),
+                            true,
+                            now,
+                        )?;
+                        summary.completed += 1;
+                    }
+                    Err((_, Json(val))) => {
+                        let msg = val
+                            .get("error")
+                            .and_then(Value::as_str)
+                            .unwrap_or("reconciliation error");
+                        let mut store = state
+                            .store
+                            .lock()
+                            .map_err(|_| "store lock poisoned".to_string())?;
+                        store.record_reconciliation_attempt(
+                            &row.receipt_id,
+                            Some(msg),
+                            false,
+                            now,
+                        )?;
+                        summary.deferred += 1;
+                    }
+                }
+            }
+            Err(err) => {
+                let mut store = state
+                    .store
+                    .lock()
+                    .map_err(|_| "store lock poisoned".to_string())?;
+                store.record_reconciliation_attempt(&row.receipt_id, Some(&err), false, now)?;
+                summary.deferred += 1;
+            }
+        }
+    }
+
+    Ok(summary)
+}
+
+/// Spawns a background Tokio worker polling `reconcile_pending_once` on a fixed interval.
+pub fn spawn_reconciliation_worker(
+    state: Arc<SolanaSwapGatewayState>,
+    interval: std::time::Duration,
+) -> tokio::task::JoinHandle<()> {
+    tokio::spawn(async move {
+        let mut ticker = tokio::time::interval(interval);
+        ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+        loop {
+            ticker.tick().await;
+            let _ = reconcile_pending_once(&state).await;
+        }
+    })
+}
+
+async fn track_tx_for_reconciliation(
+    State(state): State<Arc<SolanaSwapGatewayState>>,
+    headers: HeaderMap,
+    Path(receipt_id): Path<String>,
+    Json(req): Json<TrackTransactionRequest>,
+) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
+    authenticate(&headers, &state)?;
+    let sig = req.tx_signature.trim();
+    if sig.is_empty() || sig.len() > 128 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "txSignature must be 1..=128 characters" })),
+        ));
+    }
+
+    let mut store = state.store.lock().map_err(|_| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": "store lock poisoned" })),
+        )
+    })?;
+    let Some(stored) = store.get_receipt_bundle(&receipt_id).map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": e })),
+        )
+    })?
+    else {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(json!({ "error": "receipt not found" })),
+        ));
+    };
+    let decision: SolanaSwapDecisionReceipt = serde_json::from_slice(&stored.leaf_json)
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": format!("corrupted stored receipt JSON: {e}") })),
+            )
+        })?;
+    if decision.authorization.is_none() {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(json!({
+                "error": format!(
+                    "receipt '{}' has verdict '{}' and cannot be tracked for on-chain reconciliation",
+                    receipt_id, decision.policy_verdict
+                )
+            })),
+        ));
+    }
+
+    let now = (state.clock)();
+    let inserted = store
+        .enqueue_pending_reconciliation(&receipt_id, sig, now)
+        .map_err(|e| {
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "error": e })),
+            )
+        })?;
+    if !inserted {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(json!({ "error": format!("receipt '{receipt_id}' is already tracked") })),
+        ));
+    }
+
+    Ok((
+        StatusCode::ACCEPTED,
+        Json(json!({
+            "tracked": true,
+            "receiptId": receipt_id,
+            "txSignature": sig,
+            "enqueuedAt": now,
+        })),
+    ))
+}
+
+async fn list_pending_reconciliations_http(
+    State(state): State<Arc<SolanaSwapGatewayState>>,
+    headers: HeaderMap,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    authenticate(&headers, &state)?;
+    let store = state.store.lock().map_err(|_| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": "store lock poisoned" })),
+        )
+    })?;
+    let rows = store.list_pending_reconciliations(200).map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": e })),
+        )
+    })?;
+    let items: Vec<Value> = rows
+        .into_iter()
+        .map(|r| {
+            json!({
+                "receiptId": r.receipt_id,
+                "txSignature": r.tx_signature,
+                "enqueuedAt": r.enqueued_at,
+                "attempts": r.attempts,
+                "lastError": r.last_error,
+                "completed": r.completed,
+            })
+        })
+        .collect();
+    Ok(Json(json!({
+        "count": items.len(),
+        "pending": items,
+    })))
+}
+
 pub fn router(state: Arc<SolanaSwapGatewayState>) -> Router {
     Router::new()
         .route("/v1/solana/swap/health", get(health))
@@ -2245,6 +2626,14 @@ pub fn router(state: Arc<SolanaSwapGatewayState>) -> Router {
         .route(
             "/v1/solana/swap/receipts/{receipt_id}/reconcile-rpc",
             post(reconcile_rpc_http),
+        )
+        .route(
+            "/v1/solana/swap/receipts/{receipt_id}/track-tx",
+            post(track_tx_for_reconciliation),
+        )
+        .route(
+            "/v1/solana/swap/reconciliations/pending",
+            get(list_pending_reconciliations_http),
         )
         .route(
             "/v1/solana/swap/receipts/{receipt_id}/confirmation",
