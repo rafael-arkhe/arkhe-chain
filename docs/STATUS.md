@@ -1,5 +1,11 @@
 # Status
 
+## Fase A e Fase B (Arkhe Verify Alpha) — 25/11/2026
+
+- **Fase B ([evidência](evidence/2026-11-25-phase-b-alpha-release/RESULTS.md))**: fechamento de **R-02** (`--expect-invariant-version` sem alterar o schema `/v1`), adição de `LICENSE-APACHE` e `LICENSE-MIT` na raiz e em `packaging/core`, endurecimento de `verify_release.py` e execução verde do CI remoto [arkhe-verify-release.yml](../../.github/workflows/arkhe-verify-release.yml) (Run `45625806852`, commit `cebf25e0`, `5/5` jobs `success`, incluindo `build-docker-image` + `compose.yaml` e atestação Sigstore OIDC).
+- **Fase A ([evidência](evidence/2026-11-25-phase-a-root-hygiene/RESULTS.md) · [triagem QA-003](evidence/2026-11-25-phase-a-root-hygiene/QA-003-AUDIT-TRIAGE.md))**: formatação cirúrgica dos 14 arquivos `.rs` pendentes da raiz (`cargo fmt --all --check` verde), reconciliação de `verification/arkhe-native-control-lab` em [config/architecture.json](../../config/architecture.json) (`scripts/check_architecture.py` e `scripts/tests` verdes) e triagem completa `QA-003` (`cargo audit` com **0 vulnerabilidades alcançáveis** em `packaging/core/Cargo.lock` e triagem detalhada dos 28 advisories + 8 avisos do `Cargo.lock` da raiz).
+- **Portões externos ainda abertos**: **M1 / Gate 0** (reexecução do kit por terceiro independente fora do ambiente do autor) e **M4 / Gate 1** (primeiro cliente pagante externo).
+
 ## Pesquisa e envelope de retrieval — 26/10/2026
 
 [Auditoria de fontes](audits/2026-10-26-research-and-envelope-audit.md),

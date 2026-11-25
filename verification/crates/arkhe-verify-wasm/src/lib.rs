@@ -240,9 +240,8 @@ pub fn evaluate_solana_swap_message_v0(
     if compiled_message_bytes.len() > 4096 || context_json.len() > 262_144 {
         return Err(JsValue::from_str("solana swap evaluation input too large"));
     }
-    let ctx: arkhe_verify_core::solana_swap::EvaluationContext =
-        serde_json::from_str(context_json)
-            .map_err(|e| JsValue::from_str(&format!("invalid evaluation context JSON: {e}")))?;
+    let ctx: arkhe_verify_core::solana_swap::EvaluationContext = serde_json::from_str(context_json)
+        .map_err(|e| JsValue::from_str(&format!("invalid evaluation context JSON: {e}")))?;
     let eval = arkhe_verify_core::solana_swap::evaluate_message_v0(compiled_message_bytes, &ctx)
         .map_err(|e| JsValue::from_str(&e))?;
     serde_json::to_string(&eval).map_err(|e| JsValue::from_str(&e.to_string()))
@@ -265,13 +264,12 @@ fn compile_solana_swap_inner(request_json: &str) -> Result<String, String> {
     let raw_payload = val
         .get("swapInstructionsPayload")
         .ok_or_else(|| "compile request missing 'swapInstructionsPayload'".to_string())?;
-    let alts: Vec<arkhe_verify_core::solana_swap::AddressLookupTableSnapshot> = match val
-        .get("addressLookupTables")
-    {
-        Some(v) if !v.is_null() => serde_json::from_value(v.clone())
-            .map_err(|e| format!("invalid 'addressLookupTables': {e}"))?,
-        _ => Vec::new(),
-    };
+    let alts: Vec<arkhe_verify_core::solana_swap::AddressLookupTableSnapshot> =
+        match val.get("addressLookupTables") {
+            Some(v) if !v.is_null() => serde_json::from_value(v.clone())
+                .map_err(|e| format!("invalid 'addressLookupTables': {e}"))?,
+            _ => Vec::new(),
+        };
     let normalized = arkhe_verify_core::solana_swap::normalize_raw_0x_payload(raw_payload)?;
     let artifact = arkhe_verify_core::solana_swap::compile_solana_message_v0(
         payer,
@@ -299,8 +297,7 @@ fn reconcile_solana_swap_inner(request_json: &str) -> Result<String, String> {
         .get("policy")
         .ok_or_else(|| "reconcile request missing 'policy'".to_string())?;
     let policy: arkhe_verify_core::solana_swap::SolanaSwapPolicy =
-        serde_json::from_value(policy_val.clone())
-            .map_err(|e| format!("invalid 'policy': {e}"))?;
+        serde_json::from_value(policy_val.clone()).map_err(|e| format!("invalid 'policy': {e}"))?;
     let authorized_sha256 = val
         .get("authorizedSha256")
         .and_then(serde_json::Value::as_str)

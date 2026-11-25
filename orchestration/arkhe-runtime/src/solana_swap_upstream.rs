@@ -594,11 +594,10 @@ fn parse_rpc_token_balances(
         .ok_or_else(|| format!("{label} must be an array"))?;
     let mut out = Vec::with_capacity(arr.len());
     for item in arr {
-        let account_index = item
-            .get("accountIndex")
-            .and_then(Value::as_u64)
-            .ok_or_else(|| format!("{label} entry missing accountIndex"))?
-            as usize;
+        let account_index =
+            item.get("accountIndex")
+                .and_then(Value::as_u64)
+                .ok_or_else(|| format!("{label} entry missing accountIndex"))? as usize;
         let mint = item
             .get("mint")
             .and_then(Value::as_str)

@@ -153,8 +153,8 @@ fn load_or_create_signing_key(
 fn load_extra_0x_keys(path: &Path) -> Result<BTreeMap<String, [u8; 32]>, String> {
     let raw = fs::read_to_string(path)
         .map_err(|e| format!("failed reading extra 0x keys {}: {e}", path.display()))?;
-    let parsed: BTreeMap<String, String> = serde_json::from_str(&raw)
-        .map_err(|e| format!("invalid extra 0x keys JSON: {e}"))?;
+    let parsed: BTreeMap<String, String> =
+        serde_json::from_str(&raw).map_err(|e| format!("invalid extra 0x keys JSON: {e}"))?;
     let mut out = BTreeMap::new();
     for (kid, pub_hex) in parsed {
         let bytes = decode_hex_32(&pub_hex, &kid)?;
@@ -168,13 +168,13 @@ fn load_extra_0x_keys(path: &Path) -> Result<BTreeMap<String, [u8; 32]>, String>
 fn run_verify_bundle(bundle_path: &Path, keys_path: &Path) -> Result<(), String> {
     let bundle_raw = fs::read_to_string(bundle_path)
         .map_err(|e| format!("failed reading bundle {}: {e}", bundle_path.display()))?;
-    let bundle: SolanaSwapOfflineBundle = serde_json::from_str(&bundle_raw)
-        .map_err(|e| format!("invalid bundle JSON: {e}"))?;
+    let bundle: SolanaSwapOfflineBundle =
+        serde_json::from_str(&bundle_raw).map_err(|e| format!("invalid bundle JSON: {e}"))?;
 
     let keys_raw = fs::read_to_string(keys_path)
         .map_err(|e| format!("failed reading public keys {}: {e}", keys_path.display()))?;
-    let keys: PublicKeysDocument = serde_json::from_str(&keys_raw)
-        .map_err(|e| format!("invalid public keys JSON: {e}"))?;
+    let keys: PublicKeysDocument =
+        serde_json::from_str(&keys_raw).map_err(|e| format!("invalid public keys JSON: {e}"))?;
 
     let auth_vk = VerifyingKey::from_bytes(&decode_hex_32(
         &keys.auth_public_key_hex,
@@ -214,15 +214,19 @@ fn run_verify_bundle(bundle_path: &Path, keys_path: &Path) -> Result<(), String>
 }
 
 fn run_verify_confirmation(confirmation_path: &Path, keys_path: &Path) -> Result<(), String> {
-    let conf_raw = fs::read_to_string(confirmation_path)
-        .map_err(|e| format!("failed reading confirmation {}: {e}", confirmation_path.display()))?;
-    let signed: SignedConfirmationReceipt = serde_json::from_str(&conf_raw)
-        .map_err(|e| format!("invalid confirmation JSON: {e}"))?;
+    let conf_raw = fs::read_to_string(confirmation_path).map_err(|e| {
+        format!(
+            "failed reading confirmation {}: {e}",
+            confirmation_path.display()
+        )
+    })?;
+    let signed: SignedConfirmationReceipt =
+        serde_json::from_str(&conf_raw).map_err(|e| format!("invalid confirmation JSON: {e}"))?;
 
     let keys_raw = fs::read_to_string(keys_path)
         .map_err(|e| format!("failed reading public keys {}: {e}", keys_path.display()))?;
-    let keys: PublicKeysDocument = serde_json::from_str(&keys_raw)
-        .map_err(|e| format!("invalid public keys JSON: {e}"))?;
+    let keys: PublicKeysDocument =
+        serde_json::from_str(&keys_raw).map_err(|e| format!("invalid public keys JSON: {e}"))?;
 
     let receipt_vk = VerifyingKey::from_bytes(&decode_hex_32(
         &keys.receipt_public_key_hex,
@@ -253,8 +257,8 @@ fn run_verify_confirmation(confirmation_path: &Path, keys_path: &Path) -> Result
 fn run_validate_policy(policy_path: &Path) -> Result<(), String> {
     let raw = fs::read_to_string(policy_path)
         .map_err(|e| format!("failed reading policy {}: {e}", policy_path.display()))?;
-    let policy: SolanaSwapPolicy = serde_json::from_str(&raw)
-        .map_err(|e| format!("invalid SolanaSwapPolicy JSON: {e}"))?;
+    let policy: SolanaSwapPolicy =
+        serde_json::from_str(&raw).map_err(|e| format!("invalid SolanaSwapPolicy JSON: {e}"))?;
     let digest = validate_solana_swap_policy(&policy)?;
     println!(
         "{}",

@@ -36,13 +36,25 @@ pub const ZEROX_SETTLER_PROGRAM_ID: &str = "Sett1erwx2eqT5A8uvu8GBxDFT2W5TNnhirL
 const KNOWN_SOLANA_DEX_OR_SYS_PROGRAMS: &[(&str, &str)] = &[
     (SYSTEM_PROGRAM_ID, "SystemProgram"),
     (TOKEN_PROGRAM_ID, "SplToken"),
-    ("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", "SplToken2022"),
+    (
+        "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+        "SplToken2022",
+    ),
     (ASSOCIATED_TOKEN_PROGRAM_ID, "AssociatedTokenProgram"),
     ("LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo", "MeteoraDlmm"),
     ("DRVSpZ2YUYYKgZP8XtLhAGtT1zYSCKzeHfb4DgRnrgqD", "Deriverse"),
-    ("whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc", "OrcaWhirlpool"),
-    ("CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK", "RaydiumClmm"),
-    ("675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8", "RaydiumAmmV4"),
+    (
+        "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",
+        "OrcaWhirlpool",
+    ),
+    (
+        "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK",
+        "RaydiumClmm",
+    ),
+    (
+        "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+        "RaydiumAmmV4",
+    ),
 ];
 
 const BASE58_ALPHABET: &[u8; 58] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -85,7 +97,8 @@ pub fn base58_decode_32(input: &str) -> Result<[u8; 32], String> {
         let val = BASE58_ALPHABET
             .iter()
             .position(|&c| c == ch)
-            .ok_or_else(|| format!("invalid base58 character in '{input}'"))? as u32;
+            .ok_or_else(|| format!("invalid base58 character in '{input}'"))?
+            as u32;
         let mut carry = val;
         for b in &mut bytes {
             carry += u32::from(*b) * 58;
@@ -113,8 +126,16 @@ fn base64_encode(bytes: &[u8]) -> String {
     let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
     for chunk in bytes.chunks(3) {
         let b0 = u32::from(chunk[0]);
-        let b1 = if chunk.len() > 1 { u32::from(chunk[1]) } else { 0 };
-        let b2 = if chunk.len() > 2 { u32::from(chunk[2]) } else { 0 };
+        let b1 = if chunk.len() > 1 {
+            u32::from(chunk[1])
+        } else {
+            0
+        };
+        let b2 = if chunk.len() > 2 {
+            u32::from(chunk[2])
+        } else {
+            0
+        };
         let n = (b0 << 16) | (b1 << 8) | b2;
         out.push(TABLE[((n >> 18) & 0x3f) as usize] as char);
         out.push(TABLE[((n >> 12) & 0x3f) as usize] as char);
@@ -369,7 +390,14 @@ pub fn canonical_alt_snapshot_bytes(
 ) -> Result<Vec<u8>, String> {
     let key_bytes = base58_decode_32(key)?;
     let mut out = Vec::with_capacity(
-        ALT_SNAPSHOT_DOMAIN.len() + 8 + network.len() + genesis_hash.len() + 32 + 16 + 4 + addresses.len() * 32,
+        ALT_SNAPSHOT_DOMAIN.len()
+            + 8
+            + network.len()
+            + genesis_hash.len()
+            + 32
+            + 16
+            + 4
+            + addresses.len() * 32,
     );
     out.extend_from_slice(ALT_SNAPSHOT_DOMAIN);
     out.extend_from_slice(&(network.len() as u32).to_be_bytes());
@@ -787,15 +815,19 @@ pub fn evaluate_message_v0(
     base58_decode_32(&policy.input_mint)?;
     base58_decode_32(&policy.output_mint)?;
 
-    let max_input_asset_debit = parse_u64_strict(&policy.max_input_asset_debit, "maxInputAssetDebit")?;
+    let max_input_asset_debit =
+        parse_u64_strict(&policy.max_input_asset_debit, "maxInputAssetDebit")?;
     let max_sol_ancillary_debit =
         parse_u64_strict(&policy.max_sol_ancillary_debit, "maxSolAncillaryDebit")?;
-    let min_output_net_credit = parse_u64_strict(&policy.min_output_net_credit, "minOutputNetCredit")?;
+    let min_output_net_credit =
+        parse_u64_strict(&policy.min_output_net_credit, "minOutputNetCredit")?;
     let input_is_native_sol = policy.input_mint == NATIVE_MINT_ID;
     let max_total_sol_debit = match &policy.max_total_sol_debit {
         Some(v) => Some(parse_u64_strict(v, "maxTotalSolDebit")?),
         None if input_is_native_sol => {
-            return Err("maxTotalSolDebit is required when inputMint is native SOL/wSOL".to_string())
+            return Err(
+                "maxTotalSolDebit is required when inputMint is native SOL/wSOL".to_string(),
+            )
         }
         None => None,
     };
@@ -825,7 +857,10 @@ pub fn evaluate_message_v0(
             violations.push(PolicyViolation {
                 code: "NETWORK_MISMATCH".to_string(),
                 instruction_index: None,
-                detail: format!("Payload network '{net}' does not match policy network '{}'.", policy.network),
+                detail: format!(
+                    "Payload network '{net}' does not match policy network '{}'.",
+                    policy.network
+                ),
             });
         }
     }
@@ -858,7 +893,9 @@ pub fn evaluate_message_v0(
                 instruction_index: None,
                 program_id: None,
                 accounts: vec![alt_key.clone()],
-                reason: format!("Address Lookup Table {alt_key} referenced by transaction is unavailable."),
+                reason: format!(
+                    "Address Lookup Table {alt_key} referenced by transaction is unavailable."
+                ),
             });
             continue;
         };
@@ -894,7 +931,9 @@ pub fn evaluate_message_v0(
         let digest_hex = match &canonical_opt {
             Some(bytes) => hex::encode(crate::hash::blake3_256(bytes)),
             None => hex::encode(crate::hash::blake3_256(
-                serde_json::to_vec(&snap.addresses).unwrap_or_default().as_slice(),
+                serde_json::to_vec(&snap.addresses)
+                    .unwrap_or_default()
+                    .as_slice(),
             )),
         };
 
@@ -1000,11 +1039,21 @@ pub fn evaluate_message_v0(
         };
 
         let sig_ok = (|| -> bool {
-            let Ok(pub_raw) = hex::decode(pub_hex) else { return false };
-            let Ok(pub_arr): Result<[u8; 32], _> = pub_raw.try_into() else { return false };
-            let Ok(vk) = VerifyingKey::from_bytes(&pub_arr) else { return false };
-            let Ok(sig_raw) = hex::decode(&att.signature_hex) else { return false };
-            let Ok(sig_arr): Result<[u8; 64], _> = sig_raw.try_into() else { return false };
+            let Ok(pub_raw) = hex::decode(pub_hex) else {
+                return false;
+            };
+            let Ok(pub_arr): Result<[u8; 32], _> = pub_raw.try_into() else {
+                return false;
+            };
+            let Ok(vk) = VerifyingKey::from_bytes(&pub_arr) else {
+                return false;
+            };
+            let Ok(sig_raw) = hex::decode(&att.signature_hex) else {
+                return false;
+            };
+            let Ok(sig_arr): Result<[u8; 64], _> = sig_raw.try_into() else {
+                return false;
+            };
             let sig = Signature::from_bytes(&sig_arr);
             vk.verify_strict(&canonical_bytes, &sig).is_ok()
         })();
@@ -1052,7 +1101,8 @@ pub fn evaluate_message_v0(
     let static_count = msg.static_account_keys.len();
     let num_req_sigs = usize::from(msg.header.num_required_signatures);
     let writable_signed_end = num_req_sigs - usize::from(msg.header.num_readonly_signed_accounts);
-    let writable_unsigned_end = static_count - usize::from(msg.header.num_readonly_unsigned_accounts);
+    let writable_unsigned_end =
+        static_count - usize::from(msg.header.num_readonly_unsigned_accounts);
 
     let mut resolved_accounts: Vec<ResolvedAccount> = Vec::new();
     for (i, key_bytes) in msg.static_account_keys.iter().enumerate() {
@@ -1192,13 +1242,17 @@ pub fn evaluate_message_v0(
                 instruction_index: Some(ix_index),
                 program_id: None,
                 accounts: Vec::new(),
-                reason: format!("Program index {} could not be resolved.", ci.program_id_index),
+                reason: format!(
+                    "Program index {} could not be resolved.",
+                    ci.program_id_index
+                ),
             });
             continue;
         };
         let program_id = prog_acc.pubkey.as_str();
 
-        let mut ix_accounts: Vec<&ResolvedAccount> = Vec::with_capacity(ci.account_key_indexes.len());
+        let mut ix_accounts: Vec<&ResolvedAccount> =
+            Vec::with_capacity(ci.account_key_indexes.len());
         let mut unresolved = false;
         for &acc_idx in &ci.account_key_indexes {
             match resolved_accounts.get(usize::from(acc_idx)) {
@@ -1250,7 +1304,9 @@ pub fn evaluate_message_v0(
                     instruction_index: Some(ix_index),
                     program_id: Some(program_id.to_string()),
                     accounts: ix_accounts.iter().map(|a| a.pubkey.clone()).collect(),
-                    reason: format!("Unrecognized ComputeBudget opcode at instruction #{ix_index}."),
+                    reason: format!(
+                        "Unrecognized ComputeBudget opcode at instruction #{ix_index}."
+                    ),
                 });
                 instruction_analysis.push(serde_json::json!({
                     "instructionIndex": ix_index,
@@ -1272,7 +1328,9 @@ pub fn evaluate_message_v0(
                     instruction_index: Some(ix_index),
                     program_id: Some(program_id.to_string()),
                     accounts: ix_accounts.iter().map(|a| a.pubkey.clone()).collect(),
-                    reason: format!("Malformed or unsupported ATA instruction at index {ix_index}."),
+                    reason: format!(
+                        "Malformed or unsupported ATA instruction at index {ix_index}."
+                    ),
                 });
                 instruction_analysis.push(serde_json::json!({
                     "instructionIndex": ix_index,
@@ -1407,7 +1465,9 @@ pub fn evaluate_message_v0(
                     violations.push(PolicyViolation {
                         code: "UNAUTHORIZED_SYNC_NATIVE".to_string(),
                         instruction_index: Some(ix_index),
-                        detail: format!("SyncNative at index {ix_index} targets unexpected account {account}."),
+                        detail: format!(
+                            "SyncNative at index {ix_index} targets unexpected account {account}."
+                        ),
                     });
                     instruction_analysis.push(serde_json::json!({
                         "instructionIndex": ix_index,
@@ -1498,7 +1558,10 @@ pub fn evaluate_message_v0(
                     instruction_index: Some(ix_index),
                     program_id: Some(program_id.to_string()),
                     accounts: ix_accounts.iter().map(|a| a.pubkey.clone()).collect(),
-                    reason: format!("SPL Token opcode {:?} at index {ix_index} is not covered.", opcode),
+                    reason: format!(
+                        "SPL Token opcode {:?} at index {ix_index} is not covered.",
+                        opcode
+                    ),
                 });
                 instruction_analysis.push(serde_json::json!({
                     "instructionIndex": ix_index,
@@ -1561,13 +1624,22 @@ pub fn evaluate_message_v0(
                 ));
             }
             if in_mint.pubkey != policy.input_mint {
-                swap_errors.push(format!("input mint {} !== {}", in_mint.pubkey, policy.input_mint));
+                swap_errors.push(format!(
+                    "input mint {} !== {}",
+                    in_mint.pubkey, policy.input_mint
+                ));
             }
             if out_mint.pubkey != policy.output_mint {
-                swap_errors.push(format!("output mint {} !== {}", out_mint.pubkey, policy.output_mint));
+                swap_errors.push(format!(
+                    "output mint {} !== {}",
+                    out_mint.pubkey, policy.output_mint
+                ));
             }
             if tok_prog.pubkey != TOKEN_PROGRAM_ID {
-                swap_errors.push(format!("token program {} !== {TOKEN_PROGRAM_ID}", tok_prog.pubkey));
+                swap_errors.push(format!(
+                    "token program {} !== {TOKEN_PROGRAM_ID}",
+                    tok_prog.pubkey
+                ));
             }
 
             if !swap_errors.is_empty() {
@@ -1800,7 +1872,10 @@ pub fn evaluate_message_v0(
                     guard_errs.push(format!("taker mismatch or unsigned ({})", taker_acc.pubkey));
                 }
                 if !guard_pda.is_writable {
-                    guard_errs.push(format!("guard state PDA {} must be writable", guard_pda.pubkey));
+                    guard_errs.push(format!(
+                        "guard state PDA {} must be writable",
+                        guard_pda.pubkey
+                    ));
                 }
                 if src_ata.pubkey != policy.taker_input_token_account {
                     guard_errs.push(format!(
@@ -1815,10 +1890,16 @@ pub fn evaluate_message_v0(
                     ));
                 }
                 if in_mint.pubkey != policy.input_mint {
-                    guard_errs.push(format!("inputMint {} !== {}", in_mint.pubkey, policy.input_mint));
+                    guard_errs.push(format!(
+                        "inputMint {} !== {}",
+                        in_mint.pubkey, policy.input_mint
+                    ));
                 }
                 if out_mint.pubkey != policy.output_mint {
-                    guard_errs.push(format!("outputMint {} !== {}", out_mint.pubkey, policy.output_mint));
+                    guard_errs.push(format!(
+                        "outputMint {} !== {}",
+                        out_mint.pubkey, policy.output_mint
+                    ));
                 }
 
                 if is_pre {
@@ -1826,7 +1907,10 @@ pub fn evaluate_message_v0(
                         violations.push(PolicyViolation {
                             code: "SWAP_GUARD_SCOPE_MISMATCH".to_string(),
                             instruction_index: Some(ix_index),
-                            detail: format!("ArkheSwapGuardV1.PreCheck #{ix_index}: {}", guard_errs.join("; ")),
+                            detail: format!(
+                                "ArkheSwapGuardV1.PreCheck #{ix_index}: {}",
+                                guard_errs.join("; ")
+                            ),
                         });
                     } else {
                         guard_pre_checks.push((ix_index, guard_pda.pubkey.clone()));
@@ -1867,7 +1951,10 @@ pub fn evaluate_message_v0(
                         violations.push(PolicyViolation {
                             code: "SWAP_GUARD_BOUNDS_VIOLATION".to_string(),
                             instruction_index: Some(ix_index),
-                            detail: format!("ArkheSwapGuardV1.PostCheck #{ix_index}: {}", guard_errs.join("; ")),
+                            detail: format!(
+                                "ArkheSwapGuardV1.PostCheck #{ix_index}: {}",
+                                guard_errs.join("; ")
+                            ),
                         });
                     } else {
                         guard_post_checks.push((
@@ -1976,8 +2063,8 @@ pub fn evaluate_message_v0(
     }
 
     // Spend-cap accounting
-    let base_fee_lamports =
-        u128::from(msg.header.num_required_signatures) * u128::from(BASE_FEE_PER_SIGNATURE_LAMPORTS);
+    let base_fee_lamports = u128::from(msg.header.num_required_signatures)
+        * u128::from(BASE_FEE_PER_SIGNATURE_LAMPORTS);
     let effective_cu_limit: u128 = match compute_unit_limit {
         Some(limit) => u128::from(limit),
         None => {
@@ -1992,7 +2079,8 @@ pub fn evaluate_message_v0(
         0
     };
 
-    let sol_ancillary_debit = base_fee_lamports + priority_fee_lamports + ata_creation_rent_lamports;
+    let sol_ancillary_debit =
+        base_fee_lamports + priority_fee_lamports + ata_creation_rent_lamports;
     let input_asset_debit = if input_is_native_sol {
         wsol_funded_lamports.max(swap_input_debit)
     } else {
@@ -2190,8 +2278,7 @@ pub fn compile_solana_message_v0(
     // Build ALT lookup index map (pubkey -> (alt_idx, address_idx_in_alt))
     let mut alt_lookup_map: BTreeMap<String, (usize, u8)> = BTreeMap::new();
     for (alt_idx, alt) in lookup_tables.iter().enumerate() {
-        base58_decode_32(&alt.key)
-            .map_err(|e| format!("invalid ALT key '{}': {e}", alt.key))?;
+        base58_decode_32(&alt.key).map_err(|e| format!("invalid ALT key '{}': {e}", alt.key))?;
         for (addr_idx, addr) in alt.addresses.iter().enumerate() {
             if addr_idx > 255 {
                 return Err(format!("ALT '{}' exceeds 256 addresses", alt.key));
@@ -2545,7 +2632,8 @@ pub fn reconcile_solana_confirmation(
     };
 
     let actual_input_asset_debit = if input_is_native_sol {
-        input_tok_debit.max(actual_taker_sol_debit.saturating_sub(u128::from(evidence.fee_lamports)))
+        input_tok_debit
+            .max(actual_taker_sol_debit.saturating_sub(u128::from(evidence.fee_lamports)))
     } else {
         input_tok_debit
     };
@@ -2837,14 +2925,46 @@ mod tests {
                 instructions: vec![Raw0xInstruction {
                     program_id: base58_encode(&swap_program),
                     accounts: vec![
-                        Raw0xAccountMeta { pubkey: base58_encode(&taker), is_signer: true, is_writable: true },
-                        Raw0xAccountMeta { pubkey: base58_encode(&taker_in_ata), is_signer: false, is_writable: true },
-                        Raw0xAccountMeta { pubkey: base58_encode(&auth_dest_ata), is_signer: false, is_writable: true },
-                        Raw0xAccountMeta { pubkey: base58_encode(&input_mint), is_signer: false, is_writable: false },
-                        Raw0xAccountMeta { pubkey: base58_encode(&output_mint), is_signer: false, is_writable: false },
-                        Raw0xAccountMeta { pubkey: base58_encode(&pool_in), is_signer: false, is_writable: true },
-                        Raw0xAccountMeta { pubkey: base58_encode(&pool_out), is_signer: false, is_writable: true },
-                        Raw0xAccountMeta { pubkey: TOKEN_PROGRAM_ID.to_string(), is_signer: false, is_writable: false },
+                        Raw0xAccountMeta {
+                            pubkey: base58_encode(&taker),
+                            is_signer: true,
+                            is_writable: true,
+                        },
+                        Raw0xAccountMeta {
+                            pubkey: base58_encode(&taker_in_ata),
+                            is_signer: false,
+                            is_writable: true,
+                        },
+                        Raw0xAccountMeta {
+                            pubkey: base58_encode(&auth_dest_ata),
+                            is_signer: false,
+                            is_writable: true,
+                        },
+                        Raw0xAccountMeta {
+                            pubkey: base58_encode(&input_mint),
+                            is_signer: false,
+                            is_writable: false,
+                        },
+                        Raw0xAccountMeta {
+                            pubkey: base58_encode(&output_mint),
+                            is_signer: false,
+                            is_writable: false,
+                        },
+                        Raw0xAccountMeta {
+                            pubkey: base58_encode(&pool_in),
+                            is_signer: false,
+                            is_writable: true,
+                        },
+                        Raw0xAccountMeta {
+                            pubkey: base58_encode(&pool_out),
+                            is_signer: false,
+                            is_writable: true,
+                        },
+                        Raw0xAccountMeta {
+                            pubkey: TOKEN_PROGRAM_ID.to_string(),
+                            is_signer: false,
+                            is_writable: false,
+                        },
                     ],
                     data: base64_encode(&swap_data),
                 }],
@@ -2873,8 +2993,14 @@ mod tests {
         let (wire, ctx, _) = base_fixture(attacker_dest_ata);
         let eval = evaluate_message_v0(&wire, &ctx).unwrap();
         assert_eq!(eval.verdict, VERDICT_BLOCKED);
-        assert!(eval.violations.iter().any(|v| v.code == "SWAP_PARAMETERS_OUT_OF_POLICY"));
-        assert!(eval.violations.iter().any(|v| v.code == "LOCAL_ASSEMBLY_DIVERGENCE_FROM_0X_RESPONSE"));
+        assert!(eval
+            .violations
+            .iter()
+            .any(|v| v.code == "SWAP_PARAMETERS_OUT_OF_POLICY"));
+        assert!(eval
+            .violations
+            .iter()
+            .any(|v| v.code == "LOCAL_ASSEMBLY_DIVERGENCE_FROM_0X_RESPONSE"));
     }
 
     #[test]
@@ -2885,8 +3011,16 @@ mod tests {
         assert_eq!(eval.verdict, VERDICT_ELIGIBLE);
         assert_eq!(eval.verified_alt_snapshots.len(), 1);
         assert_eq!(eval.verified_alt_snapshots[0].status, "VERIFIED");
-        assert!(eval.compiled_message.resolved_accounts.iter().any(|a| a.source == "alt-writable"));
-        assert!(eval.compiled_message.resolved_accounts.iter().any(|a| a.source == "alt-readonly"));
+        assert!(eval
+            .compiled_message
+            .resolved_accounts
+            .iter()
+            .any(|a| a.source == "alt-writable"));
+        assert!(eval
+            .compiled_message
+            .resolved_accounts
+            .iter()
+            .any(|a| a.source == "alt-readonly"));
     }
 
     #[test]
@@ -2897,8 +3031,14 @@ mod tests {
         ctx.address_lookup_tables[0].addresses[3] = base58_encode(&key_bytes(88));
         let eval = evaluate_message_v0(&wire, &ctx).unwrap();
         assert_eq!(eval.verdict, VERDICT_BLOCKED);
-        assert!(eval.violations.iter().any(|v| v.code == "ALT_SNAPSHOT_ATTESTATION_INVALID"));
-        assert!(eval.violations.iter().any(|v| v.code == "SWAP_PARAMETERS_OUT_OF_POLICY"));
+        assert!(eval
+            .violations
+            .iter()
+            .any(|v| v.code == "ALT_SNAPSHOT_ATTESTATION_INVALID"));
+        assert!(eval
+            .violations
+            .iter()
+            .any(|v| v.code == "SWAP_PARAMETERS_OUT_OF_POLICY"));
         assert_eq!(eval.verified_alt_snapshots[0].status, VERDICT_BLOCKED);
     }
 
@@ -2960,7 +3100,8 @@ mod tests {
         ];
         let base_ev = OnChainConfirmationEvidence {
             network: ctx.policy.network.clone(),
-            signature: "5FakeSigForOfflineReconciliationTest111111111111111111111111111111111".to_string(),
+            signature: "5FakeSigForOfflineReconciliationTest111111111111111111111111111111111"
+                .to_string(),
             slot: 310_000_050,
             block_time: Some(1_760_000_025),
             confirmation_status: "finalized".to_string(),
@@ -3089,12 +3230,36 @@ mod tests {
             instructions: vec![Raw0xInstruction {
                 program_id: ZEROX_SETTLER_PROGRAM_ID.to_string(),
                 accounts: vec![
-                    Raw0xAccountMeta { pubkey: base58_encode(&taker_in_ata), is_signer: false, is_writable: true },
-                    Raw0xAccountMeta { pubkey: base58_encode(&auth_dest_ata), is_signer: false, is_writable: true },
-                    Raw0xAccountMeta { pubkey: meteora_dlmm.to_string(), is_signer: false, is_writable: false },
-                    Raw0xAccountMeta { pubkey: deriverse.to_string(), is_signer: false, is_writable: false },
-                    Raw0xAccountMeta { pubkey: base58_encode(&taker), is_signer: true, is_writable: true },
-                    Raw0xAccountMeta { pubkey: TOKEN_PROGRAM_ID.to_string(), is_signer: false, is_writable: false },
+                    Raw0xAccountMeta {
+                        pubkey: base58_encode(&taker_in_ata),
+                        is_signer: false,
+                        is_writable: true,
+                    },
+                    Raw0xAccountMeta {
+                        pubkey: base58_encode(&auth_dest_ata),
+                        is_signer: false,
+                        is_writable: true,
+                    },
+                    Raw0xAccountMeta {
+                        pubkey: meteora_dlmm.to_string(),
+                        is_signer: false,
+                        is_writable: false,
+                    },
+                    Raw0xAccountMeta {
+                        pubkey: deriverse.to_string(),
+                        is_signer: false,
+                        is_writable: false,
+                    },
+                    Raw0xAccountMeta {
+                        pubkey: base58_encode(&taker),
+                        is_signer: true,
+                        is_writable: true,
+                    },
+                    Raw0xAccountMeta {
+                        pubkey: TOKEN_PROGRAM_ID.to_string(),
+                        is_signer: false,
+                        is_writable: false,
+                    },
                 ],
                 data: base64_encode(&settler_data),
             }],
@@ -3138,14 +3303,38 @@ mod tests {
         )
         .unwrap();
         assert_eq!(eval_cap.verdict, VERDICT_BLOCKED);
-        assert!(eval_cap.violations.iter().any(|v| v.code == "INPUT_ASSET_CAP_EXCEEDED"));
-        assert!(eval_cap.violations.iter().any(|v| v.code == "TOTAL_SOL_CAP_EXCEEDED"));
-        assert!(eval_cap.indeterminate_factors.iter().any(|f| f.code == "UNINTERPRETED_PROGRAM"));
-        assert_eq!(eval_cap.instruction_analysis[0]["kind"], "ZeroXSettler.UnverifiedCpiRoute");
-        assert_eq!(eval_cap.instruction_analysis[0]["zidHex"], "0x2aa3c060be30ef0ae6d00945");
-        assert_eq!(eval_cap.instruction_analysis[0]["declaredAmountIn"], "100000000");
-        assert_eq!(eval_cap.instruction_analysis[0]["declaredMinAmountOut"], "7217315");
-        assert_eq!(eval_cap.instruction_analysis[0]["cpiAuditStatus"], "UNVERIFIED_EXTERNAL_CPI");
+        assert!(eval_cap
+            .violations
+            .iter()
+            .any(|v| v.code == "INPUT_ASSET_CAP_EXCEEDED"));
+        assert!(eval_cap
+            .violations
+            .iter()
+            .any(|v| v.code == "TOTAL_SOL_CAP_EXCEEDED"));
+        assert!(eval_cap
+            .indeterminate_factors
+            .iter()
+            .any(|f| f.code == "UNINTERPRETED_PROGRAM"));
+        assert_eq!(
+            eval_cap.instruction_analysis[0]["kind"],
+            "ZeroXSettler.UnverifiedCpiRoute"
+        );
+        assert_eq!(
+            eval_cap.instruction_analysis[0]["zidHex"],
+            "0x2aa3c060be30ef0ae6d00945"
+        );
+        assert_eq!(
+            eval_cap.instruction_analysis[0]["declaredAmountIn"],
+            "100000000"
+        );
+        assert_eq!(
+            eval_cap.instruction_analysis[0]["declaredMinAmountOut"],
+            "7217315"
+        );
+        assert_eq!(
+            eval_cap.instruction_analysis[0]["cpiAuditStatus"],
+            "UNVERIFIED_EXTERNAL_CPI"
+        );
 
         // 2. Even when all caps & accounts pass -> MUST STAY INCONCLUSIVO (NEVER ELEGÍVEL!)
         let eval_within = evaluate_message_v0(
@@ -3180,20 +3369,60 @@ mod tests {
         let settler_ix = Raw0xInstruction {
             program_id: ZEROX_SETTLER_PROGRAM_ID.to_string(),
             accounts: vec![
-                Raw0xAccountMeta { pubkey: base58_encode(&taker_in_ata), is_signer: false, is_writable: true },
-                Raw0xAccountMeta { pubkey: base58_encode(&auth_dest_ata), is_signer: false, is_writable: true },
-                Raw0xAccountMeta { pubkey: base58_encode(&taker), is_signer: true, is_writable: true },
-                Raw0xAccountMeta { pubkey: TOKEN_PROGRAM_ID.to_string(), is_signer: false, is_writable: false },
+                Raw0xAccountMeta {
+                    pubkey: base58_encode(&taker_in_ata),
+                    is_signer: false,
+                    is_writable: true,
+                },
+                Raw0xAccountMeta {
+                    pubkey: base58_encode(&auth_dest_ata),
+                    is_signer: false,
+                    is_writable: true,
+                },
+                Raw0xAccountMeta {
+                    pubkey: base58_encode(&taker),
+                    is_signer: true,
+                    is_writable: true,
+                },
+                Raw0xAccountMeta {
+                    pubkey: TOKEN_PROGRAM_ID.to_string(),
+                    is_signer: false,
+                    is_writable: false,
+                },
             ],
             data: base64_encode(&settler_data),
         };
         let guard_accounts = vec![
-            Raw0xAccountMeta { pubkey: base58_encode(&taker), is_signer: true, is_writable: true },
-            Raw0xAccountMeta { pubkey: base58_encode(&guard_pda), is_signer: false, is_writable: true },
-            Raw0xAccountMeta { pubkey: base58_encode(&taker_in_ata), is_signer: false, is_writable: false },
-            Raw0xAccountMeta { pubkey: base58_encode(&auth_dest_ata), is_signer: false, is_writable: false },
-            Raw0xAccountMeta { pubkey: NATIVE_MINT_ID.to_string(), is_signer: false, is_writable: false },
-            Raw0xAccountMeta { pubkey: base58_encode(&out_mint), is_signer: false, is_writable: false },
+            Raw0xAccountMeta {
+                pubkey: base58_encode(&taker),
+                is_signer: true,
+                is_writable: true,
+            },
+            Raw0xAccountMeta {
+                pubkey: base58_encode(&guard_pda),
+                is_signer: false,
+                is_writable: true,
+            },
+            Raw0xAccountMeta {
+                pubkey: base58_encode(&taker_in_ata),
+                is_signer: false,
+                is_writable: false,
+            },
+            Raw0xAccountMeta {
+                pubkey: base58_encode(&auth_dest_ata),
+                is_signer: false,
+                is_writable: false,
+            },
+            Raw0xAccountMeta {
+                pubkey: NATIVE_MINT_ID.to_string(),
+                is_signer: false,
+                is_writable: false,
+            },
+            Raw0xAccountMeta {
+                pubkey: base58_encode(&out_mint),
+                is_signer: false,
+                is_writable: false,
+            },
         ];
         let pre_ix = Raw0xInstruction {
             program_id: base58_encode(&guard_prog),
@@ -3203,7 +3432,7 @@ mod tests {
         let mut post_data = Vec::new();
         post_data.extend_from_slice(&post_disc);
         post_data.extend_from_slice(&150_000_000u64.to_le_bytes()); // max_in <= 200M
-        post_data.extend_from_slice(&7_200_000u64.to_le_bytes());   // min_out >= 7M
+        post_data.extend_from_slice(&7_200_000u64.to_le_bytes()); // min_out >= 7M
         post_data.extend_from_slice(&155_000_000u64.to_le_bytes()); // max_total_sol <= 205M
         let post_ix = Raw0xInstruction {
             program_id: base58_encode(&guard_prog),

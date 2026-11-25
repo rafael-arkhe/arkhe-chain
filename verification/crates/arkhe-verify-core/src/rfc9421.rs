@@ -37,8 +37,16 @@ pub fn base64_encode(bytes: &[u8]) -> String {
     let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
     for chunk in bytes.chunks(3) {
         let b0 = u32::from(chunk[0]);
-        let b1 = if chunk.len() > 1 { u32::from(chunk[1]) } else { 0 };
-        let b2 = if chunk.len() > 2 { u32::from(chunk[2]) } else { 0 };
+        let b1 = if chunk.len() > 1 {
+            u32::from(chunk[1])
+        } else {
+            0
+        };
+        let b2 = if chunk.len() > 2 {
+            u32::from(chunk[2])
+        } else {
+            0
+        };
         let n = (b0 << 16) | (b1 << 8) | b2;
         out.push(TABLE[((n >> 18) & 0x3f) as usize] as char);
         out.push(TABLE[((n >> 12) & 0x3f) as usize] as char);
@@ -124,8 +132,8 @@ pub fn base64url_decode_nopad(input: &str) -> Result<Vec<u8>, String> {
 
 /// Returns the official 0x production Ed25519 verifying key map.
 pub fn official_0x_prod_keys() -> BTreeMap<String, [u8; 32]> {
-    let raw = base64url_decode_nopad(OFFICIAL_0X_PROD_KEY_JWK_X)
-        .expect("static 0x JWK x must decode");
+    let raw =
+        base64url_decode_nopad(OFFICIAL_0X_PROD_KEY_JWK_X).expect("static 0x JWK x must decode");
     let arr: [u8; 32] = raw.try_into().expect("static 0x JWK x must be 32 bytes");
     let mut map = BTreeMap::new();
     map.insert(OFFICIAL_0X_PROD_KEY_ID.to_string(), arr);
@@ -389,17 +397,19 @@ pub fn sign_0x_http_response(
         .headers
         .entry("content-type".to_string())
         .or_insert_with(|| "application/json".to_string());
-    request
-        .headers
-        .insert("content-digest".to_string(), format_content_digest(&req_bytes));
+    request.headers.insert(
+        "content-digest".to_string(),
+        format_content_digest(&req_bytes),
+    );
 
     response
         .headers
         .entry("content-type".to_string())
         .or_insert_with(|| "application/json".to_string());
-    response
-        .headers
-        .insert("content-digest".to_string(), format_content_digest(&res_bytes));
+    response.headers.insert(
+        "content-digest".to_string(),
+        format_content_digest(&res_bytes),
+    );
 
     let components: Vec<String> = vec![
         "\"@status\"".to_string(),
@@ -627,10 +637,7 @@ pub fn verify_0x_http_response(
     if parsed_input.alg.as_deref() != Some("ed25519") {
         return fail(
             "UNSUPPORTED_SIGNATURE_ALG",
-            format!(
-                "Expected alg=\"ed25519\", received {:?}.",
-                parsed_input.alg
-            ),
+            format!("Expected alg=\"ed25519\", received {:?}.", parsed_input.alg),
             parsed_input.key_id.clone(),
             parsed_input.created,
             None,
@@ -670,9 +677,7 @@ pub fn verify_0x_http_response(
     if created.saturating_sub(now_unix_seconds) > max_future_skew_seconds {
         return fail(
             "RESPONSE_SIGNATURE_FROM_FUTURE",
-            format!(
-                "Signature created {created} is too far ahead of clock {now_unix_seconds}."
-            ),
+            format!("Signature created {created} is too far ahead of clock {now_unix_seconds}."),
             parsed_input.key_id.clone(),
             Some(created),
             Some(age_seconds),
@@ -804,11 +809,13 @@ mod tests {
 
         // Swapped request body with recomputed request Content-Digest (without 0x re-signing)
         let mut swapped_req = req.clone();
-        let new_body = br#"{"token_in":"So11111111111111111111111111111111111111112","amount_in":50000000}"#;
+        let new_body =
+            br#"{"token_in":"So11111111111111111111111111111111111111112","amount_in":50000000}"#;
         swapped_req.body_base64 = base64_encode(new_body);
-        swapped_req
-            .headers
-            .insert("content-digest".to_string(), format_content_digest(new_body));
+        swapped_req.headers.insert(
+            "content-digest".to_string(),
+            format_content_digest(new_body),
+        );
         let swapped = verify_0x_http_response(
             &swapped_req,
             &res,

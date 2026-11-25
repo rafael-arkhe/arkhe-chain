@@ -402,14 +402,26 @@ impl SqliteSolanaSwapStore {
         })
     }
 
-    pub fn get_receipt_bundle(&self, receipt_id: &str) -> Result<Option<StoredReceiptBundle>, String> {
+    pub fn get_receipt_bundle(
+        &self,
+        receipt_id: &str,
+    ) -> Result<Option<StoredReceiptBundle>, String> {
         let row: Option<(i64, Vec<u8>, String, String, String, String)> = self
             .conn
             .query_row(
                 "SELECT seq, leaf_json, leaf_digest, signature_hex, verdict, final_outcome
                  FROM swap_receipts WHERE receipt_id = ?1",
                 params![receipt_id],
-                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)),
+                |r| {
+                    Ok((
+                        r.get(0)?,
+                        r.get(1)?,
+                        r.get(2)?,
+                        r.get(3)?,
+                        r.get(4)?,
+                        r.get(5)?,
+                    ))
+                },
             )
             .optional()
             .map_err(|e| format!("sqlite query swap_receipts failed: {e}"))?;
@@ -447,11 +459,15 @@ impl SqliteSolanaSwapStore {
     pub fn stats(&self) -> Result<SolanaSwapStoreStats, String> {
         let consumed_0x_count: i64 = self
             .conn
-            .query_row("SELECT COUNT(*) FROM consumed_0x_responses", [], |r| r.get(0))
+            .query_row("SELECT COUNT(*) FROM consumed_0x_responses", [], |r| {
+                r.get(0)
+            })
             .map_err(|e| format!("sqlite count consumed_0x_responses failed: {e}"))?;
         let issued_auth_count: i64 = self
             .conn
-            .query_row("SELECT COUNT(*) FROM issued_authorizations", [], |r| r.get(0))
+            .query_row("SELECT COUNT(*) FROM issued_authorizations", [], |r| {
+                r.get(0)
+            })
             .map_err(|e| format!("sqlite count issued_authorizations failed: {e}"))?;
         let consumed_auth_count: i64 = self
             .conn
@@ -463,11 +479,15 @@ impl SqliteSolanaSwapStore {
             .map_err(|e| format!("sqlite count consumed auths failed: {e}"))?;
         let signing_boundary_event_count: i64 = self
             .conn
-            .query_row("SELECT COUNT(*) FROM signing_boundary_events", [], |r| r.get(0))
+            .query_row("SELECT COUNT(*) FROM signing_boundary_events", [], |r| {
+                r.get(0)
+            })
             .map_err(|e| format!("sqlite count signing_boundary_events failed: {e}"))?;
         let onchain_confirmation_count: i64 = self
             .conn
-            .query_row("SELECT COUNT(*) FROM onchain_confirmations", [], |r| r.get(0))
+            .query_row("SELECT COUNT(*) FROM onchain_confirmations", [], |r| {
+                r.get(0)
+            })
             .map_err(|e| format!("sqlite count onchain_confirmations failed: {e}"))?;
         let pending_reconciliation_count: i64 = self
             .conn
@@ -566,7 +586,11 @@ impl SqliteSolanaSwapStore {
             .conn
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(|e| format!("sqlite tx begin failed: {e}"))?;
-        let completed_at = if completed { Some(now_unix_seconds) } else { None };
+        let completed_at = if completed {
+            Some(now_unix_seconds)
+        } else {
+            None
+        };
         tx.execute(
             "UPDATE pending_reconciliations
              SET attempts = attempts + 1, last_error = ?2, completed = ?3, completed_at = ?4

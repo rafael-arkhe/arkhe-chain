@@ -39,6 +39,7 @@
     "verification/crates/arkhe-verify-cli",
     "verification/crates/arkhe-verify-wasm",
     "verification/crates/arkhe-license-issuer",
+    "verification/arkhe-native-control-lab",
     "integrations/arkhe-python-runtime/bridge",
     "apps/arkhe-ask"
   ],
@@ -184,6 +185,13 @@
       "path": "verification",
       "layer": "verification",
       "status": "active",
+      "authority": false
+    },
+    {
+      "id": "native-control-lab",
+      "path": "verification/arkhe-native-control-lab",
+      "layer": "control-lab",
+      "status": "test-harness",
       "authority": false
     },
     {
@@ -405,7 +413,7 @@
     },
     {
       "id": "verification-does-not-authorize",
-      "from_prefixes": ["verification/"],
+      "from_prefixes": ["verification/crates/"],
       "forbids": ["arkhe-kernel", "arkhe-wormgraph", "arkhe-memory", "arkhe-chain", "arkhe-barrier", "arkhe-state", "arkhe-gate"]
     },
     {
@@ -565,7 +573,7 @@
   },
   "policy_verdict": {
     "definition": "governance/arkhe-governance/src/lib.rs",
-    "silent_prefixes": ["cognition/", "evidence/", "verification/", "state/", "barrier/", "kernel/arkhe-gate"]
+    "silent_prefixes": ["cognition/", "evidence/", "verification/crates/", "state/", "barrier/", "kernel/arkhe-gate"]
   },
   "source_maps": [
     "docs/architecture/moves.json",
