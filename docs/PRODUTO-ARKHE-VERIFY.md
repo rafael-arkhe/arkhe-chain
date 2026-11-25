@@ -650,12 +650,12 @@ fosse recibo de produção.
 
 Marcos com critério de saída que outra pessoa pode apontar. Intenção não é marco.
 
-| Marco | Entrega | Critério de saída | Estado em 21/11/2026 |
+| Marco | Entrega | Critério de saída | Estado em 25/11/2026 |
 |---|---|---|---|
 | **M0** | O que já existe | 34 testes, fixture pública, demo de um byte, procedimento escrito | **Feito** |
-| **M1 — Gate 0** | P-10, P-04 | Um terceiro, sem `DATABASE_URL`, sem PostgreSQL, sem semente e sem a máquina do emissor, reexecuta os sete comandos de `HOW_TO_AUDIT.md` e obtém a tabela | **Aberto (kit local pronto)** — `package_buyer_kit.py` + `verify_release.py` + `AUDIT-1-PAGE.md` validados em 21/11/2026; aguarda execução por terceiro fora desta máquina e release multiplataforma no CI |
-| **M2 — Implantável** | P-01, P-03, P-04, P-05, P-08 | O compose sobe numa rede do operador, com autenticação de chamador, chave em custódia dele, e os quatro gates do repositório verdes | **Parcial (engenharia local verde)** — P-01 (`ReceiptSigner` + `external-signer`), P-03 (`CallerToken` 401/403 antes do medidor), P-05 (`TenantRosters`), P-08 (3/3 gates da raiz verdes) implementados e testados; build Docker e triagem QA-003 pendentes |
-| **M3 — Âncora e invariante** | P-02, P-06 | `anchor: PASS` existe contra checkpoint configurado à parte; um invariante é executado por um runner isolado e o recibo dele fecha o contraste | **Feito localmente (21/11/2026)** — P-02 (RFC 6962 contra `AnchorCheckpoint` configurado à parte) e P-06 (`arkhe-anonymize` sem chave + assinatura separada do papel `invariant`, positivo e byte invertido) verdes em `cargo test --locked --workspace` |
+| **M1 — Gate 0** | P-10, P-04 | Um terceiro, sem `DATABASE_URL`, sem PostgreSQL, sem semente e sem a máquina do emissor, reexecuta os sete comandos de `HOW_TO_AUDIT.md` e obtém a tabela | **Aberto (kits CI + atestação prontos)** — Run `45625806852` (`cebf25e0`) gerou e validou os kits Linux/Windows/macOS (com `LICENSE-APACHE`/`LICENSE-MIT`), `RELEASE-SHA256SUMS` e bundle Sigstore OIDC; aguarda execução por terceiro fora do ambiente do autor |
+| **M2 — Implantável** | P-01, P-03, P-04, P-05, P-08 | O compose sobe numa rede do operador, com autenticação de chamador, chave em custódia dele, e os quatro gates do repositório verdes | **Parcial (CI + Docker + Compose verdes; QA-003 pendente)** — Run `45625806852` construiu `arkhe-provenance-mcp:local` (`sha256:fc55e2...`) e validou `compose.yaml` (`internal: true` + PostgreSQL + seats + `CallerToken` + rosters); em `d:\arkhe` raiz permanecem pendências da Fase A (`cargo fmt` de outros módulos e triagem QA-003) |
+| **M3 — Âncora e invariante** | P-02, P-06, R-02 | `anchor: PASS` existe contra checkpoint configurado à parte; um invariante é executado por um runner isolado e o recibo dele fecha o contraste; versão exata exigível (`--expect-invariant-version`) | **Feito** — P-02, P-06 e R-02 (`--expect-invariant-version` sem alterar schema `/v1`) validados localmente e em CI multiplataforma (`42` testes workspace + `29` `external-signer`) |
 | **M4 — Gate 1** | P-07, P-09 | Um cliente, que não é o autor, paga por verificação em produção: recibo e raiz de confiança **dele**, no processo **dele**, com pagamento identificável | **Aberto** — P-07 (`arkhe-platform reconcile`) implementado e testado; P-09 permanece bloqueado por regra até haver cliente pagante externo |
 
 O que explicitamente **não** sobe de conjectura a lema: interesse, piloto, preço
@@ -1232,14 +1232,15 @@ COFINS — são o que a documentação do repositório diz, não leitura da lei.
 | O produto compila e verifica sem banco e sem rede | FACT | `verify` não lê `DATABASE_URL`; `serve` sobe com `postgres: absent` |
 | Um invariante determinístico roda de verdade, com registro fail-closed, e 21 testes passam | FACT, 19/11/2026 | `cargo test -p arkhe-exec-adapter --locked` |
 | O lock de migrações está completo | FACT, 19/11/2026 | `20261026000018_wormgraph_fencing.sql` em `config/migrations.lock.json` |
-| A imagem `arkhe-provenance-mcp:local` foi construída | **FALSO localmente** | workflow `.github/workflows/arkhe-verify-release.yml` pronto; aguarda execução em CI/Docker |
+| A imagem `arkhe-provenance-mcp:local` foi construída | **FACT, 25/11/2026** | Run `45625806852` (`build-docker-image`): `sha256:fc55e21615680ad014734b09b77f7f8acf242dbf6c4e896c76de005aae7fcb48`, CLI/R-02 + `compose.yaml` validados (`docs/evidence/2026-11-25-phase-b-alpha-release/RESULTS.md`) |
+| R-02 (`--expect-invariant-version`), `LICENSE-APACHE`/`LICENSE-MIT` e atestação Sigstore OIDC dos kits Linux/Windows/macOS passam em CI | **FACT, 25/11/2026** | Run `45625806852` (`cebf25e0`), 5/5 jobs `success`, `docs/evidence/2026-11-25-phase-b-alpha-release/RESULTS.md` |
 | Um terceiro reexecutou os recibos fora deste ambiente | **FALSO hoje** | Gate 0 / M1 |
 | Existe disposição a pagar por verificação | CONJECTURE | Gate 1 / M4, tabela vazia |
 | O ICP #1 é o comprador certo | CONJECTURE, confiança 0,55–0,70 | `docs/mercado/experimento-01.md`, 0 conversas |
 | Verificação recalculável é defesa competitiva | CONJECTURE | só vira defesa quando o terceiro verifica sem o autor |
 | O recibo satisfaz exigência de regulador | **não afirmado** | nenhuma seção deste documento o afirma |
 | Os três repositórios RTC da Receita existem, são MIT, e nenhum declara status normativo | FACT, 19/11/2026 | leitura das três páginas e da página da organização, registrada no Anexo A |
-| `discharge` compara só `invariant_id`, e nunca `invariant_version` | FACT, 19/11/2026 | `crates/arkhe-flow/src/lib.rs`, `fn discharge` |
+| Sem `expect_invariant_version` (19/11/2026), `discharge` comparava só `invariant_id`; com R-02 (25/11/2026), `--expect-invariant-version` exige igualdade exata | FACT, 25/11/2026 | `crates/arkhe-flow/src/lib.rs`, `fn discharge` |
 | O lote publicado do regime geral tem quatro itens, com erro por item (`REG-011`, com ponteiro) e um item inválido de fábrica | FACT, 19/11/2026 | `docs/exemplos.md` do regime geral, lido no bruto |
 | A resposta é HTTP 200 com item em erro, e o endpoint sem observabilidade recusa o lote inteiro com 422 | FACT, 19/11/2026 | mesmo arquivo |
 | As alíquotas de referência estão cadastradas só para 2026; de 2027 a consulta responde 404 | FACT, 19/11/2026 | mesmo arquivo. É o que o repositório diz, não leitura da lei |
