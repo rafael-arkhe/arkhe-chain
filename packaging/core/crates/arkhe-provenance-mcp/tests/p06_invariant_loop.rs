@@ -83,6 +83,7 @@ fn p06_end_to_end_deterministic_invariant_passes_and_flipped_byte_fails() {
         action_id: None,
         invariant: Some(verdict_ok.clone()),
         expect_invariant: Some(NO_DIRECT_IDENTIFIER_ID.into()),
+        expect_invariant_version: None,
         anchor_checkpoint: None,
         anchor_inclusion: None,
     });
@@ -125,6 +126,7 @@ fn p06_end_to_end_deterministic_invariant_passes_and_flipped_byte_fails() {
         action_id: Some(bad_action.id.clone()),
         invariant: None,
         expect_invariant: None,
+        expect_invariant_version: None,
         anchor_checkpoint: None,
         anchor_inclusion: None,
     });
@@ -152,6 +154,7 @@ fn p06_end_to_end_deterministic_invariant_passes_and_flipped_byte_fails() {
         action_id: None,
         invariant: Some(verdict_fail),
         expect_invariant: Some(NO_DIRECT_IDENTIFIER_ID.into()),
+        expect_invariant_version: None,
         anchor_checkpoint: None,
         anchor_inclusion: None,
     });
@@ -162,4 +165,30 @@ fn p06_end_to_end_deterministic_invariant_passes_and_flipped_byte_fails() {
     let pii_bytes = br#"{"nota":"contato pessoa@example.test","valor":1250}"#;
     let body_pii = evaluate_no_direct_identifier_body(&action.id, pii_bytes).unwrap();
     assert_eq!(body_pii["held"], false);
+
+    // 4. R-02: Mismatched `expect_invariant_version` refuses discharge on an otherwise valid `verdict_ok`.
+    let wrong_ver = judge(&VerifyRequest {
+        receipt: action,
+        trust,
+        expect_purpose: Some(GATE0_PURPOSE.into()),
+        tenant: None,
+        subject_sha256: None,
+        policy_sha256: None,
+        admission_id: None,
+        commit_id: None,
+        artifact_sha256: Some(clean_sha.clone()),
+        model_sha256: Some(model_sha),
+        data_sha256: None,
+        pipeline_sha256: None,
+        plan_sha256: Some(plan_sha),
+        output_sha256: Some(clean_sha),
+        action_id: None,
+        invariant: Some(verdict_ok),
+        expect_invariant: Some(NO_DIRECT_IDENTIFIER_ID.into()),
+        expect_invariant_version: Some("9.9.9".into()),
+        anchor_checkpoint: None,
+        anchor_inclusion: None,
+    });
+    assert_eq!(wrong_ver.components["llm_output"], "FAIL");
+    assert_eq!(wrong_ver.overall, "FAIL");
 }

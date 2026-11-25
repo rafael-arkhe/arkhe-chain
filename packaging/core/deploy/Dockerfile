@@ -1,4 +1,4 @@
-FROM rust:1.96.0 AS build
+FROM rust:1.96.0-bookworm AS build
 WORKDIR /src
 COPY . .
 RUN cargo build --locked --release -p arkhe-provenance-mcp --bin arkhe-provenance-mcp

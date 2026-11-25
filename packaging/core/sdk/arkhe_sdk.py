@@ -8,13 +8,34 @@ import subprocess
 import urllib.request
 
 
+_OPTIONAL_BINDING_KEYS = (
+    "subject_sha256",
+    "policy_sha256",
+    "admission_id",
+    "commit_id",
+    "artifact_sha256",
+    "model_sha256",
+    "data_sha256",
+    "pipeline_sha256",
+    "plan_sha256",
+    "output_sha256",
+    "action_id",
+    "tenant",
+    "invariant",
+    "expect_invariant",
+    "expect_invariant_version",
+    "anchor_checkpoint",
+    "anchor_inclusion",
+)
+
+
 def verify_http(base_url, receipt, trust, expect_purpose, **bindings):
     body = {
         "receipt": receipt,
         "trust": trust,
         "expect_purpose": expect_purpose,
     }
-    for key in ("subject_sha256", "policy_sha256", "admission_id", "commit_id"):
+    for key in _OPTIONAL_BINDING_KEYS:
         if bindings.get(key) is not None:
             body[key] = bindings[key]
     request = urllib.request.Request(
@@ -32,7 +53,7 @@ def verify_mcp(binary, receipt, trust, expect_purpose, **bindings):
         "trust": trust,
         "expect_purpose": expect_purpose,
     }
-    for key in ("subject_sha256", "policy_sha256", "admission_id", "commit_id"):
+    for key in _OPTIONAL_BINDING_KEYS:
         if bindings.get(key) is not None:
             arguments[key] = bindings[key]
     process = subprocess.Popen(

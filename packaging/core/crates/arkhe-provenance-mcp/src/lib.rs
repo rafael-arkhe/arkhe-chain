@@ -113,6 +113,9 @@ pub struct VerifyRequest {
     pub invariant: Option<Receipt>,
     /// The invariant id the caller requires. Without it nothing discharges.
     pub expect_invariant: Option<String>,
+    /// Optional exact `invariant_version` the caller requires (R-02).
+    #[serde(default)]
+    pub expect_invariant_version: Option<String>,
     /// Auditor-configured checkpoint for verifiable anchor inclusion (P-02).
     #[serde(default)]
     pub anchor_checkpoint: Option<AnchorCheckpoint>,
@@ -173,6 +176,7 @@ pub fn handle_mcp_message(message: &Value) -> Option<Value> {
                         "tenant": { "type": "string" },
                         "invariant": { "type": "object" },
                         "expect_invariant": { "type": "string" },
+                        "expect_invariant_version": { "type": "string" },
                         "anchor_checkpoint": { "type": "object" },
                         "anchor_inclusion": { "type": "object" }
                     }
@@ -294,6 +298,7 @@ pub fn judge_with_rosters(
         action_id: request.action_id.as_deref(),
         invariant: request.invariant.as_ref(),
         expect_invariant: request.expect_invariant.as_deref(),
+        expect_invariant_version: request.expect_invariant_version.as_deref(),
         anchor_checkpoint: request.anchor_checkpoint.as_ref(),
         anchor_inclusion: request.anchor_inclusion.as_ref(),
     });
@@ -494,6 +499,7 @@ mod tests {
             action_id: None,
             invariant: None,
             expect_invariant: None,
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         };
@@ -537,6 +543,7 @@ mod tests {
             action_id: None,
             invariant,
             expect_invariant: expect.map(str::to_owned),
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         };
@@ -832,6 +839,7 @@ mod tests {
             action_id: None,
             invariant: None,
             expect_invariant: None,
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         };
@@ -867,5 +875,92 @@ mod tests {
         );
         assert_eq!(new_ok.components["signer"], "PASS");
         assert_eq!(new_ok.overall, "PASS");
+    }
+
+    #[test]
+    fn r02_judge_and_mcp_enforce_expect_invariant_version() {
+        let stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let dir = std::env::temp_dir().join(format!("arkhe-mcp-r02-{stamp}"));
+        emit_gate0(&dir).unwrap();
+        let trust: arkhe_flow::Trust = arkhe_flow::read_json(&dir.join("trust.json")).unwrap();
+        let action: Receipt = arkhe_flow::read_json(&dir.join("action.json")).unwrap();
+        let signed_verdict: Receipt = arkhe_flow::read_json(&dir.join("verdict.json")).unwrap();
+        let artifact = sha256_hex(&std::fs::read(dir.join("artifact.bin")).unwrap());
+        let plan = sha256_hex(&std::fs::read(dir.join("plan.json")).unwrap());
+        let model = sha256_hex(&std::fs::read(dir.join("model.json")).unwrap());
+        let _ = std::fs::remove_dir_all(&dir);
+
+        let make_req = |expect_version: Option<&str>| VerifyRequest {
+            receipt: action.clone(),
+            trust: trust.clone(),
+            expect_purpose: Some(GATE0_PURPOSE.to_string()),
+            tenant: None,
+            subject_sha256: None,
+            policy_sha256: None,
+            admission_id: None,
+            commit_id: None,
+            artifact_sha256: Some(artifact.clone()),
+            model_sha256: Some(model.clone()),
+            data_sha256: None,
+            pipeline_sha256: None,
+            plan_sha256: Some(plan.clone()),
+            output_sha256: Some(artifact.clone()),
+            action_id: None,
+            invariant: Some(signed_verdict.clone()),
+            expect_invariant: Some(arkhe_flow::GATE0_INVARIANT_ID.to_string()),
+            expect_invariant_version: expect_version.map(str::to_owned),
+            anchor_checkpoint: None,
+            anchor_inclusion: None,
+        };
+
+        let ok = judge(&make_req(Some(arkhe_flow::GATE0_INVARIANT_VERSION)));
+        assert_eq!(ok.components["llm_output"], "PASS");
+        assert_eq!(ok.overall, "PASS");
+
+        let bad = judge(&make_req(Some("2.0.0")));
+        assert_eq!(bad.components["llm_output"], "FAIL");
+        assert_eq!(bad.overall, "FAIL");
+        assert!(
+            bad.notes
+                .iter()
+                .any(|n| n.contains("1.0.0") && n.contains("2.0.0")),
+            "expected both versions in notes: {:?}",
+            bad.notes
+        );
+
+        let mcp_call = |expect_version: &str| {
+            let response = handle_mcp_message(&json!({
+                "jsonrpc": "2.0",
+                "id": 99,
+                "method": "tools/call",
+                "params": {
+                    "name": "verify_receipt",
+                    "arguments": {
+                        "receipt": action,
+                        "trust": trust,
+                        "expect_purpose": GATE0_PURPOSE,
+                        "artifact_sha256": artifact,
+                        "model_sha256": model,
+                        "plan_sha256": plan,
+                        "output_sha256": artifact,
+                        "invariant": signed_verdict,
+                        "expect_invariant": arkhe_flow::GATE0_INVARIANT_ID,
+                        "expect_invariant_version": expect_version
+                    }
+                }
+            }))
+            .unwrap();
+            assert_eq!(response["result"]["isError"], false);
+            let text = response.pointer("/result/content/0/text").and_then(Value::as_str).unwrap();
+            serde_json::from_str::<Value>(text).unwrap()
+        };
+
+        let mcp_ok = mcp_call("1.0.0");
+        assert_eq!(mcp_ok["overall"], "PASS");
+        assert_eq!(mcp_ok["components"]["llm_output"], "PASS");
+
+        let mcp_bad = mcp_call("2.0.0");
+        assert_eq!(mcp_bad["overall"], "FAIL");
+        assert_eq!(mcp_bad["components"]["llm_output"], "FAIL");
     }
 }

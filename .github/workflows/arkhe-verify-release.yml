@@ -1,6 +1,14 @@
 name: arkhe-verify-release
 on:
   push:
+    branches:
+      - "main"
+      - "feat/native-control-lab-l1-l2-l3"
+    paths:
+      - "packaging/core/**"
+      - ".github/workflows/arkhe-verify-release.yml"
+      - "LICENSE-APACHE"
+      - "LICENSE-MIT"
     tags:
       - "arkhe-verify-v*"
   workflow_dispatch:
@@ -27,11 +35,13 @@ jobs:
             target: aarch64-apple-darwin
             ext: ""
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.96.0
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@d86e0fa8f147d6539442c26a61ebba8becc19489 # 1.96.0
         with:
           components: clippy
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - name: Test and lint packaging/core
@@ -40,6 +50,7 @@ jobs:
           cargo test --locked --workspace
           cargo test --locked -p arkhe-flow --features external-signer
           cargo clippy --all-targets --locked -- -D warnings
+          cargo clippy -p arkhe-flow --features external-signer --all-targets --locked -- -D warnings
           python -B audit_receipt.py fixtures/gate0
       - name: Build deterministic release binaries
         working-directory: packaging/core
@@ -47,12 +58,18 @@ jobs:
           RUSTFLAGS: "--remap-path-prefix=${{ github.workspace }}=/arkhe-src"
         run: |
           cargo build --locked --release -p arkhe-provenance-mcp -p arkhe-flow -p arkhe-platform -p arkhe-anonymize
+      - name: Run Python tamper and SDK smoke checks
+        working-directory: packaging/core
+        run: |
+          cargo build --locked -p arkhe-provenance-mcp
+          python -B demo/tamper.py
+          python -B sdk/test_sdk.py
       - name: Package self-contained Gate 0 buyer kit and verify checksums
         working-directory: packaging/core
         run: |
           python -B scripts/package_buyer_kit.py --profile release --out dist/arkhe-verify-gate0-${{ matrix.target }}
           python -B scripts/verify_release.py --kit dist/arkhe-verify-gate0-${{ matrix.target }} --run-gate0
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: arkhe-verify-${{ matrix.target }}
           path: |
@@ -65,9 +82,112 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - name: Build arkhe-provenance-mcp:local image from packaging/core/deploy/Dockerfile
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Build arkhe-provenance-mcp:local image and run CLI + R-02 container checks
         working-directory: packaging/core
+        shell: bash
         run: |
+          set -euo pipefail
           docker build -f deploy/Dockerfile -t arkhe-provenance-mcp:local .
           docker run --rm arkhe-provenance-mcp:local --help
+          docker run --rm -v "$PWD/fixtures/gate0:/fx:ro" arkhe-provenance-mcp:local \
+            verify --receipt /fx/admission.json --trust /fx/trust.json --expect-purpose gate0-lab \
+            --subject /fx/subject.bin --policy /fx/policy.json
+          docker run --rm -v "$PWD/fixtures/gate0:/fx:ro" arkhe-provenance-mcp:local \
+            verify --receipt /fx/action.json --trust /fx/trust.json --expect-purpose gate0-lab \
+            --plan /fx/plan.json --output /fx/artifact.bin --model /fx/model.json --artifact /fx/artifact.bin \
+            --invariant /fx/verdict.json --expect-invariant invariant.valor-present --expect-invariant-version 1.0.0
+          set +e
+          docker run --rm -v "$PWD/fixtures/gate0:/fx:ro" arkhe-provenance-mcp:local \
+            verify --receipt /fx/action.json --trust /fx/trust.json --expect-purpose gate0-lab \
+            --plan /fx/plan.json --output /fx/artifact.bin --model /fx/model.json --artifact /fx/artifact.bin \
+            --invariant /fx/verdict.json --expect-invariant invariant.valor-present --expect-invariant-version 9.9.9
+          rc=$?
+          set -e
+          test "$rc" -eq 1
+      - name: Smoke test compose internal network with PostgreSQL + seats + caller auth + rosters
+        working-directory: packaging/core/deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          cleanup() {
+            docker compose -p arkhe-verify-ci down -v || true
+            rm -f .env
+          }
+          trap cleanup EXIT
+          printf 'POSTGRES_PASSWORD=ci-ephemeral-only-not-secret\n' > .env
+          docker compose -p arkhe-verify-ci up -d --wait
+          docker run --rm --network arkhe-verify-ci_private python:3.12-slim python3 -c '
+          import json, time, urllib.request
+          for attempt in range(30):
+              try:
+                  with urllib.request.urlopen("http://verify:8080/health", timeout=2) as r:
+                      data = json.loads(r.read().decode())
+                  assert data["verify"] == "ready", data
+                  assert data["postgres"] == "ready", data
+                  assert data["auth"] == "operator-signed-token", data
+                  assert data["seats"] == "enforced", data
+                  assert data["tenant_rosters"] == "enforced", data
+                  print("COMPOSE_HEALTH_PASS:", json.dumps(data, sort_keys=True))
+                  break
+              except Exception as exc:
+                  if attempt == 29:
+                      raise
+                  time.sleep(1)
+          '
+      - name: Export Docker image digest
+        shell: bash
+        run: |
+          mkdir -p packaging/core/dist
+          docker image inspect --format '{{.Id}}' arkhe-provenance-mcp:local > packaging/core/dist/docker-image-digest.txt
+          cat packaging/core/dist/docker-image-digest.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: arkhe-verify-docker-digest
+          path: packaging/core/dist/docker-image-digest.txt
+          retention-days: 30
+
+  sign-and-attest-release:
+    name: sign-and-attest-release
+    needs: [verify-and-package, docker-image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    steps:
+      # Zero checkout and zero execution of repository scripts in signing job.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: arkhe-verify-*
+          path: release-assets
+          merge-multiple: false
+      - name: Flatten release assets and verify consolidated checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signed-bundle
+          find release-assets -type f \( -name '*.zip' -o -name 'docker-image-digest.txt' \) -exec cp {} signed-bundle/ \;
+          cd signed-bundle
+          sha256sum *.zip docker-image-digest.txt | tee RELEASE-SHA256SUMS
+          sha256sum --check --strict RELEASE-SHA256SUMS
+      - name: Attest release archives and checksums via Sigstore OIDC
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            signed-bundle/RELEASE-SHA256SUMS
+            signed-bundle/*.zip
+          create-storage-record: false
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: arkhe-verify-release-attestation
+          path: |
+            signed-bundle/RELEASE-SHA256SUMS
+            ${{ steps.attest.outputs.bundle-path }}
+          if-no-files-found: error
+          retention-days: 30

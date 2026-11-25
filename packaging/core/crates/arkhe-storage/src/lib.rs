@@ -54,6 +54,7 @@ pub fn append(dir: &Path, admission_path: &Path, secret: &Secret, trust: &Trust)
         action_id: None,
         invariant: None,
         expect_invariant: None,
+        expect_invariant_version: None,
         anchor_checkpoint: None,
         anchor_inclusion: None,
     });

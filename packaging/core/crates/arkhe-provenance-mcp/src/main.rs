@@ -49,6 +49,9 @@ struct VerifyArgs {
     /// The invariant id you require. Without it nothing discharges.
     #[arg(long)]
     expect_invariant: Option<String>,
+    /// Optional exact invariant_version you require (R-02; exact string match).
+    #[arg(long)]
+    expect_invariant_version: Option<String>,
     /// Auditor-configured transparency log checkpoint for anchor verification (P-02).
     #[arg(long)]
     anchor_checkpoint: Option<PathBuf>,
@@ -98,6 +101,7 @@ async fn main() -> anyhow::Result<()> {
                 action,
                 invariant,
                 expect_invariant,
+                expect_invariant_version,
                 anchor_checkpoint,
                 anchor_inclusion,
             } = *args;
@@ -145,6 +149,7 @@ async fn main() -> anyhow::Result<()> {
                 action_id: id_of(action)?,
                 invariant,
                 expect_invariant,
+                expect_invariant_version,
                 anchor_checkpoint,
                 anchor_inclusion,
             });

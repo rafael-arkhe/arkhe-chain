@@ -135,6 +135,11 @@ def main() -> int:
             shutil.copy2(src, fixtures_dst / src.name)
 
     shutil.copy2(CORE_ROOT / "scripts" / "verify_release.py", out_dir / "verify_release.py")
+    for lic in ("LICENSE-APACHE", "LICENSE-MIT"):
+        lic_src = CORE_ROOT / lic
+        if not lic_src.is_file():
+            raise RuntimeError(f"Missing required license file: {lic_src}")
+        shutil.copy2(lic_src, out_dir / lic)
     (out_dir / "AUDIT-1-PAGE.md").write_text(ONE_PAGE_GUIDE, encoding="utf-8", newline="\n")
 
     assert_no_secrets(out_dir)

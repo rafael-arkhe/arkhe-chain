@@ -23,6 +23,11 @@ pub const ANCHOR_INCLUSION_SCHEMA: &str = "arkhe-anchor-inclusion/v1";
 pub const DOMAIN: &[u8] = b"ARKHE-RECEIPT-V1\n";
 pub const ANCHOR_CHECKPOINT_DOMAIN: &[u8] = b"ARKHE-ANCHOR-CHECKPOINT-V1\n";
 pub const ANCHOR_ENTRY_DOMAIN: &[u8] = b"arkhe-anchor-entry/v1\n";
+pub const SOLANA_CHECKPOINT_PDA_TRANSPORT: &str = "solana:checkpoint-pda/v1";
+pub const SOLANA_CHECKPOINT_PROFILE: &str = "arkhe-mmr-checkpoint@1";
+pub const SOLANA_CHECKPOINT_DOMAIN: &[u8] = b"AKG:MMR:CHECKPOINT:v1\0";
+pub const SOLANA_MMR_PROFILE_DIGEST_HEX: &str =
+    "bcd07a275061ef385fccdd184030c2358fdd0937477cb0ef30cf8148342f2450";
 
 pub const GATE0_FLOW_SEED: [u8; 32] = [0x01; 32];
 pub const GATE0_STORAGE_SEED: [u8; 32] = [0x02; 32];
@@ -93,6 +98,21 @@ impl Verdict {
     }
 }
 
+/// On-chain `CheckpointState` PDA payload anchored by `arkhe-guard-vault` on Solana.
+///
+/// Matches `arkhe-mmr-checkpoint@1` and `AKG:MMR:CHECKPOINT:v1\0 || JCS(checkpoint)`
+/// verified on-chain by Solana's native `Ed25519SigVerify` precompile.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct SolanaPdaCheckpoint {
+    pub profile: String,
+    pub log_id: String,
+    pub mmr_profile_digest: String,
+    pub root_hex: String,
+    pub leaf_count: u32,
+    pub issued_at: String,
+}
+
 /// Auditor-configured checkpoint for an external transparency log (P-02).
 ///
 /// Must be supplied independently by the auditor (never trusted solely because
@@ -110,6 +130,8 @@ pub struct AnchorCheckpoint {
     pub log_public_key_hex: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub checkpoint_signature: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub solana_checkpoint: Option<SolanaPdaCheckpoint>,
 }
 
 /// RFC 6962 inclusion proof tying an anchor receipt (`commit_id`, `reference`)
@@ -320,6 +342,9 @@ pub struct VerifyInput<'a> {
     pub invariant: Option<&'a Receipt>,
     /// The invariant id the caller requires. Without it nothing discharges.
     pub expect_invariant: Option<&'a str>,
+    /// Optional exact `invariant_version` the caller requires (R-02).
+    /// Checked by exact string equality (never semver ordering).
+    pub expect_invariant_version: Option<&'a str>,
     /// Optional auditor-configured transparency log checkpoint (P-02).
     pub anchor_checkpoint: Option<&'a AnchorCheckpoint>,
     /// Optional RFC 6962 inclusion proof tying the anchor receipt to `anchor_checkpoint` (P-02).
@@ -788,6 +813,51 @@ pub fn sign_anchor_checkpoint(cp: &mut AnchorCheckpoint, seed: [u8; 32]) {
     cp.checkpoint_signature = Some(hex::encode(sig.to_bytes()));
 }
 
+/// Exact JCS preimage signed by the Solana `LogKeyState` PDA and verified on-chain
+/// via Solana's `Ed25519SigVerify` precompile.
+pub fn solana_pda_checkpoint_preimage(sc: &SolanaPdaCheckpoint) -> Vec<u8> {
+    let body = serde_json::json!({
+        "issued_at": sc.issued_at,
+        "leaf_count": sc.leaf_count,
+        "log_id": sc.log_id,
+        "mmr_profile_digest": sc.mmr_profile_digest,
+        "profile": sc.profile,
+        "root_hex": sc.root_hex,
+    });
+    let mut preimage = SOLANA_CHECKPOINT_DOMAIN.to_vec();
+    preimage.extend_from_slice(canonical(&body).as_bytes());
+    preimage
+}
+
+/// Sign a [`SolanaPdaCheckpoint`] with an Ed25519 log signing key (matches `arkhe-guard-vault`).
+pub fn sign_solana_pda_checkpoint(sc: &SolanaPdaCheckpoint, seed: [u8; 32]) -> (String, String) {
+    let key = SigningKey::from_bytes(&seed);
+    let sig = key.sign(&solana_pda_checkpoint_preimage(sc));
+    (
+        hex::encode(key.verifying_key().to_bytes()),
+        hex::encode(sig.to_bytes()),
+    )
+}
+
+fn is_valid_solana_log_id(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= 64
+        && s.bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"._:@/-".contains(&b))
+}
+
+fn is_valid_utc_timestamp(s: &str) -> bool {
+    let b = s.as_bytes();
+    b.len() == 20
+        && b.iter().enumerate().all(|(i, c)| match i {
+            4 | 7 => *c == b'-',
+            10 => *c == b'T',
+            13 | 16 => *c == b':',
+            19 => *c == b'Z',
+            _ => c.is_ascii_digit(),
+        })
+}
+
 fn verify_anchor_checkpoint(cp: &AnchorCheckpoint, transport: &str) -> Result<(), String> {
     if cp.schema != ANCHOR_CHECKPOINT_SCHEMA {
         return Err("anchor checkpoint schema is not arkhe-anchor-checkpoint/v1".into());
@@ -800,6 +870,46 @@ fn verify_anchor_checkpoint(cp: &AnchorCheckpoint, transport: &str) -> Result<()
     }
     if cp.tree_size == 0 || !is_hex64(&cp.root_sha256) {
         return Err("anchor checkpoint tree_size or root_sha256 is invalid".into());
+    }
+    if cp.transport == SOLANA_CHECKPOINT_PDA_TRANSPORT {
+        let Some(sc) = &cp.solana_checkpoint else {
+            return Err("solana:checkpoint-pda/v1 requires solana_checkpoint payload".into());
+        };
+        if sc.profile != SOLANA_CHECKPOINT_PROFILE {
+            return Err("solana checkpoint profile is not arkhe-mmr-checkpoint@1".into());
+        }
+        if sc.mmr_profile_digest != SOLANA_MMR_PROFILE_DIGEST_HEX {
+            return Err("solana checkpoint mmr_profile_digest does not match frozen profile".into());
+        }
+        if !is_valid_solana_log_id(&sc.log_id) {
+            return Err("solana checkpoint log_id is invalid".into());
+        }
+        if !is_hex64(&sc.root_hex) || sc.root_hex != cp.root_sha256 {
+            return Err("solana checkpoint root_hex does not match root_sha256".into());
+        }
+        if sc.leaf_count == 0 || u64::from(sc.leaf_count) != cp.tree_size {
+            return Err("solana checkpoint leaf_count does not match tree_size".into());
+        }
+        if !is_valid_utc_timestamp(&sc.issued_at) {
+            return Err("solana checkpoint issued_at is not YYYY-MM-DDTHH:MM:SSZ".into());
+        }
+        if !cp.origin.starts_with("solana:") || !cp.origin.ends_with(&format!(":{}", sc.log_id)) {
+            return Err("solana checkpoint origin must start with solana: and bind log_id".into());
+        }
+        let (Some(pk_hex), Some(sig_hex)) = (&cp.log_public_key_hex, &cp.checkpoint_signature) else {
+            return Err("solana:checkpoint-pda/v1 requires log_public_key_hex and checkpoint_signature".into());
+        };
+        let vk = decode_key(pk_hex).map_err(|e| format!("solana checkpoint key invalid: {e}"))?;
+        let sig_bytes =
+            hex::decode(sig_hex).map_err(|_| "solana checkpoint signature is not hex".to_string())?;
+        let sig = ed25519_dalek::Signature::from_slice(&sig_bytes)
+            .map_err(|_| "solana checkpoint signature length invalid".to_string())?;
+        vk.verify(&solana_pda_checkpoint_preimage(sc), &sig)
+            .map_err(|_| "solana checkpoint Ed25519 signature does not verify".to_string())?;
+        return Ok(());
+    }
+    if cp.solana_checkpoint.is_some() {
+        return Err("solana_checkpoint is only valid with transport solana:checkpoint-pda/v1".into());
     }
     match (&cp.log_public_key_hex, &cp.checkpoint_signature) {
         (Some(pk_hex), Some(sig_hex)) => {
@@ -1427,6 +1537,14 @@ fn discharge(
             stated("invariant_id")
         ));
     }
+    if let Some(expected_version) = input.expect_invariant_version {
+        let actual_version = stated("invariant_version");
+        if actual_version != expected_version {
+            return Discharge::Refused(format!(
+                "verdict is from invariant version {actual_version} and the caller requires {expected_version}"
+            ));
+        }
+    }
     Discharge::Verified(stated("invariant_id").to_string())
 }
 
@@ -1736,6 +1854,7 @@ mod tests {
             action_id: None,
             invariant: None,
             expect_invariant: None,
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         }
@@ -1845,6 +1964,7 @@ mod tests {
             action_id: None,
             invariant: None,
             expect_invariant: None,
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         }
@@ -1953,6 +2073,7 @@ mod tests {
             action_id: None,
             invariant: None,
             expect_invariant: None,
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         }
@@ -2108,6 +2229,7 @@ mod tests {
             action_id: None,
             invariant: verdict,
             expect_invariant: expect,
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         }
@@ -2294,6 +2416,7 @@ mod tests {
             action_id: Some(&action.id),
             invariant: None,
             expect_invariant: None,
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         });
@@ -2328,6 +2451,7 @@ mod tests {
             action_id: Some(&action.id),
             invariant: None,
             expect_invariant: None,
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         });
@@ -2375,6 +2499,7 @@ mod tests {
             action_id: None,
             invariant: None,
             expect_invariant: None,
+            expect_invariant_version: None,
             anchor_checkpoint: None,
             anchor_inclusion: None,
         });
@@ -2550,6 +2675,7 @@ mod tests {
             root_sha256: root_hex.clone(),
             log_public_key_hex: None,
             checkpoint_signature: None,
+            solana_checkpoint: None,
         };
         sign_anchor_checkpoint(&mut checkpoint, [0x77; 32]);
 
@@ -2593,5 +2719,230 @@ mod tests {
         let cp_only_verdict = verify(cp_only_input);
         assert_eq!(cp_only_verdict.components["anchor"], "INCONCLUSIVE");
         assert_eq!(cp_only_verdict.overall, "INCONCLUSIVE");
+    }
+
+    #[test]
+    fn p02_solana_checkpoint_pda_anchor_passes_and_rejects_tamper() {
+        let (trust, _, commit, _) = gate0();
+        let anchor_secret = secret_from_seed("anchor", GATE0_ANCHOR_SEED).unwrap();
+        let reference = "29Yz7aFTQqpTXfrSALCT6Si43yaVNHd2feHkq8zeXeRYY7GoZy8FA579pDyKJ3uvhqQQbJvtRSBuxmbdDNRevNhs";
+        let anchor_confirmed = sign_body(
+            &anchor_secret,
+            &anchor_body(
+                &commit.id,
+                SOLANA_CHECKPOINT_PDA_TRANSPORT,
+                reference,
+                "confirmed",
+            )
+            .unwrap(),
+        )
+        .unwrap();
+
+        let leaf0 = anchor_entry_bytes(&"11".repeat(32), "tx-prev-0");
+        let leaf1 = anchor_entry_bytes(&commit.id, reference);
+        let leaves: Vec<&[u8]> = vec![&leaf0, &leaf1];
+        let (root_hex, hashes) = rfc6962_prove(&leaves, 1).unwrap();
+
+        let log_id = "arkhe-anchor-devnet";
+        let sc = SolanaPdaCheckpoint {
+            profile: SOLANA_CHECKPOINT_PROFILE.into(),
+            log_id: log_id.into(),
+            mmr_profile_digest: SOLANA_MMR_PROFILE_DIGEST_HEX.into(),
+            root_hex: root_hex.clone(),
+            leaf_count: 2,
+            issued_at: "2026-11-23T15:53:00Z".into(),
+        };
+        let (pk_hex, sig_hex) = sign_solana_pda_checkpoint(&sc, [0x55; 32]);
+
+        let checkpoint = AnchorCheckpoint {
+            schema: ANCHOR_CHECKPOINT_SCHEMA.into(),
+            transport: SOLANA_CHECKPOINT_PDA_TRANSPORT.into(),
+            origin: format!(
+                "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG:7QC5jYYPHqr19sdiCaMqfTmGBzstJfP8Jp4HJpvYTtwB:2FMdbjfhSdpsUTVurjiTaGz4JfdRpPWC5RuMD2D72egX:{log_id}"
+            ),
+            tree_size: 2,
+            root_sha256: root_hex,
+            log_public_key_hex: Some(pk_hex),
+            checkpoint_signature: Some(sig_hex),
+            solana_checkpoint: Some(sc.clone()),
+        };
+        let proof = AnchorInclusionProof {
+            schema: ANCHOR_INCLUSION_SCHEMA.into(),
+            leaf_index: 1,
+            tree_size: 2,
+            hashes,
+        };
+
+        // Case 1: valid Solana CheckpointState PDA signature + valid inclusion proof -> PASS.
+        let mut ok_in = input(&anchor_confirmed, &trust, None, None, None, Some(&commit.id));
+        ok_in.anchor_checkpoint = Some(&checkpoint);
+        ok_in.anchor_inclusion = Some(&proof);
+        let ok = verify(ok_in);
+        assert_eq!(ok.components["anchor"], "PASS", "{:?}", ok.notes);
+        assert_eq!(ok.components["binding"], "PASS");
+        assert_eq!(ok.overall, "PASS");
+        assert_eq!(ok.exit_code(), 0);
+
+        // Case 2: 1-byte tampered Solana checkpoint signature -> FAIL.
+        let mut bad_sig_cp = checkpoint.clone();
+        let mut bytes = hex::decode(bad_sig_cp.checkpoint_signature.as_ref().unwrap()).unwrap();
+        bytes[0] ^= 0x01;
+        bad_sig_cp.checkpoint_signature = Some(hex::encode(bytes));
+        let mut bad_sig_in = input(&anchor_confirmed, &trust, None, None, None, Some(&commit.id));
+        bad_sig_in.anchor_checkpoint = Some(&bad_sig_cp);
+        bad_sig_in.anchor_inclusion = Some(&proof);
+        let bad_sig = verify(bad_sig_in);
+        assert_eq!(bad_sig.components["anchor"], "FAIL");
+        assert_eq!(bad_sig.overall, "FAIL");
+
+        // Case 3: valid signature over a different root -> FAIL.
+        let mut other_sc = sc;
+        other_sc.root_hex = "ee".repeat(32);
+        let (other_pk, other_sig) = sign_solana_pda_checkpoint(&other_sc, [0x55; 32]);
+        let mut wrong_root_cp = checkpoint.clone();
+        wrong_root_cp.root_sha256 = other_sc.root_hex.clone();
+        wrong_root_cp.log_public_key_hex = Some(other_pk);
+        wrong_root_cp.checkpoint_signature = Some(other_sig);
+        wrong_root_cp.solana_checkpoint = Some(other_sc);
+        let mut wrong_root_in = input(&anchor_confirmed, &trust, None, None, None, Some(&commit.id));
+        wrong_root_in.anchor_checkpoint = Some(&wrong_root_cp);
+        wrong_root_in.anchor_inclusion = Some(&proof);
+        let wrong_root = verify(wrong_root_in);
+        assert_eq!(wrong_root.components["anchor"], "FAIL");
+        assert_eq!(wrong_root.overall, "FAIL");
+
+        // Case 4: unsigned solana:checkpoint-pda/v1 rejected fail-closed -> FAIL.
+        let mut unsigned_cp = checkpoint.clone();
+        unsigned_cp.checkpoint_signature = None;
+        let mut unsigned_in = input(&anchor_confirmed, &trust, None, None, None, Some(&commit.id));
+        unsigned_in.anchor_checkpoint = Some(&unsigned_cp);
+        unsigned_in.anchor_inclusion = Some(&proof);
+        let unsigned = verify(unsigned_in);
+        assert_eq!(unsigned.components["anchor"], "FAIL");
+        assert_eq!(unsigned.overall, "FAIL");
+
+        // Case 5: observed=confirmed without proof stays INCONCLUSIVE (I8).
+        let no_proof = verify(input(&anchor_confirmed, &trust, None, None, None, Some(&commit.id)));
+        assert_eq!(no_proof.components["anchor"], "INCONCLUSIVE");
+        assert_eq!(no_proof.overall, "INCONCLUSIVE");
+    }
+
+    // ---- R-02: Require exact invariant_version without altering schema /v1 ----
+
+    #[test]
+    fn r02_expect_invariant_version_enforces_exact_match_and_preserves_schema() {
+        let trust = trust_with_invariant();
+        let (plan, output, model) = action_digests();
+        let action = agent_receipt(&plan, &output, &model);
+        let verdict = verdict_for(&action, &output, true);
+
+        // I5 schema invariance: exact 7 keys on kind: "invariant".
+        let keys: Vec<&str> = verdict
+            .body
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        assert_eq!(
+            keys,
+            vec![
+                "action_id",
+                "held",
+                "invariant_id",
+                "invariant_version",
+                "issuer",
+                "kind",
+                "output_sha256",
+            ]
+        );
+
+        // 1. Exact version match -> PASS.
+        let matched = verify(VerifyInput {
+            expect_invariant_version: Some("1.0.0"),
+            ..discharge_input(&action, &trust, &plan, &output, &model, Some(&verdict), Some(CHECKER))
+        });
+        assert_eq!(matched.components["llm_output"], "PASS", "{:?}", matched.notes);
+        assert_eq!(matched.overall, "PASS");
+        assert_eq!(matched.exit_code(), 0);
+
+        // 2. Version mismatch -> FAIL, naming both actual and required versions in notes.
+        let mismatched = verify(VerifyInput {
+            expect_invariant_version: Some("2.0.0"),
+            ..discharge_input(&action, &trust, &plan, &output, &model, Some(&verdict), Some(CHECKER))
+        });
+        assert_eq!(mismatched.components["llm_output"], "FAIL");
+        assert_eq!(mismatched.overall, "FAIL");
+        assert_eq!(mismatched.exit_code(), 1);
+        assert!(
+            mismatched
+                .notes
+                .iter()
+                .any(|n| n.contains("1.0.0") && n.contains("2.0.0")),
+            "expected both versions in notes: {:?}",
+            mismatched.notes
+        );
+
+        // 3. Exact equality only (no semver coercion).
+        for non_exact in ["01.0.0", "1.0.0+manifest=abcd"] {
+            let res = verify(VerifyInput {
+                expect_invariant_version: Some(non_exact),
+                ..discharge_input(&action, &trust, &plan, &output, &model, Some(&verdict), Some(CHECKER))
+            });
+            assert_eq!(res.components["llm_output"], "FAIL", "for {non_exact}");
+            assert_eq!(res.overall, "FAIL", "for {non_exact}");
+        }
+
+        // 4. Frozen published fixtures/gate0/verdict.json remains valid with or without version pin.
+        let gate0_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("..")
+            .join("fixtures")
+            .join("gate0");
+        let gate0_action: Receipt = read_json(&gate0_dir.join("action.json")).unwrap();
+        let gate0_verdict: Receipt = read_json(&gate0_dir.join("verdict.json")).unwrap();
+        let gate0_plan = sha256_hex(&fs::read(gate0_dir.join("plan.json")).unwrap());
+        let gate0_art = sha256_hex(&fs::read(gate0_dir.join("artifact.bin")).unwrap());
+        let gate0_model = sha256_hex(&fs::read(gate0_dir.join("model.json")).unwrap());
+
+        let legacy_ok = verify(discharge_input(
+            &gate0_action,
+            &trust,
+            &gate0_plan,
+            &gate0_art,
+            &gate0_model,
+            Some(&gate0_verdict),
+            Some(GATE0_INVARIANT_ID),
+        ));
+        assert_eq!(legacy_ok.overall, "PASS");
+
+        let pinned_ok = verify(VerifyInput {
+            expect_invariant_version: Some(GATE0_INVARIANT_VERSION),
+            ..discharge_input(
+                &gate0_action,
+                &trust,
+                &gate0_plan,
+                &gate0_art,
+                &gate0_model,
+                Some(&gate0_verdict),
+                Some(GATE0_INVARIANT_ID),
+            )
+        });
+        assert_eq!(pinned_ok.overall, "PASS");
+
+        let pinned_fail = verify(VerifyInput {
+            expect_invariant_version: Some("1.0.1"),
+            ..discharge_input(
+                &gate0_action,
+                &trust,
+                &gate0_plan,
+                &gate0_art,
+                &gate0_model,
+                Some(&gate0_verdict),
+                Some(GATE0_INVARIANT_ID),
+            )
+        });
+        assert_eq!(pinned_fail.components["llm_output"], "FAIL");
+        assert_eq!(pinned_fail.overall, "FAIL");
     }
 }
